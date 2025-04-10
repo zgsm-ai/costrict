@@ -1,0 +1,110 @@
+/* color palette from <https://github.com/vuejs/theme> */
+:root {
+  --vt-c-white: #ffffff;
+  --vt-c-white-soft: #f8f8f8;
+  --vt-c-white-mute: #f2f2f2;
+
+  --vt-c-black: #181818;
+  --vt-c-black-soft: #222222;
+  --vt-c-black-mute: #282828;
+
+  --vt-c-indigo: #2c3e50;
+
+  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
+  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
+  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
+  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+
+  --vt-c-text-light-1: var(--vt-c-indigo);
+  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
+  --vt-c-text-dark-1: var(--vt-c-white);
+  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+}
+
+/* semantic color variables for this project */
+:root {
+  --color-background: var(--vt-c-white);
+  --color-background-soft: var(--vt-c-white-soft);
+  --color-background-mute: var(--vt-c-white-mute);
+
+  --color-border: var(--vt-c-divider-light-2);
+  --color-border-hover: var(--vt-c-divider-light-1);
+
+  --color-heading: var(--vt-c-text-light-1);
+  --color-text: var(--vt-c-text-light-1);
+
+  --section-gap: 160px;
+}
+
+// idux variable
+:root {
+  --ix-reset-color-text: transparent !important;
+  --ix-reset-color-bg: transparent !important;
+  --ix-reset-color-text-title: #cccccc !important;
+}
+
+:root {
+  --container-padding: 0;
+  --input-padding-vertical: 6px;
+  --input-padding-horizontal: 4px;
+  --input-margin-vertical: 4px;
+  --input-margin-horizontal: 0;
+
+  --text-color: var(--vscode-foreground);
+  --desc-color: var(--vscode-descriptionForeground);
+  --bg-color: var(--vscode-editor-background);
+  // --bg-color: transparent;
+  --btn-bg-color: var(--vscode-button-background);
+  --btn-hover-bg-color: var(--vscode-button-hoverBackground);
+  --btn-color: var(--vscode-button-foreground);
+  --text-link-color: var(--vscode-textLink-foreground);
+  --input-color: var(--vscode-input-foreground);
+  --input-bg-color: var(--vscode-input-background);
+  --dropdown-color: var(--vscode-dropdown-foreground);
+  --dropdown-bg-color: var(--vscode-dropdown-background);
+  --border-color: var(--vscode-badge-background);
+  --scroll-bg-color: var(--vscode-editor-background);
+  --scroll-color: var(--vscode-scrollbarSlider-background);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--vt-c-black);
+    --color-background-soft: var(--vt-c-black-soft);
+    --color-background-mute: var(--vt-c-black-mute);
+
+    --color-border: var(--vt-c-divider-dark-2);
+    --color-border-hover: var(--vt-c-divider-dark-1);
+
+    --color-heading: var(--vt-c-text-dark-1);
+    --color-text: var(--vt-c-text-dark-2);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  position: relative;
+  font-weight: normal;
+}
+
+.ix-input,
+.ix-select,
+.ix-select-overlay {
+  background: #2f2f30 !important;
+  color: #ccc !important;
+  border: 1px solid #2f2f30 !important;
+}
+
+.ix-select-option {
+  background: #424141 !important;
+  color: #ccc !important;
+}
+
+.ix-select-option-active,
+.ix-select-option-selected {
+  background: #615f5f !important;
+  color: #ccc !important;
+}

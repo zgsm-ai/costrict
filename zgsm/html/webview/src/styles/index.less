@@ -1,0 +1,180 @@
+@import url('katex/dist/katex.min.css');
+@import url('./lib/highlight.less');
+@import url('./lib/tailwind.css');
+@import url('./lib/github-markdown.less');
+@import url('./base.less');
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-size: 12px;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+h1,
+h2,
+h3,
+p {
+  padding: 0;
+  margin: 0;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  color: var(--text-color);
+  background-color: transparent;
+}
+
+.markdown-body {
+  background-color: transparent;
+  font-size: 14px;
+
+  .start-step {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+  }
+
+  p {
+    white-space: pre-wrap;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  pre code,
+  pre tt {
+    line-height: 1.65;
+  }
+
+  .highlight pre,
+  pre {
+    background-color: var(--bg-color);
+  }
+
+  code {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+  }
+
+  code.hljs {
+    padding: 0;
+  }
+
+  table tr {
+    background: transparent !important;
+  }
+
+  table th,
+  table td {
+    border-color: rgb(136 136 136 / 0.3) !important;
+  }
+
+  .code-block {
+    &-wrapper {
+      position: relative;
+      padding: 8px 12px;
+      white-space: normal;
+    }
+
+    &-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 28px;
+      line-height: 20px;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgb(136 136 136 / 0.2);
+
+      .button-list {
+        display: flex;
+        align-items: center;
+
+        .button-item {
+          display: flex;
+          align-items: center;
+          height: 20px;
+          padding: 0 8px;
+          cursor: pointer;
+          color: var(--text-color);
+          white-space: nowrap;
+
+          &:not(:last-child) {
+            border-right: 1px solid #36404d;
+          }
+
+          &:hover {
+            color: #91bbf2;
+
+            svg {
+              fill: #91bbf2;
+            }
+          }
+
+          &.active {
+            color: #50B371;
+
+            svg {
+              fill: #50B371;
+            }
+          }
+
+          svg {
+            margin-right: 4px;
+          }
+        }
+      }
+
+      &.hide {
+        display: none;
+      }
+    }
+  }
+
+  &.is-question {
+    pre {
+      margin-bottom: 0;
+    }
+
+    .code-block-header {
+      display: none;
+    }
+
+    overflow: hidden;
+
+    &.show-part {
+      height: 80px;
+    }
+
+    &.form-ide {
+      height: 100px;
+    }
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 5px !important;
+  background: #666666 !important;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 0;
+  background: transparent;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

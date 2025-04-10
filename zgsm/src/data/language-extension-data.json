@@ -1,0 +1,179 @@
+[
+    {
+        "file_extensions": [
+            "",
+            "txt"
+        ],
+        "language": "Text"
+    },
+    {
+        "file_extensions": [
+            "vue"
+        ],
+        "language": "Vue"
+    },
+    {
+        "file_extensions": [
+            "ts",
+            "tsx"
+        ],
+        "language": "TypeScript"
+    },
+    {
+        "file_extensions": [
+            "js",
+            "jsx",
+            "mjs"
+        ],
+        "language": "JavaScript"
+    },
+    {
+        "file_extensions": [
+            "py"
+        ],
+        "language": "Python"
+    },
+    {
+        "file_extensions": [
+            "go"
+        ],
+        "language": "Go"
+    },
+    {
+        "file_extensions": [
+            "c",
+            "ec",
+            "pgc",
+            "h"
+        ],
+        "language": "C"
+    },
+    {
+        "file_extensions": [
+            "cc",
+            "cpp",
+            "cxx",
+            "c++",
+            "pcc",
+            "hh",
+            "hpp",
+            "hxx",
+            "inl",
+            "ipp"
+        ],
+        "language": "C++"
+    },
+    {
+        "file_extensions": [
+            "sh",
+            ".tcshrc"
+        ],
+        "language": "Shell"
+    },
+    {
+        "file_extensions": [
+            "bash",
+            "bash_login",
+            "bash_logout",
+            "bash_profile",
+            "bashrc",
+            ".bash_login",
+            ".bash_logout",
+            ".bash_profile",
+            ".bashrc"
+        ],
+        "language": "Bash"
+    },
+    {
+        "file_extensions": [
+            "bat",
+            "btm",
+            "cmd"
+        ],
+        "language": "Batch"
+    },
+    {
+        "file_extensions": [
+            "lua"
+        ],
+        "language": "Lua"
+    },
+    {
+        "file_extensions": [
+            "java"
+        ],
+        "language": "Java"
+    },
+    {
+        "file_extensions": [
+            "php"
+        ],
+        "language": "PHP"
+    },
+    {
+        "file_extensions": [
+            "rb"
+        ],
+        "language": "Ruby"
+    },
+    {
+        "file_extensions": [
+            "html",
+            "hml"
+        ],
+        "language": "HTML"
+    },
+    {
+        "file_extensions": [
+            "css"
+        ],
+        "language": "CSS"
+    },
+    {
+        "file_extensions": [
+            "swift"
+        ],
+        "language": "Swift"
+    },
+    {
+        "file_extensions": [
+            "kt",
+            "kts"
+        ],
+        "language": "Kotlin"
+    },
+    {
+        "file_extensions": [
+            "rs"
+        ],
+        "language": "Rust"
+    },
+    {
+        "file_extensions": [
+            "sql"
+        ],
+        "language": "SQL"
+    },
+    {
+        "file_extensions": [
+            "md",
+            "markdown"
+        ],
+        "language": "Markdown"
+    },
+    {
+        "file_extensions": [
+            "pl",
+            "pm",
+            "t"
+        ],
+        "language": "Perl"
+    },
+    {
+        "file_extensions": [
+            "m",
+            "mm"
+        ],
+        "language": "Objective-C"
+    }
+]
