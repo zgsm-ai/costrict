@@ -1,0 +1,472 @@
+{
+  "name": "zgsm",
+  "publisher": "zgsm-ai",
+  "displayName": "ZHUGE: AI Coding Assistant",
+  "icon": "images/zhuge_shenma_rebot_logo_big.png",
+  "description": "Zhuge Shenma: An intelligent programming assistant that improves coding efficiency",
+  "version": "1.2.0",
+  "repository": {
+    "url": "https://github.com/zgsm-ai/zgsm"
+  },
+  "engines": {
+    "vscode": "^1.69.0"
+  },
+  "categories": [
+    "Testing",
+    "Data Science",
+    "Formatters",
+    "Programming Languages",
+    "Snippets",
+    "Machine Learning",
+    "Education",
+    "Linters"
+  ],
+  "keywords": [
+    "智能助手",
+    "智能",
+    "助手",
+    "编码助手",
+    "编程",
+    "编程助手",
+    "AI编程",
+    "AI助手",
+    "AI编程助手",
+    "AI工程师",
+    "Intelligent Assistant",
+    "AI",
+    "Assistant",
+    "Coding Assistant",
+    "Programming",
+    "Programming Assistant",
+    "AI Programming",
+    "AI Assistant",
+    "AI Coding Assistant",
+    "AI Engineer",
+    "devin",
+    "Assistance",
+    "Assisted Coding",
+    "Sangfor",
+    "Zhuge",
+    "Shenma",
+    "Assistance",
+    "Assisted Coding",
+    "Sangfor",
+    "Zhuge",
+    "Shenma",
+    "cursor",
+    "copilot",
+    "context",
+    "coding",
+    "openai",
+    "testing",
+    "find bugs",
+    "ai",
+    "assistant",
+    "autocomplete",
+    "sangfor",
+    "c++",
+    "documentation",
+    "go",
+    "golang",
+    "intellisense",
+    "java",
+    "javascript",
+    "keybindings",
+    "review",
+    "project",
+    "lua",
+    "sql",
+    "shell",
+    "php",
+    "python",
+    "refactor",
+    "ruby",
+    "typescript",
+    "unittest"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:vscode-zgsm.clearSession"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "submenus": [
+      {
+        "id": "zhuge-shenma",
+        "label": "Zhuge Shenma"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "zhuge-shenma",
+          "group": "0_chatGpt@1"
+        }
+      ],
+      "zhuge-shenma": [
+        {
+          "command": "vscode-zgsm.explain",
+          "group": "zhuge-shenma@1",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "vscode-zgsm.addComment",
+          "group": "zhuge-shenma@2",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "vscode-zgsm.codeReview",
+          "group": "zhuge-shenma@3",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "vscode-zgsm.addDebugCode",
+          "group": "zhuge-shenma@4",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "vscode-zgsm.addStrongerCode",
+          "group": "zhuge-shenma@5",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "vscode-zgsm.simplifyCode",
+          "group": "zhuge-shenma@6",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "vscode-zgsm.performanceOptimization",
+          "group": "zhuge-shenma@7",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "vscode-zgsm.view.issue",
+          "group": "zhuge-shenma@8"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "vscode-zgsm.view.userHelperDoc",
+          "when": "view == vscode-zgsm.view",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-zgsm.view.logout",
+          "when": "view == vscode-zgsm.view",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-zgsm.view.issue",
+          "when": "view == vscode-zgsm.view",
+          "group": "navigation"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "vscode-zgsm.view.userHelperDoc",
+        "title": "Zhuge Shenma Official Site",
+        "icon": {
+          "light": "images/zhuge_ai_help_doc_icon_lightmode.svg",
+          "dark": "images/zhuge_ai_help_doc_icon_darkmode.svg"
+        }
+      },
+      {
+        "command": "vscode-zgsm.view.logout",
+        "title": "Zhuge Shenma: Logout",
+        "icon": {
+          "light": "images/zhuge_ai_logout_icon_lightmode.svg",
+          "dark": "images/zhuge_ai_logout_icon_darkmode.svg"
+        }
+      },
+      {
+        "command": "vscode-zgsm.view.issue",
+        "title": "Zhuge Shenma: Feedback",
+        "icon": {
+          "light": "images/issue.svg",
+          "dark": "images/issue-dark.svg"
+        }
+      },
+      {
+        "command": "vscode-zgsm.explain",
+        "title": "Explain Code"
+      },
+      {
+        "command": "vscode-zgsm.addComment",
+        "title": "Add Comments"
+      },
+      {
+        "command": "vscode-zgsm.addTests",
+        "title": "Generate Unit Tests"
+      },
+      {
+        "command": "vscode-zgsm.codeReview",
+        "title": "Code Review"
+      },
+      {
+        "command": "vscode-zgsm.addDebugCode",
+        "title": "Add Logging"
+      },
+      {
+        "command": "vscode-zgsm.addStrongerCode",
+        "title": "Enhance Robustness"
+      },
+      {
+        "command": "vscode-zgsm.simplifyCode",
+        "title": "Simplify Code"
+      },
+      {
+        "command": "vscode-zgsm.performanceOptimization",
+        "title": "Optimize Performance"
+      },
+      {
+        "command": "vscode-zgsm.chat",
+        "title": "Zhuge Shenma: Start Chat"
+      },
+      {
+        "command": "zgsm-completion.shortKeyCut",
+        "title": "Zhuge Shenma Code Completion Shortcut",
+        "shortTitle": "Zhuge Shenma Code Completion Shortcut"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "vscode-zgsm.chat",
+        "key": "alt+q"
+      },
+      {
+        "command": "zgsm-completion.shortKeyCut",
+        "key": "alt+a",
+        "when": "editorTextFocus && !editorReadonly"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "vscode-zgsm-view-container",
+          "title": "Zhuge Shenma",
+          "icon": "images/zhuge_shenma_logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "vscode-zgsm-view-container": [
+        {
+          "type": "webview",
+          "id": "vscode-zgsm.view",
+          "name": ""
+        }
+      ]
+    },
+    "configuration": [
+      {
+        "title": "Zhuge Shenma",
+        "order": 1,
+        "properties": {
+          "ZhugeShenma.baseUrl": {
+            "type": "string",
+            "order": 1,
+            "default": "",
+            "description": "Base URL for Zhuge Shenma backend services"
+          },
+          "ZhugeShenma.loginUrl": {
+            "type": "string",
+            "order": 2,
+            "default": "",
+            "description": "Custom OIDC login API URL"
+          },
+          "ZhugeShenma.tokenUrl": {
+            "type": "string",
+            "order": 3,
+            "default": "",
+            "description": "Custom OIDC token retrieval API URL"
+          },
+          "ZhugeShenma.logoutUrl": {
+            "type": "string",
+            "order": 4,
+            "default": "",
+            "description": "Custom OIDC logout API URL"
+          },
+          "ZhugeShenma.response.showNotification": {
+            "type": "boolean",
+            "order": 5,
+            "default": false,
+            "description": "Whether to show notifications when waiting for bot responses."
+          }
+        }
+      },
+      {
+        "title": "Intelligent Code Completion",
+        "order": 2,
+        "properties": {
+          "IntelligentCodeCompletion.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 1,
+            "description": "Enable intelligent code completion"
+          },
+          "IntelligentCodeCompletion.betaMode": {
+            "type": "boolean",
+            "default": false,
+            "order": 2,
+            "description": "Enable beta features for early access. See version notes for feature list."
+          },
+          "IntelligentCodeCompletion.inlineCompletion": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable line-by-line completion (displays single-line suggestions)"
+          },
+          "IntelligentCodeCompletion.shortCutKeys": {
+            "default": "alt+a",
+            "enum": [
+              "alt+a"
+            ],
+            "description": "Shortcut key for manual triggering. To modify, search 'Zhuge Shenma Code Completion Shortcut' in command palette."
+          },
+          "IntelligentCodeCompletion.disableLanguages": {
+            "type": "object",
+            "additionalProperties": "string",
+            "default": {},
+            "markdownDescription": "Disable code completion for specific languages (set value to true to disable)"
+          }
+        }
+      },
+      {
+        "title": "Function Quick Commands",
+        "order": 3,
+        "properties": {
+          "FunctionQuickCommands.enabled": {
+            "type": "boolean",
+            "default": true,
+            "order": 1,
+            "description": "Enable function quick commands"
+          },
+          "FunctionQuickCommands.disableLanguages": {
+            "type": "object",
+            "additionalProperties": "string",
+            "default": {},
+            "markdownDescription": "Disable quick commands for specific languages (set value to true to disable)"
+          },
+          "FunctionQuickCommands.quickCommandButtons": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Configure quick command buttons above functions",
+            "default": {
+              "explain": true,
+              "addComment": true,
+              "addTests": true,
+              "codeReview": true,
+              "addDebugCode": true,
+              "addStrongerCode": true,
+              "simplifyCode": true,
+              "performanceOptimization": true,
+              "shenmaInstructSet": false
+            },
+            "properties": {
+              "explain": {
+                "type": "boolean",
+                "default": true,
+                "description": "Explain Code"
+              },
+              "addComment": {
+                "type": "boolean",
+                "default": true,
+                "description": "Add Comments"
+              },
+              "addTests": {
+                "type": "boolean",
+                "default": true,
+                "description": "Generate Unit Tests"
+              },
+              "codeReview": {
+                "type": "boolean",
+                "default": true,
+                "description": "Code Review"
+              },
+              "addDebugCode": {
+                "type": "boolean",
+                "default": true,
+                "description": "Add Logging"
+              },
+              "addStrongerCode": {
+                "type": "boolean",
+                "default": true,
+                "description": "Enhance Robustness"
+              },
+              "simplifyCode": {
+                "type": "boolean",
+                "default": true,
+                "description": "Simplify Code"
+              },
+              "performanceOptimization": {
+                "type": "boolean",
+                "default": true,
+                "description": "Optimize Performance"
+              },
+              "shenmaInstructSet": {
+                "type": "boolean",
+                "default": false,
+                "description": "Show <Shenma> button with all commands above functions"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "icons": {
+      "zhuge-shenma-icon": {
+        "description": "Zhuge Shenma logo",
+        "default": {
+          "fontPath": "images/zhuge_shenma_logo_icon.woff",
+          "fontCharacter": "\\E900"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "rimraf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "build": "npm run -S esbuild-base -- --sourcemap",
+    "watch": "npm run -S esbuild-base -- --sourcemap --watch",
+    "fmt": "prettier --write \"src/**/*.ts\"&& npm run test -- --fix",
+    "test": "eslint src --ext ts && tsc --noEmit",
+    "package": "vsce package",
+    "package:dev": "vsce package",
+    "publish": "vsce publish",
+    "lint-no-warning": "eslint . --quiet --ext .ts",
+    "lint": "eslint . --ext .ts",
+    "lint-and-fix": "eslint . --ext .ts --fix",
+    "postpackage": "echo 'Package created successfully!'"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.0.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.69.0",
+    "@types/vscode-webview": "^1.57.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/test-electron": "^2.2.0",
+    "esbuild": "^0.15.18",
+    "eslint": "^8.28.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "os": "^0.1.1",
+    "semver": "^7.5.4",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.9.3"
+  },
+  "dependencies": {
+    "async-mutex": "^0.4.0",
+    "axios": "^1.4.0",
+    "iconv-lite": "^0.6.3",
+    "node-fetch": "^3.3.0",
+    "openai": "^3.0.0",
+    "os": "^0.1.1",
+    "semver": "^7.5.4",
+    "vsce": "^2.15.0"
+  },
+  "files": [
+    "src/view/**/*"
+  ]
+}

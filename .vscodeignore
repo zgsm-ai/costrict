@@ -56,3 +56,6 @@ webview-ui/node_modules/**
 
 # Include .env file for telemetry
 !.env
+
+# zgsm
+ !src/zgsm/images/**
