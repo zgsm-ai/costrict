@@ -6,8 +6,8 @@
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  */
-import { Configuration, CreateCompletionResponse, OpenAIApi } from 'openai';
-import { envClient, envSetting } from "../common/env"
+import OpenAI from 'openai';
+import { envClient, envSetting } from "../common/env";
 import { Logger } from "../common/log-util";
 import { window, workspace } from 'vscode';
 import { AxiosResponse } from "axios";
@@ -23,7 +23,7 @@ import { CompletionTrace } from './completionTrace';
  */
 export class CompletionClient {
     private static client: CompletionClient|undefined = undefined;
-    private openai: OpenAIApi | undefined;
+    private openai: OpenAI | undefined;
     private stopWords: string[] = [];
     private reqs: Map<string, any> = new Map<string, any>();
     private betaMode: any = undefined;
@@ -84,15 +84,15 @@ export class CompletionClient {
             window.showErrorMessage('Failed to get login information. Please log in again to use the completion service');
             return false;
         }
-        // The configuration takes effect in real time.
-        let configuration = new Configuration({
+        this.openai = new OpenAI({
+            baseURL: envSetting.completionUrl,
             apiKey: envClient.apiKey
         });
-        this.openai = new OpenAIApi(configuration, envSetting.completionUrl);
         if (!this.openai) {
             Logger.error("Completion: Configuration error: configuration:", configuration, "openai: ", this.openai);
             return false;
         }
+
         this.stopWords = workspace.getConfiguration(configCompletion).get("inlineCompletion") ? ["\n", "\r"] : [];
         this.betaMode = workspace.getConfiguration(configCompletion).get("betaMode");
         Logger.info(`Completion: Create OpenAIApi client, URL: ${envSetting.completionUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`)
