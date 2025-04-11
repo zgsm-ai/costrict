@@ -59,6 +59,10 @@
 			{
 				"id": "roo-code.terminalMenu",
 				"label": "Roo Code"
+			},
+			{
+				"id": "zhuge-shenma",
+				"label": "Zhuge Shenma"
 			}
 		],
 		"viewsContainers": {
@@ -179,6 +183,71 @@
 				"command": "roo-cline.focusInput",
 				"title": "Focus Input Field",
 				"category": "Roo Code"
+			},
+			{
+				"command": "vscode-zgsm.view.userHelperDoc",
+				"title": "Zhuge Shenma Official Site",
+				"icon": {
+					"light": "zgsm/images/zhuge_ai_help_doc_icon_lightmode.svg",
+					"dark": "zgsm/images/zhuge_ai_help_doc_icon_darkmode.svg"
+				}
+			},
+			{
+				"command": "vscode-zgsm.view.logout",
+				"title": "Zhuge Shenma: Logout",
+				"icon": {
+					"light": "zgsm/images/zhuge_ai_logout_icon_lightmode.svg",
+					"dark": "zgsm/images/zhuge_ai_logout_icon_darkmode.svg"
+				}
+			},
+			{
+				"command": "vscode-zgsm.view.issue",
+				"title": "Zhuge Shenma: Feedback",
+				"icon": {
+					"light": "zgsm/images/issue.svg",
+					"dark": "zgsm/images/issue-dark.svg"
+				}
+			},
+			{
+				"command": "vscode-zgsm.explain",
+				"title": "Explain Code"
+			},
+			{
+				"command": "vscode-zgsm.addComment",
+				"title": "Add Comments"
+			},
+			{
+				"command": "vscode-zgsm.addTests",
+				"title": "Generate Unit Tests"
+			},
+			{
+				"command": "vscode-zgsm.codeReview",
+				"title": "Code Review"
+			},
+			{
+				"command": "vscode-zgsm.addDebugCode",
+				"title": "Add Logging"
+			},
+			{
+				"command": "vscode-zgsm.addStrongerCode",
+				"title": "Enhance Robustness"
+			},
+			{
+				"command": "vscode-zgsm.simplifyCode",
+				"title": "Simplify Code"
+			},
+			{
+				"command": "vscode-zgsm.performanceOptimization",
+				"title": "Optimize Performance"
+			},
+			{
+				"command": "vscode-zgsm.chat",
+				"title": "Zhuge Shenma: Start Chat"
+			},
+			{
+				"command": "zgsm-completion.shortKeyCut",
+				"title": "Zhuge Shenma Code Completion Shortcut",
+				"shortTitle": "Zhuge Shenma Code Completion Shortcut"
 			}
 		],
 		"menus": {
@@ -186,6 +255,10 @@
 				{
 					"submenu": "roo-code.contextMenu",
 					"group": "navigation"
+				},
+				{
+					"submenu": "zhuge-shenma",
+					"group": "0_chatGpt@1"
 				}
 			],
 			"roo-code.contextMenu": [
@@ -204,6 +277,47 @@
 				{
 					"command": "roo-cline.improveCode",
 					"group": "1_actions@4"
+				}
+			],
+			"zhuge-shenma": [
+				{
+					"command": "vscode-zgsm.explain",
+					"group": "zhuge-shenma@1",
+					"when": "editorHasSelection"
+				},
+				{
+					"command": "vscode-zgsm.addComment",
+					"group": "zhuge-shenma@2",
+					"when": "editorHasSelection"
+				},
+				{
+					"command": "vscode-zgsm.codeReview",
+					"group": "zhuge-shenma@3",
+					"when": "editorHasSelection"
+				},
+				{
+					"command": "vscode-zgsm.addDebugCode",
+					"group": "zhuge-shenma@4",
+					"when": "editorHasSelection"
+				},
+				{
+					"command": "vscode-zgsm.addStrongerCode",
+					"group": "zhuge-shenma@5",
+					"when": "editorHasSelection"
+				},
+				{
+					"command": "vscode-zgsm.simplifyCode",
+					"group": "zhuge-shenma@6",
+					"when": "editorHasSelection"
+				},
+				{
+					"command": "vscode-zgsm.performanceOptimization",
+					"group": "zhuge-shenma@7",
+					"when": "editorHasSelection"
+				},
+				{
+					"command": "vscode-zgsm.view.issue",
+					"group": "zhuge-shenma@8"
 				}
 			],
 			"terminal/context": [
@@ -269,6 +383,21 @@
 					"command": "roo-cline.helpButtonClicked",
 					"group": "navigation@7",
 					"when": "view == roo-cline.SidebarProvider"
+				},
+				{
+					"command": "vscode-zgsm.view.userHelperDoc",
+					"when": "view == vscode-zgsm.view",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-zgsm.view.logout",
+					"when": "view == vscode-zgsm.view",
+					"group": "navigation"
+				},
+				{
+					"command": "vscode-zgsm.view.issue",
+					"when": "view == vscode-zgsm.view",
+					"group": "navigation"
 				}
 			],
 			"editor/title": [
@@ -309,42 +438,213 @@
 				}
 			]
 		},
-		"configuration": {
-			"title": "Roo Code",
-			"properties": {
-				"roo-cline.allowedCommands": {
-					"type": "array",
-					"items": {
-						"type": "string"
-					},
-					"default": [
-						"npm test",
-						"npm install",
-						"tsc",
-						"git log",
-						"git diff",
-						"git show"
-					],
-					"description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled"
-				},
-				"roo-cline.vsCodeLmModelSelector": {
-					"type": "object",
-					"properties": {
-						"vendor": {
-							"type": "string",
-							"description": "The vendor of the language model (e.g. copilot)"
+		"configuration": [
+			{
+				"title": "Roo Code",
+				"properties": {
+					"roo-cline.allowedCommands": {
+						"type": "array",
+						"items": {
+							"type": "string"
 						},
-						"family": {
-							"type": "string",
-							"description": "The family of the language model (e.g. gpt-4)"
-						}
+						"default": [
+							"npm test",
+							"npm install",
+							"tsc",
+							"git log",
+							"git diff",
+							"git show"
+						],
+						"description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled"
 					},
-					"description": "Settings for VSCode Language Model API"
-				},
-				"roo-cline.customStoragePath": {
-					"type": "string",
-					"default": "",
-					"description": "Custom storage path. Leave empty to use the default location. Supports absolute paths (e.g. 'D:\\RooCodeStorage')"
+					"roo-cline.vsCodeLmModelSelector": {
+						"type": "object",
+						"properties": {
+							"vendor": {
+								"type": "string",
+								"description": "The vendor of the language model (e.g. copilot)"
+							},
+							"family": {
+								"type": "string",
+								"description": "The family of the language model (e.g. gpt-4)"
+							}
+						},
+						"description": "Settings for VSCode Language Model API"
+					},
+					"roo-cline.customStoragePath": {
+						"type": "string",
+						"default": "",
+						"description": "Custom storage path. Leave empty to use the default location. Supports absolute paths (e.g. 'D:\\RooCodeStorage')"
+					}
+				}
+			},
+			{
+				"title": "Zhuge Shenma",
+				"order": 1,
+				"properties": {
+					"ZhugeShenma.baseUrl": {
+						"type": "string",
+						"order": 1,
+						"default": "",
+						"description": "Base URL for Zhuge Shenma backend services"
+					},
+					"ZhugeShenma.loginUrl": {
+						"type": "string",
+						"order": 2,
+						"default": "",
+						"description": "Custom OIDC login API URL"
+					},
+					"ZhugeShenma.tokenUrl": {
+						"type": "string",
+						"order": 3,
+						"default": "",
+						"description": "Custom OIDC token retrieval API URL"
+					},
+					"ZhugeShenma.logoutUrl": {
+						"type": "string",
+						"order": 4,
+						"default": "",
+						"description": "Custom OIDC logout API URL"
+					},
+					"ZhugeShenma.response.showNotification": {
+						"type": "boolean",
+						"order": 5,
+						"default": false,
+						"description": "Whether to show notifications when waiting for bot responses."
+					}
+				}
+			},
+			{
+				"title": "Intelligent Code Completion",
+				"order": 2,
+				"properties": {
+					"IntelligentCodeCompletion.enabled": {
+						"type": "boolean",
+						"default": true,
+						"order": 1,
+						"description": "Enable intelligent code completion"
+					},
+					"IntelligentCodeCompletion.betaMode": {
+						"type": "boolean",
+						"default": false,
+						"order": 2,
+						"description": "Enable beta features for early access. See version notes for feature list."
+					},
+					"IntelligentCodeCompletion.inlineCompletion": {
+						"type": "boolean",
+						"default": false,
+						"description": "Enable line-by-line completion (displays single-line suggestions)"
+					},
+					"IntelligentCodeCompletion.shortCutKeys": {
+						"default": "alt+a",
+						"enum": [
+							"alt+a"
+						],
+						"description": "Shortcut key for manual triggering. To modify, search 'Zhuge Shenma Code Completion Shortcut' in command palette."
+					},
+					"IntelligentCodeCompletion.disableLanguages": {
+						"type": "object",
+						"additionalProperties": "string",
+						"default": {},
+						"markdownDescription": "Disable code completion for specific languages (set value to true to disable)"
+					}
+				}
+			},
+			{
+				"title": "Function Quick Commands",
+				"order": 3,
+				"properties": {
+					"FunctionQuickCommands.enabled": {
+						"type": "boolean",
+						"default": true,
+						"order": 1,
+						"description": "Enable function quick commands"
+					},
+					"FunctionQuickCommands.disableLanguages": {
+						"type": "object",
+						"additionalProperties": "string",
+						"default": {},
+						"markdownDescription": "Disable quick commands for specific languages (set value to true to disable)"
+					},
+					"FunctionQuickCommands.quickCommandButtons": {
+						"type": "object",
+						"additionalProperties": false,
+						"description": "Configure quick command buttons above functions",
+						"default": {
+							"explain": true,
+							"addComment": true,
+							"addTests": true,
+							"codeReview": true,
+							"addDebugCode": true,
+							"addStrongerCode": true,
+							"simplifyCode": true,
+							"performanceOptimization": true,
+							"shenmaInstructSet": false
+						},
+						"properties": {
+							"explain": {
+								"type": "boolean",
+								"default": true,
+								"description": "Explain Code"
+							},
+							"addComment": {
+								"type": "boolean",
+								"default": true,
+								"description": "Add Comments"
+							},
+							"addTests": {
+								"type": "boolean",
+								"default": true,
+								"description": "Generate Unit Tests"
+							},
+							"codeReview": {
+								"type": "boolean",
+								"default": true,
+								"description": "Code Review"
+							},
+							"addDebugCode": {
+								"type": "boolean",
+								"default": true,
+								"description": "Add Logging"
+							},
+							"addStrongerCode": {
+								"type": "boolean",
+								"default": true,
+								"description": "Enhance Robustness"
+							},
+							"simplifyCode": {
+								"type": "boolean",
+								"default": true,
+								"description": "Simplify Code"
+							},
+							"performanceOptimization": {
+								"type": "boolean",
+								"default": true,
+								"description": "Optimize Performance"
+							},
+							"shenmaInstructSet": {
+								"type": "boolean",
+								"default": false,
+								"description": "Show <Shenma> button with all commands above functions"
+							}
+						}
+					}
+				}
+			}
+		],
+		"keybindings": [
+			{
+				"command": "zgsm-completion.shortKeyCut",
+				"key": "alt+a",
+				"when": "editorTextFocus && !editorReadonly"
+			}
+		],
+		"icons": {
+			"zhuge-shenma-icon": {
+				"description": "Zhuge Shenma logo",
+				"default": {
+					"fontPath": "zgsm/images/zhuge_shenma_logo_icon.woff",
+					"fontCharacter": "\\E900"
 				}
 			}
 		}

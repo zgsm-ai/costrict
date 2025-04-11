@@ -81,8 +81,8 @@ function registerMenuCommands(context: vscode.ExtensionContext, cvProvider: Chat
 export async function activate(context: vscode.ExtensionContext) {
     initialize();
 
-    const authProvider = Auth0AuthenticationProvider.getInstance(context);
-    authProvider.checkToken();
+    // const authProvider = Auth0AuthenticationProvider.getInstance(context);
+    // authProvider.checkToken();
 
     setupExtensionUpdater(context);
     doExtensionOnce(context);
@@ -90,15 +90,15 @@ export async function activate(context: vscode.ExtensionContext) {
     const cvProvider = ChatViewProvider.getInstance(context);
 
     // Register webview
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(
-        "vscode-zgsm.view",
-        cvProvider,
-        {
-            webviewOptions: {
-                retainContextWhenHidden: true,
-            },
-        }
-    ));
+    // context.subscriptions.push(vscode.window.registerWebviewViewProvider(
+    //     "vscode-zgsm.view",
+    //     cvProvider,
+    //     {
+    //         webviewOptions: {
+    //             retainContextWhenHidden: true,
+    //         },
+    //     }
+    // ));
 
     context.subscriptions.push(
         // Register codelens related commands
