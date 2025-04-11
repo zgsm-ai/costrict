@@ -81,6 +81,7 @@ function registerMenuCommands(context: vscode.ExtensionContext, cvProvider: Chat
 export async function activate(context: vscode.ExtensionContext) {
     initialize();
 
+    // TODO: it will cause coredump
     // const authProvider = Auth0AuthenticationProvider.getInstance(context);
     // authProvider.checkToken();
 
