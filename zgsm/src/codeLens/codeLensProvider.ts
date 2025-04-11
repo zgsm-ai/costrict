@@ -37,7 +37,7 @@ export class MyCodeLensProvider implements vscode.CodeLensProvider {
         }
 
         const results: any[] = [];
-        const config = vscode.workspace.getConfiguration(`Quick Commands.Quick command buttons displayed above functions`);
+        const config = vscode.workspace.getConfiguration(`FunctionQuickCommands.quickCommandButtons`);
 
         // Get the codeLens buttons that need to be displayed from the configuration
         const configCodelensDicts = Object.entries(CODELENS_FUNC)
