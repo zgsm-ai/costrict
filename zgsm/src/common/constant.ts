@@ -137,9 +137,9 @@ export const CODELENS_FUNC: { [key: string]: CodelensItem } = {
 export const codeLensDiffCodeTempFileDir = "codeLensDiffCodeTempFileDir";
 export const noDirtyFile = "no dirty file";
 
-export const configShenmaName = "Zhuge Shenma";
-export const configCompletion = "Intelligent Code Completion";
-export const configCodeLens = "Function Quick Commands";
+export const configShenmaName = "ZhugeShenma";
+export const configCompletion = "IntelligentCodeCompletion";
+export const configCodeLens = "FunctionQuickCommands";
 
 // User Authentication
 export const AUTH_TYPE = `zgsm-auth0`;
