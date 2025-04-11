@@ -69,8 +69,8 @@
 			"activitybar": [
 				{
 					"id": "roo-cline-ActivityBar",
-					"title": "Roo Code",
-					"icon": "assets/icons/icon.svg"
+					"title": "Zhuge Shenma",
+					"icon": "zgsm/images/zhuge_shenma_logo.svg"
 				}
 			]
 		},
