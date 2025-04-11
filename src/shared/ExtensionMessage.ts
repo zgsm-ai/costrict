@@ -159,6 +159,8 @@ export type ExtensionState = Pick<
 	| "terminalCommandDelay"
 	| "terminalPowershellCounter"
 	| "terminalZshClearEolMark"
+	| "terminalZshOhMy"
+	| "terminalZshP10k"
 	| "diffEnabled"
 	| "fuzzyMatchThreshold"
 	// | "experiments" // Optional in GlobalSettings, required here.

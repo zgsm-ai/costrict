@@ -376,6 +376,8 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 				terminalShellIntegrationTimeout,
 				terminalCommandDelay,
 				terminalZshClearEolMark,
+				terminalZshOhMy,
+				terminalZshP10k,
 				terminalPowershellCounter,
 			}) => {
 				setSoundEnabled(soundEnabled ?? false)
@@ -384,6 +386,8 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 				)
 				Terminal.setCommandDelay(terminalCommandDelay ?? 0)
 				Terminal.setTerminalZshClearEolMark(terminalZshClearEolMark ?? true)
+				Terminal.setTerminalZshOhMy(terminalZshOhMy ?? false)
+				Terminal.setTerminalZshP10k(terminalZshP10k ?? false)
 				Terminal.setPowershellCounter(terminalPowershellCounter ?? false)
 			},
 		)
@@ -1294,6 +1298,8 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			terminalCommandDelay,
 			terminalPowershellCounter,
 			terminalZshClearEolMark,
+			terminalZshOhMy,
+			terminalZshP10k,
 			fuzzyMatchThreshold,
 			mcpEnabled,
 			enableMcpServerCreation,
@@ -1364,6 +1370,8 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			terminalCommandDelay: terminalCommandDelay ?? 0,
 			terminalPowershellCounter: terminalPowershellCounter ?? false,
 			terminalZshClearEolMark: terminalZshClearEolMark ?? true,
+			terminalZshOhMy: terminalZshOhMy ?? false,
+			terminalZshP10k: terminalZshP10k ?? false,
 			fuzzyMatchThreshold: fuzzyMatchThreshold ?? 1.0,
 			mcpEnabled: mcpEnabled ?? true,
 			enableMcpServerCreation: enableMcpServerCreation ?? true,
@@ -1465,6 +1473,8 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			terminalCommandDelay: stateValues.terminalCommandDelay ?? 0,
 			terminalPowershellCounter: stateValues.terminalPowershellCounter ?? false,
 			terminalZshClearEolMark: stateValues.terminalZshClearEolMark ?? true,
+			terminalZshOhMy: stateValues.terminalZshOhMy ?? false,
+			terminalZshP10k: stateValues.terminalZshP10k ?? false,
 			mode: stateValues.mode ?? defaultModeSlug,
 			language: stateValues.language ?? formatLanguage(vscode.env.language),
 			mcpEnabled: stateValues.mcpEnabled ?? true,
