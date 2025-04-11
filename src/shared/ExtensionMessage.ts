@@ -161,6 +161,7 @@ export type ExtensionState = Pick<
 	| "terminalZshClearEolMark"
 	| "terminalZshOhMy"
 	| "terminalZshP10k"
+	| "terminalZdotdir"
 	| "diffEnabled"
 	| "fuzzyMatchThreshold"
 	// | "experiments" // Optional in GlobalSettings, required here.

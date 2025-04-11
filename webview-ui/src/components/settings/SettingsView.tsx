@@ -134,6 +134,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		terminalZshClearEolMark,
 		terminalZshOhMy,
 		terminalZshP10k,
+		terminalZdotdir,
 		writeDelayMs,
 		showRooIgnoredFiles,
 		remoteBrowserEnabled,
@@ -254,6 +255,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			vscode.postMessage({ type: "terminalZshClearEolMark", bool: terminalZshClearEolMark })
 			vscode.postMessage({ type: "terminalZshOhMy", bool: terminalZshOhMy })
 			vscode.postMessage({ type: "terminalZshP10k", bool: terminalZshP10k })
+			vscode.postMessage({ type: "terminalZdotdir", bool: terminalZdotdir })
 			vscode.postMessage({ type: "mcpEnabled", bool: mcpEnabled })
 			vscode.postMessage({ type: "alwaysApproveResubmit", bool: alwaysApproveResubmit })
 			vscode.postMessage({ type: "requestDelaySeconds", value: requestDelaySeconds })
@@ -503,6 +505,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						terminalZshClearEolMark={terminalZshClearEolMark}
 						terminalZshOhMy={terminalZshOhMy}
 						terminalZshP10k={terminalZshP10k}
+						terminalZdotdir={terminalZdotdir}
 						setCachedStateField={setCachedStateField}
 					/>
 				</div>

@@ -576,6 +576,7 @@ export const globalSettingsSchema = z.object({
 	terminalZshClearEolMark: z.boolean().optional(),
 	terminalZshOhMy: z.boolean().optional(),
 	terminalZshP10k: z.boolean().optional(),
+	terminalZdotdir: z.boolean().optional(),
 
 	rateLimitSeconds: z.number().optional(),
 	diffEnabled: z.boolean().optional(),
@@ -651,6 +652,7 @@ const globalSettingsRecord: GlobalSettingsRecord = {
 	terminalZshClearEolMark: undefined,
 	terminalZshOhMy: undefined,
 	terminalZshP10k: undefined,
+	terminalZdotdir: undefined,
 
 	rateLimitSeconds: undefined,
 	diffEnabled: undefined,
