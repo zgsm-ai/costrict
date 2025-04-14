@@ -8,7 +8,7 @@
  */
 import * as vscode from "vscode";
 import Auth0AuthenticationProvider from './common/authProvider';
-import { rightMenus } from "./chatView/chat-view-menu";
+import { registerZGSMCodeActions } from "./chatView/chat-view-menu";
 import { ChatViewProvider } from "./chatView/chat-view-provider";
 import { shortKeyCut } from "./codeCompletion/completionCommands";
 import { CompletionStatusBar } from "./codeCompletion/completionStatusBar";
@@ -38,41 +38,42 @@ async function initialize() {
  * Register the command for each menu item
  */
 function registerMenuCommands(context: vscode.ExtensionContext, cvProvider: ChatViewProvider) {
-    for (const rightMenu of rightMenus) {
-        const myCommand = vscode.commands.registerCommand(rightMenu.command, async () => {
-            const editor = vscode.window.activeTextEditor;
-            if (!editor) {
-                return;
-            }
-            const selectedCode = editor.document.getText(editor.selection);
-            if (!selectedCode) {
-                return;
-            }
-            Logger.log('You clicked', rightMenu);
-            vscode.commands.executeCommand('vscode-zgsm.view.focus');
+    // for (const rightMenu of rightMenus) {
+    //     const myCommand = vscode.commands.registerCommand(rightMenu.command, async () => {
+    //         const editor = vscode.window.activeTextEditor;
+    //         if (!editor) {
+    //             return;
+    //         }
+    //         const selectedCode = editor.document.getText(editor.selection);
+    //         if (!selectedCode) {
+    //             return;
+    //         }
+    //         Logger.log('You clicked', rightMenu);
+    //         vscode.commands.executeCommand('vscode-zgsm.view.focus');
 
-            let params: any = CODELENS_FUNC[rightMenu.key];
-            const filePath = editor.document.uri.fsPath;
-            const language = getLanguageByFilePath(filePath);
-            const langClass = getLanguageClass(language);
-            const startLine = editor.selection.start.line;
-            const endLine = editor.selection.end.line;
-            params.category = rightMenu.category;
-            params.filePath = filePath;
-            params.language = language;
-            params.code = getFullLineCode(editor, startLine, endLine);
-            params.callType = CODELENS_CONST.rightMenu;
-            params.range = {
-                startLine: startLine,
-                endLine: endLine,
-            };
-            params = langClass.codelensGetExtraArgs(editor.document, params.range, params);
-            setTimeout(() => {
-                cvProvider?.codeLensButtonSend(params);
-            }, cvProvider?.webView ? 0 : 1000);
-        });
-        context.subscriptions.push(myCommand);
-    }
+    //         let params: any = CODELENS_FUNC[rightMenu.key];
+    //         const filePath = editor.document.uri.fsPath;
+    //         const language = getLanguageByFilePath(filePath);
+    //         const langClass = getLanguageClass(language);
+    //         const startLine = editor.selection.start.line;
+    //         const endLine = editor.selection.end.line;
+    //         params.category = rightMenu.category;
+    //         params.filePath = filePath;
+    //         params.language = language;
+    //         params.code = getFullLineCode(editor, startLine, endLine);
+    //         params.callType = CODELENS_CONST.rightMenu;
+    //         params.range = {
+    //             startLine: startLine,
+    //             endLine: endLine,
+    //         };
+    //         params = langClass.codelensGetExtraArgs(editor.document, params.range, params);
+    //         setTimeout(() => {
+    //             cvProvider?.codeLensButtonSend(params);
+    //         }, cvProvider?.webView ? 0 : 1000);
+    //     });
+    //     context.subscriptions.push(myCommand);
+    // }
+    registerZGSMCodeActions(context);
 }
 
 /**
