@@ -118,6 +118,73 @@ Please provide:
 	NEW_TASK: {
 		template: `\${userInput}`,
 	},
+	ZGSM_EXPLAIN: {
+		template: `Explain the following code from file path \${filePath}:\${startLine}-\${endLine}
+\${userInput}
+
+\`\`\`
+\${selectedText}
+\`\`\`
+
+Please provide a clear and concise explanation of what this code does, including:
+1. The purpose and functionality
+2. Key components and their interactions
+3. Important patterns or techniques used`,
+	},
+	ZGSM_ADD_COMMENT: {
+		template: `Add comments to the following code from file path \${filePath}:\${startLine}-\${endLine}
+\${userInput}
+
+\`\`\`
+\${selectedText}
+\`\`\`
+`,
+	},
+	ZGSM_CODE_REVIEW: {
+		template: `Check for code quality issues and provide suggestions to the following code from file path \${filePath}:\${startLine}-\${endLine}
+\${userInput}
+
+\`\`\`
+\${selectedText}
+\`\`\`
+`,
+	},
+	ZGSM_ADD_DEBUG_CODE: {
+		template: `Enhance troubleshooting capabilities by adding logs and debug code to key logic steps to the following code from file path \${filePath}:\${startLine}-\${endLine}
+\${userInput}
+
+\`\`\`
+\${selectedText}
+\`\`\`
+`,
+	},
+	ZGSM_ADD_STRONG_CODE: {
+		template: `Enhance robustness by adding exception handling and parameter validation to the following code from file path \${filePath}:\${startLine}-\${endLine}
+\${userInput}
+
+\`\`\`
+\${selectedText}
+\`\`\`
+`,
+	},
+	ZGSM_SIMPLIFY_CODE: {
+		template: `Remove ineffective part of the following code from file path \${filePath}:\${startLine}-\${endLine}
+\${userInput}
+
+\`\`\`
+\${selectedText}
+\`\`\`
+`,
+	},
+	ZGSM_PERFORMANCE: {
+		template: `Improve code performance, provide modification suggestions, focus on efficiency issues to the following code from file path \${filePath}:\${startLine}-\${endLine}
+\${userInput}
+
+\`\`\`
+\${selectedText}
+\`\`\`
+`,
+	},
 } as const
 
 type SupportPromptType = keyof typeof supportPromptConfigs

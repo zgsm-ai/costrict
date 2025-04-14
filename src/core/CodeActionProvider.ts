@@ -8,6 +8,13 @@ export const ACTION_NAMES = {
 	IMPROVE: "Roo Code: Improve Code",
 	ADD_TO_CONTEXT: "Roo Code: Add to Context",
 	NEW_TASK: "Roo Code: New Task",
+	ZGSM_EXPLAIN: "Zhuge Shenma: Explain Code",
+	ZGSM_ADD_COMMENT: "Zhuge Shenma: Add Comment",
+	ZGSM_CODE_REVIEW: "Zhuge Shenma: Code Review",
+	ZGSM_ADD_DEBUG_CODE: "Zhuge Shenma: Add Debug Code",
+	ZGSM_ADD_STRONG_CODE: "Zhuge Shenma: Add Strong Code",
+	ZGSM_SIMPLIFY_CODE: "Zhuge Shenma: Simplify Code",
+	ZGSM_PERFORMANCE: "Zhuge Shenma: Performance Optimization",
 } as const
 
 export const COMMAND_IDS = {
@@ -16,6 +23,13 @@ export const COMMAND_IDS = {
 	IMPROVE: "roo-cline.improveCode",
 	ADD_TO_CONTEXT: "roo-cline.addToContext",
 	NEW_TASK: "roo-cline.newTask",
+	ZGSM_EXPLAIN: "vscode-zgsm.explain",
+	ZGSM_ADD_COMMENT: "vscode-zgsm.addComment",
+	ZGSM_CODE_REVIEW: "vscode-zgsm.codeReview",
+	ZGSM_ADD_DEBUG_CODE: "vscode-zgsm.addDebugCode",
+	ZGSM_ADD_STRONG_CODE: "vscode-zgsm.addStrongerCode",
+	ZGSM_SIMPLIFY_CODE: "vscode-zgsm.simplifyCode",
+	ZGSM_PERFORMANCE: "vscode-zgsm.performanceOptimization",
 } as const
 
 export class CodeActionProvider implements vscode.CodeActionProvider {

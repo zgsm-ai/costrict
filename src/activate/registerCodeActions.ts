@@ -80,7 +80,7 @@ const registerCodeAction = (
 	)
 }
 
-const registerCodeActionPair = (
+export const registerCodeActionPair = (
 	context: vscode.ExtensionContext,
 	baseCommand: string,
 	promptType: keyof typeof ACTION_NAMES,
