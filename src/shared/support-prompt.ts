@@ -185,6 +185,15 @@ Please provide a clear and concise explanation of what this code does, including
 \`\`\`
 `,
 	},
+	ZGSM_ADD_TEST: {
+		template: `Generate unit tests for the following code from file path \${filePath}:\${startLine}-\${endLine}
+\${userInput}
+
+\`\`\`
+\${selectedText}
+\`\`\`
+`,
+	},
 } as const
 
 type SupportPromptType = keyof typeof supportPromptConfigs
