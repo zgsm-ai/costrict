@@ -12,6 +12,7 @@ import { ChatViewProvider } from "../chatView/chat-view-provider";
 import { CODELENS_CONST, CODELENS_FUNC } from "../common/constant";
 import { throttle } from "../common/util";
 import { getLanguageByFilePath } from '../common/lang-util';
+import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 
 /**
  * Throttled function for commonCodeLensFunc
@@ -25,22 +26,53 @@ const throttleCommonCodeLensFunc = throttle(commonCodeLensFunc, 2000);
  */
 async function commonCodeLensFunc(editor: any, ...args: any) {
     // Show the webview page first, as there may be time-consuming operations later
-    vscode.commands.executeCommand('vscode-zgsm.view.focus');
+    // vscode.commands.executeCommand('vscode-zgsm.view.focus');
     const documentSymbol = args[1];
     const codelensItem = args[2];
     const language = getLanguageByFilePath(editor.document.uri.fsPath);
     const langClass = getLanguageClass(language);
 
+    const docUri = editor.document.uri;
+    const filePath = docUri.fsPath;
+    const startLine = documentSymbol.range.start.line;
+    const endLine = documentSymbol.range.end.line;
+
+    const allDiagnostics = vscode.languages.getDiagnostics(docUri);
+    const diagnostics = allDiagnostics.filter(d => {
+        const symbolStart = documentSymbol.range.start.line;
+        const symbolEnd = documentSymbol.range.end.line;
+        return d.range.start.line <= symbolEnd &&
+               d.range.end.line >= symbolStart;
+    });
+
     codelensItem.range = {
-        startLine: documentSymbol.range.start.line,
-        endLine: documentSymbol.range.end.line,
+        startLine: startLine,
+        endLine: endLine,
     };
-    codelensItem.filePath = editor.document.uri.fsPath;
+    codelensItem.filePath = filePath;
     codelensItem.callType = CODELENS_CONST.funcHead;
     codelensItem.language = language;
     const params = langClass.codelensGetExtraArgs(editor.document, codelensItem.range, codelensItem);
-    // Send a message to let LLM complete the response action
-    ChatViewProvider.getInstance().codeLensButtonSend(params);
+
+    let userInput: string | undefined;
+    if (params.inputPrompt) {
+        userInput = await vscode.window.showInputBox({
+            prompt: params.inputPrompt,
+            placeHolder: params.inputPlaceholder,
+        });
+    }
+
+    const selectedText = params.code;
+
+    const data = {
+        ...{ filePath, selectedText },
+        ...(startLine !== undefined ? { startLine: startLine.toString() } : {}),
+        ...(endLine !== undefined ? { endLine: endLine.toString() } : {}),
+        ...(diagnostics ? { diagnostics } : {}),
+        ...(userInput ? { userInput } : {}),
+    };
+
+    await ClineProvider.handleCodeAction(params.command, params.actionType, data);
 }
 
 /**

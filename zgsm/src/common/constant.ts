@@ -82,55 +82,91 @@ export const CODELENS_FUNC: { [key: string]: CodelensItem } = {
         key: 'explain',
         actionName: 'Explain Code',
         tooltip: "Explain code implementation",
+        // for Roo Code
         command: "vscode-zgsm.codelens_button",
+        actionType: "ZGSM_EXPLAIN",
+        inputPrompt: "What would you like ZGSM to explain?",
+        inputPlaceholder: "E.g. How does the error handling work?",
     } as CodelensItem,
     addComment: {
         key: 'addComment',
         actionName: 'Add Comments',
         tooltip: "Add comments to this function",
+        // for Roo Code
         command: "vscode-zgsm.codelens_button",
+        actionType: "ZGSM_ADD_COMMENT",
+        inputPrompt: "What would you like ZGSM to do?",
+        inputPlaceholder: "E.g. Add comments to the code",
     } as CodelensItem,
     addTests: {
         key: 'addTests',
         actionName: 'Generate Unit Tests',
         tooltip: "Generate unit tests for this function",
+        // for Roo Code
         command: "vscode-zgsm.codelens_button",
+        actionType: "ZGSM_ADD_TEST",
+        inputPrompt: "What would you like ZGSM to do?",
+        inputPlaceholder: "E.g. Generate unit tests for this function",
     } as CodelensItem,
     codeReview: {
         key: 'codeReview',
         actionName: 'Code Review',
         tooltip: "Check for code quality issues and provide suggestions",
+        // for Roo Code
         command: "vscode-zgsm.codelens_button",
+        actionType: "ZGSM_CODE_REVIEW",
+        inputPrompt: "What would you like ZGSM to do?",
+        inputPlaceholder: "E.g. Check for code quality issues and provide suggestions to the code",
     } as CodelensItem,
     addDebugCode: {
         key: 'addDebugCode',
         actionName: 'Add Debug Code',
         tooltip: "Enhance troubleshooting capabilities by adding logs and debug code to key logic steps",
+        // for Roo Code
         command: "vscode-zgsm.codelens_button",
+        actionType: "ZGSM_ADD_DEBUG_CODE",
+        inputPrompt: "What would you like ZGSM to do?",
+        inputPlaceholder: "E.g. Enhance troubleshooting capabilities by adding logs and debug code to key logic steps to the code",
     } as CodelensItem,
     addStrongerCode: {
         key: 'addStrongerCode',
         actionName: 'Add Error Handling',
         tooltip: "Enhance robustness by adding exception handling and parameter validation",
+        // for Roo Code
         command: "vscode-zgsm.codelens_button",
+        actionType: "ZGSM_ADD_STRONG_CODE",
+        inputPrompt: "What would you like ZGSM to do?",
+        inputPlaceholder: "E.g. Enhance robustness by adding exception handling and parameter validation to the code",
     } as CodelensItem,
     simplifyCode: {
         key: 'simplifyCode',
         actionName: 'Simplify Code',
         tooltip: "Remove ineffective code",
+        // for Roo Code
         command: "vscode-zgsm.codelens_button",
+        actionType: "ZGSM_SIMPLIFY_CODE",
+        inputPrompt: "What would you like ZGSM to do?",
+        inputPlaceholder: "E.g. Remove ineffective part of the code",
     } as CodelensItem,
     performanceOptimization: {
         key: 'performanceOptimization',
         actionName: 'Performance Optimization',
         tooltip: "Improve code performance, provide modification suggestions, focus on efficiency issues",
+        // for Roo Code
         command: "vscode-zgsm.codelens_button",
+        actionType: "ZGSM_PERFORMANCE",
+        inputPrompt: "What would you like ZGSM to do?",
+        inputPlaceholder: "E.g. Improve code performance, provide modification suggestions, focus on efficiency issues to the following code",
     } as CodelensItem,
     shenmaInstructSet: {
         key: 'shenmaInstructSet',
         actionName: `$(zhuge-shenma-icon)$(chevron-down)`,
         tooltip: "Shenma Instruction Set",
+        // for Roo Code
         command: "vscode-zgsm.codelens_more_button",
+        actionType: "ZGSM_EXPLAIN",
+        inputPrompt: "What would you like ZGSM to do?",
+        inputPlaceholder: "E.g. Add comments to the code",
     } as CodelensItem
 };
 

@@ -8,6 +8,8 @@ export const ACTION_NAMES = {
 	IMPROVE: "Roo Code: Improve Code",
 	ADD_TO_CONTEXT: "Roo Code: Add to Context",
 	NEW_TASK: "Roo Code: New Task",
+
+	// right menu and quick menu
 	ZGSM_EXPLAIN: "Zhuge Shenma: Explain Code",
 	ZGSM_ADD_COMMENT: "Zhuge Shenma: Add Comment",
 	ZGSM_CODE_REVIEW: "Zhuge Shenma: Code Review",
@@ -15,6 +17,7 @@ export const ACTION_NAMES = {
 	ZGSM_ADD_STRONG_CODE: "Zhuge Shenma: Add Strong Code",
 	ZGSM_SIMPLIFY_CODE: "Zhuge Shenma: Simplify Code",
 	ZGSM_PERFORMANCE: "Zhuge Shenma: Performance Optimization",
+	ZGSM_ADD_TEST: "Zhuge Shenma: Add Unit test"
 } as const
 
 export const COMMAND_IDS = {
