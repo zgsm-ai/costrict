@@ -170,7 +170,6 @@ export const CODELENS_FUNC: { [key: string]: CodelensItem } = {
     } as CodelensItem
 };
 
-
 export const codeLensDiffCodeTempFileDir = "codeLensDiffCodeTempFileDir";
 export const noDirtyFile = "no dirty file";
 

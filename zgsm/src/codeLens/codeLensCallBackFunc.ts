@@ -24,9 +24,6 @@ const throttleCommonCodeLensFunc = throttle(commonCodeLensFunc, 2000);
  * @param editor The document editor where the codelens is located
  * @param args: [documentSymbol, codelensItem]
  */
-
-
-
 async function commonCodeLensFunc(editor: any, ...args: any) {
     // Show the webview page first, as there may be time-consuming operations later
     // vscode.commands.executeCommand('vscode-zgsm.view.focus');
