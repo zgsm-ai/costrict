@@ -25,7 +25,7 @@ import { findToolName, formatContentBlockToMarkdown } from "../integrations/misc
 import { fetchInstructionsTool } from "./tools/fetchInstructionsTool"
 import { listFilesTool } from "./tools/listFilesTool"
 import { readFileTool } from "./tools/readFileTool"
-import { ExitCodeDetails } from "../integrations/terminal/TerminalProcess"
+import { ExitCodeDetails, TerminalProcess } from "../integrations/terminal/TerminalProcess"
 import { Terminal } from "../integrations/terminal/Terminal"
 import { TerminalRegistry } from "../integrations/terminal/TerminalRegistry"
 import { UrlContentFetcher } from "../services/browser/UrlContentFetcher"
@@ -966,11 +966,14 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		const workingDirInfo = workingDir ? ` from '${workingDir.toPosix()}'` : ""
 		terminalInfo.terminal.show() // weird visual bug when creating new terminals (even manually) where there's an empty space at the top.
-		const process = terminalInfo.runCommand(command)
-
 		let userFeedback: { text?: string; images?: string[] } | undefined
 		let didContinue = false
-		const sendCommandOutput = async (line: string): Promise<void> => {
+		let completed = false
+		let result: string = ""
+		let exitDetails: ExitCodeDetails | undefined
+		const { terminalOutputLineLimit = 500 } = (await this.providerRef.deref()?.getState()) ?? {}
+
+		const sendCommandOutput = async (line: string, terminalProcess: TerminalProcess): Promise<void> => {
 			try {
 				const { response, text, images } = await this.ask("command_output", line)
 				if (response === "yesButtonClicked") {
@@ -979,37 +982,30 @@ export class Cline extends EventEmitter<ClineEvents> {
 					userFeedback = { text, images }
 				}
 				didContinue = true
-				process.continue() // continue past the await
+				terminalProcess.continue() // continue past the await
 			} catch {
 				// This can only happen if this ask promise was ignored, so ignore this error
 			}
 		}
 
-		const { terminalOutputLineLimit = 500 } = (await this.providerRef.deref()?.getState()) ?? {}
-
-		process.on("line", (line) => {
-			if (!didContinue) {
-				sendCommandOutput(Terminal.compressTerminalOutput(line, terminalOutputLineLimit))
-			} else {
-				this.say("command_output", Terminal.compressTerminalOutput(line, terminalOutputLineLimit))
-			}
-		})
-
-		let completed = false
-		let result: string = ""
-		let exitDetails: ExitCodeDetails | undefined
-		process.once("completed", (output?: string) => {
-			// Use provided output if available, otherwise keep existing result.
-			result = output ?? ""
-			completed = true
-		})
-
-		process.once("shell_execution_complete", (details: ExitCodeDetails) => {
-			exitDetails = details
-		})
-
-		process.once("no_shell_integration", async (message: string) => {
-			await this.say("shell_integration_warning", message)
+		const process = terminalInfo.runCommand(command, {
+			onLine: (line, process) => {
+				if (!didContinue) {
+					sendCommandOutput(Terminal.compressTerminalOutput(line, terminalOutputLineLimit), process)
+				} else {
+					this.say("command_output", Terminal.compressTerminalOutput(line, terminalOutputLineLimit))
+				}
+			},
+			onCompleted: (output) => {
+				result = output ?? ""
+				completed = true
+			},
+			onShellExecutionComplete: (details) => {
+				exitDetails = details
+			},
+			onNoShellIntegration: async (message) => {
+				await this.say("shell_integration_warning", message)
+			},
 		})
 
 		await process
@@ -1022,6 +1018,25 @@ export class Cline extends EventEmitter<ClineEvents> {
 		await delay(50)
 
 		result = Terminal.compressTerminalOutput(result, terminalOutputLineLimit)
+
+		// keep in case we need it to troubleshoot user issues, but this should be removed in the future
+		// if everything looks good:
+		console.debug(
+			"[execute_command status]",
+			JSON.stringify(
+				{
+					completed,
+					userFeedback,
+					hasResult: result.length > 0,
+					exitDetails,
+					terminalId: terminalInfo.id,
+					workingDir: workingDirInfo,
+					isTerminalBusy: terminalInfo.busy,
+				},
+				null,
+				2,
+			),
+		)
 
 		if (userFeedback) {
 			await this.say("user_feedback", userFeedback.text, userFeedback.images)
