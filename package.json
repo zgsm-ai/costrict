@@ -1,7 +1,7 @@
 {
 	"name": "zgsm",
-	"displayName": "ZHUGE: AI Coding Assistant",
-	"description": "Zhuge Shenma: An intelligent programming assistant that improves coding efficiency",
+	"displayName": "%extension.displayName.long%",
+	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
 	"version": "1.0.0",
 	"icon": "zgsm/images/zhuge_shenma_rebot_logo_big.png",
@@ -62,14 +62,14 @@
 			},
 			{
 				"id": "zhuge-shenma",
-				"label": "Zhuge Shenma"
+				"label": "%extension.displayName%"
 			}
 		],
 		"viewsContainers": {
 			"activitybar": [
 				{
 					"id": "roo-cline-ActivityBar",
-					"title": "Zhuge Shenma",
+					"title": "%extension.displayName%",
 					"icon": "zgsm/images/zhuge_shenma_logo.svg"
 				}
 			]
@@ -186,7 +186,7 @@
 			},
 			{
 				"command": "vscode-zgsm.view.userHelperDoc",
-				"title": "Zhuge Shenma Official Site",
+				"title": "%command.view.userHelperDoc.title%",
 				"icon": {
 					"light": "zgsm/images/zhuge_ai_help_doc_icon_lightmode.svg",
 					"dark": "zgsm/images/zhuge_ai_help_doc_icon_darkmode.svg"
@@ -194,7 +194,7 @@
 			},
 			{
 				"command": "vscode-zgsm.view.logout",
-				"title": "Zhuge Shenma: Logout",
+				"title": "%command.view.logout.title%",
 				"icon": {
 					"light": "zgsm/images/zhuge_ai_logout_icon_lightmode.svg",
 					"dark": "zgsm/images/zhuge_ai_logout_icon_darkmode.svg"
@@ -202,7 +202,7 @@
 			},
 			{
 				"command": "vscode-zgsm.view.issue",
-				"title": "Zhuge Shenma: Feedback",
+				"title": "%command.view.issue.title%",
 				"icon": {
 					"light": "zgsm/images/issue.svg",
 					"dark": "zgsm/images/issue-dark.svg"
@@ -210,44 +210,44 @@
 			},
 			{
 				"command": "vscode-zgsm.explain",
-				"title": "Explain Code"
+				"title": "%command.explain.title%"
 			},
 			{
 				"command": "vscode-zgsm.addComment",
-				"title": "Add Comments"
+				"title": "%command.addComment.title%"
 			},
 			{
 				"command": "vscode-zgsm.addTests",
-				"title": "Generate Unit Tests"
+				"title": "%command.addTests.title%"
 			},
 			{
 				"command": "vscode-zgsm.codeReview",
-				"title": "Code Review"
+				"title": "%command.codeReview.title%"
 			},
 			{
 				"command": "vscode-zgsm.addDebugCode",
-				"title": "Add Logging"
+				"title": "%command.addDebugCode.title%"
 			},
 			{
 				"command": "vscode-zgsm.addStrongerCode",
-				"title": "Enhance Robustness"
+				"title": "%command.addStrongerCode.title%"
 			},
 			{
 				"command": "vscode-zgsm.simplifyCode",
-				"title": "Simplify Code"
+				"title": "%command.simplifyCode.title%"
 			},
 			{
 				"command": "vscode-zgsm.performanceOptimization",
-				"title": "Optimize Performance"
+				"title": "%command.performanceOptimization.title%"
 			},
 			{
 				"command": "vscode-zgsm.chat",
-				"title": "Zhuge Shenma: Start Chat"
+				"title": "%command.chat.title%"
 			},
 			{
 				"command": "zgsm-completion.shortKeyCut",
-				"title": "Zhuge Shenma Code Completion Shortcut",
-				"shortTitle": "Zhuge Shenma Code Completion Shortcut"
+				"title": "%command.shortKeyCut.title%",
+				"shortTitle": "%command.shortKeyCut.title%"
 			}
 		],
 		"menus": {
@@ -479,97 +479,97 @@
 				}
 			},
 			{
-				"title": "Zhuge Shenma",
+				"title": "%extension.displayName%",
 				"order": 1,
 				"properties": {
 					"ZhugeShenma.baseUrl": {
 						"type": "string",
 						"order": 1,
 						"default": "",
-						"description": "Base URL for Zhuge Shenma backend services"
+						"description": "%zhugeShenma.baseUrl.description%"
 					},
 					"ZhugeShenma.loginUrl": {
 						"type": "string",
 						"order": 2,
 						"default": "",
-						"description": "Custom OIDC login API URL"
+						"description": "%zhugeShenma.loginUrl.description%"
 					},
 					"ZhugeShenma.tokenUrl": {
 						"type": "string",
 						"order": 3,
 						"default": "",
-						"description": "Custom OIDC token retrieval API URL"
+						"description": "%zhugeShenma.tokenUrl.description%"
 					},
 					"ZhugeShenma.logoutUrl": {
 						"type": "string",
 						"order": 4,
 						"default": "",
-						"description": "Custom OIDC logout API URL"
+						"description": "%zhugeShenma.logoutUrl.description%"
 					},
 					"ZhugeShenma.response.showNotification": {
 						"type": "boolean",
 						"order": 5,
 						"default": false,
-						"description": "Whether to show notifications when waiting for bot responses."
+						"description": "%zhugeShenma.response.showNotification.description%"
 					}
 				}
 			},
 			{
-				"title": "Intelligent Code Completion",
+				"title": "%intelligentCodeCompletion.title%",
 				"order": 2,
 				"properties": {
 					"IntelligentCodeCompletion.enabled": {
 						"type": "boolean",
 						"default": true,
 						"order": 1,
-						"description": "Enable intelligent code completion"
+						"description": "%intelligentCodeCompletion.enabled.description%"
 					},
 					"IntelligentCodeCompletion.betaMode": {
 						"type": "boolean",
 						"default": false,
 						"order": 2,
-						"description": "Enable beta features for early access. See version notes for feature list."
+						"description": "%intelligentCodeCompletion.betaMode.description%"
 					},
 					"IntelligentCodeCompletion.inlineCompletion": {
 						"type": "boolean",
 						"default": false,
-						"description": "Enable line-by-line completion (displays single-line suggestions)"
+						"description": "%intelligentCodeCompletion.inlineCompletion.description%"
 					},
 					"IntelligentCodeCompletion.shortCutKeys": {
 						"default": "alt+a",
 						"enum": [
 							"alt+a"
 						],
-						"description": "Shortcut key for manual triggering. To modify, search 'Zhuge Shenma Code Completion Shortcut' in command palette."
+						"description": "%intelligentCodeCompletion.shortCutKeys.description%"
 					},
 					"IntelligentCodeCompletion.disableLanguages": {
 						"type": "object",
 						"additionalProperties": "string",
 						"default": {},
-						"markdownDescription": "Disable code completion for specific languages (set value to true to disable)"
+						"markdownDescription": "%intelligentCodeCompletion.disableLanguages.description%"
 					}
 				}
 			},
 			{
-				"title": "Function Quick Commands",
+				"title": "%functionQuickCommands.title%",
 				"order": 3,
 				"properties": {
 					"FunctionQuickCommands.enabled": {
 						"type": "boolean",
 						"default": false,
 						"order": 1,
-						"description": "Enable function quick commands"
+						"description": "%functionQuickCommands.enabled.description%"
 					},
 					"FunctionQuickCommands.disableLanguages": {
 						"type": "object",
 						"additionalProperties": "string",
 						"default": {},
-						"markdownDescription": "Disable quick commands for specific languages (set value to true to disable)"
+						"markdownDescription": "%functionQuickCommands.disableLanguages.description%"
 					},
 					"FunctionQuickCommands.quickCommandButtons": {
 						"type": "object",
 						"additionalProperties": false,
-						"description": "Configure quick command buttons above functions",
+						"description": "%functionQuickCommands.quickCommandButtons.description%",
 						"default": {
 							"explain": true,
 							"addComment": true,
@@ -585,47 +585,47 @@
 							"explain": {
 								"type": "boolean",
 								"default": true,
-								"description": "Explain Code"
+								"description": "%command.explain.title%"
 							},
 							"addComment": {
 								"type": "boolean",
 								"default": true,
-								"description": "Add Comments"
+								"description": "%command.addComment.title%"
 							},
 							"addTests": {
 								"type": "boolean",
 								"default": true,
-								"description": "Generate Unit Tests"
+								"description": "%command.addTests.title%"
 							},
 							"codeReview": {
 								"type": "boolean",
 								"default": true,
-								"description": "Code Review"
+								"description": "%command.codeReview.title%"
 							},
 							"addDebugCode": {
 								"type": "boolean",
 								"default": true,
-								"description": "Add Logging"
+								"description": "%command.addDebugCode.title%"
 							},
 							"addStrongerCode": {
 								"type": "boolean",
 								"default": true,
-								"description": "Enhance Robustness"
+								"description": "%command.addStrongerCode.title%"
 							},
 							"simplifyCode": {
 								"type": "boolean",
 								"default": true,
-								"description": "Simplify Code"
+								"description": "%command.simplifyCode.title%"
 							},
 							"performanceOptimization": {
 								"type": "boolean",
 								"default": true,
-								"description": "Optimize Performance"
+								"description": "%command.performanceOptimization.title%"
 							},
 							"shenmaInstructSet": {
 								"type": "boolean",
 								"default": false,
-								"description": "Show <Shenma> button with all commands above functions"
+								"description": "%functionQuickCommands.quickCommandButtons.shenmaInstructSet.description%"
 							}
 						}
 					}
