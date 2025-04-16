@@ -1,5 +1,7 @@
 {
 	"extension.displayName": "Zhuge Shenma",
+	"extension.displayName.long": "ZHUGE: AI Coding Assistant",
+	"extension.description": "Zhuge Shenma: An intelligent programming assistant that improves coding efficiency",
 	"command.view.issue.title": "Zhuge Shenma: Feedback",
 	"command.view.logout.title": "Zhuge Shenma: Logout",
 	"command.view.userHelperDoc.title": "Zhuge Shenma Official Site",
@@ -12,5 +14,22 @@
 	"command.simplifyCode.title": "Simplify Code",
 	"command.performanceOptimization.title": "Optimize Performance",
 	"command.chat.title": "Zhuge Shenma: Start Chat",
-	"command.shortKeyCut.title": "Zhuge Shenma Code Completion Shortcut"
+	"command.shortKeyCut.title": "Zhuge Shenma Code Completion Shortcut",
+	"intelligentCodeCompletion.title": "Intelligent Code Completion",
+	"intelligentCodeCompletion.enabled.description": "Enable intelligent code completion",
+	"intelligentCodeCompletion.betaMode.description": "Enable beta features for early access. See version notes for feature list.",
+	"intelligentCodeCompletion.inlineCompletion.description": "Enable line-by-line completion (displays single-line suggestions)",
+	"intelligentCodeCompletion.shortCutKeys.description": "Shortcut key for manual triggering. To modify, search 'Zhuge Shenma Code Completion Shortcut' in command palette.",
+	"intelligentCodeCompletion.disableLanguages.description": "Disable code completion for specific languages (set value to true to disable)",
+	"functionQuickCommands.title": "Function Quick Commands",
+	"functionQuickCommands.enabled.description": "Enable function quick commands",
+	"functionQuickCommands.disableLanguages.description": "Disable quick commands for specific languages (set value to true to disable)",
+	"functionQuickCommands.quickCommandButtons.description": "Configure quick command buttons above functions",
+	"functionQuickCommands.quickCommandButtons.shenmaInstructSet.description": "Show <Shenma> button with all commands above functions",
+	"zhugeShenma.title": "Zhuge Shenma",
+	"zhugeShenma.baseUrl.description": "Base URL for Zhuge Shenma backend services",
+	"zhugeShenma.loginUrl.description": "Custom OIDC login API URL",
+	"zhugeShenma.tokenUrl.description": "Custom OIDC token retrieval API URL",
+	"zhugeShenma.logoutUrl.description": "Custom OIDC logout API URL",
+	"zhugeShenma.response.showNotification.description": "Whether to show notifications when waiting for bot responses."
 }
