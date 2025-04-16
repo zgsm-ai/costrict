@@ -1,0 +1,16 @@
+{
+	"extension.displayName": "诸葛神码",
+	"command.view.issue.title": "诸葛神码: 反馈",
+	"command.view.logout.title": "诸葛神码: 登出",
+	"command.view.userHelperDoc.title": "诸葛神码官方网站",
+	"command.explain.title": "解释代码",
+	"command.addComment.title": "添加注释",
+	"command.addTests.title": "生成单元测试",
+	"command.codeReview.title": "代码审查",
+	"command.addDebugCode.title": "添加日志",
+	"command.addStrongerCode.title": "增强鲁棒性",
+	"command.simplifyCode.title": "简化代码",
+	"command.performanceOptimization.title": "优化性能",
+	"command.chat.title": "诸葛神码: 开始对话",
+	"command.shortKeyCut.title": "诸葛神码代码补全快捷键"
+}

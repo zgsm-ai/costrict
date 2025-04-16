@@ -1,0 +1,16 @@
+{
+	"extension.displayName": "Zhuge Shenma",
+	"command.view.issue.title": "Zhuge Shenma: Feedback",
+	"command.view.logout.title": "Zhuge Shenma: Logout",
+	"command.view.userHelperDoc.title": "Zhuge Shenma Official Site",
+	"command.explain.title": "Explain Code",
+	"command.addComment.title": "Add Comments",
+	"command.addTests.title": "Generate Unit Tests",
+	"command.codeReview.title": "Code Review",
+	"command.addDebugCode.title": "Add Logging",
+	"command.addStrongerCode.title": "Enhance Robustness",
+	"command.simplifyCode.title": "Simplify Code",
+	"command.performanceOptimization.title": "Optimize Performance",
+	"command.chat.title": "Zhuge Shenma: Start Chat",
+	"command.shortKeyCut.title": "Zhuge Shenma Code Completion Shortcut"
+}
