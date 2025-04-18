@@ -53,10 +53,6 @@
 	"contributes": {
 		"submenus": [
 			{
-				"id": "roo-code.contextMenu",
-				"label": "Roo Code"
-			},
-			{
 				"id": "roo-code.terminalMenu",
 				"label": "Roo Code"
 			},
@@ -253,71 +249,60 @@
 		"menus": {
 			"editor/context": [
 				{
-					"submenu": "roo-code.contextMenu",
-					"group": "navigation"
-				},
-				{
 					"submenu": "zhuge-shenma",
 					"group": "0_chatGpt@1"
 				}
 			],
-			"roo-code.contextMenu": [
+			"zhuge-shenma": [
 				{
 					"command": "roo-cline.addToContext",
-					"group": "1_actions@1"
+					"group": "zhuge-shenma@1"
 				},
 				{
 					"command": "roo-cline.explainCode",
-					"group": "1_actions@2"
+					"group": "zhuge-shenma@2"
 				},
 				{
 					"command": "roo-cline.fixCode",
-					"group": "1_actions@3"
+					"group": "zhuge-shenma@3"
 				},
 				{
 					"command": "roo-cline.improveCode",
-					"group": "1_actions@4"
-				}
-			],
-			"zhuge-shenma": [
-				{
-					"command": "vscode-zgsm.explain",
-					"group": "zhuge-shenma@1",
-					"when": "editorHasSelection"
+					"group": "zhuge-shenma@4"
 				},
 				{
 					"command": "vscode-zgsm.addComment",
-					"group": "zhuge-shenma@2",
-					"when": "editorHasSelection"
-				},
-				{
-					"command": "vscode-zgsm.codeReview",
-					"group": "zhuge-shenma@3",
-					"when": "editorHasSelection"
-				},
-				{
-					"command": "vscode-zgsm.addDebugCode",
-					"group": "zhuge-shenma@4",
-					"when": "editorHasSelection"
-				},
-				{
-					"command": "vscode-zgsm.addStrongerCode",
 					"group": "zhuge-shenma@5",
 					"when": "editorHasSelection"
 				},
 				{
-					"command": "vscode-zgsm.simplifyCode",
+					"command": "vscode-zgsm.codeReview",
 					"group": "zhuge-shenma@6",
 					"when": "editorHasSelection"
 				},
 				{
-					"command": "vscode-zgsm.performanceOptimization",
+					"command": "vscode-zgsm.addDebugCode",
 					"group": "zhuge-shenma@7",
 					"when": "editorHasSelection"
 				},
 				{
+					"command": "vscode-zgsm.addStrongerCode",
+					"group": "zhuge-shenma@8",
+					"when": "editorHasSelection"
+				},
+				{
+					"command": "vscode-zgsm.simplifyCode",
+					"group": "zhuge-shenma@9",
+					"when": "editorHasSelection"
+				},
+				{
+					"command": "vscode-zgsm.performanceOptimization",
+					"group": "zhuge-shenma@10",
+					"when": "editorHasSelection"
+				},
+				{
 					"command": "vscode-zgsm.view.issue",
-					"group": "zhuge-shenma@8"
+					"group": "zissue@1"
 				}
 			],
 			"terminal/context": [
@@ -440,9 +425,10 @@
 		},
 		"configuration": [
 			{
-				"title": "Roo Code",
+				"title": "Features",
+				"order": 2,
 				"properties": {
-					"roo-cline.allowedCommands": {
+					"features.allowedCommands": {
 						"type": "array",
 						"items": {
 							"type": "string"
@@ -457,7 +443,7 @@
 						],
 						"description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled"
 					},
-					"roo-cline.vsCodeLmModelSelector": {
+					"features.vsCodeLmModelSelector": {
 						"type": "object",
 						"properties": {
 							"vendor": {
@@ -471,52 +457,51 @@
 						},
 						"description": "Settings for VSCode Language Model API"
 					},
-					"roo-cline.customStoragePath": {
+					"features.customStoragePath": {
 						"type": "string",
 						"default": "",
 						"description": "Custom storage path. Leave empty to use the default location. Supports absolute paths (e.g. 'D:\\RooCodeStorage')"
+					},
+					"features.showNotification": {
+						"type": "boolean",
+						"default": false,
+						"description": "%auth.response.showNotification.description%"
 					}
 				}
 			},
 			{
-				"title": "%extension.displayName%",
+				"title": "%auth.title%",
 				"order": 1,
 				"properties": {
-					"ZhugeShenma.baseUrl": {
+					"auth.baseUrl": {
 						"type": "string",
 						"order": 1,
 						"default": "",
-						"description": "%zhugeShenma.baseUrl.description%"
+						"description": "%auth.baseUrl.description%"
 					},
-					"ZhugeShenma.loginUrl": {
+					"auth.loginUrl": {
 						"type": "string",
 						"order": 2,
 						"default": "",
-						"description": "%zhugeShenma.loginUrl.description%"
+						"description": "%auth.loginUrl.description%"
 					},
-					"ZhugeShenma.tokenUrl": {
+					"auth.tokenUrl": {
 						"type": "string",
 						"order": 3,
 						"default": "",
-						"description": "%zhugeShenma.tokenUrl.description%"
+						"description": "%auth.tokenUrl.description%"
 					},
-					"ZhugeShenma.logoutUrl": {
+					"auth.logoutUrl": {
 						"type": "string",
 						"order": 4,
 						"default": "",
-						"description": "%zhugeShenma.logoutUrl.description%"
-					},
-					"ZhugeShenma.response.showNotification": {
-						"type": "boolean",
-						"order": 5,
-						"default": false,
-						"description": "%zhugeShenma.response.showNotification.description%"
+						"description": "%auth.logoutUrl.description%"
 					}
 				}
 			},
 			{
 				"title": "%intelligentCodeCompletion.title%",
-				"order": 2,
+				"order": 3,
 				"properties": {
 					"IntelligentCodeCompletion.enabled": {
 						"type": "boolean",
@@ -552,7 +537,7 @@
 			},
 			{
 				"title": "%functionQuickCommands.title%",
-				"order": 3,
+				"order": 4,
 				"properties": {
 					"FunctionQuickCommands.enabled": {
 						"type": "boolean",
