@@ -1316,11 +1316,11 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		}
 		case "zgsmLogin":
-			if (message.authUrl) {
+			if (message.authUrl && message.apiConfiguration) {
 				// 使用独立函数处理 ZGSM 登录
-				await handleZgsmLogin(message.authUrl, message.apiConfiguration, provider);
+				await handleZgsmLogin(message.authUrl, message.apiConfiguration, provider)
 			}
-			break;
+			break
 	}
 }
 

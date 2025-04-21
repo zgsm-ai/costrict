@@ -22,6 +22,12 @@ export function getZgsmAuthUrl(stateId: string, apiConfiguration?: ApiConfigurat
 	if (apiConfiguration) {
 		updateAuthConfig({
 			baseUrl: apiConfiguration.zgsmBaseUrl,
+			clientId: apiConfiguration.zgsmClientId,
+			clientSecret: apiConfiguration.zgsmClientSecret,
+			redirectUri: apiConfiguration.zgsmRedirectUri,
+			loginUrl: apiConfiguration.zgsmLoginUrl,
+			logoutUrl: apiConfiguration.zgsmLogoutUrl,
+			tokenUrl: apiConfiguration.zgsmTokenUrl,
 		})
 	}
 	const { loginUrl, clientId, redirectUri } = getAuthConfig()

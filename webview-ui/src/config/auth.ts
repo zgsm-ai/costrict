@@ -16,10 +16,10 @@ export const defaultAuthConfig = {
 	clientId: "vscode", // Authentication: Client ID
 	clientSecret: "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l", // Authentication: Client secret
 
-	loginUrl: "{baseUrl}/realms/{realmName}/protocol/openid-connect/auth",
-	logoutUrl: "{baseUrl}/realms/{realmName}/protocol/openid-connect/logout",
-	tokenUrl: "{baseUrl}/realms/{realmName}/protocol/openid-connect/token",
-	redirectUri: "{baseUrl}/login/ok", // Authentication: Callback after successful login
+	loginUrlTpl: "{baseUrl}/realms/{realmName}/protocol/openid-connect/auth",
+	logoutUrlTpl: "{baseUrl}/realms/{realmName}/protocol/openid-connect/logout",
+	tokenUrlTpl: "{baseUrl}/realms/{realmName}/protocol/openid-connect/token",
+	redirectUriTpl: "{baseUrl}/login/ok", // Authentication: Callback after successful login
 }
 
 function replaceVars(template: string, config: AuthConfig): string {
@@ -30,9 +30,9 @@ function replaceVars(template: string, config: AuthConfig): string {
 
 export function getAuthUrls(config: AuthConfig) {
 	return {
-		loginUrl: replaceVars(defaultAuthConfig.loginUrl, config),
-		logoutUrl: replaceVars(defaultAuthConfig.logoutUrl, config),
-		tokenUrl: replaceVars(defaultAuthConfig.tokenUrl, config),
-		redirectUri: replaceVars(defaultAuthConfig.redirectUri, config),
+		loginUrl: replaceVars(defaultAuthConfig.loginUrlTpl, config),
+		logoutUrl: replaceVars(defaultAuthConfig.logoutUrlTpl, config),
+		tokenUrl: replaceVars(defaultAuthConfig.tokenUrlTpl, config),
+		redirectUri: replaceVars(defaultAuthConfig.redirectUriTpl, config),
 	}
 }

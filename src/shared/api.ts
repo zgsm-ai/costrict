@@ -4,7 +4,17 @@ export type { ModelInfo, ProviderName as ApiProvider }
 
 export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider" | "id">
 
-export type ApiConfiguration = ProviderSettings
+export type ApiConfiguration = ProviderSettings & {
+	// ZGSM OAuth 相关配置
+	zgsmBaseUrl?: string // ZGSM 服务基础 URL
+	zgsmClientId?: string // OAuth 客户端 ID
+	zgsmClientSecret?: string // OAuth 客户端密钥
+	zgsmRedirectUri?: string // OAuth 重定向 URI
+	zgsmLoginUrl?: string // 登录 URL
+	zgsmLogoutUrl?: string // 登出 URL
+	zgsmTokenUrl?: string // Token 获取 URL
+	zgsmApiKey?: string // ZGSM API 密钥
+}
 
 // Anthropic
 // https://docs.anthropic.com/en/docs/about-claude/models
