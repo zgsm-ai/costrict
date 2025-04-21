@@ -1,6 +1,6 @@
 import i18next from "i18next"
 import { initReactI18next } from "react-i18next"
-// import { mergeLanguageResources } from "../../../zgsm/src/i18n/webview-ui/setup"
+
 // Build translations object
 const translations: Record<string, Record<string, any>> = {}
 // Build zgsm translations object
@@ -88,13 +88,21 @@ export const mergeLanguageResources = (
 
 	// Add current translations that don't exist in zgsm
 	for (const language in currentTranslations) {
+		// if (!mergedTranslations[language]) {
+		// 	mergedTranslations[language] = currentTranslations[language]
+		// } else {
+		// 	for (const namespace in currentTranslations[language]) {
+		// 		if (!mergedTranslations[language][namespace]) {
+		// 			mergedTranslations[language][namespace] = currentTranslations[language][namespace]
+		// 		}
+		// 	}
+		// }
 		if (!mergedTranslations[language]) {
-			mergedTranslations[language] = currentTranslations[language]
-		} else {
-			for (const namespace in currentTranslations[language]) {
-				if (!mergedTranslations[language][namespace]) {
-					mergedTranslations[language][namespace] = currentTranslations[language][namespace]
-				}
+			continue
+		}
+		for (const namespace in currentTranslations[language]) {
+			if (!mergedTranslations[language][namespace]) {
+				mergedTranslations[language][namespace] = currentTranslations[language][namespace]
 			}
 		}
 	}

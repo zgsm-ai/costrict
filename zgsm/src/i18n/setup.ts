@@ -1,7 +1,7 @@
 import i18next from "i18next"
 import * as fs from "fs"
 import * as path from "path"
-import { LanguageResources, TranslationResource } from "../types"
+import { LanguageResources, TranslationResource } from "./types"
 
 // Load translations from directory
 const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
@@ -47,9 +47,7 @@ const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
 }
 
 // Load zgsm backend translations
-export const zgsmTranslations = loadTranslationsFromDir(
-	path.join(__dirname, "..", "zgsm", "src", "i18n", "backend", "locales"),
-)
+export const zgsmTranslations = loadTranslationsFromDir(path.join(__dirname, "..", "zgsm", "src", "i18n", "locales"))
 console.log(`Loaded zgsm backend translations for languages: ${Object.keys(zgsmTranslations).join(", ")}`)
 
 // Initialize i18next
@@ -98,13 +96,21 @@ export const mergeLanguageResources = (
 
 	// Add current translations that don't exist in zgsm
 	for (const language in currentTranslations) {
+		// if (!mergedTranslations[language]) {
+		// 	mergedTranslations[language] = currentTranslations[language]
+		// } else {
+		// 	for (const namespace in currentTranslations[language]) {
+		// 		if (!mergedTranslations[language][namespace]) {
+		// 			mergedTranslations[language][namespace] = currentTranslations[language][namespace]
+		// 		}
+		// 	}
+		// }
 		if (!mergedTranslations[language]) {
-			mergedTranslations[language] = currentTranslations[language]
-		} else {
-			for (const namespace in currentTranslations[language]) {
-				if (!mergedTranslations[language][namespace]) {
-					mergedTranslations[language][namespace] = currentTranslations[language][namespace]
-				}
+			continue
+		}
+		for (const namespace in currentTranslations[language]) {
+			if (!mergedTranslations[language][namespace]) {
+				mergedTranslations[language][namespace] = currentTranslations[language][namespace]
 			}
 		}
 	}
