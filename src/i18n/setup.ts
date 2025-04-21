@@ -1,5 +1,5 @@
 import i18next from "i18next"
-import { zgsmTranslations, mergeLanguageResources } from "../../zgsm/src/i18n/backend/setup"
+import { zgsmTranslations, mergeLanguageResources } from "../../zgsm/src/i18n/setup"
 
 // Build translations object
 const translations: Record<string, Record<string, any>> = {}
