@@ -17,6 +17,7 @@ body:
       description: Choose the API provider involved
       multiple: false
       options:
+        - Zgsm
         - OpenRouter
         - Anthropic
         - Google Gemini

@@ -39,6 +39,8 @@ export const PROVIDERS = [
 	{ value: "human-relay", label: "Human Relay" },
 ].sort((a, b) => a.label.localeCompare(b.label))
 
+PROVIDERS.unshift({ value: "zgsm", label: "Zgsm" })
+
 export const VERTEX_REGIONS = [
 	{ value: "us-east5", label: "us-east5" },
 	{ value: "us-central1", label: "us-central1" },

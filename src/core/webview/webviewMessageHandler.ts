@@ -42,6 +42,7 @@ import { getDiffStrategy } from "../diff/DiffStrategy"
 import { SYSTEM_PROMPT } from "../prompts/system"
 import { buildApiHandler } from "../../api"
 import { GlobalState } from "../../schemas"
+import { handleZgsmLogin } from "../../auth/zgsmAuthHandler"
 
 export const webviewMessageHandler = async (provider: ClineProvider, message: WebviewMessage) => {
 	// Utility functions provided for concise get/update of global state via contextProxy API.
@@ -1314,6 +1315,12 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await provider.postStateToWebview()
 			break
 		}
+		case "zgsmLogin":
+			if (message.authUrl) {
+				// 使用独立函数处理 ZGSM 登录
+				await handleZgsmLogin(message.authUrl, message.apiConfiguration, provider);
+			}
+			break;
 	}
 }
 

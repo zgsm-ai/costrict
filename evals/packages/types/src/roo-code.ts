@@ -7,6 +7,7 @@ import { Equals, Keys, AssertEqual } from "./utils.js"
  */
 
 export const providerNames = [
+	"zgsm",
 	"anthropic",
 	"glama",
 	"openrouter",

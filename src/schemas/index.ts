@@ -11,6 +11,7 @@ import { Equals, Keys, AssertEqual } from "../utils/type-fu"
  */
 
 export const providerNames = [
+	"zgsm",
 	"anthropic",
 	"glama",
 	"openrouter",
@@ -304,6 +305,10 @@ type _AssertExperiments = AssertEqual<Equals<ExperimentId, Keys<Experiments>>>
 
 export const providerSettingsSchema = z.object({
 	apiProvider: providerNamesSchema.optional(),
+	// Zgsm
+	zgsmBaseUrl: z.string().optional(),
+	zgsmApiKey: z.string().optional(),
+	zgsmModelId: z.string().optional(),
 	// Anthropic
 	apiModelId: z.string().optional(),
 	apiKey: z.string().optional(),
@@ -399,6 +404,10 @@ type ProviderSettingsRecord = Record<Keys<ProviderSettings>, undefined>
 
 const providerSettingsRecord: ProviderSettingsRecord = {
 	apiProvider: undefined,
+	// Zgsm
+	zgsmBaseUrl: undefined,
+	zgsmApiKey: undefined,
+	zgsmModelId: undefined,
 	// Anthropic
 	apiModelId: undefined,
 	apiKey: undefined,
@@ -641,6 +650,7 @@ export type RooCodeSettings = GlobalSettings & ProviderSettings
 export type SecretState = Pick<
 	ProviderSettings,
 	| "apiKey"
+	| "zgsmApiKey"
 	| "glamaApiKey"
 	| "openRouterApiKey"
 	| "awsAccessKey"
@@ -659,6 +669,7 @@ type SecretStateRecord = Record<Keys<SecretState>, undefined>
 
 const secretStateRecord: SecretStateRecord = {
 	apiKey: undefined,
+	zgsmApiKey: undefined,
 	glamaApiKey: undefined,
 	openRouterApiKey: undefined,
 	awsAccessKey: undefined,

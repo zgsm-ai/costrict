@@ -26,9 +26,10 @@
 	"functionQuickCommands.disableLanguages.description": "禁用特定语言的快捷命令（将值设置为true以禁用）",
 	"functionQuickCommands.quickCommandButtons.description": "配置函数上方的快捷命令按钮",
 	"functionQuickCommands.quickCommandButtons.shenmaInstructSet.description": "在函数上方显示<Shenma>按钮，包含所有命令",
-	"zhugeShenma.baseUrl.description": "诸葛神码后端服务的基础URL",
-	"zhugeShenma.loginUrl.description": "自定义OIDC登录API URL",
-	"zhugeShenma.tokenUrl.description": "自定义OIDC令牌获取API URL",
-	"zhugeShenma.logoutUrl.description": "自定义OIDC登出API URL",
-	"zhugeShenma.response.showNotification.description": "等待机器人响应时是否显示通知"
+	"auth.title": "认证",
+	"auth.baseUrl.description": "诸葛神码后端服务的基础URL",
+	"auth.loginUrl.description": "自定义OIDC登录API URL",
+	"auth.tokenUrl.description": "自定义OIDC令牌获取API URL",
+	"auth.logoutUrl.description": "自定义OIDC登出API URL",
+	"auth.response.showNotification.description": "等待机器人响应时是否显示通知"
 }

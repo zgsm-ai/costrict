@@ -26,9 +26,10 @@
 	"functionQuickCommands.disableLanguages.description": "Disable quick commands for specific languages (set value to true to disable)",
 	"functionQuickCommands.quickCommandButtons.description": "Configure quick command buttons above functions",
 	"functionQuickCommands.quickCommandButtons.shenmaInstructSet.description": "Show <Shenma> button with all commands above functions",
-	"zhugeShenma.baseUrl.description": "Base URL for Zhuge Shenma backend services",
-	"zhugeShenma.loginUrl.description": "Custom OIDC login API URL",
-	"zhugeShenma.tokenUrl.description": "Custom OIDC token retrieval API URL",
-	"zhugeShenma.logoutUrl.description": "Custom OIDC logout API URL",
-	"zhugeShenma.response.showNotification.description": "Whether to show notifications when waiting for bot responses."
+	"auth.title": "Authentication",
+	"auth.baseUrl.description": "Base URL for Zhuge Shenma backend services",
+	"auth.loginUrl.description": "Custom OIDC login API URL",
+	"auth.tokenUrl.description": "Custom OIDC token retrieval API URL",
+	"auth.logoutUrl.description": "Custom OIDC logout API URL",
+	"auth.response.showNotification.description": "Whether to show notifications when waiting for bot responses."
 }
