@@ -124,6 +124,7 @@
 		"getGeminiApiKey": "获取 Gemini API 密钥",
 		"openAiApiKey": "OpenAI API 密钥",
 		"openAiBaseUrl": "OpenAI 基础 URL",
+		"zgsmBaseUrl": "诸葛神码 Base Url",
 		"getOpenAiApiKey": "获取 OpenAI API 密钥",
 		"mistralApiKey": "Mistral API 密钥",
 		"getMistralApiKey": "获取 Mistral / Codestral API 密钥",

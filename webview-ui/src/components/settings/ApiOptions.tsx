@@ -324,18 +324,30 @@ const ApiOptions = ({
 			</div>
 
 			{errorMessage && <ApiErrorMessage errorMessage={errorMessage} />}
-			{!fromWelcomeView && selectedProvider === "zgsm" && (
+			{selectedProvider === "zgsm" && (
 				<>
-					<VSCodeButtonLink
-						href={generateZgsmAuthUrl(uriScheme)}
-						style={{ width: "100%" }}
-						appearance="primary">
-						{t(
-							!apiConfiguration?.zgsmApiKey
-								? "settings:providers.getZgsmApiKey"
-								: "settings:providers.getZgsmApiKeyAgain",
-						)}
-					</VSCodeButtonLink>
+					<VSCodeTextField
+						value={apiConfiguration?.zgsmBaseUrl || ""}
+						type="url"
+						onInput={handleInputChange("zgsmBaseUrl")}
+						placeholder={t("settings:placeholders.baseUrl")}
+						className="w-full">
+						<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
+					</VSCodeTextField>
+					{!fromWelcomeView && (
+						<>
+							<VSCodeButtonLink
+								href={generateZgsmAuthUrl(apiConfiguration, uriScheme)}
+								style={{ width: "100%" }}
+								appearance="primary">
+								{t(
+									!apiConfiguration?.zgsmApiKey
+										? "settings:providers.getZgsmApiKey"
+										: "settings:providers.getZgsmApiKeyAgain",
+								)}
+							</VSCodeButtonLink>
+						</>
+					)}
 				</>
 			)}
 			{selectedProvider === "openrouter" && (

@@ -1,4 +1,15 @@
-export const authConfig = {
+export interface AuthConfig {
+	baseUrl: string
+	realmName: string
+	clientId: string
+	clientSecret: string
+	loginUrl: string
+	logoutUrl: string
+	tokenUrl: string
+	redirectUri: string
+}
+
+export const defaultAuthConfig = {
 	baseUrl: "https://zgsm.sangfor.com", // Base URL of Zhuge Shenma backend
 	zgsmSite: "https://zgsm.ai", // Portal site of Zhuge Shenma
 	realmName: "gw", // Authentication: Keycloak tenant name
@@ -11,17 +22,17 @@ export const authConfig = {
 	redirectUri: "{baseUrl}/login/ok", // Authentication: Callback after successful login
 }
 
-function replaceVars(template: string): string {
-	let result = template.replace(/{baseUrl}/g, authConfig.baseUrl)
-	result = result.replace(/{realmName}/g, authConfig.realmName)
+function replaceVars(template: string, config: AuthConfig): string {
+	let result = template.replace(/{baseUrl}/g, config.baseUrl)
+	result = result.replace(/{realmName}/g, config.realmName)
 	return result
 }
 
-export function getAuthUrls() {
+export function getAuthUrls(config: AuthConfig) {
 	return {
-		loginUrl: replaceVars(authConfig.loginUrl),
-		logoutUrl: replaceVars(authConfig.logoutUrl),
-		tokenUrl: replaceVars(authConfig.tokenUrl),
-		redirectUri: replaceVars(authConfig.redirectUri),
+		loginUrl: replaceVars(defaultAuthConfig.loginUrl, config),
+		logoutUrl: replaceVars(defaultAuthConfig.logoutUrl, config),
+		tokenUrl: replaceVars(defaultAuthConfig.tokenUrl, config),
+		redirectUri: replaceVars(defaultAuthConfig.redirectUri, config),
 	}
 }
