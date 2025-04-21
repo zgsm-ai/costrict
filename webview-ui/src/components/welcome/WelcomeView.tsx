@@ -8,6 +8,7 @@ import { Tab, TabContent } from "../common/Tab"
 import { useAppTranslation } from "../../i18n/TranslationContext"
 import { getRequestyAuthUrl, getOpenRouterAuthUrl } from "../../oauth/urls"
 import knuthShuffle from "knuth-shuffle-seeded"
+import { initiateZgsmLogin } from "../../utils/zgsmAuth"
 
 const WelcomeView = () => {
 	const { apiConfiguration, currentApiConfigName, setApiConfiguration, uriScheme, machineId } = useExtensionState()
@@ -23,8 +24,14 @@ const WelcomeView = () => {
 		}
 
 		setErrorMessage(undefined)
-		vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
-	}, [apiConfiguration, currentApiConfigName])
+
+		if (apiConfiguration?.apiProvider === "zgsm") {
+			// 发起 ZGSM 登录流程
+			initiateZgsmLogin(apiConfiguration, uriScheme)
+		} else {
+			vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
+		}
+	}, [apiConfiguration, currentApiConfigName, uriScheme])
 
 	// Using a lazy initializer so it reads once at mount
 	const [imagesBaseUri] = useState(() => {
@@ -38,65 +45,68 @@ const WelcomeView = () => {
 				<h2 className="m-0 p-0">{t("welcome:greeting")}</h2>
 				<div>{t("welcome:introduction")}</div>
 				<div>{t("welcome:chooseProvider")}</div>
-
 				<div className="mb-4">
-					<h4 className="mt-3 mb-2">{t("welcome:startRouter")}</h4>
+					{apiConfiguration?.apiProvider !== "zgsm" && (
+						<>
+							<h4 className="mt-3 mb-2">{t("welcome:startRouter")}</h4>
 
-					<div className="flex gap-4">
-						{/* Define the providers */}
-						{(() => {
-							// Provider card configuration
-							const providers = [
-								{
-									slug: "requesty",
-									name: "Requesty",
-									description: t("welcome:routers.requesty.description"),
-									incentive: t("welcome:routers.requesty.incentive"),
-									authUrl: getRequestyAuthUrl(uriScheme),
-								},
-								{
-									slug: "openrouter",
-									name: "OpenRouter",
-									description: t("welcome:routers.openrouter.description"),
-									authUrl: getOpenRouterAuthUrl(uriScheme),
-								},
-							]
+							<div className="flex gap-4">
+								{/* Define the providers */}
+								{(() => {
+									// Provider card configuration
+									const providers = [
+										{
+											slug: "requesty",
+											name: "Requesty",
+											description: t("welcome:routers.requesty.description"),
+											incentive: t("welcome:routers.requesty.incentive"),
+											authUrl: getRequestyAuthUrl(uriScheme),
+										},
+										{
+											slug: "openrouter",
+											name: "OpenRouter",
+											description: t("welcome:routers.openrouter.description"),
+											authUrl: getOpenRouterAuthUrl(uriScheme),
+										},
+									]
 
-							// Shuffle providers based on machine ID (will be consistent for the same machine)
-							const orderedProviders = [...providers]
-							knuthShuffle(orderedProviders, (machineId as any) || Date.now())
+									// Shuffle providers based on machine ID (will be consistent for the same machine)
+									const orderedProviders = [...providers]
+									knuthShuffle(orderedProviders, (machineId as any) || Date.now())
 
-							// Render the provider cards
-							return orderedProviders.map((provider, index) => (
-								<a
-									key={index}
-									href={provider.authUrl}
-									className="flex-1 border border-vscode-panel-border rounded p-4 flex flex-col items-center cursor-pointer transition-all hover:bg-vscode-button-hoverBackground hover:border-vscode-button-border no-underline text-inherit"
-									target="_blank"
-									rel="noopener noreferrer">
-									<div className="w-16 h-16 flex items-center justify-center rounded mb-2 overflow-hidden bg-white relative">
-										<img
-											src={`${imagesBaseUri}/${provider.slug}.png`}
-											alt={provider.name}
-											className="w-full h-full object-contain p-2"
-										/>
-									</div>
-									<div className="text-center">
-										<div className="font-bold">{provider.name}</div>
-										<div className="text-sm text-vscode-descriptionForeground">
-											{provider.description}
-										</div>
-										{provider.incentive && (
-											<div className="text-sm font-bold">{provider.incentive}</div>
-										)}
-									</div>
-								</a>
-							))
-						})()}
-					</div>
+									// Render the provider cards
+									return orderedProviders.map((provider, index) => (
+										<a
+											key={index}
+											href={provider.authUrl}
+											className="flex-1 border border-vscode-panel-border rounded p-4 flex flex-col items-center cursor-pointer transition-all hover:bg-vscode-button-hoverBackground hover:border-vscode-button-border no-underline text-inherit"
+											target="_blank"
+											rel="noopener noreferrer">
+											<div className="w-16 h-16 flex items-center justify-center rounded mb-2 overflow-hidden bg-white relative">
+												<img
+													src={`${imagesBaseUri}/${provider.slug}.png`}
+													alt={provider.name}
+													className="w-full h-full object-contain p-2"
+												/>
+											</div>
+											<div className="text-center">
+												<div className="font-bold">{provider.name}</div>
+												<div className="text-sm text-vscode-descriptionForeground">
+													{provider.description}
+												</div>
+												{provider.incentive && (
+													<div className="text-sm font-bold">{provider.incentive}</div>
+												)}
+											</div>
+										</a>
+									))
+								})()}
+							</div>
 
-					<div className="text-center my-4">{t("welcome:or")}</div>
-					<h4 className="mt-3 mb-2">{t("welcome:startCustom")}</h4>
+							<div className="text-center my-4">{t("welcome:or")}</div>
+							<h4 className="mt-3 mb-2">{t("welcome:startCustom")}</h4>
+						</>
+					)}
 					<ApiOptions
 						fromWelcomeView
 						apiConfiguration={apiConfiguration || {}}
@@ -110,7 +120,7 @@ const WelcomeView = () => {
 			<div className="sticky bottom-0 bg-vscode-sideBar-background p-5">
 				<div className="flex flex-col gap-1">
 					<VSCodeButton onClick={handleSubmit} appearance="primary">
-						{t("welcome:start")}
+						{apiConfiguration?.apiProvider === "zgsm" ? t("welcome:zgsm") : t("welcome:start")}
 					</VSCodeButton>
 					{errorMessage && <div className="text-vscode-errorForeground">{errorMessage}</div>}
 				</div>

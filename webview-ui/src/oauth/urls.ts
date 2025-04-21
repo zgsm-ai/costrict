@@ -1,3 +1,6 @@
+import { ApiConfiguration } from "../../../src/shared/api"
+import { getAuthConfig, updateAuthConfig } from "./config"
+
 export function getCallbackUrl(provider: string, uriScheme?: string) {
 	const callbackUrl = `${uriScheme || "vscode"}://rooveterinaryinc.roo-cline/${provider}`
 	return encodeURIComponent(callbackUrl)
@@ -13,4 +16,30 @@ export function getOpenRouterAuthUrl(uriScheme?: string) {
 
 export function getRequestyAuthUrl(uriScheme?: string) {
 	return `https://app.requesty.ai/oauth/authorize?callback_url=${getCallbackUrl("requesty", uriScheme)}`
+}
+
+export function getZgsmAuthUrl(stateId: string, apiConfiguration?: ApiConfiguration, uriScheme?: string) {
+	if (apiConfiguration) {
+		updateAuthConfig({
+			baseUrl: apiConfiguration.zgsmBaseUrl,
+			clientId: apiConfiguration.zgsmClientId,
+			clientSecret: apiConfiguration.zgsmClientSecret,
+			redirectUri: apiConfiguration.zgsmRedirectUri,
+			loginUrl: apiConfiguration.zgsmLoginUrl,
+			logoutUrl: apiConfiguration.zgsmLogoutUrl,
+			tokenUrl: apiConfiguration.zgsmTokenUrl,
+		})
+	}
+	const { loginUrl, clientId, redirectUri } = getAuthConfig()
+	const scopes = ["openid", "profile", "email"]
+
+	const searchParams = new URLSearchParams([
+		["response_type", "code"],
+		["client_id", clientId],
+		["redirect_uri", redirectUri],
+		["state", stateId],
+		["scope", scopes.join(" ")],
+	])
+
+	return `${loginUrl}?${searchParams.toString()}`
 }

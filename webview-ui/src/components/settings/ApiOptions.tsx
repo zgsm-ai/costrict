@@ -58,6 +58,7 @@ import { ThinkingBudget } from "./ThinkingBudget"
 import { R1FormatSetting } from "./R1FormatSetting"
 import { OpenRouterBalanceDisplay } from "./OpenRouterBalanceDisplay"
 import { RequestyBalanceDisplay } from "./RequestyBalanceDisplay"
+import { useZgsmOAuth } from "../../hooks/useOAuth"
 
 interface ApiOptionsProps {
 	uriScheme: string | undefined
@@ -77,6 +78,7 @@ const ApiOptions = ({
 	setErrorMessage,
 }: ApiOptionsProps) => {
 	const { t } = useAppTranslation()
+	const { generateZgsmAuthUrl } = useZgsmOAuth()
 
 	const [ollamaModels, setOllamaModels] = useState<string[]>([])
 	const [lmStudioModels, setLmStudioModels] = useState<string[]>([])
@@ -251,34 +253,37 @@ const ApiOptions = ({
 	)
 
 	// Base URL for provider documentation
-	const DOC_BASE_URL = "https://docs.roocode.com/providers"
+	// const DOC_BASE_URL = "https://docs.roocode.com/providers"
 
 	// Custom URL path mappings for providers with different slugs
-	const providerUrlSlugs: Record<string, string> = {
-		"openai-native": "openai",
-		openai: "openai-compatible",
-	}
+	// const providerUrlSlugs: Record<string, string> = {
+	// 	"openai-native": "openai",
+	// 	openai: "openai-compatible",
+	// }
 
 	// Helper function to get provider display name from PROVIDERS constant
-	const getProviderDisplayName = (providerKey: string): string | undefined => {
-		const provider = PROVIDERS.find((p) => p.value === providerKey)
-		return provider?.label
-	}
+	// const getProviderDisplayName = (providerKey: string): string | undefined => {
+	// 	const provider = PROVIDERS.find((p) => p.value === providerKey)
+	// 	return provider?.label
+	// }
 
 	// Helper function to get the documentation URL and name for the currently selected provider
 	const getSelectedProviderDocUrl = (): { url: string; name: string } | undefined => {
-		const displayName = getProviderDisplayName(selectedProvider)
-		if (!displayName) {
-			return undefined
-		}
+		// const displayName = getProviderDisplayName(selectedProvider)
 
-		// Get the URL slug - use custom mapping if available, otherwise use the provider key
-		const urlSlug = providerUrlSlugs[selectedProvider] || selectedProvider
+		// zgsm todo: update docs url
+		return undefined
+		// if (!displayName) {
+		// 	return undefined
+		// }
 
-		return {
-			url: `${DOC_BASE_URL}/${urlSlug}`,
-			name: displayName,
-		}
+		// // Get the URL slug - use custom mapping if available, otherwise use the provider key
+		// const urlSlug = providerUrlSlugs[selectedProvider] || selectedProvider
+
+		// return {
+		// 	url: `${DOC_BASE_URL}/${urlSlug}`,
+		// 	name: displayName,
+		// }
 	}
 
 	return (
@@ -306,9 +311,10 @@ const ApiOptions = ({
 						<SelectValue placeholder={t("settings:common.select")} />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="openrouter">OpenRouter</SelectItem>
+						{/* todo: 国际化 */}
+						<SelectItem value="zgsm">{t("settings:providers.zgsm")}</SelectItem>
 						<SelectSeparator />
-						{PROVIDERS.filter((p) => p.value !== "openrouter").map(({ value, label }) => (
+						{PROVIDERS.filter((p) => p.value !== "zgsm").map(({ value, label }) => (
 							<SelectItem key={value} value={value}>
 								{label}
 							</SelectItem>
@@ -318,7 +324,32 @@ const ApiOptions = ({
 			</div>
 
 			{errorMessage && <ApiErrorMessage errorMessage={errorMessage} />}
-
+			{selectedProvider === "zgsm" && (
+				<>
+					<VSCodeTextField
+						value={apiConfiguration?.zgsmBaseUrl || ""}
+						type="url"
+						onInput={handleInputChange("zgsmBaseUrl")}
+						placeholder={t("settings:placeholders.baseUrl")}
+						className="w-full">
+						<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
+					</VSCodeTextField>
+					{!fromWelcomeView && (
+						<>
+							<VSCodeButtonLink
+								href={generateZgsmAuthUrl(apiConfiguration, uriScheme)}
+								style={{ width: "100%" }}
+								appearance="primary">
+								{t(
+									!apiConfiguration?.zgsmApiKey
+										? "settings:providers.getZgsmApiKey"
+										: "settings:providers.getZgsmApiKeyAgain",
+								)}
+							</VSCodeButtonLink>
+						</>
+					)}
+				</>
+			)}
 			{selectedProvider === "openrouter" && (
 				<>
 					<VSCodeTextField
@@ -1679,9 +1710,13 @@ const ApiOptions = ({
 }
 
 export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
-	const provider = apiConfiguration?.apiProvider || "anthropic"
-	const modelId = apiConfiguration?.apiModelId
-
+	const provider = apiConfiguration?.apiProvider || "zgsm"
+	const modelId = apiConfiguration?.zgsmModelId || "deepseek-chat"
+	const zgsmApiConfiguration = {
+		selectedProvider: provider,
+		selectedModelId: modelId,
+		selectedModelInfo: apiConfiguration?.openAiCustomModelInfo || openAiModelInfoSaneDefaults,
+	}
 	const getProviderData = (models: Record<string, ModelInfo>, defaultId: string) => {
 		let selectedModelId: string
 		let selectedModelInfo: ModelInfo
@@ -1698,6 +1733,8 @@ export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
 	}
 
 	switch (provider) {
+		case "zgsm":
+			return zgsmApiConfiguration
 		case "anthropic":
 			return getProviderData(anthropicModels, anthropicDefaultModelId)
 		case "bedrock":
@@ -1779,7 +1816,7 @@ export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
 				},
 			}
 		default:
-			return getProviderData(anthropicModels, anthropicDefaultModelId)
+			return zgsmApiConfiguration
 	}
 }
 

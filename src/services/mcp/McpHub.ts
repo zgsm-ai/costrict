@@ -1171,7 +1171,7 @@ export class McpHub {
 			// Default to 60 seconds if parsing fails
 			timeout = 60 * 1000
 		}
-
+		// @ts-ignore
 		return await connection.client.request(
 			{
 				method: "tools/call",

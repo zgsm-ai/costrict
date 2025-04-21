@@ -7,7 +7,7 @@
  * copies or substantial portions of the Software.
  */
 import * as vscode from "vscode";
-import Auth0AuthenticationProvider from './common/authProvider';
+// import Auth0AuthenticationProvider from './common/authProvider';
 import { registerZGSMCodeActions } from "./chatView/chat-view-menu";
 import { ChatViewProvider } from "./chatView/chat-view-provider";
 import { shortKeyCut } from "./codeCompletion/completionCommands";
