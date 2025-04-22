@@ -11,23 +11,24 @@ import OpenAI from "openai"
 import { envClient, envSetting } from "../common/env"
 import { Logger } from "../common/log-util"
 import { window, workspace } from "vscode"
-import { AxiosResponse, AxiosError } from "axios"
+import { AxiosError } from "axios"
 import { createAuthenticatedHeaders } from "../common/api"
 import { configCompletion, settings } from "../common/constant"
 import { CompletionPoint } from "./completionPoint"
 import { CompletionScores } from "./completionScore"
 import { CompletionTrace } from "./completionTrace"
+import { Completion } from "openai/resources/completions"
 
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
  */
 export class CompletionClient {
-	private static client: CompletionClient | undefined = undefined
-	private openai: OpenAI | undefined
+	private static client?: CompletionClient
+	private openai?: OpenAI
 	private stopWords: string[] = []
 	private reqs: Map<string, any> = new Map<string, any>()
-	private betaMode: any = undefined
+	private betaMode?: any
 
 	/**
 	 * Send a request to the LLM to obtain the code completion result at the completion point cp.
@@ -54,7 +55,7 @@ export class CompletionClient {
 				Logger.error(`Completion [${cp.id}]: Request failed`, err)
 				this.client = undefined // reset client
 				const statusCode = (err as AxiosError)?.response?.status || 500
-				CompletionTrace.reportApiError(statusCode)
+				CompletionTrace.reportApiError(`${statusCode}`)
 			}
 			throw err
 		} finally {
@@ -130,7 +131,7 @@ export class CompletionClient {
 	/**
 	 * Obtain the completion content from the result returned by the LLM.
 	 */
-	private acquireCompletionText(resp: ReturnType<OpenAI.Completions["create"]>): string {
+	private acquireCompletionText(resp: Completion): string {
 		if (!resp || !resp.choices || resp.choices.length === 0) {
 			return ""
 		}
@@ -158,10 +159,10 @@ export class CompletionClient {
 	/**
 	 * Initiate a request for code completion.
 	 */
-	private async doCallApi(
-		cp: CompletionPoint,
-		scores: CompletionScores,
-	): Promise<ReturnType<OpenAI.Completions["create"]>> {
+	private async doCallApi(cp: CompletionPoint, scores: CompletionScores): Promise<Completion> {
+		if (!this.openai) {
+			throw new Error("OpenAI client not initialized")
+		}
 		// cleanup Old Requests
 		const currentId = cp.id
 		for (const [key, controller] of this.reqs) {
