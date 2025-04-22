@@ -311,8 +311,7 @@ const ApiOptions = ({
 						<SelectValue placeholder={t("settings:common.select")} />
 					</SelectTrigger>
 					<SelectContent>
-						{/* todo: 国际化 */}
-						<SelectItem value="zgsm">诸葛神码</SelectItem>
+						<SelectItem value="zgsm">{t("settings:providers.zgsm")}</SelectItem>
 						<SelectSeparator />
 						{PROVIDERS.filter((p) => p.value !== "zgsm").map(({ value, label }) => (
 							<SelectItem key={value} value={value}>

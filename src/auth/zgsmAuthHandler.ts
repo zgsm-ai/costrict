@@ -136,7 +136,7 @@ export async function getAccessToken(code: string, apiConfiguration?: ApiConfigu
 		// 优先使用 apiConfiguration 中的配置，如果不存在则使用环境设置
 		const clientId = apiConfiguration?.zgsmClientId || "vscode"
 		const clientSecret = apiConfiguration?.zgsmClientSecret || "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l"
-		const redirectUri = apiConfiguration?.zgsmRedirectUri || apiConfiguration?.zgsmBaseUrl + "/login/ok"
+		const redirectUri = apiConfiguration?.zgsmRedirectUri || `${apiConfiguration?.zgsmBaseUrl}/login/ok`
 		const tokenUrl =
 			apiConfiguration?.zgsmTokenUrl ||
 			(apiConfiguration?.zgsmBaseUrl
@@ -175,39 +175,7 @@ export async function getAccessToken(code: string, apiConfiguration?: ApiConfigu
 			}
 		}
 	} catch (err) {
-		// 错误处理
-		if (axios.isAxiosError(err)) {
-			console.error("fetchToken: Axios error:", err.message)
-			if (err.response) {
-				// 请求成功但服务器返回错误状态码
-				console.error("Response headers:", err.response.headers)
-				console.error(`Error ${err.response.status}:`, err.response.data)
-				return {
-					status: err.response.status,
-					data: null,
-				}
-			} else if (err.request) {
-				// 请求已发送但未收到响应
-				console.error("Request data:", err.request)
-				return {
-					status: 504,
-					data: null,
-				}
-			} else {
-				// 其他错误
-				console.error("Error message:", err.message)
-				return {
-					status: 408,
-					data: null,
-				}
-			}
-		} else {
-			// 处理其他类型的错误
-			console.error("fetchToken: Unexpected error:", err)
-			return {
-				status: 500,
-				data: null,
-			}
-		}
+		console.error("fetchToken: Axios error:", err.message)
+		throw err
 	}
 }

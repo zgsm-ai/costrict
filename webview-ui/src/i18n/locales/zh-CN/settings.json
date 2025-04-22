@@ -105,6 +105,8 @@
 		"awsCustomArnDesc": "请确保ARN中的区域与上方选择的AWS区域一致。",
 		"openRouterApiKey": "OpenRouter API 密钥",
 		"getOpenRouterApiKey": "获取 OpenRouter API 密钥",
+		"zgsm": "诸葛神码",
+		"zgsmBaseUrl": "诸葛神码 Base Url",
 		"getZgsmApiKey": "登陆诸葛神码",
 		"getZgsmApiKeyAgain": "重新登陆诸葛神码",
 		"apiKeyStorageNotice": "API 密钥安全存储在 VSCode 的密钥存储中",
