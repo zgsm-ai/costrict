@@ -420,7 +420,6 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmLoginUrl: undefined,
 	zgsmLogoutUrl: undefined,
 	zgsmTokenUrl: undefined,
-
 	// Anthropic
 	apiModelId: undefined,
 	apiKey: undefined,

@@ -126,6 +126,7 @@
 		"getGeminiApiKey": "Get Gemini API Key",
 		"openAiApiKey": "OpenAI API Key",
 		"openAiBaseUrl": "Base URL",
+		"zgsmBaseUrl": "Zgsm Base Url",
 		"getOpenAiApiKey": "Get OpenAI API Key",
 		"mistralApiKey": "Mistral API Key",
 		"getMistralApiKey": "Get Mistral / Codestral API Key",
