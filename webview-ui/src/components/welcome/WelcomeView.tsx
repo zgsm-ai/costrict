@@ -120,7 +120,7 @@ const WelcomeView = () => {
 			<div className="sticky bottom-0 bg-vscode-sideBar-background p-5">
 				<div className="flex flex-col gap-1">
 					<VSCodeButton onClick={handleSubmit} appearance="primary">
-						{apiConfiguration?.apiProvider === "zgsm" ? t("welcome:zgsm") : t("welcome:start")}
+						{apiConfiguration?.apiProvider === "zgsm" ? t("welcome:getZgsmApiKey") : t("welcome:start")}
 					</VSCodeButton>
 					{errorMessage && <div className="text-vscode-errorForeground">{errorMessage}</div>}
 				</div>
