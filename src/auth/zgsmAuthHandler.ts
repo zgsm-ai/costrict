@@ -40,7 +40,7 @@ function getLocalIP(): string {
  * @param dict 额外的请求头信息
  * @returns 完整的请求头对象
  */
-function createHeaders(dict: Record<string, any> = {}): Record<string, any> {
+export function createHeaders(dict: Record<string, any> = {}): Record<string, any> {
 	// 获取扩展信息
 	const extension =
 		vscode.extensions.getExtension("zgsm-ai.zgsm") || vscode.extensions.getExtension("rooveterinaryinc.roo-cline")
@@ -155,18 +155,22 @@ export async function getAccessToken(code: string, apiConfiguration?: ApiConfigu
 		// 使用querystring将对象转换为application/x-www-form-urlencoded格式
 		const formData = querystring.stringify(params)
 
-		// 发送请求获取token，添加创建的请求头
-		const res = await axios.post(tokenUrl, formData, {
+		// 使用fetch发送请求获取token，添加创建的请求头
+		const res = await fetch(tokenUrl, {
+			method: "POST",
 			headers: createHeaders({
 				"Content-Type": "application/x-www-form-urlencoded",
 			}),
+			body: formData,
 		})
 
+		const data = await res.json()
+
 		// 成功获取token
-		if (res.status === 200 && res.data && res.data.access_token) {
+		if (res.status === 200 && data && data.access_token) {
 			return {
 				status: 200,
-				data: res.data,
+				data,
 			}
 		} else {
 			return {

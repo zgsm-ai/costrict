@@ -16,6 +16,7 @@ import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
 import { BaseProvider } from "./base-provider"
 import { XmlMatcher } from "../../utils/xml-matcher"
 import { DEEP_SEEK_DEFAULT_TEMPERATURE } from "./constants"
+import { createHeaders } from "../../auth/zgsmAuthHandler"
 
 export const defaultHeaders = {
 	"HTTP-Referer": "https://github.com/RooVetGit/Roo-Cline",
@@ -343,7 +344,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 	}
 }
 
-export async function getOpenAiModels(baseUrl?: string, apiKey?: string, hostHeader?: string) {
+export async function getZgsmModels(baseUrl?: string, apiKey?: string, hostHeader?: string) {
 	try {
 		if (!baseUrl) {
 			return []
@@ -354,7 +355,7 @@ export async function getOpenAiModels(baseUrl?: string, apiKey?: string, hostHea
 		}
 
 		const config: Record<string, any> = {}
-		const headers: Record<string, string> = {}
+		const headers: Record<string, string> = createHeaders({})
 
 		if (apiKey) {
 			headers["Authorization"] = `Bearer ${apiKey}`
