@@ -18,6 +18,7 @@ import { CompletionPoint } from "./completionPoint"
 import { CompletionScores } from "./completionScore"
 import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
+import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
@@ -34,7 +35,7 @@ export class CompletionClient {
 	 * Send a request to the LLM to obtain the code completion result at the completion point cp.
 	 */
 	public static async callApi(cp: CompletionPoint, scores: CompletionScores): Promise<string> {
-		const client = this.getInstance()
+		const client = await this.getInstance()
 		if (!client) {
 			throw new Error("OpenAI client not initialized")
 		}
@@ -68,8 +69,8 @@ export class CompletionClient {
 	/**
 	 * Cancel the incomplete request initiated by the completion point cp.
 	 */
-	public static cancelApi(cp: CompletionPoint) {
-		const client = this.getInstance()
+	public static async cancelApi(cp: CompletionPoint) {
+		const client = await this.getInstance()
 		if (!client) {
 			return
 		}
@@ -84,11 +85,15 @@ export class CompletionClient {
 	/**
 	 * Create an OpenAI client for calling the LLM API.
 	 */
-	private createClient(force: boolean): boolean {
+	private async createClient(force: boolean): Promise<boolean> {
 		if (this.openai && !force) {
 			return true
 		}
-		if (!envClient.apiKey) {
+
+		const provider = await ClineProvider.getInstance()
+		const { apiConfiguration } = (await provider?.getState()) ?? { apiConfiguration: { zgsmApiKey: undefined } }
+
+		if (!apiConfiguration.zgsmApiKey) {
 			Logger.error(
 				"Failed to get login information. Please log in again to use the completion service",
 				envClient,
@@ -100,7 +105,7 @@ export class CompletionClient {
 		}
 		this.openai = new OpenAI({
 			baseURL: envSetting.completionUrl,
-			apiKey: envClient.apiKey,
+			apiKey: apiConfiguration.zgsmApiKey,
 		})
 		if (!this.openai) {
 			// Logger.error("Completion: Configuration error: configuration:", configuration, "openai: ", this.openai);
@@ -118,10 +123,10 @@ export class CompletionClient {
 	/**
 	 * The client uses a single instance.
 	 */
-	private static getInstance(): CompletionClient | undefined {
+	private static async getInstance(): Promise<CompletionClient | undefined> {
 		if (!this.client) {
 			this.client = new CompletionClient()
-			if (!this.client.createClient(true)) {
+			if (!(await this.client.createClient(true))) {
 				this.client = undefined
 			}
 		}
