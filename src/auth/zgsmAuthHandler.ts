@@ -68,9 +68,8 @@ export async function handleZgsmAuthCallback(code: string, state: string, provid
 	try {
 		// 获取当前的 API 配置
 		const { apiConfiguration } = await provider.getState()
-
 		// 获取访问令牌
-		const tokenResponse = await getAccessToken(code, apiConfiguration)
+		const tokenResponse = await getAccessToken(code, { ...apiConfiguration, apiProvider: "zgsm" })
 
 		if (tokenResponse.status === 200 && tokenResponse.data && tokenResponse.data.access_token) {
 			const tokenData = tokenResponse.data
@@ -79,6 +78,7 @@ export async function handleZgsmAuthCallback(code: string, state: string, provid
 			if (apiConfiguration) {
 				const updatedConfig: ApiConfiguration = {
 					...apiConfiguration,
+					apiProvider: "zgsm",
 					zgsmApiKey: tokenData.access_token,
 				}
 
