@@ -45,6 +45,7 @@ export interface ExtensionMessage {
 		| "unboundModels"
 		| "requestyModels"
 		| "openAiModels"
+		| "zgsmModels"
 		| "mcpServers"
 		| "enhancedPrompt"
 		| "commitSearchResults"
@@ -96,6 +97,7 @@ export interface ExtensionMessage {
 	unboundModels?: Record<string, ModelInfo>
 	requestyModels?: Record<string, ModelInfo>
 	openAiModels?: string[]
+	zgsmModels?: string[]
 	mcpServers?: McpServer[]
 	commits?: GitCommit[]
 	listApiConfig?: ApiConfigMeta[]

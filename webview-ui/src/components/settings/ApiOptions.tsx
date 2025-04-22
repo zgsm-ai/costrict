@@ -101,6 +101,7 @@ const ApiOptions = ({
 	})
 
 	const [openAiModels, setOpenAiModels] = useState<Record<string, ModelInfo> | null>(null)
+	const [zgsmModels, setZgsmModels] = useState<Record<string, ModelInfo> | null>(null)
 
 	const [anthropicBaseUrlSelected, setAnthropicBaseUrlSelected] = useState(!!apiConfiguration?.anthropicBaseUrl)
 	const [azureApiVersionSelected, setAzureApiVersionSelected] = useState(!!apiConfiguration?.azureApiVersion)
@@ -152,6 +153,15 @@ const ApiOptions = ({
 					values: {
 						baseUrl: apiConfiguration?.openAiBaseUrl,
 						apiKey: apiConfiguration?.openAiApiKey,
+						hostHeader: apiConfiguration?.openAiHostHeader,
+					},
+				})
+			} else if (selectedProvider === "zgsm") {
+				vscode.postMessage({
+					type: "refreshZgsmModels",
+					values: {
+						baseUrl: apiConfiguration?.zgsmBaseUrl,
+						apiKey: apiConfiguration?.zgsmApiKey,
 						hostHeader: apiConfiguration?.openAiHostHeader,
 					},
 				})
@@ -216,6 +226,11 @@ const ApiOptions = ({
 			case "openAiModels": {
 				const updatedModels = message.openAiModels ?? []
 				setOpenAiModels(Object.fromEntries(updatedModels.map((item) => [item, openAiModelInfoSaneDefaults])))
+				break
+			}
+			case "zgsmModels": {
+				const updatedModels = message.zgsmModels ?? []
+				setZgsmModels(Object.fromEntries(updatedModels.map((item) => [item, openAiModelInfoSaneDefaults])))
 				break
 			}
 			case "ollamaModels":
@@ -333,6 +348,19 @@ const ApiOptions = ({
 						className="w-full">
 						<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
 					</VSCodeTextField>
+					{apiConfiguration.zgsmBaseUrl && apiConfiguration.zgsmApiKey && (
+						<ModelPicker
+							apiConfiguration={apiConfiguration}
+							setApiConfigurationField={setApiConfigurationField}
+							defaultModelId="deepseek-chat"
+							defaultModelInfo={openAiModelInfoSaneDefaults}
+							models={zgsmModels}
+							modelIdKey="zgsmModelId"
+							modelInfoKey="openAiCustomModelInfo"
+							serviceName="OpenAI"
+							serviceUrl={apiConfiguration.zgsmBaseUrl}
+						/>
+					)}
 					{!fromWelcomeView && (
 						<>
 							<VSCodeButtonLink
