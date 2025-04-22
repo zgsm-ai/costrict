@@ -11,7 +11,7 @@ import OpenAI from "openai"
 import { envClient, envSetting } from "../common/env"
 import { Logger } from "../common/log-util"
 import { window, workspace } from "vscode"
-import Axios, { AxiosResponse } from "axios"
+import { AxiosResponse, AxiosError } from "axios"
 import { createAuthenticatedHeaders } from "../common/api"
 import { configCompletion, settings } from "../common/constant"
 import { CompletionPoint } from "./completionPoint"
@@ -35,33 +35,33 @@ export class CompletionClient {
 	public static async callApi(cp: CompletionPoint, scores: CompletionScores): Promise<string> {
 		const client = this.getInstance()
 		if (!client) {
-			return Promise.reject(new Error("Configuration error"))
+			throw new Error("OpenAI client not initialized")
 		}
-		return client
-			.doCallApi(cp, scores)
-			.then((response) => {
-				Logger.log(`Completion [${cp.id}]: Request succeeded`, response)
-				cp.fetched(client.acquireCompletionText(response.data))
-				CompletionTrace.reportApiOk()
-				return Promise.resolve(cp.getContent())
-			})
-			.catch((err) => {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
-				if (client.openai.axios.isCancel(err)) {
-					Logger.log(`Completion [${cp.id}]: Request cancelled`, err)
-					cp.cancel()
-					CompletionTrace.reportApiCancel()
-				} else {
-					Logger.error(`Completion [${cp.id}]: Request failed`, err)
-					this.client = undefined
-					CompletionTrace.reportApiError(err.status)
-				}
-				return Promise.reject(err)
-			})
-			.finally(() => {
+
+		try {
+			const response = await client.doCallApi(cp, scores)
+
+			Logger.log(`Completion [${cp.id}]: Request succeeded`, response)
+			cp.fetched(client.acquireCompletionText(response))
+			CompletionTrace.reportApiOk()
+			return cp.getContent()
+		} catch (err: unknown) {
+			if (err instanceof Error && err.name === "AbortError") {
+				Logger.log(`Completion [${cp.id}]: Request cancelled`, err)
+				cp.cancel()
+				CompletionTrace.reportApiCancel()
+			} else {
+				Logger.error(`Completion [${cp.id}]: Request failed`, err)
+				this.client = undefined // reset client
+				const statusCode = (err as AxiosError)?.response?.status || 500
+				CompletionTrace.reportApiError(statusCode)
+			}
+			throw err
+		} finally {
+			if (client) {
 				client.reqs.delete(cp.id)
-			})
+			}
+		}
 	}
 
 	/**
@@ -130,7 +130,7 @@ export class CompletionClient {
 	/**
 	 * Obtain the completion content from the result returned by the LLM.
 	 */
-	private acquireCompletionText(resp: OpenAI.Completion): string {
+	private acquireCompletionText(resp: ReturnType<OpenAI.Completions["create"]>): string {
 		if (!resp || !resp.choices || resp.choices.length === 0) {
 			return ""
 		}
@@ -161,42 +161,53 @@ export class CompletionClient {
 	private async doCallApi(
 		cp: CompletionPoint,
 		scores: CompletionScores,
-	): Promise<AxiosResponse<OpenAI.Completion, any>> {
-		// Traverse all requests. If there is a new one, cancel the old request.
-		for (const [key, value] of this.reqs) {
-			Logger.log(`Completion: Request cancelled id: ${key}`)
-			value.cancel(`Request cancelled id: ${key}`)
+	): Promise<ReturnType<OpenAI.Completions["create"]>> {
+		// cleanup Old Requests
+		const currentId = cp.id
+		for (const [key, controller] of this.reqs) {
+			if (key !== currentId) {
+				Logger.log(`Completion: Request cancelled id: ${key}`)
+				controller.abort()
+				this.reqs.delete(key)
+			}
 		}
-		Logger.log(`Completion [${cp.id}]: Send API request`)
-		// Get the cancellation object of the current Axios request.
-		const cancelTokenSource = Axios.CancelToken.source()
-		this.reqs.set(cp.id, cancelTokenSource)
+
+		const abortController = new AbortController()
+		this.reqs.set(cp.id, abortController)
+
+		Logger.log(`Completion [${cp.id}]: Sending API request`)
 		const headers = createAuthenticatedHeaders()
 		const repo = workspace?.name?.split(" ")[0] ?? ""
 
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
-		return this?.openai?.createCompletion(
+		return this.openai.completions.create(
 			{
-				headers: headers,
+				// no use
 				model: settings.openai_model,
-				/* eslint-disable-next-line @typescript-eslint/naming-convention */
 				temperature: settings.temperature,
 				stop: this.stopWords,
-				completion_id: cp.id,
-				// prompt: promptOptions.prefix + FIM_INDICATOR + promptOptions.suffix,
-				prompt_options: cp.getPrompt(),
-				language_id: cp.doc.language,
-				beta_mode: this.betaMode,
-				calculate_hide_score: scores,
-				file_project_path: "",
-				project_path: "",
-				code_path: "",
-				user_id: "",
-				repo: repo,
-				git_path: "",
+				prompt: null,
 			},
-			{ cancelToken: cancelTokenSource.token },
+			{
+				// in use
+				headers: headers,
+				signal: abortController.signal,
+				body: {
+					model: settings.openai_model,
+					temperature: settings.temperature,
+					stop: this.stopWords,
+					prompt_options: cp.getPrompt(),
+					completion_id: cp.id,
+					language_id: cp.doc.language,
+					beta_mode: this.betaMode,
+					calculate_hide_score: scores,
+					file_project_path: "",
+					project_path: "",
+					code_path: "",
+					user_id: "",
+					repo: repo,
+					git_path: "",
+				},
+			},
 		)
 	}
 }
