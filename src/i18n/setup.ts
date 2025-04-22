@@ -1,5 +1,4 @@
 import i18next from "i18next"
-import { zgsmTranslations, mergeLanguageResources } from "../../zgsm/src/i18n/setup"
 
 // Build translations object
 const translations: Record<string, Record<string, any>> = {}
@@ -71,16 +70,12 @@ if (!isTestEnv) {
 	}
 }
 
-// Merge zgsm translations
-const mergedTranslations = mergeLanguageResources(translations, zgsmTranslations)
-console.log(`Merged translations:`, mergedTranslations)
-
 // Initialize i18next with configuration
 i18next.init({
 	lng: "en",
 	fallbackLng: "en",
 	debug: false,
-	resources: mergedTranslations,
+	resources: translations,
 	interpolation: {
 		escapeValue: false,
 	},
