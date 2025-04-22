@@ -1,0 +1,12 @@
+{
+	"extension": {
+		"name": "諸葛神碼"
+	},
+	"storage": {
+		"path_placeholder": "D:\\RooCodeStorage",
+		"enter_absolute_path": "請輸入絕對路徑（例如：D:\\RooCodeStorage 或 /home/user/storage）"
+	},
+	"input": {
+		"task_prompt": "諸葛神碼應該做什麼？"
+	}
+} 
