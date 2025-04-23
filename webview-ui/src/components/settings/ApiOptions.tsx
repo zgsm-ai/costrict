@@ -36,6 +36,7 @@ import {
 	requestyDefaultModelId,
 	requestyDefaultModelInfo,
 	ApiProvider,
+	allModels,
 	zgsmDefaultModelId,
 } from "../../../../src/shared/api"
 import { ExtensionMessage } from "../../../../src/shared/ExtensionMessage"
@@ -234,7 +235,7 @@ const ApiOptions = ({
 			}
 			case "zgsmModels": {
 				const updatedModels = message.zgsmModels ?? []
-				setZgsmModels(Object.fromEntries(updatedModels.map((item) => [item, openAiModelInfoSaneDefaults])))
+				setZgsmModels(Object.fromEntries(updatedModels.map((item) => [item, allModels[item]])))
 				break
 			}
 			case "ollamaModels":
@@ -1775,7 +1776,7 @@ export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
 
 	switch (provider) {
 		case "zgsm":
-			return zgsmApiConfiguration
+			return getProviderData(allModels, zgsmDefaultModelId)
 		case "anthropic":
 			return getProviderData(anthropicModels, anthropicDefaultModelId)
 		case "bedrock":
