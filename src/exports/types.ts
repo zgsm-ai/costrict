@@ -4,6 +4,7 @@
 type ProviderSettings = {
 	apiProvider?:
 		| (
+				| "zgsm"
 				| "anthropic"
 				| "glama"
 				| "openrouter"
@@ -23,6 +24,15 @@ type ProviderSettings = {
 				| "fake-ai"
 		  )
 		| undefined
+	zgsmBaseUrl?: string | undefined
+	zgsmApiKey?: string | undefined
+	zgsmModelId?: string | undefined
+	zgsmClientId?: string | undefined
+	zgsmClientSecret?: string | undefined
+	zgsmRedirectUri?: string | undefined
+	zgsmLoginUrl?: string | undefined
+	zgsmLogoutUrl?: string | undefined
+	zgsmTokenUrl?: string | undefined
 	apiModelId?: string | undefined
 	apiKey?: string | undefined
 	anthropicBaseUrl?: string | undefined
@@ -194,6 +204,7 @@ type GlobalSettings = {
 				name: string
 				apiProvider?:
 					| (
+							| "zgsm"
 							| "anthropic"
 							| "glama"
 							| "openrouter"

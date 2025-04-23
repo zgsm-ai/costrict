@@ -14,6 +14,7 @@ import { LmStudioHandler } from "./providers/lmstudio"
 import { GeminiHandler } from "./providers/gemini"
 import { OpenAiNativeHandler } from "./providers/openai-native"
 import { DeepSeekHandler } from "./providers/deepseek"
+import { ZgsmHandler } from "./providers/zgsm"
 import { MistralHandler } from "./providers/mistral"
 import { VsCodeLmHandler } from "./providers/vscode-lm"
 import { ApiStream } from "./transform/stream"
@@ -44,6 +45,8 @@ export interface ApiHandler {
 export function buildApiHandler(configuration: ApiConfiguration): ApiHandler {
 	const { apiProvider, ...options } = configuration
 	switch (apiProvider) {
+		case "zgsm":
+			return new ZgsmHandler(options)
 		case "anthropic":
 			return new AnthropicHandler(options)
 		case "glama":
