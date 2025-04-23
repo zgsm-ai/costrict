@@ -21,11 +21,11 @@ export const ACTION_NAMES = {
 } as const
 
 export const COMMAND_IDS = {
-	EXPLAIN: "roo-cline.explainCode",
-	FIX: "roo-cline.fixCode",
-	IMPROVE: "roo-cline.improveCode",
-	ADD_TO_CONTEXT: "roo-cline.addToContext",
-	NEW_TASK: "roo-cline.newTask",
+	EXPLAIN: "vscode-zgsm.explainCode",
+	FIX: "vscode-zgsm.fixCode",
+	IMPROVE: "vscode-zgsm.improveCode",
+	ADD_TO_CONTEXT: "vscode-zgsm.addToContext",
+	NEW_TASK: "vscode-zgsm.newTask",
 	ZGSM_EXPLAIN: "vscode-zgsm.explain",
 	ZGSM_ADD_COMMENT: "vscode-zgsm.addComment",
 	ZGSM_CODE_REVIEW: "vscode-zgsm.codeReview",
