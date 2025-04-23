@@ -62,40 +62,40 @@ export const registerCommands = (options: RegisterCommandOptions) => {
 
 const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOptions) => {
 	return {
-		"roo-cline.activationCompleted": () => {},
-		"roo-cline.plusButtonClicked": async () => {
+		"vscode-zgsm.activationCompleted": () => {},
+		"vscode-zgsm.plusButtonClicked": async () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
 			if (!visibleProvider) return
 			await visibleProvider.removeClineFromStack()
 			await visibleProvider.postStateToWebview()
 			await visibleProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
 		},
-		"roo-cline.mcpButtonClicked": () => {
+		"vscode-zgsm.mcpButtonClicked": () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
 			if (!visibleProvider) return
 			visibleProvider.postMessageToWebview({ type: "action", action: "mcpButtonClicked" })
 		},
-		"roo-cline.promptsButtonClicked": () => {
+		"vscode-zgsm.promptsButtonClicked": () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
 			if (!visibleProvider) return
 			visibleProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" })
 		},
-		"roo-cline.popoutButtonClicked": () => openClineInNewTab({ context, outputChannel }),
-		"roo-cline.openInNewTab": () => openClineInNewTab({ context, outputChannel }),
-		"roo-cline.settingsButtonClicked": () => {
+		"vscode-zgsm.popoutButtonClicked": () => openClineInNewTab({ context, outputChannel }),
+		"vscode-zgsm.openInNewTab": () => openClineInNewTab({ context, outputChannel }),
+		"vscode-zgsm.settingsButtonClicked": () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
 			if (!visibleProvider) return
 			visibleProvider.postMessageToWebview({ type: "action", action: "settingsButtonClicked" })
 		},
-		"roo-cline.historyButtonClicked": () => {
+		"vscode-zgsm.historyButtonClicked": () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
 			if (!visibleProvider) return
 			visibleProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" })
 		},
-		"roo-cline.helpButtonClicked": () => {
+		"vscode-zgsm.helpButtonClicked": () => {
 			vscode.env.openExternal(vscode.Uri.parse("https://docs.roocode.com"))
 		},
-		"roo-cline.showHumanRelayDialog": (params: { requestId: string; promptText: string }) => {
+		"vscode-zgsm.showHumanRelayDialog": (params: { requestId: string; promptText: string }) => {
 			const panel = getPanel()
 
 			if (panel) {
@@ -106,15 +106,15 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				})
 			}
 		},
-		"roo-cline.registerHumanRelayCallback": registerHumanRelayCallback,
-		"roo-cline.unregisterHumanRelayCallback": unregisterHumanRelayCallback,
-		"roo-cline.handleHumanRelayResponse": handleHumanRelayResponse,
-		"roo-cline.newTask": handleNewTask,
-		"roo-cline.setCustomStoragePath": async () => {
+		"vscode-zgsm.registerHumanRelayCallback": registerHumanRelayCallback,
+		"vscode-zgsm.unregisterHumanRelayCallback": unregisterHumanRelayCallback,
+		"vscode-zgsm.handleHumanRelayResponse": handleHumanRelayResponse,
+		"vscode-zgsm.newTask": handleNewTask,
+		"vscode-zgsm.setCustomStoragePath": async () => {
 			const { promptForCustomStoragePath } = await import("../shared/storagePathManager")
 			await promptForCustomStoragePath()
 		},
-		"roo-cline.focusInput": () => {
+		"vscode-zgsm.focusInput": () => {
 			provider.postMessageToWebview({ type: "action", action: "focusInput" })
 		},
 	}
