@@ -1,0 +1,12 @@
+{
+	"extension": {
+		"name": "诸葛神码"
+	},
+	"storage": {
+		"path_placeholder": "D:\\RooCodeStorage",
+		"enter_absolute_path": "请输入绝对路径（例如：D:\\RooCodeStorage 或 /home/user/storage）"
+	},
+	"input": {
+		"task_prompt": "诸葛神码应该做什么？"
+	}
+}
