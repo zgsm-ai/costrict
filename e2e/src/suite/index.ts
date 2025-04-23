@@ -35,7 +35,7 @@ export async function run() {
 		},
 	})
 
-	await vscode.commands.executeCommand("roo-cline.SidebarProvider.focus")
+	await vscode.commands.executeCommand("vscode-zgsm.SidebarProvider.focus")
 	await waitFor(() => api.isReady())
 
 	// Expose the API to the tests.

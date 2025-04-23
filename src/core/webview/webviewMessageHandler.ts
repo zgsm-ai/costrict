@@ -1302,7 +1302,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "humanRelayResponse":
 			if (message.requestId && message.text) {
-				vscode.commands.executeCommand("roo-cline.handleHumanRelayResponse", {
+				vscode.commands.executeCommand("vscode-zgsm.handleHumanRelayResponse", {
 					requestId: message.requestId,
 					text: message.text,
 					cancelled: false,
@@ -1312,7 +1312,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 
 		case "humanRelayCancel":
 			if (message.requestId) {
-				vscode.commands.executeCommand("roo-cline.handleHumanRelayResponse", {
+				vscode.commands.executeCommand("vscode-zgsm.handleHumanRelayResponse", {
 					requestId: message.requestId,
 					cancelled: true,
 				})

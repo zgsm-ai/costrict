@@ -145,7 +145,7 @@ export async function activate(context: vscode.ExtensionContext) {
     registerMenuCommands(context, cvProvider);
     // Register the 'Start Chat' command
     context.subscriptions.push(vscode.commands.registerCommand('vscode-zgsm.chat', () => {
-        vscode.commands.executeCommand("roo-cline.SidebarProvider.focus");
+        vscode.commands.executeCommand("vscode-zgsm.SidebarProvider.focus");
     }));
     // Register the 'Logout' command
     context.subscriptions.push(vscode.commands.registerCommand('vscode-zgsm.view.logout', () => {
