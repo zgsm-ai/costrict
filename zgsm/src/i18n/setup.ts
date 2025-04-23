@@ -96,21 +96,13 @@ export const mergeLanguageResources = (
 
 	// Add current translations that don't exist in zgsm
 	for (const language in currentTranslations) {
-		// if (!mergedTranslations[language]) {
-		// 	mergedTranslations[language] = currentTranslations[language]
-		// } else {
-		// 	for (const namespace in currentTranslations[language]) {
-		// 		if (!mergedTranslations[language][namespace]) {
-		// 			mergedTranslations[language][namespace] = currentTranslations[language][namespace]
-		// 		}
-		// 	}
-		// }
 		if (!mergedTranslations[language]) {
-			continue
-		}
-		for (const namespace in currentTranslations[language]) {
-			if (!mergedTranslations[language][namespace]) {
-				mergedTranslations[language][namespace] = currentTranslations[language][namespace]
+			mergedTranslations[language] = currentTranslations[language]
+		} else {
+			for (const namespace in currentTranslations[language]) {
+				if (!mergedTranslations[language][namespace]) {
+					mergedTranslations[language][namespace] = currentTranslations[language][namespace]
+				}
 			}
 		}
 	}
