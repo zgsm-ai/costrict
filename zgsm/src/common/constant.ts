@@ -6,6 +6,9 @@
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  */
+
+import { t } from "../../../src/i18n";
+
 // Completion: Model settings
 export const settings = {
     // fillmodel in settings
@@ -80,93 +83,93 @@ export interface CodelensItem {
 export const CODELENS_FUNC: { [key: string]: CodelensItem } = {
     explain: {
         key: 'explain',
-        actionName: 'Explain Code',
-        tooltip: "Explain code implementation",
+        actionName: t("common:command.explain.name"),
+        tooltip: t("common:command.explain.tip"),
         // for Roo Code
         command: "vscode-zgsm.codelens_button",
         actionType: "ZGSM_EXPLAIN",
-        inputPrompt: "What would you like ZGSM to explain?",
-        inputPlaceholder: "E.g. How does the error handling work?",
+        inputPrompt: t("common:command.explain.input_prompt"),
+        inputPlaceholder: t("common:command.explain.input_placeholder"),
     } as CodelensItem,
     addComment: {
         key: 'addComment',
-        actionName: 'Add Comments',
-        tooltip: "Add comments to this function",
+        actionName: t("common:command.add_comment.name"),
+        tooltip: t("common:command.add_comment.tip"),
         // for Roo Code
         command: "vscode-zgsm.codelens_button",
         actionType: "ZGSM_ADD_COMMENT",
-        inputPrompt: "What would you like ZGSM to do?",
-        inputPlaceholder: "E.g. Add comments to the code",
+        inputPrompt: t("common:command.add_comment.input_prompt"),
+        inputPlaceholder: t("common:command.add_comment.input_placeholder"),
     } as CodelensItem,
     addTests: {
         key: 'addTests',
-        actionName: 'Generate Unit Tests',
-        tooltip: "Generate unit tests for this function",
+        actionName: t("common:command.add_tests.name"),
+        tooltip: t("common:command.add_tests.tip"),
         // for Roo Code
         command: "vscode-zgsm.codelens_button",
         actionType: "ZGSM_ADD_TEST",
-        inputPrompt: "What would you like ZGSM to do?",
-        inputPlaceholder: "E.g. Generate unit tests for this function",
+        inputPrompt: t("common:command.add_tests.input_prompt"),
+        inputPlaceholder: t("common:command.add_tests.input_placeholder"),
     } as CodelensItem,
     codeReview: {
         key: 'codeReview',
-        actionName: 'Code Review',
-        tooltip: "Check for code quality issues and provide suggestions",
+        actionName: t("common:command.code_review.name"),
+        tooltip: t("common:command.code_review.tip"),
         // for Roo Code
         command: "vscode-zgsm.codelens_button",
         actionType: "ZGSM_CODE_REVIEW",
-        inputPrompt: "What would you like ZGSM to do?",
-        inputPlaceholder: "E.g. Check for code quality issues and provide suggestions to the code",
+        inputPrompt: t("common:command.code_review.input_prompt"),
+        inputPlaceholder: t('command.code_review.input_placeholder'),
     } as CodelensItem,
     addDebugCode: {
         key: 'addDebugCode',
-        actionName: 'Add Debug Code',
-        tooltip: "Enhance troubleshooting capabilities by adding logs and debug code to key logic steps",
+        actionName: t("common:command.add_debug_code.name"),
+        tooltip: t("common:command.add_debug_code.tip"),
         // for Roo Code
         command: "vscode-zgsm.codelens_button",
         actionType: "ZGSM_ADD_DEBUG_CODE",
-        inputPrompt: "What would you like ZGSM to do?",
-        inputPlaceholder: "E.g. Enhance troubleshooting capabilities by adding logs and debug code to key logic steps to the code",
+        inputPrompt: t("common:command.add_debug_code.input_prompt"),
+        inputPlaceholder: t("common:command.add_debug_code.input_placeholder"),
     } as CodelensItem,
     addStrongerCode: {
         key: 'addStrongerCode',
-        actionName: 'Add Error Handling',
-        tooltip: "Enhance robustness by adding exception handling and parameter validation",
+        actionName: t("common:command.add_stronger_code.name"),
+        tooltip: t("common:command.add_stronger_code.tip"),
         // for Roo Code
         command: "vscode-zgsm.codelens_button",
         actionType: "ZGSM_ADD_STRONG_CODE",
-        inputPrompt: "What would you like ZGSM to do?",
-        inputPlaceholder: "E.g. Enhance robustness by adding exception handling and parameter validation to the code",
+        inputPrompt: t("common:command.add_stronger_code.input_prompt"),
+        inputPlaceholder: t("common:command.add_stronger_code.input_placeholder"),
     } as CodelensItem,
     simplifyCode: {
         key: 'simplifyCode',
-        actionName: 'Simplify Code',
-        tooltip: "Remove ineffective code",
+        actionName: t("common:command.simplify_code.name"),
+        tooltip: t("common:command.simplify_code.tip"),
         // for Roo Code
         command: "vscode-zgsm.codelens_button",
         actionType: "ZGSM_SIMPLIFY_CODE",
-        inputPrompt: "What would you like ZGSM to do?",
-        inputPlaceholder: "E.g. Remove ineffective part of the code",
+        inputPrompt: t("common:command.simplify_code.input_prompt"),
+        inputPlaceholder: t("common:command.simplify_code.input_placeholder"),
     } as CodelensItem,
     performanceOptimization: {
         key: 'performanceOptimization',
-        actionName: 'Performance Optimization',
-        tooltip: "Improve code performance, provide modification suggestions, focus on efficiency issues",
+        actionName: t("common:command.performance_optimization.name"),
+        tooltip: t("common:command.performance_optimization.tip"),
         // for Roo Code
         command: "vscode-zgsm.codelens_button",
         actionType: "ZGSM_PERFORMANCE",
-        inputPrompt: "What would you like ZGSM to do?",
-        inputPlaceholder: "E.g. Improve code performance, provide modification suggestions, focus on efficiency issues to the following code",
+        inputPrompt: t("common:command.performance_optimization.input_prompt"),
+        inputPlaceholder: t("common:command.performance_optimization.input_placeholder"),
     } as CodelensItem,
     shenmaInstructSet: {
         key: 'shenmaInstructSet',
         actionName: `$(zhuge-shenma-icon)$(chevron-down)`,
-        tooltip: "Shenma Instruction Set",
+        tooltip: t("common:command.shenma_instruct_set.tip"),
         // for Roo Code
         command: "vscode-zgsm.codelens_more_button",
         actionType: "ZGSM_EXPLAIN",
-        inputPrompt: "What would you like ZGSM to do?",
-        inputPlaceholder: "E.g. Add comments to the code",
+        inputPrompt: t("common:command.shenma_instruct_set.input_prompt"),
+        inputPlaceholder: t("common:command.shenma_instruct_set.input_placeholder"),
     } as CodelensItem
 };
 

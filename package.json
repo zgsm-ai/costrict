@@ -82,102 +82,102 @@
 		"commands": [
 			{
 				"command": "vscode-zgsm.plusButtonClicked",
-				"title": "New Task",
+				"title": "%command.newTask.title%",
 				"icon": "$(add)"
 			},
 			{
 				"command": "vscode-zgsm.mcpButtonClicked",
-				"title": "MCP Servers",
+				"title": "%command.mcpServers.title%",
 				"icon": "$(server)"
 			},
 			{
 				"command": "vscode-zgsm.promptsButtonClicked",
-				"title": "Prompts",
+				"title": "%command.prompts.title%",
 				"icon": "$(notebook)"
 			},
 			{
 				"command": "vscode-zgsm.historyButtonClicked",
-				"title": "History",
+				"title": "%command.history.title%",
 				"icon": "$(history)"
 			},
 			{
 				"command": "vscode-zgsm.popoutButtonClicked",
-				"title": "Open in Editor",
+				"title": "%command.openInEditor.title%",
 				"icon": "$(link-external)"
 			},
 			{
 				"command": "vscode-zgsm.settingsButtonClicked",
-				"title": "Settings",
+				"title": "%command.settings.title%",
 				"icon": "$(settings-gear)"
 			},
 			{
 				"command": "vscode-zgsm.helpButtonClicked",
-				"title": "Documentation",
+				"title": "%command.documentation.title%",
 				"icon": "$(question)"
 			},
 			{
 				"command": "vscode-zgsm.openInNewTab",
-				"title": "Open In New Tab",
+				"title": "%command.openInNewTab.title%",
 				"category": "Roo Code"
 			},
 			{
 				"command": "vscode-zgsm.explainCode",
-				"title": "Explain Code",
+				"title": "%command.explainCode.title%",
 				"category": "Roo Code"
 			},
 			{
 				"command": "vscode-zgsm.fixCode",
-				"title": "Fix Code",
+				"title": "%command.fixCode.title%",
 				"category": "Roo Code"
 			},
 			{
 				"command": "vscode-zgsm.improveCode",
-				"title": "Improve Code",
+				"title": "%command.improveCode.title%",
 				"category": "Roo Code"
 			},
 			{
 				"command": "vscode-zgsm.addToContext",
-				"title": "Add To Context",
+				"title": "%command.addToContext.title%",
 				"category": "Roo Code"
 			},
 			{
 				"command": "vscode-zgsm.newTask",
-				"title": "New Task",
+				"title": "%command.newTask.title%",
 				"category": "Roo Code"
 			},
 			{
 				"command": "vscode-zgsm.terminalAddToContext",
-				"title": "Add Terminal Content to Context",
+				"title": "%command.terminal.addToContext.title%",
 				"category": "Terminal"
 			},
 			{
 				"command": "vscode-zgsm.terminalFixCommand",
-				"title": "Fix This Command",
+				"title": "%command.terminal.fixCommand.title%",
 				"category": "Terminal"
 			},
 			{
 				"command": "vscode-zgsm.terminalExplainCommand",
-				"title": "Explain This Command",
+				"title": "%command.terminal.explainCommand.title%",
 				"category": "Terminal"
 			},
 			{
 				"command": "vscode-zgsm.terminalFixCommandInCurrentTask",
-				"title": "Fix This Command (Current Task)",
+				"title": "%command.terminal.fixCommandInCurrentTask.title%",
 				"category": "Terminal"
 			},
 			{
 				"command": "vscode-zgsm.terminalExplainCommandInCurrentTask",
-				"title": "Explain This Command (Current Task)",
+				"title": "%command.terminal.explainCommandInCurrentTask.title%",
 				"category": "Terminal"
 			},
 			{
 				"command": "vscode-zgsm.setCustomStoragePath",
-				"title": "Set Custom Storage Path",
+				"title": "%command.setCustomStoragePath.title%",
 				"category": "Roo Code"
 			},
 			{
 				"command": "vscode-zgsm.focusInput",
-				"title": "Focus Input Field",
+				"title": "%command.focusInput.title%",
 				"category": "Roo Code"
 			},
 			{

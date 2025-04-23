@@ -19,6 +19,7 @@ import { CompletionScores } from "./completionScore"
 import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
+import { t } from "../../../src/i18n"
 
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
@@ -99,7 +100,7 @@ export class CompletionClient {
 				envClient,
 			)
 			window.showErrorMessage(
-				"Failed to get login information. Please log in again to use the completion service",
+				t("common:window.error.failed_to_get_login_info"),
 			)
 			return false
 		}

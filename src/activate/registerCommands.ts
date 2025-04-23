@@ -93,7 +93,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			visibleProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" })
 		},
 		"vscode-zgsm.helpButtonClicked": () => {
-			vscode.env.openExternal(vscode.Uri.parse("https://docs.roocode.com"))
+			vscode.env.openExternal(vscode.Uri.parse("https://zgsm.ai"))
 		},
 		"vscode-zgsm.showHumanRelayDialog": (params: { requestId: string; promptText: string }) => {
 			const panel = getPanel()

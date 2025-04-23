@@ -14,7 +14,7 @@ import { Logger } from "./log-util";
 import { LangSetting, LangSwitch, LangDisables, getLanguageByFilePath, loadRemoteLanguageExtensions } from './lang-util';
 import { DateFormat, formatTime, formatTimeDifference } from './util';
 import { getCompleteConfig } from './vscode-util';
-
+import { t } from '../../../src/i18n';
 /**
  * Set up a timer to periodically check for extension updates and programming language settings
  */
@@ -226,21 +226,21 @@ function createButtons(
     let buttons: ButtonDefined[] = [];
     if (enabled) {
         buttons.push({
-            text: "Disable" + cmd.funcName,
+            text: t("common:button.disable") + cmd.funcName,
             lang: lang,
             value: false,
             command: cmd.setupGlobal,
         });
         if (sw === LangSwitch.Disabled) {
             buttons.push({
-                text: "Enable" + lang + cmd.funcName,
+                text: t("common:button.enable") + lang + cmd.funcName,
                 lang: lang,
                 value: LangSwitch.Enabled,
                 command: cmd.setupLanguage,
             });
         } else {
             buttons.push({
-                text: "Disable" + lang + cmd.funcName,
+                text: t("common:button.disable") + lang + cmd.funcName,
                 lang: lang,
                 value: LangSwitch.Disabled,
                 command: cmd.setupLanguage,
@@ -248,7 +248,7 @@ function createButtons(
         }
     } else {
         buttons.push({
-            text: "Enable Quick Menu",
+            text: t("common:button.enable_function_quick_menu"),
             lang: lang,
             value: true,
             command: cmd.setupGlobal,
@@ -297,7 +297,7 @@ function setupLangSwitch(
  * Function quick menu button settings
  */
 const codelensCommand: ButtonCommand = {
-    funcName: "Menu",
+    funcName: t("common:function.menu"),
     setupGlobal: (button: any, value: boolean|LangSwitch) => {
         const config = vscode.workspace.getConfiguration(configCodeLens);
         config.update("enabled", value as boolean, vscode.ConfigurationTarget.Global);
@@ -313,7 +313,7 @@ const codelensCommand: ButtonCommand = {
  * Completion button settings
  */
 const completionCommand: ButtonCommand = {
-    funcName: "Completion",
+    funcName: t("common:function.completion"),
     setupGlobal: (button: any, value: boolean|LangSwitch) => {
         const config = vscode.workspace.getConfiguration(configCompletion);
         config.update("enabled", value as boolean, vscode.ConfigurationTarget.Global);
@@ -347,7 +347,7 @@ export function setupLangSwitchs() {
         buttonTexts.push(button.text);
     });
 
-    vscode.window.showInformationMessage('Enable/Disable "Function Quick Menu" and "Intelligent Code Completion"',
+    vscode.window.showInformationMessage(t("common:window.infor.enable_disable_function_quick_menu"),
         { modal: false },
         ...buttonTexts
     ).then((button) => {

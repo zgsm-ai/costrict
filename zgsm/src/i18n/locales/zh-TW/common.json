@@ -8,5 +8,77 @@
 	},
 	"input": {
 		"task_prompt": "諸葛神碼應該做什麼？"
+	},
+	"window":{
+		"error":{
+			"failed_to_get_login_info": "無法取得登入資訊。請重新登入以使用補全服務。"
+		},
+		"infor":{
+			"enable_disable_function_quick_menu": "啟用/禁用“功能快捷選單”和“智能程式碼補全”"
+		}
+	},
+	"button":{
+		"enable_function_quick_menu": "啟用快捷選單",
+		"disable": "禁用",
+		"enable": "啟用"
+	},
+	"function": {
+		"completion": "補全",
+		"menu": "選單"
+	},
+	"command": {
+		"explain": {
+			"name": "解釋程式碼",
+			"tip": "解釋程式碼實現",
+			"input_prompt": "你想讓諸葛神碼解釋什麼？",
+			"input_placeholder": "例如：如何處理錯誤？"
+		},
+		"add_comment": {
+			"name": "添加註釋",
+			"tip": "添加註釋到此函數",
+			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_placeholder": "例如：添加註釋到程式碼"
+		},
+		"add_tests": {
+			"name": "生成單元測試",
+			"tip": "為函數生成單元測試",
+			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_placeholder": "例如：生成單元測試"
+		},
+		"code_review": {
+			"name": "程式碼審查",
+			"tip": "檢查程式碼品質問題並提供建議",
+			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_placeholder": "例如：檢查程式碼品質問題並對程式碼提出建議"
+		},
+		"add_debug_code": {
+			"name": "添加日誌",
+			"tip": "在關鍵邏輯步驟中添加日誌和調試代碼來增強故障排除能力",
+			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_placeholder": "例如：在程式碼的關鍵邏輯步驟中添加日誌和調試代碼來增強故障排除能力"
+		},
+		"add_stronger_code": {
+			"name": "增加容錯",
+			"tip": "增強魯棒性，通過添加異常處理和參數驗證",
+			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_placeholder": "例如：增強程式碼魯棒性，通過添加異常處理和參數驗證"
+		},
+		"simplify_code": {
+			"name": "簡化程式碼",
+			"tip": "刪除無效代碼",
+			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_placeholder": "例如：刪除無效代碼"
+		},
+		"performance_optimization": {
+			"name": "性能優化",
+			"tip": "提高程式碼性能，提供修改建議，專注於效率問題",
+			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_placeholder": "例如：提高程式碼性能，提供修改建議，專注於效率問題"
+		},
+		"shenma_instruct_set": {
+			"tip": "諸葛神碼指令集",
+			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_placeholder": "例如：添加註釋到程式碼"
+		}	
 	}
 } 
