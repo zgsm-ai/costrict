@@ -1,7 +1,6 @@
 import { SECRET_STATE_KEYS, ProviderSettings } from "../schemas"
 
 export function checkExistKey(config: ProviderSettings | undefined) {
-	console.log("checkExistKey", config)
 	if (!config) {
 		return false
 	}

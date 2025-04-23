@@ -53,8 +53,8 @@
 	"contributes": {
 		"submenus": [
 			{
-				"id": "roo-code.terminalMenu",
-				"label": "Roo Code"
+				"id": "vscode-zgsm.terminalMenu",
+				"label": "%extension.displayName%"
 			},
 			{
 				"id": "zhuge-shenma",
@@ -64,119 +64,119 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "roo-cline-ActivityBar",
+					"id": "vscode-zgsm-ActivityBar",
 					"title": "%extension.displayName%",
 					"icon": "zgsm/images/zhuge_shenma_logo.svg"
 				}
 			]
 		},
 		"views": {
-			"roo-cline-ActivityBar": [
+			"vscode-zgsm-ActivityBar": [
 				{
 					"type": "webview",
-					"id": "roo-cline.SidebarProvider",
+					"id": "vscode-zgsm.SidebarProvider",
 					"name": ""
 				}
 			]
 		},
 		"commands": [
 			{
-				"command": "roo-cline.plusButtonClicked",
+				"command": "vscode-zgsm.plusButtonClicked",
 				"title": "New Task",
 				"icon": "$(add)"
 			},
 			{
-				"command": "roo-cline.mcpButtonClicked",
+				"command": "vscode-zgsm.mcpButtonClicked",
 				"title": "MCP Servers",
 				"icon": "$(server)"
 			},
 			{
-				"command": "roo-cline.promptsButtonClicked",
+				"command": "vscode-zgsm.promptsButtonClicked",
 				"title": "Prompts",
 				"icon": "$(notebook)"
 			},
 			{
-				"command": "roo-cline.historyButtonClicked",
+				"command": "vscode-zgsm.historyButtonClicked",
 				"title": "History",
 				"icon": "$(history)"
 			},
 			{
-				"command": "roo-cline.popoutButtonClicked",
+				"command": "vscode-zgsm.popoutButtonClicked",
 				"title": "Open in Editor",
 				"icon": "$(link-external)"
 			},
 			{
-				"command": "roo-cline.settingsButtonClicked",
+				"command": "vscode-zgsm.settingsButtonClicked",
 				"title": "Settings",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "roo-cline.helpButtonClicked",
+				"command": "vscode-zgsm.helpButtonClicked",
 				"title": "Documentation",
 				"icon": "$(question)"
 			},
 			{
-				"command": "roo-cline.openInNewTab",
+				"command": "vscode-zgsm.openInNewTab",
 				"title": "Open In New Tab",
 				"category": "Roo Code"
 			},
 			{
-				"command": "roo-cline.explainCode",
+				"command": "vscode-zgsm.explainCode",
 				"title": "Explain Code",
 				"category": "Roo Code"
 			},
 			{
-				"command": "roo-cline.fixCode",
+				"command": "vscode-zgsm.fixCode",
 				"title": "Fix Code",
 				"category": "Roo Code"
 			},
 			{
-				"command": "roo-cline.improveCode",
+				"command": "vscode-zgsm.improveCode",
 				"title": "Improve Code",
 				"category": "Roo Code"
 			},
 			{
-				"command": "roo-cline.addToContext",
+				"command": "vscode-zgsm.addToContext",
 				"title": "Add To Context",
 				"category": "Roo Code"
 			},
 			{
-				"command": "roo-cline.newTask",
+				"command": "vscode-zgsm.newTask",
 				"title": "New Task",
 				"category": "Roo Code"
 			},
 			{
-				"command": "roo-cline.terminalAddToContext",
+				"command": "vscode-zgsm.terminalAddToContext",
 				"title": "Add Terminal Content to Context",
 				"category": "Terminal"
 			},
 			{
-				"command": "roo-cline.terminalFixCommand",
+				"command": "vscode-zgsm.terminalFixCommand",
 				"title": "Fix This Command",
 				"category": "Terminal"
 			},
 			{
-				"command": "roo-cline.terminalExplainCommand",
+				"command": "vscode-zgsm.terminalExplainCommand",
 				"title": "Explain This Command",
 				"category": "Terminal"
 			},
 			{
-				"command": "roo-cline.terminalFixCommandInCurrentTask",
+				"command": "vscode-zgsm.terminalFixCommandInCurrentTask",
 				"title": "Fix This Command (Current Task)",
 				"category": "Terminal"
 			},
 			{
-				"command": "roo-cline.terminalExplainCommandInCurrentTask",
+				"command": "vscode-zgsm.terminalExplainCommandInCurrentTask",
 				"title": "Explain This Command (Current Task)",
 				"category": "Terminal"
 			},
 			{
-				"command": "roo-cline.setCustomStoragePath",
+				"command": "vscode-zgsm.setCustomStoragePath",
 				"title": "Set Custom Storage Path",
 				"category": "Roo Code"
 			},
 			{
-				"command": "roo-cline.focusInput",
+				"command": "vscode-zgsm.focusInput",
 				"title": "Focus Input Field",
 				"category": "Roo Code"
 			},
@@ -255,19 +255,19 @@
 			],
 			"zhuge-shenma": [
 				{
-					"command": "roo-cline.addToContext",
+					"command": "vscode-zgsm.addToContext",
 					"group": "zhuge-shenma@1"
 				},
 				{
-					"command": "roo-cline.explainCode",
+					"command": "vscode-zgsm.explainCode",
 					"group": "zhuge-shenma@2"
 				},
 				{
-					"command": "roo-cline.fixCode",
+					"command": "vscode-zgsm.fixCode",
 					"group": "zhuge-shenma@3"
 				},
 				{
-					"command": "roo-cline.improveCode",
+					"command": "vscode-zgsm.improveCode",
 					"group": "zhuge-shenma@4"
 				},
 				{
@@ -307,67 +307,67 @@
 			],
 			"terminal/context": [
 				{
-					"submenu": "roo-code.terminalMenu",
+					"submenu": "vscode-zgsm.terminalMenu",
 					"group": "navigation"
 				}
 			],
-			"roo-code.terminalMenu": [
+			"vscode-zgsm.terminalMenu": [
 				{
-					"command": "roo-cline.terminalAddToContext",
+					"command": "vscode-zgsm.terminalAddToContext",
 					"group": "1_actions@1"
 				},
 				{
-					"command": "roo-cline.terminalFixCommand",
+					"command": "vscode-zgsm.terminalFixCommand",
 					"group": "1_actions@2"
 				},
 				{
-					"command": "roo-cline.terminalExplainCommand",
+					"command": "vscode-zgsm.terminalExplainCommand",
 					"group": "1_actions@3"
 				},
 				{
-					"command": "roo-cline.terminalFixCommandInCurrentTask",
+					"command": "vscode-zgsm.terminalFixCommandInCurrentTask",
 					"group": "1_actions@5"
 				},
 				{
-					"command": "roo-cline.terminalExplainCommandInCurrentTask",
+					"command": "vscode-zgsm.terminalExplainCommandInCurrentTask",
 					"group": "1_actions@6"
 				}
 			],
 			"view/title": [
 				{
-					"command": "roo-cline.plusButtonClicked",
+					"command": "vscode-zgsm.plusButtonClicked",
 					"group": "navigation@1",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == vscode-zgsm.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.promptsButtonClicked",
+					"command": "vscode-zgsm.promptsButtonClicked",
 					"group": "navigation@2",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == vscode-zgsm.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.mcpButtonClicked",
+					"command": "vscode-zgsm.mcpButtonClicked",
 					"group": "navigation@3",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == vscode-zgsm.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.historyButtonClicked",
+					"command": "vscode-zgsm.historyButtonClicked",
 					"group": "navigation@4",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == vscode-zgsm.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.popoutButtonClicked",
+					"command": "vscode-zgsm.popoutButtonClicked",
 					"group": "navigation@5",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == vscode-zgsm.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.settingsButtonClicked",
+					"command": "vscode-zgsm.settingsButtonClicked",
 					"group": "navigation@6",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == vscode-zgsm.SidebarProvider"
 				},
 				{
-					"command": "roo-cline.helpButtonClicked",
+					"command": "vscode-zgsm.helpButtonClicked",
 					"group": "navigation@7",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == vscode-zgsm.SidebarProvider"
 				},
 				{
 					"command": "vscode-zgsm.view.userHelperDoc",
@@ -387,39 +387,39 @@
 			],
 			"editor/title": [
 				{
-					"command": "roo-cline.plusButtonClicked",
+					"command": "vscode-zgsm.plusButtonClicked",
 					"group": "navigation@1",
-					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
 				},
 				{
-					"command": "roo-cline.promptsButtonClicked",
+					"command": "vscode-zgsm.promptsButtonClicked",
 					"group": "navigation@2",
-					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
 				},
 				{
-					"command": "roo-cline.mcpButtonClicked",
+					"command": "vscode-zgsm.mcpButtonClicked",
 					"group": "navigation@3",
-					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
 				},
 				{
-					"command": "roo-cline.historyButtonClicked",
+					"command": "vscode-zgsm.historyButtonClicked",
 					"group": "navigation@4",
-					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
 				},
 				{
-					"command": "roo-cline.popoutButtonClicked",
+					"command": "vscode-zgsm.popoutButtonClicked",
 					"group": "navigation@5",
-					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
 				},
 				{
-					"command": "roo-cline.settingsButtonClicked",
+					"command": "vscode-zgsm.settingsButtonClicked",
 					"group": "navigation@6",
-					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
 				},
 				{
-					"command": "roo-cline.helpButtonClicked",
+					"command": "vscode-zgsm.helpButtonClicked",
 					"group": "navigation@7",
-					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
 				}
 			]
 		},

@@ -30,6 +30,7 @@ import { getGlamaModels } from "../../api/providers/glama"
 import { getUnboundModels } from "../../api/providers/unbound"
 import { getRequestyModels } from "../../api/providers/requesty"
 import { getOpenAiModels } from "../../api/providers/openai"
+import { getZgsmModels } from "../../api/providers/zgsm"
 import { getOllamaModels } from "../../api/providers/ollama"
 import { getVsCodeLmModels } from "../../api/providers/vscode-lm"
 import { getLmStudioModels } from "../../api/providers/lmstudio"
@@ -430,6 +431,17 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 					message?.values?.hostHeader,
 				)
 				provider.postMessageToWebview({ type: "openAiModels", openAiModels })
+			}
+
+			break
+		case "refreshZgsmModels":
+			if (message?.values?.baseUrl && message?.values?.apiKey) {
+				const zgsmModels = await getZgsmModels(
+					message?.values?.baseUrl,
+					message?.values?.apiKey,
+					message?.values?.hostHeader,
+				)
+				provider.postMessageToWebview({ type: "zgsmModels", zgsmModels })
 			}
 
 			break
