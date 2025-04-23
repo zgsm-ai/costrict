@@ -1,0 +1,46 @@
+{
+	"greeting": "诸葛神码能为您做什么？",
+	"aboutMe": "得益于最新的代理编码能力突破，我可以逐步处理复杂的软件开发任务。通过允许我创建和编辑文件、探索复杂项目、使用浏览器以及执行终端命令（在您授予权限后）的工具，我可以以超越代码补全或技术支持的方式协助您。我甚至可以使用MCP创建新工具并扩展自己的能力。",
+	"instructions": {
+		"wantsToFetch": "诸葛神码想要获取详细指令以协助当前任务"
+	},
+	"fileOperations": {
+		"wantsToRead": "诸葛神码想要读取此文件：",
+		"wantsToReadOutsideWorkspace": "诸葛神码想要读取工作区外的此文件：",
+		"didRead": "诸葛神码已读取此文件：",
+		"wantsToEdit": "诸葛神码想要编辑此文件：",
+		"wantsToEditOutsideWorkspace": "诸葛神码想要编辑工作区外的此文件：",
+		"wantsToCreate": "诸葛神码想要创建新文件："
+	},
+	"directoryOperations": {
+		"wantsToViewTopLevel": "诸葛神码想要查看此目录中的顶层文件：",
+		"didViewTopLevel": "诸葛神码已查看此目录中的顶层文件：",
+		"wantsToViewRecursive": "诸葛神码想要递归查看此目录中的所有文件：",
+		"didViewRecursive": "诸葛神码已递归查看此目录中的所有文件：",
+		"wantsToViewDefinitions": "诸葛神码想要查看此目录中使用的源代码定义名称：",
+		"didViewDefinitions": "诸葛神码已查看此目录中使用的源代码定义名称：",
+		"wantsToSearch": "诸葛神码想要在此目录中搜索<code>{{regex}}</code>：",
+		"didSearch": "诸葛神码已在此目录中搜索<code>{{regex}}</code>："
+	},
+	"mcp": {
+		"wantsToUseTool": "诸葛神码想要在{{serverName}} MCP服务器上使用工具：",
+		"wantsToAccessResource": "诸葛神码想要访问{{serverName}} MCP服务器上的资源："
+	},
+	"modes": {
+		"wantsToSwitch": "诸葛神码想要切换到{{mode}}模式",
+		"wantsToSwitchWithReason": "诸葛神码想要切换到{{mode}}模式，因为：{{reason}}",
+		"didSwitch": "诸葛神码已切换到{{mode}}模式",
+		"didSwitchWithReason": "诸葛神码已切换到{{mode}}模式，因为：{{reason}}"
+	},
+	"subtasks": {
+		"wantsToCreate": "诸葛神码想要在{{mode}}模式下创建新子任务：",
+		"wantsToFinish": "诸葛神码想要完成此子任务"
+	},
+	"questions": {
+		"hasQuestion": "诸葛神码有一个问题："
+	},
+	"troubleMessage": "诸葛神码遇到了一些问题...",
+	"browser": {
+		"rooWantsToUse": "诸葛神码想要使用浏览器："
+	}
+}
