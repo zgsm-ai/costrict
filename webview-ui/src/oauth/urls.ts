@@ -1,3 +1,4 @@
+import { defaultAuthConfig } from "@/config/auth"
 import { ApiConfiguration } from "../../../src/shared/api"
 import { getAuthConfig, updateAuthConfig } from "./config"
 
@@ -21,9 +22,9 @@ export function getRequestyAuthUrl(uriScheme?: string) {
 export function getZgsmAuthUrl(stateId: string, apiConfiguration?: ApiConfiguration, uriScheme?: string) {
 	if (apiConfiguration) {
 		updateAuthConfig({
-			baseUrl: apiConfiguration.zgsmBaseUrl,
-			clientId: apiConfiguration.zgsmClientId,
-			clientSecret: apiConfiguration.zgsmClientSecret,
+			baseUrl: apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl,
+			clientId: apiConfiguration.zgsmClientId || defaultAuthConfig.clientId,
+			clientSecret: apiConfiguration.zgsmClientSecret || defaultAuthConfig.clientSecret,
 			redirectUri: apiConfiguration.zgsmRedirectUri,
 			loginUrl: apiConfiguration.zgsmLoginUrl,
 			logoutUrl: apiConfiguration.zgsmLogoutUrl,

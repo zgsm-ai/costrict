@@ -27,6 +27,10 @@ export interface OpenAiHandlerOptions extends ApiHandlerOptions {}
 
 const AZURE_AI_INFERENCE_PATH = "/models/chat/completions"
 
+const ZGSM_DEFAULT_BASEURL = "https://zgsm.sangfor.com"
+
+let ZGSM_DEFAULT_MODELID = "deepseek-chat"
+
 export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: OpenAiHandlerOptions
 	private client: OpenAI
@@ -35,10 +39,10 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		super()
 		this.options = options
 
-		const baseURL = `${this.options.zgsmBaseUrl ?? "https://zgsm.sangfor.com"}/v1`
+		const baseURL = `${this.options.zgsmBaseUrl ?? ZGSM_DEFAULT_BASEURL}/v1`
 		const apiKey = this.options.zgsmApiKey ?? "not-provided"
-		const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl)
-		const urlHost = this._getUrlHost(this.options.zgsmBaseUrl)
+		const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
+		const urlHost = this._getUrlHost(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
 		const isAzureOpenAi = urlHost === "azure.com" || urlHost.endsWith(".azure.com") || options.openAiUseAzure
 
 		if (isAzureAiInference) {
@@ -75,8 +79,8 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		const modelInfo = this.getModel().info
-		const modelUrl = `${this.options.zgsmBaseUrl ?? ""}/v1`
-		const modelId = this.options.zgsmModelId ?? ""
+		const modelUrl = `${this.options.zgsmBaseUrl ?? ZGSM_DEFAULT_BASEURL}/v1`
+		const modelId = this.options.zgsmModelId ?? ZGSM_DEFAULT_MODELID
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const enabledLegacyFormat = this.options.openAiLegacyFormat ?? false
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
@@ -232,14 +236,14 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override getModel(): { id: string; info: ModelInfo } {
 		return {
-			id: this.options.zgsmModelId ?? "",
+			id: this.options.zgsmModelId ?? ZGSM_DEFAULT_MODELID,
 			info: this.options.openAiCustomModelInfo ?? openAiModelInfoSaneDefaults,
 		}
 	}
 
 	async completePrompt(prompt: string): Promise<string> {
 		try {
-			const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl)
+			const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
 			const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
 				model: this.getModel().id,
 				messages: [{ role: "user", content: prompt }],
@@ -264,7 +268,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		messages: Anthropic.Messages.MessageParam[],
 	): ApiStream {
 		if (this.options.openAiStreamingEnabled ?? true) {
-			const methodIsAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl)
+			const methodIsAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
 
 			const stream = await this.client.chat.completions.create(
 				{
@@ -296,7 +300,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				],
 			}
 
-			const methodIsAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl)
+			const methodIsAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
 
 			const response = await this.client.chat.completions.create(
 				requestOptions,
@@ -371,6 +375,9 @@ export async function getZgsmModels(baseUrl?: string, apiKey?: string, hostHeade
 
 		const response = await axios.get(`${baseUrl}/v1/models`, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
+		if (modelsArray[0]) {
+			ZGSM_DEFAULT_MODELID = modelsArray[0]
+		}
 		return [...new Set<string>(modelsArray)]
 	} catch (error) {
 		return []
