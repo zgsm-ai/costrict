@@ -36,6 +36,7 @@ import {
 	requestyDefaultModelId,
 	requestyDefaultModelInfo,
 	ApiProvider,
+	zgsmDefaultModelId,
 } from "../../../../src/shared/api"
 import { ExtensionMessage } from "../../../../src/shared/ExtensionMessage"
 
@@ -59,6 +60,8 @@ import { R1FormatSetting } from "./R1FormatSetting"
 import { OpenRouterBalanceDisplay } from "./OpenRouterBalanceDisplay"
 import { RequestyBalanceDisplay } from "./RequestyBalanceDisplay"
 import { useZgsmOAuth } from "../../hooks/useOAuth"
+import { defaultAuthConfig } from "@/config/auth"
+import { useExtensionState } from "@/context/ExtensionStateContext"
 
 interface ApiOptionsProps {
 	uriScheme: string | undefined
@@ -77,6 +80,7 @@ const ApiOptions = ({
 	errorMessage,
 	setErrorMessage,
 }: ApiOptionsProps) => {
+	const { currentApiConfigName } = useExtensionState()
 	const { t } = useAppTranslation()
 	const { generateZgsmAuthUrl } = useZgsmOAuth()
 
@@ -160,7 +164,7 @@ const ApiOptions = ({
 				vscode.postMessage({
 					type: "refreshZgsmModels",
 					values: {
-						baseUrl: apiConfiguration?.zgsmBaseUrl,
+						baseUrl: apiConfiguration?.zgsmBaseUrl || defaultAuthConfig.baseUrl,
 						apiKey: apiConfiguration?.zgsmApiKey,
 						hostHeader: apiConfiguration?.openAiHostHeader,
 					},
@@ -344,21 +348,31 @@ const ApiOptions = ({
 						value={apiConfiguration?.zgsmBaseUrl || ""}
 						type="url"
 						onInput={handleInputChange("zgsmBaseUrl")}
-						placeholder={t("settings:placeholders.baseUrl")}
+						onChange={(event: any) => {
+							vscode.postMessage({
+								type: "upsertApiConfiguration",
+								text: currentApiConfigName,
+								apiConfiguration: {
+									...apiConfiguration,
+									zgsmBaseUrl: event.target._currentValue,
+								},
+							})
+						}}
+						placeholder={`default: ${defaultAuthConfig.baseUrl}`}
 						className="w-full">
 						<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
 					</VSCodeTextField>
-					{apiConfiguration.zgsmBaseUrl && apiConfiguration.zgsmApiKey && (
+					{apiConfiguration.zgsmApiKey && (
 						<ModelPicker
 							apiConfiguration={apiConfiguration}
 							setApiConfigurationField={setApiConfigurationField}
-							defaultModelId="deepseek-chat"
+							defaultModelId={apiConfiguration.zgsmModelId || zgsmDefaultModelId}
 							defaultModelInfo={openAiModelInfoSaneDefaults}
 							models={zgsmModels}
 							modelIdKey="zgsmModelId"
 							modelInfoKey="openAiCustomModelInfo"
 							serviceName="OpenAI"
-							serviceUrl={apiConfiguration.zgsmBaseUrl}
+							serviceUrl={apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl}
 						/>
 					)}
 					{!fromWelcomeView && (
