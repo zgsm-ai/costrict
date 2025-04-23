@@ -8,5 +8,77 @@
 	},
 	"input": {
 		"task_prompt": "What should Shenma do?"
+	},
+	"window":{
+		"error":{
+			"failed_to_get_login_info": "Failed to get login information. Please log in again to use the completion service."
+		},
+		"infor":{
+			"enable_disable_function_quick_menu": "Enable/Disable \"Function Quick Menu\" and \"Intelligent Code Completion\""
+		}
+	},
+	"button":{
+		"enable_function_quick_menu": "Enable Quick Menu",
+		"disable": "Disable",
+		"enable": "Enable"
+	},
+	"function": {
+		"completion": "Completion",
+		"menu": "Menu"
+	},
+	"command": {
+		"explain": {
+			"name": "Explain Code",
+			"tip": "Explain code implementation",
+			"input_prompt": "What would you like ZGSM to explain?",
+			"input_placeholder": "E.g. How does the error handling work?"
+		},
+		"add_comment": {
+			"name": "Add Comments",
+			"tip": "Add comments to this function",
+			"input_prompt": "What would you like ZGSM to do?",
+			"input_placeholder": "E.g. Add comments to the code"
+		},
+		"add_tests": {
+			"name": "Generate Unit Tests",
+			"tip": "Generate unit tests for this function",
+			"input_prompt": "What would you like ZGSM to do?",
+			"input_placeholder": "E.g. Generate unit tests for this function"
+		},
+		"code_review": {
+			"name": "Code Review",
+			"tip": "Check for code quality issues and provide suggestions",
+			"input_prompt": "What would you like ZGSM to do?",
+			"input_placeholder": "E.g. Check for code quality issues and provide suggestions to the code"
+		},
+		"add_debug_code": {
+			"name": "Add Debug Code",
+			"tip": "Enhance troubleshooting capabilities by adding logs and debug code to key logic steps",
+			"input_prompt": "What would you like ZGSM to do?",
+			"input_placeholder": "E.g. Enhance troubleshooting capabilities by adding logs and debug code to key logic steps to the code"
+		},
+		"add_stronger_code": {
+			"name": "Add Error Handling",
+			"tip": "Enhance robustness by adding exception handling and parameter validation",
+			"input_prompt": "What would you like ZGSM to do?",
+			"input_placeholder": "E.g. Enhance robustness by adding exception handling and parameter validation to the code"
+		},
+		"simplify_code": {
+			"name": "Simplify Code",
+			"tip": "Remove ineffective code",
+			"input_prompt": "What would you like ZGSM to do?",
+			"input_placeholder": "E.g. Remove ineffective code"
+		},
+		"performance_optimization": {
+			"name": "Performance Optimization",
+			"tip": "Improve code performance, provide modification suggestions, focus on efficiency issues",
+			"input_prompt": "What would you like ZGSM to do?",
+			"input_placeholder": "E.g. Improve code performance, provide modification suggestions, ffocus on efficiency issues to the following code"
+		},
+		"shenma_instruct_set": {
+			"tip": "Shenma Instruction Set",
+			"input_prompt": "What would you like ZGSM to do?",
+			"input_placeholder": "E.g. Add comments to the code"
+		}
 	}
 }

@@ -8,5 +8,77 @@
 	},
 	"input": {
 		"task_prompt": "诸葛神码应该做什么？"
+	},
+	"window":{
+		"error":{
+			"failed_to_get_login_info": "获取登录信息失败，请重新登录以使用代码补全功能。"
+		},
+		"infor":{
+			"enable_disable_function_quick_menu": "启用/禁用“功能快捷菜单”和“智能代码补全”"
+		}
+	},
+	"button":{
+		"enable_function_quick_menu": "启用快捷菜单",
+		"disable": "禁用",
+		"enable": "启用"
+	},
+	"function": {
+		"completion": "补全",
+		"menu": "菜单"
+	},
+	"command": {
+		"explain": {
+			"name": "解释代码",
+			"tip": "解释代码实现",
+			"input_prompt": "你想让诸葛神码解释什么？",
+			"input_placeholder": "例如：如何处理错误？"
+		},
+		"add_comment": {
+			"name": "添加注释",
+			"tip": "添加注释到此函数",
+			"input_prompt": "你想让诸葛神码做什么？",
+			"input_placeholder": "例如：添加注释到代码"
+		},
+		"add_tests": {
+			"name": "生成单元测试",
+			"tip": "为函数生成单元测试",
+			"input_prompt": "你想让诸葛神码做什么？",
+			"input_placeholder": "例如：生成单元测试"
+		},
+		"code_review": {
+			"name": "代码审查",
+			"tip": "检查代码质量问题并提供建议",
+			"input_prompt": "你想让诸葛神码做什么？",
+			"input_placeholder": "例如：检查代码质量问题并对代码提出建议"
+		},
+		"add_debug_code": {
+			"name": "添加日志",
+			"tip": "在关键逻辑步骤中添加日志和调试代码来增强故障排除能力",
+			"input_prompt": "你想让诸葛神码做什么？",
+			"input_placeholder": "例如：在代码的关键逻辑步骤中添加日志和调试代码来增强故障排除能力"
+		},
+		"add_stronger_code": {
+			"name": "增加容错",
+			"tip": "增强鲁棒性，通过添加异常处理和参数验证",
+			"input_prompt": "你想让诸葛神码做什么？",
+			"input_placeholder": "例如：增强代码鲁棒性，通过添加异常处理和参数验证"
+		},
+		"simplify_code": {
+			"name": "简化代码",
+			"tip": "删除无效代码",
+			"input_prompt": "你想让诸葛神码做什么？",
+			"input_placeholder": "例如：删除无效代码"
+		},
+		"performance_optimization": {
+			"name": "性能优化",
+			"tip": "提高代码性能，提供修改建议，专注于效率问题",
+			"input_prompt": "你想让诸葛神码做什么？",
+			"input_placeholder": "例如：提高代码性能，提供修改建议，专注于效率问题"
+		},
+		"shenma_instruct_set": {
+			"tip": "诸葛神码指令集",
+			"input_prompt": "你想让诸葛神码做什么？",
+			"input_placeholder": "例如：添加注释到代码"
+		}	
 	}
 }
