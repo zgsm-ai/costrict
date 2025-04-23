@@ -123,7 +123,7 @@ async function showHumanRelayDialog(promptText: string): Promise<string | undefi
 
 		// Register a global callback function
 		vscode.commands.executeCommand(
-			"roo-cline.registerHumanRelayCallback",
+			"vscode-zgsm.registerHumanRelayCallback",
 			requestId,
 			(response: string | undefined) => {
 				resolve(response)
@@ -131,7 +131,7 @@ async function showHumanRelayDialog(promptText: string): Promise<string | undefi
 		)
 
 		// Open the dialog box directly using the current panel
-		vscode.commands.executeCommand("roo-cline.showHumanRelayDialog", {
+		vscode.commands.executeCommand("vscode-zgsm.showHumanRelayDialog", {
 			requestId,
 			promptText,
 		})
