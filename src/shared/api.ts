@@ -945,3 +945,18 @@ export const unboundDefaultModelInfo: ModelInfo = {
 	cacheWritesPrice: 3.75,
 	cacheReadsPrice: 0.3,
 }
+
+// 所有models
+export const allModels: Record<string, any> = {
+	...anthropicModels,
+	...bedrockModels,
+	...geminiModels,
+	...openAiNativeModels,
+	...deepSeekModels,
+	...mistralModels,
+	...openAiModelInfoSaneDefaults,
+	...vertexModels,
+	"anthropic/claude-3-7-sonnet": glamaDefaultModelInfo,
+	"anthropic/claude-3-7-sonnet-latest": requestyDefaultModelInfo,
+	"anthropic/claude-3-5-sonnet-20241022": unboundDefaultModelInfo,
+}
