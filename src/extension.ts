@@ -27,6 +27,7 @@ import { migrateSettings } from "./utils/migrateSettings"
 
 import { handleUri, registerCommands, registerCodeActions, registerTerminalActions } from "./activate"
 import { formatLanguage } from "./shared/language"
+import { osLocale } from "os-locale"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -55,8 +56,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Initialize telemetry service after environment variables are loaded.
 	telemetryService.initialize()
 
+	// Get system locale
+	const systemLocale = await osLocale()
+
 	// Initialize i18n for internationalization support
-	initializeI18n(context.globalState.get("language") ?? formatLanguage(vscode.env.language))
+	initializeI18n(context.globalState.get("language") ?? formatLanguage(systemLocale))
 
 	// Initialize terminal shell execution handlers.
 	TerminalRegistry.initialize()
