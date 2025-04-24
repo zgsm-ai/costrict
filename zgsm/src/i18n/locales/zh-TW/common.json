@@ -11,7 +11,17 @@
 	},
 	"window":{
 		"error":{
-			"failed_to_get_login_info": "無法取得登入資訊。請重新登入以使用補全服務。"
+			"failed_to_get_login_info": "無法取得登入資訊。請重新登入以使用補全服務。",
+			"login_failed": "登入失敗，請重新登入。",
+			"login_expired": "登入已過期，請重新登入。",
+			"failed_to_open_source_file": "無法開啟原始碼檔案。請檢查原始碼檔案是否已被刪除。",
+			"failed_to_compare_or_adopt": "目前沒有開啟的檔案，無法比較或採用。",
+			"failed_to_display_diff": "無法顯示差異。請檢查原始碼檔案是否已被刪除。如果錯誤持續存在，請聯繫諸葛神碼客服。",
+			"failed_to_jump_by_path": "跳轉失敗。檔案路徑為空。",
+			"failed_to_jump": "跳轉失敗",
+			"failed_to_jump_by_path_not_exist": "跳轉失敗，檔案路徑不存在。檔案路徑：",
+			"sign_in_failed": "登入失敗：",
+			"please_log_in_first": "請先登入。"
 		},
 		"infor":{
 			"enable_disable_function_quick_menu": "啟用/禁用“功能快捷選單”和“智能程式碼補全”"
@@ -24,7 +34,7 @@
 	},
 	"function": {
 		"completion": "補全",
-		"menu": "選單"
+		"quick_menu": "快捷選單"
 	},
 	"command": {
 		"explain": {

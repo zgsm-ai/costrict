@@ -17,6 +17,7 @@ import { Logger } from "../common/log-util";
 import { getUuid } from "../common/util";
 import { getFullLineCode, getVscodeTempFileDir, getWebviewContent } from "../common/vscode-util";
 import { getLanguageByFilePath } from "../common/lang-util";
+import { t } from "../../../src/i18n";
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
     private static instance: ChatViewProvider;          // Singleton, ensuring a globally unique instance
@@ -204,7 +205,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     private async doLogin(message: any) {
         const accessToken = await Auth0AuthenticationProvider.getInstance().login();
         if (!accessToken) {
-            vscode.window.showInformationMessage('Login failed, please log in again');
+            vscode.window.showInformationMessage(t("window.error.login_failed"));
             return;
         }
         const username = Auth0AuthenticationProvider.getUsername(accessToken);
@@ -220,7 +221,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     private async doCheckToken(message: any) {
         const accessToken = await Auth0AuthenticationProvider.getInstance().checkToken();
         if (!accessToken) {
-            vscode.window.showInformationMessage('Login has expired, please log in again');
+            vscode.window.showInformationMessage(t("window.error.login_expired"));
             return;
         }
         const username = Auth0AuthenticationProvider.getUsername(accessToken);
@@ -418,7 +419,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             if (!filePath || range?.startLine === undefined || range?.endLine === undefined || (key === CODELENS_FUNC.addTests.key)) {
                 editor = vscode.window.activeTextEditor;
                 if (!editor) {
-                    vscode.window.showErrorMessage("There is no open file currently, unable to compare or adopt");
+                    vscode.window.showErrorMessage(t("window.error.failed_to_compare_or_adopt"));
                     return;
                 }
                 fileUri = editor.document.uri;
@@ -466,7 +467,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             await vscode.commands.executeCommand('vscode.diff', vscode.Uri.file(tempFilePath), fileUri, 'ZGSM View Changes');
         } catch (err) {
             Logger.error(`ideDiffCode. fail` + err);
-            vscode.window.showInformationMessage('Failed to display the diff. Please check if the source file has been deleted. If the error persists, please contact the ZGSM customer service.');
+            vscode.window.showInformationMessage(t("window.error.failed_to_display_diff"));
         }
     }
 
@@ -483,7 +484,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             if (!filePath || range?.startLine === undefined || range?.endLine === undefined || (key === CODELENS_FUNC.addTests.key)) {
                 editor = vscode.window.activeTextEditor;
                 if (!editor) {
-                    vscode.window.showErrorMessage("There is no open file currently, unable to compare or adopt.");
+                    vscode.window.showErrorMessage(t("window.error.failed_to_compare_or_adopt"));
                     return;
                 }
                 // Insert the code at the cursor (or replace the selected block).
@@ -522,7 +523,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             }
         } catch (err) {
             Logger.error(`insertCode. file open fail` + err);
-            vscode.window.showInformationMessage('Failed to open the source file. Please check if the source file has been deleted.');
+            vscode.window.showInformationMessage(t("window.error.failed_to_open_source_file"));
         }
     }
 
@@ -537,7 +538,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 return;
             }
             if (!filePath) {
-                vscode.window.showInformationMessage('Jump failed. The file path is empty.');
+                vscode.window.showInformationMessage(t("window.error.failed_to_jump_by_path"));
                 return;
             }
 
@@ -569,11 +570,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 }
             } else {
                 Logger.info(`The file path does not exist: ${filePath}`);
-                vscode.window.showInformationMessage(`Jump failed: The file path ${filePath} does not exist.`);
+                vscode.window.showInformationMessage(t("window.error.failed_to_jump_by_path_not_exist") + filePath);
             }
         } catch (err) {
             Logger.error("doJumpByPath failed:" + err);
-            vscode.window.showInformationMessage('Jump failed.');
+            vscode.window.showInformationMessage(t("window.error.failed_to_jump"));
         }
     }
 

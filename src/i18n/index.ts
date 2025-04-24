@@ -1,4 +1,5 @@
 import i18next from "./setup"
+import { changeZgsmLanguage } from "../../zgsm/src/i18n/setup"
 
 /**
  * Initialize i18next with the specified language
@@ -7,6 +8,7 @@ import i18next from "./setup"
  */
 export function initializeI18n(language: string): void {
 	i18next.changeLanguage(language)
+	changeZgsmLanguage()
 }
 
 /**
@@ -25,6 +27,7 @@ export function getCurrentLanguage(): string {
  */
 export function changeLanguage(language: string): void {
 	i18next.changeLanguage(language)
+	changeZgsmLanguage()
 }
 
 /**

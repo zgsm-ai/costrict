@@ -11,7 +11,17 @@
 	},
 	"window":{
 		"error":{
-			"failed_to_get_login_info": "获取登录信息失败，请重新登录以使用代码补全功能。"
+			"failed_to_get_login_info": "获取登录信息失败，请重新登录以使用代码补全功能。",
+			"login_failed": "登录失败，请重新登录。",
+			"login_expired": "登录已过期，请重新登录。",
+			"failed_to_open_source_file": "无法打开源文件。请检查源文件是否已被删除。",
+			"failed_to_compare_or_adopt": "当前没有打开的文件，无法比较或采用。",
+			"failed_to_display_diff": "无法显示差异。请检查源文件是否已被删除。如果错误持续存在，请联系诸葛神码客服。",
+			"failed_to_jump_by_path": "跳转失败。文件路径为空。",
+			"failed_to_jump": "跳转失败。",
+			"failed_to_jump_by_path_not_exist": "跳转失败，文件路径不存在。文件路径：",
+			"sign_in_failed": "登录失败：",
+			"please_log_in_first": "请先登录。"
 		},
 		"infor":{
 			"enable_disable_function_quick_menu": "启用/禁用“功能快捷菜单”和“智能代码补全”"
@@ -24,7 +34,7 @@
 	},
 	"function": {
 		"completion": "补全",
-		"menu": "菜单"
+		"quick_menu": "快捷菜单"
 	},
 	"command": {
 		"explain": {
