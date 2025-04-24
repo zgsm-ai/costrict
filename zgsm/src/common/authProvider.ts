@@ -29,6 +29,7 @@ import { Logger } from "./log-util"
 import { getRandomId } from "./util"
 import { ChatViewProvider } from "../chatView/chat-view-provider"
 import { envSetting, envClient, updateApiKey } from "./env"
+import { t } from "../../../src/i18n"
 
 /**
  * Build request headers (without authentication information)
@@ -177,7 +178,7 @@ export default class Auth0AuthenticationProvider implements AuthenticationProvid
 			this._sessionChangeEmitter.fire({ added: [session], removed: [], changed: [] })
 			return session
 		} catch (e) {
-			window.showErrorMessage(`Sign in failed: ${e}`)
+			window.showErrorMessage(t("window.error.sign_in_failed") + e)
 			throw e
 		}
 	}
@@ -287,12 +288,12 @@ export default class Auth0AuthenticationProvider implements AuthenticationProvid
 		try {
 			const session = await this.context.secrets.get(ACCESS_TOKEN_KEY)
 			if (!session) {
-				window.showInformationMessage("Please log in first")
+				window.showInformationMessage(t("window.error.please_log_in_first"))
 				return
 			}
 			const tokenData = JSON.parse(session)
 			if (!tokenData || !tokenData.refresh_token) {
-				window.showInformationMessage("Please log in first")
+				window.showInformationMessage(t("window.error.please_log_in_first"))
 				return
 			}
 			const res = await axios.post(
@@ -418,7 +419,7 @@ export default class Auth0AuthenticationProvider implements AuthenticationProvid
 					} else {
 						this.storeToken({})
 						resolve("")
-						window.showErrorMessage("Login failed, please log in again!")
+						window.showErrorMessage(t("window.error.login_failed"))
 					}
 				}
 			}
@@ -448,7 +449,7 @@ export default class Auth0AuthenticationProvider implements AuthenticationProvid
 			ChatViewProvider.getInstance().sendMessage({
 				action: "ide.logout",
 			})
-			window.showErrorMessage("Login has expired, please log in again!")
+			window.showErrorMessage(t("window.error.login_expired"))
 			return null
 		} else if (res.status == 200) {
 			const data = res.data
