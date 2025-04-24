@@ -294,36 +294,26 @@ function setupLangSwitch(
 }
 
 /**
- * Function quick menu button settings
+ * Create a button command with the given configuration
  */
-const codelensCommand: ButtonCommand = {
-    funcName: t("common:function.menu"),
-    setupGlobal: (button: any, value: boolean|LangSwitch) => {
-        const config = vscode.workspace.getConfiguration(configCodeLens);
-        config.update("enabled", value as boolean, vscode.ConfigurationTarget.Global);
-        LangSetting.codelensEnabled = value as boolean;
-    },
-    setupLanguage: (button: any, value: boolean|LangSwitch) => {
-        const config = vscode.workspace.getConfiguration(configCodeLens);
-        setupLangSwitch(button, value, config);
-    }
-};
-
-/**
- * Completion button settings
- */
-const completionCommand: ButtonCommand = {
-    funcName: t("common:function.completion"),
-    setupGlobal: (button: any, value: boolean|LangSwitch) => {
-        const config = vscode.workspace.getConfiguration(configCompletion);
-        config.update("enabled", value as boolean, vscode.ConfigurationTarget.Global);
-        LangSetting.completionEnabled = value as boolean;
-    },
-    setupLanguage: (button: any, value: boolean|LangSwitch) => {
-        const config = vscode.workspace.getConfiguration(configCompletion);
-        setupLangSwitch(button, value, config);
-    }
-};
+function createButtonCommand(
+    funcName: string,
+    configName: string,
+    enabledSetting: { value: boolean }
+): ButtonCommand {
+    return {
+        funcName: t(funcName),
+        setupGlobal: (button: any, value: boolean|LangSwitch) => {
+            const config = vscode.workspace.getConfiguration(configName);
+            config.update("enabled", value as boolean, vscode.ConfigurationTarget.Global);
+            enabledSetting.value = value as boolean;
+        },
+        setupLanguage: (button: any, value: boolean|LangSwitch) => {
+            const config = vscode.workspace.getConfiguration(configName);
+            setupLangSwitch(button, value, config);
+        }
+    };
+}
 
 /**
  * Status bar click event function
@@ -337,10 +327,22 @@ export function setupLangSwitchs() {
     const completionSwitch = LangSetting.getCompletionDisable(language);
     const codelensSwitch = LangSetting.getCodelensDisable(language);
 
-    let buttons = createButtons(language, codelensCommand,
-        LangSetting.codelensEnabled, codelensSwitch);
-    buttons = buttons.concat(...createButtons(language, completionCommand,
-        LangSetting.completionEnabled, completionSwitch));
+    let buttons = createButtons(
+		language,
+		createButtonCommand(t("common:function.quick_menu"), configCodeLens, { value: LangSetting.codelensEnabled }),
+		LangSetting.codelensEnabled,
+		codelensSwitch,
+	)
+	buttons = buttons.concat(
+		...createButtons(
+			language,
+			createButtonCommand(t("common:function.completion"), configCompletion, {
+				value: LangSetting.completionEnabled,
+			}),
+			LangSetting.completionEnabled,
+			completionSwitch,
+		),
+	)
 
     let buttonTexts: string[] = [];
     buttons.forEach((button) => {

@@ -24,7 +24,7 @@
 	},
 	"function": {
 		"completion": "补全",
-		"menu": "菜单"
+		"quick_menu": "快捷菜单"
 	},
 	"command": {
 		"explain": {

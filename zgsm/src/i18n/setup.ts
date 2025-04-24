@@ -110,4 +110,18 @@ export const mergeLanguageResources = (
 	return mergedTranslations
 }
 
+// List to store refresh functions
+const languageRefreshFuncs: (() => void)[] = [];
+
+// Method to register a refresh function when language changes
+export const registerRefreshFunction = (fn: () => void) => {
+	languageRefreshFuncs.push(fn);
+};
+
+// Refresh all registered functions when language changes
+export const changeZgsmLanguage = () => {
+	// Execute all registered refresh functions
+	languageRefreshFuncs.forEach(fn => fn());
+};
+
 export default i18next
