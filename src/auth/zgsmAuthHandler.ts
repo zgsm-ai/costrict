@@ -1,3 +1,4 @@
+import { defaultAuthConfig } from "./../../webview-ui/src/config/auth"
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { ApiConfiguration } from "../shared/api"
@@ -69,7 +70,11 @@ export async function handleZgsmAuthCallback(code: string, state: string, provid
 		// 获取当前的 API 配置
 		const { apiConfiguration } = await provider.getState()
 		// 获取访问令牌
-		const tokenResponse = await getAccessToken(code, { ...apiConfiguration, apiProvider: "zgsm" })
+		const tokenResponse = await getAccessToken(code, {
+			...apiConfiguration,
+			zgsmBaseUrl: apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl,
+			apiProvider: "zgsm",
+		})
 
 		if (tokenResponse.status === 200 && tokenResponse.data && tokenResponse.data.access_token) {
 			const tokenData = tokenResponse.data

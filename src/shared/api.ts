@@ -15,7 +15,7 @@ export type ApiConfiguration = ProviderSettings & {
 	zgsmTokenUrl?: string // Token 获取 URL
 	zgsmApiKey?: string // ZGSM API 密钥
 }
-
+export const zgsmDefaultModelId = "deepseek-chat"
 // Anthropic
 // https://docs.anthropic.com/en/docs/about-claude/models
 export type AnthropicModelId = keyof typeof anthropicModels
