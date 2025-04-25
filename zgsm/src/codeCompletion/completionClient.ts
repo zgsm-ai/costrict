@@ -27,6 +27,7 @@ import { t } from "../../../src/i18n"
  */
 export class CompletionClient {
 	private static client?: CompletionClient
+	private static provider?: ClineProvider
 	private openai?: OpenAI
 	private stopWords: string[] = []
 	private reqs: Map<string, any> = new Map<string, any>()
@@ -91,17 +92,16 @@ export class CompletionClient {
 			return true
 		}
 
-		const provider = await ClineProvider.getInstance()
-		const { apiConfiguration } = (await provider?.getState()) ?? { apiConfiguration: { zgsmApiKey: undefined } }
+		const { apiConfiguration } = (await CompletionClient.provider?.getState()) ?? {
+			apiConfiguration: { zgsmApiKey: undefined },
+		}
 
 		if (!apiConfiguration.zgsmApiKey) {
 			Logger.error(
 				"Failed to get login information. Please log in again to use the completion service",
 				envClient,
 			)
-			window.showErrorMessage(
-				t("common:window.error.failed_to_get_login_info"),
-			)
+			window.showErrorMessage(t("common:window.error.failed_to_get_login_info"))
 			return false
 		}
 		this.openai = new OpenAI({
@@ -126,6 +126,9 @@ export class CompletionClient {
 	 */
 	private static async getInstance(): Promise<CompletionClient | undefined> {
 		if (!this.client) {
+			if (!this.provider) {
+				this.provider = await ClineProvider.getCacheInstances()
+			}
 			this.client = new CompletionClient()
 			if (!(await this.client.createClient(true))) {
 				this.client = undefined

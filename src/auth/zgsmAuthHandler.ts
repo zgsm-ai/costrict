@@ -2,9 +2,10 @@ import { defaultAuthConfig } from "./../../webview-ui/src/config/auth"
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { ApiConfiguration } from "../shared/api"
-import axios from "axios"
 import * as os from "os"
 import * as querystring from "querystring"
+import { getZgsmModels } from "../api/providers/zgsm"
+import { logger } from "../utils/logging"
 
 /**
  * 获取本地IP地址
@@ -66,9 +67,30 @@ export function createHeaders(dict: Record<string, any> = {}): Record<string, an
  * @param provider ClineProvider 实例
  */
 export async function handleZgsmAuthCallback(code: string, state: string, provider: ClineProvider): Promise<void> {
+	const afterLogin = async ({
+		apiConfiguration,
+		provider,
+		tokenData,
+	}: {
+		apiConfiguration: ApiConfiguration
+		provider: ClineProvider
+		tokenData: any
+	}) => {
+		try {
+			const zgsmModels = await getZgsmModels(
+				apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl,
+				tokenData.access_token,
+				apiConfiguration.openAiHostHeader,
+			)
+			provider.postMessageToWebview({ type: "zgsmModels", zgsmModels })
+		} catch (error) {
+			logger.error("Failed to get ZGSM models:", error)
+		}
+	}
+
 	try {
 		// 获取当前的 API 配置
-		const { apiConfiguration } = await provider.getState()
+		const { apiConfiguration, currentApiConfigName } = await provider.getState()
 		// 获取访问令牌
 		const tokenResponse = await getAccessToken(code, {
 			...apiConfiguration,
@@ -84,18 +106,28 @@ export async function handleZgsmAuthCallback(code: string, state: string, provid
 				const updatedConfig: ApiConfiguration = {
 					...apiConfiguration,
 					apiProvider: "zgsm",
+					zgsmBaseUrl: apiConfiguration.zgsmBaseUrl || "",
 					zgsmApiKey: tokenData.access_token,
 				}
 
 				// 更新 API 配置
 				await provider.updateApiConfiguration(updatedConfig)
 
-				// 保存更新后的配置
-				await provider.upsertApiConfiguration("zgsm", updatedConfig)
-			}
+				const listApiConfig = (await provider.providerSettingsManager.listConfig()).filter(
+					(config) => config.apiProvider === "zgsm",
+				)
 
-			// 发送更新的状态到 webview
-			provider.postMessageToWebview({ type: "state", state: await provider.getStateToPostToWebview() })
+				const configUpdatesPromise = [provider.upsertApiConfiguration("zgsm", updatedConfig)]
+
+				for (const configInfo of listApiConfig) {
+					if (configInfo.name === "zgsm") continue
+					configUpdatesPromise.push(provider.upsertApiConfiguration(configInfo.name, updatedConfig))
+				}
+
+				await Promise.all(configUpdatesPromise).then(() => {
+					afterLogin({ apiConfiguration, provider, tokenData })
+				})
+			}
 
 			// 显示成功消息
 			vscode.window.showInformationMessage("zgsm login successful")

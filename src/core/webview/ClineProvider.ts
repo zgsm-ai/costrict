@@ -233,6 +233,11 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		return findLast(Array.from(this.activeInstances), (instance) => instance.view?.visible === true)
 	}
 
+	public static getCacheInstances(): ClineProvider | undefined {
+		const instances = Array.from(this.activeInstances)
+		return instances.length > 0 ? instances.at(-1) : undefined
+	}
+
 	public static async getInstance(): Promise<ClineProvider | undefined> {
 		let visibleProvider = ClineProvider.getVisibleInstance()
 

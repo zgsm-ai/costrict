@@ -39,8 +39,8 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		super()
 		this.options = options
 
-		const baseURL = `${this.options.zgsmBaseUrl ?? ZGSM_DEFAULT_BASEURL}/v1`
-		const apiKey = this.options.zgsmApiKey ?? "not-provided"
+		const baseURL = `${this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL}/v1`
+		const apiKey = this.options.zgsmApiKey || "not-provided"
 		const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
 		const urlHost = this._getUrlHost(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
 		const isAzureOpenAi = urlHost === "azure.com" || urlHost.endsWith(".azure.com") || options.openAiUseAzure
@@ -79,8 +79,8 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		const modelInfo = this.getModel().info
-		const modelUrl = `${this.options.zgsmBaseUrl ?? ZGSM_DEFAULT_BASEURL}/v1`
-		const modelId = this.options.zgsmModelId ?? ZGSM_DEFAULT_MODELID
+		const modelUrl = `${this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL}/v1`
+		const modelId = this.options.zgsmModelId || ZGSM_DEFAULT_MODELID
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const enabledLegacyFormat = this.options.openAiLegacyFormat ?? false
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
@@ -236,8 +236,8 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override getModel(): { id: string; info: ModelInfo } {
 		return {
-			id: this.options.zgsmModelId ?? ZGSM_DEFAULT_MODELID,
-			info: this.options.openAiCustomModelInfo ?? openAiModelInfoSaneDefaults,
+			id: this.options.zgsmModelId || ZGSM_DEFAULT_MODELID,
+			info: this.options.openAiCustomModelInfo || openAiModelInfoSaneDefaults,
 		}
 	}
 
