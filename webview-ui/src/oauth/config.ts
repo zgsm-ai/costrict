@@ -1,6 +1,6 @@
 import { defaultAuthConfig, getAuthUrls } from "../config/auth"
 
-// 完整的AuthConfig接口，对应扩展后的ApiConfiguration
+// Complete AuthConfig interface, corresponding to extended ApiConfiguration
 export interface AuthConfig {
 	baseUrl: string
 	realmName: string
@@ -21,7 +21,7 @@ class AuthConfigManager {
 	}
 
 	private initConfig(config: Partial<AuthConfig>): AuthConfig {
-		// 合并默认值和提供的配置
+		// Merge default values with provided configuration
 		const baseConfig = {
 			baseUrl: config.baseUrl || defaultAuthConfig.baseUrl,
 			realmName: config.realmName || defaultAuthConfig.realmName,
@@ -29,7 +29,7 @@ class AuthConfigManager {
 			clientSecret: config.clientSecret || defaultAuthConfig.clientSecret,
 		}
 
-		// 直接使用提供的URL，如果没有则从baseUrl生成
+		// Directly use provided URL, if not available generate from baseUrl
 		const urls =
 			config.loginUrl && config.logoutUrl && config.tokenUrl && config.redirectUri
 				? {
@@ -58,22 +58,22 @@ class AuthConfigManager {
 	}
 
 	public updateConfig(newConfig: Partial<AuthConfig>): void {
-		// 只更新提供的配置项
+		// Only update provided configuration items
 		const updatedConfig = { ...this.config }
 
-		// 更新基础URL和认证信息
+		// Update base URL and authentication information
 		if (newConfig.baseUrl) updatedConfig.baseUrl = newConfig.baseUrl
 		if (newConfig.realmName) updatedConfig.realmName = newConfig.realmName
 		if (newConfig.clientId) updatedConfig.clientId = newConfig.clientId
 		if (newConfig.clientSecret) updatedConfig.clientSecret = newConfig.clientSecret
 
-		// 直接更新URL，如果有提供
+		// Directly update URL, if provided
 		if (newConfig.loginUrl) updatedConfig.loginUrl = newConfig.loginUrl
 		if (newConfig.logoutUrl) updatedConfig.logoutUrl = newConfig.logoutUrl
 		if (newConfig.tokenUrl) updatedConfig.tokenUrl = newConfig.tokenUrl
 		if (newConfig.redirectUri) updatedConfig.redirectUri = newConfig.redirectUri
 
-		// 如果没有提供完整的URL集，但提供了baseUrl，则重新生成URL
+		// If not provided complete URL set but provided baseUrl, regenerate URL
 		if (
 			newConfig.baseUrl &&
 			!(newConfig.loginUrl && newConfig.logoutUrl && newConfig.tokenUrl && newConfig.redirectUri)

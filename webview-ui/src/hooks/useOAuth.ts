@@ -12,7 +12,7 @@ export function useZgsmOAuth() {
 	const initiateZgsmLogin = useCallback(
 		(apiConfiguration: ApiConfiguration, uriScheme?: string) => {
 			const authUrl = generateZgsmAuthUrl(apiConfiguration, uriScheme)
-			// 发送消息到扩展，处理认证流程
+			// Send message to extension to handle authentication process
 			vscode.postMessage({
 				type: "zgsmLogin",
 				authUrl,

@@ -14,7 +14,7 @@ export const handleUri = async (uri: vscode.Uri) => {
 		const code = query.get("code")
 		const state = query.get("state")
 		if (code && state) {
-			// 使用独立函数处理 ZGSM 认证回调
+			// Use separate function to handle ZGSM authentication callback
 			await handleZgsmAuthCallback(code, state, visibleProvider)
 		}
 		return

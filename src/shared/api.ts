@@ -5,15 +5,15 @@ export type { ModelInfo, ProviderName as ApiProvider }
 export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider" | "id">
 
 export type ApiConfiguration = ProviderSettings & {
-	// ZGSM OAuth 相关配置
-	zgsmBaseUrl?: string // ZGSM 服务基础 URL
-	zgsmClientId?: string // OAuth 客户端 ID
-	zgsmClientSecret?: string // OAuth 客户端密钥
-	zgsmRedirectUri?: string // OAuth 重定向 URI
-	zgsmLoginUrl?: string // 登录 URL
-	zgsmLogoutUrl?: string // 登出 URL
-	zgsmTokenUrl?: string // Token 获取 URL
-	zgsmApiKey?: string // ZGSM API 密钥
+	// ZGSM OAuth related configuration
+	zgsmBaseUrl?: string // ZGSM service base URL
+	zgsmClientId?: string // OAuth client ID
+	zgsmClientSecret?: string // OAuth client secret
+	zgsmRedirectUri?: string // OAuth redirect URI
+	zgsmLoginUrl?: string // Login URL
+	zgsmLogoutUrl?: string // Logout URL
+	zgsmTokenUrl?: string // Token acquisition URL
+	zgsmApiKey?: string // ZGSM API key
 }
 export const zgsmDefaultModelId = "deepseek-chat"
 // Anthropic
@@ -946,7 +946,7 @@ export const unboundDefaultModelInfo: ModelInfo = {
 	cacheReadsPrice: 0.3,
 }
 
-// 所有models
+// All models
 export const allModels: Record<string, any> = {
 	...anthropicModels,
 	...bedrockModels,
