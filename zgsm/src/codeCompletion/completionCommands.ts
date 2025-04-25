@@ -16,7 +16,7 @@ export type Command = { command: string, callback: (...args: any[]) => any, this
  * Add a command to the completion status bar item.
  */
 export const statusBarCommand: Command = {
-    command: "statusBar.showInformationMessage",
+    command: "zgsm-statusBar.showInformationMessage",
     callback: () => setupLangSwitchs()
 };
 
