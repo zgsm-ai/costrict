@@ -6,6 +6,7 @@ import * as os from "os"
 import * as querystring from "querystring"
 import { getZgsmModels } from "../api/providers/zgsm"
 import { logger } from "../utils/logging"
+import delay from "delay"
 
 /**
  * Get local IP address
@@ -77,12 +78,19 @@ export async function handleZgsmAuthCallback(code: string, state: string, provid
 		tokenData: any
 	}) => {
 		try {
-			const zgsmModels = await getZgsmModels(
+			const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
 				apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl,
 				tokenData.access_token,
 				apiConfiguration.openAiHostHeader,
 			)
-			provider.postMessageToWebview({ type: "zgsmModels", zgsmModels })
+
+			await provider.updateApiConfiguration({
+				...apiConfiguration,
+				zgsmModelId: zgsmDefaultModelId,
+				zgsmDefaultModelId,
+			})
+
+			provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId })
 		} catch (error) {
 			logger.error("Failed to get ZGSM models:", error)
 		}
@@ -117,15 +125,15 @@ export async function handleZgsmAuthCallback(code: string, state: string, provid
 					(config) => config.apiProvider === zgsmProviderKey,
 				)
 
-				const configUpdatesPromise = [provider.upsertApiConfiguration(zgsmProviderKey, updatedConfig)]
+				const configUpdatesPromise = [provider.upsertApiConfiguration(currentApiConfigName, updatedConfig)]
 
 				for (const configInfo of listApiConfig) {
-					if (configInfo.name === zgsmProviderKey) continue
+					if (configInfo.name === currentApiConfigName) continue
 					configUpdatesPromise.push(provider.upsertApiConfiguration(configInfo.name, updatedConfig))
 				}
 
-				await Promise.all(configUpdatesPromise).then(() => {
-					afterLogin({ apiConfiguration, provider, tokenData })
+				await Promise.all(configUpdatesPromise).then(async () => {
+					afterLogin({ apiConfiguration: updatedConfig, provider, tokenData })
 				})
 			}
 

@@ -98,6 +98,7 @@ export interface ExtensionMessage {
 	requestyModels?: Record<string, ModelInfo>
 	openAiModels?: string[]
 	zgsmModels?: string[]
+	zgsmDefaultModelId?: string
 	mcpServers?: McpServer[]
 	commits?: GitCommit[]
 	listApiConfig?: ApiConfigMeta[]

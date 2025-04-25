@@ -436,12 +436,12 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "refreshZgsmModels":
 			if (message?.values?.baseUrl && message?.values?.apiKey) {
-				const zgsmModels = await getZgsmModels(
+				const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
 					message?.values?.baseUrl,
 					message?.values?.apiKey,
 					message?.values?.hostHeader,
 				)
-				provider.postMessageToWebview({ type: "zgsmModels", zgsmModels })
+				provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId })
 			}
 
 			break

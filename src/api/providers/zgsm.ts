@@ -80,7 +80,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		const modelInfo = this.getModel().info
 		const modelUrl = `${this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL}/v1`
-		const modelId = this.options.zgsmModelId || ZGSM_DEFAULT_MODELID
+		const modelId = this.options.zgsmModelId || this.options.zgsmDefaultModelId || ""
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const enabledLegacyFormat = this.options.openAiLegacyFormat ?? false
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
@@ -236,7 +236,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override getModel(): { id: string; info: ModelInfo } {
 		return {
-			id: this.options.zgsmModelId || ZGSM_DEFAULT_MODELID,
+			id: this.options.zgsmModelId || this.options.zgsmDefaultModelId || "",
 			info: this.options.openAiCustomModelInfo || openAiModelInfoSaneDefaults,
 		}
 	}
@@ -375,11 +375,9 @@ export async function getZgsmModels(baseUrl?: string, apiKey?: string, hostHeade
 
 		const response = await axios.get(`${baseUrl}/v1/models`, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
-		if (modelsArray[0]) {
-			ZGSM_DEFAULT_MODELID = modelsArray[0]
-		}
-		return [...new Set<string>(modelsArray)]
+
+		return [[...new Set<string>(modelsArray)], modelsArray[0]]
 	} catch (error) {
-		return []
+		return [[]]
 	}
 }
