@@ -38,6 +38,7 @@ import {
 	ApiProvider,
 	allModels,
 	zgsmDefaultModelId,
+	zgsmProviderKey,
 } from "../../../../src/shared/api"
 import { ExtensionMessage } from "../../../../src/shared/ExtensionMessage"
 
@@ -161,7 +162,7 @@ const ApiOptions = ({
 						hostHeader: apiConfiguration?.openAiHostHeader,
 					},
 				})
-			} else if (selectedProvider === "zgsm") {
+			} else if (selectedProvider === zgsmProviderKey) {
 				vscode.postMessage({
 					type: "refreshZgsmModels",
 					values: {
@@ -331,9 +332,9 @@ const ApiOptions = ({
 						<SelectValue placeholder={t("settings:common.select")} />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="zgsm">{t("settings:providers.zgsm")}</SelectItem>
+						<SelectItem value={zgsmProviderKey}>{t("settings:providers.zgsm")}</SelectItem>
 						<SelectSeparator />
-						{PROVIDERS.filter((p) => p.value !== "zgsm").map(({ value, label }) => (
+						{PROVIDERS.filter((p) => p.value !== zgsmProviderKey).map(({ value, label }) => (
 							<SelectItem key={value} value={value}>
 								{label}
 							</SelectItem>
@@ -343,7 +344,7 @@ const ApiOptions = ({
 			</div>
 
 			{errorMessage && <ApiErrorMessage errorMessage={errorMessage} />}
-			{selectedProvider === "zgsm" && (
+			{selectedProvider === zgsmProviderKey && (
 				<>
 					<VSCodeTextField
 						value={apiConfiguration?.zgsmBaseUrl || ""}
@@ -359,7 +360,9 @@ const ApiOptions = ({
 								},
 							})
 						}}
-						placeholder={`default: ${defaultAuthConfig.baseUrl}`}
+						placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
+							zgsmBaseUrl: defaultAuthConfig.baseUrl,
+						})}
 						className="w-full">
 						<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
 					</VSCodeTextField>
@@ -1752,18 +1755,17 @@ const ApiOptions = ({
 }
 
 export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
-	const provider = apiConfiguration?.apiProvider || "zgsm"
-	const modelId = apiConfiguration?.zgsmModelId || "deepseek-chat"
-	const zgsmApiConfiguration = {
-		selectedProvider: provider,
-		selectedModelId: modelId,
-		selectedModelInfo: apiConfiguration?.openAiCustomModelInfo || openAiModelInfoSaneDefaults,
-	}
+	const provider = apiConfiguration?.apiProvider || zgsmProviderKey
+	const modelId = provider === zgsmProviderKey ? apiConfiguration?.zgsmModelId : apiConfiguration?.apiModelId
 	const getProviderData = (models: Record<string, ModelInfo>, defaultId: string) => {
 		let selectedModelId: string
 		let selectedModelInfo: ModelInfo
 
-		if (modelId && modelId in models) {
+		if (provider === "zgsm") {
+			const ids = Object.keys(models)
+			selectedModelId = modelId || defaultId
+			selectedModelInfo = models[ids.find((id) => modelId && id.includes(modelId)) || ""] || models[defaultId]
+		} else if (modelId && modelId in models) {
 			selectedModelId = modelId
 			selectedModelInfo = models[modelId]
 		} else {
@@ -1775,7 +1777,7 @@ export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
 	}
 
 	switch (provider) {
-		case "zgsm":
+		case zgsmProviderKey:
 			return getProviderData(allModels, zgsmDefaultModelId)
 		case "anthropic":
 			return getProviderData(anthropicModels, anthropicDefaultModelId)
@@ -1858,7 +1860,7 @@ export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
 				},
 			}
 		default:
-			return zgsmApiConfiguration
+			return getProviderData(anthropicModels, anthropicDefaultModelId)
 	}
 }
 

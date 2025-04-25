@@ -3,9 +3,9 @@ import { ApiConfiguration } from "../../../src/shared/api"
 import { getZgsmAuthUrl } from "../oauth/urls"
 
 /**
- * 生成 ZGSM 认证链接
- * @param uriScheme URI 方案
- * @returns 认证链接
+ * Generate ZGSM authentication URL
+ * @param uriScheme URI scheme
+ * @returns Authentication URL
  */
 export function generateZgsmAuthUrl(apiConfiguration: ApiConfiguration, uriScheme?: string): string {
 	const stateId = Math.random().toString(36).substring(2) + Date.now().toString(36)
@@ -13,13 +13,13 @@ export function generateZgsmAuthUrl(apiConfiguration: ApiConfiguration, uriSchem
 }
 
 /**
- * 发起 ZGSM 登录认证流程
- * @param apiConfiguration API 配置
- * @param uriScheme URI 方案
+ * Initiate ZGSM login authentication process
+ * @param apiConfiguration API configuration
+ * @param uriScheme URI scheme
  */
 export function initiateZgsmLogin(apiConfiguration: ApiConfiguration, uriScheme?: string): void {
 	const authUrl = generateZgsmAuthUrl(apiConfiguration, uriScheme)
-	// 发送消息到扩展，处理认证流程
+	// Send message to extension to handle authentication process
 	vscode.postMessage({
 		type: "zgsmLogin",
 		authUrl,

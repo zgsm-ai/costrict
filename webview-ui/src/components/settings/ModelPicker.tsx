@@ -23,6 +23,7 @@ import {
 import { normalizeApiConfiguration } from "./ApiOptions"
 import { ThinkingBudget } from "./ThinkingBudget"
 import { ModelInfoView } from "./ModelInfoView"
+import { zgsmProviderKey } from "../../../../src/shared/api"
 
 type ModelIdKey = keyof Pick<
 	ProviderSettings,
@@ -197,7 +198,7 @@ export const ModelPicker = ({
 				setApiConfigurationField={setApiConfigurationField}
 				modelInfo={selectedModelInfo}
 			/>
-			{apiConfiguration.apiProvider !== "zgsm" && (
+			{apiConfiguration.apiProvider !== zgsmProviderKey && (
 				<div className="text-sm text-vscode-descriptionForeground">
 					<Trans
 						i18nKey="settings:modelPicker.automaticFetch"

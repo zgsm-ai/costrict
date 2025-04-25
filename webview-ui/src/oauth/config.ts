@@ -1,6 +1,6 @@
 import { defaultAuthConfig, getAuthUrls } from "../config/auth"
 
-// 完整的AuthConfig接口，对应扩展后的ApiConfiguration
+// Complete AuthConfig interface, corresponding to the extended ApiConfiguration
 export interface AuthConfig {
 	baseUrl: string
 	realmName: string
@@ -16,12 +16,14 @@ class AuthConfigManager {
 	private static instance: AuthConfigManager
 	private config: AuthConfig
 
+	// Private constructor to prevent instantiation outside the class
 	private constructor() {
 		this.config = this.initConfig(defaultAuthConfig)
 	}
 
+	// Initialize configuration by merging defaults with provided configuration
 	private initConfig(config: Partial<AuthConfig>): AuthConfig {
-		// 合并默认值和提供的配置
+		// Merge default values and provided configuration
 		const baseConfig = {
 			baseUrl: config.baseUrl || defaultAuthConfig.baseUrl,
 			realmName: config.realmName || defaultAuthConfig.realmName,
@@ -29,7 +31,7 @@ class AuthConfigManager {
 			clientSecret: config.clientSecret || defaultAuthConfig.clientSecret,
 		}
 
-		// 直接使用提供的URL，如果没有则从baseUrl生成
+		// Use provided URLs directly, or generate from baseUrl if not provided
 		const urls =
 			config.loginUrl && config.logoutUrl && config.tokenUrl && config.redirectUri
 				? {
@@ -40,12 +42,14 @@ class AuthConfigManager {
 					}
 				: getAuthUrls(baseConfig as AuthConfig)
 
+		// Return the merged configuration
 		return {
 			...baseConfig,
 			...urls,
 		}
 	}
 
+	// Get the singleton instance of AuthConfigManager
 	public static getInstance(): AuthConfigManager {
 		if (!AuthConfigManager.instance) {
 			AuthConfigManager.instance = new AuthConfigManager()
@@ -53,27 +57,29 @@ class AuthConfigManager {
 		return AuthConfigManager.instance
 	}
 
+	// Get the current authentication configuration
 	public getConfig(): AuthConfig {
 		return this.config
 	}
 
+	// Update the authentication configuration with new values
 	public updateConfig(newConfig: Partial<AuthConfig>): void {
-		// 只更新提供的配置项
+		// Update only the provided configuration items
 		const updatedConfig = { ...this.config }
 
-		// 更新基础URL和认证信息
+		// Update base URL and authentication information
 		if (newConfig.baseUrl) updatedConfig.baseUrl = newConfig.baseUrl
 		if (newConfig.realmName) updatedConfig.realmName = newConfig.realmName
 		if (newConfig.clientId) updatedConfig.clientId = newConfig.clientId
 		if (newConfig.clientSecret) updatedConfig.clientSecret = newConfig.clientSecret
 
-		// 直接更新URL，如果有提供
+		// Directly update URLs if provided
 		if (newConfig.loginUrl) updatedConfig.loginUrl = newConfig.loginUrl
 		if (newConfig.logoutUrl) updatedConfig.logoutUrl = newConfig.logoutUrl
 		if (newConfig.tokenUrl) updatedConfig.tokenUrl = newConfig.tokenUrl
 		if (newConfig.redirectUri) updatedConfig.redirectUri = newConfig.redirectUri
 
-		// 如果没有提供完整的URL集，但提供了baseUrl，则重新生成URL
+		// If a complete set of URLs is not provided but baseUrl is provided, regenerate URLs
 		if (
 			newConfig.baseUrl &&
 			!(newConfig.loginUrl && newConfig.logoutUrl && newConfig.tokenUrl && newConfig.redirectUri)

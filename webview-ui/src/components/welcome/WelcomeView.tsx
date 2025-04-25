@@ -9,6 +9,7 @@ import { useAppTranslation } from "../../i18n/TranslationContext"
 import { getRequestyAuthUrl, getOpenRouterAuthUrl } from "../../oauth/urls"
 import knuthShuffle from "knuth-shuffle-seeded"
 import { initiateZgsmLogin } from "../../utils/zgsmAuth"
+import { zgsmProviderKey } from "../../../../src/shared/api"
 
 const WelcomeView = () => {
 	const { apiConfiguration, currentApiConfigName, setApiConfiguration, uriScheme, machineId } = useExtensionState()
@@ -25,8 +26,8 @@ const WelcomeView = () => {
 
 		setErrorMessage(undefined)
 
-		if (apiConfiguration?.apiProvider === "zgsm") {
-			// 发起 ZGSM 登录流程
+		if (apiConfiguration?.apiProvider === zgsmProviderKey) {
+			// Initiate ZGSM login process
 			initiateZgsmLogin(apiConfiguration, uriScheme)
 		} else {
 			vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
@@ -46,7 +47,7 @@ const WelcomeView = () => {
 				<div>{t("welcome:introduction")}</div>
 				<div>{t("welcome:chooseProvider")}</div>
 				<div className="mb-4">
-					{apiConfiguration?.apiProvider !== "zgsm" && (
+					{apiConfiguration?.apiProvider !== zgsmProviderKey && (
 						<>
 							<h4 className="mt-3 mb-2">{t("welcome:startRouter")}</h4>
 
@@ -120,7 +121,9 @@ const WelcomeView = () => {
 			<div className="sticky bottom-0 bg-vscode-sideBar-background p-5">
 				<div className="flex flex-col gap-1">
 					<VSCodeButton onClick={handleSubmit} appearance="primary">
-						{apiConfiguration?.apiProvider === "zgsm" ? t("welcome:getZgsmApiKey") : t("welcome:start")}
+						{apiConfiguration?.apiProvider === zgsmProviderKey
+							? t("welcome:getZgsmApiKey")
+							: t("welcome:start")}
 					</VSCodeButton>
 					{errorMessage && <div className="text-vscode-errorForeground">{errorMessage}</div>}
 				</div>

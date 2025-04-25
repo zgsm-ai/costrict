@@ -5,13 +5,14 @@
 import { z } from "zod"
 
 import { Equals, Keys, AssertEqual } from "../utils/type-fu"
+import { zgsmProviderKey } from "../shared/api"
 
 /**
  * ProviderName
  */
 
 export const providerNames = [
-	"zgsm",
+	zgsmProviderKey,
 	"anthropic",
 	"glama",
 	"openrouter",
