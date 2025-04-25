@@ -12,7 +12,7 @@ import getFolderSize from "get-folder-size"
 import { serializeError } from "serialize-error"
 import * as vscode from "vscode"
 
-import { TokenUsage } from "../schemas"
+import { isLanguage, TokenUsage } from "../schemas"
 import { ApiHandler, buildApiHandler } from "../api"
 import { ApiStream } from "../api/transform/stream"
 import { DIFF_VIEW_URI_SCHEME, DiffViewProvider } from "../integrations/editor/DiffViewProvider"
@@ -60,7 +60,7 @@ import { SYSTEM_PROMPT } from "./prompts/system"
 import { truncateConversationIfNeeded } from "./sliding-window"
 import { ClineProvider } from "./webview/ClineProvider"
 import { BrowserSession } from "../services/browser/BrowserSession"
-import { formatLanguage } from "../shared/language"
+import { formatLanguage, LANGUAGES } from "../shared/language"
 import { McpHub } from "../services/mcp/McpHub"
 import { DiffStrategy, getDiffStrategy } from "./diff/DiffStrategy"
 import { telemetryService } from "../services/telemetry/TelemetryService"
@@ -1786,6 +1786,16 @@ export class Cline extends EventEmitter<ClineEvents> {
 		userContent = parsedUserContent
 		// add environment details as its own text block, separate from tool results
 		userContent.push({ type: "text", text: environmentDetails })
+
+		// Add language preference to user content if available
+		const { language } = (await this.providerRef.deref()?.getState()) ?? {}
+		if (language) {
+			const languageName = isLanguage(language) ? LANGUAGES[language] : language
+			await this.addToApiConversationHistory({
+				role: "user",
+				content: `\nPlease also follow these instructions in all of your responses if relevant to my query. No need to acknowledge these instructions directly in your response.\n\nAlways respond in ${languageName}\n`,
+			})
+		}
 
 		await this.addToApiConversationHistory({ role: "user", content: userContent })
 		telemetryService.captureConversationMessage(this.taskId, "user")
