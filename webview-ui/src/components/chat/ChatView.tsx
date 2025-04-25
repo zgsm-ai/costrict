@@ -29,7 +29,7 @@ import AutoApproveMenu from "./AutoApproveMenu"
 import { AudioType } from "../../../../src/shared/WebviewMessage"
 import { validateCommand } from "../../utils/command-validation"
 import { getAllModes } from "../../../../src/shared/modes"
-import TelemetryBanner from "../common/TelemetryBanner"
+// import TelemetryBanner from "../common/TelemetryBanner"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import removeMd from "remove-markdown"
 import { Trans } from "react-i18next"
@@ -68,7 +68,7 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 		alwaysAllowModeSwitch,
 		alwaysAllowSubtasks,
 		customModes,
-		telemetrySetting,
+		// telemetrySetting,
 	} = useExtensionState()
 
 	//const task = messages.length > 0 ? (messages[0].say === "task" ? messages[0] : undefined) : undefined) : undefined
@@ -1205,7 +1205,7 @@ const ChatView = ({ isHidden, showAnnouncement, hideAnnouncement, showHistoryVie
 						flexDirection: "column",
 						paddingBottom: "10px",
 					}}>
-					{/* todo: 信息上报telemetrySetting */}
+					{/* todo: Report telemetry setting */}
 					{/* {telemetrySetting === "unset" && <TelemetryBanner />} */}
 					{showAnnouncement && <Announcement version={version} hideAnnouncement={hideAnnouncement} />}
 					<div style={{ padding: "0 20px", flexShrink: 0 }}>

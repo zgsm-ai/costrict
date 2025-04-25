@@ -5,13 +5,14 @@
 import { z } from "zod"
 
 import { Equals, Keys, AssertEqual } from "../utils/type-fu"
+import { zgsmProviderKey } from "../shared/api"
 
 /**
  * ProviderName
  */
 
 export const providerNames = [
-	"zgsm",
+	zgsmProviderKey,
 	"anthropic",
 	"glama",
 	"openrouter",
@@ -309,6 +310,7 @@ export const providerSettingsSchema = z.object({
 	zgsmBaseUrl: z.string().optional(),
 	zgsmApiKey: z.string().optional(),
 	zgsmModelId: z.string().optional(),
+	zgsmDefaultModelId: z.string().optional(),
 	zgsmClientId: z.string().optional(),
 	zgsmClientSecret: z.string().optional(),
 	zgsmRedirectUri: z.string().optional(),
@@ -406,7 +408,7 @@ export const providerSettingsSchema = z.object({
 
 export type ProviderSettings = z.infer<typeof providerSettingsSchema>
 
-type ProviderSettingsRecord = Record<Keys<ProviderSettings>, undefined>
+type ProviderSettingsRecord = Record<Keys<ProviderSettings>, undefined | string>
 
 const providerSettingsRecord: ProviderSettingsRecord = {
 	apiProvider: undefined,
@@ -414,6 +416,7 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmBaseUrl: undefined,
 	zgsmApiKey: undefined,
 	zgsmModelId: undefined,
+	zgsmDefaultModelId: "deepseek-chat",
 	zgsmClientId: undefined,
 	zgsmClientSecret: undefined,
 	zgsmRedirectUri: undefined,

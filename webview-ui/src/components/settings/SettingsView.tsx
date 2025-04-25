@@ -150,6 +150,13 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		setChangeDetected(false)
 	}, [currentApiConfigName, extensionState, isChangeDetected])
 
+	useEffect(() => {
+		if (extensionState.apiConfiguration?.zgsmApiKey !== cachedState.apiConfiguration?.zgsmApiKey) {
+			setCachedState((prevCachedState) => ({ ...prevCachedState, ...extensionState }))
+			setChangeDetected(true)
+		}
+	}, [cachedState.apiConfiguration?.zgsmApiKey, extensionState, extensionState.apiConfiguration?.zgsmApiKey])
+
 	// Bust the cache when settings are imported.
 	useEffect(() => {
 		if (settingsImportedAt) {

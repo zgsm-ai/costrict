@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { BetaThinkingConfigParam } from "@anthropic-ai/sdk/resources/beta/messages/index.mjs"
 
-import { ApiConfiguration, ModelInfo, ApiHandlerOptions } from "../shared/api"
+import { ApiConfiguration, ModelInfo, ApiHandlerOptions, zgsmProviderKey } from "../shared/api"
 import { ANTHROPIC_DEFAULT_MAX_TOKENS } from "./providers/constants"
 import { GlamaHandler } from "./providers/glama"
 import { AnthropicHandler } from "./providers/anthropic"
@@ -45,7 +45,7 @@ export interface ApiHandler {
 export function buildApiHandler(configuration: ApiConfiguration): ApiHandler {
 	const { apiProvider, ...options } = configuration
 	switch (apiProvider) {
-		case "zgsm":
+		case zgsmProviderKey:
 			return new ZgsmHandler(options)
 		case "anthropic":
 			return new AnthropicHandler(options)

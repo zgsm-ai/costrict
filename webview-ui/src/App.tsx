@@ -27,8 +27,15 @@ const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]
 }
 
 const App = () => {
-	const { didHydrateState, showWelcome, shouldShowAnnouncement, telemetrySetting, telemetryKey, machineId } =
-		useExtensionState()
+	const {
+		didHydrateState,
+		showWelcome,
+		shouldShowAnnouncement,
+		telemetrySetting,
+		telemetryKey,
+		machineId,
+		setApiConfiguration,
+	} = useExtensionState()
 
 	const [showAnnouncement, setShowAnnouncement] = useState(false)
 	const [tab, setTab] = useState<Tab>("chat")
@@ -75,8 +82,15 @@ const App = () => {
 				const { requestId, promptText } = message
 				setHumanRelayDialogState({ isOpen: true, requestId, promptText })
 			}
+
+			if (message.type === "zgsmModels" && message.zgsmDefaultModelId) {
+				setApiConfiguration({
+					zgsmModelId: message.zgsmDefaultModelId,
+					zgsmDefaultModelId: message.zgsmDefaultModelId,
+				})
+			}
 		},
-		[switchTab],
+		[switchTab, setApiConfiguration],
 	)
 
 	useEvent("message", onMessage)

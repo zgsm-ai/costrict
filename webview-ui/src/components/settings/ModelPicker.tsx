@@ -23,6 +23,7 @@ import {
 import { normalizeApiConfiguration } from "./ApiOptions"
 import { ThinkingBudget } from "./ThinkingBudget"
 import { ModelInfoView } from "./ModelInfoView"
+import { zgsmProviderKey } from "../../../../src/shared/api"
 
 type ModelIdKey = keyof Pick<
 	ProviderSettings,
@@ -70,7 +71,9 @@ export const ModelPicker = ({
 		[apiConfiguration],
 	)
 
-	const [searchValue, setSearchValue] = useState(selectedModelId || "")
+	const [searchValue, setSearchValue] = useState(
+		apiConfiguration.apiProvider === zgsmProviderKey ? "" : selectedModelId || "",
+	)
 
 	const onSelect = useCallback(
 		(modelId: string) => {
@@ -84,14 +87,19 @@ export const ModelPicker = ({
 			setApiConfigurationField(modelInfoKey, modelInfo ?? defaultModelInfo)
 
 			// Delay to ensure the popover is closed before setting the search value.
-			setTimeout(() => setSearchValue(modelId), 100)
+			setTimeout(() => setSearchValue(apiConfiguration.apiProvider === zgsmProviderKey ? "" : modelId), 100)
 		},
-		[modelIdKey, modelInfoKey, models, setApiConfigurationField, defaultModelInfo],
+		[modelIdKey, modelInfoKey, models, setApiConfigurationField, defaultModelInfo, apiConfiguration.apiProvider],
 	)
 
 	const onOpenChange = useCallback(
 		(open: boolean) => {
 			setOpen(open)
+
+			if (apiConfiguration.apiProvider === zgsmProviderKey) {
+				setTimeout(() => setSearchValue(""), 100)
+				return
+			}
 
 			// Abandon the current search if the popover is closed.
 			if (!open) {
@@ -99,7 +107,7 @@ export const ModelPicker = ({
 				setTimeout(() => setSearchValue(selectedModelId), 100)
 			}
 		},
-		[selectedModelId],
+		[selectedModelId, apiConfiguration.apiProvider],
 	)
 
 	const onClearSearch = useCallback(() => {
@@ -197,7 +205,7 @@ export const ModelPicker = ({
 				setApiConfigurationField={setApiConfigurationField}
 				modelInfo={selectedModelInfo}
 			/>
-			{apiConfiguration.apiProvider !== "zgsm" && (
+			{apiConfiguration.apiProvider !== zgsmProviderKey && (
 				<div className="text-sm text-vscode-descriptionForeground">
 					<Trans
 						i18nKey="settings:modelPicker.automaticFetch"

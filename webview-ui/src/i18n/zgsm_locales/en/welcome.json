@@ -1,4 +1,5 @@
 {
+	"getZgsmApiKey": "Login to Zgsm",
 	"greeting": "Hi, I'm Shenma!",
 	"telemetry": {
 		"title": "Help Improve Shenma"

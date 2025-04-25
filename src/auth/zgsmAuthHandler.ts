@@ -1,15 +1,16 @@
 import { defaultAuthConfig } from "./../../webview-ui/src/config/auth"
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
-import { ApiConfiguration } from "../shared/api"
+import { ApiConfiguration, zgsmProviderKey } from "../shared/api"
 import * as os from "os"
 import * as querystring from "querystring"
 import { getZgsmModels } from "../api/providers/zgsm"
 import { logger } from "../utils/logging"
+import delay from "delay"
 
 /**
- * 获取本地IP地址
- * @returns 本地IP地址，如果找不到则返回空字符串
+ * Get local IP address
+ * @returns Local IP address, or an empty string if not found
  */
 function getLocalIP(): string {
 	try {
@@ -21,13 +22,13 @@ function getLocalIP(): string {
 			if (!networkInterface) continue
 
 			for (const iface of networkInterface) {
-				// 筛选IPv4且非内部地址
+				// Filter for IPv4 and non-internal addresses
 				if (iface.family === "IPv4" && !iface.internal) {
 					ipAddress = iface.address
 					break
 				}
 			}
-			if (ipAddress) break // 找到第一个有效IP后退出
+			if (ipAddress) break // Exit after finding the first valid IP
 		}
 
 		return ipAddress || ""
@@ -38,12 +39,12 @@ function getLocalIP(): string {
 }
 
 /**
- * 创建请求头部，包含客户端识别信息
- * @param dict 额外的请求头信息
- * @returns 完整的请求头对象
+ * Create request headers with client identification information
+ * @param dict Additional request header information
+ * @returns Complete request header object
  */
 export function createHeaders(dict: Record<string, any> = {}): Record<string, any> {
-	// 获取扩展信息
+	// Get extended information
 	const extension =
 		vscode.extensions.getExtension("zgsm-ai.zgsm") || vscode.extensions.getExtension("rooveterinaryinc.roo-cline")
 	const extVersion = extension?.packageJSON.version || ""
@@ -61,10 +62,10 @@ export function createHeaders(dict: Record<string, any> = {}): Record<string, an
 }
 
 /**
- * 处理 ZGSM OAuth 回调
- * @param code 授权码
- * @param state 状态值
- * @param provider ClineProvider 实例
+ * Handle ZGSM OAuth callback
+ * @param code Authorization code
+ * @param state State value
+ * @param provider ClineProvider instance
  */
 export async function handleZgsmAuthCallback(code: string, state: string, provider: ClineProvider): Promise<void> {
 	const afterLogin = async ({
@@ -77,100 +78,107 @@ export async function handleZgsmAuthCallback(code: string, state: string, provid
 		tokenData: any
 	}) => {
 		try {
-			const zgsmModels = await getZgsmModels(
+			const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
 				apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl,
 				tokenData.access_token,
 				apiConfiguration.openAiHostHeader,
 			)
-			provider.postMessageToWebview({ type: "zgsmModels", zgsmModels })
+
+			await provider.updateApiConfiguration({
+				...apiConfiguration,
+				zgsmModelId: zgsmDefaultModelId,
+				zgsmDefaultModelId,
+			})
+
+			provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId })
 		} catch (error) {
 			logger.error("Failed to get ZGSM models:", error)
 		}
 	}
 
 	try {
-		// 获取当前的 API 配置
+		// Get current API configuration
 		const { apiConfiguration, currentApiConfigName } = await provider.getState()
-		// 获取访问令牌
+		// Get access token
 		const tokenResponse = await getAccessToken(code, {
 			...apiConfiguration,
 			zgsmBaseUrl: apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl,
-			apiProvider: "zgsm",
+			apiProvider: zgsmProviderKey,
 		})
 
 		if (tokenResponse.status === 200 && tokenResponse.data && tokenResponse.data.access_token) {
 			const tokenData = tokenResponse.data
 
-			// 使用 token 更新 API 配置
+			// Use token to update API configuration
 			if (apiConfiguration) {
 				const updatedConfig: ApiConfiguration = {
 					...apiConfiguration,
-					apiProvider: "zgsm",
 					zgsmBaseUrl: apiConfiguration.zgsmBaseUrl || "",
+					apiProvider: zgsmProviderKey,
 					zgsmApiKey: tokenData.access_token,
 				}
 
-				// 更新 API 配置
+				// Update API configuration
 				await provider.updateApiConfiguration(updatedConfig)
 
 				const listApiConfig = (await provider.providerSettingsManager.listConfig()).filter(
-					(config) => config.apiProvider === "zgsm",
+					(config) => config.apiProvider === zgsmProviderKey,
 				)
 
-				const configUpdatesPromise = [provider.upsertApiConfiguration("zgsm", updatedConfig)]
+				const configUpdatesPromise = [provider.upsertApiConfiguration(currentApiConfigName, updatedConfig)]
 
 				for (const configInfo of listApiConfig) {
-					if (configInfo.name === "zgsm") continue
+					if (configInfo.name === currentApiConfigName) continue
 					configUpdatesPromise.push(provider.upsertApiConfiguration(configInfo.name, updatedConfig))
 				}
 
-				await Promise.all(configUpdatesPromise).then(() => {
-					afterLogin({ apiConfiguration, provider, tokenData })
+				await Promise.all(configUpdatesPromise).then(async () => {
+					afterLogin({ apiConfiguration: updatedConfig, provider, tokenData })
 				})
 			}
 
-			// 显示成功消息
+			// Show success message
 			vscode.window.showInformationMessage("zgsm login successful")
 		} else {
-			throw new Error("获取令牌失败")
+			throw new Error("Failed to get token")
 		}
 	} catch (error) {
-		vscode.window.showErrorMessage(`ZGSM 授权失败: ${error}`)
+		vscode.window.showErrorMessage(`ZGSM authorization failed: ${error}`)
 	}
 }
 
 /**
- * 处理 ZGSM OAuth 消息
- * @param authUrl 认证 URL
- * @param apiConfiguration API 配置
- * @param provider ClineProvider 实例
+ * Handle ZGSM OAuth message
+ * @param authUrl Authentication URL
+ * @param apiConfiguration API configuration
+ * @param provider ClineProvider instance
  */
 export async function handleZgsmLogin(
 	authUrl: string,
 	apiConfiguration: ApiConfiguration,
 	provider: ClineProvider,
 ): Promise<void> {
-	// 打开认证链接
+	// Open authentication link
 	await vscode.env.openExternal(vscode.Uri.parse(authUrl))
 
-	// 保存 apiConfiguration，以便在认证成功后使用
+	// Save apiConfiguration for use after successful authentication
 	if (apiConfiguration) {
 		await provider.updateApiConfiguration(apiConfiguration)
 	}
 
-	// 向 webview 发送消息，通知认证已发起
+	// Send message to webview to notify that authentication has started
 	provider.postMessageToWebview({ type: "state", state: await provider.getStateToPostToWebview() })
 }
 
 /**
- * 获取访问令牌
- * @param code 授权码
- * @param apiConfiguration API配置
- * @returns 包含访问令牌的响应
+ * Get access token
+ * @param code Authorization code
+ * @param apiConfiguration API configuration
+ * @returns Response containing access token
  */
 export async function getAccessToken(code: string, apiConfiguration?: ApiConfiguration) {
 	try {
-		// 优先使用 apiConfiguration 中的配置，如果不存在则使用环境设置
+		// Prefer configuration in apiConfiguration, if not exist, use environment settings
 		const clientId = apiConfiguration?.zgsmClientId || "vscode"
 		const clientSecret = apiConfiguration?.zgsmClientSecret || "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l"
 		const redirectUri = apiConfiguration?.zgsmRedirectUri || `${apiConfiguration?.zgsmBaseUrl}/login/ok`
@@ -180,7 +188,7 @@ export async function getAccessToken(code: string, apiConfiguration?: ApiConfigu
 				? `${apiConfiguration.zgsmBaseUrl}/realms/gw/protocol/openid-connect/token`
 				: "https://zgsm.sangfor.com/realms/gw/protocol/openid-connect/token")
 
-		// 设置请求参数
+		// Set request parameters
 		const params = {
 			client_id: clientId,
 			client_secret: clientSecret,
@@ -189,10 +197,10 @@ export async function getAccessToken(code: string, apiConfiguration?: ApiConfigu
 			redirect_uri: redirectUri,
 		}
 
-		// 使用querystring将对象转换为application/x-www-form-urlencoded格式
+		// Use querystring to convert object to application/x-www-form-urlencoded format
 		const formData = querystring.stringify(params)
 
-		// 使用fetch发送请求获取token，添加创建的请求头
+		// Use fetch to send request and get token, add created request headers
 		const res = await fetch(tokenUrl, {
 			method: "POST",
 			headers: createHeaders({
@@ -203,7 +211,7 @@ export async function getAccessToken(code: string, apiConfiguration?: ApiConfigu
 
 		const data = await res.json()
 
-		// 成功获取token
+		// Successfully obtained token
 		if (res.status === 200 && data && data.access_token) {
 			return {
 				status: 200,

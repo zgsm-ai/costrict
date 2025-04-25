@@ -22,6 +22,7 @@ import {
 	openRouterDefaultModelInfo,
 	glamaDefaultModelId,
 	glamaDefaultModelInfo,
+	zgsmProviderKey,
 } from "../../shared/api"
 import { findLast } from "../../shared/array"
 import { supportPrompt } from "../../shared/support-prompt"
@@ -1314,7 +1315,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		const customModes = await this.customModesManager.getCustomModes()
 
 		// Determine apiProvider with the same logic as before.
-		const apiProvider: ApiProvider = stateValues.apiProvider ? stateValues.apiProvider : "zgsm"
+		const apiProvider: ApiProvider = stateValues.apiProvider ? stateValues.apiProvider : zgsmProviderKey
 
 		// Build the apiConfiguration object combining state values and secrets.
 		const providerSettings = this.contextProxy.getProviderSettings()

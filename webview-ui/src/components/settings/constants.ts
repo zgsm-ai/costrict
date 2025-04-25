@@ -8,6 +8,7 @@ import {
 	mistralModels,
 	openAiNativeModels,
 	vertexModels,
+	zgsmProviderKey,
 } from "../../../../src/shared/api"
 
 export const MODELS_BY_PROVIDER: Partial<Record<ApiProvider, Record<string, ModelInfo>>> = {
@@ -39,7 +40,7 @@ export const PROVIDERS = [
 	{ value: "human-relay", label: "Human Relay" },
 ].sort((a, b) => a.label.localeCompare(b.label))
 
-PROVIDERS.unshift({ value: "zgsm", label: "Zgsm" })
+PROVIDERS.unshift({ value: zgsmProviderKey, label: "Zgsm" })
 
 export const VERTEX_REGIONS = [
 	{ value: "us-east5", label: "us-east5" },

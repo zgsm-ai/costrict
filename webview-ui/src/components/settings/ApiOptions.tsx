@@ -37,7 +37,7 @@ import {
 	requestyDefaultModelInfo,
 	ApiProvider,
 	allModels,
-	zgsmDefaultModelId,
+	zgsmProviderKey,
 } from "../../../../src/shared/api"
 import { ExtensionMessage } from "../../../../src/shared/ExtensionMessage"
 
@@ -161,7 +161,7 @@ const ApiOptions = ({
 						hostHeader: apiConfiguration?.openAiHostHeader,
 					},
 				})
-			} else if (selectedProvider === "zgsm") {
+			} else if (selectedProvider === zgsmProviderKey) {
 				vscode.postMessage({
 					type: "refreshZgsmModels",
 					values: {
@@ -204,60 +204,70 @@ const ApiOptions = ({
 			apiConfiguration.openRouterModelId in openRouterModels,
 	})
 
-	const onMessage = useCallback((event: MessageEvent) => {
-		const message: ExtensionMessage = event.data
+	const onMessage = useCallback(
+		(event: MessageEvent) => {
+			const message: ExtensionMessage = event.data
 
-		switch (message.type) {
-			case "openRouterModels": {
-				const updatedModels = message.openRouterModels ?? {}
-				setOpenRouterModels({ [openRouterDefaultModelId]: openRouterDefaultModelInfo, ...updatedModels })
-				break
-			}
-			case "glamaModels": {
-				const updatedModels = message.glamaModels ?? {}
-				setGlamaModels({ [glamaDefaultModelId]: glamaDefaultModelInfo, ...updatedModels })
-				break
-			}
-			case "unboundModels": {
-				const updatedModels = message.unboundModels ?? {}
-				setUnboundModels({ [unboundDefaultModelId]: unboundDefaultModelInfo, ...updatedModels })
-				break
-			}
-			case "requestyModels": {
-				const updatedModels = message.requestyModels ?? {}
-				setRequestyModels({ [requestyDefaultModelId]: requestyDefaultModelInfo, ...updatedModels })
-				break
-			}
-			case "openAiModels": {
-				const updatedModels = message.openAiModels ?? []
-				setOpenAiModels(Object.fromEntries(updatedModels.map((item) => [item, openAiModelInfoSaneDefaults])))
-				break
-			}
-			case "zgsmModels": {
-				const updatedModels = message.zgsmModels ?? []
-				setZgsmModels(Object.fromEntries(updatedModels.map((item) => [item, allModels[item]])))
-				break
-			}
-			case "ollamaModels":
-				{
-					const newModels = message.ollamaModels ?? []
-					setOllamaModels(newModels)
+			switch (message.type) {
+				case "openRouterModels": {
+					const updatedModels = message.openRouterModels ?? {}
+					setOpenRouterModels({ [openRouterDefaultModelId]: openRouterDefaultModelInfo, ...updatedModels })
+					break
 				}
-				break
-			case "lmStudioModels":
-				{
-					const newModels = message.lmStudioModels ?? []
-					setLmStudioModels(newModels)
+				case "glamaModels": {
+					const updatedModels = message.glamaModels ?? {}
+					setGlamaModels({ [glamaDefaultModelId]: glamaDefaultModelInfo, ...updatedModels })
+					break
 				}
-				break
-			case "vsCodeLmModels":
-				{
-					const newModels = message.vsCodeLmModels ?? []
-					setVsCodeLmModels(newModels)
+				case "unboundModels": {
+					const updatedModels = message.unboundModels ?? {}
+					setUnboundModels({ [unboundDefaultModelId]: unboundDefaultModelInfo, ...updatedModels })
+					break
 				}
-				break
-		}
-	}, [])
+				case "requestyModels": {
+					const updatedModels = message.requestyModels ?? {}
+					setRequestyModels({ [requestyDefaultModelId]: requestyDefaultModelInfo, ...updatedModels })
+					break
+				}
+				case "openAiModels": {
+					const updatedModels = message.openAiModels ?? []
+					setOpenAiModels(
+						Object.fromEntries(updatedModels.map((item) => [item, openAiModelInfoSaneDefaults])),
+					)
+					break
+				}
+				case "zgsmModels": {
+					const updatedModels = message.zgsmModels ?? []
+					if (message.zgsmDefaultModelId) {
+						setApiConfigurationField("zgsmDefaultModelId", message.zgsmDefaultModelId)
+						setApiConfigurationField("zgsmModelId", message.zgsmDefaultModelId)
+					}
+
+					setZgsmModels(Object.fromEntries(updatedModels.map((item) => [item, allModels[item]])))
+					break
+				}
+				case "ollamaModels":
+					{
+						const newModels = message.ollamaModels ?? []
+						setOllamaModels(newModels)
+					}
+					break
+				case "lmStudioModels":
+					{
+						const newModels = message.lmStudioModels ?? []
+						setLmStudioModels(newModels)
+					}
+					break
+				case "vsCodeLmModels":
+					{
+						const newModels = message.vsCodeLmModels ?? []
+						setVsCodeLmModels(newModels)
+					}
+					break
+			}
+		},
+		[setApiConfigurationField],
+	)
 
 	useEvent("message", onMessage)
 
@@ -331,9 +341,9 @@ const ApiOptions = ({
 						<SelectValue placeholder={t("settings:common.select")} />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="zgsm">{t("settings:providers.zgsm")}</SelectItem>
+						<SelectItem value={zgsmProviderKey}>{t("settings:providers.zgsm")}</SelectItem>
 						<SelectSeparator />
-						{PROVIDERS.filter((p) => p.value !== "zgsm").map(({ value, label }) => (
+						{PROVIDERS.filter((p) => p.value !== zgsmProviderKey).map(({ value, label }) => (
 							<SelectItem key={value} value={value}>
 								{label}
 							</SelectItem>
@@ -343,7 +353,7 @@ const ApiOptions = ({
 			</div>
 
 			{errorMessage && <ApiErrorMessage errorMessage={errorMessage} />}
-			{selectedProvider === "zgsm" && (
+			{selectedProvider === zgsmProviderKey && (
 				<>
 					<VSCodeTextField
 						value={apiConfiguration?.zgsmBaseUrl || ""}
@@ -359,7 +369,9 @@ const ApiOptions = ({
 								},
 							})
 						}}
-						placeholder={`default: ${defaultAuthConfig.baseUrl}`}
+						placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
+							zgsmBaseUrl: defaultAuthConfig.baseUrl,
+						})}
 						className="w-full">
 						<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
 					</VSCodeTextField>
@@ -367,7 +379,7 @@ const ApiOptions = ({
 						<ModelPicker
 							apiConfiguration={apiConfiguration}
 							setApiConfigurationField={setApiConfigurationField}
-							defaultModelId={apiConfiguration.zgsmModelId || zgsmDefaultModelId}
+							defaultModelId={`${apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId}`}
 							defaultModelInfo={openAiModelInfoSaneDefaults}
 							models={zgsmModels}
 							modelIdKey="zgsmModelId"
@@ -1751,19 +1763,44 @@ const ApiOptions = ({
 	)
 }
 
-export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
-	const provider = apiConfiguration?.apiProvider || "zgsm"
-	const modelId = apiConfiguration?.zgsmModelId || "deepseek-chat"
-	const zgsmApiConfiguration = {
-		selectedProvider: provider,
-		selectedModelId: modelId,
-		selectedModelInfo: apiConfiguration?.openAiCustomModelInfo || openAiModelInfoSaneDefaults,
+const getZgsmSelectedModelInfo = (models: Record<string, ModelInfo>, modelId: string): ModelInfo => {
+	if (!modelId) {
+		return {} as ModelInfo
 	}
+
+	const ids = Object.keys(models)
+
+	let mastchKey = ids.find((id) => modelId && id.includes(modelId))
+
+	if (!mastchKey) {
+		if (modelId.startsWith("claude-")) {
+			mastchKey = anthropicDefaultModelId
+		} else if (modelId.startsWith("deepseek-")) {
+			mastchKey = deepSeekDefaultModelId
+		} else if (modelId.startsWith("gpt-")) {
+			mastchKey = openAiNativeDefaultModelId
+		} else if (modelId.startsWith("gemini-")) {
+			mastchKey = geminiDefaultModelId
+		} else if (modelId.startsWith("mistral-")) {
+			mastchKey = mistralDefaultModelId
+		}
+	}
+
+	return mastchKey ? models[mastchKey] : deepSeekModels["deepseek-chat"]
+}
+
+export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
+	const provider = apiConfiguration?.apiProvider || zgsmProviderKey
+	const modelId = provider === zgsmProviderKey ? apiConfiguration?.zgsmModelId : apiConfiguration?.apiModelId
+
 	const getProviderData = (models: Record<string, ModelInfo>, defaultId: string) => {
 		let selectedModelId: string
 		let selectedModelInfo: ModelInfo
 
-		if (modelId && modelId in models) {
+		if (provider === "zgsm") {
+			selectedModelId = modelId || defaultId
+			selectedModelInfo = getZgsmSelectedModelInfo(models, selectedModelId)
+		} else if (modelId && modelId in models) {
 			selectedModelId = modelId
 			selectedModelInfo = models[modelId]
 		} else {
@@ -1775,8 +1812,8 @@ export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
 	}
 
 	switch (provider) {
-		case "zgsm":
-			return getProviderData(allModels, zgsmDefaultModelId)
+		case zgsmProviderKey:
+			return getProviderData(allModels, `${apiConfiguration?.zgsmDefaultModelId}`)
 		case "anthropic":
 			return getProviderData(anthropicModels, anthropicDefaultModelId)
 		case "bedrock":
@@ -1858,7 +1895,7 @@ export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
 				},
 			}
 		default:
-			return zgsmApiConfiguration
+			return getProviderData(anthropicModels, anthropicDefaultModelId)
 	}
 }
 
