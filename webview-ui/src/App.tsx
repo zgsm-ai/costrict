@@ -15,6 +15,7 @@ import WelcomeView from "./components/welcome/WelcomeView"
 import McpView from "./components/mcp/McpView"
 import PromptsView from "./components/prompts/PromptsView"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
+import { zgsmProviderKey } from "../../src/shared/api"
 
 type Tab = "settings" | "history" | "mcp" | "prompts" | "chat"
 
@@ -34,6 +35,7 @@ const App = () => {
 		telemetrySetting,
 		telemetryKey,
 		machineId,
+		apiConfiguration,
 		setApiConfiguration,
 	} = useExtensionState()
 
@@ -85,12 +87,21 @@ const App = () => {
 
 			if (message.type === "zgsmModels" && message.zgsmDefaultModelId) {
 				setApiConfiguration({
-					zgsmModelId: message.zgsmDefaultModelId,
+					zgsmModelId:
+						apiConfiguration?.apiProvider === zgsmProviderKey
+							? apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId
+							: message.zgsmDefaultModelId,
 					zgsmDefaultModelId: message.zgsmDefaultModelId,
 				})
 			}
 		},
-		[switchTab, setApiConfiguration],
+		[
+			switchTab,
+			setApiConfiguration,
+			apiConfiguration?.apiProvider,
+			apiConfiguration?.zgsmModelId,
+			apiConfiguration?.zgsmDefaultModelId,
+		],
 	)
 
 	useEvent("message", onMessage)

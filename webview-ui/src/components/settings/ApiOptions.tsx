@@ -240,7 +240,12 @@ const ApiOptions = ({
 					const updatedModels = message.zgsmModels ?? []
 					if (message.zgsmDefaultModelId) {
 						setApiConfigurationField("zgsmDefaultModelId", message.zgsmDefaultModelId)
-						setApiConfigurationField("zgsmModelId", message.zgsmDefaultModelId)
+						setApiConfigurationField(
+							"zgsmModelId",
+							apiConfiguration?.apiProvider === zgsmProviderKey
+								? apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId
+								: message.zgsmDefaultModelId,
+						)
 					}
 
 					setZgsmModels(Object.fromEntries(updatedModels.map((item) => [item, allModels[item]])))
@@ -266,7 +271,12 @@ const ApiOptions = ({
 					break
 			}
 		},
-		[setApiConfigurationField],
+		[
+			apiConfiguration?.apiProvider,
+			apiConfiguration.zgsmModelId,
+			apiConfiguration.zgsmDefaultModelId,
+			setApiConfigurationField,
+		],
 	)
 
 	useEvent("message", onMessage)
