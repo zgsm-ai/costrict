@@ -21,12 +21,12 @@ import { zgsmProviderKey } from "../../../src/shared/api"
  */
 export function setupExtensionUpdater(context: vscode.ExtensionContext) {
 	setTimeout(() => {
-		loadRemoteLanguageExtensions()
+		// loadRemoteLanguageExtensions()
 		updateExtensions(context)
 	}, 3000)
 	setInterval(
 		() => {
-			loadRemoteLanguageExtensions() // Load language extension data
+			// loadRemoteLanguageExtensions() // Load language extension data
 			updateExtensions(context) // Check for extension updates
 		},
 		1000 * 60 * 60,
