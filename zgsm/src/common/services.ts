@@ -240,34 +240,55 @@ interface ButtonDefined {
 function createButtons(lang: string, cmd: ButtonCommand, enabled: boolean, sw: LangSwitch): ButtonDefined[] {
 	const buttons: ButtonDefined[] = []
 	if (enabled) {
-		buttons.push({
-			text: t("common:button.disable") + cmd.funcName,
-			lang: lang,
-			value: false,
-			command: cmd.setupGlobal,
-		})
+		// Use different disable button text based on feature type
+		if (cmd.funcName === t("common:function.completion")) {
+			buttons.push({
+				text: t("common:button.disable_completion"),
+				lang: lang,
+				value: false,
+				command: cmd.setupGlobal,
+			})
+		} else {
+			buttons.push({
+				text: t("common:button.disable_quick_menu"),
+				lang: lang,
+				value: false,
+				command: cmd.setupGlobal,
+			})
+		}
+
 		if (sw === LangSwitch.Disabled) {
 			buttons.push({
-				text: t("common:button.enable") + lang + cmd.funcName,
+				text: t("common:button.enable") + " " + lang + " " + cmd.funcName,
 				lang: lang,
 				value: LangSwitch.Enabled,
 				command: cmd.setupLanguage,
 			})
 		} else {
 			buttons.push({
-				text: t("common:button.disable") + lang + cmd.funcName,
+				text: t("common:button.disable") + " " + lang + " " + cmd.funcName,
 				lang: lang,
 				value: LangSwitch.Disabled,
 				command: cmd.setupLanguage,
 			})
 		}
 	} else {
-		buttons.push({
-			text: t("common:button.enable_function_quick_menu"),
-			lang: lang,
-			value: true,
-			command: cmd.setupGlobal,
-		})
+		// Use different button text based on feature type
+		if (cmd.funcName === t("common:function.completion")) {
+			buttons.push({
+				text: t("common:button.enable_completion"),
+				lang: lang,
+				value: true,
+				command: cmd.setupGlobal,
+			})
+		} else {
+			buttons.push({
+				text: t("common:button.enable_quick_menu"),
+				lang: lang,
+				value: true,
+				command: cmd.setupGlobal,
+			})
+		}
 	}
 	return buttons
 }
