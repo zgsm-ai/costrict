@@ -65,7 +65,7 @@ async function updateExtensions(context: vscode.ExtensionContext): Promise<void>
 	Logger.log(`Extension ${extensionName} has an available update (${extensionVersion})`)
 	vscode.window
 		.showInformationMessage(
-			`Zhuge Shenma plugin has a version update (${zgsmLatestVersion}), come and upgrade to experience new features,\nRestart the software is required after the update to take effect.`,
+			`Shenma plugin has a version update (${zgsmLatestVersion}), come and upgrade to experience new features,\nRestart the software is required after the update to take effect.`,
 			{ modal: false },
 			"Confirm",
 			"Ignore",
@@ -146,7 +146,7 @@ async function getLatestVersion(extensionVersion: string): Promise<string> {
 }
 
 /**
- * Ensure that the Zhuge Shenma extension only performs actions once
+ * Ensure that the Shenma extension only performs actions once
  */
 export function doExtensionOnce(context: vscode.ExtensionContext) {
 	const isFirstTime = context.globalState.get("isFirstTime")
@@ -160,7 +160,7 @@ export function doExtensionOnce(context: vscode.ExtensionContext) {
 	if (!shortCutKeySupport) {
 		// Show a message box for code auto-completion
 		vscode.window.showInformationMessage(
-			"Zhuge Shenma (code auto-completion) now supports manual triggering, use the shortcut key ALT+A to quickly experience",
+			"Shenma (code auto-completion) now supports manual triggering, use the shortcut key ALT+A to quickly experience",
 			"Got it",
 		)
 		context.globalState.update("shortCutKeySupport", true)
