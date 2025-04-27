@@ -50,5 +50,11 @@
 	"auth.loginUrl.description": "自定义OIDC登录API URL",
 	"auth.tokenUrl.description": "自定义OIDC令牌获取API URL",
 	"auth.logoutUrl.description": "自定义OIDC登出API URL",
-	"auth.response.showNotification.description": "等待机器人响应时是否显示通知"
+	"auth.response.showNotification.description": "等待机器人响应时是否显示通知",
+	"settings.title": "配置",
+	"commands.allowedCommands.description": "当启用'始终批准执行操作'时可以自动执行的命令",
+	"settings.vsCodeLmModelSelector.description": "VSCode 语言模型 API 的设置",
+	"settings.vsCodeLmModelSelector.vendor.description": "语言模型的供应商（例如：copilot）",
+	"settings.vsCodeLmModelSelector.family.description": "语言模型的系列（例如：gpt-4）",
+	"settings.customStoragePath.description": "自定义存储路径。留空以使用默认位置。支持绝对路径（例如：'D:\\RooCodeStorage'）"
 }

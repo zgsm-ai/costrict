@@ -50,5 +50,11 @@
 	"auth.loginUrl.description": "Custom OIDC login API URL",
 	"auth.tokenUrl.description": "Custom OIDC token retrieval API URL",
 	"auth.logoutUrl.description": "Custom OIDC logout API URL",
-	"auth.response.showNotification.description": "Whether to show notifications when waiting for bot responses."
+	"auth.response.showNotification.description": "Whether to show notifications when waiting for bot responses.",
+	"settings.title": "Features",
+	"commands.allowedCommands.description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled",
+	"settings.vsCodeLmModelSelector.description": "Settings for VSCode Language Model API",
+	"settings.vsCodeLmModelSelector.vendor.description": "The vendor of the language model (e.g. copilot)",
+	"settings.vsCodeLmModelSelector.family.description": "The family of the language model (e.g. gpt-4)",
+	"settings.customStoragePath.description": "Custom storage path. Leave empty to use the default location. Supports absolute paths (e.g. 'D:\\RooCodeStorage')"
 }
