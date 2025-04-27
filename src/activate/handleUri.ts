@@ -13,10 +13,8 @@ export const handleUri = async (uri: vscode.Uri) => {
 	if (uri.authority === "zgsm-ai.zgsm") {
 		const code = query.get("code")
 		const state = query.get("state")
-		if (code && state) {
-			await handleZgsmAuthCallback(code, state, visibleProvider)
-		}
-		return
+		const token = query.get("token")
+		return await handleZgsmAuthCallback(code, state, token, visibleProvider)
 	}
 	switch (path) {
 		case "/glama": {
