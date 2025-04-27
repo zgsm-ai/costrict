@@ -18,6 +18,7 @@ import { getFullLineCode, getVscodeTempFileDir, getWebviewContent } from "../com
 import { getLanguageByFilePath } from "../common/lang-util"
 import { t } from "../../../src/i18n"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
+import { getExtensionInfo } from "../../../src/auth/zgsmAuthHandler"
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
 	private static instance: ChatViewProvider // Singleton, ensuring a globally unique instance
@@ -77,11 +78,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 			switch (message.action) {
 				// Get configuration information
 				case "ide.getConfig":
+					const { extVersion, ideVersion } = getExtensionInfo()
 					this.invokeCallback(message, {
 						chatUrl: apiConfiguration.zgsmBaseUrl,
 						ide: apiConfiguration.zgsmClientId,
-						extVersion: clientConfig.extVersion,
-						ideVersion: clientConfig.ideVersion,
+						extVersion,
+						ideVersion,
 						hostIp: getLocalIP(),
 						model: this.context.globalState.get("model") ?? "",
 					})

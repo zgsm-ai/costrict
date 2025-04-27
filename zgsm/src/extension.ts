@@ -15,7 +15,6 @@ import { AICompletionProvider } from "./codeCompletion/completionProvider"
 import { codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codeLens/codeLensCallBackFunc"
 import { MyCodeLensProvider } from "./codeLens/codeLensProvider"
 import { configCompletion, configCodeLens, configShenmaName } from "./common/constant"
-import { initClientConfig, updateEnv } from "./common/env"
 import {
 	setupExtensionUpdater,
 	doExtensionOnce,
@@ -31,9 +30,7 @@ import { loadLocalLanguageExtensions } from "./common/lang-util"
  */
 async function initialize() {
 	printLogo()
-	initClientConfig()
 	initLangSetting()
-
 	loadLocalLanguageExtensions()
 }
 
@@ -85,7 +82,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	const configChanged = vscode.workspace.onDidChangeConfiguration(async (e) => {
 		if (e.affectsConfiguration(configShenmaName)) {
 			// Zhuge Shenma settings changed, mainly URL settings for various services
-			updateEnv()
 			await cvProvider.updateConfig()
 		}
 		if (e.affectsConfiguration(configCompletion)) {

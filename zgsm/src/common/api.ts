@@ -7,36 +7,34 @@
  * copies or substantial portions of the Software.
  */
 import axios from "axios"
-import { getClientConfig, getAuthConfig } from "./env"
 import { Logger } from "./log-util"
+import { ClineProvider } from "../../../src/core/webview/ClineProvider"
+import { createHeaders } from "../../../src/auth/zgsmAuthHandler"
 
 /**
  * Build REST API request headers with client identification and authentication API-KEY
  */
-export const createAuthenticatedHeaders = (token?: string, dict: Record<string, string> = {}) => {
-	return {
-		ide: clientConfig.ide,
-		"ide-version": clientConfig.extVersion,
-		"ide-real-version": clientConfig.ideVersion,
-		"host-ip": clientConfig.hostIp,
-		"api-key": token,
+export const createAuthenticatedHeaders = (token = "", dict: Record<string, string> = {}) => {
+	return createHeaders({
 		"Content-Type": "application/json",
+		"api-key": token,
 		...dict,
-	}
+	})
 }
 
 /**
  * Query the list of language suffixes
  */
 export async function getLanguageExtensions() {
-	const authConfig = getAuthConfig()
-	const clientConfig = getClientConfig()
+	const provider = await ClineProvider.getCacheInstances()
+	if (!provider) throw new Error("provider is not defined")
+	const { apiConfiguration } = await provider.getState()
 
-	const url = `${authConfig.baseUrl}/api/configuration?belong_type=language&attribute_key=language_map`
+	const url = `${apiConfiguration.zgsmBaseUrl}/api/configuration?belong_type=language&attribute_key=language_map`
 	Logger.log("Request started: getLanguageExtensions()", url)
 	return axios
 		.get(url, {
-			headers: createAuthenticatedHeaders(clientConfig.apiKey),
+			headers: createAuthenticatedHeaders(apiConfiguration.zgsmApiKey),
 		})
 		.then((res) => {
 			if (res.status === 200 && Array.isArray(res.data?.data)) {
@@ -58,15 +56,16 @@ export async function getLanguageExtensions() {
  * Check if the extension plugin has a new version
  */
 export async function getExtensionsLatestVersion() {
-	const authConfig = getAuthConfig()
-	const clientConfig = getClientConfig()
+	const provider = await ClineProvider.getCacheInstances()
+	if (!provider) throw new Error("provider is not defined")
+	const { apiConfiguration } = await provider.getState()
 
 	Logger.log("Request started: getExtensionsLatestVersion()")
-	const url = `${authConfig.baseUrl}/vscode/ex-server-api/zgsm-ai/zgsm/latest`
+	const url = `${apiConfiguration.zgsmBaseUrl}/vscode/ex-server-api/zgsm-ai/zgsm/latest`
 
 	return axios
 		.get(url, {
-			headers: createAuthenticatedHeaders(clientConfig.apiKey),
+			headers: createAuthenticatedHeaders(apiConfiguration.zgsmApiKey),
 		})
 		.then((res) => {
 			if (res.status === 200 && res.data?.version) {

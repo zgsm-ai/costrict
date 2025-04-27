@@ -19,7 +19,6 @@ export interface ClientConfig {
 	extVersion: string
 	hostIp: string
 	apiKey: string
-	updateExtensionsTimeInterval: number
 	clientId: string
 	clientSecret: string
 	redirectUri: string
@@ -49,7 +48,6 @@ export const defaultClientConfig: ClientConfig = {
 	extVersion: "",
 	hostIp: "",
 	apiKey: "",
-	updateExtensionsTimeInterval: 3600000, // 1 hour
 	clientId: "",
 	clientSecret: "",
 	redirectUri: "",

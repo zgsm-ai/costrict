@@ -8,6 +8,15 @@ import { getZgsmModels } from "../api/providers/zgsm"
 import { logger } from "../utils/logging"
 import delay from "delay"
 
+// Get extended information
+export const getExtensionInfo = () => {
+	const extension =
+		vscode.extensions.getExtension("zgsm-ai.zgsm") || vscode.extensions.getExtension("rooveterinaryinc.roo-cline")
+	const extVersion = extension?.packageJSON?.version || ""
+
+	return { extVersion, ideVersion: vscode.version || "" }
+}
+
 /**
  * Get local IP address
  * @returns Local IP address, or an empty string if not found
@@ -45,26 +54,16 @@ function getLocalIP(): string {
  */
 export function createHeaders(dict: Record<string, any> = {}): Record<string, any> {
 	// Get extended information
-	const extension =
-		vscode.extensions.getExtension("zgsm-ai.zgsm") || vscode.extensions.getExtension("rooveterinaryinc.roo-cline")
-	const extVersion = extension?.packageJSON.version || ""
-	const ideVersion = vscode.version || ""
-	const hostIp = getLocalIP()
-
-	// Update client config
-	updateClientConfig({
-		extVersion,
-		ideVersion,
-		hostIp,
-	})
+	const { extVersion, ideVersion } = getExtensionInfo()
 
 	const headers = {
 		ide: clientConfig.ide,
-		"ide-version": clientConfig.extVersion,
-		"ide-real-version": clientConfig.ideVersion,
-		"host-ip": clientConfig.hostIp,
+		"ide-version": extVersion,
+		"ide-real-version": ideVersion,
+		"host-ip": getLocalIP(),
 		...dict,
 	}
+
 	return headers
 }
 
