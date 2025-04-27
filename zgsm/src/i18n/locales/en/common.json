@@ -9,8 +9,8 @@
 	"input": {
 		"task_prompt": "What should Shenma do?"
 	},
-	"window":{
-		"error":{
+	"window": {
+		"error": {
 			"failed_to_get_login_info": "Failed to get login information. Please log in again to use the completion service.",
 			"login_failed": "Login failed, please log in again.",
 			"login_expired": "Login has expired, please log in again.",
@@ -23,14 +23,18 @@
 			"sign_in_failed": "Sign in failed: ",
 			"please_log_in_first": "Please log in first."
 		},
-		"infor":{
+		"infor": {
 			"enable_disable_function_quick_menu": "Enable/Disable \"Function Quick Menu\" and \"Intelligent Code Completion\""
 		}
 	},
-	"button":{
+	"button": {
 		"enable_function_quick_menu": "Enable Quick Menu",
-		"disable": "Disable",
-		"enable": "Enable"
+		"disable": "Disable ",
+		"enable": "Enable ",
+		"enable_completion": "Enable Intelligent Completion",
+		"enable_quick_menu": "Enable Function Quick Menu",
+		"disable_completion": "Disable Intelligent Completion",
+		"disable_quick_menu": "Disable Function Quick Menu"
 	},
 	"function": {
 		"completion": "Completion",
