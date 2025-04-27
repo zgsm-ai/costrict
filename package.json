@@ -425,7 +425,7 @@
 		},
 		"configuration": [
 			{
-				"title": "Features",
+				"title": "%settings.title%",
 				"order": 2,
 				"properties": {
 					"features.allowedCommands": {
@@ -441,26 +441,26 @@
 							"git diff",
 							"git show"
 						],
-						"description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled"
+						"description": "%commands.allowedCommands.description%"
 					},
 					"features.vsCodeLmModelSelector": {
 						"type": "object",
 						"properties": {
 							"vendor": {
 								"type": "string",
-								"description": "The vendor of the language model (e.g. copilot)"
+								"description": "%settings.vsCodeLmModelSelector.vendor.description%"
 							},
 							"family": {
 								"type": "string",
-								"description": "The family of the language model (e.g. gpt-4)"
+								"description": "%settings.vsCodeLmModelSelector.family.description%"
 							}
 						},
-						"description": "Settings for VSCode Language Model API"
+						"description": "%settings.vsCodeLmModelSelector.description%"
 					},
 					"features.customStoragePath": {
 						"type": "string",
 						"default": "",
-						"description": "Custom storage path. Leave empty to use the default location. Supports absolute paths (e.g. 'D:\\RooCodeStorage')"
+						"description": "%settings.customStoragePath.description%"
 					},
 					"features.showNotification": {
 						"type": "boolean",
