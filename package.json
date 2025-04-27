@@ -473,25 +473,25 @@
 				"title": "%auth.title%",
 				"order": 1,
 				"properties": {
-					"auth.baseUrl": {
+					"Auth.baseUrl": {
 						"type": "string",
 						"order": 1,
 						"default": "",
 						"description": "%auth.baseUrl.description%"
 					},
-					"auth.loginUrl": {
+					"Auth.loginUrl": {
 						"type": "string",
 						"order": 2,
 						"default": "",
 						"description": "%auth.loginUrl.description%"
 					},
-					"auth.tokenUrl": {
+					"Auth.tokenUrl": {
 						"type": "string",
 						"order": 3,
 						"default": "",
 						"description": "%auth.tokenUrl.description%"
 					},
-					"auth.logoutUrl": {
+					"Auth.logoutUrl": {
 						"type": "string",
 						"order": 4,
 						"default": "",
