@@ -9,6 +9,8 @@ export type ApiConfiguration = ProviderSettings & {
 	zgsmBaseUrl?: string // ZGSM base URL
 	zgsmClientId?: string // OAuth client ID
 	zgsmClientSecret?: string // OAuth client secret
+	zgsmCompletionUrl?: string
+	zgsmDownloadUrl?: string
 	zgsmRedirectUri?: string // OAuth redirect URI
 	zgsmLoginUrl?: string // Login URL
 	zgsmLogoutUrl?: string // Logout URL

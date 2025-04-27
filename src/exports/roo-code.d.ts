@@ -34,6 +34,8 @@ type ProviderSettings = {
 	zgsmLoginUrl?: string | undefined
 	zgsmLogoutUrl?: string | undefined
 	zgsmTokenUrl?: string | undefined
+	zgsmCompletionUrl?: string | undefined
+	zgsmDownloadUrl?: string | undefined
 	apiModelId?: string | undefined
 	apiKey?: string | undefined
 	anthropicBaseUrl?: string | undefined

@@ -25,6 +25,26 @@ export interface ClientConfig {
 	loginUrl: string
 	logoutUrl: string
 	tokenUrl: string
+	chatUrl: string
+	completionUrl: string
+	downloadUrl: string
+}
+
+export const defaultClientConfig: ClientConfig = {
+	ide: "vscode",
+	ideVersion: "",
+	extVersion: "",
+	hostIp: "",
+	apiKey: "",
+	clientId: "",
+	clientSecret: "",
+	redirectUri: "",
+	loginUrl: "",
+	logoutUrl: "",
+	tokenUrl: "",
+	chatUrl: "", // Will be generated
+	completionUrl: "", // Will be generated
+	downloadUrl: "", // Will be generated
 }
 
 export const defaultAuthConfig: AuthConfig = {
@@ -42,19 +62,6 @@ export const defaultAuthConfig: AuthConfig = {
 	downloadUrl: "", // Will be generated
 }
 
-export const defaultClientConfig: ClientConfig = {
-	ide: "vscode",
-	ideVersion: "",
-	extVersion: "",
-	hostIp: "",
-	apiKey: "",
-	clientId: "",
-	clientSecret: "",
-	redirectUri: "",
-	loginUrl: "",
-	logoutUrl: "",
-	tokenUrl: "",
-}
 // URL templates
 const URL_TEMPLATES = {
 	login: "{baseUrl}/realms/{realmName}/protocol/openid-connect/auth",
@@ -69,14 +76,13 @@ const URL_TEMPLATES = {
 export let authConfig = { ...defaultAuthConfig }
 export let clientConfig = { ...defaultClientConfig }
 
+authConfig = generateAuthUrls({})
+
 function replaceVars(template: string, config: AuthConfig): string {
 	let result = template.replace(/{baseUrl}/g, config.baseUrl)
 	result = result.replace(/{realmName}/g, config.realmName)
 	return result
 }
-
-// 导出 generateAuthUrls 作为 getAuthUrls 以解决兼容性问题
-export const getAuthUrls = generateAuthUrls
 
 // 更新客户端配置
 export function updateClientConfig(config: Partial<ClientConfig>) {
@@ -90,9 +96,9 @@ export function updateAuthConfig(config: Partial<AuthConfig>) {
 }
 
 export const getClientConfig = () => clientConfig
-export const getAuthConfig = () => authConfig
+export const getAuthConfig = () => generateAuthUrls({})
 
-function generateAuthUrls(config: Partial<AuthConfig>): AuthConfig {
+export function generateAuthUrls(config: Partial<AuthConfig>): AuthConfig {
 	const fullConfig = { ...authConfig, ...config }
 	return {
 		...fullConfig,

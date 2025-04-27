@@ -10,6 +10,7 @@ import axios from "axios"
 import { Logger } from "./log-util"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { createHeaders } from "../../../src/auth/zgsmAuthHandler"
+import { getAuthConfig } from "../../../webview-ui/src/config/auth"
 
 /**
  * Build REST API request headers with client identification and authentication API-KEY
@@ -30,7 +31,7 @@ export async function getLanguageExtensions() {
 	if (!provider) throw new Error("provider is not defined")
 	const { apiConfiguration } = await provider.getState()
 
-	const url = `${apiConfiguration.zgsmBaseUrl}/api/configuration?belong_type=language&attribute_key=language_map`
+	const url = `${apiConfiguration.zgsmBaseUrl || getAuthConfig().baseUrl}/api/configuration?belong_type=language&attribute_key=language_map`
 	Logger.log("Request started: getLanguageExtensions()", url)
 	return axios
 		.get(url, {
@@ -61,7 +62,7 @@ export async function getExtensionsLatestVersion() {
 	const { apiConfiguration } = await provider.getState()
 
 	Logger.log("Request started: getExtensionsLatestVersion()")
-	const url = `${apiConfiguration.zgsmBaseUrl}/vscode/ex-server-api/zgsm-ai/zgsm/latest`
+	const url = `${apiConfiguration.zgsmBaseUrl || getAuthConfig().baseUrl}/vscode/ex-server-api/zgsm-ai/zgsm/latest`
 
 	return axios
 		.get(url, {

@@ -318,6 +318,8 @@ export const providerSettingsSchema = z.object({
 	zgsmLoginUrl: z.string().optional(),
 	zgsmLogoutUrl: z.string().optional(),
 	zgsmTokenUrl: z.string().optional(),
+	zgsmCompletionUrl: z.string().optional(),
+	zgsmDownloadUrl: z.string().optional(),
 	// Anthropic
 	apiModelId: z.string().optional(),
 	apiKey: z.string().optional(),
@@ -425,6 +427,8 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmLoginUrl: undefined,
 	zgsmLogoutUrl: undefined,
 	zgsmTokenUrl: undefined,
+	zgsmCompletionUrl: undefined,
+	zgsmDownloadUrl: undefined,
 	// Anthropic
 	apiModelId: undefined,
 	apiKey: undefined,

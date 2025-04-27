@@ -29,8 +29,6 @@ const AZURE_AI_INFERENCE_PATH = "/models/chat/completions"
 
 const ZGSM_DEFAULT_BASEURL = "https://zgsm.sangfor.com"
 
-let ZGSM_DEFAULT_MODELID = "deepseek-chat"
-
 export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: OpenAiHandlerOptions
 	private client: OpenAI

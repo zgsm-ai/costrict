@@ -19,6 +19,7 @@ import { getLanguageByFilePath } from "../common/lang-util"
 import { t } from "../../../src/i18n"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { getExtensionInfo } from "../../../src/auth/zgsmAuthHandler"
+import { getAuthConfig } from "../../../webview-ui/src/config/auth"
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
 	private static instance: ChatViewProvider // Singleton, ensuring a globally unique instance
@@ -80,8 +81,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 				case "ide.getConfig":
 					const { extVersion, ideVersion } = getExtensionInfo()
 					this.invokeCallback(message, {
-						chatUrl: apiConfiguration.zgsmBaseUrl,
-						ide: apiConfiguration.zgsmClientId,
+						chatUrl: apiConfiguration.zgsmBaseUrl || getAuthConfig().baseUrl,
+						ide: apiConfiguration.zgsmClientId || getAuthConfig().clientId,
 						extVersion,
 						ideVersion,
 						hostIp: getLocalIP(),
@@ -206,7 +207,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 		this.sendMessage({
 			action: "ide.updateConfig",
 			data: {
-				chatUrl: apiConfiguration.zgsmBaseUrl,
+				chatUrl: apiConfiguration.zgsmBaseUrl || getAuthConfig().baseUrl,
 			},
 		})
 	}
@@ -388,7 +389,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 		if (!ChatViewProvider.provider) throw new Error("ChatViewProvider is not initialized")
 
 		const { apiConfiguration } = await ChatViewProvider.provider.getState()
-		vscode.env.openExternal(vscode.Uri.parse(`${apiConfiguration.zgsmBaseUrl}/issue/`))
+		vscode.env.openExternal(vscode.Uri.parse(`${apiConfiguration.zgsmBaseUrl || getAuthConfig().baseUrl}/issue/`))
 	}
 
 	/**

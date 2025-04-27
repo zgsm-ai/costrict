@@ -1,4 +1,4 @@
-import { authConfig, clientConfig, updateClientConfig } from "./../../webview-ui/src/config/auth"
+import { getAuthConfig, getClientConfig } from "./../../webview-ui/src/config/auth"
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { ApiConfiguration, zgsmProviderKey } from "../shared/api"
@@ -6,7 +6,6 @@ import * as os from "os"
 import * as querystring from "querystring"
 import { getZgsmModels } from "../api/providers/zgsm"
 import { logger } from "../utils/logging"
-import delay from "delay"
 
 // Get extended information
 export const getExtensionInfo = () => {
@@ -57,7 +56,7 @@ export function createHeaders(dict: Record<string, any> = {}): Record<string, an
 	const { extVersion, ideVersion } = getExtensionInfo()
 
 	const headers = {
-		ide: clientConfig.ide,
+		ide: getClientConfig().ide,
 		"ide-version": extVersion,
 		"ide-real-version": ideVersion,
 		"host-ip": getLocalIP(),
@@ -81,7 +80,7 @@ async function handlePostLogin({
 }): Promise<void> {
 	try {
 		const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
-			apiConfiguration.zgsmBaseUrl || authConfig.baseUrl,
+			apiConfiguration.zgsmBaseUrl || getAuthConfig().baseUrl,
 			accessToken,
 			apiConfiguration.openAiHostHeader,
 		)
@@ -162,9 +161,7 @@ async function handleZgsmAuthCallbackWithToken(token: string, provider: ClinePro
 		apiProvider: zgsmProviderKey,
 		zgsmApiKey: token,
 	}
-	updateClientConfig({
-		apiKey: token,
-	})
+
 	await updateApiConfigurations(provider, currentApiConfigName, updatedConfig)
 	await handlePostLogin({ apiConfiguration: updatedConfig, provider, accessToken: token })
 
@@ -187,7 +184,7 @@ export async function handleZgsmAuthCallbackWithCode(
 
 	const tokenResponse = await getAccessToken(code, {
 		...apiConfiguration,
-		zgsmBaseUrl: apiConfiguration.zgsmBaseUrl || authConfig.baseUrl,
+		zgsmBaseUrl: apiConfiguration.zgsmBaseUrl || getAuthConfig().baseUrl,
 		apiProvider: zgsmProviderKey,
 	})
 
@@ -203,9 +200,6 @@ export async function handleZgsmAuthCallbackWithCode(
 		apiProvider: zgsmProviderKey,
 		zgsmApiKey: tokenData.access_token,
 	}
-	updateClientConfig({
-		apiKey: tokenData.access_token,
-	})
 	await updateApiConfigurations(provider, currentApiConfigName, updatedConfig)
 	await handlePostLogin({ apiConfiguration: updatedConfig, provider, accessToken: tokenData.access_token })
 
@@ -242,6 +236,7 @@ export async function handleZgsmLogin(
  * @returns Response containing access token
  */
 export async function getAccessToken(code: string, apiConfiguration?: ApiConfiguration) {
+	const authConfig = getAuthConfig()
 	try {
 		// Prefer configuration in apiConfiguration, if not exist, use environment settings
 		const clientId = apiConfiguration?.zgsmClientId || authConfig.clientId

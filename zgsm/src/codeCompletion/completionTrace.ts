@@ -14,6 +14,7 @@ import { getAcceptionString, getCorrectionString } from "./completionDataInterfa
 import { CompletionCache } from "./completionCache"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { writeLogsSync } from "../common/vscode-util"
+import { getAuthConfig } from "../../../webview-ui/src/config/auth"
 
 /**
  * Completion metrics memo
@@ -107,7 +108,7 @@ export class CompletionTrace {
 		if (!CompletionTrace.provider) throw Error("CompletionTrace.provider is not set")
 		const { apiConfiguration } = await CompletionTrace.provider.getState()
 
-		const url = `${apiConfiguration.zgsmBaseUrl}/api/feedbacks/completions`
+		const url = `${apiConfiguration.zgsmBaseUrl || getAuthConfig().baseUrl}/api/feedbacks/completions`
 		const client = await this.getInstance()
 		const datas = this.constructDatas()
 		if (datas.count === 0) {
@@ -151,7 +152,7 @@ export class CompletionTrace {
 		if (client.openApiError == client.lastUploadError) {
 			return
 		}
-		const url = `${apiConfiguration.zgsmBaseUrl}/api/feedbacks/error`
+		const url = `${apiConfiguration.zgsmBaseUrl || getAuthConfig().baseUrl}/api/feedbacks/error`
 		await client
 			.postDatas(url, data as Record<string, unknown>)
 			.then(() => {

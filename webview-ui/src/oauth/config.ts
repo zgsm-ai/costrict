@@ -1,4 +1,4 @@
-import { defaultAuthConfig, getAuthUrls } from "../config/auth"
+import { defaultAuthConfig, generateAuthUrls } from "../config/auth"
 
 // Complete AuthConfig interface, corresponding to the extended ApiConfiguration
 export interface AuthConfig {
@@ -10,6 +10,8 @@ export interface AuthConfig {
 	logoutUrl: string
 	tokenUrl: string
 	redirectUri: string
+	completionUrl: string
+	downloadUrl: string
 }
 
 class AuthConfigManager {
@@ -29,6 +31,8 @@ class AuthConfigManager {
 			realmName: config.realmName || defaultAuthConfig.realmName,
 			clientId: config.clientId || defaultAuthConfig.clientId,
 			clientSecret: config.clientSecret || defaultAuthConfig.clientSecret,
+			completionUrl: config.completionUrl || defaultAuthConfig.completionUrl,
+			downloadUrl: config.downloadUrl || defaultAuthConfig.downloadUrl,
 		}
 
 		// Use provided URLs directly, or generate from baseUrl if not provided
@@ -40,7 +44,7 @@ class AuthConfigManager {
 						tokenUrl: config.tokenUrl,
 						redirectUri: config.redirectUri,
 					}
-				: getAuthUrls(baseConfig as AuthConfig)
+				: generateAuthUrls(baseConfig as AuthConfig)
 
 		// Return the merged configuration
 		return {
@@ -84,7 +88,7 @@ class AuthConfigManager {
 			newConfig.baseUrl &&
 			!(newConfig.loginUrl && newConfig.logoutUrl && newConfig.tokenUrl && newConfig.redirectUri)
 		) {
-			const urls = getAuthUrls({
+			const urls = generateAuthUrls({
 				...updatedConfig,
 				baseUrl: newConfig.baseUrl,
 			})

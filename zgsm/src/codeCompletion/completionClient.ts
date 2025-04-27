@@ -19,6 +19,7 @@ import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { t } from "../../../src/i18n"
+import { getAuthConfig } from "../../../webview-ui/src/config/auth"
 
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
@@ -104,7 +105,7 @@ export class CompletionClient {
 			return false
 		}
 		this.openai = new OpenAI({
-			baseURL: apiConfiguration.zgsmBaseUrl,
+			baseURL: apiConfiguration.zgsmCompletionUrl || getAuthConfig().completionUrl,
 			apiKey: apiConfiguration.zgsmApiKey,
 		})
 		if (!this.openai) {
@@ -115,7 +116,7 @@ export class CompletionClient {
 		this.stopWords = workspace.getConfiguration(configCompletion).get("inlineCompletion") ? ["\n", "\r"] : []
 		this.betaMode = workspace.getConfiguration(configCompletion).get("betaMode")
 		Logger.info(
-			`Completion: Create OpenAIApi client, URL: ${apiConfiguration.zgsmBaseUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
+			`Completion: Create OpenAIApi client, URL: ${apiConfiguration.zgsmCompletionUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
 		)
 		return true
 	}
