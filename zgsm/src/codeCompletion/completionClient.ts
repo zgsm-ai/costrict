@@ -8,7 +8,6 @@
  * copies or substantial portions of the Software.
  */
 import OpenAI from "openai"
-import { envClient, envSetting } from "../common/env"
 import { Logger } from "../common/log-util"
 import { window, workspace } from "vscode"
 import { AxiosError } from "axios"
@@ -92,20 +91,20 @@ export class CompletionClient {
 			return true
 		}
 
-		const { apiConfiguration } = (await CompletionClient.provider?.getState()) ?? {
-			apiConfiguration: { zgsmApiKey: undefined },
-		}
+		if (!CompletionClient.provider) throw new Error("CompletionClient.provider is undefined")
+
+		const { apiConfiguration } = await CompletionClient.provider.getState()
 
 		if (!apiConfiguration.zgsmApiKey) {
 			Logger.error(
 				"Failed to get login information. Please log in again to use the completion service",
-				envClient,
+				apiConfiguration,
 			)
 			window.showErrorMessage(t("common:window.error.failed_to_get_login_info"))
 			return false
 		}
 		this.openai = new OpenAI({
-			baseURL: envSetting.completionUrl,
+			baseURL: apiConfiguration.zgsmBaseUrl,
 			apiKey: apiConfiguration.zgsmApiKey,
 		})
 		if (!this.openai) {
@@ -116,7 +115,7 @@ export class CompletionClient {
 		this.stopWords = workspace.getConfiguration(configCompletion).get("inlineCompletion") ? ["\n", "\r"] : []
 		this.betaMode = workspace.getConfiguration(configCompletion).get("betaMode")
 		Logger.info(
-			`Completion: Create OpenAIApi client, URL: ${envSetting.completionUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
+			`Completion: Create OpenAIApi client, URL: ${apiConfiguration.zgsmBaseUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
 		)
 		return true
 	}

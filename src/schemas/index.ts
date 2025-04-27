@@ -308,6 +308,7 @@ export const providerSettingsSchema = z.object({
 	apiProvider: providerNamesSchema.optional(),
 	// Zgsm
 	zgsmBaseUrl: z.string().optional(),
+	zgsmSite: z.string().optional(),
 	zgsmApiKey: z.string().optional(),
 	zgsmModelId: z.string().optional(),
 	zgsmDefaultModelId: z.string().optional(),
@@ -414,6 +415,7 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	apiProvider: undefined,
 	// Zgsm
 	zgsmBaseUrl: undefined,
+	zgsmSite: undefined,
 	zgsmApiKey: undefined,
 	zgsmModelId: undefined,
 	zgsmDefaultModelId: "deepseek-chat",

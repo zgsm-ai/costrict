@@ -1,4 +1,4 @@
-import { defaultAuthConfig } from "./../../webview-ui/src/config/auth"
+import { authConfig, clientConfig, updateClientConfig } from "./../../webview-ui/src/config/auth"
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { ApiConfiguration, zgsmProviderKey } from "../shared/api"
@@ -51,11 +51,18 @@ export function createHeaders(dict: Record<string, any> = {}): Record<string, an
 	const ideVersion = vscode.version || ""
 	const hostIp = getLocalIP()
 
+	// Update client config
+	updateClientConfig({
+		extVersion,
+		ideVersion,
+		hostIp,
+	})
+
 	const headers = {
-		ide: "vscode",
-		"ide-version": extVersion,
-		"ide-real-version": ideVersion,
-		"host-ip": hostIp,
+		ide: clientConfig.ide,
+		"ide-version": clientConfig.extVersion,
+		"ide-real-version": clientConfig.ideVersion,
+		"host-ip": clientConfig.hostIp,
 		...dict,
 	}
 	return headers
@@ -75,7 +82,7 @@ async function handlePostLogin({
 }): Promise<void> {
 	try {
 		const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
-			apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl,
+			apiConfiguration.zgsmBaseUrl || authConfig.baseUrl,
 			accessToken,
 			apiConfiguration.openAiHostHeader,
 		)
@@ -156,7 +163,9 @@ async function handleZgsmAuthCallbackWithToken(token: string, provider: ClinePro
 		apiProvider: zgsmProviderKey,
 		zgsmApiKey: token,
 	}
-
+	updateClientConfig({
+		apiKey: token,
+	})
 	await updateApiConfigurations(provider, currentApiConfigName, updatedConfig)
 	await handlePostLogin({ apiConfiguration: updatedConfig, provider, accessToken: token })
 
@@ -179,7 +188,7 @@ export async function handleZgsmAuthCallbackWithCode(
 
 	const tokenResponse = await getAccessToken(code, {
 		...apiConfiguration,
-		zgsmBaseUrl: apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl,
+		zgsmBaseUrl: apiConfiguration.zgsmBaseUrl || authConfig.baseUrl,
 		apiProvider: zgsmProviderKey,
 	})
 
@@ -195,7 +204,9 @@ export async function handleZgsmAuthCallbackWithCode(
 		apiProvider: zgsmProviderKey,
 		zgsmApiKey: tokenData.access_token,
 	}
-
+	updateClientConfig({
+		apiKey: tokenData.access_token,
+	})
 	await updateApiConfigurations(provider, currentApiConfigName, updatedConfig)
 	await handlePostLogin({ apiConfiguration: updatedConfig, provider, accessToken: tokenData.access_token })
 
@@ -234,14 +245,10 @@ export async function handleZgsmLogin(
 export async function getAccessToken(code: string, apiConfiguration?: ApiConfiguration) {
 	try {
 		// Prefer configuration in apiConfiguration, if not exist, use environment settings
-		const clientId = apiConfiguration?.zgsmClientId || "vscode"
-		const clientSecret = apiConfiguration?.zgsmClientSecret || "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l"
-		const redirectUri = apiConfiguration?.zgsmRedirectUri || `${apiConfiguration?.zgsmBaseUrl}/login/ok`
-		const tokenUrl =
-			apiConfiguration?.zgsmTokenUrl ||
-			(apiConfiguration?.zgsmBaseUrl
-				? `${apiConfiguration.zgsmBaseUrl}/realms/gw/protocol/openid-connect/token`
-				: "https://zgsm.sangfor.com/realms/gw/protocol/openid-connect/token")
+		const clientId = apiConfiguration?.zgsmClientId || authConfig.clientId
+		const clientSecret = apiConfiguration?.zgsmClientSecret || authConfig.clientSecret
+		const redirectUri = apiConfiguration?.zgsmRedirectUri || authConfig.redirectUri
+		const tokenUrl = apiConfiguration?.zgsmTokenUrl || authConfig.tokenUrl
 
 		// Set request parameters
 		const params = {

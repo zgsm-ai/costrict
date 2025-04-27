@@ -10,12 +10,13 @@
 import * as vscode from "vscode"
 import { getExtensionsLatestVersion } from "./api"
 import { EXTENSION_ID, configCompletion, configCodeLens } from "./constant"
-import { envSetting } from "./env"
 import { Logger } from "./log-util"
 import { LangSetting, LangSwitch, LangDisables, getLanguageByFilePath, loadRemoteLanguageExtensions } from "./lang-util"
 import { DateFormat, formatTime, formatTimeDifference } from "./util"
 import { t } from "../../../src/i18n"
 import { zgsmProviderKey } from "../../../src/shared/api"
+import { getClientConfig } from "./env"
+
 /**
  * Set up a timer to periodically check for extension updates and programming language settings
  */
@@ -100,8 +101,9 @@ function isTimeToCheck(context: vscode.ExtensionContext): boolean {
 		const lastChecked = formatTime(new Date(zgsmLastChecked as number), DateFormat.LITE)
 		const timeDiff = currentTime - (zgsmLastChecked as number)
 		const timeDiffStr = formatTimeDifference(timeDiff)
-		const maxIntervalStr = formatTimeDifference(envSetting.updateExtensionsTimeInterval)
-		if (timeDiff > envSetting.updateExtensionsTimeInterval) {
+		const clientConfig = getClientConfig()
+		const maxIntervalStr = formatTimeDifference(clientConfig.updateExtensionsTimeInterval)
+		if (timeDiff > clientConfig.updateExtensionsTimeInterval) {
 			Logger.info(
 				`Last check time for zgsm-ai.zgsm extension: ${lastChecked}, waiting time ${timeDiffStr} exceeded ${maxIntervalStr}, need to check again`,
 			)
