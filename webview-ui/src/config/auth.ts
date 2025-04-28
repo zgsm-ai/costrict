@@ -96,7 +96,7 @@ export function updateAuthConfig(config: Partial<AuthConfig>) {
 }
 
 export const getClientConfig = () => clientConfig
-export const getAuthConfig = () => generateAuthUrls({})
+export const getAuthConfig = (opt = {}) => generateAuthUrls(opt)
 
 export function generateAuthUrls(config: Partial<AuthConfig>): AuthConfig {
 	const fullConfig = { ...authConfig, ...config }

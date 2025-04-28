@@ -105,7 +105,6 @@ export class CompletionClient {
 			return false
 		}
 		this.openai = new OpenAI({
-			baseURL: apiConfiguration.zgsmCompletionUrl || getAuthConfig().completionUrl,
 			apiKey: apiConfiguration.zgsmApiKey,
 		})
 		if (!this.openai) {
@@ -188,7 +187,10 @@ export class CompletionClient {
 		Logger.log(`Completion [${cp.id}]: Sending API request`)
 		const headers = createAuthenticatedHeaders()
 		const repo = workspace?.name?.split(" ")[0] ?? ""
+		if (!CompletionClient.provider) throw new Error("CompletionClient.provider is undefined")
 
+		const { apiConfiguration } = await CompletionClient.provider.getState()
+		this.openai.baseURL = apiConfiguration.zgsmCompletionUrl || getAuthConfig().completionUrl
 		return this.openai.completions.create(
 			{
 				// no use
