@@ -88,7 +88,7 @@ async function handlePostLogin({
 
 		provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId })
 	} catch (error) {
-		logger.error("Failed to get zgsm models:", error)
+		logger.error("Failed to get Shenma models:", error)
 		throw error
 	}
 }
@@ -135,7 +135,7 @@ export async function handleZgsmAuthCallback(
 			throw new Error("Invalid callback parameters")
 		}
 	} catch (error) {
-		logger.error(`zgsm login failed: ${error}`)
+		logger.error(`Shenma login failed: ${error}`)
 		throw error
 	}
 }
@@ -160,7 +160,7 @@ async function handleZgsmAuthCallbackWithToken(token: string, provider: ClinePro
 	await updateApiConfigurations(provider, currentApiConfigName, updatedConfig)
 	await handlePostLogin({ apiConfiguration: updatedConfig, provider, accessToken: token })
 
-	vscode.window.showInformationMessage("zgsm login successful")
+	vscode.window.showInformationMessage("Shenma login successful")
 }
 
 /**
@@ -199,7 +199,7 @@ export async function handleZgsmAuthCallbackWithCode(
 	await updateApiConfigurations(provider, currentApiConfigName, updatedConfig)
 	await handlePostLogin({ apiConfiguration: updatedConfig, provider, accessToken: tokenData.access_token })
 
-	vscode.window.showInformationMessage("zgsm login successful")
+	vscode.window.showInformationMessage("Shenma login successful")
 }
 
 /**

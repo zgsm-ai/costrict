@@ -17,10 +17,10 @@
 		}
 	},
 	"providers": {
-		"getZgsmApiKey": "Login to Zgsm",
-		"getZgsmApiKeyAgain": "Re-login to Zgsm",
-		"zgsm": "Zgsm",
-		"zgsmBaseUrl": "Zgsm Base Url",
+		"getZgsmApiKey": "Login to Shenma",
+		"getZgsmApiKeyAgain": "Re-login to Shenma",
+		"zgsm": "Shenma",
+		"zgsmBaseUrl": "Shenma Base Url",
 		"zgsmDefaultBaseUrl": "Default: {{zgsmBaseUrl}}",
 		"lmStudio": {
 			"description": "LM Studio allows you to run models locally on your computer. For instructions on how to get started, see their <a>quickstart guide</a>. You will also need to start LM Studio's <b>local server</b> feature to use it with this extension. <span>Note:</span> Shenma uses complex prompts and works best with Claude models. Less capable models may not work as expected."

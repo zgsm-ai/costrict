@@ -18,28 +18,28 @@
  */
 
 export class Logger {
-    private static formatMessage(): string {
-        const timestamp = new Date().toLocaleString();
-        return `[ZGSM][${timestamp}] `;
-    }
+	private static formatMessage(): string {
+		const timestamp = new Date().toLocaleString()
+		return `[SHENMA][${timestamp}] `
+	}
 
-    static log(...optionalParams: any[]) {
-        console.log(this.formatMessage(), ...optionalParams);
-    }
+	static log(...optionalParams: any[]) {
+		console.log(this.formatMessage(), ...optionalParams)
+	}
 
-    static info(...optionalParams: any[]) {
-        console.info(this.formatMessage(), ...optionalParams);
-    }
+	static info(...optionalParams: any[]) {
+		console.info(this.formatMessage(), ...optionalParams)
+	}
 
-    static warn(...optionalParams: any[]) {
-        console.warn(this.formatMessage(), ...optionalParams);
-    }
+	static warn(...optionalParams: any[]) {
+		console.warn(this.formatMessage(), ...optionalParams)
+	}
 
-    static error(...optionalParams: any[]) {
-        console.error(this.formatMessage(), ...optionalParams);
-    }
+	static error(...optionalParams: any[]) {
+		console.error(this.formatMessage(), ...optionalParams)
+	}
 
-    static debug(...optionalParams: any[]) {
-        console.debug(this.formatMessage(), ...optionalParams);
-    }
+	static debug(...optionalParams: any[]) {
+		console.debug(this.formatMessage(), ...optionalParams)
+	}
 }

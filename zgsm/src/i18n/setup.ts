@@ -5,7 +5,7 @@ import { LanguageResources, TranslationResource } from "./types"
 
 // Load translations from directory
 const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
-	console.log(`Loading zgsm backend translations from ${dirPath}`)
+	console.log(`Loading shenma backend translations from ${dirPath}`)
 	const result: LanguageResources = {}
 
 	try {
@@ -48,7 +48,7 @@ const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
 
 // Load zgsm backend translations
 export const zgsmTranslations = loadTranslationsFromDir(path.join(__dirname, "..", "zgsm", "src", "i18n", "locales"))
-console.log(`Loaded zgsm backend translations for languages: ${Object.keys(zgsmTranslations).join(", ")}`)
+console.log(`Loaded shenma backend translations for languages: ${Object.keys(zgsmTranslations).join(", ")}`)
 
 // Initialize i18next
 i18next.init({
@@ -111,17 +111,17 @@ export const mergeLanguageResources = (
 }
 
 // List to store refresh functions
-const languageRefreshFuncs: (() => void)[] = [];
+const languageRefreshFuncs: (() => void)[] = []
 
 // Method to register a refresh function when language changes
 export const registerRefreshFunction = (fn: () => void) => {
-	languageRefreshFuncs.push(fn);
-};
+	languageRefreshFuncs.push(fn)
+}
 
 // Refresh all registered functions when language changes
 export const changeZgsmLanguage = () => {
 	// Execute all registered refresh functions
-	languageRefreshFuncs.forEach(fn => fn());
-};
+	languageRefreshFuncs.forEach((fn) => fn())
+}
 
 export default i18next
