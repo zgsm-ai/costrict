@@ -25,7 +25,7 @@ export function printLogo(): void {
      ███╔╝  ██╔══██║██║   ██║██║   ██║██╔══╝  ╚════╝██╔══██║██║
     ███████╗██║  ██║╚██████╔╝╚██████╔╝███████╗      ██║  ██║██║
     ╚══════╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝      ╚═╝  ╚═╝╚═╝
-                                 by:Zhuge Shenma Team
+                                 by:Shenma Team
     vscode:       ${vscode.version}
     zgsm-ai.zgsm: ${version}
     `)
