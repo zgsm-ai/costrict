@@ -9,5 +9,14 @@
 		"dist": true // set this to false to include "dist" folder in search results
 	},
 	// Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-	"typescript.tsc.autoDetect": "off"
+	"typescript.tsc.autoDetect": "off",
+	// format on save
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	// enable ESLint and Prettier
+	"prettier.enable": true,
+	"eslint.enable": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "always"
+	}
 }
