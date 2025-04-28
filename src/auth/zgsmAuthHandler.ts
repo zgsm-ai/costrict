@@ -46,7 +46,7 @@ function getLocalIP(): string {
 export function createHeaders(dict: Record<string, any> = {}): Record<string, any> {
 	// Get extended information
 	const extension =
-		vscode.extensions.getExtension("zgsm-ai.zgsm") || vscode.extensions.getExtension("rooveterinaryinc.roo-cline")
+		vscode.extensions.getExtension("zgsm-ai.zgsm")
 	const extVersion = extension?.packageJSON.version || ""
 	const ideVersion = vscode.version || ""
 	const hostIp = getLocalIP()
