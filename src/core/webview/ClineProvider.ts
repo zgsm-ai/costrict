@@ -84,6 +84,9 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 	public readonly providerSettingsManager: ProviderSettingsManager
 	public readonly customModesManager: CustomModesManager
 
+	private isMovingView = false
+	private movingDisposeTimer?: NodeJS.Timeout
+
 	constructor(
 		readonly context: vscode.ExtensionContext,
 		private readonly outputChannel: vscode.OutputChannel,
@@ -341,6 +344,12 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 	async resolveWebviewView(webviewView: vscode.WebviewView | vscode.WebviewPanel) {
 		this.log("Resolving webview view")
 
+		if (this.movingDisposeTimer) {
+			clearTimeout(this.movingDisposeTimer)
+			this.movingDisposeTimer = undefined
+			this.isMovingView = false
+		}
+
 		if (!this.contextProxy.isInitialized) {
 			await this.contextProxy.initialize()
 		}
@@ -421,7 +430,13 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		// This happens when the user closes the view or when the view is closed programmatically
 		webviewView.onDidDispose(
 			async () => {
-				await this.dispose()
+				this.movingDisposeTimer = setTimeout(async () => {
+					if (!this.isMovingView) {
+						await this.dispose()
+					}
+					this.movingDisposeTimer = undefined
+				}, 700)
+				this.isMovingView = true
 			},
 			null,
 			this.disposables,
