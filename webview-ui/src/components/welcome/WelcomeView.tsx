@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "../../context/ExtensionStateContext"
-import { validateApiConfiguration } from "../../utils/validate"
+import { isValidUrl, validateApiConfiguration } from "../../utils/validate"
 import { vscode } from "../../utils/vscode"
 import ApiOptions from "../settings/ApiOptions"
 import { Tab, TabContent } from "../common/Tab"
@@ -14,7 +14,8 @@ import { zgsmProviderKey } from "../../../../src/shared/api"
 const WelcomeView = () => {
 	const { apiConfiguration, currentApiConfigName, setApiConfiguration, uriScheme, machineId } = useExtensionState()
 	const { t } = useAppTranslation()
-	const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
+	const [errorMessage, setErrorMessage] = useState<string | undefined>()
+	const [baseUrlErrorMessage, setBaseUrlErrorMessage] = useState<string | undefined>()
 
 	const handleSubmit = useCallback(() => {
 		const error = validateApiConfiguration(apiConfiguration)
@@ -26,13 +27,26 @@ const WelcomeView = () => {
 
 		setErrorMessage(undefined)
 
+		const zgsmBaseUrl = apiConfiguration?.zgsmBaseUrl
+		// Check if the base URL is valid
+		if (zgsmBaseUrl) {
+			const isValid = isValidUrl(zgsmBaseUrl)
+
+			if (!isValid) {
+				setBaseUrlErrorMessage(t("welcome:baseUrlInvalidMsg"))
+				return
+			}
+		}
+
+		setBaseUrlErrorMessage(undefined)
+
 		if (apiConfiguration?.apiProvider === zgsmProviderKey) {
 			// Initiate ZGSM login process
 			initiateZgsmLogin(apiConfiguration, uriScheme)
 		} else {
 			vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
 		}
-	}, [apiConfiguration, currentApiConfigName, uriScheme])
+	}, [apiConfiguration, currentApiConfigName, uriScheme, t])
 
 	// Using a lazy initializer so it reads once at mount
 	const [imagesBaseUri] = useState(() => {
@@ -115,6 +129,8 @@ const WelcomeView = () => {
 						setApiConfigurationField={(field, value) => setApiConfiguration({ [field]: value })}
 						errorMessage={errorMessage}
 						setErrorMessage={setErrorMessage}
+						baseUrlErrorMessage={baseUrlErrorMessage}
+						setBaseUrlErrorMessage={setBaseUrlErrorMessage}
 					/>
 				</div>
 			</TabContent>
