@@ -430,13 +430,17 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		// This happens when the user closes the view or when the view is closed programmatically
 		webviewView.onDidDispose(
 			async () => {
-				this.movingDisposeTimer = setTimeout(async () => {
-					if (!this.isMovingView) {
-						await this.dispose()
-					}
-					this.movingDisposeTimer = undefined
-				}, 700)
-				this.isMovingView = true
+				if ("onDidChangeViewState" in webviewView) {
+					await this.dispose()
+				} else {
+					this.movingDisposeTimer = setTimeout(async () => {
+						if (!this.isMovingView) {
+							await this.dispose()
+						}
+						this.movingDisposeTimer = undefined
+					}, 700)
+					this.isMovingView = true
+				}
 			},
 			null,
 			this.disposables,
