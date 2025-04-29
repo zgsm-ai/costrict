@@ -32,7 +32,7 @@
 - New: Login page with CAPTCHA to enhance system security against DDoS attacks
 - New: Function header shortcuts for common operations (click to complete dialog)
 - New: Smart next-step shortcuts based on user queries (click to follow up)
-- Fixed: Completion anomalies in specific scenarios (resolved by opening Zhuge Code dialog)
+- Fixed: Completion anomalies in specific scenarios (resolved by opening Shenma dialog)
 - Fixed: Conflict with Doubao's "MarsCode.marscode-extension" programming assistant
 - Fixed: Mismatched text content in certain prompts
 - Optimization: Improved performance of completion models

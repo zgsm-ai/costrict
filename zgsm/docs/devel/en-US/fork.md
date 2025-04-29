@@ -1,15 +1,15 @@
-# Zhuge Shenma Project Contribution Process
+# Shenma Project Contribution Process
 
-The Zhuge Shenma project adopts GitHub Forking workflow.
+The Shenma project adopts GitHub Forking workflow.
 
 Detailed steps for GitHub Forking workflow:
 
-1) **Fork the remote repository to your account**
+1. **Fork the remote repository to your account**
 
-   Visit https://github.com/zgsm-ai/zgsm, click the **Fork** button at top-right. The forked repository address will be:
-   `https://github.com/{{your_account}}/zgsm`
+    Visit https://github.com/zgsm-ai/zgsm, click the **Fork** button at top-right. The forked repository address will be:
+    `https://github.com/{{your_account}}/zgsm`
 
-2) **Clone the forked repository locally**
+2. **Clone the forked repository locally**
 
 ```bash
 $ git clone https://github.com/{{your account}}/zgsm
@@ -23,7 +23,7 @@ upstream	https://github.com/marmotedu/zgsm(fetch)
 upstream	https://github.com/marmotedu/zgsm(push)
 ```
 
-3) **Create a feature branch**
+3. **Create a feature branch**
 
 First, synchronize the local `main` branch to match the latest state of `upstream/main`
 
@@ -39,7 +39,7 @@ Create a feature branch:
 $ git checkout -b feature/add-function
 ```
 
-4) **Develop code**
+4. **Develop code**
 
 Rebase to `upstream/main` first:
 
@@ -48,7 +48,7 @@ $ git fetch upstream # commit 前需要再次同步feature跟upstream/main
 $ git rebase upstream/main
 ```
 
-5) **Commit changes**
+5. **Commit changes**
 
 Develop code on the `feature/add-function` branch. After completing development, commit the changes:
 
@@ -94,6 +94,7 @@ pick fa20af3 git interactive rebase, squash, amend
 In the interactive interface above, first list the 4 latest commits of current branch (newer commits at bottom). Each commit has an action command prefix, with pick as default indicating the commit is selected for rebase operation.
 
 Below these 4 commits are various comments listing available commands:
+
 - pick: Keep commit as is
 - reword: Select and modify commit message
 - edit: Select and pause rebase to modify commit (see reference)
@@ -163,7 +164,7 @@ $ git commit --fixup
 $ git rebase -i --autosquash
 ```
 
-6) Push the feature branch to your personal remote repository
+6. Push the feature branch to your personal remote repository
 
 After completing development and committing changes, you need to push the feature branch to the remote code repository.
 
@@ -171,6 +172,6 @@ After completing development and committing changes, you need to push the featur
 $ git push -f origin feature/add-function
 ```
 
-7) Create a pull request on your personal remote repository page.
+7. Create a pull request on your personal remote repository page.
 
-After pushing to the remote repository, you can submit a pull request to the main branch. The Maintainer of the Zhuge Shenma project will then review the code and merge it into the main branch.
+After pushing to the remote repository, you can submit a pull request to the main branch. The Maintainer of the Shenma project will then review the code and merge it into the main branch.

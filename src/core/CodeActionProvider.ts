@@ -10,14 +10,14 @@ export const ACTION_NAMES = {
 	NEW_TASK: "Roo Code: New Task",
 
 	// right menu and quick menu
-	ZGSM_EXPLAIN: "Zhuge Shenma: Explain Code",
-	ZGSM_ADD_COMMENT: "Zhuge Shenma: Add Comment",
-	ZGSM_CODE_REVIEW: "Zhuge Shenma: Code Review",
-	ZGSM_ADD_DEBUG_CODE: "Zhuge Shenma: Add Debug Code",
-	ZGSM_ADD_STRONG_CODE: "Zhuge Shenma: Add Strong Code",
-	ZGSM_SIMPLIFY_CODE: "Zhuge Shenma: Simplify Code",
-	ZGSM_PERFORMANCE: "Zhuge Shenma: Performance Optimization",
-	ZGSM_ADD_TEST: "Zhuge Shenma: Add Unit test"
+	ZGSM_EXPLAIN: "Shenma: Explain Code",
+	ZGSM_ADD_COMMENT: "Shenma: Add Comment",
+	ZGSM_CODE_REVIEW: "Shenma: Code Review",
+	ZGSM_ADD_DEBUG_CODE: "Shenma: Add Debug Code",
+	ZGSM_ADD_STRONG_CODE: "Shenma: Add Strong Code",
+	ZGSM_SIMPLIFY_CODE: "Shenma: Simplify Code",
+	ZGSM_PERFORMANCE: "Shenma: Performance Optimization",
+	ZGSM_ADD_TEST: "Shenma: Add Unit test",
 } as const
 
 export const COMMAND_IDS = {

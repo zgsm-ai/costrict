@@ -228,7 +228,7 @@ export default class Auth0AuthenticationProvider implements AuthenticationProvid
 		return await window.withProgress<string>(
 			{
 				location: ProgressLocation.Notification,
-				title: "Please login to use Zhuge Shenma",
+				title: "Please login to use Shenma",
 				cancellable: true,
 			},
 			async (_, token) => {
