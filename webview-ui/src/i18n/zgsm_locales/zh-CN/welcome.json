@@ -3,5 +3,7 @@
 	"greeting": "你好，我是诸葛神码！",
 	"telemetry": {
 		"title": "帮助改进诸葛神码"
-	}
+	},
+	"baseUrlInvalidMsg": "URL拼写错误",
+	"baseUrlTip": "如果为私有化部署或内网环境，需设置为内网可访问的私有化服务器地址"
 }

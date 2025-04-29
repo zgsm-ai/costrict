@@ -3,5 +3,7 @@
 	"greeting": "Hi, I'm Shenma!",
 	"telemetry": {
 		"title": "Help Improve Shenma"
-	}
+	},
+	"baseUrlInvalidMsg": "URL misspelling",
+	"baseUrlTip": "If it is a private deployment or intranet environment, it needs to be set to the private server address accessible to the intranet"
 }

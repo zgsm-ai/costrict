@@ -71,6 +71,8 @@ interface ApiOptionsProps {
 	fromWelcomeView?: boolean
 	errorMessage: string | undefined
 	setErrorMessage: React.Dispatch<React.SetStateAction<string | undefined>>
+	baseUrlErrorMessage?: string | undefined
+	setBaseUrlErrorMessage?: React.Dispatch<React.SetStateAction<string | undefined>>
 }
 
 const ApiOptions = ({
@@ -80,6 +82,8 @@ const ApiOptions = ({
 	fromWelcomeView,
 	errorMessage,
 	setErrorMessage,
+	baseUrlErrorMessage,
+	setBaseUrlErrorMessage,
 }: ApiOptionsProps) => {
 	const { currentApiConfigName } = useExtensionState()
 	const { t } = useAppTranslation()
@@ -368,14 +372,32 @@ const ApiOptions = ({
 					<VSCodeTextField
 						value={apiConfiguration?.zgsmBaseUrl || ""}
 						type="url"
-						onInput={handleInputChange("zgsmBaseUrl")}
-						onChange={(event: any) => {
+						onInput={(e: any) => {
+							const value = e.target._currentValue
+							handleInputChange("zgsmBaseUrl")(e)
+
+							if (value) return
+							// if value is empty, clear the error message and send empty baseUrl
+							setBaseUrlErrorMessage && setBaseUrlErrorMessage(undefined)
 							vscode.postMessage({
 								type: "upsertApiConfiguration",
 								text: currentApiConfigName,
 								apiConfiguration: {
 									...apiConfiguration,
-									zgsmBaseUrl: event.target._currentValue,
+									zgsmBaseUrl: "",
+								},
+							})
+						}}
+						onChange={(event: any) => {
+							const value = event.target._currentValue
+							if (!value) return
+
+							vscode.postMessage({
+								type: "upsertApiConfiguration",
+								text: currentApiConfigName,
+								apiConfiguration: {
+									...apiConfiguration,
+									zgsmBaseUrl: value,
 								},
 							})
 						}}
@@ -385,6 +407,8 @@ const ApiOptions = ({
 						className="w-full">
 						<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
 					</VSCodeTextField>
+					{baseUrlErrorMessage && <ApiErrorMessage errorMessage={baseUrlErrorMessage} />}
+					<div className="text-sm text-vscode-descriptionForeground mt-1">{t("welcome:baseUrlTip")}</div>
 					{apiConfiguration.zgsmApiKey && (
 						<ModelPicker
 							apiConfiguration={apiConfiguration}
