@@ -727,7 +727,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await provider.postStateToWebview()
 			break
 		case "alwaysApproveResubmit":
-			await updateGlobalState("alwaysApproveResubmit", message.bool ?? false)
+			await updateGlobalState("alwaysApproveResubmit", message.bool ?? true)
 			await provider.postStateToWebview()
 			break
 		case "requestDelaySeconds":
@@ -954,7 +954,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await provider.postStateToWebview()
 			break
 		case "autoApprovalEnabled":
-			await updateGlobalState("autoApprovalEnabled", message.bool ?? false)
+			await updateGlobalState("autoApprovalEnabled", message.bool ?? true)
 			await provider.postStateToWebview()
 			break
 		case "enhancePrompt":

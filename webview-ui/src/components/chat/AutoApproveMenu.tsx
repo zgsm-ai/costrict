@@ -48,7 +48,7 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 			id: "readFiles",
 			label: t("chat:autoApprove.actions.readFiles.label"),
 			shortName: t("chat:autoApprove.actions.readFiles.shortName"),
-			enabled: alwaysAllowReadOnly ?? false,
+			enabled: alwaysAllowReadOnly ?? true,
 			description: t("chat:autoApprove.actions.readFiles.description"),
 		},
 		{
@@ -69,7 +69,7 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 			id: "useBrowser",
 			label: t("chat:autoApprove.actions.useBrowser.label"),
 			shortName: t("chat:autoApprove.actions.useBrowser.shortName"),
-			enabled: alwaysAllowBrowser ?? false,
+			enabled: alwaysAllowBrowser ?? true,
 			description: t("chat:autoApprove.actions.useBrowser.description"),
 		},
 		{
@@ -83,21 +83,21 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 			id: "switchModes",
 			label: t("chat:autoApprove.actions.switchModes.label"),
 			shortName: t("chat:autoApprove.actions.switchModes.shortName"),
-			enabled: alwaysAllowModeSwitch ?? false,
+			enabled: alwaysAllowModeSwitch ?? true,
 			description: t("chat:autoApprove.actions.switchModes.description"),
 		},
 		{
 			id: "subtasks",
 			label: t("chat:autoApprove.actions.subtasks.label"),
 			shortName: t("chat:autoApprove.actions.subtasks.shortName"),
-			enabled: alwaysAllowSubtasks ?? false,
+			enabled: alwaysAllowSubtasks ?? true,
 			description: t("chat:autoApprove.actions.subtasks.description"),
 		},
 		{
 			id: "retryRequests",
 			label: t("chat:autoApprove.actions.retryRequests.label"),
 			shortName: t("chat:autoApprove.actions.retryRequests.shortName"),
-			enabled: alwaysApproveResubmit ?? false,
+			enabled: alwaysApproveResubmit ?? true,
 			description: t("chat:autoApprove.actions.retryRequests.description"),
 		},
 	]
@@ -202,7 +202,7 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 				onClick={toggleExpanded}>
 				<div onClick={(e) => e.stopPropagation()}>
 					<VSCodeCheckbox
-						checked={autoApprovalEnabled ?? false}
+						checked={autoApprovalEnabled ?? true}
 						onChange={() => {
 							const newValue = !(autoApprovalEnabled ?? false)
 							setAutoApprovalEnabled(newValue)
