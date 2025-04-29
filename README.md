@@ -1,10 +1,10 @@
-# Zhuge Shenma | AI Programming Assistant
+# Shenma | AI Programming Assistant
 
 English | [Simplified Chinese](./README.zh-CN.md)
 
 <img src="./images/zhuge_shenma_rebot_logo_big.png" alt="zhuge logo" height="150px" align="right" />
 
-Zhuge Shenma is an exquisitely crafted AI programming tool that revolutionizes developers' coding paradigms through sharp code completion capabilities and the infinite possibilities of open-source ecosystems. Seamlessly integrating human-machine collaboration in mainstream development environments like VSCode and JetBrains, it offers precise contextual awareness and multi-language support, making code creation as natural and fluid as flowing water.
+Shenma is an exquisitely crafted AI programming tool that revolutionizes developers' coding paradigms through sharp code completion capabilities and the infinite possibilities of open-source ecosystems. Seamlessly integrating human-machine collaboration in mainstream development environments like VSCode and JetBrains, it offers precise contextual awareness and multi-language support, making code creation as natural and fluid as flowing water.
 
 ## Features
 

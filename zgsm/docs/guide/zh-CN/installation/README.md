@@ -21,7 +21,7 @@
 
 ### 插件安装
 
-在 vscode 插件商店搜索 “ZHUGE”，点击 “Install” 进行安装
+在 vscode 插件商店搜索 “Shenma”，点击 “Install” 进行安装
 
 ![alt text](/images/install/extensions.png)
 
@@ -58,9 +58,11 @@
 ### 部署后端服务
 
 1. 下载部署脚本
+
 ```
 git clone git@github.com:zgsm-ai/zgsm-backend-deploy.git
 ```
+
 2. 修改部署脚本的以下配置
 
 - 服务器地址

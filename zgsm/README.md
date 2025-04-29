@@ -1,12 +1,13 @@
-# Zhuge Shenma | AI Programming Assistant
+# Shenma | AI Programming Assistant
 
 English | [Simplified Chinese](./README.zh-CN.md)
 
 <img src="./images/zhuge_shenma_rebot_logo_big.png" alt="zhuge logo" height="150px" align="right" />
 
-Zhuge Shenma is an exquisitely crafted AI programming tool that revolutionizes developers' coding paradigms through sharp code completion capabilities and the infinite possibilities of open-source ecosystems. Seamlessly integrating human-machine collaboration in mainstream development environments like VSCode and JetBrains, it offers precise contextual awareness and multi-language support, making code creation as natural and fluid as flowing water.
+Shenma is an exquisitely crafted AI programming tool that revolutionizes developers' coding paradigms through sharp code completion capabilities and the infinite possibilities of open-source ecosystems. Seamlessly integrating human-machine collaboration in mainstream development environments like VSCode and JetBrains, it offers precise contextual awareness and multi-language support, making code creation as natural and fluid as flowing water.
 
 ## Features
+
 - **Code Completion**: Automatically generates subsequent code based on cursor context, delivering instant results within seconds.
 
 ![GIF](https://zgsm.ai/assets/case_page_img1-458fb4ce.gif)
@@ -30,6 +31,7 @@ Zhuge Shenma is an exquisitely crafted AI programming tool that revolutionizes d
 - **Privacy & Security**: Full-stack code open source with support for local deployment, ensuring no sensitive data leaks.
 
 ## Software Architecture
+
 ### System Overview Diagram
 
 <img src="./images/readme/system.png">
@@ -39,6 +41,7 @@ Zhuge Shenma is an exquisitely crafted AI programming tool that revolutionizes d
 <img src="./images/readme/subsystem.png">
 
 ## Quick Start
+
 ### Deployment
 
 Refer to [Deployment Guide](/docs/guide/en-US/installation/README.md)
@@ -48,10 +51,13 @@ Refer to [Deployment Guide](/docs/guide/en-US/installation/README.md)
 Refer to Development Documentation
 
 ## Contributing
+
 We welcome contributions! Please review [How To Contribute](docs/devel/en-US/how-to-contribute.md) for guidelines.
 
 ## Community
+
 Communicate via [GitHub Issues](https://github.com/zgsm-ai/zgsm/issues/new/choose) or pull requests.
 
 ## License
+
 Licensed under MIT. See [LICENSE](LICENSE) for full text.

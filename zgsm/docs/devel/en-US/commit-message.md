@@ -1,4 +1,4 @@
-# Zhuge Shenma Commit Message Specification
+# Shenma Commit Message Specification
 
 We adhere to the Angular specification, which enforces precise rules for Git commit formatting to make the commit history more readable.
 
@@ -12,7 +12,7 @@ A compliant Angular-style commit message contains three parts: **Header**, **Bod
 [optional footer(s)]
 ```
 
- **Header** is required, **Body** and **Footer** can be omitted.
+**Header** is required, **Body** and **Footer** can be omitted.
 
 Here is an Angular-style compliant commit message:
 
@@ -33,32 +33,38 @@ Ensure that no line in the commit message exceeds 100 characters.
 Next, let's examine the three parts of the Angular-style Commit Message in detail.
 
 ## Header
+
 The Header is a single line containing three fields: `type` (required), `scope` (optional), and `subject` (required).
 
 ### type
+
 Specifies the commit type. Common types include:
 
-* **feat**: New feature
-* **fix**: Bug fix
-* **perf**: Performance optimization
-* **style**: Code formatting changes (e.g., whitespace removal)
-* **refactor**: Code changes not covered by feat/fix/perf/style (e.g., code simplification, renaming)
-* **test**: Adding or modifying tests
-* **ci**: CI/CD configuration changes (e.g., Jenkins, GitLab CI)
-* **docs**: Documentation updates
-* **chore**: Maintenance tasks (dependencies, tooling, etc.)
-* **change**: Breaking changes
+- **feat**: New feature
+- **fix**: Bug fix
+- **perf**: Performance optimization
+- **style**: Code formatting changes (e.g., whitespace removal)
+- **refactor**: Code changes not covered by feat/fix/perf/style (e.g., code simplification, renaming)
+- **test**: Adding or modifying tests
+- **ci**: CI/CD configuration changes (e.g., Jenkins, GitLab CI)
+- **docs**: Documentation updates
+- **chore**: Maintenance tasks (dependencies, tooling, etc.)
+- **change**: Breaking changes
 
 ### scope
+
 Indicates the scope of changes (a noun). Must be wrapped in parentheses followed by a colon and space:
 Example: `(auth):`
 
 ### subject
+
 A concise description starting with a lowercase verb in present tense (e.g., "fix" not "fixed").
 Do NOT end with a period.
 
 ## Body
+
 Optional detailed description of the commit.
+
 - Written in present tense
 - Must explain motivation and differences from previous versions
 
@@ -70,6 +76,7 @@ causing intermittent auth failures. Added retry logic for token refresh.
 ```
 
 ## Footer
+
 The Footer is optional and primarily used to describe consequences of the commit. In practice, it typically documents breaking changes and closes issues, formatted as follows:
 
 ```
@@ -84,9 +91,9 @@ Fixes #<issue number>
 Next, I'll explain these two scenarios in detail:
 
 - **Breaking changes**: If the code introduces backward incompatibility, the Footer must start with `BREAKING CHANGE:`, followed by a summary. The remaining Footer content should describe:
-  - The nature of the change
-  - Reasoning behind it
-  - Migration steps
+    - The nature of the change
+    - Reasoning behind it
+    - Migration steps
 
 Example:
 
@@ -109,6 +116,7 @@ Closes #392
 ```
 
 ## Revert Commit
+
 In addition to the three standard parts (Header, Body, Footer), a Commit Message may have a special case: If the commit reverts a previous commit, the message must start with `revert:` followed by the Header of the reverted commit. The Body must include `This reverts commit <hash>`, where `<hash>` is the SHA of the reverted commit.
 
 Example:

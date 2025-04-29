@@ -10,8 +10,8 @@ export interface AuthConfig {
 }
 
 export const defaultAuthConfig = {
-	baseUrl: "https://zgsm.sangfor.com", // Base URL of Zhuge Shenma backend
-	zgsmSite: "https://zgsm.ai", // Portal site of Zhuge Shenma
+	baseUrl: "https://zgsm.sangfor.com", // Base URL of Shenma backend
+	zgsmSite: "https://zgsm.ai", // Portal site of Shenma
 	realmName: "gw", // Authentication: Keycloak tenant name
 	clientId: "vscode", // Authentication: Client ID
 	clientSecret: "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l", // Authentication: Client secret
