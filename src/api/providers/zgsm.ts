@@ -348,13 +348,27 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 	}
 }
 
+const canParseURL = (url: string): boolean => {
+	// if the URL constructor is available, use it to check if the URL is valid
+	if (typeof URL.canParse === "function") {
+		return URL.canParse(url)
+	}
+
+	try {
+		new URL(url)
+		return true
+	} catch {
+		return false
+	}
+}
+
 export async function getZgsmModels(baseUrl?: string, apiKey?: string, hostHeader?: string) {
 	try {
 		if (!baseUrl) {
 			return []
 		}
 
-		if (!URL.canParse(baseUrl)) {
+		if (!canParseURL(baseUrl)) {
 			return []
 		}
 
