@@ -1,5 +1,5 @@
 import { ClineAsk, ToolProgressStatus } from "../../schemas"
-import { ToolParamName } from "../assistant-message"
+import { ToolParamName } from "../../shared/tools"
 import { ToolResponse } from "../Cline"
 
 export type AskApproval = (

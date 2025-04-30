@@ -191,7 +191,49 @@
 	"autoApprove": {
 		"title": "Aprovação automática:",
 		"none": "Nenhuma",
-		"description": "A aprovação automática permite que o Roo Code execute ações sem pedir permissão. Ative apenas para ações nas quais você confia totalmente. Configuração mais detalhada disponível nas <settingsLink>Configurações</settingsLink>."
+		"description": "A aprovação automática permite que o Roo Code execute ações sem pedir permissão. Ative apenas para ações nas quais você confia totalmente. Configuração mais detalhada disponível nas <settingsLink>Configurações</settingsLink>.",
+		"actions": {
+			"readFiles": {
+				"label": "Ler arquivos e diretórios",
+				"shortName": "Leitura",
+				"description": "Permite acesso para ler qualquer arquivo em seu computador."
+			},
+			"editFiles": {
+				"label": "Editar arquivos",
+				"shortName": "Edição",
+				"description": "Permite a modificação de quaisquer arquivos em seu computador."
+			},
+			"executeCommands": {
+				"label": "Executar comandos aprovados",
+				"shortName": "Comandos",
+				"description": "Permite a execução de comandos de terminal aprovados. Você pode configurar isso no painel de configurações."
+			},
+			"useBrowser": {
+				"label": "Usar o navegador",
+				"shortName": "Navegador",
+				"description": "Permite a capacidade de iniciar e interagir com qualquer site em um navegador headless."
+			},
+			"useMcp": {
+				"label": "Usar servidores MCP",
+				"shortName": "MCP",
+				"description": "Permite o uso de servidores MCP configurados que podem modificar o sistema de arquivos ou interagir com APIs."
+			},
+			"switchModes": {
+				"label": "Alternar modos",
+				"shortName": "Modos",
+				"description": "Permite a alternância automática entre diferentes modos sem exigir aprovação."
+			},
+			"subtasks": {
+				"label": "Criar e completar subtarefas",
+				"shortName": "Subtarefas",
+				"description": "Permite a criação e conclusão de subtarefas sem exigir aprovação."
+			},
+			"retryRequests": {
+				"label": "Retentar requisições falhas",
+				"shortName": "Retentativas",
+				"description": "Retenta automaticamente requisições de API falhas quando o provedor retorna uma resposta de erro."
+			}
+		}
 	},
 	"reasoning": {
 		"thinking": "Pensando",
@@ -201,8 +243,9 @@
 		"copyToInput": "Copiar para entrada (ou Shift + clique)"
 	},
 	"announcement": {
-		"title": "🎉 Roo Code 3.14 Lançado",
-		"description": "Roo Code 3.14 traz novos recursos e melhorias baseados no seu feedback.",
+		"title": "Faça mais com Tarefas Boomerang 🪃",
+		"description": "Divida o trabalho em subtarefas, cada uma executando em um modo especializado, como code, architect, debug ou um modo personalizado.",
+		"learnMore": "Saiba mais →",
 		"whatsNew": "O que há de novo",
 		"feature1": "<bold>Ferramentas de edição aprimoradas</bold>: As ferramentas <code>search_and_replace</code> e <code>insert_content</code> foram aprimoradas e não são mais experimentais",
 		"feature2": "<bold>Correções no apply_diff</bold>: Continuamos trabalhando para melhorar a ferramenta <code>apply_diff</code>",

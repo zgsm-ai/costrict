@@ -191,7 +191,49 @@
 	"autoApprove": {
 		"title": "Aprovació automàtica:",
 		"none": "Cap",
-		"description": "L'aprovació automàtica permet a Roo Code realitzar accions sense demanar permís. Activa-la només per a accions en les que confies plenament. Configuració més detallada disponible a la <settingsLink>Configuració</settingsLink>."
+		"description": "L'aprovació automàtica permet a Roo Code realitzar accions sense demanar permís. Activa-la només per a accions en les que confies plenament. Configuració més detallada disponible a la <settingsLink>Configuració</settingsLink>.",
+		"actions": {
+			"readFiles": {
+				"label": "Llegir fitxers i directoris",
+				"shortName": "Lectura",
+				"description": "Permet l'accés per llegir qualsevol fitxer al teu ordinador."
+			},
+			"editFiles": {
+				"label": "Editar fitxers",
+				"shortName": "Edició",
+				"description": "Permet la modificació de qualsevol fitxer al teu ordinador."
+			},
+			"executeCommands": {
+				"label": "Executar ordres aprovades",
+				"shortName": "Ordres",
+				"description": "Permet l'execució d'ordres de terminal aprovades. Pots configurar-ho al panell de configuració."
+			},
+			"useBrowser": {
+				"label": "Utilitzar el navegador",
+				"shortName": "Navegador",
+				"description": "Permet la capacitat d'iniciar i interactuar amb qualsevol lloc web en un navegador headless."
+			},
+			"useMcp": {
+				"label": "Utilitzar servidors MCP",
+				"shortName": "MCP",
+				"description": "Permet l'ús de servidors MCP configurats que poden modificar el sistema de fitxers o interactuar amb APIs."
+			},
+			"switchModes": {
+				"label": "Canviar modes",
+				"shortName": "Modes",
+				"description": "Permet el canvi automàtic entre diferents modes sense requerir aprovació."
+			},
+			"subtasks": {
+				"label": "Crear i completar subtasques",
+				"shortName": "Subtasques",
+				"description": "Permet la creació i finalització de subtasques sense requerir aprovació."
+			},
+			"retryRequests": {
+				"label": "Reintentar sol·licituds fallides",
+				"shortName": "Reintents",
+				"description": "Reintenta automàticament les sol·licituds API fallides quan el proveïdor retorna una resposta d'error."
+			}
+		}
 	},
 	"reasoning": {
 		"thinking": "Pensant",
@@ -201,8 +243,9 @@
 		"copyToInput": "Copiar a l'entrada (o Shift + clic)"
 	},
 	"announcement": {
-		"title": "🎉 Roo Code 3.14 publicat",
-		"description": "Roo Code 3.14 porta noves funcionalitats i millores basades en els teus comentaris.",
+		"title": "Fes més amb Tasques Boomerang 🪃",
+		"description": "Divideix la feina en subtasques, cadascuna executant-se en un mode especialitzat, com code, architect, debug o un mode personalitzat.",
+		"learnMore": "Saber-ne més →",
 		"whatsNew": "Novetats",
 		"feature1": "<bold>Eines d'edició millorades</bold>: Les eines <code>search_and_replace</code> i <code>insert_content</code> han estat millorades i ja no són experimentals",
 		"feature2": "<bold>Millores a apply_diff</bold>: Continuem treballant per millorar l'eina <code>apply_diff</code>",

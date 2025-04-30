@@ -191,7 +191,49 @@
 	"autoApprove": {
 		"title": "Automatyczne zatwierdzanie:",
 		"none": "Brak",
-		"description": "Automatyczne zatwierdzanie pozwala Roo Code wykonywać działania bez pytania o pozwolenie. Włącz tylko dla działań, którym w pełni ufasz. Bardziej szczegółowa konfiguracja dostępna w <settingsLink>Ustawieniach</settingsLink>."
+		"description": "Automatyczne zatwierdzanie pozwala Roo Code wykonywać działania bez pytania o pozwolenie. Włącz tylko dla działań, którym w pełni ufasz. Bardziej szczegółowa konfiguracja dostępna w <settingsLink>Ustawieniach</settingsLink>.",
+		"actions": {
+			"readFiles": {
+				"label": "Czytaj pliki i katalogi",
+				"shortName": "Czytanie",
+				"description": "Pozwala na dostęp do odczytu dowolnego pliku na Twoim komputerze."
+			},
+			"editFiles": {
+				"label": "Edytuj pliki",
+				"shortName": "Edycja",
+				"description": "Pozwala na modyfikację dowolnych plików na Twoim komputerze."
+			},
+			"executeCommands": {
+				"label": "Wykonuj zatwierdzone polecenia",
+				"shortName": "Polecenia",
+				"description": "Pozwala na wykonywanie zatwierdzonych poleceń terminala. Możesz to skonfigurować w panelu ustawień."
+			},
+			"useBrowser": {
+				"label": "Używaj przeglądarki",
+				"shortName": "Przeglądarka",
+				"description": "Pozwala na uruchamianie i interakcję z dowolną stroną internetową w przeglądarce bezinterfejsowej."
+			},
+			"useMcp": {
+				"label": "Używaj serwerów MCP",
+				"shortName": "MCP",
+				"description": "Pozwala na korzystanie ze skonfigurowanych serwerów MCP, które mogą modyfikować system plików lub wchodzić w interakcje z API."
+			},
+			"switchModes": {
+				"label": "Przełączaj tryby",
+				"shortName": "Tryby",
+				"description": "Pozwala na automatyczne przełączanie między różnymi trybami bez wymagania zatwierdzenia."
+			},
+			"subtasks": {
+				"label": "Twórz i kończ podzadania",
+				"shortName": "Podzadania",
+				"description": "Pozwala na tworzenie i kończenie podzadań bez wymagania zatwierdzenia."
+			},
+			"retryRequests": {
+				"label": "Ponów nieudane zapytania",
+				"shortName": "Ponowienia",
+				"description": "Automatycznie ponawia nieudane zapytania API, gdy dostawca zwraca odpowiedź z błędem."
+			}
+		}
 	},
 	"reasoning": {
 		"thinking": "Myślenie",
@@ -201,8 +243,9 @@
 		"copyToInput": "Kopiuj do pola wprowadzania (lub Shift + kliknięcie)"
 	},
 	"announcement": {
-		"title": "🎉 Roo Code 3.14 wydany",
-		"description": "Roo Code 3.14 przynosi nowe funkcje i ulepszenia na podstawie Twoich opinii.",
+		"title": "Zrób więcej z Zadaniami Bumerang 🪃",
+		"description": "Podziel pracę na podzadania, każde działające w wyspecjalizowanym trybie, takim jak code, architect, debug lub trybie niestandardowym.",
+		"learnMore": "Dowiedz się więcej →",
 		"whatsNew": "Co nowego",
 		"feature1": "<bold>Ulepszone narzędzia edycji</bold>: Narzędzia <code>search_and_replace</code> i <code>insert_content</code> zostały ulepszone i nie są już eksperymentalne",
 		"feature2": "<bold>Poprawki apply_diff</bold>: Kontynuujemy pracę nad ulepszaniem narzędzia <code>apply_diff</code>",

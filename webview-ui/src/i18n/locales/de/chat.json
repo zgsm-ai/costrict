@@ -191,7 +191,49 @@
 	"autoApprove": {
 		"title": "Automatische Genehmigung:",
 		"none": "Keine",
-		"description": "Automatische Genehmigung erlaubt Roo Code, Aktionen ohne Nachfrage auszuführen. Aktiviere dies nur für Aktionen, denen du vollständig vertraust. Detailliertere Konfiguration verfügbar in den <settingsLink>Einstellungen</settingsLink>."
+		"description": "Automatische Genehmigung erlaubt Roo Code, Aktionen ohne Nachfrage auszuführen. Aktiviere dies nur für Aktionen, denen du vollständig vertraust. Detailliertere Konfiguration verfügbar in den <settingsLink>Einstellungen</settingsLink>.",
+		"actions": {
+			"readFiles": {
+				"label": "Dateien und Verzeichnisse lesen",
+				"shortName": "Lesen",
+				"description": "Erlaubt Zugriff zum Lesen jeder Datei auf deinem Computer."
+			},
+			"editFiles": {
+				"label": "Dateien bearbeiten",
+				"shortName": "Bearbeiten",
+				"description": "Erlaubt die Änderung jeder Datei auf deinem Computer."
+			},
+			"executeCommands": {
+				"label": "Genehmigte Befehle ausführen",
+				"shortName": "Befehle",
+				"description": "Erlaubt die Ausführung genehmigter Terminal-Befehle. Du kannst dies im Einstellungsfenster konfigurieren."
+			},
+			"useBrowser": {
+				"label": "Browser verwenden",
+				"shortName": "Browser",
+				"description": "Erlaubt die Fähigkeit, jede Website in einem Headless-Browser zu starten und mit ihr zu interagieren."
+			},
+			"useMcp": {
+				"label": "MCP-Server verwenden",
+				"shortName": "MCP",
+				"description": "Erlaubt die Verwendung konfigurierter MCP-Server, die das Dateisystem ändern oder mit APIs interagieren können."
+			},
+			"switchModes": {
+				"label": "Modi wechseln",
+				"shortName": "Modi",
+				"description": "Erlaubt automatischen Wechsel zwischen verschiedenen Modi ohne erforderliche Genehmigung."
+			},
+			"subtasks": {
+				"label": "Teilaufgaben erstellen & abschließen",
+				"shortName": "Teilaufgaben",
+				"description": "Erlaubt die Erstellung und den Abschluss von Teilaufgaben ohne erforderliche Genehmigung."
+			},
+			"retryRequests": {
+				"label": "Fehlgeschlagene Anfragen wiederholen",
+				"shortName": "Wiederholungen",
+				"description": "Wiederholt automatisch fehlgeschlagene API-Anfragen, wenn der Anbieter eine Fehlermeldung zurückgibt."
+			}
+		}
 	},
 	"reasoning": {
 		"thinking": "Denke nach",
@@ -201,8 +243,9 @@
 		"copyToInput": "In Eingabefeld kopieren (oder Shift + Klick)"
 	},
 	"announcement": {
-		"title": "🎉 Roo Code 3.14 veröffentlicht",
-		"description": "Roo Code 3.14 bringt neue Funktionen und Verbesserungen basierend auf deinem Feedback.",
+		"title": "Mach mehr mit Boomerang Tasks 🪃",
+		"description": "Teile deine Arbeit in Unteraufgaben auf, die jeweils in einem spezialisierten Modus laufen, wie code, architect, debug oder einem benutzerdefinierten Modus.",
+		"learnMore": "Mehr erfahren →",
 		"whatsNew": "Was ist neu",
 		"feature1": "<bold>Verbesserte Bearbeitungswerkzeuge</bold>: Die <code>search_and_replace</code> und <code>insert_content</code> Tools wurden verbessert und sind nicht mehr experimentell",
 		"feature2": "<bold>Diff Apply Fixes</bold>: Wir arbeiten weiterhin an der Verbesserung des <code>apply_diff</code> Tools",

@@ -3,9 +3,9 @@
 import { describe, expect, it, jest, beforeEach } from "@jest/globals"
 
 import { Cline } from "../../Cline"
-import { ToolUse } from "../../assistant-message"
+import { ToolUse } from "../../../shared/tools"
 import { formatResponse } from "../../prompts/responses"
-import { AskApproval, HandleError, PushToolResult, RemoveClosingTag } from "../types"
+import { AskApproval, HandleError, PushToolResult, RemoveClosingTag } from "../../../shared/tools"
 import { ToolUsage } from "../../../schemas"
 import { ClineAsk } from "../../../schemas"
 
