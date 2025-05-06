@@ -16,6 +16,14 @@ export type ApiConfiguration = ProviderSettings & {
 	zgsmApiKey?: string // ZGSM API key
 }
 export const zgsmProviderKey = "zgsm"
+export const zgsmModels = {
+	"default": {
+        maxTokens: 8192,
+        contextWindow: 64000,
+        supportsImages: false,
+        supportsPromptCache: true,
+	}
+}
 // Anthropic
 // https://docs.anthropic.com/en/docs/about-claude/models
 export type AnthropicModelId = keyof typeof anthropicModels
