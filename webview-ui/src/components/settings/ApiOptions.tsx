@@ -38,6 +38,7 @@ import {
 	ApiProvider,
 	allModels,
 	zgsmProviderKey,
+	zgsmModels,
 } from "../../../../src/shared/api"
 import { ExtensionMessage } from "../../../../src/shared/ExtensionMessage"
 
@@ -1820,7 +1821,7 @@ const getZgsmSelectedModelInfo = (models: Record<string, ModelInfo>, modelId: st
 		}
 	}
 
-	return mastchKey ? models[mastchKey] : deepSeekModels["deepseek-chat"]
+	return mastchKey ? models[mastchKey] : zgsmModels["default"]
 }
 
 export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
