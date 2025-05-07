@@ -95,5 +95,31 @@
 			"input_prompt": "What would you like Shenma to do?",
 			"input_placeholder": "E.g. Add comments to the code"
 		}
+	},
+	"completion": {
+		"status": {
+			"loading": {
+				"text": "$(loading~spin) SHENMA - In Progress",
+				"tooltip": "SHENMA - Code Completion - Waiting for request results"
+			},
+			"complete": {
+				"text": "$(check) SHENMA",
+				"tooltip": "SHENMA - Code Completion - Completed"
+			},
+			"fail": {
+				"text": "$(alert) SHENMA - Please check your network connection or log in again",
+				"tooltip": "SHENMA - Code Completion - Failed "
+			},
+			"noSuggest": {
+				"text": "$(check) SHENMA - No Suggestions",
+				"tooltip": "SHENMA - Code Completion - No Suggestions Available"
+			},
+			"enabled": {
+				"tooltip": "SHENMA - Code Completion - Enabled"
+			},
+			"disabled": {
+				"tooltip": "SHENMA - Code Completion - Disabled"
+			}
+		}
 	}
 }

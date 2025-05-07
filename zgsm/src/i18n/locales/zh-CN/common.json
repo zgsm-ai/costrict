@@ -41,6 +41,32 @@
 		"completion": "补全",
 		"quick_menu": "快捷菜单"
 	},
+	"completion": {
+		"status": {
+			"loading": {
+				"text": "$(loading~spin) 诸葛神码 - 处理中",
+				"tooltip": "诸葛神码 - 代码补全 - 等待请求结果"
+			},
+			"complete": {
+				"text": "$(check) 诸葛神码",
+				"tooltip": "诸葛神码 - 代码补全 - 已完成"
+			},
+			"fail": {
+				"text": "$(alert) 诸葛神码 - 请检查网络连接或重新登录",
+				"tooltip": "诸葛神码 - 代码补全 - 失败 "
+			},
+			"noSuggest": {
+				"text": "$(check) 诸葛神码 - 无建议",
+				"tooltip": "诸葛神码 - 代码补全 - 无可用建议"
+			},
+			"enabled": {
+				"tooltip": "诸葛神码 - 代码补全 - 已启用"
+			},
+			"disabled": {
+				"tooltip": "诸葛神码 - 代码补全 - 已禁用"
+			}
+		}
+	},
 	"command": {
 		"explain": {
 			"name": "解释代码",
