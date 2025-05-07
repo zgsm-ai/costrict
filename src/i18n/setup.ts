@@ -81,6 +81,8 @@ i18next.init({
 	fallbackLng: "en",
 	debug: false,
 	resources: mergedTranslations,
+	ns: ["common", "apiErrors"],
+	defaultNS: "common",
 	interpolation: {
 		escapeValue: false,
 	},

@@ -80,6 +80,7 @@ import { askFollowupQuestionTool } from "./tools/askFollowupQuestionTool"
 import { switchModeTool } from "./tools/switchModeTool"
 import { attemptCompletionTool } from "./tools/attemptCompletionTool"
 import { newTaskTool } from "./tools/newTaskTool"
+import { t } from "../i18n"
 
 export type ToolResponse = string | Array<Anthropic.TextBlockParam | Anthropic.ImageBlockParam>
 type UserContent = Array<Anthropic.Messages.ContentBlockParam>
@@ -442,14 +443,14 @@ export class Cline extends EventEmitter<ClineEvents> {
 					// saves, and only post parts of partial message instead of
 					// whole array in new listener.
 					this.updateClineMessage(lastMessage)
-					throw new Error("Current ask promise was ignored (#1)")
+					throw new Error(t("apiErrors:request.failed"))
 				} else {
 					// This is a new partial message, so add it with partial
 					// state.
 					askTs = Date.now()
 					this.lastMessageTs = askTs
 					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, partial })
-					throw new Error("Current ask promise was ignored (#2)")
+					throw new Error(t("apiErrors:request.failed"))
 				}
 			} else {
 				if (isUpdatingPreviousPartial) {
@@ -499,7 +500,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			// Could happen if we send multiple asks in a row i.e. with
 			// command_output. It's important that when we know an ask could
 			// fail, it is handled gracefully.
-			throw new Error("Current ask promise was ignored")
+			throw new Error(t("apiErrors:request.failed"))
 		}
 
 		const result = { response: this.askResponse!, text: this.askResponseText, images: this.askResponseImages }
@@ -1223,18 +1224,49 @@ export class Cline extends EventEmitter<ClineEvents> {
 			yield firstChunk.value
 			this.isWaitingForFirstChunk = false
 		} catch (error) {
+			this.isWaitingForFirstChunk = false
+
+			let errorMsg
+
+			// Build user-friendly error message
+			if (error.status === 401) {
+				errorMsg = t("apiErrors:status.401") + "\n\n"
+			} else if (error.status === 400) {
+				errorMsg = t("apiErrors:status.400") + "\n\n"
+			} else if (error.status === 403) {
+				errorMsg = t("apiErrors:status.403") + "\n\n"
+			} else if (error.status === 404) {
+				errorMsg = t("apiErrors:status.404") + "\n\n"
+			} else if (error.status === 500) {
+				errorMsg = t("apiErrors:status.500") + "\n\n"
+			} else if (error.status === 502) {
+				errorMsg = t("apiErrors:status.502") + "\n\n"
+			} else if (error.status === 503) {
+				errorMsg = t("apiErrors:status.503") + "\n\n"
+			} else if (error.status === 504) {
+				errorMsg = t("apiErrors:status.504") + "\n\n"
+			} else if (error.status === 429) {
+				errorMsg = t("apiErrors:status.429") + "\n\n"
+			} else if (error.error?.metadata?.raw) {
+				errorMsg = JSON.stringify(error.error.metadata.raw, null, 2)
+			} else if (error.message) {
+				errorMsg = error.message
+			} else {
+				errorMsg = t("apiErrors:status.unknown")
+			}
+
+			// Add backend details and request ID
+			const requestId = error.error?.metadata?.raw?.request_id || error.error?.metadata?.raw?.requestId
+			const backendMsg = error.error?.metadata?.raw?.message || error.message
+			if (backendMsg && backendMsg !== errorMsg) {
+				errorMsg += t("apiErrors:request.backend_message") + backendMsg + "\n"
+			}
+			if (requestId) {
+				errorMsg += t("apiErrors:request.request_id") + requestId
+			}
+
 			// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 			if (alwaysApproveResubmit) {
-				let errorMsg
-
-				if (error.error?.metadata?.raw) {
-					errorMsg = JSON.stringify(error.error.metadata.raw, null, 2)
-				} else if (error.message) {
-					errorMsg = error.message
-				} else {
-					errorMsg = "Unknown error"
-				}
-
 				const baseDelay = requestDelaySeconds || 5
 				let exponentialDelay = Math.ceil(baseDelay * Math.pow(2, retryAttempt))
 
@@ -1254,11 +1286,15 @@ export class Cline extends EventEmitter<ClineEvents> {
 				// Wait for the greater of the exponential delay or the rate limit delay
 				const finalDelay = Math.max(exponentialDelay, rateLimitDelay)
 
+				const retryAttemptMsg = t("apiErrors:request.retry_attempt") + ` ${retryAttempt + 1}`
+				const retryingInMsg = (sec: number) => t("apiErrors:request.retry_in_seconds", { seconds: sec })
+				const retryingNowMsg = t("apiErrors:request.retrying_now")
+
 				// Show countdown timer with exponential backoff
 				for (let i = finalDelay; i > 0; i--) {
 					await this.say(
 						"api_req_retry_delayed",
-						`${errorMsg}\n\nRetry attempt ${retryAttempt + 1}\nRetrying in ${i} seconds...`,
+						`${errorMsg}\n${retryAttemptMsg}\n${retryingInMsg(i)}`,
 						undefined,
 						true,
 					)
@@ -1267,7 +1303,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 				await this.say(
 					"api_req_retry_delayed",
-					`${errorMsg}\n\nRetry attempt ${retryAttempt + 1}\nRetrying now...`,
+					`${errorMsg}\n${retryAttemptMsg}\n${retryingNowMsg}`,
 					undefined,
 					false,
 				)
@@ -1276,13 +1312,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 				yield* this.attemptApiRequest(previousApiReqIndex, retryAttempt + 1)
 				return
 			} else {
-				const { response } = await this.ask(
-					"api_req_failed",
-					error.message ?? JSON.stringify(serializeError(error), null, 2),
-				)
+				const { response } = await this.ask("api_req_failed", errorMsg)
 				if (response !== "yesButtonClicked") {
 					// this will never happen since if noButtonClicked, we will clear current task, aborting this instance
-					throw new Error("API request failed")
+					throw new Error(t("apiErrors:request.failed"))
 				}
 				await this.say("api_req_retried")
 				// delegate generator output from the recursive call
