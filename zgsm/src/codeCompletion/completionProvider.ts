@@ -374,7 +374,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 					Logger.info(`Completion [${cp.id}]: The request has been cancelled.`)
 				} else {
 					Logger.error(`Completion [${cp.id}]: Failed to get completion content`, error)
-					CompletionStatusBar.fail()
+					CompletionStatusBar.fail(error, cp.id)
 				}
 				return Promise.reject(error)
 			})

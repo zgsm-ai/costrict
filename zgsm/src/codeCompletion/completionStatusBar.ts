@@ -11,6 +11,7 @@ import { StatusBarItem } from "vscode"
 import { configCompletion } from "../common/constant"
 import { Logger } from "../common/log-util"
 import { statusBarCommand, turnOffCompletion, turnOnCompletion } from "./completionCommands"
+import { t } from "../../../src/i18n"
 
 /**
  * Status bar at the bottom right of vscode
@@ -69,11 +70,11 @@ export class CompletionStatusBar {
 		if (suggestion_switch === undefined) {
 			suggestion_switch = vscode.workspace.getConfiguration(configCompletion).get("enabled")
 		}
-		this.instance.text = "$(check) SHENMA"
+		this.instance.text = t("common:completion.status.complete.text")
 		if (suggestion_switch) {
-			this.instance.tooltip = `SHENMA - Code Completion - Enabled`
+			this.instance.tooltip = t("common:completion.status.enabled.tooltip")
 		} else {
-			this.instance.tooltip = `SHENMA - Code Completion - Disabled`
+			this.instance.tooltip = t("common:completion.status.disabled.tooltip")
 		}
 		this.instance.show()
 	}
@@ -82,30 +83,63 @@ export class CompletionStatusBar {
 	 * Waiting for request results
 	 */
 	public static loading() {
-		this.instance.tooltip = "SHENMA - Code Completion - Waiting for request results"
-		this.instance.text = "$(loading~spin) SHENMA - In Progress"
+		this.instance.tooltip = t("common:completion.status.loading.tooltip")
+		this.instance.text = t("common:completion.status.loading.text")
 	}
 
 	/**
 	 * Completion is done
 	 */
 	public static complete() {
-		this.instance.tooltip = "SHENMA - Code Completion - Completed"
-		this.instance.text = "$(check) SHENMA"
+		this.instance.tooltip = t("common:completion.status.complete.tooltip")
+		this.instance.text = t("common:completion.status.complete.text")
 	}
 
 	/**
 	 * Completion failed
 	 */
-	public static fail() {
-		this.instance.tooltip = "SHENMA - Code Completion - Failed"
-		this.instance.text = "$(alert) SHENMA - Exception"
+	public static fail(error: any, id: string) {
+		let errorMsg
+
+		// Build user-friendly error message
+		if (error.status === 401) {
+			errorMsg = t("apiErrors:status.401") + "\n\n"
+		} else if (error.status === 400) {
+			errorMsg = t("apiErrors:status.400") + "\n\n"
+		} else if (error.status === 403) {
+			errorMsg = t("apiErrors:status.403") + "\n\n"
+		} else if (error.status === 404) {
+			errorMsg = t("apiErrors:status.404") + "\n\n"
+		} else if (error.status === 500) {
+			errorMsg = t("apiErrors:status.500") + "\n\n"
+		} else if (error.status === 502) {
+			errorMsg = t("apiErrors:status.502") + "\n\n"
+		} else if (error.status === 503) {
+			errorMsg = t("apiErrors:status.503") + "\n\n"
+		} else if (error.status === 504) {
+			errorMsg = t("apiErrors:status.504") + "\n\n"
+		} else if (error.status === 429) {
+			errorMsg = t("apiErrors:status.429") + "\n\n"
+		} else if (error.error?.metadata?.raw) {
+			errorMsg = JSON.stringify(error.error.metadata.raw, null, 2)
+		} else if (error.message) {
+			errorMsg = error.message
+		} else {
+			errorMsg = t("apiErrors:status.unknown")
+		}
+
+		const backendMsg = error.error?.metadata?.raw?.message || error.message
+
+		this.instance.tooltip = t("common:completion.status.fail.tooltip") + errorMsg + ` [${id}] ` + 
+		`${(error.message && !error.status) ? '' : (t("apiErrors:request.backend_message") + backendMsg)}`
+		this.instance.text = t("common:completion.status.fail.text")
 	}
 
 	/**
 	 * Completion succeeded, but no suggestions
 	 */
 	public static noSuggest() {
-		this.instance.text = "$(check) SHENMA - No Suggestions"
+		this.instance.tooltip = t("common:completion.status.noSuggest.tooltip")
+		this.instance.text = t("common:completion.status.noSuggest.text")
 	}
 }
