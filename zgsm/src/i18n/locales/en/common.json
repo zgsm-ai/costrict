@@ -21,7 +21,8 @@
 			"failed_to_jump": "Jump failed.",
 			"failed_to_jump_by_path_not_exist": "Jump failed, The file path does not exist. file path: ",
 			"sign_in_failed": "Sign in failed: ",
-			"please_log_in_first": "Please log in first."
+			"please_log_in_first": "Please log in first.",
+			"login_again": "login again"
 		},
 		"infor": {
 			"enable_disable_function_quick_menu": "Enable/Disable \"Function Quick Menu\" and \"Intelligent Code Completion\""

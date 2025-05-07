@@ -10,7 +10,7 @@
 import OpenAI from "openai"
 import { envClient, envSetting } from "../common/env"
 import { Logger } from "../common/log-util"
-import { window, workspace } from "vscode"
+import { window, workspace, env, Uri } from "vscode"
 import { AxiosError } from "axios"
 import { createAuthenticatedHeaders } from "../common/api"
 import { configCompletion, settings } from "../common/constant"
@@ -20,11 +20,15 @@ import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { t } from "../../../src/i18n"
+import { generateZgsmAuthUrl } from "../../../webview-ui/src/utils/zgsmAuth"
 
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
  */
+// window error failed msg tag
+let isErrorDialogActive = false
+
 export class CompletionClient {
 	private static client?: CompletionClient
 	private static provider?: ClineProvider
@@ -101,7 +105,26 @@ export class CompletionClient {
 				"Failed to get login information. Please log in again to use the completion service",
 				envClient,
 			)
-			window.showErrorMessage(t("common:window.error.failed_to_get_login_info"))
+
+			if (isErrorDialogActive) {
+				return false
+			}
+
+			isErrorDialogActive = true
+
+			const reLoginText = t("common:window.error.login_again")
+			window
+				.showErrorMessage(t("common:window.error.failed_to_get_login_info"), reLoginText)
+				.then((selection) => {
+					isErrorDialogActive = false
+
+					// re-login
+					if (selection === reLoginText) {
+						const authUrl = generateZgsmAuthUrl(apiConfiguration, env.uriScheme)
+						env.openExternal(Uri.parse(authUrl))
+					}
+				})
+
 			return false
 		}
 		this.openai = new OpenAI({

@@ -9,8 +9,8 @@
 	"input": {
 		"task_prompt": "諸葛神碼應該做什麼？"
 	},
-	"window":{
-		"error":{
+	"window": {
+		"error": {
 			"failed_to_get_login_info": "無法取得登入資訊。請重新登入以使用補全服務。",
 			"login_failed": "登入失敗，請重新登入。",
 			"login_expired": "登入已過期，請重新登入。",
@@ -21,13 +21,14 @@
 			"failed_to_jump": "跳轉失敗",
 			"failed_to_jump_by_path_not_exist": "跳轉失敗，檔案路徑不存在。檔案路徑：",
 			"sign_in_failed": "登入失敗：",
-			"please_log_in_first": "請先登入。"
+			"please_log_in_first": "請先登入。",
+			"login_again": "重新登錄"
 		},
-		"infor":{
+		"infor": {
 			"enable_disable_function_quick_menu": "啟用/禁用“功能快捷選單”和“智能程式碼補全”"
 		}
 	},
-	"button":{
+	"button": {
 		"enable_function_quick_menu": "啟用快捷選單",
 		"disable": "禁用",
 		"enable": "啟用"
@@ -89,6 +90,6 @@
 			"tip": "諸葛神碼指令集",
 			"input_prompt": "你想讓諸葛神碼做什麼？",
 			"input_placeholder": "例如：添加註釋到程式碼"
-		}	
+		}
 	}
-} 
+}
