@@ -16,7 +16,7 @@ import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
 import { BaseProvider } from "./base-provider"
 import { XmlMatcher } from "../../utils/xml-matcher"
 import { DEEP_SEEK_DEFAULT_TEMPERATURE } from "./constants"
-import { createHeaders } from "../../auth/zgsmAuthHandler"
+import { createHeaders } from "../../zgsmAuth/zgsmAuthHandler"
 
 export const defaultHeaders = {
 	"HTTP-Referer": "https://github.com/RooVetGit/Roo-Cline",
@@ -27,10 +27,6 @@ export interface OpenAiHandlerOptions extends ApiHandlerOptions {}
 
 const AZURE_AI_INFERENCE_PATH = "/models/chat/completions"
 
-const ZGSM_DEFAULT_BASEURL = "https://zgsm.sangfor.com"
-
-let ZGSM_DEFAULT_MODELID = "deepseek-chat"
-
 export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: OpenAiHandlerOptions
 	private client: OpenAI
@@ -39,10 +35,10 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		super()
 		this.options = options
 
-		const baseURL = `${this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL}/v1`
+		const baseURL = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
 		const apiKey = this.options.zgsmApiKey || "not-provided"
-		const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
-		const urlHost = this._getUrlHost(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
+		const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl)
+		const urlHost = this._getUrlHost(this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl)
 		const isAzureOpenAi = urlHost === "azure.com" || urlHost.endsWith(".azure.com") || options.openAiUseAzure
 
 		if (isAzureAiInference) {
@@ -79,7 +75,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		const modelInfo = this.getModel().info
-		const modelUrl = `${this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL}/v1`
+		const modelUrl = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
 		const modelId = this.options.zgsmModelId || this.options.zgsmDefaultModelId || ""
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const enabledLegacyFormat = this.options.openAiLegacyFormat ?? false
@@ -243,7 +239,9 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	async completePrompt(prompt: string): Promise<string> {
 		try {
-			const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
+			const isAzureAiInference = this._isAzureAiInference(
+				this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl,
+			)
 			const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
 				model: this.getModel().id,
 				messages: [{ role: "user", content: prompt }],
@@ -268,7 +266,9 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		messages: Anthropic.Messages.MessageParam[],
 	): ApiStream {
 		if (this.options.openAiStreamingEnabled ?? true) {
-			const methodIsAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
+			const methodIsAzureAiInference = this._isAzureAiInference(
+				this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl,
+			)
 
 			const stream = await this.client.chat.completions.create(
 				{
@@ -300,7 +300,9 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				],
 			}
 
-			const methodIsAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
+			const methodIsAzureAiInference = this._isAzureAiInference(
+				this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl,
+			)
 
 			const response = await this.client.chat.completions.create(
 				requestOptions,

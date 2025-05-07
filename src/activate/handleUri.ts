@@ -1,7 +1,6 @@
 import * as vscode from "vscode"
 
 import { ClineProvider } from "../core/webview/ClineProvider"
-import { handleZgsmAuthCallback } from "../auth/zgsmAuthHandler"
 
 export const handleUri = async (uri: vscode.Uri) => {
 	const path = uri.path
@@ -9,12 +8,6 @@ export const handleUri = async (uri: vscode.Uri) => {
 	const visibleProvider = ClineProvider.getVisibleInstance()
 	if (!visibleProvider) {
 		return
-	}
-	if (uri.authority === "zgsm-ai.zgsm") {
-		const code = query.get("code")
-		const state = query.get("state")
-		const token = query.get("token")
-		return await handleZgsmAuthCallback(code, state, token, visibleProvider)
 	}
 	switch (path) {
 		case "/glama": {
@@ -35,6 +28,16 @@ export const handleUri = async (uri: vscode.Uri) => {
 			const code = query.get("code")
 			if (code) {
 				await visibleProvider.handleRequestyCallback(code)
+			}
+			break
+		}
+		case "/callback": {
+			// todo:
+			const code = query.get("code")
+			const state = query.get("state")
+			const token = query.get("token")
+			if ((code && state) || token) {
+				await visibleProvider.handleZgsmAuthCallback(code, state, token)
 			}
 			break
 		}

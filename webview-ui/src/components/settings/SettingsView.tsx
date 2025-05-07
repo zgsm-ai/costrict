@@ -153,7 +153,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 	useEffect(() => {
 		if (extensionState.apiConfiguration?.zgsmApiKey !== cachedState.apiConfiguration?.zgsmApiKey) {
 			setCachedState((prevCachedState) => ({ ...prevCachedState, ...extensionState }))
-			setChangeDetected(true)
+			setChangeDetected(false)
 		}
 	}, [cachedState.apiConfiguration?.zgsmApiKey, extensionState, extensionState.apiConfiguration?.zgsmApiKey])
 
@@ -171,6 +171,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				return prevState
 			}
 
+			debugger
 			setChangeDetected(true)
 			return { ...prevState, [field]: value }
 		})
@@ -183,6 +184,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					return prevState
 				}
 
+				debugger
 				setChangeDetected(true)
 				return { ...prevState, apiConfiguration: { ...prevState.apiConfiguration, [field]: value } }
 			})
@@ -196,6 +198,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				return prevState
 			}
 
+			debugger
 			setChangeDetected(true)
 			return { ...prevState, experiments: { ...prevState.experiments, [id]: enabled } }
 		})
@@ -207,6 +210,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				return prevState
 			}
 
+			debugger
 			setChangeDetected(true)
 			return { ...prevState, telemetrySetting: setting }
 		})

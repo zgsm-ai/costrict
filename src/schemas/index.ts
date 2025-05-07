@@ -307,16 +307,23 @@ type _AssertExperiments = AssertEqual<Equals<ExperimentId, Keys<Experiments>>>
 export const providerSettingsSchema = z.object({
 	apiProvider: providerNamesSchema.optional(),
 	// Zgsm
+
 	zgsmBaseUrl: z.string().optional(),
 	zgsmApiKey: z.string().optional(),
 	zgsmModelId: z.string().optional(),
+
+	zgsmDefaultBaseUrl: z.string().optional(),
 	zgsmDefaultModelId: z.string().optional(),
-	zgsmClientId: z.string().optional(),
-	zgsmClientSecret: z.string().optional(),
-	zgsmRedirectUri: z.string().optional(),
+	zgsmSite: z.string().optional(),
 	zgsmLoginUrl: z.string().optional(),
 	zgsmLogoutUrl: z.string().optional(),
 	zgsmTokenUrl: z.string().optional(),
+	zgsmCompletionUrl: z.string().optional(),
+	zgsmDownloadUrl: z.string().optional(),
+	zgsmRedirectUri: z.string().optional(),
+	zgsmClientId: z.string().optional(),
+	zgsmClientSecret: z.string().optional(),
+
 	// Anthropic
 	apiModelId: z.string().optional(),
 	apiKey: z.string().optional(),
@@ -416,13 +423,18 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmBaseUrl: undefined,
 	zgsmApiKey: undefined,
 	zgsmModelId: undefined,
-	zgsmDefaultModelId: "deepseek-chat",
-	zgsmClientId: undefined,
-	zgsmClientSecret: undefined,
-	zgsmRedirectUri: undefined,
+
+	zgsmSite: undefined,
+	zgsmDefaultBaseUrl: undefined,
+	zgsmDefaultModelId: undefined,
 	zgsmLoginUrl: undefined,
 	zgsmLogoutUrl: undefined,
 	zgsmTokenUrl: undefined,
+	zgsmCompletionUrl: undefined,
+	zgsmDownloadUrl: undefined,
+	zgsmRedirectUri: undefined,
+	zgsmClientId: undefined,
+	zgsmClientSecret: undefined,
 	// Anthropic
 	apiModelId: undefined,
 	apiKey: undefined,

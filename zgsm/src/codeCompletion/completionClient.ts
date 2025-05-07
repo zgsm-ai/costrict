@@ -20,8 +20,7 @@ import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { t } from "../../../src/i18n"
-import { generateZgsmAuthUrl } from "../../../webview-ui/src/utils/zgsmAuth"
-
+import { generateZgsmAuthUrl } from "./../../../src/shared/zgsmAuthUrl"
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
@@ -31,11 +30,15 @@ let isErrorDialogActive = false
 
 export class CompletionClient {
 	private static client?: CompletionClient
-	private static provider?: ClineProvider
+	private static providerRef: WeakRef<ClineProvider>
 	private openai?: OpenAI
 	private stopWords: string[] = []
 	private reqs: Map<string, any> = new Map<string, any>()
 	private betaMode?: any
+
+	public static setProvider(provider: ClineProvider) {
+		CompletionClient.providerRef = new WeakRef(provider)
+	}
 
 	/**
 	 * Send a request to the LLM to obtain the code completion result at the completion point cp.
@@ -95,12 +98,11 @@ export class CompletionClient {
 		if (this.openai && !force) {
 			return true
 		}
+		const provider = CompletionClient.providerRef.deref()
 
-		const { apiConfiguration } = (await CompletionClient.provider?.getState()) ?? {
-			apiConfiguration: { zgsmApiKey: undefined },
-		}
+		const { apiConfiguration } = await provider!.getState()
 
-		if (!apiConfiguration.zgsmApiKey) {
+		if (!apiConfiguration?.zgsmApiKey) {
 			Logger.error(
 				"Failed to get login information. Please log in again to use the completion service",
 				envClient,
@@ -149,9 +151,6 @@ export class CompletionClient {
 	 */
 	private static async getInstance(): Promise<CompletionClient | undefined> {
 		if (!this.client) {
-			if (!this.provider) {
-				this.provider = await ClineProvider.getCacheInstances()
-			}
 			this.client = new CompletionClient()
 			if (!(await this.client.createClient(true))) {
 				this.client = undefined

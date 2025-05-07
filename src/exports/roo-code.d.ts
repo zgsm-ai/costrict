@@ -26,13 +26,17 @@ type ProviderSettings = {
 	zgsmBaseUrl?: string | undefined
 	zgsmApiKey?: string | undefined
 	zgsmModelId?: string | undefined
+	zgsmDefaultBaseUrl?: string | undefined
 	zgsmDefaultModelId?: string | undefined
-	zgsmClientId?: string | undefined
-	zgsmClientSecret?: string | undefined
-	zgsmRedirectUri?: string | undefined
+	zgsmSite?: string | undefined
 	zgsmLoginUrl?: string | undefined
 	zgsmLogoutUrl?: string | undefined
 	zgsmTokenUrl?: string | undefined
+	zgsmCompletionUrl?: string | undefined
+	zgsmDownloadUrl?: string | undefined
+	zgsmRedirectUri?: string | undefined
+	zgsmClientId?: string | undefined
+	zgsmClientSecret?: string | undefined
 	apiModelId?: string | undefined
 	apiKey?: string | undefined
 	anthropicBaseUrl?: string | undefined

@@ -4,26 +4,16 @@ export type { ModelInfo, ProviderName as ApiProvider }
 
 export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider" | "id">
 
-export type ApiConfiguration = ProviderSettings & {
-	// ZGSM OAuth related configuration
-	zgsmBaseUrl?: string // ZGSM base URL
-	zgsmClientId?: string // OAuth client ID
-	zgsmClientSecret?: string // OAuth client secret
-	zgsmRedirectUri?: string // OAuth redirect URI
-	zgsmLoginUrl?: string // Login URL
-	zgsmLogoutUrl?: string // Logout URL
-	zgsmTokenUrl?: string // Token retrieval URL
-	zgsmApiKey?: string // ZGSM API key
-}
+export type ApiConfiguration = ProviderSettings
 export const zgsmProviderKey = "zgsm"
 export const zgsmModels = {
-	"default": {
-        maxTokens: 8192,
-        contextWindow: 64000,
-        supportsImages: false,
-        supportsPromptCache: true,
-	}
-}
+	default: {
+		maxTokens: 8192,
+		contextWindow: 64000,
+		supportsImages: false,
+		supportsPromptCache: true,
+	},
+} as const satisfies Record<string, ModelInfo>
 // Anthropic
 // https://docs.anthropic.com/en/docs/about-claude/models
 export type AnthropicModelId = keyof typeof anthropicModels

@@ -1,3 +1,4 @@
+import { ClineProvider } from "./../../../src/core/webview/ClineProvider"
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Copyright (c) 2024 - Sangfor LTD.
@@ -43,13 +44,17 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 	private disposables: Disposable[] = []
 	private timer: NodeJS.Timeout | undefined
 	private mutex: Mutex
+	private provider: ClineProvider
+
 	private extensionContext: ExtensionContext
 
-	constructor(context: ExtensionContext) {
+	constructor(context: ExtensionContext, provider: ClineProvider) {
 		this.activate()
+		this.provider = provider
 		this.mutex = new Mutex()
 		this.timer = undefined
 		this.extensionContext = context
+		CompletionClient.setProvider(provider)
 		CompletionTrace.init(context)
 	}
 
