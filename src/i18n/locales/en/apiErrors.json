@@ -1,0 +1,23 @@
+{
+	"status": {
+		"401": "Unauthorized access, please check if you are logged in or if your API Key is valid.",
+		"400": "Invalid request, please check your parameters or input format.",
+		"403": "Access forbidden, please check your permission settings.",
+		"404": "Resource not found, please check the request path or if the resource exists.",
+		"429": "Too many requests or exceeded API quota, please try again later or contact the administrator.",
+		"500": "Internal server error, please try again later. If this happens repeatedly, please contact the administrator.",
+		"502": "Gateway error, the service is temporarily unavailable, please try again later. If this happens repeatedly, please contact the administrator.",
+		"503": "Service temporarily unavailable, please try again later. If this happens repeatedly, please contact the administrator.",
+		"504": "Gateway timeout, please try again later.",
+		"unknown": "Unknown error"
+	},
+	"request": {
+		"failed": "Request failed, please try again.",
+		"backend_message": "Backend message: ",
+		"request_id": "Request ID: ",
+		"retry_attempt": "Retry attempt: ",
+		"retry_in_seconds": "Retrying in {{seconds}} seconds...",
+		"retrying_now": "Retrying now...",
+		"current_ask_promise_ignored": "Operation was interrupted or overridden, please try again."
+	}
+}
