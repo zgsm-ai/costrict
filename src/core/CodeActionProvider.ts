@@ -2,12 +2,12 @@ import * as vscode from "vscode"
 import { EditorUtils } from "./EditorUtils"
 
 export const ACTION_NAMES = {
-	EXPLAIN: "Roo Code: Explain Code",
-	FIX: "Roo Code: Fix Code",
-	FIX_LOGIC: "Roo Code: Fix Logic",
-	IMPROVE: "Roo Code: Improve Code",
-	ADD_TO_CONTEXT: "Roo Code: Add to Context",
-	NEW_TASK: "Roo Code: New Task",
+	EXPLAIN: "Shenma: Explain Code",
+	FIX: "Shenma: Fix Code",
+	FIX_LOGIC: "Shenma: Fix Logic",
+	IMPROVE: "Shenma: Improve Code",
+	ADD_TO_CONTEXT: "Shenma: Add to Context",
+	NEW_TASK: "Shenma: New Task",
 
 	// right menu and quick menu
 	ZGSM_EXPLAIN: "Shenma: Explain Code",
