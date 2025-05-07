@@ -21,7 +21,8 @@
 			"failed_to_jump": "跳转失败。",
 			"failed_to_jump_by_path_not_exist": "跳转失败，文件路径不存在。文件路径：",
 			"sign_in_failed": "登录失败：",
-			"please_log_in_first": "请先登录。"
+			"please_log_in_first": "请先登录。",
+			"login_again": "重新登录"
 		},
 		"infor": {
 			"enable_disable_function_quick_menu": "启用/禁用\"功能快捷菜单\"和\"智能代码补全\""
