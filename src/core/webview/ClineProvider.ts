@@ -1051,6 +1051,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		}
 
 		await this.upsertApiConfiguration(currentApiConfigName, newConfiguration)
+		vscode.window.showInformationMessage("Shenma login successful")
 		await afterZgsmPostLogin({
 			apiConfiguration: newConfiguration,
 			provider: this,
