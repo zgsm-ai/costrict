@@ -129,7 +129,7 @@ export class CompletionClient {
 		const completionUrl = `${apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl}`
 		this.openai = new OpenAI({
 			baseURL: completionUrl,
-			apiKey: apiConfiguration.zgsmApiKey,
+			apiKey: apiConfiguration.zgsmApiKey || "not-provided",
 		})
 		if (!this.openai) {
 			// Logger.error("Completion: Configuration error: configuration:", configuration, "openai: ", this.openai);
@@ -213,7 +213,7 @@ export class CompletionClient {
 		const headers = createAuthenticatedHeaders()
 		const repo = workspace?.name?.split(" ")[0] ?? ""
 		this.openai.baseURL = `${apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl}`
-		apiConfiguration.zgsmApiKey && (this.openai.apiKey = apiConfiguration.zgsmApiKey)
+		this.openai.apiKey = apiConfiguration.zgsmApiKey || "not-provided"
 		return this.openai.completions.create(
 			{
 				// no use
