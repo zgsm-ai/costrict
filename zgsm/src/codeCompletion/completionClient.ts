@@ -8,7 +8,7 @@
  * copies or substantial portions of the Software.
  */
 import OpenAI from "openai"
-import { envClient, envSetting } from "../common/env"
+import { defaultZgsmAuthConfig } from "../../../src/zgsmAuth/config"
 import { Logger } from "../common/log-util"
 import { window, workspace, env, Uri } from "vscode"
 import { AxiosError } from "axios"
@@ -103,10 +103,7 @@ export class CompletionClient {
 		const { apiConfiguration } = await provider!.getState()
 
 		if (!apiConfiguration?.zgsmApiKey) {
-			Logger.error(
-				"Failed to get login information. Please log in again to use the completion service",
-				envClient,
-			)
+			Logger.error("Failed to get login information. Please log in again to use the completion service")
 
 			if (isErrorDialogActive) {
 				return false
@@ -129,8 +126,9 @@ export class CompletionClient {
 
 			return false
 		}
+		const completionUrl = `${apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl}`
 		this.openai = new OpenAI({
-			baseURL: envSetting.completionUrl,
+			baseURL: completionUrl,
 			apiKey: apiConfiguration.zgsmApiKey,
 		})
 		if (!this.openai) {
@@ -141,7 +139,7 @@ export class CompletionClient {
 		this.stopWords = workspace.getConfiguration(configCompletion).get("inlineCompletion") ? ["\n", "\r"] : []
 		this.betaMode = workspace.getConfiguration(configCompletion).get("betaMode")
 		Logger.info(
-			`Completion: Create OpenAIApi client, URL: ${envSetting.completionUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
+			`Completion: Create OpenAIApi client, URL: ${completionUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
 		)
 		return true
 	}
@@ -194,6 +192,10 @@ export class CompletionClient {
 		if (!this.openai) {
 			throw new Error("OpenAI client not initialized")
 		}
+		const provider = CompletionClient.providerRef.deref()
+
+		const { apiConfiguration } = await provider!.getState()
+
 		// cleanup Old Requests
 		const currentId = cp.id
 		for (const [key, controller] of this.reqs) {
@@ -210,7 +212,8 @@ export class CompletionClient {
 		Logger.log(`Completion [${cp.id}]: Sending API request`)
 		const headers = createAuthenticatedHeaders()
 		const repo = workspace?.name?.split(" ")[0] ?? ""
-
+		this.openai.baseURL = `${apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl}`
+		apiConfiguration.zgsmApiKey && (this.openai.apiKey = apiConfiguration.zgsmApiKey)
 		return this.openai.completions.create(
 			{
 				// no use

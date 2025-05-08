@@ -16,7 +16,7 @@ import { AICompletionProvider } from "./codeCompletion/completionProvider"
 import { codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codeLens/codeLensCallBackFunc"
 import { MyCodeLensProvider } from "./codeLens/codeLensProvider"
 import { configCompletion, configCodeLens, configShenmaName } from "./common/constant"
-import { initEnv, updateEnv } from "./common/env"
+// import { initEnv, updateEnv } from "./common/env"
 // import { Logger } from "./common/log-util"
 import {
 	setupExtensionUpdater,
@@ -34,7 +34,7 @@ import { ClineProvider } from "../../src/core/webview/ClineProvider"
  */
 async function initialize() {
 	printLogo()
-	initEnv()
+	// initEnv()
 	initLangSetting()
 
 	loadLocalLanguageExtensions()
@@ -74,7 +74,7 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 	const configChanged = vscode.workspace.onDidChangeConfiguration((e) => {
 		if (e.affectsConfiguration(configShenmaName)) {
 			// Shenma settings changed, mainly URL settings for various services
-			updateEnv()
+			// updateEnv()
 			cvProvider.updateConfig()
 		}
 		if (e.affectsConfiguration(configCompletion)) {

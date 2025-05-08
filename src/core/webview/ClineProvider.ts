@@ -56,6 +56,7 @@ import { getWorkspacePath } from "../../utils/path"
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import { WebviewMessage } from "../../shared/WebviewMessage"
 import { afterZgsmPostLogin, getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
+import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -1028,17 +1029,18 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		} else if (code) {
 			try {
 				// Extract the base domain for the auth endpoint
-				const response = await getZgsmAccessToken(code, apiConfiguration)
+				const access_token = await getZgsmAccessToken(code, apiConfiguration)
 
-				if (response.status !== 200 || !response.data?.access_token) {
-					throw new Error(`Failed to get access token: ${response}`)
+				if (!access_token) {
+					throw new Error(`Failed to get access token`)
 				}
 
-				apiKey = response.data.access_token
+				apiKey = access_token
 			} catch (error) {
 				this.log(
 					`Error exchanging code for API key: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
 				)
+				vscode.window.showErrorMessage(error.message)
 				throw error
 			}
 		}
@@ -1392,17 +1394,17 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			providerSettings.apiProvider = apiProvider
 		}
 		Object.assign(providerSettings, {
-			zgsmSite: "https://zgsm.ai",
-			zgsmDefaultBaseUrl: "https://zgsm.sangfor.com",
-			zgsmLoginUrl: "/realms/gw/protocol/openid-connect/auth",
-			zgsmLogoutUrl: "/realms/gw/protocol/openid-connect/logout",
-			zgsmTokenUrl: "/realms/gw/protocol/openid-connect/token",
-			zgsmCompletionUrl: "/v2",
-			zgsmDownloadUrl: "/downloads",
-			zgsmRedirectUri: "/login/ok",
+			zgsmSite: defaultZgsmAuthConfig.zgsmSite,
+			zgsmDefaultBaseUrl: defaultZgsmAuthConfig.baseUrl,
+			zgsmLoginUrl: defaultZgsmAuthConfig.loginUrl,
+			zgsmLogoutUrl: defaultZgsmAuthConfig.logoutUrl,
+			zgsmTokenUrl: defaultZgsmAuthConfig.tokenUrl,
+			zgsmCompletionUrl: defaultZgsmAuthConfig.completionUrl,
+			zgsmDownloadUrl: defaultZgsmAuthConfig.downloadUrl,
+			zgsmRedirectUri: defaultZgsmAuthConfig.redirectUri,
 
-			zgsmClientId: "vscode",
-			zgsmClientSecret: "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l",
+			zgsmClientId: defaultZgsmAuthConfig.clientId,
+			zgsmClientSecret: defaultZgsmAuthConfig.clientSecret,
 		})
 		// Return the same structure as before
 		return {

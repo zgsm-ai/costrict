@@ -122,17 +122,17 @@ export async function handleZgsmLogin(
  */
 export async function getZgsmAccessToken(code: string, apiConfiguration?: ApiConfiguration) {
 	try {
+		const { redirectUri, tokenUrl } = defaultZgsmAuthConfig.getAuthUrls(apiConfiguration?.zgsmBaseUrl)
+
 		// Prefer configuration in apiConfiguration, if not exist, use environment settings
 		const clientId = apiConfiguration?.zgsmClientId || defaultZgsmAuthConfig.clientId
 		const clientSecret = apiConfiguration?.zgsmClientSecret || defaultZgsmAuthConfig.clientSecret
-		const redirectUri = `${apiConfiguration?.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration?.zgsmRedirectUri || defaultZgsmAuthConfig.redirectUri}`
-		const tokenUrl = `${apiConfiguration?.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration?.zgsmTokenUrl || defaultZgsmAuthConfig.tokenUrl}`
 
 		// Set request parameters
 		const params = {
 			client_id: clientId,
 			client_secret: clientSecret,
-			code: code,
+			code,
 			grant_type: "authorization_code",
 			redirect_uri: redirectUri,
 		}
@@ -149,20 +149,13 @@ export async function getZgsmAccessToken(code: string, apiConfiguration?: ApiCon
 			body: formData,
 		})
 
+		if (!res.ok) {
+			throw new Error(`Failed to get token: ${await res.text()}`)
+		}
+
 		const data = await res.json()
 
-		// Successfully obtained token
-		if (res.status === 200 && data && data.access_token) {
-			return {
-				status: 200,
-				data,
-			}
-		} else {
-			return {
-				status: res.status || 400,
-				data: null,
-			}
-		}
+		return data?.access_token
 	} catch (err) {
 		console.error("fetchToken: Axios error:", err.message)
 		throw err

@@ -1,13 +1,3 @@
-export interface AuthConfig {
-	baseUrl: string
-	clientId: string
-	clientSecret: string
-	loginUrl: string
-	logoutUrl: string
-	tokenUrl: string
-	redirectUri: string
-}
-
 class DefaultZgsmAuthConfig {
 	static URL_TEMPLATES = {
 		loginUrlTpl: "/realms/gw/protocol/openid-connect/auth",
@@ -24,24 +14,28 @@ class DefaultZgsmAuthConfig {
 	tokenUrl: string
 	loginUrl: string
 	logoutUrl: string
+	completionUrl: string
+	downloadUrl: string
 
 	constructor() {
 		this.baseUrl = "https://zgsm.sangfor.com"
 		this.zgsmSite = "https://zgsm.ai"
 		this.clientId = "vscode"
 		this.clientSecret = "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l"
-		this.redirectUri = `${this.baseUrl}${DefaultZgsmAuthConfig.URL_TEMPLATES.redirectUriTpl}`
-		this.tokenUrl = `${this.baseUrl}${DefaultZgsmAuthConfig.URL_TEMPLATES.tokenUrlTpl}`
-		this.loginUrl = `${this.baseUrl}${DefaultZgsmAuthConfig.URL_TEMPLATES.loginUrlTpl}`
-		this.logoutUrl = `${this.baseUrl}${DefaultZgsmAuthConfig.URL_TEMPLATES.logoutUrlTpl}`
+		this.completionUrl = "/v2"
+		this.downloadUrl = "/downloads"
+		this.loginUrl = "/realms/gw/protocol/openid-connect/auth"
+		this.logoutUrl = "/realms/gw/protocol/openid-connect/logout"
+		this.tokenUrl = "/realms/gw/protocol/openid-connect/token"
+		this.redirectUri = "/login/ok"
 	}
 
 	getAuthUrls(baseUrl?: string) {
 		return {
-			redirectUri: `${baseUrl || this.baseUrl}${DefaultZgsmAuthConfig.URL_TEMPLATES.redirectUriTpl}`,
-			tokenUrl: `${baseUrl || this.baseUrl}${DefaultZgsmAuthConfig.URL_TEMPLATES.tokenUrlTpl}`,
-			loginUrl: `${baseUrl || this.baseUrl}${DefaultZgsmAuthConfig.URL_TEMPLATES.loginUrlTpl}`,
-			logoutUrl: `${baseUrl || this.baseUrl}${DefaultZgsmAuthConfig.URL_TEMPLATES.logoutUrlTpl}`,
+			redirectUri: `${baseUrl || this.baseUrl}${this.redirectUri}`,
+			tokenUrl: `${baseUrl || this.baseUrl}${this.tokenUrl}`,
+			loginUrl: `${baseUrl || this.baseUrl}${this.loginUrl}`,
+			logoutUrl: `${baseUrl || this.baseUrl}${this.logoutUrl}`,
 		}
 	}
 }
