@@ -107,8 +107,18 @@
 				"tooltip": "SHENMA - Code Completion - Completed"
 			},
 			"fail": {
-				"text": "$(alert) SHENMA - Please check your network connection or log in again",
-				"tooltip": "SHENMA - Code Completion - Failed "
+				"401": "Unauthorized, please log in",
+				"400": "Invalid request, please check parameters",
+				"403": "Access denied, please check permissions",
+				"404": "Resource not found, please check request",
+				"429": "API rate limit exceeded, please try again later",
+				"500": "Server error, please try again later",
+				"502": "Gateway error, please try again later",
+				"503": "Service unavailable, please try again later",
+				"504": "Gateway timeout, please try again later",
+				"unknown": "Unknown error",
+				"text": "$(alert) SHENMA - ",
+				"tooltip": "SHENMA - Code Completion - Failed: "
 			},
 			"noSuggest": {
 				"text": "$(check) SHENMA - No Suggestions",
@@ -123,3 +133,4 @@
 		}
 	}
 }
+
