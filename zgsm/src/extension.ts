@@ -15,7 +15,7 @@ import { CompletionStatusBar } from "./codeCompletion/completionStatusBar"
 import { AICompletionProvider } from "./codeCompletion/completionProvider"
 import { codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codeLens/codeLensCallBackFunc"
 import { MyCodeLensProvider } from "./codeLens/codeLensProvider"
-import { configCompletion, configCodeLens, configShenmaName } from "./common/constant"
+import { configCompletion, configCodeLens } from "./common/constant"
 // import { initEnv, updateEnv } from "./common/env"
 // import { Logger } from "./common/log-util"
 import {
@@ -72,11 +72,6 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 
 	// Listen for configuration changes
 	const configChanged = vscode.workspace.onDidChangeConfiguration((e) => {
-		if (e.affectsConfiguration(configShenmaName)) {
-			// Shenma settings changed, mainly URL settings for various services
-			// updateEnv()
-			cvProvider.updateConfig()
-		}
 		if (e.affectsConfiguration(configCompletion)) {
 			// Code completion settings changed
 			updateCompletionConfig()

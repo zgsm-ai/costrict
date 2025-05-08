@@ -192,7 +192,6 @@ registerRefreshFunction(refreshCodelensFunc)
 export const codeLensDiffCodeTempFileDir = "codeLensDiffCodeTempFileDir"
 export const noDirtyFile = "no dirty file"
 
-export const configShenmaName = "Auth"
 export const configCompletion = "IntelligentCodeCompletion"
 export const configCodeLens = "FunctionQuickCommands"
 
