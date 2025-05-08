@@ -470,36 +470,6 @@
 				}
 			},
 			{
-				"title": "%auth.title%",
-				"order": 1,
-				"properties": {
-					"Auth.baseUrl": {
-						"type": "string",
-						"order": 1,
-						"default": "",
-						"description": "%auth.baseUrl.description%"
-					},
-					"Auth.loginUrl": {
-						"type": "string",
-						"order": 2,
-						"default": "",
-						"description": "%auth.loginUrl.description%"
-					},
-					"Auth.tokenUrl": {
-						"type": "string",
-						"order": 3,
-						"default": "",
-						"description": "%auth.tokenUrl.description%"
-					},
-					"Auth.logoutUrl": {
-						"type": "string",
-						"order": 4,
-						"default": "",
-						"description": "%auth.logoutUrl.description%"
-					}
-				}
-			},
-			{
 				"title": "%intelligentCodeCompletion.title%",
 				"order": 3,
 				"properties": {
