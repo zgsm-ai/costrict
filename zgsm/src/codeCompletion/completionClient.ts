@@ -10,7 +10,7 @@
 import OpenAI from "openai"
 import { defaultZgsmAuthConfig } from "../../../src/zgsmAuth/config"
 import { Logger } from "../common/log-util"
-import { window, workspace, env, Uri } from "vscode"
+import { workspace } from "vscode"
 import { AxiosError } from "axios"
 import { createAuthenticatedHeaders } from "../common/api"
 import { configCompletion, settings, OPENAI_CLIENT_NOT_INITIALIZED } from "../common/constant"
@@ -20,13 +20,10 @@ import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { t } from "../../../src/i18n"
-import { generateZgsmAuthUrl } from "./../../../src/shared/zgsmAuthUrl"
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
  */
-// window error failed msg tag
-let isErrorDialogActive = false
 
 export class CompletionClient {
 	private static client?: CompletionClient
@@ -36,8 +33,14 @@ export class CompletionClient {
 	private reqs: Map<string, any> = new Map<string, any>()
 	private betaMode?: any
 
-	public static setProvider(provider: ClineProvider) {
+	public static async setProvider(provider: ClineProvider) {
 		CompletionClient.providerRef = new WeakRef(provider)
+
+		const { apiConfiguration } = await provider!.getState()
+		await provider?.updateApiConfiguration({
+			...apiConfiguration,
+			isZgsmApiKeyValid: true,
+		})
 	}
 
 	/**
@@ -46,6 +49,14 @@ export class CompletionClient {
 	public static async callApi(cp: CompletionPoint, scores: CompletionScores): Promise<string> {
 		const client = await this.getInstance()
 		if (!client) {
+			const provider = CompletionClient.providerRef.deref()
+
+			const { apiConfiguration } = await provider!.getState()
+			await provider?.updateApiConfiguration({
+				...apiConfiguration,
+				isZgsmApiKeyValid: false,
+			})
+
 			throw new Error(OPENAI_CLIENT_NOT_INITIALIZED)
 		}
 
@@ -66,6 +77,16 @@ export class CompletionClient {
 				this.client = undefined // reset client
 				const statusCode = (err as AxiosError)?.response?.status || 500
 				CompletionTrace.reportApiError(`${statusCode}`)
+				// token error upate isZgsmApiKeyValid status
+				if ((err as AxiosError).status === 401) {
+					const provider = CompletionClient.providerRef.deref()
+
+					const { apiConfiguration } = await provider!.getState()
+					await provider?.updateApiConfiguration({
+						...apiConfiguration,
+						isZgsmApiKeyValid: false,
+					})
+				}
 			}
 			throw err
 		} finally {
@@ -101,29 +122,8 @@ export class CompletionClient {
 		const provider = CompletionClient.providerRef.deref()
 
 		const { apiConfiguration } = await provider!.getState()
-
 		if (!apiConfiguration?.zgsmApiKey) {
 			Logger.error("Failed to get login information. Please log in again to use the completion service")
-
-			if (isErrorDialogActive) {
-				return false
-			}
-
-			isErrorDialogActive = true
-
-			const reLoginText = t("common:window.error.login_again")
-			window
-				.showErrorMessage(t("common:window.error.failed_to_get_login_info"), reLoginText)
-				.then((selection) => {
-					isErrorDialogActive = false
-
-					// re-login
-					if (selection === reLoginText) {
-						const authUrl = generateZgsmAuthUrl(apiConfiguration, env.uriScheme)
-						env.openExternal(Uri.parse(authUrl))
-					}
-				})
-
 			return false
 		}
 		const completionUrl = `${apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl}`

@@ -16,6 +16,8 @@ import { LangSetting, LangSwitch, LangDisables, getLanguageByFilePath, loadRemot
 import { DateFormat, formatTime, formatTimeDifference } from "./util"
 import { t } from "../../../src/i18n"
 import { zgsmProviderKey } from "../../../src/shared/api"
+import { CompletionClient } from "../codeCompletion/completionClient"
+import { generateZgsmAuthUrl } from "../../../src/shared/zgsmAuthUrl"
 /**
  * Set up a timer to periodically check for extension updates and programming language settings
  */
@@ -345,11 +347,69 @@ function createButtonCommand(funcName: string, configName: string, enabledSettin
 /**
  * Status bar click event function
  */
-export function setupLangSwitchs() {
+export async function setupLangSwitchs() {
 	const editor = vscode.window.activeTextEditor
 	if (!editor) {
 		return
 	}
+
+	const provider = CompletionClient.providerRef.deref()
+
+	const { apiConfiguration } = await provider!.getState()
+
+	// if no apiConfiguration.zgsmApiKey, user is not logger in
+	const { isZgsmApiKeyValid } = apiConfiguration
+
+	if (!isZgsmApiKeyValid) {
+		const reLoginText = t("common:window.error.login_again")
+		vscode.window
+			.showErrorMessage(t("common:window.error.failed_to_get_login_info"), reLoginText)
+			.then(async (selection) => {
+				// re-login
+				if (selection === reLoginText) {
+					await vscode.window
+						.showInputBox({
+							title: t("common:window.relogin_input.title"),
+							placeHolder: t("common:window.relogin_input.placeholder"),
+							ignoreFocusOut: true,
+							validateInput: (input) => {
+								if (!input) {
+									return null
+								}
+
+								try {
+									const parsedUrl = new URL(input)
+									const VALID_PROTOCOLS = ["http:", "https:"]
+
+									if (!VALID_PROTOCOLS.includes(parsedUrl.protocol)) {
+										return t("common:window.relogin_input.error_portocol")
+									}
+
+									return null
+								} catch (error) {
+									return t("common:window.relogin_input.error_url")
+								}
+							},
+						})
+						.then((credentials) => {
+							if (credentials === undefined) {
+								return
+							}
+							const authUrl = generateZgsmAuthUrl(
+								{
+									...apiConfiguration,
+									zgsmBaseUrl: credentials,
+								},
+								vscode.env.uriScheme,
+							)
+							vscode.env.openExternal(vscode.Uri.parse(authUrl))
+						})
+				}
+			})
+
+		return
+	}
+
 	const language = getLanguageByFilePath(editor.document.uri.fsPath)
 	const completionSwitch = LangSetting.getCompletionDisable(language)
 	const codelensSwitch = LangSetting.getCodelensDisable(language)

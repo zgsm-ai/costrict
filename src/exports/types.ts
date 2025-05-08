@@ -38,6 +38,7 @@ type ProviderSettings = {
 	zgsmRedirectUri?: string | undefined
 	zgsmClientId?: string | undefined
 	zgsmClientSecret?: string | undefined
+	isZgsmApiKeyValid?: boolean | undefined
 	apiModelId?: string | undefined
 	apiKey?: string | undefined
 	anthropicBaseUrl?: string | undefined

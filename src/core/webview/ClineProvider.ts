@@ -57,6 +57,7 @@ import { webviewMessageHandler } from "./webviewMessageHandler"
 import { WebviewMessage } from "../../shared/WebviewMessage"
 import { afterZgsmPostLogin, getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
 import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
+import { CompletionStatusBar } from "../../../zgsm/src/codeCompletion/completionStatusBar"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -1048,9 +1049,12 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		const newConfiguration: ApiConfiguration = {
 			...apiConfiguration,
 			zgsmApiKey: apiKey,
+			isZgsmApiKeyValid: true,
 			// openRouterModelId: apiConfiguration?.openRouterModelId || openRouterDefaultModelId,
 			// openRouterModelInfo: apiConfiguration?.openRouterModelInfo || zgsmModels.default,
 		}
+
+		CompletionStatusBar.complete()
 
 		await this.upsertApiConfiguration(currentApiConfigName, newConfiguration)
 		vscode.window.showInformationMessage("Shenma login successful")

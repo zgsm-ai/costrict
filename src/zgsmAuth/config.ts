@@ -16,6 +16,8 @@ class DefaultZgsmAuthConfig {
 	logoutUrl: string
 	completionUrl: string
 	downloadUrl: string
+	// tokenIsValid
+	isZgsmApiKeyValid: boolean
 
 	constructor() {
 		this.baseUrl = "https://zgsm.sangfor.com"
@@ -28,6 +30,7 @@ class DefaultZgsmAuthConfig {
 		this.logoutUrl = "/realms/gw/protocol/openid-connect/logout"
 		this.tokenUrl = "/realms/gw/protocol/openid-connect/token"
 		this.redirectUri = "/login/ok"
+		this.isZgsmApiKeyValid = true
 	}
 
 	getAuthUrls(baseUrl?: string) {
