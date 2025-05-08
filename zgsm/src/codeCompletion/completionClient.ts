@@ -8,7 +8,7 @@
  * copies or substantial portions of the Software.
  */
 import OpenAI from "openai"
-import { envClient, envSetting } from "../common/env"
+import { defaultZgsmAuthConfig } from "../../../src/zgsmAuth/config"
 import { Logger } from "../common/log-util"
 import { window, workspace, env, Uri } from "vscode"
 import { AxiosError } from "axios"
@@ -20,8 +20,7 @@ import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { t } from "../../../src/i18n"
-import { generateZgsmAuthUrl } from "../../../webview-ui/src/utils/zgsmAuth"
-
+import { generateZgsmAuthUrl } from "./../../../src/shared/zgsmAuthUrl"
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
@@ -31,11 +30,15 @@ let isErrorDialogActive = false
 
 export class CompletionClient {
 	private static client?: CompletionClient
-	private static provider?: ClineProvider
+	private static providerRef: WeakRef<ClineProvider>
 	private openai?: OpenAI
 	private stopWords: string[] = []
 	private reqs: Map<string, any> = new Map<string, any>()
 	private betaMode?: any
+
+	public static setProvider(provider: ClineProvider) {
+		CompletionClient.providerRef = new WeakRef(provider)
+	}
 
 	/**
 	 * Send a request to the LLM to obtain the code completion result at the completion point cp.
@@ -95,16 +98,12 @@ export class CompletionClient {
 		if (this.openai && !force) {
 			return true
 		}
+		const provider = CompletionClient.providerRef.deref()
 
-		const { apiConfiguration } = (await CompletionClient.provider?.getState()) ?? {
-			apiConfiguration: { zgsmApiKey: undefined },
-		}
+		const { apiConfiguration } = await provider!.getState()
 
-		if (!apiConfiguration.zgsmApiKey) {
-			Logger.error(
-				"Failed to get login information. Please log in again to use the completion service",
-				envClient,
-			)
+		if (!apiConfiguration?.zgsmApiKey) {
+			Logger.error("Failed to get login information. Please log in again to use the completion service")
 
 			if (isErrorDialogActive) {
 				return false
@@ -127,8 +126,9 @@ export class CompletionClient {
 
 			return false
 		}
+		const completionUrl = `${apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl}`
 		this.openai = new OpenAI({
-			baseURL: envSetting.completionUrl,
+			baseURL: completionUrl,
 			apiKey: apiConfiguration.zgsmApiKey,
 		})
 		if (!this.openai) {
@@ -139,7 +139,7 @@ export class CompletionClient {
 		this.stopWords = workspace.getConfiguration(configCompletion).get("inlineCompletion") ? ["\n", "\r"] : []
 		this.betaMode = workspace.getConfiguration(configCompletion).get("betaMode")
 		Logger.info(
-			`Completion: Create OpenAIApi client, URL: ${envSetting.completionUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
+			`Completion: Create OpenAIApi client, URL: ${completionUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
 		)
 		return true
 	}
@@ -149,9 +149,6 @@ export class CompletionClient {
 	 */
 	private static async getInstance(): Promise<CompletionClient | undefined> {
 		if (!this.client) {
-			if (!this.provider) {
-				this.provider = await ClineProvider.getCacheInstances()
-			}
 			this.client = new CompletionClient()
 			if (!(await this.client.createClient(true))) {
 				this.client = undefined
@@ -195,6 +192,10 @@ export class CompletionClient {
 		if (!this.openai) {
 			throw new Error("OpenAI client not initialized")
 		}
+		const provider = CompletionClient.providerRef.deref()
+
+		const { apiConfiguration } = await provider!.getState()
+
 		// cleanup Old Requests
 		const currentId = cp.id
 		for (const [key, controller] of this.reqs) {
@@ -211,7 +212,8 @@ export class CompletionClient {
 		Logger.log(`Completion [${cp.id}]: Sending API request`)
 		const headers = createAuthenticatedHeaders()
 		const repo = workspace?.name?.split(" ")[0] ?? ""
-
+		this.openai.baseURL = `${apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl}`
+		apiConfiguration.zgsmApiKey && (this.openai.apiKey = apiConfiguration.zgsmApiKey)
 		return this.openai.completions.create(
 			{
 				// no use

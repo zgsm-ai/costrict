@@ -61,9 +61,8 @@ import { ThinkingBudget } from "./ThinkingBudget"
 import { R1FormatSetting } from "./R1FormatSetting"
 import { OpenRouterBalanceDisplay } from "./OpenRouterBalanceDisplay"
 import { RequestyBalanceDisplay } from "./RequestyBalanceDisplay"
-import { useZgsmOAuth } from "../../hooks/useOAuth"
-import { defaultAuthConfig } from "@/config/auth"
 import { useExtensionState } from "@/context/ExtensionStateContext"
+import { generateZgsmAuthUrl } from "../../../../src/shared/zgsmAuthUrl"
 
 interface ApiOptionsProps {
 	uriScheme: string | undefined
@@ -88,7 +87,6 @@ const ApiOptions = ({
 }: ApiOptionsProps) => {
 	const { currentApiConfigName } = useExtensionState()
 	const { t } = useAppTranslation()
-	const { generateZgsmAuthUrl } = useZgsmOAuth()
 
 	const [ollamaModels, setOllamaModels] = useState<string[]>([])
 	const [lmStudioModels, setLmStudioModels] = useState<string[]>([])
@@ -170,7 +168,7 @@ const ApiOptions = ({
 				vscode.postMessage({
 					type: "refreshZgsmModels",
 					values: {
-						baseUrl: apiConfiguration?.zgsmBaseUrl || defaultAuthConfig.baseUrl,
+						baseUrl: `${apiConfiguration?.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}`,
 						apiKey: apiConfiguration?.zgsmApiKey,
 						hostHeader: apiConfiguration?.openAiHostHeader,
 					},
@@ -244,7 +242,8 @@ const ApiOptions = ({
 				case "zgsmModels": {
 					const updatedModels = message.zgsmModels ?? []
 					if (message.zgsmDefaultModelId) {
-						setApiConfigurationField("zgsmDefaultModelId", message.zgsmDefaultModelId)
+						apiConfiguration.zgsmDefaultModelId !== message.zgsmDefaultModelId &&
+							setApiConfigurationField("zgsmDefaultModelId", message.zgsmDefaultModelId)
 						setApiConfigurationField(
 							"zgsmModelId",
 							apiConfiguration?.apiProvider === zgsmProviderKey
@@ -330,7 +329,6 @@ const ApiOptions = ({
 		// 	name: displayName,
 		// }
 	}
-
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-col gap-1 relative">
@@ -403,7 +401,7 @@ const ApiOptions = ({
 							})
 						}}
 						placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
-							zgsmBaseUrl: defaultAuthConfig.baseUrl,
+							zgsmBaseUrl: `${apiConfiguration.zgsmDefaultBaseUrl}`,
 						})}
 						className="w-full">
 						<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
@@ -420,7 +418,7 @@ const ApiOptions = ({
 							modelIdKey="zgsmModelId"
 							modelInfoKey="openAiCustomModelInfo"
 							serviceName="OpenAI"
-							serviceUrl={apiConfiguration.zgsmBaseUrl || defaultAuthConfig.baseUrl}
+							serviceUrl={`${apiConfiguration?.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}`}
 						/>
 					)}
 					{!fromWelcomeView && (

@@ -15,9 +15,9 @@ import { CompletionStatusBar } from "./codeCompletion/completionStatusBar"
 import { AICompletionProvider } from "./codeCompletion/completionProvider"
 import { codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codeLens/codeLensCallBackFunc"
 import { MyCodeLensProvider } from "./codeLens/codeLensProvider"
-import { CODELENS_CONST, CODELENS_FUNC, configCompletion, configCodeLens, configShenmaName } from "./common/constant"
-import { initEnv, updateEnv } from "./common/env"
-import { Logger } from "./common/log-util"
+import { configCompletion, configCodeLens, configShenmaName } from "./common/constant"
+// import { initEnv, updateEnv } from "./common/env"
+// import { Logger } from "./common/log-util"
 import {
 	setupExtensionUpdater,
 	doExtensionOnce,
@@ -25,67 +25,25 @@ import {
 	updateCompletionConfig,
 	initLangSetting,
 } from "./common/services"
-import { getFullLineCode, printLogo } from "./common/vscode-util"
-import { getLanguageByFilePath, loadLocalLanguageExtensions } from "./common/lang-util"
-import { getLanguageClass } from "./langClass/factory"
+import { printLogo } from "./common/vscode-util"
+import { loadLocalLanguageExtensions } from "./common/lang-util"
+import { ClineProvider } from "../../src/core/webview/ClineProvider"
 
 /**
  * Initialization entry
  */
 async function initialize() {
 	printLogo()
-	initEnv()
+	// initEnv()
 	initLangSetting()
 
 	loadLocalLanguageExtensions()
 }
 
 /**
- * Register the command for each menu item
- */
-function registerMenuCommands(context: vscode.ExtensionContext, cvProvider: ChatViewProvider) {
-	// for (const rightMenu of rightMenus) {
-	//     const myCommand = vscode.commands.registerCommand(rightMenu.command, async () => {
-	//         const editor = vscode.window.activeTextEditor;
-	//         if (!editor) {
-	//             return;
-	//         }
-	//         const selectedCode = editor.document.getText(editor.selection);
-	//         if (!selectedCode) {
-	//             return;
-	//         }
-	//         Logger.log('You clicked', rightMenu);
-	//         vscode.commands.executeCommand('vscode-zgsm.view.focus');
-
-	//         let params: any = CODELENS_FUNC[rightMenu.key];
-	//         const filePath = editor.document.uri.fsPath;
-	//         const language = getLanguageByFilePath(filePath);
-	//         const langClass = getLanguageClass(language);
-	//         const startLine = editor.selection.start.line;
-	//         const endLine = editor.selection.end.line;
-	//         params.category = rightMenu.category;
-	//         params.filePath = filePath;
-	//         params.language = language;
-	//         params.code = getFullLineCode(editor, startLine, endLine);
-	//         params.callType = CODELENS_CONST.rightMenu;
-	//         params.range = {
-	//             startLine: startLine,
-	//             endLine: endLine,
-	//         };
-	//         params = langClass.codelensGetExtraArgs(editor.document, params.range, params);
-	//         setTimeout(() => {
-	//             cvProvider?.codeLensButtonSend(params);
-	//         }, cvProvider?.webView ? 0 : 1000);
-	//     });
-	//     context.subscriptions.push(myCommand);
-	// }
-	registerZGSMCodeActions(context)
-}
-
-/**
  * Entry function when the extension is activated
  */
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext, provider: ClineProvider) {
 	initialize()
 
 	// TODO: it will cause coredump
@@ -96,17 +54,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	doExtensionOnce(context)
 	CompletionStatusBar.create(context)
 	const cvProvider = ChatViewProvider.getInstance(context)
-
-	// Register webview
-	// context.subscriptions.push(vscode.window.registerWebviewViewProvider(
-	//     "vscode-zgsm.view",
-	//     cvProvider,
-	//     {
-	//         webviewOptions: {
-	//             retainContextWhenHidden: true,
-	//         },
-	//     }
-	// ));
 
 	context.subscriptions.push(
 		// Register codelens related commands
@@ -127,7 +74,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	const configChanged = vscode.workspace.onDidChangeConfiguration((e) => {
 		if (e.affectsConfiguration(configShenmaName)) {
 			// Shenma settings changed, mainly URL settings for various services
-			updateEnv()
+			// updateEnv()
 			cvProvider.updateConfig()
 		}
 		if (e.affectsConfiguration(configCompletion)) {
@@ -144,14 +91,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		// Code completion service
-		vscode.languages.registerInlineCompletionItemProvider({ pattern: "**" }, new AICompletionProvider(context)),
+		vscode.languages.registerInlineCompletionItemProvider(
+			{ pattern: "**" },
+			new AICompletionProvider(context, provider),
+		),
 		// Shortcut command to trigger auto-completion manually
 		vscode.commands.registerCommand(shortKeyCut.command, () => {
 			shortKeyCut.callback(context)
 		}),
 	)
 	// Register the command for the right-click menu
-	registerMenuCommands(context, cvProvider)
+	registerZGSMCodeActions(context)
 	// Register the 'Start Chat' command
 	context.subscriptions.push(
 		vscode.commands.registerCommand("vscode-zgsm.chat", () => {

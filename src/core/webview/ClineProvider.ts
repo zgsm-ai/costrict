@@ -23,6 +23,7 @@ import {
 	glamaDefaultModelId,
 	glamaDefaultModelInfo,
 	zgsmProviderKey,
+	zgsmModels,
 } from "../../shared/api"
 import { findLast } from "../../shared/array"
 import { supportPrompt } from "../../shared/support-prompt"
@@ -54,6 +55,8 @@ import { telemetryService } from "../../services/telemetry/TelemetryService"
 import { getWorkspacePath } from "../../utils/path"
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import { WebviewMessage } from "../../shared/WebviewMessage"
+import { afterZgsmPostLogin, getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
+import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -1009,6 +1012,55 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		await this.upsertApiConfiguration(currentApiConfigName, newConfiguration)
 	}
 
+	// Zgsm
+
+	async handleZgsmAuthCallback(code: string | null, state: string | null, token: string | null) {
+		let { apiConfiguration, currentApiConfigName } = await this.getState()
+		const visibleProvider = await ClineProvider.getInstance()
+
+		if (!visibleProvider) {
+			return
+		}
+
+		let apiKey = ""
+
+		if (token) {
+			apiKey = token
+		} else if (code) {
+			try {
+				// Extract the base domain for the auth endpoint
+				const access_token = await getZgsmAccessToken(code, apiConfiguration)
+
+				if (!access_token) {
+					throw new Error(`Failed to get access token`)
+				}
+
+				apiKey = access_token
+			} catch (error) {
+				this.log(
+					`Error exchanging code for API key: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+				)
+				vscode.window.showErrorMessage(error.message)
+				throw error
+			}
+		}
+
+		const newConfiguration: ApiConfiguration = {
+			...apiConfiguration,
+			zgsmApiKey: apiKey,
+			// openRouterModelId: apiConfiguration?.openRouterModelId || openRouterDefaultModelId,
+			// openRouterModelInfo: apiConfiguration?.openRouterModelInfo || zgsmModels.default,
+		}
+
+		await this.upsertApiConfiguration(currentApiConfigName, newConfiguration)
+		vscode.window.showInformationMessage("Shenma login successful")
+		await afterZgsmPostLogin({
+			apiConfiguration: newConfiguration,
+			provider: this,
+			accessToken: apiKey,
+		})
+	}
+
 	// Glama
 
 	async handleGlamaCallback(code: string) {
@@ -1341,7 +1393,19 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		if (!providerSettings.apiProvider) {
 			providerSettings.apiProvider = apiProvider
 		}
+		Object.assign(providerSettings, {
+			zgsmSite: defaultZgsmAuthConfig.zgsmSite,
+			zgsmDefaultBaseUrl: defaultZgsmAuthConfig.baseUrl,
+			zgsmLoginUrl: defaultZgsmAuthConfig.loginUrl,
+			zgsmLogoutUrl: defaultZgsmAuthConfig.logoutUrl,
+			zgsmTokenUrl: defaultZgsmAuthConfig.tokenUrl,
+			zgsmCompletionUrl: defaultZgsmAuthConfig.completionUrl,
+			zgsmDownloadUrl: defaultZgsmAuthConfig.downloadUrl,
+			zgsmRedirectUri: defaultZgsmAuthConfig.redirectUri,
 
+			zgsmClientId: defaultZgsmAuthConfig.clientId,
+			zgsmClientSecret: defaultZgsmAuthConfig.clientSecret,
+		})
 		// Return the same structure as before
 		return {
 			apiConfiguration: providerSettings,

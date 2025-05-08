@@ -43,7 +43,7 @@ import { getDiffStrategy } from "../diff/DiffStrategy"
 import { SYSTEM_PROMPT } from "../prompts/system"
 import { buildApiHandler } from "../../api"
 import { GlobalState } from "../../schemas"
-import { handleZgsmLogin } from "../../auth/zgsmAuthHandler"
+import { handleZgsmLogin } from "../../zgsmAuth/zgsmAuthHandler"
 
 export const webviewMessageHandler = async (provider: ClineProvider, message: WebviewMessage) => {
 	// Utility functions provided for concise get/update of global state via contextProxy API.

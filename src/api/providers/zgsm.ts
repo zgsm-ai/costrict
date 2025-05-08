@@ -16,7 +16,7 @@ import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
 import { BaseProvider } from "./base-provider"
 import { XmlMatcher } from "../../utils/xml-matcher"
 import { DEEP_SEEK_DEFAULT_TEMPERATURE } from "./constants"
-import { createHeaders } from "../../auth/zgsmAuthHandler"
+import { createHeaders } from "../../zgsmAuth/zgsmAuthHandler"
 
 export const defaultHeaders = {
 	"HTTP-Referer": "https://github.com/RooVetGit/Roo-Cline",
@@ -24,12 +24,9 @@ export const defaultHeaders = {
 }
 
 export interface OpenAiHandlerOptions extends ApiHandlerOptions {}
-
+let modelsCache = new WeakRef<string[]>([])
+let defaultModelCache: string | undefined
 const AZURE_AI_INFERENCE_PATH = "/models/chat/completions"
-
-const ZGSM_DEFAULT_BASEURL = "https://zgsm.sangfor.com"
-
-let ZGSM_DEFAULT_MODELID = "deepseek-chat"
 
 export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: OpenAiHandlerOptions
@@ -39,10 +36,10 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		super()
 		this.options = options
 
-		const baseURL = `${this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL}/v1`
+		const baseURL = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
 		const apiKey = this.options.zgsmApiKey || "not-provided"
-		const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
-		const urlHost = this._getUrlHost(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
+		const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl)
+		const urlHost = this._getUrlHost(this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl)
 		const isAzureOpenAi = urlHost === "azure.com" || urlHost.endsWith(".azure.com") || options.openAiUseAzure
 
 		if (isAzureAiInference) {
@@ -79,8 +76,8 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		const modelInfo = this.getModel().info
-		const modelUrl = `${this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL}/v1`
-		const modelId = this.options.zgsmModelId || this.options.zgsmDefaultModelId || ""
+		const modelUrl = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
+		const modelId = `${this.options.zgsmModelId || this.options.zgsmDefaultModelId}`
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const enabledLegacyFormat = this.options.openAiLegacyFormat ?? false
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
@@ -236,14 +233,16 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override getModel(): { id: string; info: ModelInfo } {
 		return {
-			id: this.options.zgsmModelId || this.options.zgsmDefaultModelId || "",
+			id: `${this.options.zgsmModelId || this.options.zgsmDefaultModelId}`,
 			info: this.options.openAiCustomModelInfo || openAiModelInfoSaneDefaults,
 		}
 	}
 
 	async completePrompt(prompt: string): Promise<string> {
 		try {
-			const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
+			const isAzureAiInference = this._isAzureAiInference(
+				this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl,
+			)
 			const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
 				model: this.getModel().id,
 				messages: [{ role: "user", content: prompt }],
@@ -268,7 +267,9 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		messages: Anthropic.Messages.MessageParam[],
 	): ApiStream {
 		if (this.options.openAiStreamingEnabled ?? true) {
-			const methodIsAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
+			const methodIsAzureAiInference = this._isAzureAiInference(
+				this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl,
+			)
 
 			const stream = await this.client.chat.completions.create(
 				{
@@ -300,7 +301,9 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				],
 			}
 
-			const methodIsAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || ZGSM_DEFAULT_BASEURL)
+			const methodIsAzureAiInference = this._isAzureAiInference(
+				this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl,
+			)
 
 			const response = await this.client.chat.completions.create(
 				requestOptions,
@@ -362,36 +365,43 @@ const canParseURL = (url: string): boolean => {
 	}
 }
 
-export async function getZgsmModels(baseUrl?: string, apiKey?: string, hostHeader?: string) {
+export async function getZgsmModels(
+	baseUrl?: string,
+	apiKey?: string,
+	hostHeader?: string,
+): Promise<[string[] | undefined, string | undefined]> {
+	if (!baseUrl) {
+		return [[], undefined]
+	}
+
+	if (!canParseURL(baseUrl)) {
+		return [[], undefined]
+	}
+
+	const config: Record<string, any> = {}
+	const headers: Record<string, string> = createHeaders({})
+
+	if (apiKey) {
+		headers["Authorization"] = `Bearer ${apiKey}`
+	}
+
+	if (hostHeader) {
+		headers["Host"] = hostHeader
+	}
+
+	if (Object.keys(headers).length > 0) {
+		config["headers"] = headers
+	}
+
 	try {
-		if (!baseUrl) {
-			return []
-		}
-
-		if (!canParseURL(baseUrl)) {
-			return []
-		}
-
-		const config: Record<string, any> = {}
-		const headers: Record<string, string> = createHeaders({})
-
-		if (apiKey) {
-			headers["Authorization"] = `Bearer ${apiKey}`
-		}
-
-		if (hostHeader) {
-			headers["Host"] = hostHeader
-		}
-
-		if (Object.keys(headers).length > 0) {
-			config["headers"] = headers
-		}
-
 		const response = await axios.get(`${baseUrl}/v1/models`, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 
-		return [[...new Set<string>(modelsArray)], modelsArray[0]]
+		modelsCache = new WeakRef([...new Set<string>(modelsArray)])
+		defaultModelCache = modelsArray[0]
 	} catch (error) {
-		return [[]]
+		console.error("Error fetching ZGSM models", error)
+	} finally {
+		return [modelsCache.deref(), defaultModelCache]
 	}
 }

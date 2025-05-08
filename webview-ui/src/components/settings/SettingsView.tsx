@@ -153,7 +153,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 	useEffect(() => {
 		if (extensionState.apiConfiguration?.zgsmApiKey !== cachedState.apiConfiguration?.zgsmApiKey) {
 			setCachedState((prevCachedState) => ({ ...prevCachedState, ...extensionState }))
-			setChangeDetected(true)
+			setChangeDetected(false)
 		}
 	}, [cachedState.apiConfiguration?.zgsmApiKey, extensionState, extensionState.apiConfiguration?.zgsmApiKey])
 
