@@ -13,7 +13,7 @@ import { Logger } from "../common/log-util"
 import { window, workspace, env, Uri } from "vscode"
 import { AxiosError } from "axios"
 import { createAuthenticatedHeaders } from "../common/api"
-import { configCompletion, settings } from "../common/constant"
+import { configCompletion, settings, OPENAI_CLIENT_NOT_INITIALIZED } from "../common/constant"
 import { CompletionPoint } from "./completionPoint"
 import { CompletionScores } from "./completionScore"
 import { CompletionTrace } from "./completionTrace"
@@ -46,7 +46,7 @@ export class CompletionClient {
 	public static async callApi(cp: CompletionPoint, scores: CompletionScores): Promise<string> {
 		const client = await this.getInstance()
 		if (!client) {
-			throw new Error("OpenAI client not initialized")
+			throw new Error(OPENAI_CLIENT_NOT_INITIALIZED)
 		}
 
 		try {
@@ -190,7 +190,7 @@ export class CompletionClient {
 	 */
 	private async doCallApi(cp: CompletionPoint, scores: CompletionScores): Promise<Completion> {
 		if (!this.openai) {
-			throw new Error("OpenAI client not initialized")
+			throw new Error(OPENAI_CLIENT_NOT_INITIALIZED)
 		}
 		const provider = CompletionClient.providerRef.deref()
 
