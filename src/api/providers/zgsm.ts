@@ -24,7 +24,8 @@ export const defaultHeaders = {
 }
 
 export interface OpenAiHandlerOptions extends ApiHandlerOptions {}
-
+let modelsCache = new WeakRef<string[]>([])
+let defaultModelCache: string | undefined
 const AZURE_AI_INFERENCE_PATH = "/models/chat/completions"
 
 export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler {
@@ -76,7 +77,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		const modelInfo = this.getModel().info
 		const modelUrl = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
-		const modelId = this.options.zgsmModelId || this.options.zgsmDefaultModelId || ""
+		const modelId = `${this.options.zgsmModelId || this.options.zgsmDefaultModelId}`
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const enabledLegacyFormat = this.options.openAiLegacyFormat ?? false
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
@@ -232,7 +233,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override getModel(): { id: string; info: ModelInfo } {
 		return {
-			id: this.options.zgsmModelId || this.options.zgsmDefaultModelId || "",
+			id: `${this.options.zgsmModelId || this.options.zgsmDefaultModelId}`,
 			info: this.options.openAiCustomModelInfo || openAiModelInfoSaneDefaults,
 		}
 	}
@@ -364,36 +365,43 @@ const canParseURL = (url: string): boolean => {
 	}
 }
 
-export async function getZgsmModels(baseUrl?: string, apiKey?: string, hostHeader?: string) {
+export async function getZgsmModels(
+	baseUrl?: string,
+	apiKey?: string,
+	hostHeader?: string,
+): Promise<[string[] | undefined, string | undefined]> {
+	if (!baseUrl) {
+		return [[], undefined]
+	}
+
+	if (!canParseURL(baseUrl)) {
+		return [[], undefined]
+	}
+
+	const config: Record<string, any> = {}
+	const headers: Record<string, string> = createHeaders({})
+
+	if (apiKey) {
+		headers["Authorization"] = `Bearer ${apiKey}`
+	}
+
+	if (hostHeader) {
+		headers["Host"] = hostHeader
+	}
+
+	if (Object.keys(headers).length > 0) {
+		config["headers"] = headers
+	}
+
 	try {
-		if (!baseUrl) {
-			return []
-		}
-
-		if (!canParseURL(baseUrl)) {
-			return []
-		}
-
-		const config: Record<string, any> = {}
-		const headers: Record<string, string> = createHeaders({})
-
-		if (apiKey) {
-			headers["Authorization"] = `Bearer ${apiKey}`
-		}
-
-		if (hostHeader) {
-			headers["Host"] = hostHeader
-		}
-
-		if (Object.keys(headers).length > 0) {
-			config["headers"] = headers
-		}
-
 		const response = await axios.get(`${baseUrl}/v1/models`, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 
-		return [[...new Set<string>(modelsArray)], modelsArray[0]]
+		modelsCache = new WeakRef([...new Set<string>(modelsArray)])
+		defaultModelCache = modelsArray[0]
 	} catch (error) {
-		return [[]]
+		console.error("Error fetching ZGSM models", error)
+	} finally {
+		return [modelsCache.deref(), defaultModelCache]
 	}
 }

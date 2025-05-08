@@ -171,7 +171,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				return prevState
 			}
 
-			debugger
 			setChangeDetected(true)
 			return { ...prevState, [field]: value }
 		})
@@ -184,7 +183,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					return prevState
 				}
 
-				debugger
 				setChangeDetected(true)
 				return { ...prevState, apiConfiguration: { ...prevState.apiConfiguration, [field]: value } }
 			})
@@ -198,7 +196,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				return prevState
 			}
 
-			debugger
 			setChangeDetected(true)
 			return { ...prevState, experiments: { ...prevState.experiments, [id]: enabled } }
 		})
@@ -210,7 +207,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				return prevState
 			}
 
-			debugger
 			setChangeDetected(true)
 			return { ...prevState, telemetrySetting: setting }
 		})

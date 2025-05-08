@@ -247,14 +247,22 @@ export const ChatRowContent = ({
 
 	const tool = useMemo(() => {
 		if (message.ask === "tool" || message.say === "tool") {
-			return JSON.parse(message.text || "{}") as ClineSayTool
+			try {
+				return JSON.parse(message.text || "{}") as ClineSayTool
+			} catch (e) {
+				return {} as ClineSayTool
+			}
 		}
 		return null
 	}, [message.ask, message.say, message.text])
 
 	const followUpData = useMemo(() => {
 		if (message.type === "ask" && message.ask === "followup" && !message.partial) {
-			return JSON.parse(message.text || "{}")
+			try {
+				return JSON.parse(message.text || "{}")
+			} catch (e) {
+				return {}
+			}
 		}
 		return null
 	}, [message.type, message.ask, message.partial, message.text])

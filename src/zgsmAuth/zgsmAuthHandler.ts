@@ -80,7 +80,7 @@ export async function afterZgsmPostLogin({
 
 		await provider.updateApiConfiguration({
 			...apiConfiguration,
-			zgsmModelId: zgsmDefaultModelId,
+			zgsmModelId: apiConfiguration.zgsmModelId || zgsmDefaultModelId,
 			zgsmDefaultModelId,
 		})
 
