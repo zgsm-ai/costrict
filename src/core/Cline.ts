@@ -1226,44 +1226,73 @@ export class Cline extends EventEmitter<ClineEvents> {
 		} catch (error) {
 			this.isWaitingForFirstChunk = false
 
-			let errorMsg
+			let errorStatusMsg
+			let errorSolutionMsg
 
 			// Build user-friendly error message
 			if (error.status === 401) {
-				errorMsg = t("apiErrors:status.401") + "\n\n"
+				errorStatusMsg = t("apiErrors:status.401")
+				errorSolutionMsg = t("apiErrors:solution.401")
 			} else if (error.status === 400) {
-				errorMsg = t("apiErrors:status.400") + "\n\n"
+				errorStatusMsg = t("apiErrors:status.400")
+				errorSolutionMsg = t("apiErrors:solution.400")
 			} else if (error.status === 403) {
-				errorMsg = t("apiErrors:status.403") + "\n\n"
+				errorStatusMsg = t("apiErrors:status.403")
+				errorSolutionMsg = t("apiErrors:solution.403")
 			} else if (error.status === 404) {
-				errorMsg = t("apiErrors:status.404") + "\n\n"
+				errorStatusMsg = t("apiErrors:status.404")
+				errorSolutionMsg = t("apiErrors:solution.404")
 			} else if (error.status === 500) {
-				errorMsg = t("apiErrors:status.500") + "\n\n"
+				errorStatusMsg = t("apiErrors:status.500")
+				errorSolutionMsg = t("apiErrors:solution.500")
 			} else if (error.status === 502) {
-				errorMsg = t("apiErrors:status.502") + "\n\n"
+				errorStatusMsg = t("apiErrors:status.502")
+				errorSolutionMsg = t("apiErrors:solution.502")
 			} else if (error.status === 503) {
-				errorMsg = t("apiErrors:status.503") + "\n\n"
+				errorStatusMsg = t("apiErrors:status.503")
+				errorSolutionMsg = t("apiErrors:solution.503")
 			} else if (error.status === 504) {
-				errorMsg = t("apiErrors:status.504") + "\n\n"
+				errorStatusMsg = t("apiErrors:status.504")
+				errorSolutionMsg = t("apiErrors:solution.504")
 			} else if (error.status === 429) {
-				errorMsg = t("apiErrors:status.429") + "\n\n"
-			} else if (error.error?.metadata?.raw) {
-				errorMsg = JSON.stringify(error.error.metadata.raw, null, 2)
-			} else if (error.message) {
-				errorMsg = error.message
+				errorStatusMsg = t("apiErrors:status.429")
+				errorSolutionMsg = t("apiErrors:solution.429")
 			} else {
-				errorMsg = t("apiErrors:status.unknown")
+				errorStatusMsg = t("apiErrors:status.unknown")
+				errorSolutionMsg = t("apiErrors:solution.unknown")
 			}
 
-			// Add backend details and request ID
-			const requestId = error.error?.metadata?.raw?.request_id || error.error?.metadata?.raw?.requestId
-			const backendMsg = error.error?.metadata?.raw?.message || error.message
+			let errorMsg = t("apiErrors:request.http_code") + "\n" + error.status + " " + errorStatusMsg + "\n\n"
+
+			let backendMsg: string | undefined
+			if (error.error?.metadata?.raw) {
+				backendMsg = JSON.stringify(error.error.metadata.raw, null, 2)
+			} else if (error.error?.message) {
+				// for one-api
+				backendMsg = error.error?.message
+			} else if (error.message) {
+				backendMsg = error.message
+			}
+
+			let requestId = error.request_id
+			if (!requestId && error.type === "one_api_error") {
+				const idMatch = backendMsg?.match(/request id: (\d+)/)
+				requestId = idMatch ? idMatch[1] : ""
+			}
+
+			if (error.type === "one_api_error") {
+				backendMsg = backendMsg?.replace(/\(request id: \d+\)/g, "").trim()
+			}
+
 			if (backendMsg && backendMsg !== errorMsg) {
-				errorMsg += t("apiErrors:request.backend_message") + backendMsg + "\n"
+				errorMsg += t("apiErrors:request.error_details") + "\n" + backendMsg + "\n\n"
 			}
+
 			if (requestId) {
-				errorMsg += t("apiErrors:request.request_id") + requestId
+				errorMsg += t("apiErrors:request.request_id") + "\n" + requestId + "\n\n"
 			}
+
+			errorMsg += t("apiErrors:request.solution") + "\n" + errorSolutionMsg + "\n\n"
 
 			// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 			if (alwaysApproveResubmit) {
