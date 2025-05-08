@@ -1,23 +1,37 @@
 {
 	"status": {
-		"401": "Unauthorized access, please check if you are logged in or if your API Key is valid.",
-		"400": "Invalid request, please check your parameters or input format.",
-		"403": "Access forbidden, please check your permission settings.",
-		"404": "Resource not found, please check the request path or if the resource exists.",
-		"429": "Too many requests or exceeded API quota, please try again later or contact the administrator.",
-		"500": "Internal server error, please try again later. If this happens repeatedly, please contact the administrator.",
-		"502": "Gateway error, the service is temporarily unavailable, please try again later. If this happens repeatedly, please contact the administrator.",
-		"503": "Service temporarily unavailable, please try again later. If this happens repeatedly, please contact the administrator.",
-		"504": "Gateway timeout, please try again later.",
+		"401": "Unauthorized access",
+		"400": "Invalid request",
+		"403": "Forbidden access",
+		"404": "Resource not found",
+		"429": "Too many requests or exceeded API quota",
+		"500": "Internal server error",
+		"502": "Gateway error, service temporarily unavailable",
+		"503": "Service temporarily unavailable",
+		"504": "Gateway timeout",
 		"unknown": "Unknown error"
+	},
+	"solution": {
+		"401": "1. Check if you are logged in\n2. Verify API Key validity\n3. Contact administrator",
+		"400": "1. Verify input parameters/format\n2. Contact administrator",
+		"403": "1. Check permission settings\n2. Contact administrator",
+		"404": "1. Verify request path/resource existence\n2. Contact administrator",
+		"429": "1. Try again later\n2. Contact administrator",
+		"500": "1. Try again later\n2. Try switching models\n3. Contact administrator",
+		"502": "1. Try again later\n2. Try switching models\n3. Contact administrator",
+		"503": "1. Try again later\n2. Try switching models\n3. Contact administrator",
+		"504": "1. Try again later\n2. Try switching models\n3. Contact administrator",
+		"unknown": "Contact administrator"
 	},
 	"request": {
 		"failed": "Request failed, please try again.",
-		"backend_message": "Backend message: ",
-		"request_id": "Request ID: ",
-		"retry_attempt": "Retry attempt: ",
+		"http_code": "HTTP error code:",
+		"error_details": "Error details:",
+		"request_id": "Request ID:",
+		"solution": "Solution:",
+		"retry_attempt": "Retry attempts:",
 		"retry_in_seconds": "Retrying in {{seconds}} seconds...",
 		"retrying_now": "Retrying now...",
-		"current_ask_promise_ignored": "Operation was interrupted or overridden, please try again."
+		"current_ask_promise_ignored": "Operation interrupted or overridden, please retry."
 	}
 }
