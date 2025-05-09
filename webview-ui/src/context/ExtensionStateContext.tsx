@@ -182,6 +182,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		(value: ApiConfigMeta[]) => setState((prevState) => ({ ...prevState, listApiConfigMeta: value })),
 		[],
 	)
+
 	const handleMessage = useCallback(
 		(event: MessageEvent) => {
 			const message: ExtensionMessage = event.data
@@ -347,8 +348,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 
 export const useExtensionState = () => {
 	const context = useContext(ExtensionStateContext)
+
 	if (context === undefined) {
 		throw new Error("useExtensionState must be used within an ExtensionStateContextProvider")
 	}
+
 	return context
 }

@@ -70,6 +70,9 @@ export interface ExtensionMessage {
 		| "maxReadFileLine"
 		| "fileSearchResults"
 		| "toggleApiConfigPin"
+		| "acceptInput"
+		| "setHistoryPreviewCollapsed"
+		| "commandExecutionStatus"
 	text?: string
 	action?:
 		| "chatButtonClicked"
