@@ -1,4 +1,3 @@
-import deepEqual from "fast-deep-equal"
 import React, { memo, useEffect, useMemo, useRef, useState } from "react"
 import { useSize } from "react-use"
 import { useExtensionState } from "../../context/ExtensionStateContext"
@@ -10,8 +9,10 @@ import {
 } from "../../../../src/shared/ExtensionMessage"
 import { vscode } from "../../utils/vscode"
 import CodeBlock, { CODE_BLOCK_BG_COLOR } from "../common/CodeBlock"
-import { ChatRowContent, ProgressIndicator } from "./ChatRow"
+import { ChatRowContent } from "./ChatRow"
+import { ProgressIndicator } from "./ProgressIndicator"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
+import deepEqual from "fast-deep-equal"
 import { useTranslation } from "react-i18next"
 
 interface BrowserSessionRowProps {

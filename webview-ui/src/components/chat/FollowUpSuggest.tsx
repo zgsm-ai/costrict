@@ -10,7 +10,7 @@ interface FollowUpSuggestProps {
 	ts: number
 }
 
-const FollowUpSuggest = ({ suggestions = [], onSuggestionClick, ts = 1 }: FollowUpSuggestProps) => {
+export const FollowUpSuggest = ({ suggestions = [], onSuggestionClick, ts = 1 }: FollowUpSuggestProps) => {
 	const { t } = useAppTranslation()
 	const handleSuggestionClick = useCallback(
 		(suggestion: string, event: React.MouseEvent) => {

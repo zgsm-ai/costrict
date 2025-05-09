@@ -12,7 +12,7 @@ import getFolderSize from "get-folder-size"
 import { serializeError } from "serialize-error"
 import * as vscode from "vscode"
 
-import { isLanguage, TokenUsage } from "../schemas"
+import { isLanguage, TokenUsage, ToolUsage } from "../schemas"
 import { ApiHandler, buildApiHandler } from "../api"
 import { ApiStream } from "../api/transform/stream"
 import { DIFF_VIEW_URI_SCHEME, DiffViewProvider } from "../integrations/editor/DiffViewProvider"
@@ -25,7 +25,8 @@ import { findToolName, formatContentBlockToMarkdown } from "../integrations/misc
 import { fetchInstructionsTool } from "./tools/fetchInstructionsTool"
 import { listFilesTool } from "./tools/listFilesTool"
 import { readFileTool } from "./tools/readFileTool"
-import { ExitCodeDetails, TerminalProcess } from "../integrations/terminal/TerminalProcess"
+import { TerminalProcess } from "../integrations/terminal/TerminalProcess"
+import { ExitCodeDetails } from "../integrations/terminal/types"
 import { Terminal } from "../integrations/terminal/Terminal"
 import { TerminalRegistry } from "../integrations/terminal/TerminalRegistry"
 import { UrlContentFetcher } from "../services/browser/UrlContentFetcher"
@@ -49,12 +50,15 @@ import { ClineAskResponse } from "../shared/WebviewMessage"
 import { GlobalFileNames } from "../shared/globalFileNames"
 import { defaultModeSlug, getModeBySlug, getFullModeDetails } from "../shared/modes"
 import { EXPERIMENT_IDS, experiments as Experiments, ExperimentId } from "../shared/experiments"
+import { ToolParamName, DiffStrategy } from "../shared/tools"
+import { McpServerManager } from "../services/mcp/McpServerManager"
+import { RooTerminalProcess } from "../integrations/terminal/types"
 import { calculateApiCostAnthropic } from "../utils/cost"
 import { fileExistsAtPath } from "../utils/fs"
 import { arePathsEqual } from "../utils/path"
 import { parseMentions } from "./mentions"
 import { RooIgnoreController } from "./ignore/RooIgnoreController"
-import { AssistantMessageContent, parseAssistantMessage, ToolParamName, ToolUseName } from "./assistant-message"
+import { AssistantMessageContent, parseAssistantMessage, ToolUseName } from "./assistant-message"
 import { formatResponse } from "./prompts/responses"
 import { SYSTEM_PROMPT } from "./prompts/system"
 import { truncateConversationIfNeeded } from "./sliding-window"
@@ -62,7 +66,7 @@ import { ClineProvider } from "./webview/ClineProvider"
 import { BrowserSession } from "../services/browser/BrowserSession"
 import { formatLanguage, LANGUAGES } from "../shared/language"
 import { McpHub } from "../services/mcp/McpHub"
-import { DiffStrategy, getDiffStrategy } from "./diff/DiffStrategy"
+import { getDiffStrategy } from "./diff/DiffStrategy"
 import { telemetryService } from "../services/telemetry/TelemetryService"
 import { validateToolUse, isToolAllowedForMode, ToolName } from "./mode-validator"
 import { getWorkspacePath } from "../utils/path"
@@ -176,6 +180,12 @@ export class Cline extends EventEmitter<ClineEvents> {
 	didRejectTool = false
 	private didAlreadyUseTool = false
 	private didCompleteReadingStream = false
+
+	// metrics
+	private toolUsage: ToolUsage = {}
+
+	// terminal
+	public terminalProcess?: RooTerminalProcess
 
 	constructor({
 		provider,
@@ -515,6 +525,14 @@ export class Cline extends EventEmitter<ClineEvents> {
 		this.askResponse = askResponse
 		this.askResponseText = text
 		this.askResponseImages = images
+	}
+
+	async handleTerminalOperation(terminalOperation: "continue" | "abort") {
+		if (terminalOperation === "continue") {
+			this.terminalProcess?.continue()
+		} else if (terminalOperation === "abort") {
+			this.terminalProcess?.abort()
+		}
 	}
 
 	async say(
@@ -935,161 +953,6 @@ export class Cline extends EventEmitter<ClineEvents> {
 		// view changes) won't be called, so we need to revert the changes here.
 		if (this.isStreaming && this.diffViewProvider.isEditing) {
 			await this.diffViewProvider.revertChanges()
-		}
-	}
-
-	// Tools
-
-	async executeCommandTool(command: string, customCwd?: string): Promise<[boolean, ToolResponse]> {
-		let workingDir: string
-		if (!customCwd) {
-			workingDir = this.cwd
-		} else if (path.isAbsolute(customCwd)) {
-			workingDir = customCwd
-		} else {
-			workingDir = path.resolve(this.cwd, customCwd)
-		}
-
-		// Check if directory exists
-		try {
-			await fs.access(workingDir)
-		} catch (error) {
-			return [false, `Working directory '${workingDir}' does not exist.`]
-		}
-
-		const terminalInfo = await TerminalRegistry.getOrCreateTerminal(workingDir, !!customCwd, this.taskId)
-
-		// Update the working directory in case the terminal we asked for has
-		// a different working directory so that the model will know where the
-		// command actually executed:
-		workingDir = terminalInfo.getCurrentWorkingDirectory()
-
-		const workingDirInfo = workingDir ? ` from '${workingDir.toPosix()}'` : ""
-		terminalInfo.terminal.show() // weird visual bug when creating new terminals (even manually) where there's an empty space at the top.
-		let userFeedback: { text?: string; images?: string[] } | undefined
-		let didContinue = false
-		let completed = false
-		let result: string = ""
-		let exitDetails: ExitCodeDetails | undefined
-		const { terminalOutputLineLimit = 500 } = (await this.providerRef.deref()?.getState()) ?? {}
-
-		const sendCommandOutput = async (line: string, terminalProcess: TerminalProcess): Promise<void> => {
-			try {
-				const { response, text, images } = await this.ask("command_output", line)
-				if (response === "yesButtonClicked") {
-					// proceed while running
-				} else {
-					userFeedback = { text, images }
-				}
-				didContinue = true
-				terminalProcess.continue() // continue past the await
-			} catch {
-				// This can only happen if this ask promise was ignored, so ignore this error
-			}
-		}
-
-		const process = terminalInfo.runCommand(command, {
-			onLine: (line, process) => {
-				if (!didContinue) {
-					sendCommandOutput(Terminal.compressTerminalOutput(line, terminalOutputLineLimit), process)
-				} else {
-					this.say("command_output", Terminal.compressTerminalOutput(line, terminalOutputLineLimit))
-				}
-			},
-			onCompleted: (output) => {
-				result = output ?? ""
-				completed = true
-			},
-			onShellExecutionComplete: (details) => {
-				exitDetails = details
-			},
-			onNoShellIntegration: async (message) => {
-				await this.say("shell_integration_warning", message)
-			},
-		})
-
-		await process
-
-		// Wait for a short delay to ensure all messages are sent to the webview
-		// This delay allows time for non-awaited promises to be created and
-		// for their associated messages to be sent to the webview, maintaining
-		// the correct order of messages (although the webview is smart about
-		// grouping command_output messages despite any gaps anyways)
-		await delay(50)
-
-		result = Terminal.compressTerminalOutput(result, terminalOutputLineLimit)
-
-		// keep in case we need it to troubleshoot user issues, but this should be removed in the future
-		// if everything looks good:
-		console.debug(
-			"[execute_command status]",
-			JSON.stringify(
-				{
-					completed,
-					userFeedback,
-					hasResult: result.length > 0,
-					exitDetails,
-					terminalId: terminalInfo.id,
-					workingDir: workingDirInfo,
-					isTerminalBusy: terminalInfo.busy,
-				},
-				null,
-				2,
-			),
-		)
-
-		if (userFeedback) {
-			await this.say("user_feedback", userFeedback.text, userFeedback.images)
-			return [
-				true,
-				formatResponse.toolResult(
-					`Command is still running in terminal ${terminalInfo.id}${workingDirInfo}.${
-						result.length > 0 ? `\nHere's the output so far:\n${result}` : ""
-					}\n\nThe user provided the following feedback:\n<feedback>\n${userFeedback.text}\n</feedback>`,
-					userFeedback.images,
-				),
-			]
-		} else if (completed) {
-			let exitStatus: string = ""
-			if (exitDetails !== undefined) {
-				if (exitDetails.signal) {
-					exitStatus = `Process terminated by signal ${exitDetails.signal} (${exitDetails.signalName})`
-					if (exitDetails.coreDumpPossible) {
-						exitStatus += " - core dump possible"
-					}
-				} else if (exitDetails.exitCode === undefined) {
-					result += "<VSCE exit code is undefined: terminal output and command execution status is unknown.>"
-					exitStatus = `Exit code: <undefined, notify user>`
-				} else {
-					if (exitDetails.exitCode !== 0) {
-						exitStatus += "Command execution was not successful, inspect the cause and adjust as needed.\n"
-					}
-					exitStatus += `Exit code: ${exitDetails.exitCode}`
-				}
-			} else {
-				result += "<VSCE exitDetails == undefined: terminal output and command execution status is unknown.>"
-				exitStatus = `Exit code: <undefined, notify user>`
-			}
-
-			let workingDirInfo: string = workingDir ? ` within working directory '${workingDir.toPosix()}'` : ""
-			const newWorkingDir = terminalInfo.getCurrentWorkingDirectory()
-
-			if (newWorkingDir !== workingDir) {
-				workingDirInfo += `\nNOTICE: Your command changed the working directory for this terminal to '${newWorkingDir.toPosix()}' so you MUST adjust future commands accordingly because they will be executed in this directory`
-			}
-
-			const outputInfo = `\nOutput:\n${result}`
-			return [
-				false,
-				`Command executed in terminal ${terminalInfo.id}${workingDirInfo}. ${exitStatus}${outputInfo}`,
-			]
-		} else {
-			return [
-				false,
-				`Command is still running in terminal ${terminalInfo.id}${workingDirInfo}.${
-					result.length > 0 ? `\nHere's the output so far:\n${result}` : ""
-				}\n\nYou will be updated on the terminal status and new output in the future.`,
-			]
 		}
 	}
 
@@ -2198,6 +2061,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		// It could be useful for cline to know if the user went from one or no file to another between messages, so we always include this context
 		details += "\n\n# VSCode Visible Files"
+
 		const visibleFilePaths = vscode.window.visibleTextEditors
 			?.map((editor) => editor.document?.uri?.fsPath)
 			.filter(Boolean)
@@ -2236,11 +2100,12 @@ export class Cline extends EventEmitter<ClineEvents> {
 			details += "\n(No open tabs)"
 		}
 
-		// Get task-specific and background terminals
+		// Get task-specific and background terminals.
 		const busyTerminals = [
 			...TerminalRegistry.getTerminals(true, this.taskId),
 			...TerminalRegistry.getBackgroundTerminals(true),
 		]
+
 		const inactiveTerminals = [
 			...TerminalRegistry.getTerminals(false, this.taskId),
 			...TerminalRegistry.getBackgroundTerminals(false),
@@ -2251,77 +2116,66 @@ export class Cline extends EventEmitter<ClineEvents> {
 		}
 
 		if (busyTerminals.length > 0) {
-			// wait for terminals to cool down
+			// Wait for terminals to cool down.
 			await pWaitFor(() => busyTerminals.every((t) => !TerminalRegistry.isProcessHot(t.id)), {
 				interval: 100,
 				timeout: 15_000,
 			}).catch(() => {})
 		}
 
-		// we want to get diagnostics AFTER terminal cools down for a few reasons: terminal could be scaffolding a project, dev servers (compilers like webpack) will first re-compile and then send diagnostics, etc
-		/*
-		let diagnosticsDetails = ""
-		const diagnostics = await this.diagnosticsMonitor.getCurrentDiagnostics(this.didEditFile || terminalWasBusy) // if cline ran a command (ie npm install) or edited the workspace then wait a bit for updated diagnostics
-		for (const [uri, fileDiagnostics] of diagnostics) {
-			const problems = fileDiagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Error)
-			if (problems.length > 0) {
-				diagnosticsDetails += `\n## ${path.relative(this.cwd, uri.fsPath)}`
-				for (const diagnostic of problems) {
-					// let severity = diagnostic.severity === vscode.DiagnosticSeverity.Error ? "Error" : "Warning"
-					const line = diagnostic.range.start.line + 1 // VSCode lines are 0-indexed
-					const source = diagnostic.source ? `[${diagnostic.source}] ` : ""
-					diagnosticsDetails += `\n- ${source}Line ${line}: ${diagnostic.message}`
-				}
-			}
-		}
-		*/
-		this.didEditFile = false // reset, this lets us know when to wait for saved files to update terminals
+		// Reset, this lets us know when to wait for saved files to update terminals.
+		this.didEditFile = false
 
-		// waiting for updated diagnostics lets terminal output be the most up-to-date possible
+		// Waiting for updated diagnostics lets terminal output be the most
+		// up-to-date possible.
 		let terminalDetails = ""
+
 		if (busyTerminals.length > 0) {
-			// terminals are cool, let's retrieve their output
+			// Terminals are cool, let's retrieve their output.
 			terminalDetails += "\n\n# Actively Running Terminals"
+
 			for (const busyTerminal of busyTerminals) {
 				terminalDetails += `\n## Original command: \`${busyTerminal.getLastCommand()}\``
 				let newOutput = TerminalRegistry.getUnretrievedOutput(busyTerminal.id)
+
 				if (newOutput) {
 					newOutput = Terminal.compressTerminalOutput(newOutput, terminalOutputLineLimit)
 					terminalDetails += `\n### New Output\n${newOutput}`
-				} else {
-					// details += `\n(Still running, no new output)` // don't want to show this right after running the command
 				}
 			}
 		}
 
-		// First check if any inactive terminals in this task have completed processes with output
+		// First check if any inactive terminals in this task have completed
+		// processes with output.
 		const terminalsWithOutput = inactiveTerminals.filter((terminal) => {
 			const completedProcesses = terminal.getProcessesWithOutput()
 			return completedProcesses.length > 0
 		})
 
-		// Only add the header if there are terminals with output
+		// Only add the header if there are terminals with output.
 		if (terminalsWithOutput.length > 0) {
 			terminalDetails += "\n\n# Inactive Terminals with Completed Process Output"
 
-			// Process each terminal with output
+			// Process each terminal with output.
 			for (const inactiveTerminal of terminalsWithOutput) {
 				let terminalOutputs: string[] = []
 
-				// Get output from completed processes queue
+				// Get output from completed processes queue.
 				const completedProcesses = inactiveTerminal.getProcessesWithOutput()
+
 				for (const process of completedProcesses) {
 					let output = process.getUnretrievedOutput()
+
 					if (output) {
 						output = Terminal.compressTerminalOutput(output, terminalOutputLineLimit)
 						terminalOutputs.push(`Command: \`${process.command}\`\n${output}`)
 					}
 				}
 
-				// Clean the queue after retrieving output
+				// Clean the queue after retrieving output.
 				inactiveTerminal.cleanCompletedProcessQueue()
 
-				// Add this terminal's outputs to the details
+				// Add this terminal's outputs to the details.
 				if (terminalOutputs.length > 0) {
 					terminalDetails += `\n## Terminal ${inactiveTerminal.id}`
 					terminalOutputs.forEach((output, index) => {
@@ -2331,19 +2185,15 @@ export class Cline extends EventEmitter<ClineEvents> {
 			}
 		}
 
-		// details += "\n\n# VSCode Workspace Errors"
-		// if (diagnosticsDetails) {
-		// 	details += diagnosticsDetails
-		// } else {
-		// 	details += "\n(No errors detected)"
-		// }
+		// console.log(`[Cline#getEnvironmentDetails] terminalDetails: ${terminalDetails}`)
 
 		if (terminalDetails) {
 			details += terminalDetails
 		}
 
-		// Add current time information with timezone
+		// Add current time information with timezone.
 		const now = new Date()
+
 		const formatter = new Intl.DateTimeFormat(undefined, {
 			year: "numeric",
 			month: "numeric",
@@ -2353,6 +2203,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			second: "numeric",
 			hour12: true,
 		})
+
 		const timeZone = formatter.resolvedOptions().timeZone
 		const timeZoneOffset = -now.getTimezoneOffset() / 60 // Convert to hours and invert sign to match conventional notation
 		const timeZoneOffsetHours = Math.floor(Math.abs(timeZoneOffset))
@@ -2360,15 +2211,18 @@ export class Cline extends EventEmitter<ClineEvents> {
 		const timeZoneOffsetStr = `${timeZoneOffset >= 0 ? "+" : "-"}${timeZoneOffsetHours}:${timeZoneOffsetMinutes.toString().padStart(2, "0")}`
 		details += `\n\n# Current Time\n${formatter.format(now)} (${timeZone}, UTC${timeZoneOffsetStr})`
 
-		// Add context tokens information
+		// Add context tokens information.
 		const { contextTokens, totalCost } = getApiMetrics(this.clineMessages)
 		const modelInfo = this.api.getModel().info
 		const contextWindow = modelInfo.contextWindow
+
 		const contextPercentage =
 			contextTokens && contextWindow ? Math.round((contextTokens / contextWindow) * 100) : undefined
+
 		details += `\n\n# Current Context Size (Tokens)\n${contextTokens ? `${contextTokens.toLocaleString()} (${contextPercentage}%)` : "(Not available)"}`
 		details += `\n\n# Current Cost\n${totalCost !== null ? `$${totalCost.toFixed(2)}` : "(Not available)"}`
-		// Add current mode and any mode-specific warnings
+
+		// Add current mode and any mode-specific warnings.
 		const {
 			mode,
 			customModes,
@@ -2377,27 +2231,30 @@ export class Cline extends EventEmitter<ClineEvents> {
 			customInstructions: globalCustomInstructions,
 			language,
 		} = (await this.providerRef.deref()?.getState()) ?? {}
+
 		const currentMode = mode ?? defaultModeSlug
+
 		const modeDetails = await getFullModeDetails(currentMode, customModes, customModePrompts, {
 			cwd: this.cwd,
 			globalCustomInstructions,
 			language: language ?? formatLanguage(vscode.env.language),
 		})
+
 		details += `\n\n# Current Mode\n`
 		details += `<slug>${currentMode}</slug>\n`
 		details += `<name>${modeDetails.name}</name>\n`
+
 		if (Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.POWER_STEERING)) {
 			details += `<role>${modeDetails.roleDefinition}</role>\n`
+
 			if (modeDetails.customInstructions) {
 				details += `<custom_instructions>${modeDetails.customInstructions}</custom_instructions>\n`
 			}
 		}
 
-		// Add warning if not in code mode
+		// Add warning if not in code mode.
 		if (
-			!isToolAllowedForMode("write_to_file", currentMode, customModes ?? [], {
-				apply_diff: this.diffEnabled,
-			}) &&
+			!isToolAllowedForMode("write_to_file", currentMode, customModes ?? [], { apply_diff: this.diffEnabled }) &&
 			!isToolAllowedForMode("apply_diff", currentMode, customModes ?? [], { apply_diff: this.diffEnabled })
 		) {
 			const currentModeName = getModeBySlug(currentMode, customModes)?.name ?? currentMode
@@ -2408,13 +2265,16 @@ export class Cline extends EventEmitter<ClineEvents> {
 		if (includeFileDetails) {
 			details += `\n\n# Current Workspace Directory (${this.cwd.toPosix()}) Files\n`
 			const isDesktop = arePathsEqual(this.cwd, path.join(os.homedir(), "Desktop"))
+
 			if (isDesktop) {
-				// don't want to immediately access desktop since it would show permission popup
+				// Don't want to immediately access desktop since it would show
+				// permission popup.
 				details += "(Desktop files not shown automatically. Use list_files to explore if needed.)"
 			} else {
 				const maxFiles = maxWorkspaceFiles ?? 200
 				const [files, didHitLimit] = await listFiles(this.cwd, true, maxFiles)
 				const { showRooIgnoredFiles = true } = (await this.providerRef.deref()?.getState()) ?? {}
+
 				const result = formatResponse.formatFilesList(
 					this.cwd,
 					files,
@@ -2422,6 +2282,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 					this.rooIgnoreController,
 					showRooIgnoredFiles,
 				)
+
 				details += result
 			}
 		}

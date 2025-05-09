@@ -30,6 +30,7 @@ class PostHogClient {
 		},
 		ERRORS: {
 			SCHEMA_VALIDATION_ERROR: "Schema Validation Error",
+			SHELL_INTEGRATION_ERROR: "Shell Integration Error",
 		},
 	}
 
@@ -272,6 +273,10 @@ class TelemetryService {
 			// https://zod.dev/ERROR_HANDLING?id=formatting-errors
 			error: error.format(),
 		})
+	}
+
+	public captureShellIntegrationError(taskId: string): void {
+		this.captureEvent(PostHogClient.EVENTS.ERRORS.SHELL_INTEGRATION_ERROR, { taskId })
 	}
 
 	/**
