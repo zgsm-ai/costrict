@@ -8,7 +8,7 @@
  */
 import * as vscode from "vscode"
 import { StatusBarItem } from "vscode"
-import { configCompletion, OPENAI_CLIENT_NOT_INITIALIZED } from "../common/constant"
+import { configCompletion, OPENAI_CLIENT_NOT_INITIALIZED, OPENAI_REQUEST_ABORTED } from "../common/constant"
 import { Logger } from "../common/log-util"
 import { statusBarCommand, turnOffCompletion, turnOnCompletion } from "./completionCommands"
 import { t } from "../../../src/i18n"
@@ -99,44 +99,50 @@ export class CompletionStatusBar {
 	 * Completion failed
 	 */
 	public static fail(error: any) {
-		let errorMsg
+		let codeMsg
+		let solutionMsg
 
 		// Build user-friendly error message
 		if (error.status === 401) {
-			errorMsg = t("common:completion.status.fail.401")
+			codeMsg = t("common:completion.code.401")
+			solutionMsg = t("common:completion.solution.401")
 		} else if (error.status === 400) {
-			errorMsg = t("common:completion.status.fail.400")
+			codeMsg = t("common:completion.code.400")
+			solutionMsg = t("common:completion.solution.400")
 		} else if (error.status === 403) {
-			errorMsg = t("common:completion.status.fail.403")
+			codeMsg = t("common:completion.code.403")
+			solutionMsg = t("common:completion.solution.403")
 		} else if (error.status === 404) {
-			errorMsg = t("common:completion.status.fail.404")
+			codeMsg = t("common:completion.code.404")
+			solutionMsg = t("common:completion.solution.404")
 		} else if (error.status === 500) {
-			errorMsg = t("common:completion.status.fail.500")
+			codeMsg = t("common:completion.code.500")
+			solutionMsg = t("common:completion.solution.500")
 		} else if (error.status === 502) {
-			errorMsg = t("common:completion.status.fail.502")
+			codeMsg = t("common:completion.code.502")
+			solutionMsg = t("common:completion.solution.502")
 		} else if (error.status === 503) {
-			errorMsg = t("common:completion.status.fail.503")
+			codeMsg = t("common:completion.code.503")
+			solutionMsg = t("common:completion.solution.503")
 		} else if (error.status === 504) {
-			errorMsg = t("common:completion.status.fail.504")
+			codeMsg = t("common:completion.code.504")
+			solutionMsg = t("common:completion.solution.504")
 		} else if (error.status === 429) {
-			errorMsg = t("common:completion.status.fail.429")
-		} else if (error.error?.metadata?.raw) {
-			errorMsg = JSON.stringify(error.error.metadata.raw, null, 2)
-		} else if (error.message) {
-			if (error.message === OPENAI_CLIENT_NOT_INITIALIZED) {
-				errorMsg = t("common:completion.status.fail.401")
-			} else {
-				errorMsg = error.message
-			}
+			codeMsg = t("common:completion.code.429")
+			solutionMsg = t("common:completion.solution.429")
+		} else if (error.message?.includes(OPENAI_CLIENT_NOT_INITIALIZED)) {
+			codeMsg = t("common:completion.code.401")
+			solutionMsg = t("common:completion.solution.401")
+		} else if (error.message?.includes(OPENAI_REQUEST_ABORTED)) {
+			codeMsg = t("common:completion.code.aborted")
+			solutionMsg = t("common:completion.solution.aborted")
 		} else {
-			errorMsg = t("common:completion.status.fail.unknown")
+			codeMsg = t("common:completion.code.unknown")
+			solutionMsg = t("common:completion.solution.unknown")
 		}
 
-		const backendMsg = error.error?.metadata?.raw?.message || error.message
-
-		this.instance.tooltip = t("common:completion.status.fail.tooltip") + errorMsg + `\n` + 
-		`${(error.message && !error.status) ? '' : (t("apiErrors:request.backend_message") + backendMsg)}`
-		this.instance.text = t("common:completion.status.fail.text") + errorMsg
+		this.instance.tooltip = t("common:completion.status.fail.tooltip") + solutionMsg
+		this.instance.text = t("common:completion.status.fail.text") + codeMsg
 	}
 
 	/**
