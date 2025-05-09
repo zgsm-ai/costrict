@@ -122,6 +122,7 @@ export interface WebviewMessage {
 		| "maxReadFileLine"
 		| "searchFiles"
 		| "toggleApiConfigPin"
+		| "openExternalRelogin"
 	text?: string
 	disabled?: boolean
 	askResponse?: ClineAskResponse
@@ -148,6 +149,7 @@ export interface WebviewMessage {
 	requestId?: string
 	ids?: string[]
 	authUrl?: string
+	url?: string
 }
 
 export const checkoutDiffPayloadSchema = z.object({

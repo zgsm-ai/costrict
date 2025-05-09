@@ -72,7 +72,7 @@ export async function afterZgsmPostLogin({
 	accessToken: string
 }): Promise<void> {
 	try {
-		const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
+		const [zgsmModels, zgsmDefaultModelId, err] = await getZgsmModels(
 			apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl,
 			accessToken,
 			apiConfiguration.openAiHostHeader,
@@ -84,7 +84,7 @@ export async function afterZgsmPostLogin({
 			zgsmDefaultModelId,
 		})
 
-		provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId })
+		provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId, errorObj: err })
 	} catch (error) {
 		logger.error("Failed to get Shenma models:", error)
 		throw error

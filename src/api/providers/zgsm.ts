@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI, { AzureOpenAI } from "openai"
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 
 import {
 	ApiHandlerOptions,
@@ -369,7 +369,7 @@ export async function getZgsmModels(
 	baseUrl?: string,
 	apiKey?: string,
 	hostHeader?: string,
-): Promise<[string[] | undefined, string | undefined]> {
+): Promise<[string[] | undefined, string | undefined, (AxiosError | undefined)?]> {
 	if (!baseUrl) {
 		return [[], undefined]
 	}
@@ -393,6 +393,8 @@ export async function getZgsmModels(
 		config["headers"] = headers
 	}
 
+	let errorObj: AxiosError | undefined
+
 	try {
 		const response = await axios.get(`${baseUrl}/v1/models`, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
@@ -400,8 +402,9 @@ export async function getZgsmModels(
 		modelsCache = new WeakRef([...new Set<string>(modelsArray)])
 		defaultModelCache = modelsArray[0]
 	} catch (error) {
+		errorObj = error
 		console.error("Error fetching ZGSM models", error)
 	} finally {
-		return [modelsCache.deref(), defaultModelCache]
+		return [modelsCache.deref(), defaultModelCache, errorObj ? errorObj : undefined]
 	}
 }

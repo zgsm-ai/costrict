@@ -45,6 +45,7 @@ interface ModelPickerProps {
 	serviceUrl: string
 	apiConfiguration: ProviderSettings
 	setApiConfigurationField: <K extends keyof ProviderSettings>(field: K, value: ProviderSettings[K]) => void
+	onOpenModelPicker?: () => void
 }
 
 export const ModelPicker = ({
@@ -57,6 +58,7 @@ export const ModelPicker = ({
 	apiConfiguration,
 	setApiConfigurationField,
 	defaultModelInfo,
+	onOpenModelPicker,
 }: ModelPickerProps) => {
 	const { t } = useAppTranslation()
 
@@ -94,6 +96,8 @@ export const ModelPicker = ({
 
 	const onOpenChange = useCallback(
 		(open: boolean) => {
+			open && onOpenModelPicker?.()
+
 			setOpen(open)
 
 			if (apiConfiguration.apiProvider === zgsmProviderKey) {
@@ -107,7 +111,7 @@ export const ModelPicker = ({
 				setTimeout(() => setSearchValue(selectedModelId), 100)
 			}
 		},
-		[selectedModelId, apiConfiguration.apiProvider],
+		[selectedModelId, apiConfiguration.apiProvider, onOpenModelPicker],
 	)
 
 	const onClearSearch = useCallback(() => {

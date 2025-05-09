@@ -16,6 +16,7 @@ import {
 import { McpServer } from "./mcp"
 import { GitCommit } from "../utils/git"
 import { Mode } from "./modes"
+import { AxiosError } from "axios"
 
 export type { ApiConfigMeta, ToolProgressStatus }
 
@@ -115,6 +116,7 @@ export interface ExtensionMessage {
 		label?: string
 	}>
 	error?: string
+	errorObj?: AxiosError
 }
 
 export type ExtensionState = Pick<
