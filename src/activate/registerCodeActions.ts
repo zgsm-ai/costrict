@@ -39,16 +39,16 @@ const registerCodeAction = (
 	inputPrompt?: string,
 	inputPlaceholder?: string,
 ) => {
-	let userInput: string | undefined
+	// let userInput: string | undefined
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(command, async (...args: any[]) => {
-			if (inputPrompt) {
-				userInput = await vscode.window.showInputBox({
-					prompt: inputPrompt,
-					placeHolder: inputPlaceholder,
-				})
-			}
+			// if (inputPrompt) {
+			// 	userInput = await vscode.window.showInputBox({
+			// 		prompt: inputPrompt,
+			// 		placeHolder: inputPlaceholder,
+			// 	})
+			// }
 
 			// Handle both code action and direct command cases.
 			let filePath: string
@@ -72,7 +72,7 @@ const registerCodeAction = (
 				...(startLine !== undefined ? { startLine: startLine.toString() } : {}),
 				...(endLine !== undefined ? { endLine: endLine.toString() } : {}),
 				...(diagnostics ? { diagnostics } : {}),
-				...(userInput ? { userInput } : {}),
+				// ...(userInput ? { userInput } : {}),
 			}
 
 			await ClineProvider.handleCodeAction(command, promptType, params)
