@@ -113,16 +113,6 @@
 				"tooltip": "SHENMA - Code Completion - Completed"
 			},
 			"fail": {
-				"401": "Unauthorized, please log in",
-				"400": "Invalid request, please check parameters",
-				"403": "Access denied, please check permissions",
-				"404": "Resource not found, please check request",
-				"429": "API rate limit exceeded, please try again later",
-				"500": "Server error, please try again later",
-				"502": "Gateway error, please try again later",
-				"503": "Service unavailable, please try again later",
-				"504": "Gateway timeout, please try again later",
-				"unknown": "Unknown error",
 				"text": "$(alert) SHENMA - ",
 				"tooltip": "SHENMA - Code Completion - Failed: "
 			},
@@ -136,6 +126,32 @@
 			"disabled": {
 				"tooltip": "SHENMA - Code Completion - Disabled"
 			}
+		},
+		"code": {
+			"401": "Please login",
+			"400": "Request parameter error",
+			"403": "Forbidden access",
+			"404": "Resource not found",
+			"429": "API rate limit exceeded",
+			"500": "Service error",
+			"502": "Gateway error",
+			"503": "Service unavailable",
+			"504": "Gateway timeout",
+			"aborted": "Aborted",
+			"unknown": "Unknown error"
+		},
+		"solution": {
+			"401": "Please check login status and API key",
+			"400": "Please check request parameters",
+			"403": "Please check permissions",
+			"404": "Please check request path and resource existence",
+			"429": "Please try again later/contact administrator",
+			"500": "Please try again later/contact administrator",
+			"502": "Please try again later/contact administrator",
+			"503": "Please try again later/contact administrator",
+			"504": "Please try again later/contact administrator",
+			"aborted": "Please try again",
+			"unknown": "Please contact administrator"
 		}
 	}
 }
