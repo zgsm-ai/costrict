@@ -436,12 +436,12 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "refreshZgsmModels":
 			if (message?.values?.baseUrl && message?.values?.apiKey) {
-				const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
+				const [zgsmModels, zgsmDefaultModelId, err] = await getZgsmModels(
 					message?.values?.baseUrl,
 					message?.values?.apiKey,
 					message?.values?.hostHeader,
 				)
-				provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId })
+				provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId, errorObj: err })
 			}
 
 			break
@@ -1330,6 +1330,12 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 		case "zgsmLogin":
 			if (message.authUrl && message.apiConfiguration) {
 				await handleZgsmLogin(message.authUrl, message.apiConfiguration, provider)
+			}
+			break
+		case "openExternalRelogin":
+			if (message.url) {
+				const uri = vscode.Uri.parse(message.url)
+				vscode.env.openExternal(uri)
 			}
 			break
 	}

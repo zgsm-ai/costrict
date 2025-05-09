@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from "react"
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { Trans } from "react-i18next"
 import { getRequestyAuthUrl, getOpenRouterAuthUrl, getGlamaAuthUrl } from "../../oauth/urls"
@@ -63,7 +63,7 @@ import { OpenRouterBalanceDisplay } from "./OpenRouterBalanceDisplay"
 import { RequestyBalanceDisplay } from "./RequestyBalanceDisplay"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { generateZgsmAuthUrl } from "../../../../src/shared/zgsmAuthUrl"
-
+import { AxiosError } from "axios"
 interface ApiOptionsProps {
 	uriScheme: string | undefined
 	apiConfiguration: ApiConfiguration
@@ -120,6 +120,14 @@ const ApiOptions = ({
 		!!apiConfiguration?.googleGeminiBaseUrl,
 	)
 	const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
+
+	const [modelErrInfo, setModelErrInfo] = useState({})
+
+	const countRef = useRef(modelErrInfo)
+	useEffect(() => {
+		countRef.current = modelErrInfo
+	}, [modelErrInfo])
+
 	const noTransform = <T,>(value: T) => value
 
 	const inputEventTransform = <E,>(event: E) => (event as { target: HTMLInputElement })?.target?.value as any
@@ -250,6 +258,9 @@ const ApiOptions = ({
 								? apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId
 								: message.zgsmDefaultModelId,
 						)
+					}
+					if (message?.errorObj?.status === 401) {
+						setModelErrInfo({ ...message.errorObj })
 					}
 
 					setZgsmModels(Object.fromEntries(updatedModels.map((item) => [item, allModels[item]])))
@@ -419,6 +430,14 @@ const ApiOptions = ({
 							modelInfoKey="openAiCustomModelInfo"
 							serviceName="OpenAI"
 							serviceUrl={`${apiConfiguration?.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}`}
+							onOpenModelPicker={() => {
+								if ((countRef.current as AxiosError)?.status === 401) {
+									vscode.postMessage({
+										type: "openExternalRelogin",
+										url: generateZgsmAuthUrl(apiConfiguration, uriScheme),
+									})
+								}
+							}}
 						/>
 					)}
 					{!fromWelcomeView && (
