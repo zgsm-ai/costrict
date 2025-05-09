@@ -1641,8 +1641,10 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 		// Add model ID if available
 		const currentCline = this.getCurrentCline()
+
 		if (currentCline?.api) {
 			const { id: modelId } = currentCline.api.getModel()
+
 			if (modelId) {
 				properties.modelId = modelId
 			}
