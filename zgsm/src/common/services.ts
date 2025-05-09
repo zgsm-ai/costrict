@@ -353,7 +353,7 @@ export async function setupLangSwitchs() {
 		return
 	}
 
-	const provider = CompletionClient.providerRef.deref()
+	const provider = CompletionClient.getProvider()
 
 	const { apiConfiguration } = await provider!.getState()
 
