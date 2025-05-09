@@ -324,6 +324,8 @@ export const providerSettingsSchema = z.object({
 	zgsmClientId: z.string().optional(),
 	zgsmClientSecret: z.string().optional(),
 
+	isZgsmApiKeyValid: z.boolean().optional(),
+
 	// Anthropic
 	apiModelId: z.string().optional(),
 	apiKey: z.string().optional(),
@@ -435,6 +437,7 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmRedirectUri: undefined,
 	zgsmClientId: undefined,
 	zgsmClientSecret: undefined,
+	isZgsmApiKeyValid: undefined,
 	// Anthropic
 	apiModelId: undefined,
 	apiKey: undefined,

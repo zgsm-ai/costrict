@@ -26,6 +26,12 @@
 		},
 		"infor": {
 			"enable_disable_function_quick_menu": "启用/禁用\"功能快捷菜单\"和\"智能代码补全\""
+		},
+		"relogin_input": {
+			"title": "重新登录",
+			"placeholder": "Default: https://zgsm.sangfor.com",
+			"error_portocol": "仅支持HTTP/HTTPS协议",
+			"error_url": "无效的 URL 格式"
 		}
 	},
 	"button": {
