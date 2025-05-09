@@ -12,7 +12,7 @@ import { getExtensionsLatestVersion } from "./api"
 import { EXTENSION_ID, configCompletion, configCodeLens } from "./constant"
 import { envSetting } from "./env"
 import { Logger } from "./log-util"
-import { LangSetting, LangSwitch, LangDisables, getLanguageByFilePath, loadRemoteLanguageExtensions } from "./lang-util"
+import { LangSetting, LangSwitch, LangDisables, getLanguageByFilePath } from "./lang-util"
 import { DateFormat, formatTime, formatTimeDifference } from "./util"
 import { t } from "../../../src/i18n"
 import { zgsmProviderKey } from "../../../src/shared/api"
@@ -23,12 +23,12 @@ import { generateZgsmAuthUrl } from "../../../src/shared/zgsmAuthUrl"
  */
 export function setupExtensionUpdater(context: vscode.ExtensionContext) {
 	setTimeout(() => {
-		loadRemoteLanguageExtensions()
+		// loadRemoteLanguageExtensions()
 		updateExtensions(context)
 	}, 3000)
 	setInterval(
 		() => {
-			loadRemoteLanguageExtensions() // Load language extension data
+			// loadRemoteLanguageExtensions() // Load language extension data
 			updateExtensions(context) // Check for extension updates
 		},
 		1000 * 60 * 60,
