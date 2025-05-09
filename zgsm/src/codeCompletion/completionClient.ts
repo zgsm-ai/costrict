@@ -43,6 +43,10 @@ export class CompletionClient {
 		})
 	}
 
+	public static getProvider() {
+		return CompletionClient.providerRef.deref()
+	}
+
 	/**
 	 * Send a request to the LLM to obtain the code completion result at the completion point cp.
 	 */
