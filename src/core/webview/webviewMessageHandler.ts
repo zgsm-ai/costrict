@@ -1104,7 +1104,14 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "upsertApiConfiguration":
 			if (message.text && message.apiConfiguration) {
-				await provider.upsertApiConfiguration(message.text, message.apiConfiguration)
+				await provider.upsertApiConfiguration(message.text, {
+					...message.apiConfiguration,
+					zgsmBaseUrl:
+						`${message.apiConfiguration.zgsmBaseUrl || message.apiConfiguration.zgsmDefaultBaseUrl}`.replace(
+							/\/+$/,
+							"",
+						),
+				})
 			}
 			break
 		case "renameApiConfiguration":
