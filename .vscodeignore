@@ -58,4 +58,4 @@ webview-ui/node_modules/**
 !.env
 
 # zgsm
- !src/zgsm/images/**
+!/images/**

@@ -4,7 +4,7 @@
 	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
 	"version": "1.2.1-beta",
-	"icon": "zgsm/images/zhuge_shenma_rebot_logo_big.png",
+	"icon": "images/zhuge_shenma_rebot_logo_big.png",
 	"galleryBanner": {
 		"color": "#617A91",
 		"theme": "dark"
@@ -66,7 +66,7 @@
 				{
 					"id": "vscode-zgsm-ActivityBar",
 					"title": "%extension.displayName%",
-					"icon": "zgsm/images/zhuge_shenma_logo.svg"
+					"icon": "images/zhuge_shenma_logo.svg"
 				}
 			]
 		},
@@ -184,24 +184,24 @@
 				"command": "vscode-zgsm.view.userHelperDoc",
 				"title": "%command.view.userHelperDoc.title%",
 				"icon": {
-					"light": "zgsm/images/zhuge_ai_help_doc_icon_lightmode.svg",
-					"dark": "zgsm/images/zhuge_ai_help_doc_icon_darkmode.svg"
+					"light": "images/zhuge_ai_help_doc_icon_lightmode.svg",
+					"dark": "images/zhuge_ai_help_doc_icon_darkmode.svg"
 				}
 			},
 			{
 				"command": "vscode-zgsm.view.logout",
 				"title": "%command.view.logout.title%",
 				"icon": {
-					"light": "zgsm/images/zhuge_ai_logout_icon_lightmode.svg",
-					"dark": "zgsm/images/zhuge_ai_logout_icon_darkmode.svg"
+					"light": "images/zhuge_ai_logout_icon_lightmode.svg",
+					"dark": "images/zhuge_ai_logout_icon_darkmode.svg"
 				}
 			},
 			{
 				"command": "vscode-zgsm.view.issue",
 				"title": "%command.view.issue.title%",
 				"icon": {
-					"light": "zgsm/images/issue.svg",
-					"dark": "zgsm/images/issue-dark.svg"
+					"light": "images/issue.svg",
+					"dark": "images/issue-dark.svg"
 				}
 			},
 			{
@@ -598,7 +598,7 @@
 			"zhuge-shenma-icon": {
 				"description": "Zhuge Shenma logo",
 				"default": {
-					"fontPath": "zgsm/images/zhuge_shenma_logo_icon.woff",
+					"fontPath": "images/zhuge_shenma_logo_icon.woff",
 					"fontCharacter": "\\E900"
 				}
 			}
