@@ -65,12 +65,14 @@ export function createHeaders(dict: Record<string, any> = {}): Record<string, an
 export async function afterZgsmPostLogin({
 	apiConfiguration,
 	provider,
+	configName,
 	accessToken,
 }: {
 	apiConfiguration: ApiConfiguration
 	provider: ClineProvider
+	configName: string
 	accessToken: string
-}): Promise<void> {
+}) {
 	try {
 		const [zgsmModels, zgsmDefaultModelId, err] = await getZgsmModels(
 			apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl,
@@ -78,7 +80,7 @@ export async function afterZgsmPostLogin({
 			apiConfiguration.openAiHostHeader,
 		)
 
-		await provider.updateApiConfiguration({
+		await provider.upsertApiConfiguration(configName, {
 			...apiConfiguration,
 			zgsmModelId: apiConfiguration.zgsmModelId || zgsmDefaultModelId,
 			zgsmDefaultModelId,

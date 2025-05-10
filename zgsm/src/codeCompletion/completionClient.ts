@@ -19,7 +19,6 @@ import { CompletionScores } from "./completionScore"
 import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
-import { t } from "../../../src/i18n"
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
