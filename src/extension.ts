@@ -83,6 +83,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	registerCommands({ context, outputChannel, provider })
 
+	// Check if this is a new installation or upgrade
+	const currentVersion = vscode.extensions.getExtension("zgsm-ai.zgsm")?.packageJSON.version
+	const lastVersion = context.globalState.get<string>("lastVersion")
+
+	// If this is a new installation or upgrade, automatically open the sidebar
+	if (!lastVersion || lastVersion !== currentVersion) {
+		await vscode.commands.executeCommand("vscode-zgsm.SidebarProvider.focus")
+		// Update the stored version number
+		await context.globalState.update("lastVersion", currentVersion)
+	}
+
 	/**
 	 * We use the text document content provider API to show the left side for diff
 	 * view by creating a virtual document for the original content. This makes it
