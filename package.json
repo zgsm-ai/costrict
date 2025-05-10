@@ -3,8 +3,8 @@
 	"displayName": "%extension.displayName.long%",
 	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
-	"version": "1.2.1-beta",
-	"icon": "zgsm/images/zhuge_shenma_rebot_logo_big.png",
+	"version": "1.3.0",
+	"icon": "images/zhuge_shenma_rebot_logo_big.png",
 	"galleryBanner": {
 		"color": "#617A91",
 		"theme": "dark"
