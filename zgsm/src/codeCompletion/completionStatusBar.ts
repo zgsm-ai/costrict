@@ -152,4 +152,14 @@ export class CompletionStatusBar {
 		this.instance.tooltip = t("common:completion.status.noSuggest.tooltip")
 		this.instance.text = t("common:completion.status.noSuggest.text")
 	}
+
+	public static login() {
+		this.instance.command = undefined
+		this.instance.text = t("common:completion.status.login.text")
+		this.instance.tooltip = ""
+	}
+
+	public static resetCommand() {
+		this.instance.command = statusBarCommand.command
+	}
 }

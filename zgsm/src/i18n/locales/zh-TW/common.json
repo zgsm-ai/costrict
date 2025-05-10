@@ -66,6 +66,9 @@
 			},
 			"disabled": {
 				"tooltip": "諸葛神碼 - 程式碼補全 - 已禁用"
+			},
+			"login": {
+				"text": "$(loading~spin) 諸葛神碼 - 登錄中..."
 			}
 		},
 		"code": {

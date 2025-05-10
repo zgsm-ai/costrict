@@ -1025,6 +1025,8 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 		let apiKey = ""
 
+		CompletionStatusBar.login()
+
 		if (token) {
 			apiKey = token
 		} else if (code) {
@@ -1042,6 +1044,10 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 					`Error exchanging code for API key: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
 				)
 				vscode.window.showErrorMessage(error.message)
+
+				CompletionStatusBar.fail(error)
+				CompletionStatusBar.resetCommand()
+
 				throw error
 			}
 		}
@@ -1052,8 +1058,6 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			isZgsmApiKeyValid: true,
 		}
 
-		CompletionStatusBar.complete()
-
 		await afterZgsmPostLogin({
 			apiConfiguration: newConfiguration,
 			provider: this,
@@ -1061,6 +1065,9 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			configName: currentApiConfigName,
 		})
 		vscode.window.showInformationMessage("Shenma login successful")
+
+		CompletionStatusBar.complete()
+		CompletionStatusBar.resetCommand()
 	}
 
 	// Glama

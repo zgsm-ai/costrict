@@ -70,6 +70,9 @@
 			},
 			"disabled": {
 				"tooltip": "诸葛神码 - 代码补全 - 已禁用"
+			},
+			"login": {
+				"text": "$(loading~spin) 诸葛神码 - 登录中..."
 			}
 		},
 		"code": {
