@@ -4,27 +4,25 @@ English | [Simplified Chinese](./README.zh-CN.md)
 
 <img src="./images/zhuge_shenma_rebot_logo_big.png" alt="zhuge logo" height="150px" align="right" />
 
-Shenma is an exquisitely crafted AI programming tool that revolutionizes developers' coding paradigms through sharp code completion capabilities and the infinite possibilities of open-source ecosystems. Seamlessly integrating human-machine collaboration in mainstream development environments like VSCode and JetBrains, it offers precise contextual awareness and multi-language support, making code creation as natural and fluid as flowing water.
+Shenma is a free and open-source AI programmer with powerful code generation capabilities that understand you better than programmers. It makes your daily work from "writing code" to easier "asking questions" and "reviewing code". Compared to other tools, we are more secure and reliable, supporting enterprise private deployment, and most importantly, we are completely free.
 
 ## Features
 
-- **Code Completion**: Automatically generates subsequent code based on cursor context, delivering instant results within seconds.
+- Code Completion: Automatically generates subsequent code based on cursor context, delivering instant results within seconds
 
-![GIF](https://zgsm.ai/assets/case_page_img1-458fb4ce.gif)
+![GIF](./images/readme/completion.gif)
 
-- **Intelligent Q&A**: Generate code and technical solutions directly in your workspace through natural language descriptions.
+- Intelligent Q&A: Generate code and technical solutions directly in your workspace through natural language descriptions
 
-![GIF](https://zgsm.ai/assets/case_page_img2-8209c7a4.gif)
+![GIF](./images/readme/chat.gif)
 
-- **Quick Menu**: Integrates most practical features for one-click usability (coming soon).
+- Quick Menu: Select the code and right-click to bring up the function menu, which is powerful and can meet all your code scenarios
 
-![GIF](https://zgsm.ai/assets/case_page_img3-a9a313c3.gif)
+![GIF](./images/readme/right-menu.gif)
 
-- **Smart Team**: Multi-agent system (Mutil Agent) for end-to-end repository code generation (coming soon).
+- More features: Support MCP Server, Custom Modes, multiple model switching, context referencing, image and etc…Looking forward to your exploration
 
-<img src="https://zgsm.ai/assets/case_page_img4-bd5834b0.png">
-
-![GIF](https://zgsm.ai/assets/case_page_img4-2d2e20ec.gif)
+<img src="./images/readme/features.png">
 
 - **Multi-language Support**: Python, Go, Java, Vue, TypeScript, JavaScript, C/C++, Shell, Lua, PHP, Ruby, SQL, and other mainstream languages.
 
