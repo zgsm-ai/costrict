@@ -1050,19 +1050,17 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			...apiConfiguration,
 			zgsmApiKey: apiKey,
 			isZgsmApiKeyValid: true,
-			// openRouterModelId: apiConfiguration?.openRouterModelId || openRouterDefaultModelId,
-			// openRouterModelInfo: apiConfiguration?.openRouterModelInfo || zgsmModels.default,
 		}
 
 		CompletionStatusBar.complete()
 
-		await this.upsertApiConfiguration(currentApiConfigName, newConfiguration)
-		vscode.window.showInformationMessage("Shenma login successful")
 		await afterZgsmPostLogin({
 			apiConfiguration: newConfiguration,
 			provider: this,
 			accessToken: apiKey,
+			configName: currentApiConfigName,
 		})
+		vscode.window.showInformationMessage("Shenma login successful")
 	}
 
 	// Glama

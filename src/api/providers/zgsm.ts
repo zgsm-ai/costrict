@@ -25,7 +25,7 @@ export const defaultHeaders = {
 
 export interface OpenAiHandlerOptions extends ApiHandlerOptions {}
 let modelsCache = new WeakRef<string[]>([])
-let defaultModelCache: string | undefined
+let defaultModelCache: string | undefined = "deepseek-v3"
 const AZURE_AI_INFERENCE_PATH = "/models/chat/completions"
 
 export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler {
@@ -77,7 +77,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		const modelInfo = this.getModel().info
 		const modelUrl = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
-		const modelId = `${this.options.zgsmModelId || this.options.zgsmDefaultModelId}`
+		const modelId = `${this.options.zgsmModelId || this.options.zgsmDefaultModelId || defaultModelCache}`
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const enabledLegacyFormat = this.options.openAiLegacyFormat ?? false
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
@@ -233,7 +233,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override getModel(): { id: string; info: ModelInfo } {
 		return {
-			id: `${this.options.zgsmModelId || this.options.zgsmDefaultModelId}`,
+			id: `${this.options.zgsmModelId || this.options.zgsmDefaultModelId || defaultModelCache}`,
 			info: this.options.openAiCustomModelInfo || openAiModelInfoSaneDefaults,
 		}
 	}
