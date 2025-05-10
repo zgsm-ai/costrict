@@ -35,11 +35,8 @@ export class CompletionClient {
 	public static async setProvider(provider: ClineProvider) {
 		CompletionClient.providerRef = new WeakRef(provider)
 
-		const { apiConfiguration } = await provider!.getState()
-		await provider?.updateApiConfiguration({
-			...apiConfiguration,
-			isZgsmApiKeyValid: true,
-		})
+		await provider?.setValue?.("isZgsmApiKeyValid", true)
+		provider?.postMessageToWebview?.({ type: "state", state: await provider?.getStateToPostToWebview?.() })
 	}
 
 	public static getProvider() {
@@ -54,11 +51,8 @@ export class CompletionClient {
 		if (!client) {
 			const provider = CompletionClient.providerRef.deref()
 
-			const { apiConfiguration } = await provider!.getState()
-			await provider?.updateApiConfiguration({
-				...apiConfiguration,
-				isZgsmApiKeyValid: false,
-			})
+			await provider?.setValue?.("isZgsmApiKeyValid", false)
+			provider?.postMessageToWebview?.({ type: "state", state: await provider?.getStateToPostToWebview?.() })
 
 			throw new Error(OPENAI_CLIENT_NOT_INITIALIZED)
 		}
@@ -84,10 +78,10 @@ export class CompletionClient {
 				if ((err as AxiosError).status === 401) {
 					const provider = CompletionClient.providerRef.deref()
 
-					const { apiConfiguration } = await provider!.getState()
-					await provider?.updateApiConfiguration({
-						...apiConfiguration,
-						isZgsmApiKeyValid: false,
+					await provider?.setValue?.("isZgsmApiKeyValid", false)
+					provider?.postMessageToWebview?.({
+						type: "state",
+						state: await provider?.getStateToPostToWebview?.(),
 					})
 				}
 			}
