@@ -8,25 +8,25 @@
 
 ## 功能特性
 
-- 代码补全：根据光标的上下文代码，自动生成后续代码，快速秒级出码。
+- **代码补全**：根据光标的上下文代码，自动生成后续代码，快速秒级出码。
 
 ![GIF](./images/readme/completion.gif)
 
-- 智能问答：通过自然语言描述，直接在编程工作区，即可生成代码和技术问答，省心省力
+- **智能问答**：通过自然语言描述，直接在编程工作区，即可生成代码和技术问答，省心省力
 
 ![GIF](./images/readme/chat.gif)
 
-- 快捷菜单：选中代码，点击右键出现功能菜单，功能强大，能满足你所有的代码场景
+- **快捷菜单**：选中代码，点击右键出现功能菜单，功能强大，能满足你所有的代码场景
 
 ![GIF](./images/readme/right-menu.gif)
 
-- 更多特性：支持MCP Server、自定义模式、丰富的模型切换、上下文引用和图片引用等等，期待您的探索
+- **更多特性**：支持MCP Server、自定义模式、丰富的模型切换、上下文引用和图片引用等等，期待您的探索
 
 <img src="./images/readme/features.png">
 
-- 多语言支持：支持 python、go、java、vue、typescript、javascript、c/c++、shell、lua、php、ruby、SQL等主流语言
+- **多语言支持**：支持 python、go、java、vue、typescript、javascript、c/c++、shell、lua、php、ruby、SQL等主流语言
 
-- 隐私安全：全栈代码开源，支持服务本地化部署，杜绝敏感信息泄露
+- **隐私安全**：全栈代码开源，支持服务本地化部署，杜绝敏感信息泄露
 
 ## 软件架构
 

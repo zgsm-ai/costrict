@@ -8,19 +8,19 @@ Shenma is a free and open-source AI programmer with powerful code generation cap
 
 ## Features
 
-- Code Completion: Automatically generates subsequent code based on cursor context, delivering instant results within seconds
+- **Code Completion**: Automatically generates subsequent code based on cursor context, delivering instant results within seconds
 
 ![GIF](./images/readme/completion.gif)
 
-- Intelligent Q&A: Generate code and technical solutions directly in your workspace through natural language descriptions
+- **Intelligent Q&A**: Generate code and technical solutions directly in your workspace through natural language descriptions
 
 ![GIF](./images/readme/chat.gif)
 
-- Quick Menu: Select the code and right-click to bring up the function menu, which is powerful and can meet all your code scenarios
+- **Quick Menu**: Select the code and right-click to bring up the function menu, which is powerful and can meet all your code scenarios
 
 ![GIF](./images/readme/right-menu.gif)
 
-- More features: Support MCP Server, Custom Modes, multiple model switching, context referencing, image and etc…Looking forward to your exploration
+- **More features**: Support MCP Server, Custom Modes, multiple model switching, context referencing, image and etc…Looking forward to your exploration
 
 <img src="./images/readme/features.png">
 
