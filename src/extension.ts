@@ -44,9 +44,9 @@ let extensionContext: vscode.ExtensionContext
 // Your extension is activated the very first time the command is executed.
 export async function activate(context: vscode.ExtensionContext) {
 	extensionContext = context
-	outputChannel = vscode.window.createOutputChannel("Roo-Code")
+	outputChannel = vscode.window.createOutputChannel("Shenma")
 	context.subscriptions.push(outputChannel)
-	outputChannel.appendLine("Roo-Code extension activated")
+	outputChannel.appendLine("Shenma extension activated")
 
 	// Migrate old settings to new
 	await migrateSettings(context, outputChannel)
@@ -145,7 +145,7 @@ export async function activate(context: vscode.ExtensionContext) {
 export async function deactivate() {
 	await zgsm.deactivate()
 
-	outputChannel.appendLine("Roo-Code extension deactivated")
+	outputChannel.appendLine("Shenma extension deactivated")
 	// Clean up MCP server manager
 	await McpServerManager.cleanup(extensionContext)
 	telemetryService.shutdown()
