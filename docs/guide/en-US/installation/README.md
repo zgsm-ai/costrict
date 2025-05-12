@@ -31,7 +31,9 @@ To help you deploy Shenma more efficiently, this document provides a clear insta
 1. Click the **Login** button.
 2. Enter your phone number, graphical CAPTCHA, and SMS verification code.
 
-    ![alt text](/images/install/login.png)
+    ![alt text](/images/install/login_ide.png)
+
+    ![alt text](/images/install/login_web.png)
 
 After logging in, you can start using Shenma.
 
@@ -62,13 +64,11 @@ Follow the steps in [Install the Extension](#install-the-extension).
 git clone git@github.com:zgsm-ai/zgsm-backend-deploy.git
 ```
 
-2. Modify the following configurations in the deployment script
+2. Modify the following configurations in the deployment script as needed
 
 - Server address
 - Dialog large model's address, type, API key
 - Completion large model's address, type, API key
-
-![alt text](/images/install/deploy.png)
 
 3. Run the deployment script
 
@@ -78,20 +78,14 @@ bash deploy.sh
 
 ### Login Account
 
-#### Modify plugin configuration
+- Visit one API address, local by visiting http://127.0.0.1:30000, but can be by startup assigned address such as http://172.xxx.xxx.xxx:30000 for a visit
 
-Change the backend address of Shenma to "server IP address:9080"
-
-![alt text](/images/install/configure.png)
-
-#### Login
-
-![alt text](/images/install/login.png)
+    ![alt text](/images/install/login_backend.png)
 
 On the authentication interface, enter:
 
-Username: zgsm
+Username: root
 
-Password: 123
+Password: 123456
 
 You can now start experiencing Shenma.
