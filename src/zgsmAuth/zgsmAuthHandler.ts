@@ -124,7 +124,14 @@ export async function handleZgsmLogin(
  */
 export async function getZgsmAccessToken(code: string, apiConfiguration?: ApiConfiguration) {
 	try {
-		const { redirectUri, tokenUrl } = defaultZgsmAuthConfig.getAuthUrls(apiConfiguration?.zgsmBaseUrl)
+		const baseUrl =
+			apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl || defaultZgsmAuthConfig.baseUrl
+		const redirectUri =
+			apiConfiguration?.customZgsmRedirectUri ||
+			`${baseUrl}${apiConfiguration?.zgsmRedirectUri || defaultZgsmAuthConfig.redirectUri}`
+		const tokenUrl =
+			apiConfiguration?.customZgsmTokenUrl ||
+			`${baseUrl}${apiConfiguration?.zgsmTokenUrl || defaultZgsmAuthConfig.tokenUrl}`
 
 		// Prefer configuration in apiConfiguration, if not exist, use environment settings
 		const clientId = apiConfiguration?.zgsmClientId || defaultZgsmAuthConfig.clientId

@@ -445,5 +445,8 @@
 	"labels": {
 		"customArn": "Custom ARN",
 		"useCustomArn": "Use custom ARN..."
+	},
+	"error": {
+		"failed_to_fetch_auth_url_config": "Failed to fetch authentication URL configuration: "
 	}
 }

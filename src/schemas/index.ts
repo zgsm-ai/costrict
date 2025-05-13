@@ -311,6 +311,10 @@ export const providerSettingsSchema = z.object({
 	zgsmBaseUrl: z.string().optional(),
 	zgsmApiKey: z.string().optional(),
 	zgsmModelId: z.string().optional(),
+	customZgsmLoginUrl: z.string().optional(),
+	customZgsmLogoutUrl: z.string().optional(),
+	customZgsmTokenUrl: z.string().optional(),
+	customZgsmRedirectUri: z.string().optional(),
 
 	zgsmDefaultBaseUrl: z.string().optional(),
 	zgsmDefaultModelId: z.string().optional(),
@@ -425,6 +429,10 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmBaseUrl: undefined,
 	zgsmApiKey: undefined,
 	zgsmModelId: undefined,
+	customZgsmLoginUrl: undefined,
+	customZgsmLogoutUrl: undefined,
+	customZgsmTokenUrl: undefined,
+	customZgsmRedirectUri: undefined,
 
 	zgsmSite: undefined,
 	zgsmDefaultBaseUrl: undefined,

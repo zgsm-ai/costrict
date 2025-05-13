@@ -446,5 +446,8 @@
 	"labels": {
 		"customArn": "自定义 ARN",
 		"useCustomArn": "使用自定义 ARN..."
+	},
+	"error": {
+		"failed_to_fetch_auth_url_config": "无法获取身份验证URL配置："
 	}
 }
