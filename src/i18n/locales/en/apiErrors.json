@@ -13,7 +13,7 @@
 	},
 	"solution": {
 		"401": "1. Check if you are logged in\n2. Verify API Key validity\n3. Contact administrator",
-		"400": "1. Verify input parameters/format\n2. Contact administrator",
+		"400": "1. End the current task and start a new one.\n2. Try again using a different model.\n3. Contact administrator",
 		"403": "1. Check permission settings\n2. Contact administrator",
 		"404": "1. Verify request path/resource existence\n2. Contact administrator",
 		"429": "1. Try again later\n2. Contact administrator",

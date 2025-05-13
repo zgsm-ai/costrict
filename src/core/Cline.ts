@@ -1228,14 +1228,31 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 			let errorStatusMsg
 			let errorSolutionMsg
-
+			let backendMsg: string | undefined
+			if (error.error?.metadata?.raw) {
+				backendMsg = JSON.stringify(error.error.metadata.raw, null, 2)
+			} else if (error.error?.message) {
+				// for one-api
+				backendMsg = error.error?.message
+			} else if (error.message) {
+				backendMsg = error.message
+			}
+			if (error.type === "one_api_error") {
+				backendMsg = backendMsg?.replace(/\(request id: \d+\)/g, "").trim()
+			}
+			if (error.status === 400) {
+				errorStatusMsg = t("apiErrors:status.400")
+				errorSolutionMsg = t("apiErrors:solution.400")
+				let errorDetail = backendMsg ? `${t("apiErrors:request.error_details")}\n\n${backendMsg}` : null
+				this.say("error", `${errorStatusMsg}\n\n${errorSolutionMsg}`)
+				throw new Error(
+					`${t("apiErrors:status.400")}\n\n${t("apiErrors:request.http_code")}${error.status}${errorDetail ? `\n\n${errorDetail}` : ""}`,
+				)
+			}
 			// Build user-friendly error message
 			if (error.status === 401) {
 				errorStatusMsg = t("apiErrors:status.401")
 				errorSolutionMsg = t("apiErrors:solution.401")
-			} else if (error.status === 400) {
-				errorStatusMsg = t("apiErrors:status.400")
-				errorSolutionMsg = t("apiErrors:solution.400")
 			} else if (error.status === 403) {
 				errorStatusMsg = t("apiErrors:status.403")
 				errorSolutionMsg = t("apiErrors:solution.403")
@@ -1264,24 +1281,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 			let errorMsg = t("apiErrors:request.http_code") + "\n" + error.status + " " + errorStatusMsg + "\n\n"
 
-			let backendMsg: string | undefined
-			if (error.error?.metadata?.raw) {
-				backendMsg = JSON.stringify(error.error.metadata.raw, null, 2)
-			} else if (error.error?.message) {
-				// for one-api
-				backendMsg = error.error?.message
-			} else if (error.message) {
-				backendMsg = error.message
-			}
-
 			let requestId = error.request_id
 			if (!requestId && error.type === "one_api_error") {
 				const idMatch = backendMsg?.match(/request id: (\d+)/)
 				requestId = idMatch ? idMatch[1] : ""
-			}
-
-			if (error.type === "one_api_error") {
-				backendMsg = backendMsg?.replace(/\(request id: \d+\)/g, "").trim()
 			}
 
 			if (backendMsg && backendMsg !== errorMsg) {
@@ -1963,7 +1966,6 @@ export class Cline extends EventEmitter<ClineEvents> {
 			let assistantMessage = ""
 			let reasoningMessage = ""
 			this.isStreaming = true
-
 			try {
 				for await (const chunk of stream) {
 					if (!chunk) {
