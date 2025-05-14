@@ -64,6 +64,8 @@ import { RequestyBalanceDisplay } from "./RequestyBalanceDisplay"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { generateZgsmAuthUrl } from "../../../../src/shared/zgsmAuthUrl"
 import { AxiosError } from "axios"
+import { fetchZgsmAuthConfiguration } from "@/utils/zgsmAuth"
+
 interface ApiOptionsProps {
 	uriScheme: string | undefined
 	apiConfiguration: ApiConfiguration
@@ -400,16 +402,41 @@ const ApiOptions = ({
 						}}
 						onChange={(event: any) => {
 							const value = event.target._currentValue
-							if (!value) return
-
-							vscode.postMessage({
-								type: "upsertApiConfiguration",
-								text: currentApiConfigName,
-								apiConfiguration: {
-									...apiConfiguration,
-									zgsmBaseUrl: value,
-								},
-							})
+							if (!value) {
+								vscode.postMessage({
+									type: "upsertApiConfiguration",
+									text: currentApiConfigName,
+									apiConfiguration: {
+										...apiConfiguration,
+										customZgsmLoginUrl: "",
+										customZgsmTokenUrl: "",
+										customZgsmLogoutUrl: "",
+										customZgsmRedirectUri: "",
+									},
+								})
+							} else {
+								fetchZgsmAuthConfiguration(value)
+									.then((config) => {
+										vscode.postMessage({
+											type: "upsertApiConfiguration",
+											text: currentApiConfigName,
+											apiConfiguration: {
+												...apiConfiguration,
+												zgsmBaseUrl: value,
+												customZgsmLoginUrl: config?.loginUrl?.trim() ? config.loginUrl : "",
+												customZgsmTokenUrl: config?.tokenUrl?.trim() ? config.tokenUrl : "",
+												customZgsmLogoutUrl: config?.logoutUrl?.trim() ? config.logoutUrl : "",
+												customZgsmRedirectUri: config?.redirectUri?.trim()
+													? config.redirectUri
+													: "",
+											},
+										})
+									})
+									.catch((error) => {
+										console.error("Failed to fetch ZGSM authenticate configuration:", error)
+										setBaseUrlErrorMessage && setBaseUrlErrorMessage(error.message)
+									})
+							}
 						}}
 						placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
 							zgsmBaseUrl: `${apiConfiguration.zgsmDefaultBaseUrl}`,

@@ -26,6 +26,10 @@ type ProviderSettings = {
 	zgsmBaseUrl?: string | undefined
 	zgsmApiKey?: string | undefined
 	zgsmModelId?: string | undefined
+	customZgsmLoginUrl?: string | undefined
+	customZgsmLogoutUrl?: string | undefined
+	customZgsmTokenUrl?: string | undefined
+	customZgsmRedirectUri?: string | undefined
 	zgsmDefaultBaseUrl?: string | undefined
 	zgsmDefaultModelId?: string | undefined
 	zgsmSite?: string | undefined
