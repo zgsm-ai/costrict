@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
     - name: Feature Request
-      url: https://github.com/RooVetGit/Roo-Code/discussions/categories/feature-requests
-      about: Share and vote on feature requests for Roo Code
+      url: https://github.com/zgsm-ai/zgsm/discussions/categories/feature-request
+      about: Share and vote on feature requests for Shenma
     - name: Leave a Review
-      url: https://marketplace.visualstudio.com/items?itemName=RooVeterinaryInc.roo-cline&ssr=false#review-details
-      about: Enjoying Roo Code? Leave a review here!
+      url: https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm&ssr=false#review-details
+      about: Enjoying Shenma? Leave a review here!
