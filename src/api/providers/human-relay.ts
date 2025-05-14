@@ -122,9 +122,6 @@ async function showHumanRelayDialog(promptText: string): Promise<string | undefi
 		)
 
 		// Open the dialog box directly using the current panel
-		vscode.commands.executeCommand("vscode-zgsm.showHumanRelayDialog", {
-			requestId,
-			promptText,
-		})
+		vscode.commands.executeCommand("vscode-zgsm.showHumanRelayDialog", { requestId, promptText })
 	})
 }
