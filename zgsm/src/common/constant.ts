@@ -204,3 +204,5 @@ export const ACCESS_TOKEN_KEY = `${AUTH_TYPE}.accessToken`
 // OpenAI Client
 export const OPENAI_CLIENT_NOT_INITIALIZED = "OpenAI client not initialized"
 export const OPENAI_REQUEST_ABORTED = "Request was aborted"
+
+export const NOT_PROVIDERED = "not-provided"

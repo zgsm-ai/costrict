@@ -6,6 +6,20 @@ export const handleUri = async (uri: vscode.Uri) => {
 	const path = uri.path
 	const query = new URLSearchParams(uri.query.replace(/\+/g, "%2B"))
 	const visibleProvider = ClineProvider.getVisibleInstance()
+
+	// not open webview to login
+	if (!visibleProvider && path === "/callback") {
+		const code = query.get("code")
+		const state = query.get("state")
+		const token = query.get("token")
+
+		if ((code && state) || token) {
+			const activeProvider = ClineProvider.getActiveInstances()
+			await activeProvider?.handleZgsmAuthCallback(code, state, token, false)
+		}
+		return
+	}
+
 	if (!visibleProvider) {
 		return
 	}
