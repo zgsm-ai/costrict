@@ -14,7 +14,7 @@ import { RouterProvider } from "./router-provider"
 const GLAMA_DEFAULT_TEMPERATURE = 0
 
 const DEFAULT_HEADERS = {
-	"X-Glama-Metadata": JSON.stringify({ labels: [{ key: "app", value: "vscode.rooveterinaryinc.roo-cline" }] }),
+	"X-Glama-Metadata": JSON.stringify({ labels: [{ key: "app", value: "vscode.zgsm-ai.zgsm" }] }),
 }
 
 export class GlamaHandler extends RouterProvider implements SingleCompletionHandler {
@@ -61,18 +61,7 @@ export class GlamaHandler extends RouterProvider implements SingleCompletionHand
 		}
 
 		const { data: completion, response } = await this.client.chat.completions
-			.create(requestOptions, {
-				headers: {
-					"X-Glama-Metadata": JSON.stringify({
-						labels: [
-							{
-								key: "app",
-								value: "vscode.zgsm-ai.zgsm",
-							},
-						],
-					}),
-				},
-			})
+			.create(requestOptions, { headers: DEFAULT_HEADERS })
 			.withResponse()
 
 		const completionRequestId = response.headers.get("x-completion-request-id")

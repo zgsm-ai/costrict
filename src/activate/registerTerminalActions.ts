@@ -6,9 +6,7 @@ import { t } from "../i18n"
 const TERMINAL_COMMAND_IDS = {
 	ADD_TO_CONTEXT: "vscode-zgsm.terminalAddToContext",
 	FIX: "vscode-zgsm.terminalFixCommand",
-	FIX_IN_CURRENT_TASK: "vscode-zgsm.terminalFixCommandInCurrentTask",
 	EXPLAIN: "vscode-zgsm.terminalExplainCommand",
-	EXPLAIN_IN_CURRENT_TASK: "vscode-zgsm.terminalExplainCommandInCurrentTask",
 } as const
 
 export const registerTerminalActions = (context: vscode.ExtensionContext) => {
