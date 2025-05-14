@@ -1,5 +1,5 @@
 {
-	"recentTasks": "最近的工作",
+	"recentTasks": "工作",
 	"viewAll": "檢視全部",
 	"tokens": "Tokens: ↑{{in}} ↓{{out}}",
 	"cache": "快取：+{{writes}} → {{reads}}",
@@ -34,5 +34,6 @@
 	"deleteTasks": "刪除工作",
 	"confirmDeleteTasks": "確定要刪除 {{count}} 個工作嗎？",
 	"deleteTasksWarning": "已刪除的工作無法還原。請確認是否要繼續。",
-	"deleteItems": "刪除 {{count}} 個項目"
+	"deleteItems": "刪除 {{count}} 個項目",
+	"showAllWorkspaces": "顯示所有工作區的工作"
 }

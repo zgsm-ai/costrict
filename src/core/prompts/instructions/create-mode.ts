@@ -1,6 +1,6 @@
 import * as path from "path"
 import * as vscode from "vscode"
-import { promises as fs } from "fs"
+
 import { GlobalFileNames } from "../../../shared/globalFileNames"
 
 export async function createModeInstructions(context: vscode.ExtensionContext | undefined): Promise<string> {
@@ -25,7 +25,9 @@ If asked to create a project mode, create it in .roomodes in the workspace root.
   * roleDefinition: A detailed description of the mode's role and capabilities
   * groups: Array of allowed tool groups (can be empty). Each group can be specified either as a string (e.g., "edit" to allow editing any file) or with file restrictions (e.g., ["edit", { fileRegex: "\\.md$", description: "Markdown files only" }] to only allow editing markdown files)
 
-- The customInstructions field is optional.
+- The following fields are optional but highly recommended:
+  * whenToUse: A clear description of when this mode should be selected and what types of tasks it's best suited for. This helps the Orchestrator mode make better decisions.
+  * customInstructions: Additional instructions for how the mode should operate
 
 - For multi-line text, include newline characters in the string like "This is the first line.\\nThis is the next line.\\n\\nThis is a double line break."
 

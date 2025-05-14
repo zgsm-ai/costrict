@@ -5,8 +5,10 @@ import { isValidUrl, validateApiConfiguration } from "../../utils/validate"
 import { vscode } from "../../utils/vscode"
 import ApiOptions from "../settings/ApiOptions"
 import { Tab, TabContent } from "../common/Tab"
-import { useAppTranslation } from "../../i18n/TranslationContext"
-import { getRequestyAuthUrl, getOpenRouterAuthUrl } from "../../oauth/urls"
+import { Trans } from "react-i18next"
+import { useAppTranslation } from "@src/i18n/TranslationContext"
+import { getRequestyAuthUrl, getOpenRouterAuthUrl } from "@src/oauth/urls"
+import RooHero from "./RooHero"
 import knuthShuffle from "knuth-shuffle-seeded"
 import { initiateZgsmLogin } from "../../utils/zgsmAuth"
 import { zgsmProviderKey } from "../../../../src/shared/api"
@@ -18,7 +20,7 @@ const WelcomeView = () => {
 	const [baseUrlErrorMessage, setBaseUrlErrorMessage] = useState<string | undefined>()
 
 	const handleSubmit = useCallback(() => {
-		const error = validateApiConfiguration(apiConfiguration)
+		const error = apiConfiguration ? validateApiConfiguration(apiConfiguration) : undefined
 
 		if (error) {
 			setErrorMessage(error)
@@ -136,6 +138,17 @@ const WelcomeView = () => {
 			</TabContent>
 			<div className="sticky bottom-0 bg-vscode-sideBar-background p-5">
 				<div className="flex flex-col gap-1">
+					<div className="flex justify-end">
+						<VSCodeLink
+							href="#"
+							onClick={(e) => {
+								e.preventDefault()
+								vscode.postMessage({ type: "importSettings" })
+							}}
+							className="text-sm">
+							{t("welcome:importSettings")}
+						</VSCodeLink>
+					</div>
 					<VSCodeButton onClick={handleSubmit} appearance="primary">
 						{apiConfiguration?.apiProvider === zgsmProviderKey
 							? t("welcome:getZgsmApiKey")

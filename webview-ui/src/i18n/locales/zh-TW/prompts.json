@@ -7,7 +7,8 @@
 		"editModesConfig": "編輯模式設定",
 		"editGlobalModes": "編輯全域模式",
 		"editProjectModes": "編輯專案模式 (.roomodes)",
-		"createModeHelpText": "點選 + 建立新的自訂模式，或者在聊天中直接請 Roo 為您建立！"
+		"createModeHelpText": "點選 + 建立新的自訂模式，或者在聊天中直接請 Roo 為您建立！",
+		"selectMode": "搜尋模式"
 	},
 	"apiConfiguration": {
 		"title": "API 設定",
@@ -25,12 +26,18 @@
 			"browser": "使用瀏覽器",
 			"command": "執行命令",
 			"mcp": "使用 MCP"
-		}
+		},
+		"noTools": "無"
 	},
 	"roleDefinition": {
 		"title": "角色定義",
 		"resetToDefault": "重設為預設值",
 		"description": "定義此模式下 Roo 的專業知識和個性。此描述會形塑 Roo 如何展現自己並處理工作。"
+	},
+	"whenToUse": {
+		"title": "使用時機（選用）",
+		"description": "描述何時應使用此模式。這有助於 Orchestrator 為任務選擇適當的模式。",
+		"resetToDefault": "重設「使用時機」描述為預設值"
 	},
 	"customInstructions": {
 		"title": "模式專屬自訂指令（選用）",
@@ -128,6 +135,10 @@
 		"roleDefinition": {
 			"label": "角色定義",
 			"description": "定義此模式下 Roo 的專業知識和個性。"
+		},
+		"whenToUse": {
+			"label": "使用時機（選用）",
+			"description": "提供清晰的描述，說明此模式最適合什麼時候使用，以及適合哪些類型的任務。"
 		},
 		"tools": {
 			"label": "可用工具",

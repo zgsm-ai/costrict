@@ -7,7 +7,8 @@
 		"editModesConfig": "模式设置",
 		"editGlobalModes": "修改全局模式",
 		"editProjectModes": "编辑项目模式 (.roomodes)",
-		"createModeHelpText": "点击 + 创建模式，或在对话时让Roo创建一个新模式。"
+		"createModeHelpText": "点击 + 创建模式，或在对话时让Roo创建一个新模式。",
+		"selectMode": "搜索模式"
 	},
 	"apiConfiguration": {
 		"title": "API配置",
@@ -25,12 +26,18 @@
 			"browser": "浏览器",
 			"command": "运行命令",
 			"mcp": "MCP服务"
-		}
+		},
+		"noTools": "无"
 	},
 	"roleDefinition": {
 		"title": "角色定义",
 		"resetToDefault": "重置为默认值",
 		"description": "设定专业领域和应答风格"
+	},
+	"whenToUse": {
+		"title": "使用场景（可选）",
+		"description": "描述何时应该使用此模式。这有助于 Orchestrator 为任务选择合适的模式。",
+		"resetToDefault": "重置\"使用场景\"描述为默认值"
 	},
 	"customInstructions": {
 		"title": "模式专属规则（可选）",
@@ -128,6 +135,10 @@
 		"roleDefinition": {
 			"label": "角色定义",
 			"description": "设定专业方向"
+		},
+		"whenToUse": {
+			"label": "使用场景（可选）",
+			"description": "清晰描述此模式最适合的场景和任务类型"
 		},
 		"tools": {
 			"label": "可用工具",

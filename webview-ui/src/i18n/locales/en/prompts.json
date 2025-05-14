@@ -7,7 +7,8 @@
 		"editModesConfig": "Edit modes configuration",
 		"editGlobalModes": "Edit Global Modes",
 		"editProjectModes": "Edit Project Modes (.roomodes)",
-		"createModeHelpText": "Hit the + to create a new custom mode, or just ask Roo in chat to create one for you!"
+		"createModeHelpText": "Hit the + to create a new custom mode, or just ask Roo in chat to create one for you!",
+		"selectMode": "Search modes"
 	},
 	"apiConfiguration": {
 		"title": "API Configuration",
@@ -25,12 +26,18 @@
 			"browser": "Use Browser",
 			"command": "Run Commands",
 			"mcp": "Use MCP"
-		}
+		},
+		"noTools": "None"
 	},
 	"roleDefinition": {
 		"title": "Role Definition",
 		"resetToDefault": "Reset to default",
 		"description": "Define Roo's expertise and personality for this mode. This description shapes how Roo presents itself and approaches tasks."
+	},
+	"whenToUse": {
+		"title": "When to Use (optional)",
+		"description": "Describe when this mode should be used. This helps the Orchestrator choose the right mode for a task.",
+		"resetToDefault": "Reset to default 'When to Use' description"
 	},
 	"customInstructions": {
 		"title": "Mode-specific Custom Instructions (optional)",
@@ -128,6 +135,10 @@
 		"roleDefinition": {
 			"label": "Role Definition",
 			"description": "Define Roo's expertise and personality for this mode."
+		},
+		"whenToUse": {
+			"label": "When to Use (optional)",
+			"description": "Provide a clear description of when this mode is most effective and what types of tasks it excels at."
 		},
 		"tools": {
 			"label": "Available Tools",

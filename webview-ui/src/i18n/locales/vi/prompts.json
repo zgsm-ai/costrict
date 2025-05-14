@@ -7,7 +7,8 @@
 		"editModesConfig": "Chỉnh sửa cấu hình chế độ",
 		"editGlobalModes": "Chỉnh sửa chế độ toàn cục",
 		"editProjectModes": "Chỉnh sửa chế độ dự án (.roomodes)",
-		"createModeHelpText": "Nhấn + để tạo chế độ tùy chỉnh mới, hoặc chỉ cần yêu cầu Roo trong chat tạo một chế độ cho bạn!"
+		"createModeHelpText": "Nhấn + để tạo chế độ tùy chỉnh mới, hoặc chỉ cần yêu cầu Roo trong chat tạo một chế độ cho bạn!",
+		"selectMode": "Tìm kiếm chế độ"
 	},
 	"apiConfiguration": {
 		"title": "Cấu hình API",
@@ -25,12 +26,18 @@
 			"browser": "Sử dụng trình duyệt",
 			"command": "Chạy lệnh",
 			"mcp": "Sử dụng MCP"
-		}
+		},
+		"noTools": "Không có"
 	},
 	"roleDefinition": {
 		"title": "Định nghĩa vai trò",
 		"resetToDefault": "Đặt lại về mặc định",
 		"description": "Xác định chuyên môn và tính cách của Roo cho chế độ này. Mô tả này định hình cách Roo giới thiệu bản thân và tiếp cận nhiệm vụ."
+	},
+	"whenToUse": {
+		"title": "Khi nào nên sử dụng (tùy chọn)",
+		"description": "Mô tả khi nào nên sử dụng chế độ này. Điều này giúp Orchestrator chọn chế độ phù hợp cho một nhiệm vụ.",
+		"resetToDefault": "Đặt lại mô tả 'Khi nào nên sử dụng' về mặc định"
 	},
 	"customInstructions": {
 		"title": "Hướng dẫn tùy chỉnh dành riêng cho chế độ (tùy chọn)",
@@ -128,6 +135,10 @@
 		"roleDefinition": {
 			"label": "Định nghĩa vai trò",
 			"description": "Xác định chuyên môn và tính cách của Roo cho chế độ này."
+		},
+		"whenToUse": {
+			"label": "Khi nào nên sử dụng (tùy chọn)",
+			"description": "Cung cấp mô tả rõ ràng về thời điểm chế độ này hiệu quả nhất và những loại nhiệm vụ nào nó thực hiện tốt nhất."
 		},
 		"tools": {
 			"label": "Công cụ có sẵn",

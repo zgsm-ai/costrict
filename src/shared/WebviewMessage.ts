@@ -1,5 +1,6 @@
 import { z } from "zod"
-import { ApiConfiguration, ApiProvider } from "./api"
+
+import { ProviderSettings } from "./api"
 import { Mode, PromptComponent, ModeConfig } from "./modes"
 
 export type ClineAskResponse = "yesButtonClicked" | "noButtonClicked" | "messageResponse"
@@ -32,6 +33,7 @@ export interface WebviewMessage {
 		| "webviewDidLaunch"
 		| "newTask"
 		| "askResponse"
+		| "terminalOperation"
 		| "clearTask"
 		| "didShowAnnouncement"
 		| "selectImages"
@@ -42,17 +44,19 @@ export interface WebviewMessage {
 		| "importSettings"
 		| "exportSettings"
 		| "resetState"
+		| "flushRouterModels"
+		| "requestRouterModels"
+		| "requestOpenAiModels"
 		| "requestOllamaModels"
 		| "requestLmStudioModels"
+		| "requestVsCodeLmModels"
 		| "openImage"
 		| "openFile"
 		| "openMention"
 		| "cancelTask"
-		| "refreshOpenRouterModels"
-		| "refreshGlamaModels"
-		| "refreshUnboundModels"
-		| "refreshRequestyModels"
-		| "refreshOpenAiModels"
+		| "updateVSCodeSetting"
+		| "getVSCodeSetting"
+		| "vsCodeSetting"
 		| "alwaysAllowBrowser"
 		| "alwaysAllowMcp"
 		| "alwaysAllowModeSwitch"
@@ -66,7 +70,6 @@ export interface WebviewMessage {
 		| "soundVolume"
 		| "diffEnabled"
 		| "enableCheckpoints"
-		| "checkpointStorage"
 		| "browserViewportSize"
 		| "screenshotQuality"
 		| "remoteBrowserHost"
@@ -84,13 +87,20 @@ export interface WebviewMessage {
 		| "deleteMessage"
 		| "terminalOutputLineLimit"
 		| "terminalShellIntegrationTimeout"
+		| "terminalShellIntegrationDisabled"
+		| "terminalCommandDelay"
+		| "terminalPowershellCounter"
+		| "terminalZshClearEolMark"
+		| "terminalZshOhMy"
+		| "terminalZshP10k"
+		| "terminalZdotdir"
+		| "terminalCompressProgressBar"
 		| "mcpEnabled"
 		| "enableMcpServerCreation"
 		| "searchCommits"
 		| "alwaysApproveResubmit"
 		| "requestDelaySeconds"
 		| "setApiConfigPassword"
-		| "requestVsCodeLmModels"
 		| "mode"
 		| "updatePrompt"
 		| "updateSupportPrompt"
@@ -126,7 +136,7 @@ export interface WebviewMessage {
 	text?: string
 	disabled?: boolean
 	askResponse?: ClineAskResponse
-	apiConfiguration?: ApiConfiguration
+	apiConfiguration?: ProviderSettings
 	images?: string[]
 	bool?: boolean
 	value?: number
@@ -141,6 +151,7 @@ export interface WebviewMessage {
 	dataUrls?: string[]
 	values?: Record<string, any>
 	query?: string
+	setting?: string
 	slug?: string
 	modeConfig?: ModeConfig
 	timeout?: number

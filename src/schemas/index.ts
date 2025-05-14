@@ -30,6 +30,10 @@ export const providerNames = [
 	"requesty",
 	"human-relay",
 	"fake-ai",
+	"xai",
+	"groq",
+	"chutes",
+	"litellm",
 ] as const
 
 export const providerNamesSchema = z.enum(providerNames)
@@ -47,19 +51,6 @@ export const toolGroupsSchema = z.enum(toolGroups)
 export type ToolGroup = z.infer<typeof toolGroupsSchema>
 
 /**
- * CheckpointStorage
- */
-
-export const checkpointStorages = ["task", "workspace"] as const
-
-export const checkpointStoragesSchema = z.enum(checkpointStorages)
-
-export type CheckpointStorage = z.infer<typeof checkpointStoragesSchema>
-
-export const isCheckpointStorage = (value: string): value is CheckpointStorage =>
-	checkpointStorages.includes(value as CheckpointStorage)
-
-/**
  * Language
  */
 
@@ -73,8 +64,10 @@ export const languages = [
 	"it",
 	"ja",
 	"ko",
+	"nl",
 	"pl",
 	"pt-BR",
+	"ru",
 	"tr",
 	"vi",
 	"zh-CN",
@@ -98,11 +91,22 @@ export const telemetrySettingsSchema = z.enum(telemetrySettings)
 export type TelemetrySetting = z.infer<typeof telemetrySettingsSchema>
 
 /**
+ * ReasoningEffort
+ */
+
+export const reasoningEfforts = ["low", "medium", "high"] as const
+
+export const reasoningEffortsSchema = z.enum(reasoningEfforts)
+
+export type ReasoningEffort = z.infer<typeof reasoningEffortsSchema>
+
+/**
  * ModelInfo
  */
 
 export const modelInfoSchema = z.object({
 	maxTokens: z.number().nullish(),
+	maxThinkingTokens: z.number().nullish(),
 	contextWindow: z.number(),
 	supportsImages: z.boolean().optional(),
 	supportsComputerUse: z.boolean().optional(),
@@ -112,26 +116,25 @@ export const modelInfoSchema = z.object({
 	cacheWritesPrice: z.number().optional(),
 	cacheReadsPrice: z.number().optional(),
 	description: z.string().optional(),
-	reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+	reasoningEffort: reasoningEffortsSchema.optional(),
 	thinking: z.boolean().optional(),
 	minTokensPerCachePoint: z.number().optional(),
 	maxCachePoints: z.number().optional(),
 	cachableFields: z.array(z.string()).optional(),
+	tiers: z
+		.array(
+			z.object({
+				contextWindow: z.number(),
+				inputPrice: z.number().optional(),
+				outputPrice: z.number().optional(),
+				cacheWritesPrice: z.number().optional(),
+				cacheReadsPrice: z.number().optional(),
+			}),
+		)
+		.optional(),
 })
 
 export type ModelInfo = z.infer<typeof modelInfoSchema>
-
-/**
- * ApiConfigMeta
- */
-
-export const apiConfigMetaSchema = z.object({
-	id: z.string(),
-	name: z.string(),
-	apiProvider: providerNamesSchema.optional(),
-})
-
-export type ApiConfigMeta = z.infer<typeof apiConfigMetaSchema>
 
 /**
  * HistoryItem
@@ -216,6 +219,7 @@ export const modeConfigSchema = z.object({
 	slug: z.string().regex(/^[a-zA-Z0-9-]+$/, "Slug must contain only letters numbers and dashes"),
 	name: z.string().min(1, "Name is required"),
 	roleDefinition: z.string().min(1, "Role definition is required"),
+	whenToUse: z.string().optional(),
 	customInstructions: z.string().optional(),
 	groups: groupEntryArraySchema,
 	source: z.enum(["global", "project"]).optional(),
@@ -255,6 +259,7 @@ export type CustomModesSettings = z.infer<typeof customModesSettingsSchema>
 
 export const promptComponentSchema = z.object({
 	roleDefinition: z.string().optional(),
+	whenToUse: z.string().optional(),
 	customInstructions: z.string().optional(),
 })
 
@@ -277,10 +282,39 @@ export const customSupportPromptsSchema = z.record(z.string(), z.string().option
 export type CustomSupportPrompts = z.infer<typeof customSupportPromptsSchema>
 
 /**
+ * CommandExecutionStatus
+ */
+
+export const commandExecutionStatusSchema = z.discriminatedUnion("status", [
+	z.object({
+		executionId: z.string(),
+		status: z.literal("started"),
+		pid: z.number().optional(),
+		command: z.string(),
+	}),
+	z.object({
+		executionId: z.string(),
+		status: z.literal("output"),
+		output: z.string(),
+	}),
+	z.object({
+		executionId: z.string(),
+		status: z.literal("exited"),
+		exitCode: z.number().optional(),
+	}),
+	z.object({
+		executionId: z.string(),
+		status: z.literal("fallback"),
+	}),
+])
+
+export type CommandExecutionStatus = z.infer<typeof commandExecutionStatusSchema>
+
+/**
  * ExperimentId
  */
 
-export const experimentIds = ["search_and_replace", "insert_content", "powerSteering"] as const
+export const experimentIds = ["powerSteering"] as const
 
 export const experimentIdsSchema = z.enum(experimentIds)
 
@@ -291,14 +325,24 @@ export type ExperimentId = z.infer<typeof experimentIdsSchema>
  */
 
 const experimentsSchema = z.object({
-	search_and_replace: z.boolean(),
-	insert_content: z.boolean(),
 	powerSteering: z.boolean(),
 })
 
 export type Experiments = z.infer<typeof experimentsSchema>
 
 type _AssertExperiments = AssertEqual<Equals<ExperimentId, Keys<Experiments>>>
+
+/**
+ * ProviderSettingsEntry
+ */
+
+export const providerSettingsEntrySchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	apiProvider: providerNamesSchema.optional(),
+})
+
+export type ProviderSettingsEntry = z.infer<typeof providerSettingsEntrySchema>
 
 /**
  * ProviderSettings
@@ -328,39 +372,49 @@ export const providerSettingsSchema = z.object({
 
 	// Anthropic
 	apiModelId: z.string().optional(),
+})
+
+const anthropicSchema = apiModelIdProviderModelSchema.extend({
 	apiKey: z.string().optional(),
 	anthropicBaseUrl: z.string().optional(),
-	// Glama
+	anthropicUseAuthToken: z.boolean().optional(),
+})
+
+const glamaSchema = baseProviderSettingsSchema.extend({
 	glamaModelId: z.string().optional(),
-	glamaModelInfo: modelInfoSchema.nullish(),
 	glamaApiKey: z.string().optional(),
-	// OpenRouter
+})
+
+const openRouterSchema = baseProviderSettingsSchema.extend({
 	openRouterApiKey: z.string().optional(),
 	openRouterModelId: z.string().optional(),
-	openRouterModelInfo: modelInfoSchema.nullish(),
 	openRouterBaseUrl: z.string().optional(),
 	openRouterSpecificProvider: z.string().optional(),
 	openRouterUseMiddleOutTransform: z.boolean().optional(),
-	// AWS Bedrock
+})
+
+const bedrockSchema = apiModelIdProviderModelSchema.extend({
 	awsAccessKey: z.string().optional(),
 	awsSecretKey: z.string().optional(),
 	awsSessionToken: z.string().optional(),
 	awsRegion: z.string().optional(),
 	awsUseCrossRegionInference: z.boolean().optional(),
 	awsUsePromptCache: z.boolean().optional(),
-	awspromptCacheId: z.string().optional(),
 	awsProfile: z.string().optional(),
 	awsUseProfile: z.boolean().optional(),
 	awsCustomArn: z.string().optional(),
-	// Google Vertex
+})
+
+const vertexSchema = apiModelIdProviderModelSchema.extend({
 	vertexKeyFile: z.string().optional(),
 	vertexJsonCredentials: z.string().optional(),
 	vertexProjectId: z.string().optional(),
 	vertexRegion: z.string().optional(),
-	// OpenAI
+})
+
+const openAiSchema = baseProviderSettingsSchema.extend({
 	openAiBaseUrl: z.string().optional(),
 	openAiApiKey: z.string().optional(),
-	openAiHostHeader: z.string().optional(),
 	openAiLegacyFormat: z.boolean().optional(),
 	openAiR1FormatEnabled: z.boolean().optional(),
 	openAiModelId: z.string().optional(),
@@ -368,10 +422,17 @@ export const providerSettingsSchema = z.object({
 	openAiUseAzure: z.boolean().optional(),
 	azureApiVersion: z.string().optional(),
 	openAiStreamingEnabled: z.boolean().optional(),
-	// Ollama
+	enableReasoningEffort: z.boolean().optional(),
+	openAiHostHeader: z.string().optional(), // Keep temporarily for backward compatibility during migration.
+	openAiHeaders: z.record(z.string(), z.string()).optional(),
+})
+
+const ollamaSchema = baseProviderSettingsSchema.extend({
 	ollamaModelId: z.string().optional(),
 	ollamaBaseUrl: z.string().optional(),
-	// VS Code LM
+})
+
+const vsCodeLmSchema = baseProviderSettingsSchema.extend({
 	vsCodeLmModelSelector: z
 		.object({
 			vendor: z.string().optional(),
@@ -380,40 +441,123 @@ export const providerSettingsSchema = z.object({
 			id: z.string().optional(),
 		})
 		.optional(),
-	// LM Studio
+})
+
+const lmStudioSchema = baseProviderSettingsSchema.extend({
 	lmStudioModelId: z.string().optional(),
 	lmStudioBaseUrl: z.string().optional(),
 	lmStudioDraftModelId: z.string().optional(),
 	lmStudioSpeculativeDecodingEnabled: z.boolean().optional(),
-	// Gemini
+})
+
+const geminiSchema = apiModelIdProviderModelSchema.extend({
 	geminiApiKey: z.string().optional(),
 	googleGeminiBaseUrl: z.string().optional(),
-	// OpenAI Native
+})
+
+const openAiNativeSchema = apiModelIdProviderModelSchema.extend({
 	openAiNativeApiKey: z.string().optional(),
-	// Mistral
+	openAiNativeBaseUrl: z.string().optional(),
+})
+
+const mistralSchema = apiModelIdProviderModelSchema.extend({
 	mistralApiKey: z.string().optional(),
 	mistralCodestralUrl: z.string().optional(),
-	// DeepSeek
+})
+
+const deepSeekSchema = apiModelIdProviderModelSchema.extend({
 	deepSeekBaseUrl: z.string().optional(),
 	deepSeekApiKey: z.string().optional(),
-	// Unbound
+})
+
+const unboundSchema = baseProviderSettingsSchema.extend({
 	unboundApiKey: z.string().optional(),
 	unboundModelId: z.string().optional(),
-	unboundModelInfo: modelInfoSchema.nullish(),
-	// Requesty
+})
+
+const requestySchema = baseProviderSettingsSchema.extend({
 	requestyApiKey: z.string().optional(),
 	requestyModelId: z.string().optional(),
-	requestyModelInfo: modelInfoSchema.nullish(),
-	// Claude 3.7 Sonnet Thinking
-	modelTemperature: z.number().nullish(),
-	modelMaxTokens: z.number().optional(),
-	modelMaxThinkingTokens: z.number().optional(),
-	// Generic
-	includeMaxTokens: z.boolean().optional(),
-	rateLimitSeconds: z.number().optional(),
-	// Fake AI
+})
+
+const humanRelaySchema = baseProviderSettingsSchema
+
+const fakeAiSchema = baseProviderSettingsSchema.extend({
 	fakeAi: z.unknown().optional(),
 })
+
+const xaiSchema = apiModelIdProviderModelSchema.extend({
+	xaiApiKey: z.string().optional(),
+})
+
+const groqSchema = apiModelIdProviderModelSchema.extend({
+	groqApiKey: z.string().optional(),
+})
+
+const chutesSchema = apiModelIdProviderModelSchema.extend({
+	chutesApiKey: z.string().optional(),
+})
+
+const litellmSchema = baseProviderSettingsSchema.extend({
+	litellmBaseUrl: z.string().optional(),
+	litellmApiKey: z.string().optional(),
+	litellmModelId: z.string().optional(),
+})
+
+const defaultSchema = z.object({
+	apiProvider: z.undefined(),
+})
+
+export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProvider", [
+	anthropicSchema.merge(z.object({ apiProvider: z.literal("anthropic") })),
+	glamaSchema.merge(z.object({ apiProvider: z.literal("glama") })),
+	openRouterSchema.merge(z.object({ apiProvider: z.literal("openrouter") })),
+	bedrockSchema.merge(z.object({ apiProvider: z.literal("bedrock") })),
+	vertexSchema.merge(z.object({ apiProvider: z.literal("vertex") })),
+	openAiSchema.merge(z.object({ apiProvider: z.literal("openai") })),
+	ollamaSchema.merge(z.object({ apiProvider: z.literal("ollama") })),
+	vsCodeLmSchema.merge(z.object({ apiProvider: z.literal("vscode-lm") })),
+	lmStudioSchema.merge(z.object({ apiProvider: z.literal("lmstudio") })),
+	geminiSchema.merge(z.object({ apiProvider: z.literal("gemini") })),
+	openAiNativeSchema.merge(z.object({ apiProvider: z.literal("openai-native") })),
+	mistralSchema.merge(z.object({ apiProvider: z.literal("mistral") })),
+	deepSeekSchema.merge(z.object({ apiProvider: z.literal("deepseek") })),
+	unboundSchema.merge(z.object({ apiProvider: z.literal("unbound") })),
+	requestySchema.merge(z.object({ apiProvider: z.literal("requesty") })),
+	humanRelaySchema.merge(z.object({ apiProvider: z.literal("human-relay") })),
+	fakeAiSchema.merge(z.object({ apiProvider: z.literal("fake-ai") })),
+	xaiSchema.merge(z.object({ apiProvider: z.literal("xai") })),
+	groqSchema.merge(z.object({ apiProvider: z.literal("groq") })),
+	chutesSchema.merge(z.object({ apiProvider: z.literal("chutes") })),
+	litellmSchema.merge(z.object({ apiProvider: z.literal("litellm") })),
+	defaultSchema,
+])
+
+export const providerSettingsSchema = z
+	.object({
+		apiProvider: providerNamesSchema.optional(),
+	})
+	.merge(anthropicSchema)
+	.merge(glamaSchema)
+	.merge(openRouterSchema)
+	.merge(bedrockSchema)
+	.merge(vertexSchema)
+	.merge(openAiSchema)
+	.merge(ollamaSchema)
+	.merge(vsCodeLmSchema)
+	.merge(lmStudioSchema)
+	.merge(geminiSchema)
+	.merge(openAiNativeSchema)
+	.merge(mistralSchema)
+	.merge(deepSeekSchema)
+	.merge(unboundSchema)
+	.merge(requestySchema)
+	.merge(humanRelaySchema)
+	.merge(fakeAiSchema)
+	.merge(xaiSchema)
+	.merge(groqSchema)
+	.merge(chutesSchema)
+	.merge(litellmSchema)
 
 export type ProviderSettings = z.infer<typeof providerSettingsSchema>
 
@@ -442,25 +586,23 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	apiModelId: undefined,
 	apiKey: undefined,
 	anthropicBaseUrl: undefined,
+	anthropicUseAuthToken: undefined,
 	// Glama
 	glamaModelId: undefined,
-	glamaModelInfo: undefined,
 	glamaApiKey: undefined,
 	// OpenRouter
 	openRouterApiKey: undefined,
 	openRouterModelId: undefined,
-	openRouterModelInfo: undefined,
 	openRouterBaseUrl: undefined,
 	openRouterSpecificProvider: undefined,
 	openRouterUseMiddleOutTransform: undefined,
-	// AWS Bedrock
+	// Amazon Bedrock
 	awsAccessKey: undefined,
 	awsSecretKey: undefined,
 	awsSessionToken: undefined,
 	awsRegion: undefined,
 	awsUseCrossRegionInference: undefined,
 	awsUsePromptCache: undefined,
-	awspromptCacheId: undefined,
 	awsProfile: undefined,
 	awsUseProfile: undefined,
 	awsCustomArn: undefined,
@@ -472,7 +614,6 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	// OpenAI
 	openAiBaseUrl: undefined,
 	openAiApiKey: undefined,
-	openAiHostHeader: undefined,
 	openAiLegacyFormat: undefined,
 	openAiR1FormatEnabled: undefined,
 	openAiModelId: undefined,
@@ -480,6 +621,9 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	openAiUseAzure: undefined,
 	azureApiVersion: undefined,
 	openAiStreamingEnabled: undefined,
+	enableReasoningEffort: undefined,
+	openAiHostHeader: undefined, // Keep temporarily for backward compatibility during migration
+	openAiHeaders: undefined,
 	// Ollama
 	ollamaModelId: undefined,
 	ollamaBaseUrl: undefined,
@@ -494,6 +638,7 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	googleGeminiBaseUrl: undefined,
 	// OpenAI Native
 	openAiNativeApiKey: undefined,
+	openAiNativeBaseUrl: undefined,
 	// Mistral
 	mistralApiKey: undefined,
 	mistralCodestralUrl: undefined,
@@ -503,20 +648,31 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	// Unbound
 	unboundApiKey: undefined,
 	unboundModelId: undefined,
-	unboundModelInfo: undefined,
 	// Requesty
 	requestyApiKey: undefined,
 	requestyModelId: undefined,
-	requestyModelInfo: undefined,
 	// Claude 3.7 Sonnet Thinking
-	modelTemperature: undefined,
 	modelMaxTokens: undefined,
 	modelMaxThinkingTokens: undefined,
 	// Generic
 	includeMaxTokens: undefined,
+	reasoningEffort: undefined,
+	diffEnabled: undefined,
+	fuzzyMatchThreshold: undefined,
+	modelTemperature: undefined,
 	rateLimitSeconds: undefined,
 	// Fake AI
 	fakeAi: undefined,
+	// X.AI (Grok)
+	xaiApiKey: undefined,
+	// Groq
+	groqApiKey: undefined,
+	// Chutes AI
+	chutesApiKey: undefined,
+	// LiteLLM
+	litellmBaseUrl: undefined,
+	litellmApiKey: undefined,
+	litellmModelId: undefined,
 }
 
 export const PROVIDER_SETTINGS_KEYS = Object.keys(providerSettingsRecord) as Keys<ProviderSettings>[]
@@ -527,7 +683,7 @@ export const PROVIDER_SETTINGS_KEYS = Object.keys(providerSettingsRecord) as Key
 
 export const globalSettingsSchema = z.object({
 	currentApiConfigName: z.string().optional(),
-	listApiConfigMeta: z.array(apiConfigMetaSchema).optional(),
+	listApiConfigMeta: z.array(providerSettingsEntrySchema).optional(),
 	pinnedApiConfigs: z.record(z.string(), z.boolean()).optional(),
 
 	lastShownAnnouncementId: z.string().optional(),
@@ -557,7 +713,6 @@ export const globalSettingsSchema = z.object({
 	cachedChromeHostUrl: z.string().optional(),
 
 	enableCheckpoints: z.boolean().optional(),
-	checkpointStorage: checkpointStoragesSchema.optional(),
 
 	ttsEnabled: z.boolean().optional(),
 	ttsSpeed: z.number().optional(),
@@ -571,6 +726,14 @@ export const globalSettingsSchema = z.object({
 
 	terminalOutputLineLimit: z.number().optional(),
 	terminalShellIntegrationTimeout: z.number().optional(),
+	terminalShellIntegrationDisabled: z.boolean().optional(),
+	terminalCommandDelay: z.number().optional(),
+	terminalPowershellCounter: z.boolean().optional(),
+	terminalZshClearEolMark: z.boolean().optional(),
+	terminalZshOhMy: z.boolean().optional(),
+	terminalZshP10k: z.boolean().optional(),
+	terminalZdotdir: z.boolean().optional(),
+	terminalCompressProgressBar: z.boolean().optional(),
 
 	rateLimitSeconds: z.number().optional(),
 	diffEnabled: z.boolean().optional(),
@@ -590,6 +753,7 @@ export const globalSettingsSchema = z.object({
 	customModePrompts: customModePromptsSchema.optional(),
 	customSupportPrompts: customSupportPromptsSchema.optional(),
 	enhancementApiConfigId: z.string().optional(),
+	historyPreviewCollapsed: z.boolean().optional(),
 })
 
 export type GlobalSettings = z.infer<typeof globalSettingsSchema>
@@ -627,7 +791,6 @@ const globalSettingsRecord: GlobalSettingsRecord = {
 	remoteBrowserHost: undefined,
 
 	enableCheckpoints: undefined,
-	checkpointStorage: undefined,
 
 	ttsEnabled: undefined,
 	ttsSpeed: undefined,
@@ -641,6 +804,14 @@ const globalSettingsRecord: GlobalSettingsRecord = {
 
 	terminalOutputLineLimit: undefined,
 	terminalShellIntegrationTimeout: undefined,
+	terminalShellIntegrationDisabled: undefined,
+	terminalCommandDelay: undefined,
+	terminalPowershellCounter: undefined,
+	terminalZshClearEolMark: undefined,
+	terminalZshOhMy: undefined,
+	terminalZshP10k: undefined,
+	terminalZdotdir: undefined,
+	terminalCompressProgressBar: undefined,
 
 	rateLimitSeconds: undefined,
 	diffEnabled: undefined,
@@ -661,6 +832,7 @@ const globalSettingsRecord: GlobalSettingsRecord = {
 	customSupportPrompts: undefined,
 	enhancementApiConfigId: undefined,
 	cachedChromeHostUrl: undefined,
+	historyPreviewCollapsed: undefined,
 }
 
 export const GLOBAL_SETTINGS_KEYS = Object.keys(globalSettingsRecord) as Keys<GlobalSettings>[]
@@ -693,6 +865,10 @@ export type SecretState = Pick<
 	| "mistralApiKey"
 	| "unboundApiKey"
 	| "requestyApiKey"
+	| "xaiApiKey"
+	| "groqApiKey"
+	| "chutesApiKey"
+	| "litellmApiKey"
 >
 
 type SecretStateRecord = Record<Keys<SecretState>, undefined>
@@ -712,6 +888,10 @@ const secretStateRecord: SecretStateRecord = {
 	mistralApiKey: undefined,
 	unboundApiKey: undefined,
 	requestyApiKey: undefined,
+	xaiApiKey: undefined,
+	groqApiKey: undefined,
+	chutesApiKey: undefined,
+	litellmApiKey: undefined,
 }
 
 export const SECRET_STATE_KEYS = Object.keys(secretStateRecord) as Keys<SecretState>[]
@@ -748,7 +928,6 @@ export const clineAsks = [
 	"mistake_limit_reached",
 	"browser_action_launch",
 	"use_mcp_server",
-	"finishTask",
 ] as const
 
 export const clineAskSchema = z.enum(clineAsks)
@@ -758,7 +937,6 @@ export type ClineAsk = z.infer<typeof clineAskSchema>
 // ClineSay
 
 export const clineSays = [
-	"task",
 	"error",
 	"api_req_started",
 	"api_req_finished",
@@ -771,18 +949,15 @@ export const clineSays = [
 	"user_feedback",
 	"user_feedback_diff",
 	"command_output",
-	"tool",
 	"shell_integration_warning",
 	"browser_action",
 	"browser_action_result",
-	"command",
 	"mcp_server_request_started",
 	"mcp_server_response",
-	"new_task_started",
-	"new_task",
 	"subtask_result",
 	"checkpoint_saved",
 	"rooignore_error",
+	"diff_error",
 ] as const
 
 export const clineSaySchema = z.enum(clineSays)
@@ -836,6 +1011,48 @@ export const tokenUsageSchema = z.object({
 export type TokenUsage = z.infer<typeof tokenUsageSchema>
 
 /**
+ * ToolName
+ */
+
+export const toolNames = [
+	"execute_command",
+	"read_file",
+	"write_to_file",
+	"apply_diff",
+	"insert_content",
+	"search_and_replace",
+	"search_files",
+	"list_files",
+	"list_code_definition_names",
+	"browser_action",
+	"use_mcp_tool",
+	"access_mcp_resource",
+	"ask_followup_question",
+	"attempt_completion",
+	"switch_mode",
+	"new_task",
+	"fetch_instructions",
+] as const
+
+export const toolNamesSchema = z.enum(toolNames)
+
+export type ToolName = z.infer<typeof toolNamesSchema>
+
+/**
+ * ToolUsage
+ */
+
+export const toolUsageSchema = z.record(
+	toolNamesSchema,
+	z.object({
+		attempts: z.number(),
+		failures: z.number(),
+	}),
+)
+
+export type ToolUsage = z.infer<typeof toolUsageSchema>
+
+/**
  * RooCodeEvent
  */
 
@@ -851,6 +1068,7 @@ export enum RooCodeEventName {
 	TaskSpawned = "taskSpawned",
 	TaskCompleted = "taskCompleted",
 	TaskTokenUsageUpdated = "taskTokenUsageUpdated",
+	TaskToolFailed = "taskToolFailed",
 }
 
 export const rooCodeEventsSchema = z.object({
@@ -869,11 +1087,148 @@ export const rooCodeEventsSchema = z.object({
 	[RooCodeEventName.TaskAskResponded]: z.tuple([z.string()]),
 	[RooCodeEventName.TaskAborted]: z.tuple([z.string()]),
 	[RooCodeEventName.TaskSpawned]: z.tuple([z.string(), z.string()]),
-	[RooCodeEventName.TaskCompleted]: z.tuple([z.string(), tokenUsageSchema]),
+	[RooCodeEventName.TaskCompleted]: z.tuple([z.string(), tokenUsageSchema, toolUsageSchema]),
 	[RooCodeEventName.TaskTokenUsageUpdated]: z.tuple([z.string(), tokenUsageSchema]),
+	[RooCodeEventName.TaskToolFailed]: z.tuple([z.string(), toolNamesSchema, z.string()]),
 })
 
 export type RooCodeEvents = z.infer<typeof rooCodeEventsSchema>
+
+/**
+ * Ack
+ */
+
+export const ackSchema = z.object({
+	clientId: z.string(),
+	pid: z.number(),
+	ppid: z.number(),
+})
+
+export type Ack = z.infer<typeof ackSchema>
+
+/**
+ * TaskCommand
+ */
+
+export enum TaskCommandName {
+	StartNewTask = "StartNewTask",
+	CancelTask = "CancelTask",
+	CloseTask = "CloseTask",
+}
+
+export const taskCommandSchema = z.discriminatedUnion("commandName", [
+	z.object({
+		commandName: z.literal(TaskCommandName.StartNewTask),
+		data: z.object({
+			configuration: rooCodeSettingsSchema,
+			text: z.string(),
+			images: z.array(z.string()).optional(),
+			newTab: z.boolean().optional(),
+		}),
+	}),
+	z.object({
+		commandName: z.literal(TaskCommandName.CancelTask),
+		data: z.string(),
+	}),
+	z.object({
+		commandName: z.literal(TaskCommandName.CloseTask),
+		data: z.string(),
+	}),
+])
+
+export type TaskCommand = z.infer<typeof taskCommandSchema>
+
+/**
+ * TaskEvent
+ */
+
+export const taskEventSchema = z.discriminatedUnion("eventName", [
+	z.object({
+		eventName: z.literal(RooCodeEventName.Message),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.Message],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskCreated),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskCreated],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskStarted),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskStarted],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskModeSwitched),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskModeSwitched],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskPaused),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskPaused],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskUnpaused),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskUnpaused],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskAskResponded),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskAskResponded],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskAborted),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskAborted],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskSpawned),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskSpawned],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskCompleted),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskCompleted],
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskTokenUsageUpdated),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskTokenUsageUpdated],
+	}),
+])
+
+export type TaskEvent = z.infer<typeof taskEventSchema>
+
+/**
+ * IpcMessage
+ */
+
+export enum IpcMessageType {
+	Connect = "Connect",
+	Disconnect = "Disconnect",
+	Ack = "Ack",
+	TaskCommand = "TaskCommand",
+	TaskEvent = "TaskEvent",
+}
+
+export enum IpcOrigin {
+	Client = "client",
+	Server = "server",
+}
+
+export const ipcMessageSchema = z.discriminatedUnion("type", [
+	z.object({
+		type: z.literal(IpcMessageType.Ack),
+		origin: z.literal(IpcOrigin.Server),
+		data: ackSchema,
+	}),
+	z.object({
+		type: z.literal(IpcMessageType.TaskCommand),
+		origin: z.literal(IpcOrigin.Client),
+		clientId: z.string(),
+		data: taskCommandSchema,
+	}),
+	z.object({
+		type: z.literal(IpcMessageType.TaskEvent),
+		origin: z.literal(IpcOrigin.Server),
+		relayClientId: z.string().optional(),
+		data: taskEventSchema,
+	}),
+])
+
+export type IpcMessage = z.infer<typeof ipcMessageSchema>
 
 /**
  * TypeDefinition
@@ -885,12 +1240,16 @@ export type TypeDefinition = {
 }
 
 export const typeDefinitions: TypeDefinition[] = [
-	{ schema: providerSettingsSchema, identifier: "ProviderSettings" },
 	{ schema: globalSettingsSchema, identifier: "GlobalSettings" },
+	{ schema: providerSettingsSchema, identifier: "ProviderSettings" },
+	{ schema: providerSettingsEntrySchema, identifier: "ProviderSettingsEntry" },
 	{ schema: clineMessageSchema, identifier: "ClineMessage" },
 	{ schema: tokenUsageSchema, identifier: "TokenUsage" },
 	{ schema: rooCodeEventsSchema, identifier: "RooCodeEvents" },
+	{ schema: ipcMessageSchema, identifier: "IpcMessage" },
+	{ schema: taskCommandSchema, identifier: "TaskCommand" },
+	{ schema: taskEventSchema, identifier: "TaskEvent" },
 ]
 
-// Also export as default for ESM compatibility
+// Also export as default for ESM compatibility.
 export default { typeDefinitions }

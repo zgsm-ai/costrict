@@ -23,18 +23,21 @@ export async function openImage(dataUri: string) {
 interface OpenFileOptions {
 	create?: boolean
 	content?: string
+	line?: number
 }
 
 export async function openFile(filePath: string, options: OpenFileOptions = {}) {
 	try {
 		// Get workspace root
 		const workspaceRoot = getWorkspacePath()
-		if (!workspaceRoot) {
-			throw new Error("No workspace root found")
-		}
 
-		// If path starts with ./, resolve it relative to workspace root
-		const fullPath = filePath.startsWith("./") ? path.join(workspaceRoot, filePath.slice(2)) : filePath
+		// If path starts with ./, resolve it relative to workspace root if available
+		// Otherwise, use the path as provided without modification
+		const fullPath = filePath.startsWith("./")
+			? workspaceRoot
+				? path.join(workspaceRoot, filePath.slice(2))
+				: filePath
+			: filePath
 
 		const uri = vscode.Uri.file(fullPath)
 
@@ -73,7 +76,12 @@ export async function openFile(filePath: string, options: OpenFileOptions = {}) 
 		} catch {} // not essential, sometimes tab operations fail
 
 		const document = await vscode.workspace.openTextDocument(uri)
-		await vscode.window.showTextDocument(document, { preview: false })
+		const selection =
+			options.line !== undefined ? new vscode.Selection(options.line - 1, 0, options.line - 1, 0) : undefined
+		await vscode.window.showTextDocument(document, {
+			preview: false,
+			selection,
+		})
 	} catch (error) {
 		if (error instanceof Error) {
 			vscode.window.showErrorMessage(`Could not open file: ${error.message}`)

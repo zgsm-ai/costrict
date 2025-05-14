@@ -7,7 +7,8 @@
 		"editModesConfig": "Editar configuración de modos",
 		"editGlobalModes": "Editar modos globales",
 		"editProjectModes": "Editar modos del proyecto (.roomodes)",
-		"createModeHelpText": "¡Haz clic en + para crear un nuevo modo personalizado, o simplemente pídele a Roo en el chat que te cree uno!"
+		"createModeHelpText": "¡Haz clic en + para crear un nuevo modo personalizado, o simplemente pídele a Roo en el chat que te cree uno!",
+		"selectMode": "Buscar modos"
 	},
 	"apiConfiguration": {
 		"title": "Configuración de API",
@@ -25,12 +26,18 @@
 			"browser": "Usar navegador",
 			"command": "Ejecutar comandos",
 			"mcp": "Usar MCP"
-		}
+		},
+		"noTools": "Ninguna"
 	},
 	"roleDefinition": {
 		"title": "Definición de rol",
 		"resetToDefault": "Restablecer a valores predeterminados",
 		"description": "Define la experiencia y personalidad de Roo para este modo. Esta descripción determina cómo Roo se presenta y aborda las tareas."
+	},
+	"whenToUse": {
+		"title": "Cuándo usar (opcional)",
+		"description": "Describe cuándo se debe usar este modo. Esto ayuda al Orchestrator a elegir el modo correcto para una tarea.",
+		"resetToDefault": "Restablecer a valores predeterminados la descripción 'Cuándo usar'"
 	},
 	"customInstructions": {
 		"title": "Instrucciones personalizadas para el modo (opcional)",
@@ -128,6 +135,10 @@
 		"roleDefinition": {
 			"label": "Definición de rol",
 			"description": "Define la experiencia y personalidad de Roo para este modo."
+		},
+		"whenToUse": {
+			"label": "Cuándo usar (opcional)",
+			"description": "Proporciona una descripción clara de cuándo este modo es más efectivo y para qué tipos de tareas es más adecuado."
 		},
 		"tools": {
 			"label": "Herramientas disponibles",

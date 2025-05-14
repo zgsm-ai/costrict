@@ -1,6 +1,9 @@
-// src/integrations/terminal/__tests__/TerminalProcessExec.pwsh.test.ts
+// npx jest src/integrations/terminal/__tests__/TerminalProcessExec.pwsh.test.ts
+
 import * as vscode from "vscode"
-import { TerminalProcess, ExitCodeDetails } from "../TerminalProcess"
+
+import { ExitCodeDetails } from "../types"
+import { TerminalProcess } from "../TerminalProcess"
 import { Terminal } from "../Terminal"
 import { TerminalRegistry } from "../TerminalRegistry"
 import { createPowerShellStream } from "./streamUtils/pwshStream"
@@ -17,6 +20,7 @@ jest.mock("vscode", () => {
 	const eventHandlers = {
 		startTerminalShellExecution: null,
 		endTerminalShellExecution: null,
+		closeTerminal: null,
 	}
 
 	return {
@@ -35,6 +39,10 @@ jest.mock("vscode", () => {
 				eventHandlers.endTerminalShellExecution = handler
 				return { dispose: jest.fn() }
 			}),
+			onDidCloseTerminal: jest.fn().mockImplementation((handler) => {
+				eventHandlers.closeTerminal = handler
+				return { dispose: jest.fn() }
+			}),
 		},
 		ThemeIcon: class ThemeIcon {
 			constructor(id: string) {
@@ -49,6 +57,10 @@ jest.mock("vscode", () => {
 		__eventHandlers: eventHandlers,
 	}
 })
+
+jest.mock("execa", () => ({
+	execa: jest.fn(),
+}))
 
 /**
  * Test PowerShell command execution
@@ -66,7 +78,6 @@ async function testPowerShellCommand(
 	let startTime: bigint = BigInt(0)
 	let endTime: bigint = BigInt(0)
 	let timeRecorded = false
-	let timeoutId: NodeJS.Timeout | undefined
 
 	// Create a mock terminal with shell integration
 	const mockTerminal = {

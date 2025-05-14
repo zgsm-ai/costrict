@@ -7,7 +7,8 @@
 		"editModesConfig": "Edytuj konfigurację trybów",
 		"editGlobalModes": "Edytuj tryby globalne",
 		"editProjectModes": "Edytuj tryby projektu (.roomodes)",
-		"createModeHelpText": "Kliknij +, aby utworzyć nowy niestandardowy tryb, lub po prostu poproś Roo w czacie, aby utworzył go dla Ciebie!"
+		"createModeHelpText": "Kliknij +, aby utworzyć nowy niestandardowy tryb, lub po prostu poproś Roo w czacie, aby utworzył go dla Ciebie!",
+		"selectMode": "Szukaj trybów"
 	},
 	"apiConfiguration": {
 		"title": "Konfiguracja API",
@@ -25,12 +26,18 @@
 			"browser": "Używaj przeglądarki",
 			"command": "Uruchamiaj polecenia",
 			"mcp": "Używaj MCP"
-		}
+		},
+		"noTools": "Brak"
 	},
 	"roleDefinition": {
 		"title": "Definicja roli",
 		"resetToDefault": "Przywróć domyślne",
 		"description": "Zdefiniuj wiedzę specjalistyczną i osobowość Roo dla tego trybu. Ten opis kształtuje, jak Roo prezentuje się i podchodzi do zadań."
+	},
+	"whenToUse": {
+		"title": "Kiedy używać (opcjonalne)",
+		"description": "Opisz, kiedy ten tryb powinien być używany. Pomaga to Orchestratorowi wybrać odpowiedni tryb dla zadania.",
+		"resetToDefault": "Przywróć domyślny opis 'Kiedy używać'"
 	},
 	"customInstructions": {
 		"title": "Niestandardowe instrukcje dla trybu (opcjonalne)",
@@ -128,6 +135,10 @@
 		"roleDefinition": {
 			"label": "Definicja roli",
 			"description": "Zdefiniuj wiedzę specjalistyczną i osobowość Roo dla tego trybu."
+		},
+		"whenToUse": {
+			"label": "Kiedy używać (opcjonalne)",
+			"description": "Podaj jasny opis, kiedy ten tryb jest najbardziej efektywny i w jakich typach zadań się sprawdza."
 		},
 		"tools": {
 			"label": "Dostępne narzędzia",

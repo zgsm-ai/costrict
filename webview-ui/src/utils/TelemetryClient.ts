@@ -1,5 +1,5 @@
 import posthog from "posthog-js"
-import { TelemetrySetting } from "../../../src/shared/TelemetrySetting"
+import { TelemetrySetting } from "@roo/shared/TelemetrySetting"
 
 class TelemetryClient {
 	private static instance: TelemetryClient
@@ -17,6 +17,7 @@ class TelemetryClient {
 				loaded: () => posthog.identify(distinctId),
 				capture_pageview: false,
 				capture_pageleave: false,
+				autocapture: false,
 			})
 		} else {
 			TelemetryClient.telemetryEnabled = false

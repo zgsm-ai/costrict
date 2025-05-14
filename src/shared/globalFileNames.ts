@@ -6,6 +6,6 @@ export const GlobalFileNames = {
 	openRouterModels: "openrouter_models.json",
 	requestyModels: "requesty_models.json",
 	mcpSettings: "mcp_settings.json",
-	unboundModels: "unbound_models.json",
 	customModes: "custom_modes.json",
+	taskMetadata: "task_metadata.json",
 }

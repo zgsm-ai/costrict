@@ -7,7 +7,8 @@
 		"editModesConfig": "모드 구성 편집",
 		"editGlobalModes": "전역 모드 편집",
 		"editProjectModes": "프로젝트 모드 편집 (.roomodes)",
-		"createModeHelpText": "새 커스텀 모드를 만들려면 + 버튼을 클릭하거나, 채팅에서 Roo에게 만들어달라고 요청하세요!"
+		"createModeHelpText": "새 커스텀 모드를 만들려면 + 버튼을 클릭하거나, 채팅에서 Roo에게 만들어달라고 요청하세요!",
+		"selectMode": "모드 검색"
 	},
 	"apiConfiguration": {
 		"title": "API 구성",
@@ -25,12 +26,18 @@
 			"browser": "브라우저 사용",
 			"command": "명령 실행",
 			"mcp": "MCP 사용"
-		}
+		},
+		"noTools": "없음"
 	},
 	"roleDefinition": {
 		"title": "역할 정의",
 		"resetToDefault": "기본값으로 재설정",
 		"description": "이 모드에 대한 Roo의 전문성과 성격을 정의하세요. 이 설명은 Roo가 자신을 어떻게 표현하고 작업에 접근하는지 형성합니다."
+	},
+	"whenToUse": {
+		"title": "사용 시기 (선택 사항)",
+		"description": "이 모드를 언제 사용해야 하는지 설명합니다. 이는 Orchestrator가 작업에 적합한 모드를 선택하는 데 도움이 됩니다.",
+		"resetToDefault": "'사용 시기' 설명을 기본값으로 재설정"
 	},
 	"customInstructions": {
 		"title": "모드별 사용자 지정 지침 (선택 사항)",
@@ -128,6 +135,10 @@
 		"roleDefinition": {
 			"label": "역할 정의",
 			"description": "이 모드에 대한 Roo의 전문성과 성격을 정의하세요."
+		},
+		"whenToUse": {
+			"label": "사용 시기 (선택 사항)",
+			"description": "이 모드가 가장 효과적인 시기와 어떤 유형의 작업에 적합한지에 대한 명확한 설명을 제공하세요."
 		},
 		"tools": {
 			"label": "사용 가능한 도구",

@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from "react"
 import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import { ChevronsUpDown, Check, X } from "lucide-react"
 
-import { ApiConfigMeta } from "../../../../src/shared/ExtensionMessage"
+import { ProviderSettingsEntry } from "@roo/shared/ExtensionMessage"
 
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { cn } from "@/lib/utils"
@@ -25,7 +25,7 @@ import {
 
 interface ApiConfigManagerProps {
 	currentApiConfigName?: string
-	listApiConfigMeta?: ApiConfigMeta[]
+	listApiConfigMeta?: ProviderSettingsEntry[]
 	onSelectConfig: (configName: string) => void
 	onDeleteConfig: (configName: string) => void
 	onRenameConfig: (oldName: string, newName: string) => void
@@ -360,7 +360,7 @@ const ApiConfigManager = ({
 					}
 				}}
 				aria-labelledby="new-profile-title">
-				<DialogContent className="p-4 max-w-sm">
+				<DialogContent className="p-4 max-w-sm bg-card">
 					<DialogTitle>{t("settings:providers.newProfile")}</DialogTitle>
 					<Input
 						ref={newProfileInputRef}

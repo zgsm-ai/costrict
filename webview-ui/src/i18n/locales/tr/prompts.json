@@ -7,7 +7,8 @@
 		"editModesConfig": "Mod yapılandırmasını düzenle",
 		"editGlobalModes": "Global modları düzenle",
 		"editProjectModes": "Proje modlarını düzenle (.roomodes)",
-		"createModeHelpText": "Yeni bir özel mod oluşturmak için + düğmesine tıklayın veya sohbette Roo'dan sizin için bir tane oluşturmasını isteyin!"
+		"createModeHelpText": "Yeni bir özel mod oluşturmak için + düğmesine tıklayın veya sohbette Roo'dan sizin için bir tane oluşturmasını isteyin!",
+		"selectMode": "Modları Ara"
 	},
 	"apiConfiguration": {
 		"title": "API Yapılandırması",
@@ -25,12 +26,18 @@
 			"browser": "Tarayıcı Kullan",
 			"command": "Komutları Çalıştır",
 			"mcp": "MCP Kullan"
-		}
+		},
+		"noTools": "Yok"
 	},
 	"roleDefinition": {
 		"title": "Rol Tanımı",
 		"resetToDefault": "Varsayılana sıfırla",
 		"description": "Bu mod için Roo'nun uzmanlığını ve kişiliğini tanımlayın. Bu açıklama, Roo'nun kendini nasıl sunduğunu ve görevlere nasıl yaklaştığını şekillendirir."
+	},
+	"whenToUse": {
+		"title": "Ne zaman kullanılmalı (isteğe bağlı)",
+		"description": "Bu modun ne zaman kullanılması gerektiğini açıklayın. Bu, Orchestrator'ın bir görev için doğru modu seçmesine yardımcı olur.",
+		"resetToDefault": "'Ne zaman kullanılmalı' açıklamasını varsayılana sıfırla"
 	},
 	"customInstructions": {
 		"title": "Moda özgü özel talimatlar (isteğe bağlı)",
@@ -128,6 +135,10 @@
 		"roleDefinition": {
 			"label": "Rol Tanımı",
 			"description": "Bu mod için Roo'nun uzmanlığını ve kişiliğini tanımlayın."
+		},
+		"whenToUse": {
+			"label": "Ne zaman kullanılmalı (isteğe bağlı)",
+			"description": "Bu modun ne zaman en etkili olduğu ve hangi tür görevlerde üstün olduğu hakkında net bir açıklama sağlayın."
 		},
 		"tools": {
 			"label": "Kullanılabilir Araçlar",

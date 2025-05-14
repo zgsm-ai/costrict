@@ -7,7 +7,8 @@
 		"editModesConfig": "Modifica configurazione modalità",
 		"editGlobalModes": "Modifica modalità globali",
 		"editProjectModes": "Modifica modalità di progetto (.roomodes)",
-		"createModeHelpText": "Clicca sul + per creare una nuova modalità personalizzata, o chiedi semplicemente a Roo nella chat di crearne una per te!"
+		"createModeHelpText": "Clicca sul + per creare una nuova modalità personalizzata, o chiedi semplicemente a Roo nella chat di crearne una per te!",
+		"selectMode": "Cerca modalità"
 	},
 	"apiConfiguration": {
 		"title": "Configurazione API",
@@ -25,12 +26,18 @@
 			"browser": "Usa browser",
 			"command": "Esegui comandi",
 			"mcp": "Usa MCP"
-		}
+		},
+		"noTools": "Nessuno"
 	},
 	"roleDefinition": {
 		"title": "Definizione del ruolo",
 		"resetToDefault": "Ripristina predefiniti",
 		"description": "Definisci l'esperienza e la personalità di Roo per questa modalità. Questa descrizione modella come Roo si presenta e affronta i compiti."
+	},
+	"whenToUse": {
+		"title": "Quando utilizzare (opzionale)",
+		"description": "Descrivi quando questa modalità dovrebbe essere utilizzata. Questo aiuta l'Orchestrator a scegliere la modalità giusta per un compito.",
+		"resetToDefault": "Ripristina la descrizione 'Quando utilizzare' ai valori predefiniti"
 	},
 	"customInstructions": {
 		"title": "Istruzioni personalizzate specifiche per la modalità (opzionale)",
@@ -128,6 +135,10 @@
 		"roleDefinition": {
 			"label": "Definizione del ruolo",
 			"description": "Definisci l'esperienza e la personalità di Roo per questa modalità."
+		},
+		"whenToUse": {
+			"label": "Quando utilizzare (opzionale)",
+			"description": "Fornisci una chiara descrizione di quando questa modalità è più efficace e per quali tipi di compiti eccelle."
 		},
 		"tools": {
 			"label": "Strumenti disponibili",

@@ -2,6 +2,11 @@ import * as vscode from "vscode"
 import delay from "delay"
 
 import { ClineProvider } from "../core/webview/ClineProvider"
+import { ContextProxy } from "../core/config/ContextProxy"
+import { telemetryService } from "../services/telemetry/TelemetryService"
+
+import { registerHumanRelayCallback, unregisterHumanRelayCallback, handleHumanRelayResponse } from "./humanRelay"
+import { handleNewTask } from "./handleTask"
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -9,14 +14,11 @@ import { ClineProvider } from "../core/webview/ClineProvider"
 export function getVisibleProviderOrLog(outputChannel: vscode.OutputChannel): ClineProvider | undefined {
 	const visibleProvider = ClineProvider.getVisibleInstance()
 	if (!visibleProvider) {
-		outputChannel.appendLine("Cannot find any visible Cline instances.")
+		outputChannel.appendLine("Cannot find any visible Roo Code instances.")
 		return undefined
 	}
 	return visibleProvider
 }
-
-import { registerHumanRelayCallback, unregisterHumanRelayCallback, handleHumanRelayResponse } from "./humanRelay"
-import { handleNewTask } from "./handleTask"
 
 // Store panel references in both modes
 let sidebarPanel: vscode.WebviewView | undefined = undefined
@@ -53,7 +55,7 @@ export type RegisterCommandOptions = {
 }
 
 export const registerCommands = (options: RegisterCommandOptions) => {
-	const { context, outputChannel } = options
+	const { context } = options
 
 	for (const [command, callback] of Object.entries(getCommandsMap(options))) {
 		context.subscriptions.push(vscode.commands.registerCommand(command, callback))
@@ -65,31 +67,63 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		"vscode-zgsm.activationCompleted": () => {},
 		"vscode-zgsm.plusButtonClicked": async () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
+
+			if (!visibleProvider) {
+				return
+			}
+
+			telemetryService.captureTitleButtonClicked("plus")
+
 			await visibleProvider.removeClineFromStack()
 			await visibleProvider.postStateToWebview()
 			await visibleProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
 		},
 		"vscode-zgsm.mcpButtonClicked": () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
+
+			if (!visibleProvider) {
+				return
+			}
+
+			telemetryService.captureTitleButtonClicked("mcp")
+
 			visibleProvider.postMessageToWebview({ type: "action", action: "mcpButtonClicked" })
 		},
 		"vscode-zgsm.promptsButtonClicked": () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
+
+			if (!visibleProvider) {
+				return
+			}
+
+			telemetryService.captureTitleButtonClicked("prompts")
+
 			visibleProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" })
 		},
 		"vscode-zgsm.popoutButtonClicked": () => openClineInNewTab({ context, outputChannel }),
 		"vscode-zgsm.openInNewTab": () => openClineInNewTab({ context, outputChannel }),
 		"vscode-zgsm.settingsButtonClicked": () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
+
+			if (!visibleProvider) {
+				return
+			}
+
+			telemetryService.captureTitleButtonClicked("settings")
+
 			visibleProvider.postMessageToWebview({ type: "action", action: "settingsButtonClicked" })
+			// Also explicitly post the visibility message to trigger scroll reliably
+			visibleProvider.postMessageToWebview({ type: "action", action: "didBecomeVisible" })
 		},
 		"vscode-zgsm.historyButtonClicked": () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
+
+			if (!visibleProvider) {
+				return
+			}
+
+			telemetryService.captureTitleButtonClicked("history")
+
 			visibleProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" })
 		},
 		"vscode-zgsm.helpButtonClicked": () => {
@@ -125,7 +159,8 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 	// deserialize cached webview, but since we use retainContextWhenHidden, we
 	// don't need to use that event).
 	// https://github.com/microsoft/vscode-extension-samples/blob/main/webview-sample/src/extension.ts
-	const tabProvider = new ClineProvider(context, outputChannel, "editor")
+	const contextProxy = await ContextProxy.getInstance(context)
+	const tabProvider = new ClineProvider(context, outputChannel, "editor", contextProxy)
 	const lastCol = Math.max(...vscode.window.visibleTextEditors.map((editor) => editor.viewColumn || 0))
 
 	// Check if there are any visible text editors, otherwise open a new group
@@ -157,10 +192,26 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 
 	await tabProvider.resolveWebviewView(newPanel)
 
+	// Add listener for visibility changes to notify webview
+	newPanel.onDidChangeViewState(
+		(e) => {
+			const panel = e.webviewPanel
+			if (panel.visible) {
+				panel.webview.postMessage({ type: "action", action: "didBecomeVisible" }) // Use the same message type as in SettingsView.tsx
+			}
+		},
+		null, // First null is for `thisArgs`
+		context.subscriptions, // Register listener for disposal
+	)
+
 	// Handle panel closing events.
-	newPanel.onDidDispose(() => {
-		setPanel(undefined, "tab")
-	})
+	newPanel.onDidDispose(
+		() => {
+			setPanel(undefined, "tab")
+		},
+		null,
+		context.subscriptions, // Also register dispose listener
+	)
 
 	// Lock the editor group so clicking on files doesn't open them over the panel.
 	await delay(100)

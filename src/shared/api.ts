@@ -1,6 +1,6 @@
 import { ModelInfo, ProviderName, ProviderSettings } from "../schemas"
 
-export type { ModelInfo, ProviderName as ApiProvider }
+export type { ModelInfo, ProviderName, ProviderSettings }
 
 export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider" | "id">
 
@@ -86,7 +86,7 @@ export const anthropicModels = {
 	},
 } as const satisfies Record<string, ModelInfo> // as const assertion makes the object deeply readonly
 
-// AWS Bedrock
+// Amazon Bedrock
 // https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html
 export interface MessageContent {
 	type: "text" | "image" | "video" | "tool_use" | "tool_result"
@@ -445,7 +445,7 @@ export const glamaDefaultModelInfo: ModelInfo = {
 
 // Requesty
 // https://requesty.ai/router-2
-export const requestyDefaultModelId = "anthropic/claude-3-7-sonnet-latest"
+export const requestyDefaultModelId = "coding/claude-3-7-sonnet"
 export const requestyDefaultModelInfo: ModelInfo = {
 	maxTokens: 8192,
 	contextWindow: 200_000,
@@ -457,7 +457,7 @@ export const requestyDefaultModelInfo: ModelInfo = {
 	cacheWritesPrice: 3.75,
 	cacheReadsPrice: 0.3,
 	description:
-		"Claude 3.7 Sonnet is an advanced large language model with improved reasoning, coding, and problem-solving capabilities. It introduces a hybrid reasoning approach, allowing users to choose between rapid responses and extended, step-by-step processing for complex tasks. The model demonstrates notable improvements in coding, particularly in front-end development and full-stack updates, and excels in agentic workflows, where it can autonomously navigate multi-step processes. Claude 3.7 Sonnet maintains performance parity with its predecessor in standard mode while offering an extended reasoning mode for enhanced accuracy in math, coding, and instruction-following tasks. Read more at the [blog post here](https://www.anthropic.com/news/claude-3-7-sonnet)",
+		"The best coding model, optimized by Requesty, and automatically routed to the fastest provider. Claude 3.7 Sonnet is an advanced large language model with improved reasoning, coding, and problem-solving capabilities. It introduces a hybrid reasoning approach, allowing users to choose between rapid responses and extended, step-by-step processing for complex tasks. The model demonstrates notable improvements in coding, particularly in front-end development and full-stack updates, and excels in agentic workflows, where it can autonomously navigate multi-step processes. Claude 3.7 Sonnet maintains performance parity with its predecessor in standard mode while offering an extended reasoning mode for enhanced accuracy in math, coding, and instruction-following tasks. Read more at the [blog post here](https://www.anthropic.com/news/claude-3-7-sonnet)",
 }
 
 // OpenRouter
@@ -482,19 +482,38 @@ export const openRouterDefaultModelInfo: ModelInfo = {
 export type VertexModelId = keyof typeof vertexModels
 export const vertexDefaultModelId: VertexModelId = "claude-3-7-sonnet@20250219"
 export const vertexModels = {
-	"gemini-2.0-flash-001": {
-		maxTokens: 8192,
+	"gemini-2.5-flash-preview-04-17:thinking": {
+		maxTokens: 65_535,
+		contextWindow: 1_048_576,
+		supportsImages: true,
+		supportsPromptCache: false,
+		inputPrice: 0.15,
+		outputPrice: 3.5,
+		thinking: true,
+		maxThinkingTokens: 24_576,
+	},
+	"gemini-2.5-flash-preview-04-17": {
+		maxTokens: 65_535,
 		contextWindow: 1_048_576,
 		supportsImages: true,
 		supportsPromptCache: false,
 		inputPrice: 0.15,
 		outputPrice: 0.6,
+		thinking: false,
 	},
 	"gemini-2.5-pro-preview-03-25": {
 		maxTokens: 65_535,
 		contextWindow: 1_048_576,
 		supportsImages: true,
-		supportsPromptCache: false,
+		supportsPromptCache: true,
+		inputPrice: 2.5,
+		outputPrice: 15,
+	},
+	"gemini-2.5-pro-preview-05-06": {
+		maxTokens: 65_535,
+		contextWindow: 1_048_576,
+		supportsImages: true,
+		supportsPromptCache: true,
 		inputPrice: 2.5,
 		outputPrice: 15,
 	},
@@ -513,6 +532,14 @@ export const vertexModels = {
 		supportsPromptCache: false,
 		inputPrice: 0,
 		outputPrice: 0,
+	},
+	"gemini-2.0-flash-001": {
+		maxTokens: 8192,
+		contextWindow: 1_048_576,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 0.15,
+		outputPrice: 0.6,
 	},
 	"gemini-2.0-flash-lite-001": {
 		maxTokens: 8192,
@@ -534,7 +561,7 @@ export const vertexModels = {
 		maxTokens: 8192,
 		contextWindow: 1_048_576,
 		supportsImages: true,
-		supportsPromptCache: false,
+		supportsPromptCache: true,
 		inputPrice: 0.075,
 		outputPrice: 0.3,
 	},
@@ -637,8 +664,27 @@ export const openAiModelInfoSaneDefaults: ModelInfo = {
 export type GeminiModelId = keyof typeof geminiModels
 export const geminiDefaultModelId: GeminiModelId = "gemini-2.0-flash-001"
 export const geminiModels = {
+	"gemini-2.5-flash-preview-04-17:thinking": {
+		maxTokens: 65_535,
+		contextWindow: 1_048_576,
+		supportsImages: true,
+		supportsPromptCache: false,
+		inputPrice: 0.15,
+		outputPrice: 3.5,
+		thinking: true,
+		maxThinkingTokens: 24_576,
+	},
+	"gemini-2.5-flash-preview-04-17": {
+		maxTokens: 65_535,
+		contextWindow: 1_048_576,
+		supportsImages: true,
+		supportsPromptCache: false,
+		inputPrice: 0.15,
+		outputPrice: 0.6,
+		thinking: false,
+	},
 	"gemini-2.5-pro-exp-03-25": {
-		maxTokens: 65_536,
+		maxTokens: 65_535,
 		contextWindow: 1_048_576,
 		supportsImages: true,
 		supportsPromptCache: false,
@@ -649,17 +695,59 @@ export const geminiModels = {
 		maxTokens: 65_535,
 		contextWindow: 1_048_576,
 		supportsImages: true,
-		supportsPromptCache: false,
-		inputPrice: 2.5,
+		supportsPromptCache: true,
+		inputPrice: 2.5, // This is the pricing for prompts above 200k tokens.
 		outputPrice: 15,
+		cacheReadsPrice: 0.625,
+		cacheWritesPrice: 4.5,
+		tiers: [
+			{
+				contextWindow: 200_000,
+				inputPrice: 1.25,
+				outputPrice: 10,
+				cacheReadsPrice: 0.31,
+			},
+			{
+				contextWindow: Infinity,
+				inputPrice: 2.5,
+				outputPrice: 15,
+				cacheReadsPrice: 0.625,
+			},
+		],
+	},
+	"gemini-2.5-pro-preview-05-06": {
+		maxTokens: 65_535,
+		contextWindow: 1_048_576,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 2.5, // This is the pricing for prompts above 200k tokens.
+		outputPrice: 15,
+		cacheReadsPrice: 0.625,
+		cacheWritesPrice: 4.5,
+		tiers: [
+			{
+				contextWindow: 200_000,
+				inputPrice: 1.25,
+				outputPrice: 10,
+				cacheReadsPrice: 0.31,
+			},
+			{
+				contextWindow: Infinity,
+				inputPrice: 2.5,
+				outputPrice: 15,
+				cacheReadsPrice: 0.625,
+			},
+		],
 	},
 	"gemini-2.0-flash-001": {
 		maxTokens: 8192,
 		contextWindow: 1_048_576,
 		supportsImages: true,
-		supportsPromptCache: false,
-		inputPrice: 0,
-		outputPrice: 0,
+		supportsPromptCache: true,
+		inputPrice: 0.1,
+		outputPrice: 0.4,
+		cacheReadsPrice: 0.025,
+		cacheWritesPrice: 1.0,
 	},
 	"gemini-2.0-flash-lite-preview-02-05": {
 		maxTokens: 8192,
@@ -705,9 +793,25 @@ export const geminiModels = {
 		maxTokens: 8192,
 		contextWindow: 1_048_576,
 		supportsImages: true,
-		supportsPromptCache: false,
-		inputPrice: 0,
-		outputPrice: 0,
+		supportsPromptCache: true,
+		inputPrice: 0.15, // This is the pricing for prompts above 128k tokens.
+		outputPrice: 0.6,
+		cacheReadsPrice: 0.0375,
+		cacheWritesPrice: 1.0,
+		tiers: [
+			{
+				contextWindow: 128_000,
+				inputPrice: 0.075,
+				outputPrice: 0.3,
+				cacheReadsPrice: 0.01875,
+			},
+			{
+				contextWindow: Infinity,
+				inputPrice: 0.15,
+				outputPrice: 0.6,
+				cacheReadsPrice: 0.0375,
+			},
+		],
 	},
 	"gemini-1.5-flash-exp-0827": {
 		maxTokens: 8192,
@@ -754,9 +858,95 @@ export const geminiModels = {
 // OpenAI Native
 // https://openai.com/api/pricing/
 export type OpenAiNativeModelId = keyof typeof openAiNativeModels
-export const openAiNativeDefaultModelId: OpenAiNativeModelId = "gpt-4o"
+export const openAiNativeDefaultModelId: OpenAiNativeModelId = "gpt-4.1"
 export const openAiNativeModels = {
-	// don't support tool use yet
+	"gpt-4.1": {
+		maxTokens: 32_768,
+		contextWindow: 1_047_576,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 2,
+		outputPrice: 8,
+		cacheReadsPrice: 0.5,
+	},
+	"gpt-4.1-mini": {
+		maxTokens: 32_768,
+		contextWindow: 1_047_576,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 0.4,
+		outputPrice: 1.6,
+		cacheReadsPrice: 0.1,
+	},
+	"gpt-4.1-nano": {
+		maxTokens: 32_768,
+		contextWindow: 1_047_576,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 0.1,
+		outputPrice: 0.4,
+		cacheReadsPrice: 0.025,
+	},
+	o3: {
+		maxTokens: 100_000,
+		contextWindow: 200_000,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 10.0,
+		outputPrice: 40.0,
+		cacheReadsPrice: 2.5,
+		reasoningEffort: "medium",
+	},
+	"o3-high": {
+		maxTokens: 100_000,
+		contextWindow: 200_000,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 10.0,
+		outputPrice: 40.0,
+		cacheReadsPrice: 2.5,
+		reasoningEffort: "high",
+	},
+	"o3-low": {
+		maxTokens: 100_000,
+		contextWindow: 200_000,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 10.0,
+		outputPrice: 40.0,
+		cacheReadsPrice: 2.5,
+		reasoningEffort: "low",
+	},
+	"o4-mini": {
+		maxTokens: 100_000,
+		contextWindow: 200_000,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 1.1,
+		outputPrice: 4.4,
+		cacheReadsPrice: 0.275,
+		reasoningEffort: "medium",
+	},
+	"o4-mini-high": {
+		maxTokens: 100_000,
+		contextWindow: 200_000,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 1.1,
+		outputPrice: 4.4,
+		cacheReadsPrice: 0.275,
+		reasoningEffort: "high",
+	},
+	"o4-mini-low": {
+		maxTokens: 100_000,
+		contextWindow: 200_000,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 1.1,
+		outputPrice: 4.4,
+		cacheReadsPrice: 0.275,
+		reasoningEffort: "low",
+	},
 	"o3-mini": {
 		maxTokens: 100_000,
 		contextWindow: 200_000,
@@ -764,6 +954,7 @@ export const openAiNativeModels = {
 		supportsPromptCache: true,
 		inputPrice: 1.1,
 		outputPrice: 4.4,
+		cacheReadsPrice: 0.55,
 		reasoningEffort: "medium",
 	},
 	"o3-mini-high": {
@@ -773,6 +964,7 @@ export const openAiNativeModels = {
 		supportsPromptCache: true,
 		inputPrice: 1.1,
 		outputPrice: 4.4,
+		cacheReadsPrice: 0.55,
 		reasoningEffort: "high",
 	},
 	"o3-mini-low": {
@@ -782,15 +974,8 @@ export const openAiNativeModels = {
 		supportsPromptCache: true,
 		inputPrice: 1.1,
 		outputPrice: 4.4,
+		cacheReadsPrice: 0.55,
 		reasoningEffort: "low",
-	},
-	"o1-pro": {
-		maxTokens: 100_000,
-		contextWindow: 200_000,
-		supportsImages: true,
-		supportsPromptCache: false,
-		inputPrice: 150,
-		outputPrice: 600,
 	},
 	o1: {
 		maxTokens: 100_000,
@@ -799,6 +984,7 @@ export const openAiNativeModels = {
 		supportsPromptCache: true,
 		inputPrice: 15,
 		outputPrice: 60,
+		cacheReadsPrice: 7.5,
 	},
 	"o1-preview": {
 		maxTokens: 32_768,
@@ -807,6 +993,7 @@ export const openAiNativeModels = {
 		supportsPromptCache: true,
 		inputPrice: 15,
 		outputPrice: 60,
+		cacheReadsPrice: 7.5,
 	},
 	"o1-mini": {
 		maxTokens: 65_536,
@@ -815,6 +1002,7 @@ export const openAiNativeModels = {
 		supportsPromptCache: true,
 		inputPrice: 1.1,
 		outputPrice: 4.4,
+		cacheReadsPrice: 0.55,
 	},
 	"gpt-4.5-preview": {
 		maxTokens: 16_384,
@@ -823,6 +1011,7 @@ export const openAiNativeModels = {
 		supportsPromptCache: true,
 		inputPrice: 75,
 		outputPrice: 150,
+		cacheReadsPrice: 37.5,
 	},
 	"gpt-4o": {
 		maxTokens: 16_384,
@@ -831,6 +1020,7 @@ export const openAiNativeModels = {
 		supportsPromptCache: true,
 		inputPrice: 2.5,
 		outputPrice: 10,
+		cacheReadsPrice: 1.25,
 	},
 	"gpt-4o-mini": {
 		maxTokens: 16_384,
@@ -839,6 +1029,7 @@ export const openAiNativeModels = {
 		supportsPromptCache: true,
 		inputPrice: 0.15,
 		outputPrice: 0.6,
+		cacheReadsPrice: 0.075,
 	},
 } as const satisfies Record<string, ModelInfo>
 
@@ -932,7 +1123,8 @@ export const mistralModels = {
 } as const satisfies Record<string, ModelInfo>
 
 // Unbound Security
-export const unboundDefaultModelId = "anthropic/claude-3-5-sonnet-20241022"
+// https://www.unboundsecurity.ai/ai-gateway
+export const unboundDefaultModelId = "anthropic/claude-3-7-sonnet-20250219"
 export const unboundDefaultModelInfo: ModelInfo = {
 	maxTokens: 8192,
 	contextWindow: 200_000,
