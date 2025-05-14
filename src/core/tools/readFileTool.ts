@@ -12,6 +12,7 @@ import { readLines } from "../../integrations/misc/read-lines"
 import { extractTextFromFile, addLineNumbers } from "../../integrations/misc/extract-text"
 import { parseSourceCodeDefinitionsForFile } from "../../services/tree-sitter"
 import { isBinaryFile } from "isbinaryfile"
+import { truncateContent } from "../../../zgsm/src/core/tools/readFileTool"
 
 export async function readFileTool(
 	cline: Cline,
@@ -165,6 +166,9 @@ export async function readFileTool(
 			} else {
 				// Read entire file
 				content = await extractTextFromFile(absolutePath)
+
+				// Truncate content based on line count or character count
+				content = truncateContent(content, maxReadFileLine);
 			}
 
 			// Create variables to store XML components
