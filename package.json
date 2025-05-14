@@ -118,32 +118,32 @@
 			{
 				"command": "vscode-zgsm.openInNewTab",
 				"title": "%command.openInNewTab.title%",
-				"category": "Roo Code"
+				"category": "%configuration.title%"
 			},
 			{
 				"command": "vscode-zgsm.explainCode",
 				"title": "%command.explainCode.title%",
-				"category": "Roo Code"
+				"category": "%configuration.title%"
 			},
 			{
 				"command": "vscode-zgsm.fixCode",
 				"title": "%command.fixCode.title%",
-				"category": "Roo Code"
+				"category": "%configuration.title%"
 			},
 			{
 				"command": "vscode-zgsm.improveCode",
 				"title": "%command.improveCode.title%",
-				"category": "Roo Code"
+				"category": "%configuration.title%"
 			},
 			{
 				"command": "vscode-zgsm.addToContext",
 				"title": "%command.addToContext.title%",
-				"category": "Roo Code"
+				"category": "%configuration.title%"
 			},
 			{
 				"command": "vscode-zgsm.newTask",
 				"title": "%command.newTask.title%",
-				"category": "Roo Code"
+				"category": "%configuration.title%"
 			},
 			{
 				"command": "vscode-zgsm.terminalAddToContext",
@@ -173,12 +173,17 @@
 			{
 				"command": "vscode-zgsm.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
-				"category": "Roo Code"
+				"category": "%configuration.title%"
 			},
 			{
 				"command": "vscode-zgsm.focusInput",
 				"title": "%command.focusInput.title%",
-				"category": "Roo Code"
+				"category": "%configuration.title%"
+			},
+			{
+				"command": "roo.acceptInput",
+				"title": "%command.acceptInput.title%",
+				"category": "%configuration.title%"
 			},
 			{
 				"command": "vscode-zgsm.view.userHelperDoc",
@@ -323,14 +328,6 @@
 				{
 					"command": "vscode-zgsm.terminalExplainCommand",
 					"group": "1_actions@3"
-				},
-				{
-					"command": "vscode-zgsm.terminalFixCommandInCurrentTask",
-					"group": "1_actions@5"
-				},
-				{
-					"command": "vscode-zgsm.terminalExplainCommandInCurrentTask",
-					"group": "1_actions@6"
 				}
 			],
 			"view/title": [
@@ -685,6 +682,7 @@
 		"mammoth": "^1.8.0",
 		"monaco-vscode-textmate-theme-converter": "^0.1.7",
 		"node-fetch": "^3.3.0",
+		"node-cache": "^5.1.2",
 		"node-ipc": "^12.0.0",
 		"openai": "^4.78.1",
 		"os": "^0.1.1",
@@ -726,7 +724,7 @@
 		"@types/diff-match-patch": "^1.0.36",
 		"@types/glob": "^8.1.0",
 		"@types/jest": "^29.5.14",
-		"@types/mocha": "^10.0.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "20.x",
 		"@types/node-cache": "^4.1.3",
 		"@types/node-ipc": "^9.2.3",
@@ -736,7 +734,7 @@
 		"@types/vscode-webview": "^1.57.0",
 		"@typescript-eslint/eslint-plugin": "^7.14.1",
 		"@typescript-eslint/parser": "^7.11.0",
-		"@vscode/test-electron": "^2.2.0",
+		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^3.3.2",
 		"esbuild": "^0.25.0",
 		"eslint": "^8.57.0",
@@ -749,7 +747,8 @@
 		"lint-staged": "^15.2.11",
 		"mkdirp": "^3.0.1",
 		"mocha": "^11.1.0",
-		"npm-run-all": "^4.1.5",
+		"nock": "^14.0.4",
+		"npm-run-all2": "^8.0.1",
 		"os": "^0.1.1",
 		"prettier": "^3.4.2",
 		"rimraf": "^6.0.1",
