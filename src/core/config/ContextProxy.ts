@@ -17,6 +17,7 @@ import {
 } from "../../schemas"
 import { logger } from "../../utils/logging"
 import { telemetryService } from "../../services/telemetry/TelemetryService"
+import { ClineProvider } from "../webview/ClineProvider"
 
 type GlobalStateKey = keyof GlobalState
 type SecretStateKey = keyof SecretState
@@ -255,5 +256,15 @@ export class ContextProxy {
 		])
 
 		await this.initialize()
+	}
+
+	// get state from originContext.globalState
+	public async getOriginGlobalState(key: string) {
+		return await this?.originalContext?.globalState.get(key)
+	}
+
+	// get state from originContext.secrets
+	public async getOriginSecrets(key: string) {
+		return await this?.originalContext?.secrets.get(key)
 	}
 }
