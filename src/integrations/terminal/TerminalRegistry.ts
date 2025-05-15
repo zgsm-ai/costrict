@@ -124,13 +124,8 @@ export class TerminalRegistry {
 		}
 	}
 
-	static createTerminal(cwd: string | vscode.Uri): Terminal {
-		const terminal = vscode.window.createTerminal({
-			cwd,
-			name: "Shenma",
-			iconPath: new vscode.ThemeIcon("rocket"),
-			env: {
-				PAGER: "cat",
+	public static createTerminal(cwd: string, provider: RooTerminalProvider): RooTerminal {
+		let newTerminal
 
 		if (provider === "vscode") {
 			newTerminal = new Terminal(this.nextTerminalId++, undefined, cwd)

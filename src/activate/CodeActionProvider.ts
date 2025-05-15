@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import { EditorUtils } from "../integrations/editor/EditorUtils"
 
 export const ACTION_NAMES = {
 	EXPLAIN: "Shenma: Explain Code",
@@ -32,6 +33,30 @@ export const COMMAND_IDS = {
 	ZGSM_ADD_STRONG_CODE: "vscode-zgsm.addStrongerCode",
 	ZGSM_SIMPLIFY_CODE: "vscode-zgsm.simplifyCode",
 	ZGSM_PERFORMANCE: "vscode-zgsm.performanceOptimization",
+} as const
+
+export type CodeActionName = "EXPLAIN" | "FIX" | "IMPROVE" | "ADD_TO_CONTEXT" | "NEW_TASK"
+
+export type CodeActionId =
+	| "vscode-zgsm.explainCode"
+	| "vscode-zgsm.fixCode"
+	| "vscode-zgsm.improveCode"
+	| "vscode-zgsm.addToContext"
+	| "vscode-zgsm.newTask"
+	| "vscode-zgsm.explain"
+	| "vscode-zgsm.addComment"
+	| "vscode-zgsm.codeReview"
+	| "vscode-zgsm.addDebugCode"
+	| "vscode-zgsm.addStrongerCode"
+	| "vscode-zgsm.simplifyCode"
+	| "vscode-zgsm.performanceOptimization"
+
+export const ACTION_TITLES: Record<CodeActionName, string> = {
+	EXPLAIN: "Explain with Shenma",
+	FIX: "Fix with Shenma",
+	IMPROVE: "Improve with Shenma",
+	ADD_TO_CONTEXT: "Add to Shenma",
+	NEW_TASK: "New Shenma Task",
 } as const
 
 export class CodeActionProvider implements vscode.CodeActionProvider {
