@@ -348,29 +348,20 @@ export type ProviderSettingsEntry = z.infer<typeof providerSettingsEntrySchema>
  * ProviderSettings
  */
 
-export const providerSettingsSchema = z.object({
-	apiProvider: providerNamesSchema.optional(),
-	// Zgsm
+const baseProviderSettingsSchema = z.object({
+	includeMaxTokens: z.boolean().optional(),
+	reasoningEffort: reasoningEffortsSchema.optional(),
+	diffEnabled: z.boolean().optional(),
+	fuzzyMatchThreshold: z.number().optional(),
+	modelTemperature: z.number().nullish(),
+	rateLimitSeconds: z.number().optional(),
+	// Claude 3.7 Sonnet Thinking
+	modelMaxTokens: z.number().optional(),
+	modelMaxThinkingTokens: z.number().optional(),
+})
 
-	zgsmBaseUrl: z.string().optional(),
-	zgsmApiKey: z.string().optional(),
-	zgsmModelId: z.string().optional(),
-
-	zgsmDefaultBaseUrl: z.string().optional(),
-	zgsmDefaultModelId: z.string().optional(),
-	zgsmSite: z.string().optional(),
-	zgsmLoginUrl: z.string().optional(),
-	zgsmLogoutUrl: z.string().optional(),
-	zgsmTokenUrl: z.string().optional(),
-	zgsmCompletionUrl: z.string().optional(),
-	zgsmDownloadUrl: z.string().optional(),
-	zgsmRedirectUri: z.string().optional(),
-	zgsmClientId: z.string().optional(),
-	zgsmClientSecret: z.string().optional(),
-
-	isZgsmApiKeyValid: z.boolean().optional(),
-
-	// Anthropic
+// Several of the providers share common model config properties.
+const apiModelIdProviderModelSchema = baseProviderSettingsSchema.extend({
 	apiModelId: z.string().optional(),
 })
 
@@ -508,6 +499,24 @@ const defaultSchema = z.object({
 	apiProvider: z.undefined(),
 })
 
+const zgsmSchema = z.object({
+	zgsmBaseUrl: z.string().optional(),
+	zgsmApiKey: z.string().optional(),
+	zgsmModelId: z.string().optional(),
+	zgsmDefaultBaseUrl: z.string().optional(),
+	zgsmDefaultModelId: z.string().optional(),
+	zgsmSite: z.string().optional(),
+	zgsmLoginUrl: z.string().optional(),
+	zgsmLogoutUrl: z.string().optional(),
+	zgsmTokenUrl: z.string().optional(),
+	zgsmCompletionUrl: z.string().optional(),
+	zgsmDownloadUrl: z.string().optional(),
+	zgsmRedirectUri: z.string().optional(),
+	zgsmClientId: z.string().optional(),
+	zgsmClientSecret: z.string().optional(),
+	isZgsmApiKeyValid: z.boolean().optional(),
+})
+
 export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProvider", [
 	anthropicSchema.merge(z.object({ apiProvider: z.literal("anthropic") })),
 	glamaSchema.merge(z.object({ apiProvider: z.literal("glama") })),
@@ -558,6 +567,7 @@ export const providerSettingsSchema = z
 	.merge(groqSchema)
 	.merge(chutesSchema)
 	.merge(litellmSchema)
+  	.merge(zgsmSchema)
 
 export type ProviderSettings = z.infer<typeof providerSettingsSchema>
 
