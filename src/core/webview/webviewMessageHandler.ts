@@ -36,6 +36,10 @@ import { getWorkspacePath } from "../../utils/path"
 import { Mode, defaultModeSlug } from "../../shared/modes"
 import { GlobalState } from "../../schemas"
 import { handleZgsmLogin } from "../../zgsmAuth/zgsmAuthHandler"
+import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
+import { generateSystemPrompt } from "./generateSystemPrompt"
+
+const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
 export const webviewMessageHandler = async (provider: ClineProvider, message: WebviewMessage) => {
 	// Utility functions provided for concise get/update of global state via contextProxy API.
@@ -1071,7 +1075,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "upsertApiConfiguration":
 			if (message.text && message.apiConfiguration) {
-				await provider.upsertApiConfiguration(message.text, {
+				await provider.upsertProviderProfile(message.text, {
 					...message.apiConfiguration,
 					zgsmBaseUrl:
 						`${message.apiConfiguration.zgsmBaseUrl || message.apiConfiguration.zgsmDefaultBaseUrl}`.replace(

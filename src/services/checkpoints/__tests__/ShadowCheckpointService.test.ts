@@ -49,13 +49,10 @@ const initWorkspaceRepo = async ({
 	return { git, testFile }
 }
 
-// @ts-ignore
-describe.each([
-	[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"],
-	[RepoPerWorkspaceCheckpointService, "RepoPerWorkspaceCheckpointService"],
-	// @ts-ignore
-])("CheckpointService", (klass, prefix) => {
-	const taskId = "test-task"
+describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
+	"CheckpointService",
+	(klass, prefix) => {
+		const taskId = "test-task"
 
 		let workspaceGit: SimpleGit
 		let testFile: string

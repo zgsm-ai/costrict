@@ -9,7 +9,10 @@ import {
 	openAiNativeModels,
 	vertexModels,
 	zgsmProviderKey,
-} from "../../../../src/shared/api"
+	xaiModels,
+	groqModels,
+	chutesModels,
+} from "@roo/shared/api"
 
 export { REASONING_MODELS, PROMPT_CACHING_MODELS } from "@roo/shared/api"
 
