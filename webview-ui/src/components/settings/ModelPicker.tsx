@@ -27,12 +27,7 @@ import { zgsmProviderKey } from "../../../../src/shared/api"
 
 type ModelIdKey = keyof Pick<
 	ProviderSettings,
-	"glamaModelId" | "openRouterModelId" | "unboundModelId" | "requestyModelId" | "openAiModelId" | "zgsmModelId"
->
-
-type ModelInfoKey = keyof Pick<
-	ProviderSettings,
-	"glamaModelInfo" | "openRouterModelInfo" | "unboundModelInfo" | "requestyModelInfo" | "openAiCustomModelInfo"
+	"glamaModelId" | "openRouterModelId" | "unboundModelId" | "requestyModelId" | "openAiModelId" | "litellmModelId" | "zgsmModelId"
 >
 
 interface ModelPickerProps {
@@ -54,7 +49,6 @@ export const ModelPicker = ({
 	serviceUrl,
 	apiConfiguration,
 	setApiConfigurationField,
-	defaultModelInfo,
 	onOpenModelPicker,
 }: ModelPickerProps) => {
 	const { t } = useAppTranslation()
@@ -83,7 +77,7 @@ export const ModelPicker = ({
 			// Delay to ensure the popover is closed before setting the search value.
 			setTimeout(() => setSearchValue(apiConfiguration.apiProvider === zgsmProviderKey ? "" : modelId), 100)
 		},
-		[modelIdKey, modelInfoKey, models, setApiConfigurationField, defaultModelInfo, apiConfiguration.apiProvider],
+		[modelIdKey, setApiConfigurationField],
 	)
 
 	const onOpenChange = useCallback(
@@ -208,14 +202,9 @@ export const ModelPicker = ({
 						i18nKey="settings:modelPicker.automaticFetch"
 						components={{
 							serviceLink: <VSCodeLink href={serviceUrl} className="text-sm" />,
-							defaultModelLink: (
-								<VSCodeLink onClick={() => onSelect(defaultModelId)} className="text-sm" />
-							),
+							defaultModelLink: <VSCodeLink onClick={() => onSelect(defaultModelId)} className="text-sm" />,
 						}}
-						values={{
-							serviceName,
-							defaultModelId,
-						}}
+						values={{ serviceName, defaultModelId }}
 					/>
 				</div>
 			)}

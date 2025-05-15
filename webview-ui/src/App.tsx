@@ -95,6 +95,9 @@ const App = () => {
 					zgsmDefaultModelId: message.zgsmDefaultModelId,
 				})
 			}
+			if (message.type === "acceptInput") {
+				chatViewRef.current?.acceptInput()
+			}
 		},
 		[
 			switchTab,
