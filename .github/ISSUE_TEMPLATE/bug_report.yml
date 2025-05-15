@@ -38,9 +38,8 @@ body:
     id: model
     attributes:
       label: Model Used
-      description: Clearly specify the exact model (e.g., Claude 3.7 Sonnet)
-    validations:
-      required: true
+      description: Clearly specify the exact model (e.g., Claude 3.7 Sonnet), if you think the issue is related to the model you are using, be sure to fill in this field.
+
 
   - type: textarea
     id: what-happened
