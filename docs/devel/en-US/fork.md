@@ -48,7 +48,7 @@ $ git fetch upstream # commit 前需要再次同步feature跟upstream/main
 $ git rebase upstream/main
 ```
 
-5. **Commit changes**
+5. **Commit changes** (For commit specifications, refer to: [Commit Specifications](https://github.com/zgsm-ai/zgsm/blob/main/docs/devel/en-US/commit-message.md))
 
 Develop code on the `feature/add-function` branch. After completing development, commit the changes:
 
