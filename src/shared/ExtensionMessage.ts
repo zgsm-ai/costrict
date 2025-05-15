@@ -16,6 +16,7 @@ import {
 import { McpServer } from "./mcp"
 import { Mode } from "./modes"
 import { AxiosError } from "axios"
+import { RouterModels } from "./api"
 
 export type { ProviderSettingsEntry, ToolProgressStatus }
 
@@ -38,11 +39,6 @@ export interface ExtensionMessage {
 		| "workspaceUpdated"
 		| "invoke"
 		| "partialMessage"
-		| "openRouterModels"
-		| "glamaModels"
-		| "unboundModels"
-		| "requestyModels"
-		| "openAiModels"
 		| "zgsmModels"
 		| "mcpServers"
 		| "enhancedPrompt"
@@ -98,6 +94,9 @@ export interface ExtensionMessage {
 	openAiModels?: string[]
 	zgsmModels?: string[]
 	zgsmDefaultModelId?: string
+	ollamaModels?: string[]
+	lmStudioModels?: string[]
+	vsCodeLmModels?: { vendor?: string; family?: string; version?: string; id?: string }[]
 	mcpServers?: McpServer[]
 	commits?: GitCommit[]
 	listApiConfig?: ProviderSettingsEntry[]
@@ -111,6 +110,8 @@ export interface ExtensionMessage {
 	results?: { path: string; type: "file" | "folder"; label?: string }[]
 	error?: string
 	errorObj?: AxiosError
+	setting?: string
+	value?: any
 }
 
 export type ExtensionState = Pick<

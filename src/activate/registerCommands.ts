@@ -100,7 +100,11 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 
 			visibleProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" })
 		},
-		"vscode-zgsm.popoutButtonClicked": () => openClineInNewTab({ context, outputChannel }),
+		"vscode-zgsm.popoutButtonClicked": () => {
+			telemetryService.captureTitleButtonClicked("popout")
+
+			return openClineInNewTab({ context, outputChannel })
+		},
 		"vscode-zgsm.openInNewTab": () => openClineInNewTab({ context, outputChannel }),
 		"vscode-zgsm.settingsButtonClicked": () => {
 			const visibleProvider = getVisibleProviderOrLog(outputChannel)
@@ -148,8 +152,30 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			const { promptForCustomStoragePath } = await import("../shared/storagePathManager")
 			await promptForCustomStoragePath()
 		},
-		"vscode-zgsm.focusInput": () => {
-			provider.postMessageToWebview({ type: "action", action: "focusInput" })
+		"vscode-zgsm.focusInput": async () => {
+			try {
+				const panel = getPanel()
+
+				if (!panel) {
+					await vscode.commands.executeCommand("workbench.view.extension.roo-cline-ActivityBar")
+				} else if (panel === tabPanel) {
+					panel.reveal(vscode.ViewColumn.Active, false)
+				} else if (panel === sidebarPanel) {
+					await vscode.commands.executeCommand(`${ClineProvider.sideBarId}.focus`)
+					provider.postMessageToWebview({ type: "action", action: "focusInput" })
+				}
+			} catch (error) {
+				outputChannel.appendLine(`Error focusing input: ${error}`)
+			}
+		},
+		"vscode-zgsm.acceptInput": () => {
+			const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+			if (!visibleProvider) {
+				return
+			}
+
+			visibleProvider.postMessageToWebview({ type: "acceptInput" })
 		},
 	}
 }

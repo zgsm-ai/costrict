@@ -1426,7 +1426,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			customSupportPrompts: customSupportPrompts ?? {},
 			enhancementApiConfigId,
 			autoApprovalEnabled: autoApprovalEnabled ?? true,
-			customModes: await this.customModesManager.getCustomModes(),
+			customModes,
 			experiments: experiments ?? experimentDefault,
 			mcpServers: this.mcpHub?.getAllServers() ?? [],
 			maxOpenTabsContext: maxOpenTabsContext ?? 20,
@@ -1459,7 +1459,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		const customModes = await this.customModesManager.getCustomModes()
 
 		// Determine apiProvider with the same logic as before.
-		const apiProvider: ApiProvider = stateValues.apiProvider ? stateValues.apiProvider : zgsmProviderKey
+		const apiProvider: ProviderName = stateValues.apiProvider ? stateValues.apiProvider : zgsmProviderKey
 
 		// Build the apiConfiguration object combining state values and secrets.
 		const providerSettings = this.contextProxy.getProviderSettings()
@@ -1488,6 +1488,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			customInstructions: stateValues.customInstructions,
 			alwaysAllowReadOnly: stateValues.alwaysAllowReadOnly ?? true,
 			alwaysAllowReadOnlyOutsideWorkspace: stateValues.alwaysAllowReadOnlyOutsideWorkspace ?? true,
+			apiModelId: stateValues.apiModelId,
 			alwaysAllowWrite: stateValues.alwaysAllowWrite ?? false,
 			alwaysAllowWriteOutsideWorkspace: stateValues.alwaysAllowWriteOutsideWorkspace ?? false,
 			alwaysAllowExecute: stateValues.alwaysAllowExecute ?? false,
