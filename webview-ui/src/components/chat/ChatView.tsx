@@ -38,14 +38,11 @@ import ChatRow from "./ChatRow"
 import ChatTextArea from "./ChatTextArea"
 import TaskHeader from "./TaskHeader"
 import AutoApproveMenu from "./AutoApproveMenu"
-import { AudioType } from "../../../../src/shared/WebviewMessage"
-import { validateCommand } from "../../utils/command-validation"
-import { getAllModes } from "../../../../src/shared/modes"
 // import TelemetryBanner from "../common/TelemetryBanner"
-import { useAppTranslation } from "@/i18n/TranslationContext"
-import removeMd from "remove-markdown"
-import { Trans } from "react-i18next"
-interface ChatViewProps {
+import SystemPromptWarning from "./SystemPromptWarning"
+import { CheckpointWarning } from "./CheckpointWarning"
+
+export interface ChatViewProps {
 	isHidden: boolean
 	showAnnouncement: boolean
 	hideAnnouncement: () => void
@@ -86,6 +83,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		alwaysAllowSubtasks,
 		customModes,
 		// telemetrySetting,
+		hasSystemPromptOverride,
+		historyPreviewCollapsed, // Added historyPreviewCollapsed
 	} = useExtensionState()
 
 	const { tasks } = useTaskSearch()
@@ -1235,36 +1234,55 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					)}
 				</>
 			) : (
-				<div
-					style={{
-						flex: "1 1 0", // flex-grow: 1, flex-shrink: 1, flex-basis: 0
-						minHeight: 0,
-						overflowY: "auto",
-						display: "flex",
-						flexDirection: "column",
-						paddingBottom: "10px",
-					}}>
-					{/* todo: Report telemetry setting */}
-					{/* {telemetrySetting === "unset" && <TelemetryBanner />} */}
-					{showAnnouncement && <Announcement version={version} hideAnnouncement={hideAnnouncement} />}
-					<div style={{ padding: "0 20px", flexShrink: 0 }}>
-						<h2>{t("chat:greeting")}</h2>
-						<p>{t("chat:aboutMe")}</p>
+				<div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4">
+					{/* Moved Task Bar Header Here */}
+					{tasks.length !== 0 && (
+						<div className="flex text-vscode-descriptionForeground w-full mx-auto px-5 pt-3">
+							<div className="flex items-center gap-1 cursor-pointer" onClick={toggleExpanded}>
+								{tasks.length < 10 && (
+									<span className={`font-medium text-xs `}>{t("history:recentTasks")}</span>
+								)}
+								<span
+									className={`codicon  ${isExpanded ? "codicon-eye" : "codicon-eye-closed"} scale-90`}
+								/>
+							</div>
+						</div>
+					)}
+					<div
+						className={` w-full flex flex-col gap-4 m-auto ${isExpanded && tasks.length > 0 ? "mt-0" : ""} px-3.5 min-[370px]:px-10 pt-5 transition-all duration-300`}>
+						<RooHero />
+						{/* todo: Report telemetry setting */}
+						{/* {telemetrySetting === "unset" && <TelemetryBanner />} */}
+						{/* Show the task history preview if expanded and tasks exist */}
+						{taskHistory.length > 0 && isExpanded && <HistoryPreview />}
+						<p className="text-vscode-editor-foreground leading-tight font-vscode-font-family text-center">
+							<Trans
+								i18nKey="chat:about"
+								components={{
+									DocsLink: (
+										<a href="https://docs.roocode.com/" target="_blank" rel="noopener noreferrer">
+											the docs
+										</a>
+									),
+								}}
+							/>
+						</p>
+						<RooTips cycle={false} />
 					</div>
 				</div>
 			)}
 
-			{/*
+			{/* 
 			// Flex layout explanation:
 			// 1. Content div above uses flex: "1 1 0" to:
-			//    - Grow to fill available space (flex-grow: 1)
+			//    - Grow to fill available space (flex-grow: 1) 
 			//    - Shrink when AutoApproveMenu needs space (flex-shrink: 1)
 			//    - Start from zero size (flex-basis: 0) to ensure proper distribution
 			//    minHeight: 0 allows it to shrink below its content height
 			//
 			// 2. AutoApproveMenu uses flex: "0 1 auto" to:
 			//    - Not grow beyond its content (flex-grow: 0)
-			//    - Shrink when viewport is small (flex-shrink: 1)
+			//    - Shrink when viewport is small (flex-shrink: 1) 
 			//    - Use its content size as basis (flex-basis: auto)
 			//    This ensures it takes its natural height when there's space
 			//    but becomes scrollable when the viewport is too small
