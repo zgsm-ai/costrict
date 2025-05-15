@@ -37,64 +37,9 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 
 	const { t } = useAppTranslation()
 
-	const actions: AutoApproveAction[] = [
-		{
-			id: "readFiles",
-			label: t("chat:autoApprove.actions.readFiles.label"),
-			shortName: t("chat:autoApprove.actions.readFiles.shortName"),
-			enabled: alwaysAllowReadOnly ?? true,
-			description: t("chat:autoApprove.actions.readFiles.description"),
-		},
-		{
-			id: "editFiles",
-			label: t("chat:autoApprove.actions.editFiles.label"),
-			shortName: t("chat:autoApprove.actions.editFiles.shortName"),
-			enabled: alwaysAllowWrite ?? false,
-			description: t("chat:autoApprove.actions.editFiles.description"),
-		},
-		{
-			id: "executeCommands",
-			label: t("chat:autoApprove.actions.executeCommands.label"),
-			shortName: t("chat:autoApprove.actions.executeCommands.shortName"),
-			enabled: alwaysAllowExecute ?? false,
-			description: t("chat:autoApprove.actions.executeCommands.description"),
-		},
-		{
-			id: "useBrowser",
-			label: t("chat:autoApprove.actions.useBrowser.label"),
-			shortName: t("chat:autoApprove.actions.useBrowser.shortName"),
-			enabled: alwaysAllowBrowser ?? true,
-			description: t("chat:autoApprove.actions.useBrowser.description"),
-		},
-		{
-			id: "useMcp",
-			label: t("chat:autoApprove.actions.useMcp.label"),
-			shortName: t("chat:autoApprove.actions.useMcp.shortName"),
-			enabled: alwaysAllowMcp ?? false,
-			description: t("chat:autoApprove.actions.useMcp.description"),
-		},
-		{
-			id: "switchModes",
-			label: t("chat:autoApprove.actions.switchModes.label"),
-			shortName: t("chat:autoApprove.actions.switchModes.shortName"),
-			enabled: alwaysAllowModeSwitch ?? true,
-			description: t("chat:autoApprove.actions.switchModes.description"),
-		},
-		{
-			id: "subtasks",
-			label: t("chat:autoApprove.actions.subtasks.label"),
-			shortName: t("chat:autoApprove.actions.subtasks.shortName"),
-			enabled: alwaysAllowSubtasks ?? true,
-			description: t("chat:autoApprove.actions.subtasks.description"),
-		},
-		{
-			id: "retryRequests",
-			label: t("chat:autoApprove.actions.retryRequests.label"),
-			shortName: t("chat:autoApprove.actions.retryRequests.shortName"),
-			enabled: alwaysApproveResubmit ?? true,
-			description: t("chat:autoApprove.actions.retryRequests.description"),
-		},
-	]
+	const onAutoApproveToggle = useCallback(
+		(key: AutoApproveSetting, value: boolean) => {
+			vscode.postMessage({ type: key, bool: value })
 
 			switch (key) {
 				case "alwaysAllowReadOnly":
