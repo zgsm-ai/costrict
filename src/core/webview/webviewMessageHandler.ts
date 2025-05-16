@@ -1106,11 +1106,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			if (message.text && message.apiConfiguration) {
 				await provider.upsertApiConfiguration(message.text, {
 					...message.apiConfiguration,
-					zgsmBaseUrl:
-						`${message.apiConfiguration.zgsmBaseUrl || message.apiConfiguration.zgsmDefaultBaseUrl}`.replace(
-							/\/+$/,
-							"",
-						),
+					zgsmBaseUrl: `${message.apiConfiguration.zgsmBaseUrl}`.replace(/\/+$/, ""),
 				})
 			}
 			break

@@ -75,7 +75,7 @@ export async function afterZgsmPostLogin({
 }) {
 	try {
 		const [zgsmModels, zgsmDefaultModelId, err] = await getZgsmModels(
-			apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl,
+			apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl || defaultZgsmAuthConfig.baseUrl,
 			accessToken,
 			apiConfiguration.openAiHostHeader,
 		)

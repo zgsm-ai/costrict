@@ -440,7 +440,9 @@ export async function handleStatusBarClick() {
 	if (needLogin) {
 		statusBarloginCallback({
 			...apiConfiguration,
-			zgsmBaseUrl: hasView ? apiConfiguration.zgsmBaseUrl : (globalStateZgsmBaseUrl as string),
+			zgsmBaseUrl: hasView
+				? apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl
+				: (globalStateZgsmBaseUrl as string),
 		})
 
 		return
