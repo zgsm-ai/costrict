@@ -19,8 +19,8 @@
 	"providers": {
 		"zgsm": "诸葛神码",
 		"zgsmBaseUrl": "诸葛神码 Base Url",
-		"getZgsmApiKey": "登陆诸葛神码",
-		"getZgsmApiKeyAgain": "重新登陆诸葛神码",
+		"getZgsmApiKey": "登录诸葛神码",
+		"getZgsmApiKeyAgain": "重新登录诸葛神码",
 		"zgsmDefaultBaseUrl": "默认: {{zgsmBaseUrl}}",
 		"lmStudio": {
 			"description": "LM Studio允许您在本地计算机上运行模型。有关如何入门的说明，请参阅他们的<a>快速入门指南</a>。您还需要启动LM Studio的<b>本地服务器</b>功能才能在此扩展中使用它。<span>注意：</span>诸葛神码使用复杂的提示，最适合与Claude模型配合使用。功能较弱的模型可能无法按预期工作。"
