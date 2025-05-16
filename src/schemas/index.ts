@@ -539,6 +539,7 @@ export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProv
 	groqSchema.merge(z.object({ apiProvider: z.literal("groq") })),
 	chutesSchema.merge(z.object({ apiProvider: z.literal("chutes") })),
 	litellmSchema.merge(z.object({ apiProvider: z.literal("litellm") })),
+	zgsmSchema.merge(z.object({ apiProvider: z.literal("zgsm") })),
 	defaultSchema,
 ])
 

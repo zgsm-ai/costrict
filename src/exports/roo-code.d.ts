@@ -1,211 +1,6 @@
 import { EventEmitter } from "events"
 import { Socket } from "node:net"
 
-type ProviderSettings = {
-	apiProvider?:
-		| (
-				| "zgsm"
-				| "anthropic"
-				| "glama"
-				| "openrouter"
-				| "bedrock"
-				| "vertex"
-				| "openai"
-				| "ollama"
-				| "vscode-lm"
-				| "lmstudio"
-				| "gemini"
-				| "openai-native"
-				| "mistral"
-				| "deepseek"
-				| "unbound"
-				| "requesty"
-				| "human-relay"
-				| "fake-ai"
-				| "xai"
-				| "groq"
-				| "chutes"
-				| "litellm"
-		  )
-		| undefined
-	zgsmBaseUrl?: string | undefined
-	zgsmApiKey?: string | undefined
-	zgsmModelId?: string | undefined
-	customZgsmLoginUrl?: string | undefined
-	customZgsmLogoutUrl?: string | undefined
-	customZgsmTokenUrl?: string | undefined
-	customZgsmRedirectUri?: string | undefined
-	zgsmDefaultBaseUrl?: string | undefined
-	zgsmDefaultModelId?: string | undefined
-	zgsmSite?: string | undefined
-	zgsmLoginUrl?: string | undefined
-	zgsmLogoutUrl?: string | undefined
-	zgsmTokenUrl?: string | undefined
-	zgsmCompletionUrl?: string | undefined
-	zgsmDownloadUrl?: string | undefined
-	zgsmRedirectUri?: string | undefined
-	zgsmClientId?: string | undefined
-	zgsmClientSecret?: string | undefined
-	isZgsmApiKeyValid?: boolean | undefined
-	apiModelId?: string | undefined
-	apiKey?: string | undefined
-	anthropicBaseUrl?: string | undefined
-	anthropicUseAuthToken?: boolean | undefined
-	glamaModelId?: string | undefined
-	glamaModelInfo?:
-		| ({
-				maxTokens?: (number | null) | undefined
-				maxThinkingTokens?: (number | null) | undefined
-				contextWindow: number
-				supportsImages?: boolean | undefined
-				supportsComputerUse?: boolean | undefined
-				supportsPromptCache: boolean
-				inputPrice?: number | undefined
-				outputPrice?: number | undefined
-				cacheWritesPrice?: number | undefined
-				cacheReadsPrice?: number | undefined
-				description?: string | undefined
-				reasoningEffort?: ("low" | "medium" | "high") | undefined
-				thinking?: boolean | undefined
-				minTokensPerCachePoint?: number | undefined
-				maxCachePoints?: number | undefined
-				cachableFields?: string[] | undefined
-				tiers?:
-					| {
-							contextWindow: number
-							inputPrice?: number | undefined
-							outputPrice?: number | undefined
-							cacheWritesPrice?: number | undefined
-							cacheReadsPrice?: number | undefined
-					  }[]
-					| undefined
-		  } | null)
-		| undefined
-	glamaApiKey?: string | undefined
-	openRouterApiKey?: string | undefined
-	openRouterModelId?: string | undefined
-	openRouterModelInfo?:
-		| ({
-				maxTokens?: (number | null) | undefined
-				contextWindow: number
-				supportsImages?: boolean | undefined
-				supportsComputerUse?: boolean | undefined
-				supportsPromptCache: boolean
-				inputPrice?: number | undefined
-				outputPrice?: number | undefined
-				cacheWritesPrice?: number | undefined
-				cacheReadsPrice?: number | undefined
-				description?: string | undefined
-				reasoningEffort?: ("low" | "medium" | "high") | undefined
-				thinking?: boolean | undefined
-				minTokensPerCachePoint?: number | undefined
-				maxCachePoints?: number | undefined
-				cachableFields?: string[] | undefined
-		  } | null)
-		| undefined
-	openRouterBaseUrl?: string | undefined
-	openRouterSpecificProvider?: string | undefined
-	openRouterUseMiddleOutTransform?: boolean | undefined
-	awsAccessKey?: string | undefined
-	awsSecretKey?: string | undefined
-	awsSessionToken?: string | undefined
-	awsRegion?: string | undefined
-	awsUseCrossRegionInference?: boolean | undefined
-	awsUsePromptCache?: boolean | undefined
-	awsProfile?: string | undefined
-	awsUseProfile?: boolean | undefined
-	awsCustomArn?: string | undefined
-	vertexKeyFile?: string | undefined
-	vertexJsonCredentials?: string | undefined
-	vertexProjectId?: string | undefined
-	vertexRegion?: string | undefined
-	openAiBaseUrl?: string | undefined
-	openAiApiKey?: string | undefined
-	openAiLegacyFormat?: boolean | undefined
-	openAiR1FormatEnabled?: boolean | undefined
-	openAiModelId?: string | undefined
-	openAiCustomModelInfo?:
-		| ({
-				maxTokens?: (number | null) | undefined
-				maxThinkingTokens?: (number | null) | undefined
-				contextWindow: number
-				supportsImages?: boolean | undefined
-				supportsComputerUse?: boolean | undefined
-				supportsPromptCache: boolean
-				inputPrice?: number | undefined
-				outputPrice?: number | undefined
-				cacheWritesPrice?: number | undefined
-				cacheReadsPrice?: number | undefined
-				description?: string | undefined
-				reasoningEffort?: ("low" | "medium" | "high") | undefined
-				thinking?: boolean | undefined
-				minTokensPerCachePoint?: number | undefined
-				maxCachePoints?: number | undefined
-				cachableFields?: string[] | undefined
-				tiers?:
-					| {
-							contextWindow: number
-							inputPrice?: number | undefined
-							outputPrice?: number | undefined
-							cacheWritesPrice?: number | undefined
-							cacheReadsPrice?: number | undefined
-					  }[]
-					| undefined
-		  } | null)
-		| undefined
-	openAiUseAzure?: boolean | undefined
-	azureApiVersion?: string | undefined
-	openAiStreamingEnabled?: boolean | undefined
-	enableReasoningEffort?: boolean | undefined
-	openAiHostHeader?: string | undefined
-	openAiHeaders?:
-		| {
-				[x: string]: string
-		  }
-		| undefined
-	ollamaModelId?: string | undefined
-	ollamaBaseUrl?: string | undefined
-	vsCodeLmModelSelector?:
-		| {
-				vendor?: string | undefined
-				family?: string | undefined
-				version?: string | undefined
-				id?: string | undefined
-		  }
-		| undefined
-	lmStudioModelId?: string | undefined
-	lmStudioBaseUrl?: string | undefined
-	lmStudioDraftModelId?: string | undefined
-	lmStudioSpeculativeDecodingEnabled?: boolean | undefined
-	geminiApiKey?: string | undefined
-	googleGeminiBaseUrl?: string | undefined
-	openAiNativeApiKey?: string | undefined
-	openAiNativeBaseUrl?: string | undefined
-	mistralApiKey?: string | undefined
-	mistralCodestralUrl?: string | undefined
-	deepSeekBaseUrl?: string | undefined
-	deepSeekApiKey?: string | undefined
-	unboundApiKey?: string | undefined
-	unboundModelId?: string | undefined
-	requestyApiKey?: string | undefined
-	requestyModelId?: string | undefined
-	fakeAi?: unknown | undefined
-	xaiApiKey?: string | undefined
-	groqApiKey?: string | undefined
-	chutesApiKey?: string | undefined
-	litellmBaseUrl?: string | undefined
-	litellmApiKey?: string | undefined
-	litellmModelId?: string | undefined
-	includeMaxTokens?: boolean | undefined
-	reasoningEffort?: ("low" | "medium" | "high") | undefined
-	diffEnabled?: boolean | undefined
-	fuzzyMatchThreshold?: number | undefined
-	modelTemperature?: (number | null) | undefined
-	rateLimitSeconds?: number | undefined
-	modelMaxTokens?: number | undefined
-	modelMaxThinkingTokens?: number | undefined
-}
-
 type GlobalSettings = {
 	currentApiConfigName?: string | undefined
 	listApiConfigMeta?:
@@ -379,12 +174,165 @@ type GlobalSettings = {
 	historyPreviewCollapsed?: boolean | undefined
 }
 
+type ProviderSettings = {
+	apiProvider?:
+		| (
+				| "zgsm"
+				| "anthropic"
+				| "glama"
+				| "openrouter"
+				| "bedrock"
+				| "vertex"
+				| "openai"
+				| "ollama"
+				| "vscode-lm"
+				| "lmstudio"
+				| "gemini"
+				| "openai-native"
+				| "mistral"
+				| "deepseek"
+				| "unbound"
+				| "requesty"
+				| "human-relay"
+				| "fake-ai"
+				| "xai"
+				| "groq"
+				| "chutes"
+				| "litellm"
+		  )
+		| undefined
+	includeMaxTokens?: boolean | undefined
+	reasoningEffort?: ("low" | "medium" | "high") | undefined
+	diffEnabled?: boolean | undefined
+	fuzzyMatchThreshold?: number | undefined
+	modelTemperature?: (number | null) | undefined
+	rateLimitSeconds?: number | undefined
+	modelMaxTokens?: number | undefined
+	modelMaxThinkingTokens?: number | undefined
+	apiModelId?: string | undefined
+	apiKey?: string | undefined
+	anthropicBaseUrl?: string | undefined
+	anthropicUseAuthToken?: boolean | undefined
+	glamaModelId?: string | undefined
+	glamaApiKey?: string | undefined
+	openRouterApiKey?: string | undefined
+	openRouterModelId?: string | undefined
+	openRouterBaseUrl?: string | undefined
+	openRouterSpecificProvider?: string | undefined
+	openRouterUseMiddleOutTransform?: boolean | undefined
+	awsAccessKey?: string | undefined
+	awsSecretKey?: string | undefined
+	awsSessionToken?: string | undefined
+	awsRegion?: string | undefined
+	awsUseCrossRegionInference?: boolean | undefined
+	awsUsePromptCache?: boolean | undefined
+	awsProfile?: string | undefined
+	awsUseProfile?: boolean | undefined
+	awsCustomArn?: string | undefined
+	vertexKeyFile?: string | undefined
+	vertexJsonCredentials?: string | undefined
+	vertexProjectId?: string | undefined
+	vertexRegion?: string | undefined
+	openAiBaseUrl?: string | undefined
+	openAiApiKey?: string | undefined
+	openAiLegacyFormat?: boolean | undefined
+	openAiR1FormatEnabled?: boolean | undefined
+	openAiModelId?: string | undefined
+	openAiCustomModelInfo?:
+		| ({
+				maxTokens?: (number | null) | undefined
+				maxThinkingTokens?: (number | null) | undefined
+				contextWindow: number
+				supportsImages?: boolean | undefined
+				supportsComputerUse?: boolean | undefined
+				supportsPromptCache: boolean
+				inputPrice?: number | undefined
+				outputPrice?: number | undefined
+				cacheWritesPrice?: number | undefined
+				cacheReadsPrice?: number | undefined
+				description?: string | undefined
+				reasoningEffort?: ("low" | "medium" | "high") | undefined
+				thinking?: boolean | undefined
+				minTokensPerCachePoint?: number | undefined
+				maxCachePoints?: number | undefined
+				cachableFields?: string[] | undefined
+				tiers?:
+					| {
+							contextWindow: number
+							inputPrice?: number | undefined
+							outputPrice?: number | undefined
+							cacheWritesPrice?: number | undefined
+							cacheReadsPrice?: number | undefined
+					  }[]
+					| undefined
+		  } | null)
+		| undefined
+	openAiUseAzure?: boolean | undefined
+	azureApiVersion?: string | undefined
+	openAiStreamingEnabled?: boolean | undefined
+	enableReasoningEffort?: boolean | undefined
+	openAiHostHeader?: string | undefined
+	openAiHeaders?:
+		| {
+				[x: string]: string
+		  }
+		| undefined
+	ollamaModelId?: string | undefined
+	ollamaBaseUrl?: string | undefined
+	vsCodeLmModelSelector?:
+		| {
+				vendor?: string | undefined
+				family?: string | undefined
+				version?: string | undefined
+				id?: string | undefined
+		  }
+		| undefined
+	lmStudioModelId?: string | undefined
+	lmStudioBaseUrl?: string | undefined
+	lmStudioDraftModelId?: string | undefined
+	lmStudioSpeculativeDecodingEnabled?: boolean | undefined
+	geminiApiKey?: string | undefined
+	googleGeminiBaseUrl?: string | undefined
+	openAiNativeApiKey?: string | undefined
+	openAiNativeBaseUrl?: string | undefined
+	mistralApiKey?: string | undefined
+	mistralCodestralUrl?: string | undefined
+	deepSeekBaseUrl?: string | undefined
+	deepSeekApiKey?: string | undefined
+	unboundApiKey?: string | undefined
+	unboundModelId?: string | undefined
+	requestyApiKey?: string | undefined
+	requestyModelId?: string | undefined
+	fakeAi?: unknown | undefined
+	xaiApiKey?: string | undefined
+	groqApiKey?: string | undefined
+	chutesApiKey?: string | undefined
+	litellmBaseUrl?: string | undefined
+	litellmApiKey?: string | undefined
+	litellmModelId?: string | undefined
+	zgsmBaseUrl?: string | undefined
+	zgsmApiKey?: string | undefined
+	zgsmModelId?: string | undefined
+	zgsmDefaultBaseUrl?: string | undefined
+	zgsmDefaultModelId?: string | undefined
+	zgsmSite?: string | undefined
+	zgsmLoginUrl?: string | undefined
+	zgsmLogoutUrl?: string | undefined
+	zgsmTokenUrl?: string | undefined
+	zgsmCompletionUrl?: string | undefined
+	zgsmDownloadUrl?: string | undefined
+	zgsmRedirectUri?: string | undefined
+	zgsmClientId?: string | undefined
+	zgsmClientSecret?: string | undefined
+	isZgsmApiKeyValid?: boolean | undefined
+}
 
 type ProviderSettingsEntry = {
 	id: string
 	name: string
 	apiProvider?:
 		| (
+				| "zgsm"
 				| "anthropic"
 				| "glama"
 				| "openrouter"
@@ -629,6 +577,7 @@ type IpcMessage =
 							configuration: {
 								apiProvider?:
 									| (
+											| "zgsm"
 											| "anthropic"
 											| "glama"
 											| "openrouter"
@@ -761,6 +710,21 @@ type IpcMessage =
 								litellmBaseUrl?: string | undefined
 								litellmApiKey?: string | undefined
 								litellmModelId?: string | undefined
+								zgsmBaseUrl?: string | undefined
+								zgsmApiKey?: string | undefined
+								zgsmModelId?: string | undefined
+								zgsmDefaultBaseUrl?: string | undefined
+								zgsmDefaultModelId?: string | undefined
+								zgsmSite?: string | undefined
+								zgsmLoginUrl?: string | undefined
+								zgsmLogoutUrl?: string | undefined
+								zgsmTokenUrl?: string | undefined
+								zgsmCompletionUrl?: string | undefined
+								zgsmDownloadUrl?: string | undefined
+								zgsmRedirectUri?: string | undefined
+								zgsmClientId?: string | undefined
+								zgsmClientSecret?: string | undefined
+								isZgsmApiKeyValid?: boolean | undefined
 								currentApiConfigName?: string | undefined
 								listApiConfigMeta?:
 									| {
@@ -768,6 +732,7 @@ type IpcMessage =
 											name: string
 											apiProvider?:
 												| (
+														| "zgsm"
 														| "anthropic"
 														| "glama"
 														| "openrouter"
@@ -1091,6 +1056,7 @@ type TaskCommand =
 				configuration: {
 					apiProvider?:
 						| (
+								| "zgsm"
 								| "anthropic"
 								| "glama"
 								| "openrouter"
@@ -1223,6 +1189,21 @@ type TaskCommand =
 					litellmBaseUrl?: string | undefined
 					litellmApiKey?: string | undefined
 					litellmModelId?: string | undefined
+					zgsmBaseUrl?: string | undefined
+					zgsmApiKey?: string | undefined
+					zgsmModelId?: string | undefined
+					zgsmDefaultBaseUrl?: string | undefined
+					zgsmDefaultModelId?: string | undefined
+					zgsmSite?: string | undefined
+					zgsmLoginUrl?: string | undefined
+					zgsmLogoutUrl?: string | undefined
+					zgsmTokenUrl?: string | undefined
+					zgsmCompletionUrl?: string | undefined
+					zgsmDownloadUrl?: string | undefined
+					zgsmRedirectUri?: string | undefined
+					zgsmClientId?: string | undefined
+					zgsmClientSecret?: string | undefined
+					isZgsmApiKeyValid?: boolean | undefined
 					currentApiConfigName?: string | undefined
 					listApiConfigMeta?:
 						| {
@@ -1230,6 +1211,7 @@ type TaskCommand =
 								name: string
 								apiProvider?:
 									| (
+											| "zgsm"
 											| "anthropic"
 											| "glama"
 											| "openrouter"

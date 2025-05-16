@@ -80,7 +80,7 @@ export async function afterZgsmPostLogin({
 			apiConfiguration.openAiHostHeader,
 		)
 
-		await provider.upsertApiConfiguration(configName, {
+		await provider.upsertProviderProfile(configName, {
 			...apiConfiguration,
 			zgsmModelId: apiConfiguration.zgsmModelId || zgsmDefaultModelId,
 			zgsmDefaultModelId,
@@ -107,10 +107,10 @@ export async function handleZgsmLogin(
 	// Open authentication link
 	await vscode.env.openExternal(vscode.Uri.parse(authUrl))
 
-	// Save apiConfiguration for use after successful authentication
-	if (apiConfiguration) {
-		await provider.updateApiConfiguration(apiConfiguration)
-	}
+	// // Save apiConfiguration for use after successful authentication
+	// if (apiConfiguration) {
+	// 	await provider.upsertProviderProfile((await provider.getState()).currentApiConfigName, apiConfiguration)
+	// }
 
 	// Send message to webview to notify that authentication has started
 	provider.postMessageToWebview({ type: "state", state: await provider.getStateToPostToWebview() })

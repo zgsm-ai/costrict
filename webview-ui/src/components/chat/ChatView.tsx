@@ -27,7 +27,7 @@ import { useSelectedModel } from "@/components/ui/hooks/useSelectedModel"
 import { validateCommand } from "@src/utils/command-validation"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 
-import TelemetryBanner from "../common/TelemetryBanner"
+// import TelemetryBanner from "../common/TelemetryBanner"
 import { useTaskSearch } from "../history/useTaskSearch"
 import HistoryPreview from "../history/HistoryPreview"
 import RooHero from "@src/components/welcome/RooHero"

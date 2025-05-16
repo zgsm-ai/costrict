@@ -14,16 +14,11 @@ import { t } from "../../i18n"
 import { setPanel } from "../../activate/registerCommands"
 import {
 	ApiConfiguration,
-	ApiProvider,
-	ModelInfo,
 	requestyDefaultModelId,
-	requestyDefaultModelInfo,
 	openRouterDefaultModelId,
-	openRouterDefaultModelInfo,
 	glamaDefaultModelId,
-	glamaDefaultModelInfo,
 	zgsmProviderKey,
-	zgsmModels,
+	// zgsmModels,
 } from "../../shared/api"
 import { findLast } from "../../shared/array"
 import { supportPrompt } from "../../shared/support-prompt"

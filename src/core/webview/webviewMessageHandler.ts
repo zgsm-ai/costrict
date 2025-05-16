@@ -309,7 +309,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			}
 
 			break
-		case "refreshZgsmModels":
+		case "requestZgsmModels":
 			if (message?.values?.baseUrl && message?.values?.apiKey) {
 				const [zgsmModels, zgsmDefaultModelId, err] = await getZgsmModels(
 					message?.values?.baseUrl,

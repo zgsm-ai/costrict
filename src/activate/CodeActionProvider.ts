@@ -36,6 +36,13 @@ export const COMMAND_IDS = {
 } as const
 
 export type CodeActionName = "EXPLAIN" | "FIX" | "IMPROVE" | "ADD_TO_CONTEXT" | "NEW_TASK"
+| "ZGSM_EXPLAIN"
+| "ZGSM_ADD_COMMENT"
+| "ZGSM_CODE_REVIEW"
+| "ZGSM_ADD_DEBUG_CODE"
+| "ZGSM_ADD_STRONG_CODE"
+| "ZGSM_SIMPLIFY_CODE"
+| "ZGSM_PERFORMANCE"
 
 export type CodeActionId =
 	| "vscode-zgsm.explainCode"
@@ -57,6 +64,15 @@ export const ACTION_TITLES: Record<CodeActionName, string> = {
 	IMPROVE: "Improve with Shenma",
 	ADD_TO_CONTEXT: "Add to Shenma",
 	NEW_TASK: "New Shenma Task",
+
+	// todo: @monkeydluffy6017 Pull Request #114
+	ZGSM_EXPLAIN: "Shenma: ZGSM_EXPLAIN",
+	ZGSM_ADD_COMMENT: "Shenma: ZGSM_ADD_COMMENT",
+	ZGSM_CODE_REVIEW: "Shenma: ZGSM_CODE_REVIEW",
+	ZGSM_ADD_DEBUG_CODE: "Shenma: ZGSM_ADD_DEBUG_CODE",
+	ZGSM_ADD_STRONG_CODE: "Shenma: ZGSM_ADD_STRONG_CODE",
+	ZGSM_SIMPLIFY_CODE: "Shenma: ZGSM_SIMPLIFY_CODE",
+	ZGSM_PERFORMANCE: "Shenma: ZGSM_PERFORMANCE",
 } as const
 
 export class CodeActionProvider implements vscode.CodeActionProvider {
