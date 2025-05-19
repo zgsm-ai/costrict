@@ -12,9 +12,10 @@ export type AudioType = "notification" | "celebration" | "progress_loop"
 export interface WebviewMessage {
 	type:
 		| "zgsmLogin"
-		| "refreshZgsmModels"
+		| "requestZgsmModels"
 		| "apiConfiguration"
 		| "deleteMultipleTasksWithIds"
+		| "setHistoryPreviewCollapsed"
 		| "currentApiConfigName"
 		| "saveApiConfiguration"
 		| "upsertApiConfiguration"
@@ -159,6 +160,9 @@ export interface WebviewMessage {
 	source?: "global" | "project"
 	requestId?: string
 	ids?: string[]
+	hasSystemPromptOverride?: boolean
+	terminalOperation?: "continue" | "abort"
+	historyPreviewCollapsed?: boolean
 	authUrl?: string
 	url?: string
 }

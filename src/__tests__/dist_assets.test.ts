@@ -48,9 +48,9 @@ describe("dist assets", () => {
 			"tree-sitter.wasm",
 			"tree-sitter-yaml.wasm",
 			"tree-sitter-zig.wasm",
-		]
+		];
 
-		test.each(treeSitterFiles)("should have %s file", (filename) => {
+		(test as any).each(treeSitterFiles)("should have %s file", (filename: string) => {
 			expect(fs.existsSync(path.join(distPath, filename))).toBe(true)
 		})
 	})

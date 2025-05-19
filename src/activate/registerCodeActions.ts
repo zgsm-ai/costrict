@@ -12,7 +12,8 @@ export const registerCodeActions = (context: vscode.ExtensionContext) => {
 	registerCodeAction(context, COMMAND_IDS.ADD_TO_CONTEXT, "ADD_TO_CONTEXT")
 }
 
-const registerCodeAction = (context: vscode.ExtensionContext, command: CodeActionId, promptType: CodeActionName) => {
+export const registerCodeAction = (context: vscode.ExtensionContext, command: CodeActionId, promptType: CodeActionName) => {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let userInput: string | undefined
 
 	context.subscriptions.push(
