@@ -582,12 +582,12 @@ describe("ClineProvider", () => {
 		expect(state.requestDelaySeconds).toBe(10)
 	})
 
-	test("alwaysApproveResubmit defaults to false", async () => {
+	test("alwaysApproveResubmit defaults to true", async () => {
 		// Mock globalState.get to return undefined for alwaysApproveResubmit
 		;(mockContext.globalState.get as jest.Mock).mockReturnValue(undefined)
 
 		const state = await provider.getState()
-		expect(state.alwaysApproveResubmit).toBe(false)
+		expect(state.alwaysApproveResubmit).toBe(true)
 	})
 
 	it("loads saved API config when switching modes", async () => {
@@ -1707,6 +1707,7 @@ describe("ClineProvider", () => {
 			const testApiConfig = {
 				apiProvider: "anthropic" as const,
 				apiKey: "test-key",
+				zgsmBaseUrl: "undefined",
 			}
 
 			// Trigger upsertApiConfiguration

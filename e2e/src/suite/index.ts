@@ -12,18 +12,29 @@ declare global {
 }
 
 export async function run() {
-	const extension = vscode.extensions.getExtension<RooCodeAPI>("RooVeterinaryInc.roo-cline")
+	const extension = vscode.extensions.getExtension<RooCodeAPI>("zgsm-ai.zgsm")
 
 	if (!extension) {
 		throw new Error("Extension not found")
 	}
 
 	const api = extension.isActive ? extension.exports : await extension.activate()
-
 	await api.setConfiguration({
-		apiProvider: "openrouter" as const,
-		openRouterApiKey: process.env.OPENROUTER_API_KEY!,
-		openRouterModelId: "google/gemini-2.0-flash-001",
+		apiProvider: "zgsm" as const,
+		zgsmBaseUrl: "https://zgsm.sangfor.com",
+		zgsmApiKey: process.env.OPENROUTER_API_KEY!, // Replaced with "zgsm" but key is still used
+		zgsmModelId: "deepseek-v3",
+		zgsmDefaultBaseUrl: "https://zgsm.sangfor.com",
+		zgsmDefaultModelId: "deepseek-v3",
+		zgsmSite: "https://zgsm.ai",
+		zgsmLoginUrl: "/realms/gw/protocol/openid-connect/auth",
+		zgsmLogoutUrl: "/realms/gw/protocol/openid-connect/logout",
+		zgsmTokenUrl: "/realms/gw/protocol/openid-connect/token",
+		zgsmCompletionUrl: "/v2",
+		zgsmDownloadUrl: "/downloads",
+		zgsmRedirectUri: "/login/ok",
+		zgsmClientId: "vscode",
+		isZgsmApiKeyValid: true,
 	})
 
 	await vscode.commands.executeCommand("vscode-zgsm.SidebarProvider.focus")

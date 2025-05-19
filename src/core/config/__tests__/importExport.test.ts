@@ -492,7 +492,7 @@ describe("importExport", () => {
 			})
 
 			// Verify Uri.file was called with the correct path
-			expect(vscode.Uri.file).toHaveBeenCalledWith(path.join("/mock/home", "Documents", "roo-code-settings.json"))
+			expect(vscode.Uri.file).toHaveBeenCalledWith(path.join("/mock/home", "Documents", "shenma-settings.json"))
 		})
 	})
 })
