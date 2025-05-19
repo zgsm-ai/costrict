@@ -17,7 +17,7 @@ const WelcomeView = () => {
 	const { apiConfiguration, currentApiConfigName, setApiConfiguration, uriScheme, machineId } = useExtensionState()
 	const { t } = useAppTranslation()
 	const [errorMessage, setErrorMessage] = useState<string | undefined>()
-	const [baseUrlErrorMessage, setBaseUrlErrorMessage] = useState<string | undefined>()
+	// const [baseUrlErrorMessage, setBaseUrlErrorMessage] = useState<string | undefined>()
 
 	const handleSubmit = useCallback(() => {
 		const error = apiConfiguration ? validateApiConfiguration(apiConfiguration) : undefined
@@ -35,12 +35,12 @@ const WelcomeView = () => {
 			const isValid = isValidUrl(zgsmBaseUrl)
 
 			if (!isValid) {
-				setBaseUrlErrorMessage(t("welcome:baseUrlInvalidMsg"))
+				// setBaseUrlErrorMessage(t("welcome:baseUrlInvalidMsg"))
 				return
 			}
 		}
 
-		setBaseUrlErrorMessage(undefined)
+		// setBaseUrlErrorMessage(undefined)
 
 		if (apiConfiguration?.apiProvider === zgsmProviderKey) {
 			// Initiate ZGSM login process
@@ -48,7 +48,8 @@ const WelcomeView = () => {
 		} else {
 			vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
 		}
-	}, [apiConfiguration, currentApiConfigName, uriScheme, t])
+	}, [apiConfiguration, currentApiConfigName, uriScheme])
+	// }, [apiConfiguration, currentApiConfigName, uriScheme, t])
 
 	// Using a lazy initializer so it reads once at mount
 	const [imagesBaseUri] = useState(() => {
@@ -71,58 +72,58 @@ const WelcomeView = () => {
 						<>
 							<h4 className="mt-3 mb-2 text-center">{t("welcome:startRouter")}</h4>
 
-								<div className="flex gap-4">
-									{/* Define the providers */}
-									{(() => {
-										// Provider card configuration
-										const providers = [
-											{
-												slug: "requesty",
-												name: "Requesty",
-												description: t("welcome:routers.requesty.description"),
-												incentive: t("welcome:routers.requesty.incentive"),
-												authUrl: getRequestyAuthUrl(uriScheme),
-											},
-											{
-												slug: "openrouter",
-												name: "OpenRouter",
-												description: t("welcome:routers.openrouter.description"),
-												authUrl: getOpenRouterAuthUrl(uriScheme),
-											},
-										]
+							<div className="flex gap-4">
+								{/* Define the providers */}
+								{(() => {
+									// Provider card configuration
+									const providers = [
+										{
+											slug: "requesty",
+											name: "Requesty",
+											description: t("welcome:routers.requesty.description"),
+											incentive: t("welcome:routers.requesty.incentive"),
+											authUrl: getRequestyAuthUrl(uriScheme),
+										},
+										{
+											slug: "openrouter",
+											name: "OpenRouter",
+											description: t("welcome:routers.openrouter.description"),
+											authUrl: getOpenRouterAuthUrl(uriScheme),
+										},
+									]
 
-										// Shuffle providers based on machine ID (will be consistent for the same machine)
-										const orderedProviders = [...providers]
-										knuthShuffle(orderedProviders, (machineId as any) || Date.now())
+									// Shuffle providers based on machine ID (will be consistent for the same machine)
+									const orderedProviders = [...providers]
+									knuthShuffle(orderedProviders, (machineId as any) || Date.now())
 
-										// Render the provider cards
-										return orderedProviders.map((provider, index) => (
-											<a
-												key={index}
-												href={provider.authUrl}
-												className="flex-1 border border-vscode-panel-border rounded p-4 flex flex-col items-center cursor-pointer transition-all  no-underline text-inherit"
-												target="_blank"
-												rel="noopener noreferrer">
-												<div className="font-bold">{provider.name}</div>
-												<div className="w-16 h-16 flex items-center justify-center rounded m-2 overflow-hidden relative">
-													<img
-														src={`${imagesBaseUri}/${provider.slug}.png`}
-														alt={provider.name}
-														className="w-full h-full object-contain p-2"
-													/>
+									// Render the provider cards
+									return orderedProviders.map((provider, index) => (
+										<a
+											key={index}
+											href={provider.authUrl}
+											className="flex-1 border border-vscode-panel-border rounded p-4 flex flex-col items-center cursor-pointer transition-all  no-underline text-inherit"
+											target="_blank"
+											rel="noopener noreferrer">
+											<div className="font-bold">{provider.name}</div>
+											<div className="w-16 h-16 flex items-center justify-center rounded m-2 overflow-hidden relative">
+												<img
+													src={`${imagesBaseUri}/${provider.slug}.png`}
+													alt={provider.name}
+													className="w-full h-full object-contain p-2"
+												/>
+											</div>
+											<div className="text-center">
+												<div className="text-xs text-vscode-descriptionForeground">
+													{provider.description}
 												</div>
-												<div className="text-center">
-													<div className="text-xs text-vscode-descriptionForeground">
-														{provider.description}
-													</div>
-													{provider.incentive && (
-														<div className="text-xs font-bold">{provider.incentive}</div>
-													)}
-												</div>
-											</a>
-										))
-									})()}
-								</div>
+												{provider.incentive && (
+													<div className="text-xs font-bold">{provider.incentive}</div>
+												)}
+											</div>
+										</a>
+									))
+								})()}
+							</div>
 
 							<div className="text-center my-4 text-xl uppercase font-bold">{t("welcome:or")}</div>
 							<h4 className="mt-3 mb-2 text-center">{t("welcome:startCustom")}</h4>
@@ -135,8 +136,8 @@ const WelcomeView = () => {
 						setApiConfigurationField={(field, value) => setApiConfiguration({ [field]: value })}
 						errorMessage={errorMessage}
 						setErrorMessage={setErrorMessage}
-						baseUrlErrorMessage={baseUrlErrorMessage}
-						setBaseUrlErrorMessage={setBaseUrlErrorMessage}
+						// baseUrlErrorMessage={baseUrlErrorMessage}
+						// setBaseUrlErrorMessage={setBaseUrlErrorMessage}
 					/>
 				</div>
 			</TabContent>
