@@ -70,4 +70,3 @@ assets/docs/**
 !.env
 
 # zgsm
-!/images/**

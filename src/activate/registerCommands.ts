@@ -210,7 +210,7 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 
 	// TODO: Use better svg icon with light and dark variants (see
 	// https://stackoverflow.com/questions/58365687/vscode-extension-iconpath).
-	newPanel.iconPath = vscode.Uri.joinPath(context.extensionUri, "zgsm", "images", "zhuge_shenma_rebot_logo_big.png")
+	newPanel.iconPath = vscode.Uri.joinPath(context.extensionUri, "zgsm", "assets", "images", "shenma_robot_logo_big.png")
 	// newPanel.iconPath = {
 	// 	light: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "panel_light.png"),
 	// 	dark: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "panel_dark.png"),

@@ -23,15 +23,15 @@
 
 在 vscode 插件商店搜索 “Shenma”，点击 “Install” 进行安装
 
-    ![alt text](/images/install/extensions.png)
+    ![alt text](/assets/images/install/extensions.png)
 
 ### 登录账户
 
 点击“登录诸葛神码”按钮，在接下来的界面依次输入手机号，图形验证码和短信验证码即可完成登录
 
-    ![alt text](/images/install/login_ide.png)
+    ![alt text](/assets/images/install/login_ide.png)
 
-    ![alt text](/images/install/login_web.png)
+    ![alt text](/assets/images/install/login_web.png)
 
 账户登录后，就可以开始体验诸葛神码了
 
@@ -85,7 +85,7 @@ bash deploy.sh
 
 在接下来的认证界面输入
 
-    ![alt text](/images/install/login_backend.png)
+    ![alt text](/assets/images/install/login_backend.png)
 
 账户名：root
 
