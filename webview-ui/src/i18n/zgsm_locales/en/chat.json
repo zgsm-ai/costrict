@@ -10,7 +10,12 @@
 		"didRead": "Shenma read this file:",
 		"wantsToEdit": "Shenma wants to edit this file:",
 		"wantsToEditOutsideWorkspace": "Shenma wants to edit this file outside of the workspace:",
-		"wantsToCreate": "Shenma wants to create a new file:"
+		"wantsToCreate": "Shenma wants to create a new file:",
+		"wantsToSearchReplace": "Shenma wants to search and replace in this file:",
+		"didSearchReplace": "Shenma performed search and replace on this file:",
+		"wantsToInsert": "Shenma wants to insert content into this file:",
+		"wantsToInsertWithLineNumber": "Shenma wants to insert content into this file at line {{lineNumber}}:",
+		"wantsToInsertAtEnd": "Shenma wants to append content to the end of this file:"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Shenma wants to view the top level files in this directory:",
@@ -42,5 +47,12 @@
 	"troubleMessage": "Shenma is having trouble...",
 	"browser": {
 		"rooWantsToUse": "Shenma wants to use the browser:"
+	},
+	"autoApprove": {
+		"description": "Auto-approve allows Shenma to perform actions without asking for permission. Only enable for actions you fully trust. More detailed configuration available in <settingsLink>Settings</settingsLink>."
+	},
+	"announcement": {
+		"title": "🎉 Shenma {{version}} Released",
+		"description": "Shenma {{version}} brings new features and improvements based on your feedback."
 	}
 }
