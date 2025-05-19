@@ -9,15 +9,16 @@
  */
 import * as vscode from "vscode"
 import { getExtensionsLatestVersion } from "./api"
-import { EXTENSION_ID, configCompletion, configCodeLens } from "./constant"
+import { EXTENSION_ID, configCompletion, configCodeLens, ZGSM_API_KEY, ZGSM_BASE_URL } from "./constant"
 import { envSetting } from "./env"
 import { Logger } from "./log-util"
 import { LangSetting, LangSwitch, LangDisables, getLanguageByFilePath } from "./lang-util"
 import { DateFormat, formatTime, formatTimeDifference } from "./util"
 import { t } from "../../../src/i18n"
-import { zgsmProviderKey } from "../../../src/shared/api"
+import { ApiConfiguration, zgsmProviderKey } from "../../../src/shared/api"
 import { CompletionClient } from "../codeCompletion/completionClient"
 import { generateZgsmAuthUrl } from "../../../src/shared/zgsmAuthUrl"
+import { checkExistKey } from "../../../src/shared/checkExistApiConfig"
 /**
  * Set up a timer to periodically check for extension updates and programming language settings
  */
@@ -345,71 +346,10 @@ function createButtonCommand(funcName: string, configName: string, enabledSettin
 }
 
 /**
- * Status bar click event function
+ * Status bar click forbid callback function
+ * @param editor vscode.TextEditor
  */
-export async function setupLangSwitchs() {
-	const editor = vscode.window.activeTextEditor
-	if (!editor) {
-		return
-	}
-
-	const provider = CompletionClient.getProvider()
-
-	const { apiConfiguration } = await provider!.getState()
-
-	// if no apiConfiguration.zgsmApiKey, user is not logger in
-	const { isZgsmApiKeyValid } = apiConfiguration
-
-	if (!isZgsmApiKeyValid) {
-		const reLoginText = t("common:window.error.login_again")
-		vscode.window
-			.showErrorMessage(t("common:window.error.failed_to_get_login_info"), reLoginText)
-			.then(async (selection) => {
-				// re-login
-				if (selection === reLoginText) {
-					await vscode.window
-						.showInputBox({
-							title: t("common:window.relogin_input.title"),
-							placeHolder: t("common:window.relogin_input.placeholder"),
-							ignoreFocusOut: true,
-							validateInput: (input) => {
-								if (!input) {
-									return null
-								}
-
-								try {
-									const parsedUrl = new URL(input)
-									const VALID_PROTOCOLS = ["http:", "https:"]
-
-									if (!VALID_PROTOCOLS.includes(parsedUrl.protocol)) {
-										return t("common:window.relogin_input.error_portocol")
-									}
-
-									return null
-								} catch (error) {
-									return t("common:window.relogin_input.error_url")
-								}
-							},
-						})
-						.then((credentials) => {
-							if (credentials === undefined) {
-								return
-							}
-							const authUrl = generateZgsmAuthUrl(
-								{
-									...apiConfiguration,
-									zgsmBaseUrl: credentials,
-								},
-								vscode.env.uriScheme,
-							)
-							vscode.env.openExternal(vscode.Uri.parse(authUrl))
-						})
-				}
-			})
-
-		return
-	}
-
+function statusBarForbidCallback(editor: vscode.TextEditor) {
 	const language = getLanguageByFilePath(editor.document.uri.fsPath)
 	const completionSwitch = LangSetting.getCompletionDisable(language)
 	const codelensSwitch = LangSetting.getCodelensDisable(language)
@@ -449,4 +389,62 @@ export async function setupLangSwitchs() {
 				}
 			}
 		})
+}
+
+function statusBarloginCallback(apiConfiguration: ApiConfiguration) {
+	const reLoginText = t("common:window.error.login_again")
+	vscode.window
+		.showErrorMessage(t("common:window.error.failed_to_get_login_info"), reLoginText)
+		.then(async (selection) => {
+			if (selection !== reLoginText) {
+				return
+			}
+			// re-login
+			const authUrl = generateZgsmAuthUrl(apiConfiguration, vscode.env.uriScheme)
+			vscode.env.openExternal(vscode.Uri.parse(authUrl))
+		})
+}
+
+/**
+ * Status bar click event function
+ */
+export async function handleStatusBarClick() {
+	const editor = vscode.window.activeTextEditor
+	if (!editor) {
+		return
+	}
+
+	const provider = CompletionClient.getProvider()
+
+	const { apiConfiguration } = await provider!.getState()
+
+	const context = provider?.contextProxy
+
+	const zgsmApiKey = await context?.getOriginSecrets(ZGSM_API_KEY)
+
+	const globalStateZgsmBaseUrl = await context?.getOriginGlobalState(ZGSM_BASE_URL)
+
+	const isLogin = checkExistKey(apiConfiguration)
+
+	// if isZgsmApiKeyValid is false, user is not authenticated
+	const { isZgsmApiKeyValid } = apiConfiguration
+
+	const hasView = provider?.hasView
+	const hasValidKey = !isZgsmApiKeyValid
+
+	// 1.open webview but not login
+	// 2.not open webview and not login
+	// 3.token error
+	const needLogin = (!isLogin && hasView) || (!hasView && !zgsmApiKey) || hasValidKey
+
+	if (needLogin) {
+		statusBarloginCallback({
+			...apiConfiguration,
+			zgsmBaseUrl: hasView ? apiConfiguration.zgsmBaseUrl : (globalStateZgsmBaseUrl as string),
+		})
+
+		return
+	}
+
+	statusBarForbidCallback(editor)
 }

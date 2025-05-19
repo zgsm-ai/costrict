@@ -15,7 +15,7 @@ import { CompletionStatusBar } from "./codeCompletion/completionStatusBar"
 import { AICompletionProvider } from "./codeCompletion/completionProvider"
 import { codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codeLens/codeLensCallBackFunc"
 import { MyCodeLensProvider } from "./codeLens/codeLensProvider"
-import { configCompletion, configCodeLens } from "./common/constant"
+import { configCompletion, configCodeLens, OPENAI_CLIENT_NOT_INITIALIZED, ZGSM_API_KEY } from "./common/constant"
 // import { initEnv, updateEnv } from "./common/env"
 // import { Logger } from "./common/log-util"
 import {
@@ -127,7 +127,14 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 			cvProvider.userFeedbackIssue()
 		}),
 	)
-	CompletionStatusBar.initByConfig()
+	// get zgsmApiKey without webview resolve
+	const key = await context.secrets.get(ZGSM_API_KEY)
+
+	key
+		? CompletionStatusBar.initByConfig()
+		: CompletionStatusBar.fail({
+				message: OPENAI_CLIENT_NOT_INITIALIZED,
+			})
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
