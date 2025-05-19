@@ -28,7 +28,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
 	constructor(public context: vscode.ExtensionContext) {
 		vscode.window.createTextEditorDecorationType({
-			gutterIconPath: vscode.Uri.file(context.asAbsolutePath("images/ai-rotate.svg")),
+			gutterIconPath: vscode.Uri.file(context.asAbsolutePath("assets/images/ai-rotate.svg")),
 			gutterIconSize: "contain",
 			rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
 		})

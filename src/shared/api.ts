@@ -5,7 +5,7 @@ export type { ModelInfo, ProviderName, ProviderSettings }
 export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider" | "id">
 
 export type ApiConfiguration = ProviderSettings
-export const zgsmProviderKey = "zgsm"
+export const zgsmProviderKey = "shenma"
 export const zgsmModels = {
 	default: {
 		maxTokens: 8192,

@@ -54,7 +54,7 @@ export const PROVIDERS = [
 	{ value: "litellm", label: "LiteLLM" },
 ].sort((a, b) => a.label.localeCompare(b.label))
 
-PROVIDERS.unshift({ value: zgsmProviderKey, label: "Zgsm" })
+PROVIDERS.unshift({ value: zgsmProviderKey, label: "Shenma" })
 
 export const VERTEX_REGIONS = [
 	{ value: "us-east5", label: "us-east5" },
