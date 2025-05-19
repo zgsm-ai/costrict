@@ -9,7 +9,7 @@ type GlobalSettings = {
 				name: string
 				apiProvider?:
 					| (
-							| "shenma"
+							| "zgsm"
 							| "anthropic"
 							| "glama"
 							| "openrouter"
@@ -179,7 +179,7 @@ export type { GlobalSettings }
 type ProviderSettings = {
 	apiProvider?:
 		| (
-				| "shenma"
+				| "zgsm"
 				| "anthropic"
 				| "glama"
 				| "openrouter"
@@ -336,7 +336,7 @@ type ProviderSettingsEntry = {
 	name: string
 	apiProvider?:
 		| (
-				| "shenma"
+				| "zgsm"
 				| "anthropic"
 				| "glama"
 				| "openrouter"
@@ -589,7 +589,7 @@ type IpcMessage =
 							configuration: {
 								apiProvider?:
 									| (
-											| "shenma"
+											| "zgsm"
 											| "anthropic"
 											| "glama"
 											| "openrouter"
@@ -744,7 +744,7 @@ type IpcMessage =
 											name: string
 											apiProvider?:
 												| (
-														| "shenma"
+														| "zgsm"
 														| "anthropic"
 														| "glama"
 														| "openrouter"
@@ -1070,7 +1070,7 @@ type TaskCommand =
 				configuration: {
 					apiProvider?:
 						| (
-								| "shenma"
+								| "zgsm"
 								| "anthropic"
 								| "glama"
 								| "openrouter"
@@ -1225,7 +1225,7 @@ type TaskCommand =
 								name: string
 								apiProvider?:
 									| (
-											| "shenma"
+											| "zgsm"
 											| "anthropic"
 											| "glama"
 											| "openrouter"
