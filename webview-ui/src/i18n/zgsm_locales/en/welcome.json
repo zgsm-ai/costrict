@@ -1,5 +1,6 @@
 {
 	"getZgsmApiKey": "Login to Shenma",
+	"introduction": "<strong>Shenma is the premiere autonomous coding agent.</strong> Get ready to architect, code, debug, and boost your productivity like you've never seen before. To continue, Shenma requires an API key.",
 	"greeting": "Hi, I'm Shenma!",
 	"telemetry": {
 		"title": "Help Improve Shenma"

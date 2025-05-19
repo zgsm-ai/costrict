@@ -10,7 +10,12 @@
 		"didRead": "諸葛神碼已讀取此文件：",
 		"wantsToEdit": "諸葛神碼想要編輯此文件：",
 		"wantsToEditOutsideWorkspace": "諸葛神碼想要編輯工作區外的此文件：",
-		"wantsToCreate": "諸葛神碼想要創建新文件："
+		"wantsToCreate": "諸葛神碼想要創建新文件：",
+		"wantsToSearchReplace": "諸葛神碼想要在此檔案中搜尋和取代：",
+		"didSearchReplace": "諸葛神碼已在此檔案執行搜尋和取代：",
+		"wantsToInsert": "諸葛神碼想要在此檔案中插入內容：",
+		"wantsToInsertWithLineNumber": "諸葛神碼想要在此檔案第 {{lineNumber}} 行插入內容：",
+		"wantsToInsertAtEnd": "諸葛神碼想要在此檔案末尾新增內容："
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "諸葛神碼想要查看此目錄中的頂層文件：",
@@ -42,5 +47,12 @@
 	"troubleMessage": "諸葛神碼遇到了一些問題...",
 	"browser": {
 		"rooWantsToUse": "諸葛神碼想要使用瀏覽器："
+	},
+	"autoApprove": {
+		"description": "自動核准讓諸葛神碼可以在無需徵求您同意的情況下執行動作。請僅對您完全信任的動作啟用此功能。您可以在<settingsLink>設定</settingsLink>中進行更詳細的調整。"
+	},
+	"announcement": {
+		"title": "🎉 諸葛神碼 {{version}} 已發布",
+		"description": "諸葛神碼 {{version}} 帶來基於您意見回饋的新功能與改進。"
 	}
-} 
+}
