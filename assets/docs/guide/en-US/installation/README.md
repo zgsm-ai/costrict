@@ -24,16 +24,16 @@ To help you deploy Shenma more efficiently, this document provides a clear insta
 
 1. Search for "Shenma" in the VS Code Marketplace and click **Install**.
 
-    ![alt text](/images/install/extensions.png)
+    ![alt text](/assets/images/install/extensions.png)
 
 ### Login
 
 1. Click the **Login** button.
 2. Enter your phone number, graphical CAPTCHA, and SMS verification code.
 
-    ![alt text](/images/install/login_ide.png)
+    ![alt text](/assets/images/install/login_ide.png)
 
-    ![alt text](/images/install/login_web.png)
+    ![alt text](/assets/images/install/login_web.png)
 
 After logging in, you can start using Shenma.
 
@@ -80,7 +80,7 @@ bash deploy.sh
 
 - Visit one API address, local by visiting http://127.0.0.1:30000, but can be by startup assigned address such as http://172.xxx.xxx.xxx:30000 for a visit
 
-    ![alt text](/images/install/login_backend.png)
+    ![alt text](/assets/images/install/login_backend.png)
 
 On the authentication interface, enter:
 
