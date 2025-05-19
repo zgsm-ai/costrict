@@ -2,6 +2,7 @@ import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { memo } from "react"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { Trans } from "react-i18next"
+import { useExtensionState } from "@/context/ExtensionStateContext"
 
 interface AnnouncementProps {
 	hideAnnouncement: () => void
@@ -11,6 +12,8 @@ You must update the latestAnnouncementId in ClineProvider for new announcements 
 */
 const Announcement = ({ hideAnnouncement }: AnnouncementProps) => {
 	const { t } = useAppTranslation()
+	const extensionState = useExtensionState()
+	const { version } = extensionState
 
 	const discordLink = (
 		<VSCodeLink
@@ -58,9 +61,17 @@ const Announcement = ({ hideAnnouncement }: AnnouncementProps) => {
 					style={{ position: "absolute", top: "8px", right: "8px" }}>
 					<span className="codicon codicon-close"></span>
 				</VSCodeButton>
-				<h2 style={{ margin: "0 0 8px" }}>{t("chat:announcement.title")}</h2>
+				<h2 style={{ margin: "0 0 8px" }}>
+					{t("chat:announcement.title", {
+						version,
+					})}
+				</h2>
 
-				<p style={{ margin: "5px 0px" }}>{t("chat:announcement.description")}</p>
+				<p style={{ margin: "5px 0px" }}>
+					{t("chat:announcement.description", {
+						version,
+					})}
+				</p>
 
 				<h3 style={{ margin: "12px 0 5px", fontSize: "14px" }}>{t("chat:announcement.whatsNew")}</h3>
 				<ul style={{ margin: "5px 0" }}>
