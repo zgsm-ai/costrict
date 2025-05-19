@@ -14,7 +14,7 @@ import { handleNewTask } from "./handleTask"
 export function getVisibleProviderOrLog(outputChannel: vscode.OutputChannel): ClineProvider | undefined {
 	const visibleProvider = ClineProvider.getVisibleInstance()
 	if (!visibleProvider) {
-		outputChannel.appendLine("Cannot find any visible Roo Code instances.")
+		outputChannel.appendLine("Cannot find any visible Shenma instances.")
 		return undefined
 	}
 	return visibleProvider
@@ -210,7 +210,13 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 
 	// TODO: Use better svg icon with light and dark variants (see
 	// https://stackoverflow.com/questions/58365687/vscode-extension-iconpath).
-	newPanel.iconPath = vscode.Uri.joinPath(context.extensionUri, "zgsm", "assets", "images", "shenma_robot_logo_big.png")
+	newPanel.iconPath = vscode.Uri.joinPath(
+		context.extensionUri,
+		"zgsm",
+		"assets",
+		"images",
+		"shenma_robot_logo_big.png",
+	)
 	// newPanel.iconPath = {
 	// 	light: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "panel_light.png"),
 	// 	dark: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "panel_dark.png"),
