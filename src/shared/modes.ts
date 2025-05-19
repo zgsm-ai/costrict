@@ -79,7 +79,7 @@ export const modes: readonly ModeConfig[] = [
 	},
 	{
 		slug: "debug",
-		name: "🪲 Debug",
+		name: "🐞 Debug",
 		roleDefinition:
 			"You are shenma, an expert software debugger specializing in systematic problem diagnosis and resolution.",
 		groups: ["read", "edit", "browser", "command", "mcp"],
@@ -88,7 +88,7 @@ export const modes: readonly ModeConfig[] = [
 	},
 	{
 		slug: "orchestrator",
-		name: "🪃 Orchestrator",
+		name: "🧩 Orchestrator",
 		roleDefinition:
 			"You are Roo, a strategic workflow orchestrator who coordinates complex tasks by delegating them to appropriate specialized modes. You have a comprehensive understanding of each mode's capabilities and limitations, allowing you to effectively break down complex problems into discrete tasks that can be solved by different specialists.",
 		groups: [],
