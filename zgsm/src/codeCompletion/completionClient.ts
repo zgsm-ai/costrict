@@ -43,7 +43,10 @@ export class CompletionClient {
 	private async getApiConfig(hasView: boolean, apiConfiguration: any) {
 		if (hasView) {
 			return {
-				baseUrl: apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl,
+				baseUrl:
+					apiConfiguration.zgsmBaseUrl ||
+					apiConfiguration.zgsmDefaultBaseUrl ||
+					defaultZgsmAuthConfig.baseUrl,
 				completionUrl: apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl,
 				apiKey: apiConfiguration.zgsmApiKey || NOT_PROVIDERED,
 			}
