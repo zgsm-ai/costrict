@@ -315,6 +315,7 @@ type ProviderSettings = {
 	zgsmBaseUrl?: string | undefined
 	zgsmApiKey?: string | undefined
 	zgsmModelId?: string | undefined
+	zgsmModels?: string[] | undefined
 	zgsmDefaultBaseUrl?: string | undefined
 	zgsmDefaultModelId?: string | undefined
 	zgsmSite?: string | undefined
@@ -725,6 +726,7 @@ type IpcMessage =
 								zgsmBaseUrl?: string | undefined
 								zgsmApiKey?: string | undefined
 								zgsmModelId?: string | undefined
+								zgsmModels?: string[] | undefined
 								zgsmDefaultBaseUrl?: string | undefined
 								zgsmDefaultModelId?: string | undefined
 								zgsmSite?: string | undefined
@@ -1206,6 +1208,7 @@ type TaskCommand =
 					zgsmBaseUrl?: string | undefined
 					zgsmApiKey?: string | undefined
 					zgsmModelId?: string | undefined
+					zgsmModels?: string[] | undefined
 					zgsmDefaultBaseUrl?: string | undefined
 					zgsmDefaultModelId?: string | undefined
 					zgsmSite?: string | undefined

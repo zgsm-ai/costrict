@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"target": "es5",
+		"target": "es2018",
 		"lib": ["dom", "dom.iterable", "esnext"],
 		"allowJs": true,
 		"skipLibCheck": true,
@@ -10,9 +10,13 @@
 		"forceConsistentCasingInFileNames": true,
 		"noFallthroughCasesInSwitch": true,
 		"module": "esnext",
+		"sourceMap": true,
+		"inlineSources": false,
 		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
 		"isolatedModules": true,
+		"useUnknownInCatchVariables": false,
+		"downlevelIteration": true,
 		"noEmit": true,
 		"jsx": "react-jsx",
 		"baseUrl": ".",

@@ -20,6 +20,7 @@
 		"getZgsmApiKey": "Login to Shenma",
 		"getZgsmApiKeyAgain": "Re-login to Shenma",
 		"zgsm": "Shenma",
+		"zgsmApiKey": "Shenma API Key",
 		"zgsmBaseUrl": "Shenma Base Url",
 		"zgsmDefaultBaseUrl": "Default: {{zgsmBaseUrl}}",
 		"lmStudio": {

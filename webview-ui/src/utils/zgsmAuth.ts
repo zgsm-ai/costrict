@@ -12,7 +12,7 @@ export function initiateZgsmLogin(apiConfiguration: ApiConfiguration, uriScheme?
 	// Send message to extension to handle authentication process
 	vscode.postMessage({
 		type: "zgsmLogin",
-		authUrl,
+		url: authUrl,
 		apiConfiguration,
 	})
 }

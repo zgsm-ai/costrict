@@ -6,7 +6,8 @@ import {
 	ApiHandlerOptions,
 	azureOpenAiDefaultApiVersion,
 	ModelInfo,
-	openAiModelInfoSaneDefaults,
+	// openAiModelInfoSaneDefaults,
+	zgsmModelInfos,
 } from "../../shared/api"
 import { SingleCompletionHandler } from "../index"
 import { convertToOpenAiMessages } from "../transform/openai-format"
@@ -17,6 +18,7 @@ import { BaseProvider } from "./base-provider"
 import { XmlMatcher } from "../../utils/xml-matcher"
 import { DEEP_SEEK_DEFAULT_TEMPERATURE } from "./constants"
 import { createHeaders } from "../../zgsmAuth/zgsmAuthHandler"
+import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 
 export const defaultHeaders = {
 	"HTTP-Referer": "https://github.com/RooVetGit/Roo-Cline",
@@ -234,7 +236,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 	override getModel(): { id: string; info: ModelInfo } {
 		return {
 			id: `${this.options.zgsmModelId || this.options.zgsmDefaultModelId || defaultModelCache}`,
-			info: this.options.openAiCustomModelInfo || openAiModelInfoSaneDefaults,
+			info: this.options.openAiCustomModelInfo || zgsmModelInfos.default,
 		}
 	}
 
@@ -351,7 +353,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 	}
 }
 
-const canParseURL = (url: string): boolean => {
+export const canParseURL = (url: string): boolean => {
 	// if the URL constructor is available, use it to check if the URL is valid
 	if (typeof URL.canParse === "function") {
 		return URL.canParse(url)
@@ -369,13 +371,11 @@ export async function getZgsmModels(
 	baseUrl?: string,
 	apiKey?: string,
 	hostHeader?: string,
-): Promise<[string[] | undefined, string | undefined, (AxiosError | undefined)?]> {
-	if (!baseUrl) {
-		return [[], undefined]
-	}
+): Promise<[string[], string | undefined, (AxiosError | undefined)?]> {
+	baseUrl = baseUrl || defaultZgsmAuthConfig.baseUrl
 
 	if (!canParseURL(baseUrl)) {
-		return [[], undefined]
+		throw new Error(`Invalid ZGSM base URL: ${baseUrl}`)
 	}
 
 	const config: Record<string, any> = {}
@@ -393,20 +393,17 @@ export async function getZgsmModels(
 		config["headers"] = headers
 	}
 
-	let errorObj: AxiosError | undefined
-
 	try {
 		const response = await axios.get(`${baseUrl}/v1/models`, config)
-		console.log('response', response);
-		
+		console.log("response", response)
+
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 
 		modelsCache = new WeakRef([...new Set<string>(modelsArray)])
 		defaultModelCache = modelsArray[0]
 	} catch (error) {
-		errorObj = error
 		console.error("Error fetching ZGSM models", error)
 	} finally {
-		return [modelsCache.deref(), defaultModelCache, errorObj ? errorObj : undefined]
+		return [modelsCache.deref() || [], defaultModelCache]
 	}
 }

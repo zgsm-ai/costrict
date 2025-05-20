@@ -27,7 +27,13 @@ import { zgsmProviderKey } from "../../../../src/shared/api"
 
 type ModelIdKey = keyof Pick<
 	ProviderSettings,
-	"glamaModelId" | "openRouterModelId" | "unboundModelId" | "requestyModelId" | "openAiModelId" | "litellmModelId" | "zgsmModelId"
+	| "glamaModelId"
+	| "openRouterModelId"
+	| "unboundModelId"
+	| "requestyModelId"
+	| "openAiModelId"
+	| "litellmModelId"
+	| "zgsmModelId"
 >
 
 interface ModelPickerProps {
@@ -38,7 +44,6 @@ interface ModelPickerProps {
 	serviceUrl: string
 	apiConfiguration: ProviderSettings
 	setApiConfigurationField: <K extends keyof ProviderSettings>(field: K, value: ProviderSettings[K]) => void
-	onOpenModelPicker?: () => void
 }
 
 export const ModelPicker = ({
@@ -49,7 +54,6 @@ export const ModelPicker = ({
 	serviceUrl,
 	apiConfiguration,
 	setApiConfigurationField,
-	onOpenModelPicker,
 }: ModelPickerProps) => {
 	const { t } = useAppTranslation()
 
@@ -58,11 +62,10 @@ export const ModelPicker = ({
 	const isInitialized = useRef(false)
 	const searchInputRef = useRef<HTMLInputElement>(null)
 	const modelIds = useMemo(() => Object.keys(models ?? {}).sort((a, b) => a.localeCompare(b)), [models])
-
 	const { id: selectedModelId, info: selectedModelInfo } = useSelectedModel(apiConfiguration)
 
 	const [searchValue, setSearchValue] = useState(
-		apiConfiguration.apiProvider === zgsmProviderKey ? "" : selectedModelId || "",
+		(apiConfiguration.apiProvider === zgsmProviderKey ? "" : selectedModelId) || "",
 	)
 
 	const onSelect = useCallback(
@@ -77,27 +80,23 @@ export const ModelPicker = ({
 			// Delay to ensure the popover is closed before setting the search value.
 			setTimeout(() => setSearchValue(apiConfiguration.apiProvider === zgsmProviderKey ? "" : modelId), 100)
 		},
-		[modelIdKey, setApiConfigurationField],
+		[apiConfiguration.apiProvider, modelIdKey, setApiConfigurationField],
 	)
 
 	const onOpenChange = useCallback(
 		(open: boolean) => {
-			open && onOpenModelPicker?.()
-
 			setOpen(open)
-
-			if (apiConfiguration.apiProvider === zgsmProviderKey) {
-				setTimeout(() => setSearchValue(""), 100)
-				return
-			}
 
 			// Abandon the current search if the popover is closed.
 			if (!open) {
 				// Delay to ensure the popover is closed before setting the search value.
-				setTimeout(() => setSearchValue(selectedModelId), 100)
+				setTimeout(
+					() => setSearchValue(apiConfiguration.apiProvider === zgsmProviderKey ? "" : selectedModelId),
+					100,
+				)
 			}
 		},
-		[selectedModelId, apiConfiguration.apiProvider, onOpenModelPicker],
+		[apiConfiguration.apiProvider, selectedModelId],
 	)
 
 	const onClearSearch = useCallback(() => {
@@ -202,7 +201,9 @@ export const ModelPicker = ({
 						i18nKey="settings:modelPicker.automaticFetch"
 						components={{
 							serviceLink: <VSCodeLink href={serviceUrl} className="text-sm" />,
-							defaultModelLink: <VSCodeLink onClick={() => onSelect(defaultModelId)} className="text-sm" />,
+							defaultModelLink: (
+								<VSCodeLink onClick={() => onSelect(defaultModelId)} className="text-sm" />
+							),
 						}}
 						values={{ serviceName, defaultModelId }}
 					/>

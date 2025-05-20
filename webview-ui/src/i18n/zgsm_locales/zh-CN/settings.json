@@ -19,6 +19,7 @@
 	"providers": {
 		"zgsm": "诸葛神码",
 		"zgsmBaseUrl": "诸葛神码 Base Url",
+		"zgsmApiKey": "诸葛神码 API 密钥",
 		"getZgsmApiKey": "登陆诸葛神码",
 		"getZgsmApiKeyAgain": "重新登陆诸葛神码",
 		"zgsmDefaultBaseUrl": "默认: {{zgsmBaseUrl}}",
