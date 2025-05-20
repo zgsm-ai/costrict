@@ -38,7 +38,7 @@ jobs:
         run: |
           current_package_version=$(node -p "require('./package.json').version")
           npm run vsix
-          package=$(unzip -l bin/roo-cline-${current_package_version}.vsix)
+          package=$(unzip -l bin/zgsm-${current_package_version}.vsix)
           echo "$package"
           echo "$package" | grep -q "dist/extension.js" || exit 1
           echo "$package" | grep -q "extension/webview-ui/build/assets/index.js" || exit 1
@@ -50,14 +50,14 @@ jobs:
           git tag -a "v${current_package_version}" -m "Release v${current_package_version}"
           git push origin "v${current_package_version}"
           echo "Successfully created and pushed git tag v${current_package_version}"
-      - name: Publish Extension
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: |
-          current_package_version=$(node -p "require('./package.json').version")
-          npm run publish:marketplace
-          echo "Successfully published version $current_package_version to VS Code Marketplace"
+      # - name: Publish Extension
+      #   env:
+      #     VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      #     OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      #   run: |
+      #     current_package_version=$(node -p "require('./package.json').version")
+      #     npm run publish:marketplace
+      #     echo "Successfully published version $current_package_version to VS Code Marketplace"
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,5 +81,5 @@ jobs:
             --title "Release v${current_package_version}" \
             --notes "$changelog_content" \
             --target ${{ env.GIT_REF }} \
-            bin/roo-cline-${current_package_version}.vsix
+            bin/zgsm-${current_package_version}.vsix
           echo "Successfully created GitHub Release v${current_package_version}"

@@ -50,7 +50,15 @@ body:
     id: model
     attributes:
       label: Model Used
-      description: Exact model name (e.g., Claude 3.7 Sonnet). Use N/A if irrelevant.
+      description: Clearly specify the exact model (e.g., Claude 3.7 Sonnet), if you think the issue is related to the model you are using, be sure to fill in this field.
+
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Actual vs. Expected Behavior
+      description: Clearly state what actually happened and what you expected instead.
+      placeholder: Provide precise details of the issue here.
     validations:
       required: true
 

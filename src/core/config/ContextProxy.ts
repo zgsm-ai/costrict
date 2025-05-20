@@ -292,4 +292,13 @@ export class ContextProxy {
 
 		return this._instance
 	}
+	// get state from originContext.globalState
+	public async getOriginGlobalState(key: string) {
+		return await this?.originalContext?.globalState.get(key)
+	}
+
+	// get state from originContext.secrets
+	public async getOriginSecrets(key: string) {
+		return await this?.originalContext?.secrets.get(key)
+	}
 }
