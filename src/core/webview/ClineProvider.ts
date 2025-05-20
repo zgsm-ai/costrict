@@ -51,8 +51,8 @@ import { telemetryService } from "../../services/telemetry/TelemetryService"
 import { getWorkspacePath } from "../../utils/path"
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import { WebviewMessage } from "../../shared/WebviewMessage"
-import { afterZgsmPostLogin, getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
-import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
+import { getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
+// import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 import { CompletionStatusBar } from "../../../zgsm/src/codeCompletion/completionStatusBar"
 
 /**
@@ -1110,15 +1110,13 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		const newConfiguration: ApiConfiguration = {
 			...apiConfiguration,
 			zgsmApiKey: apiKey,
+			zgsmModelId: apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId,
 			isZgsmApiKeyValid: true,
 		}
 
-		await afterZgsmPostLogin({
-			apiConfiguration: newConfiguration,
-			provider: this,
-			accessToken: apiKey,
-			configName: currentApiConfigName,
-		})
+		await this.upsertProviderProfile(currentApiConfigName, newConfiguration)
+		// handleZgsmAuthCallback
+		await this.postMessageToWebview({ type: "afterZgsmPostLogin", values: { apiKey } })
 		vscode.window.showInformationMessage("Shenma login successful")
 
 		CompletionStatusBar.complete()
@@ -1463,19 +1461,19 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		if (!providerSettings.apiProvider) {
 			providerSettings.apiProvider = apiProvider
 		}
-		Object.assign(providerSettings, {
-			zgsmSite: defaultZgsmAuthConfig.zgsmSite,
-			zgsmDefaultBaseUrl: defaultZgsmAuthConfig.baseUrl,
-			zgsmLoginUrl: defaultZgsmAuthConfig.loginUrl,
-			zgsmLogoutUrl: defaultZgsmAuthConfig.logoutUrl,
-			zgsmTokenUrl: defaultZgsmAuthConfig.tokenUrl,
-			zgsmCompletionUrl: defaultZgsmAuthConfig.completionUrl,
-			zgsmDownloadUrl: defaultZgsmAuthConfig.downloadUrl,
-			zgsmRedirectUri: defaultZgsmAuthConfig.redirectUri,
+		// Object.assign(providerSettings, {
+		// 	zgsmSite: defaultZgsmAuthConfig.zgsmSite,
+		// 	zgsmDefaultBaseUrl: defaultZgsmAuthConfig.baseUrl,
+		// 	zgsmLoginUrl: defaultZgsmAuthConfig.loginUrl,
+		// 	zgsmLogoutUrl: defaultZgsmAuthConfig.logoutUrl,
+		// 	zgsmTokenUrl: defaultZgsmAuthConfig.tokenUrl,
+		// 	zgsmCompletionUrl: defaultZgsmAuthConfig.completionUrl,
+		// 	zgsmDownloadUrl: defaultZgsmAuthConfig.downloadUrl,
+		// 	zgsmRedirectUri: defaultZgsmAuthConfig.redirectUri,
 
-			zgsmClientId: defaultZgsmAuthConfig.clientId,
-			zgsmClientSecret: defaultZgsmAuthConfig.clientSecret,
-		})
+		// 	zgsmClientId: defaultZgsmAuthConfig.clientId,
+		// 	zgsmClientSecret: defaultZgsmAuthConfig.clientSecret,
+		// })
 		// Return the same structure as before
 		return {
 			apiConfiguration: providerSettings,

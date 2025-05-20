@@ -31,6 +31,7 @@ import {
 	glamaDefaultModelId,
 	unboundDefaultModelId,
 	litellmDefaultModelId,
+	zgsmModelInfos,
 } from "@roo/shared/api"
 
 import { useRouterModels } from "./useRouterModels"
@@ -174,6 +175,11 @@ function getSelectedModel({
 		case "openai": {
 			const id = apiConfiguration.openAiModelId ?? ""
 			const info = apiConfiguration?.openAiCustomModelInfo ?? openAiModelInfoSaneDefaults
+			return { id, info }
+		}
+		case "zgsm": {
+			const id = (apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId) ?? ""
+			const info = apiConfiguration?.openAiCustomModelInfo ?? zgsmModelInfos.default
 			return { id, info }
 		}
 		case "ollama": {

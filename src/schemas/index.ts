@@ -503,6 +503,8 @@ const zgsmSchema = z.object({
 	zgsmBaseUrl: z.string().optional(),
 	zgsmApiKey: z.string().optional(),
 	zgsmModelId: z.string().optional(),
+	// zgsmModels 是 string[]
+	zgsmModels: z.array(z.string()).optional(),
 	zgsmDefaultBaseUrl: z.string().optional(),
 	zgsmDefaultModelId: z.string().optional(),
 	zgsmSite: z.string().optional(),
@@ -568,7 +570,7 @@ export const providerSettingsSchema = z
 	.merge(groqSchema)
 	.merge(chutesSchema)
 	.merge(litellmSchema)
-  	.merge(zgsmSchema)
+	.merge(zgsmSchema)
 
 export type ProviderSettings = z.infer<typeof providerSettingsSchema>
 
@@ -580,7 +582,7 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmBaseUrl: undefined,
 	zgsmApiKey: undefined,
 	zgsmModelId: undefined,
-
+	zgsmModels: undefined,
 	zgsmSite: undefined,
 	zgsmDefaultBaseUrl: undefined,
 	zgsmDefaultModelId: undefined,

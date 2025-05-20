@@ -175,13 +175,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		setChangeDetected(false)
 	}, [currentApiConfigName, extensionState, isChangeDetected])
 
-	useEffect(() => {
-		if (extensionState.apiConfiguration?.zgsmApiKey !== cachedState.apiConfiguration?.zgsmApiKey) {
-			setCachedState((prevCachedState) => ({ ...prevCachedState, ...extensionState }))
-			setChangeDetected(false)
-		}
-	}, [cachedState.apiConfiguration?.zgsmApiKey, extensionState, extensionState.apiConfiguration?.zgsmApiKey])
-
 	// Bust the cache when settings are imported.
 	useEffect(() => {
 		if (settingsImportedAt) {
@@ -195,7 +188,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			if (prevState[field] === value) {
 				return prevState
 			}
-
 			setChangeDetected(true)
 			return { ...prevState, [field]: value }
 		})
@@ -207,7 +199,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				if (prevState.apiConfiguration?.[field] === value) {
 					return prevState
 				}
-
 				setChangeDetected(true)
 				return { ...prevState, apiConfiguration: { ...prevState.apiConfiguration, [field]: value } }
 			})
@@ -220,7 +211,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			if (prevState.experiments?.[id] === enabled) {
 				return prevState
 			}
-
 			setChangeDetected(true)
 			return { ...prevState, experiments: { ...prevState.experiments, [id]: enabled } }
 		})
@@ -231,7 +221,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			if (prevState.telemetrySetting === setting) {
 				return prevState
 			}
-
 			setChangeDetected(true)
 			return { ...prevState, telemetrySetting: setting }
 		})
@@ -239,7 +228,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 	const isSettingValid = !errorMessage
 
-	const handleSubmit = () => {
+	const handleSubmit = useCallback(() => {
 		if (isSettingValid) {
 			vscode.postMessage({ type: "language", text: language })
 			vscode.postMessage({ type: "alwaysAllowReadOnly", bool: alwaysAllowReadOnly })
@@ -291,7 +280,54 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			vscode.postMessage({ type: "telemetrySetting", text: telemetrySetting })
 			setChangeDetected(false)
 		}
-	}
+	}, [
+		allowedCommands,
+		alwaysAllowBrowser,
+		alwaysAllowExecute,
+		alwaysAllowMcp,
+		alwaysAllowModeSwitch,
+		alwaysAllowReadOnly,
+		alwaysAllowReadOnlyOutsideWorkspace,
+		alwaysAllowSubtasks,
+		alwaysAllowWrite,
+		alwaysAllowWriteOutsideWorkspace,
+		alwaysApproveResubmit,
+		apiConfiguration,
+		browserToolEnabled,
+		browserViewportSize,
+		currentApiConfigName,
+		diffEnabled,
+		enableCheckpoints,
+		experiments,
+		fuzzyMatchThreshold,
+		isSettingValid,
+		language,
+		maxOpenTabsContext,
+		maxReadFileLine,
+		maxWorkspaceFiles,
+		mcpEnabled,
+		remoteBrowserEnabled,
+		remoteBrowserHost,
+		requestDelaySeconds,
+		screenshotQuality,
+		showRooIgnoredFiles,
+		soundEnabled,
+		soundVolume,
+		telemetrySetting,
+		terminalCommandDelay,
+		terminalCompressProgressBar,
+		terminalOutputLineLimit,
+		terminalPowershellCounter,
+		terminalShellIntegrationDisabled,
+		terminalShellIntegrationTimeout,
+		terminalZdotdir,
+		terminalZshClearEolMark,
+		terminalZshOhMy,
+		terminalZshP10k,
+		ttsEnabled,
+		ttsSpeed,
+		writeDelayMs,
+	])
 
 	const checkUnsaveChanges = useCallback(
 		(then: () => void) => {
@@ -303,6 +339,14 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			}
 		},
 		[isChangeDetected],
+	)
+	const handleAfterLogin = useCallback(
+		(apiKey: string) => {
+			setApiConfigurationField("zgsmApiKey", apiKey)
+			handleSubmit()
+			onDone()
+		},
+		[handleSubmit, onDone, setApiConfigurationField],
 	)
 
 	useImperativeHandle(ref, () => ({ checkUnsaveChanges }), [checkUnsaveChanges])
@@ -403,6 +447,10 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			if (message.type === "action" && message.action === "didBecomeVisible") {
 				scrollToActiveTab()
 			}
+
+			if (message.type === "afterZgsmPostLogin") {
+				handleAfterLogin(message.values?.apiKey ?? "")
+			}
 		}
 
 		window.addEventListener("message", handleMessage)
@@ -410,7 +458,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		return () => {
 			window.removeEventListener("message", handleMessage)
 		}
-	}, [scrollToActiveTab])
+	}, [checkUnsaveChanges, handleAfterLogin, scrollToActiveTab])
 
 	return (
 		<Tab>

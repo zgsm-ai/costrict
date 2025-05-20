@@ -5,18 +5,7 @@ export type { ModelInfo, ProviderName, ProviderSettings }
 export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider" | "id">
 
 export type ApiConfiguration = ProviderSettings
-export const zgsmProviderKey = "zgsm"
-export const zgsmModels = {
-	default: {
-		maxTokens: 8192,
-		contextWindow: 64000,
-		supportsImages: false,
-		supportsPromptCache: true,
-		description: "",
-		inputPrice: 0,
-		outputPrice: 0,
-	},
-} as const satisfies Record<string, ModelInfo>
+
 // Anthropic
 // https://docs.anthropic.com/en/docs/about-claude/models
 export type AnthropicModelId = keyof typeof anthropicModels
@@ -1772,3 +1761,19 @@ export const allModels: Record<string, any> = {
 	"anthropic/claude-3-7-sonnet-latest": requestyDefaultModelInfo,
 	"anthropic/claude-3-5-sonnet-20241022": unboundDefaultModelInfo,
 }
+
+export const zgsmProviderKey = "zgsm"
+export const zgsmModelInfos = {
+	...allModels,
+	default: {
+		maxTokens: 8192,
+		contextWindow: 64_000,
+		supportsImages: false,
+		supportsPromptCache: true,
+		inputPrice: 0.27, // $0.27 per million tokens (cache miss)
+		outputPrice: 1.1, // $1.10 per million tokens
+		cacheWritesPrice: 0.27, // $0.27 per million tokens (cache miss)
+		cacheReadsPrice: 0.07, // $0.07 per million tokens (cache hit).
+		description: `DeepSeek-V3 achieves a significant breakthrough in inference speed over previous models. It tops the leaderboard among open-source models and rivals the most advanced closed-source models globally.`,
+	} as ModelInfo,
+} as const satisfies Record<string, ModelInfo>

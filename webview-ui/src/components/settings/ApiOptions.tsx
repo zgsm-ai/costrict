@@ -151,12 +151,15 @@ const ApiOptions = ({
 					},
 				})
 			} else if (selectedProvider === zgsmProviderKey) {
+				// Use our custom headers state to build the headers object.
+				const headerObject = convertHeadersToObject(customHeaders)
 				vscode.postMessage({
 					type: "requestZgsmModels",
 					values: {
-						baseUrl: `${apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}`,
+						baseUrl: apiConfiguration?.zgsmBaseUrl,
 						apiKey: apiConfiguration?.zgsmApiKey,
-						hostHeader: apiConfiguration?.openAiHostHeader,
+						customHeaders: {}, // Reserved for any additional headers
+						openAiHeaders: headerObject,
 					},
 				})
 			} else if (selectedProvider === "ollama") {
@@ -395,7 +398,12 @@ const ApiOptions = ({
 			)}
 
 			{selectedProvider === zgsmProviderKey && (
-				<ZgsmAI apiConfiguration={apiConfiguration} setApiConfigurationField={setApiConfigurationField} />
+				<ZgsmAI
+					apiConfiguration={apiConfiguration}
+					setApiConfigurationField={setApiConfigurationField}
+					fromWelcomeView={fromWelcomeView}
+					uriScheme={uriScheme}
+				/>
 			)}
 
 			{selectedProvider === "groq" && (

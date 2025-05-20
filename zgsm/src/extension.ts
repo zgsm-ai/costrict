@@ -28,23 +28,36 @@ import {
 import { printLogo } from "./common/vscode-util"
 import { loadLocalLanguageExtensions } from "./common/lang-util"
 import { ClineProvider } from "../../src/core/webview/ClineProvider"
+import { defaultZgsmAuthConfig } from "../../src/zgsmAuth/config"
+import { getZgsmModels } from "../../src/api/providers/zgsm"
 
 /**
  * Initialization entry
  */
-async function initialize() {
+async function initialize(provider: ClineProvider) {
 	printLogo()
 	// initEnv()
 	initLangSetting()
 
 	loadLocalLanguageExtensions()
+
+	const { apiConfiguration } = await provider.getState()
+	const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
+		provider?.context?.globalState?.get?.("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl,
+	)
+
+	await defaultZgsmAuthConfig.initProviderConfig(provider, {
+		zgsmModels,
+		zgsmDefaultModelId,
+		apiModelId: apiConfiguration.apiModelId || zgsmDefaultModelId,
+	})
 }
 
 /**
  * Entry function when the extension is activated
  */
 export async function activate(context: vscode.ExtensionContext, provider: ClineProvider) {
-	initialize()
+	await initialize(provider)
 
 	// TODO: it will cause coredump
 	// const authProvider = Auth0AuthenticationProvider.getInstance(context);
