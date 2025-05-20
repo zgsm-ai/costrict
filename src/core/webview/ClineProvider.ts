@@ -1070,11 +1070,11 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 	// Zgsm
 
-	async handleZgsmAuthCallback(code: string | null, state: string | null, token: string | null) {
+	async handleZgsmAuthCallback(code: string | null, state: string | null, token: string | null, needVisible = true) {
 		let { apiConfiguration, currentApiConfigName } = await this.getState()
 		const visibleProvider = await ClineProvider.getInstance()
 
-		if (!visibleProvider) {
+		if (!visibleProvider && needVisible) {
 			return
 		}
 
@@ -1588,6 +1588,11 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 	get cwd() {
 		return getWorkspacePath()
+	}
+
+	// has view
+	get hasView() {
+		return !!this.view
 	}
 
 	// dev

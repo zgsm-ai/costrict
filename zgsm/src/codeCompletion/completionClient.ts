@@ -13,7 +13,15 @@ import { Logger } from "../common/log-util"
 import { workspace } from "vscode"
 import { AxiosError } from "axios"
 import { createAuthenticatedHeaders } from "../common/api"
-import { configCompletion, settings, OPENAI_CLIENT_NOT_INITIALIZED } from "../common/constant"
+import {
+	configCompletion,
+	settings,
+	OPENAI_CLIENT_NOT_INITIALIZED,
+	NOT_PROVIDERED,
+	ZGSM_API_KEY,
+	ZGSM_BASE_URL,
+	ZGSM_COMPLETION_URL,
+} from "../common/constant"
 import { CompletionPoint } from "./completionPoint"
 import { CompletionScores } from "./completionScore"
 import { CompletionTrace } from "./completionTrace"
@@ -31,6 +39,31 @@ export class CompletionClient {
 	private stopWords: string[] = []
 	private reqs: Map<string, any> = new Map<string, any>()
 	private betaMode?: any
+
+	private async getApiConfig(hasView: boolean, apiConfiguration: any) {
+		if (hasView) {
+			return {
+				baseUrl:
+					apiConfiguration.zgsmBaseUrl ||
+					apiConfiguration.zgsmDefaultBaseUrl ||
+					defaultZgsmAuthConfig.baseUrl,
+				completionUrl: apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl,
+				apiKey: apiConfiguration.zgsmApiKey || NOT_PROVIDERED,
+			}
+		}
+
+		const context = CompletionClient.providerRef.deref()?.contextProxy
+
+		const contextApiKey = await context?.getOriginSecrets(ZGSM_API_KEY)
+		const contextBaseUrl = await context?.getGlobalState(ZGSM_BASE_URL)
+		const contextCompletionUrl = await context?.getGlobalState(ZGSM_COMPLETION_URL)
+
+		return {
+			baseUrl: contextBaseUrl || defaultZgsmAuthConfig.baseUrl,
+			completionUrl: contextCompletionUrl || defaultZgsmAuthConfig.completionUrl,
+			apiKey: contextApiKey || NOT_PROVIDERED,
+		}
+	}
 
 	public static async setProvider(provider: ClineProvider) {
 		CompletionClient.providerRef = new WeakRef(provider)
@@ -119,14 +152,24 @@ export class CompletionClient {
 		const provider = CompletionClient.providerRef.deref()
 
 		const { apiConfiguration } = await provider!.getState()
-		if (!apiConfiguration?.zgsmApiKey) {
+
+		const hasView = !!provider?.hasView
+
+		if (!apiConfiguration?.zgsmApiKey && hasView) {
 			Logger.error("Failed to get login information. Please log in again to use the completion service")
 			return false
 		}
-		const completionUrl = `${apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl}`
+
+		const config = await this.getApiConfig(hasView, apiConfiguration)
+		const fullUrl = `${config.baseUrl}${config.completionUrl}`
+
+		if (config.apiKey === NOT_PROVIDERED) {
+			return false
+		}
+
 		this.openai = new OpenAI({
-			baseURL: completionUrl,
-			apiKey: apiConfiguration.zgsmApiKey || "not-provided",
+			baseURL: fullUrl,
+			apiKey: config.apiKey,
 		})
 		if (!this.openai) {
 			// Logger.error("Completion: Configuration error: configuration:", configuration, "openai: ", this.openai);
@@ -136,7 +179,7 @@ export class CompletionClient {
 		this.stopWords = workspace.getConfiguration(configCompletion).get("inlineCompletion") ? ["\n", "\r"] : []
 		this.betaMode = workspace.getConfiguration(configCompletion).get("betaMode")
 		Logger.info(
-			`Completion: Create OpenAIApi client, URL: ${completionUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
+			`Completion: Create OpenAIApi client, URL: ${fullUrl}, betaMode: ${this.betaMode}, stopWords: ${this.stopWords}`,
 		)
 		return true
 	}
@@ -209,8 +252,12 @@ export class CompletionClient {
 		Logger.log(`Completion [${cp.id}]: Sending API request`)
 		const headers = createAuthenticatedHeaders()
 		const repo = workspace?.name?.split(" ")[0] ?? ""
-		this.openai.baseURL = `${apiConfiguration.zgsmBaseUrl || defaultZgsmAuthConfig.baseUrl}${apiConfiguration.zgsmCompletionUrl || defaultZgsmAuthConfig.completionUrl}`
-		this.openai.apiKey = apiConfiguration.zgsmApiKey || "not-provided"
+
+		const config = await this.getApiConfig(!!provider?.hasView, apiConfiguration)
+
+		this.openai.baseURL = `${config.baseUrl}${config.completionUrl}`
+		this.openai.apiKey = config.apiKey
+
 		return this.openai.completions.create(
 			{
 				// no use

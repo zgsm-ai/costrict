@@ -47,7 +47,7 @@ $ git fetch upstream # commit 前需要再次同步feature跟upstream/main
 $ git rebase upstream/main
 ```
 
-5. 提交 commit
+5. 提交 commit（commit规范请参考：[commit 规范](https://github.com/zgsm-ai/zgsm/blob/main/docs/devel/zh-CN/commit-message.md)）
 
 在 feature/add-function 分支上开发代码，开发完代码后，提交 commit：
 
