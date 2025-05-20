@@ -32,13 +32,39 @@ import {
 	unboundDefaultModelId,
 	litellmDefaultModelId,
 	zgsmModelInfos,
+	zgsmProviderKey,
 } from "@roo/shared/api"
 
 import { useRouterModels } from "./useRouterModels"
 import { useOpenRouterModelProviders } from "./useOpenRouterModelProviders"
 
+const getZgsmSelectedModelInfo = (models: Record<string, ModelInfo>, modelId: string): ModelInfo => {
+	if (!modelId) {
+		return {} as ModelInfo
+	}
+
+	const ids = Object.keys(models)
+
+	let mastchKey = ids.find((id) => modelId && id.includes(modelId))
+
+	if (!mastchKey) {
+		if (modelId.startsWith("claude-")) {
+			mastchKey = anthropicDefaultModelId
+		} else if (modelId.startsWith("deepseek-")) {
+			mastchKey = deepSeekDefaultModelId
+		} else if (modelId.startsWith("gpt-")) {
+			mastchKey = openAiNativeDefaultModelId
+		} else if (modelId.startsWith("gemini-")) {
+			mastchKey = geminiDefaultModelId
+		} else if (modelId.startsWith("mistral-")) {
+			mastchKey = mistralDefaultModelId
+		}
+	}
+
+	return mastchKey ? models[mastchKey] : zgsmModelInfos.default
+}
 export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
-	const provider = apiConfiguration?.apiProvider || "anthropic"
+	const provider = apiConfiguration?.apiProvider || zgsmProviderKey
 	const openRouterModelId = provider === "openrouter" ? apiConfiguration?.openRouterModelId : undefined
 
 	const routerModels = useRouterModels()
@@ -179,7 +205,10 @@ function getSelectedModel({
 		}
 		case "zgsm": {
 			const id = (apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId) ?? ""
-			const info = apiConfiguration?.openAiCustomModelInfo ?? zgsmModelInfos.default
+			const info =
+				apiConfiguration?.openAiCustomModelInfo ||
+				getZgsmSelectedModelInfo(zgsmModelInfos, id) ||
+				zgsmModelInfos.default
 			return { id, info }
 		}
 		case "ollama": {

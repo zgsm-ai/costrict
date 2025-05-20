@@ -13,6 +13,7 @@ import {
 	groqModels,
 	chutesModels,
 } from "@roo/shared/api"
+import i18next from "i18next"
 
 export { REASONING_MODELS, PROMPT_CACHING_MODELS } from "@roo/shared/api"
 
@@ -54,7 +55,12 @@ export const PROVIDERS = [
 	{ value: "litellm", label: "LiteLLM" },
 ].sort((a, b) => a.label.localeCompare(b.label))
 
-PROVIDERS.unshift({ value: zgsmProviderKey, label: "Shenma" })
+PROVIDERS.unshift({
+	value: zgsmProviderKey,
+	get label() {
+		return i18next.t("settings:providers.zgsm")
+	},
+})
 
 export const VERTEX_REGIONS = [
 	{ value: "us-east5", label: "us-east5" },

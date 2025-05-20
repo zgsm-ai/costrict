@@ -1770,10 +1770,5 @@ export const zgsmModelInfos = {
 		contextWindow: 64_000,
 		supportsImages: false,
 		supportsPromptCache: true,
-		inputPrice: 0.27, // $0.27 per million tokens (cache miss)
-		outputPrice: 1.1, // $1.10 per million tokens
-		cacheWritesPrice: 0.27, // $0.27 per million tokens (cache miss)
-		cacheReadsPrice: 0.07, // $0.07 per million tokens (cache hit).
-		description: `DeepSeek-V3 achieves a significant breakthrough in inference speed over previous models. It tops the leaderboard among open-source models and rivals the most advanced closed-source models globally.`,
 	} as ModelInfo,
 } as const satisfies Record<string, ModelInfo>
