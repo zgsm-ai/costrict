@@ -9,20 +9,13 @@ export function getZgsmAuthUrl(stateId: string, apiConfiguration?: ApiConfigurat
 	const params = [
 		["response_type", "code"],
 		["client_id", `${apiConfiguration?.zgsmClientId}`],
-		[
-			"redirect_uri",
-			apiConfiguration?.customZgsmRedirectUri
-				? apiConfiguration?.customZgsmRedirectUri
-				: `${baseUrl}${apiConfiguration?.zgsmRedirectUri}`,
-		],
+		["redirect_uri", `${baseUrl}${apiConfiguration?.zgsmRedirectUri}`],
 		["state", stateId],
 		["scope", scopes.join(" ")],
 	]
 	const searchParams = new URLSearchParams(params)
 
-	return apiConfiguration?.customZgsmLoginUrl
-		? `${apiConfiguration.customZgsmLoginUrl}?${searchParams.toString()}`
-		: `${baseUrl}${apiConfiguration?.zgsmLoginUrl}?${searchParams.toString()}`
+	return `${baseUrl}${apiConfiguration?.zgsmLoginUrl}?${searchParams.toString()}`
 }
 
 /**
