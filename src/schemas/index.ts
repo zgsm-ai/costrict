@@ -503,7 +503,6 @@ const zgsmSchema = z.object({
 	zgsmBaseUrl: z.string().optional(),
 	zgsmApiKey: z.string().optional(),
 	zgsmModelId: z.string().optional(),
-	// zgsmModels 是 string[]
 	zgsmModels: z.array(z.string()).optional(),
 	zgsmDefaultBaseUrl: z.string().optional(),
 	zgsmDefaultModelId: z.string().optional(),
