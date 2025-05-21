@@ -40,6 +40,7 @@ export interface ExtensionMessage {
 		| "invoke"
 		| "partialMessage"
 		| "zgsmModels"
+		| "afterZgsmPostLogin"
 		| "mcpServers"
 		| "enhancedPrompt"
 		| "commitSearchResults"

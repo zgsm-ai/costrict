@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { convertHeadersToObject } from "./utils/headers"
 import { useDebounce } from "react-use"
-import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
+// import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 
 import {
 	type ProviderName,
@@ -41,6 +41,7 @@ import {
 	Vertex,
 	VSCodeLM,
 	XAI,
+	ZgsmAI,
 } from "./providers"
 
 import { MODELS_BY_PROVIDER, PROVIDERS, REASONING_MODELS } from "./constants"
@@ -150,12 +151,15 @@ const ApiOptions = ({
 					},
 				})
 			} else if (selectedProvider === zgsmProviderKey) {
+				// Use our custom headers state to build the headers object.
+				const headerObject = convertHeadersToObject(customHeaders)
 				vscode.postMessage({
 					type: "requestZgsmModels",
 					values: {
-						baseUrl: `${apiConfiguration?.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}`,
+						baseUrl: apiConfiguration?.zgsmBaseUrl,
 						apiKey: apiConfiguration?.zgsmApiKey,
-						hostHeader: apiConfiguration?.openAiHostHeader,
+						customHeaders: {}, // Reserved for any additional headers
+						openAiHeaders: headerObject,
 					},
 				})
 			} else if (selectedProvider === "ollama") {
@@ -178,6 +182,9 @@ const ApiOptions = ({
 			apiConfiguration?.lmStudioBaseUrl,
 			apiConfiguration?.litellmBaseUrl,
 			apiConfiguration?.litellmApiKey,
+			apiConfiguration?.zgsmApiKey,
+			apiConfiguration?.zgsmDefaultBaseUrl,
+			apiConfiguration?.zgsmBaseUrl,
 			customHeaders,
 		],
 	)
@@ -249,38 +256,38 @@ const ApiOptions = ({
 		],
 	)
 
-	const docs = useMemo(() => {
-		const provider = PROVIDERS.find(({ value }) => value === selectedProvider)
-		const name = provider?.label
+	// const docs = useMemo(() => {
+	// 	const provider = PROVIDERS.find(({ value }) => value === selectedProvider)
+	// 	const name = provider?.label
 
-		if (!name) {
-			return undefined
-		}
+	// 	if (!name) {
+	// 		return undefined
+	// 	}
 
-		// Get the URL slug - use custom mapping if available, otherwise use the provider key.
-		const slugs: Record<string, string> = {
-			"openai-native": "openai",
-			openai: "openai-compatible",
-		}
+	// 	// Get the URL slug - use custom mapping if available, otherwise use the provider key.
+	// 	const slugs: Record<string, string> = {
+	// 		"openai-native": "openai",
+	// 		openai: "openai-compatible",
+	// 	}
 
-		return {
-			url: `https://docs.roocode.com/providers/${slugs[selectedProvider] || selectedProvider}`,
-			name,
-		}
-	}, [selectedProvider])
+	// 	return {
+	// 		url: `https://docs.roocode.com/providers/${slugs[selectedProvider] || selectedProvider}`,
+	// 		name,
+	// 	}
+	// }, [selectedProvider])
 
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-col gap-1 relative">
 				<div className="flex justify-between items-center">
 					<label className="block font-medium mb-1">{t("settings:providers.apiProvider")}</label>
-					{docs && (
+					{/* {docs && (
 						<div className="text-xs text-vscode-descriptionForeground">
 							<VSCodeLink href={docs.url} className="hover:text-vscode-foreground" target="_blank">
 								{t("settings:providers.providerDocumentation", { provider: docs.name })}
 							</VSCodeLink>
 						</div>
-					)}
+					)} */}
 				</div>
 				<Select value={selectedProvider} onValueChange={(value) => onProviderChange(value as ProviderName)}>
 					<SelectTrigger className="w-full">
@@ -390,6 +397,15 @@ const ApiOptions = ({
 				<XAI apiConfiguration={apiConfiguration} setApiConfigurationField={setApiConfigurationField} />
 			)}
 
+			{selectedProvider === zgsmProviderKey && (
+				<ZgsmAI
+					apiConfiguration={apiConfiguration}
+					setApiConfigurationField={setApiConfigurationField}
+					fromWelcomeView={fromWelcomeView}
+					uriScheme={uriScheme}
+				/>
+			)}
+
 			{selectedProvider === "groq" && (
 				<Groq apiConfiguration={apiConfiguration} setApiConfigurationField={setApiConfigurationField} />
 			)}
@@ -416,7 +432,7 @@ const ApiOptions = ({
 					</div>
 				</>
 			)}
-
+			{/* {JSON.stringify(selectedProviderModels)} */}
 			{selectedProviderModels.length > 0 && (
 				<>
 					<div>

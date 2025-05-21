@@ -15,7 +15,7 @@ import { CompletionStatusBar } from "./codeCompletion/completionStatusBar"
 import { AICompletionProvider } from "./codeCompletion/completionProvider"
 import { codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codeLens/codeLensCallBackFunc"
 import { MyCodeLensProvider } from "./codeLens/codeLensProvider"
-import { configCompletion, configCodeLens } from "./common/constant"
+import { configCompletion, configCodeLens, OPENAI_CLIENT_NOT_INITIALIZED, ZGSM_API_KEY } from "./common/constant"
 // import { initEnv, updateEnv } from "./common/env"
 // import { Logger } from "./common/log-util"
 import {
@@ -28,23 +28,36 @@ import {
 import { printLogo } from "./common/vscode-util"
 import { loadLocalLanguageExtensions } from "./common/lang-util"
 import { ClineProvider } from "../../src/core/webview/ClineProvider"
+import { defaultZgsmAuthConfig } from "../../src/zgsmAuth/config"
+import { getZgsmModels } from "../../src/api/providers/zgsm"
 
 /**
  * Initialization entry
  */
-async function initialize() {
+async function initialize(provider: ClineProvider) {
 	printLogo()
 	// initEnv()
 	initLangSetting()
 
 	loadLocalLanguageExtensions()
+
+	const { apiConfiguration } = await provider.getState()
+	const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
+		provider?.context?.globalState?.get?.("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl,
+	)
+
+	await defaultZgsmAuthConfig.initProviderConfig(provider, {
+		zgsmModels,
+		zgsmDefaultModelId,
+		apiModelId: apiConfiguration.apiModelId || zgsmDefaultModelId,
+	})
 }
 
 /**
  * Entry function when the extension is activated
  */
 export async function activate(context: vscode.ExtensionContext, provider: ClineProvider) {
-	initialize()
+	await initialize(provider)
 
 	// TODO: it will cause coredump
 	// const authProvider = Auth0AuthenticationProvider.getInstance(context);
@@ -127,7 +140,14 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 			cvProvider.userFeedbackIssue()
 		}),
 	)
-	CompletionStatusBar.initByConfig()
+	// get zgsmApiKey without webview resolve
+	const key = await context.secrets.get(ZGSM_API_KEY)
+
+	key
+		? CompletionStatusBar.initByConfig()
+		: CompletionStatusBar.fail({
+				message: OPENAI_CLIENT_NOT_INITIALIZED,
+			})
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function

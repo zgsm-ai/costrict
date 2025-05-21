@@ -25,7 +25,7 @@ import { singleCompletionHandler } from "../../utils/single-completion-handler"
 import { searchCommits } from "../../utils/git"
 import { exportSettings, importSettings } from "../config/importExport"
 import { getOpenAiModels } from "../../api/providers/openai"
-import { getZgsmModels } from "../../api/providers/zgsm"
+import { canParseURL, getZgsmModels } from "../../api/providers/zgsm"
 import { getOllamaModels } from "../../api/providers/ollama"
 import { getVsCodeLmModels } from "../../api/providers/vscode-lm"
 import { getLmStudioModels } from "../../api/providers/lmstudio"
@@ -38,6 +38,8 @@ import { GlobalState } from "../../schemas"
 import { handleZgsmLogin } from "../../zgsmAuth/zgsmAuthHandler"
 import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
 import { generateSystemPrompt } from "./generateSystemPrompt"
+import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
+// import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -270,6 +272,17 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "resetState":
 			await provider.resetState()
+
+			const { apiConfiguration: config } = await provider.getState()
+			const [initZgsmModels, initZgsmDefaultModelId] = await getZgsmModels(
+				provider?.context?.globalState?.get?.("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl,
+			)
+
+			await defaultZgsmAuthConfig.initProviderConfig(provider, {
+				zgsmModels: initZgsmModels,
+				zgsmDefaultModelId: initZgsmDefaultModelId,
+				apiModelId: config.apiModelId || initZgsmDefaultModelId,
+			})
 			break
 		case "flushRouterModels":
 			const routerName: RouterName = toRouterName(message.text)
@@ -310,14 +323,12 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 
 			break
 		case "requestZgsmModels":
-			if (message?.values?.baseUrl && message?.values?.apiKey) {
-				const [zgsmModels, zgsmDefaultModelId, err] = await getZgsmModels(
-					message?.values?.baseUrl,
-					message?.values?.apiKey,
-					message?.values?.hostHeader,
-				)
-				provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId, errorObj: err })
-			}
+			const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
+				message?.values?.baseUrl || defaultZgsmAuthConfig.baseUrl,
+				message?.values?.apiKey,
+				message?.values?.hostHeader,
+			)
+			provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId })
 
 			break
 		case "requestOllamaModels":
@@ -1077,11 +1088,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			if (message.text && message.apiConfiguration) {
 				await provider.upsertProviderProfile(message.text, {
 					...message.apiConfiguration,
-					zgsmBaseUrl:
-						`${message.apiConfiguration.zgsmBaseUrl || message.apiConfiguration.zgsmDefaultBaseUrl}`.replace(
-							/\/+$/,
-							"",
-						),
+					zgsmBaseUrl: `${message.apiConfiguration.zgsmBaseUrl || ""}`.trim().replace(/\/+$/, ""),
 				})
 			}
 			break
@@ -1274,15 +1281,11 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await provider.postStateToWebview()
 			break
 		}
+
 		case "zgsmLogin":
-			if (message.authUrl && message.apiConfiguration) {
-				await handleZgsmLogin(message.authUrl, message.apiConfiguration, provider)
-			}
-			break
 		case "openExternalRelogin":
-			if (message.url) {
-				const uri = vscode.Uri.parse(message.url)
-				vscode.env.openExternal(uri)
+			if (message.url && canParseURL(message.url)) {
+				await handleZgsmLogin(message.url, message.apiConfiguration!, provider)
 			}
 			break
 	}

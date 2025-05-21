@@ -5,15 +5,7 @@ export type { ModelInfo, ProviderName, ProviderSettings }
 export type ApiHandlerOptions = Omit<ProviderSettings, "apiProvider" | "id">
 
 export type ApiConfiguration = ProviderSettings
-export const zgsmProviderKey = "zgsm"
-export const zgsmModels = {
-	default: {
-		maxTokens: 8192,
-		contextWindow: 64000,
-		supportsImages: false,
-		supportsPromptCache: true,
-	},
-} as const satisfies Record<string, ModelInfo>
+
 // Anthropic
 // https://docs.anthropic.com/en/docs/about-claude/models
 export type AnthropicModelId = keyof typeof anthropicModels
@@ -1136,19 +1128,6 @@ export const unboundDefaultModelInfo: ModelInfo = {
 	cacheReadsPrice: 0.3,
 }
 
-export const allModels: Record<string, any> = {
-	...anthropicModels,
-	...bedrockModels,
-	...geminiModels,
-	...openAiNativeModels,
-	...deepSeekModels,
-	...mistralModels,
-	...openAiModelInfoSaneDefaults,
-	...vertexModels,
-	"anthropic/claude-3-7-sonnet": glamaDefaultModelInfo,
-	"anthropic/claude-3-7-sonnet-latest": requestyDefaultModelInfo,
-	"anthropic/claude-3-5-sonnet-20241022": unboundDefaultModelInfo,
-}
 // LiteLLM
 // https://docs.litellm.ai/
 export const litellmDefaultModelId = "anthropic/claude-3-7-sonnet-20250219"
@@ -1765,3 +1744,31 @@ export function toRouterName(value?: string): RouterName {
 export type ModelRecord = Record<string, ModelInfo>
 
 export type RouterModels = Record<RouterName, ModelRecord>
+
+export const allModels: Record<string, any> = {
+	...anthropicModels,
+	...bedrockModels,
+	...geminiModels,
+	...openAiNativeModels,
+	...deepSeekModels,
+	...mistralModels,
+	...openAiModelInfoSaneDefaults,
+	...vertexModels,
+	...vscodeLlmModels,
+	...groqModels,
+	...chutesModels,
+	"anthropic/claude-3-7-sonnet": glamaDefaultModelInfo,
+	"anthropic/claude-3-7-sonnet-latest": requestyDefaultModelInfo,
+	"anthropic/claude-3-5-sonnet-20241022": unboundDefaultModelInfo,
+}
+
+export const zgsmProviderKey = "zgsm"
+export const zgsmModelInfos = {
+	...allModels,
+	default: {
+		maxTokens: 8192,
+		contextWindow: 64_000,
+		supportsImages: false,
+		supportsPromptCache: true,
+	} as ModelInfo,
+} as const satisfies Record<string, ModelInfo>

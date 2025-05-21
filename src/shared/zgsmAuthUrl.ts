@@ -1,9 +1,11 @@
+import { defaultZgsmAuthConfig } from "../zgsmAuth/config"
 import { ApiConfiguration } from "./api"
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getZgsmAuthUrl(stateId: string, apiConfiguration?: ApiConfiguration, uriScheme?: string) {
 	// const { loginUrl, clientId, redirectUri } = getAuthConfig()
 	const scopes = ["openid", "profile", "email"]
-	const baseUrl = `${apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl}`
+	const baseUrl = `${apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl || defaultZgsmAuthConfig.baseUrl}`
 	const params = [
 		["response_type", "code"],
 		["client_id", `${apiConfiguration?.zgsmClientId}`],
