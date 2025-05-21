@@ -130,7 +130,7 @@ jest.mock("../../environment/getEnvironmentDetails", () => ({
 jest.mock("../../ignore/RooIgnoreController")
 
 // Mock storagePathManager to prevent dynamic import issues
-jest.mock("../../../shared/storagePathManager", () => ({
+jest.mock("../../../utils/storage", () => ({
 	getTaskDirectoryPath: jest
 		.fn()
 		.mockImplementation((globalStoragePath, taskId) => Promise.resolve(`${globalStoragePath}/tasks/${taskId}`)),
@@ -275,13 +275,11 @@ describe("Cline", () => {
 			const cline = new Task({
 				provider: mockProvider,
 				apiConfiguration: mockApiConfig,
-				customInstructions: "custom instructions",
 				fuzzyMatchThreshold: 0.95,
 				task: "test task",
 				startTask: false,
 			})
 
-			expect(cline.customInstructions).toBe("custom instructions")
 			expect(cline.diffEnabled).toBe(false)
 		})
 
@@ -289,7 +287,6 @@ describe("Cline", () => {
 			const cline = new Task({
 				provider: mockProvider,
 				apiConfiguration: mockApiConfig,
-				customInstructions: "custom instructions",
 				enableDiff: true,
 				fuzzyMatchThreshold: 0.95,
 				task: "test task",

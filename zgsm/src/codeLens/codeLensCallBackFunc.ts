@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Copyright (c) 2024 - Sangfor LTD.
  *
@@ -13,6 +15,7 @@ import { CODELENS_CONST, CODELENS_FUNC } from "../common/constant"
 import { throttle } from "../common/util"
 import { getLanguageByFilePath } from "../common/lang-util"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
+import { getCommand } from "../../../src/utils/commands"
 
 /**
  * Throttled function for commonCodeLensFunc
@@ -26,7 +29,7 @@ const throttleCommonCodeLensFunc = throttle(commonCodeLensFunc, 2000)
  */
 async function commonCodeLensFunc(editor: any, ...args: any) {
 	// Show the webview page first, as there may be time-consuming operations later
-	// vscode.commands.executeCommand('vscode-zgsm.view.focus');
+	// vscode.commands.executeCommand(getCommand('view.)focus');
 	const documentSymbol = args[1]
 	const codelensItem = args[2]
 	const language = getLanguageByFilePath(editor.document.uri.fsPath)
@@ -102,7 +105,7 @@ async function moreCodeLensFunc(editor: any, ...args: any) {
  * Callback function for common codelens
  */
 export const codeLensCallBackCommand = {
-	command: "vscode-zgsm.codelens_button",
+	command: getCommand("codelens_button"),
 	callback: (event: any) => throttleCommonCodeLensFunc,
 }
 
@@ -110,6 +113,6 @@ export const codeLensCallBackCommand = {
  * Callback function for the 'More' button in codelens
  */
 export const codeLensCallBackMoreCommand = {
-	command: "vscode-zgsm.codelens_more_button",
+	command: getCommand("codelens_more_button"),
 	callback: (event: any) => moreCodeLensFunc,
 }

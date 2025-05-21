@@ -1,23 +1,28 @@
 import * as vscode from "vscode"
 
+import { CodeActionId, CodeActionName } from "../schemas"
+import { getCodeActionCommand } from "../utils/commands"
 import { EditorUtils } from "../integrations/editor/EditorUtils"
 import { ClineProvider } from "../core/webview/ClineProvider"
-
-import { type CodeActionName, type CodeActionId, COMMAND_IDS } from "./CodeActionProvider"
+import { COMMAND_IDS } from "./CodeActionProvider"
 
 export const registerCodeActions = (context: vscode.ExtensionContext) => {
-	registerCodeAction(context, COMMAND_IDS.EXPLAIN, "EXPLAIN")
-	registerCodeAction(context, COMMAND_IDS.FIX, "FIX")
-	registerCodeAction(context, COMMAND_IDS.IMPROVE, "IMPROVE")
-	registerCodeAction(context, COMMAND_IDS.ADD_TO_CONTEXT, "ADD_TO_CONTEXT")
+	registerCodeAction(context, COMMAND_IDS.EXPLAIN as CodeActionId, "EXPLAIN")
+	registerCodeAction(context, COMMAND_IDS.FIX as CodeActionId, "FIX")
+	registerCodeAction(context, COMMAND_IDS.IMPROVE as CodeActionId, "IMPROVE")
+	registerCodeAction(context, COMMAND_IDS.ADD_TO_CONTEXT as CodeActionId, "ADD_TO_CONTEXT")
 }
 
-export const registerCodeAction = (context: vscode.ExtensionContext, command: CodeActionId, promptType: CodeActionName) => {
+export const registerCodeAction = (
+	context: vscode.ExtensionContext,
+	command: CodeActionId,
+	promptType: CodeActionName,
+) => {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let userInput: string | undefined
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(command, async (...args: any[]) => {
+		vscode.commands.registerCommand(getCodeActionCommand(command), async (...args: any[]) => {
 			// Handle both code action and direct command cases.
 			let filePath: string
 			let selectedText: string

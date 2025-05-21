@@ -1,13 +1,10 @@
 import * as vscode from "vscode"
+
+import { TerminalActionId, TerminalActionPromptType, TERMINAL_COMMAND_IDS } from "../schemas"
+import { getTerminalCommand } from "../utils/commands"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { Terminal } from "../integrations/terminal/Terminal"
 import { t } from "../i18n"
-
-const TERMINAL_COMMAND_IDS = {
-	ADD_TO_CONTEXT: "vscode-zgsm.terminalAddToContext",
-	FIX: "vscode-zgsm.terminalFixCommand",
-	EXPLAIN: "vscode-zgsm.terminalExplainCommand",
-} as const
 
 export const registerTerminalActions = (context: vscode.ExtensionContext) => {
 	registerTerminalAction(context, TERMINAL_COMMAND_IDS.ADD_TO_CONTEXT, "TERMINAL_ADD_TO_CONTEXT")
@@ -17,11 +14,11 @@ export const registerTerminalActions = (context: vscode.ExtensionContext) => {
 
 const registerTerminalAction = (
 	context: vscode.ExtensionContext,
-	command: string,
-	promptType: "TERMINAL_ADD_TO_CONTEXT" | "TERMINAL_FIX" | "TERMINAL_EXPLAIN",
+	command: TerminalActionId,
+	promptType: TerminalActionPromptType,
 ) => {
 	context.subscriptions.push(
-		vscode.commands.registerCommand(command, async (args: any) => {
+		vscode.commands.registerCommand(getTerminalCommand(command), async (args: any) => {
 			let content = args.selection
 
 			if (!content || content === "") {

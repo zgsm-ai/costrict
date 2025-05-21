@@ -298,7 +298,7 @@ export type CommandExecutionStatus = z.infer<typeof commandExecutionStatusSchema
  * ExperimentId
  */
 
-export const experimentIds = ["powerSteering"] as const
+export const experimentIds = ["autoCondenseContext", "powerSteering"] as const
 
 export const experimentIdsSchema = z.enum(experimentIds)
 
@@ -309,6 +309,7 @@ export type ExperimentId = z.infer<typeof experimentIdsSchema>
  */
 
 const experimentsSchema = z.object({
+	autoCondenseContext: z.boolean(),
 	powerSteering: z.boolean(),
 })
 
@@ -961,6 +962,7 @@ export const clineAsks = [
 	"resume_task",
 	"resume_completed_task",
 	"mistake_limit_reached",
+	"auto_approval_max_req_reached",
 	"browser_action_launch",
 	"use_mcp_server",
 ] as const
@@ -993,6 +995,7 @@ export const clineSays = [
 	"checkpoint_saved",
 	"rooignore_error",
 	"diff_error",
+	"condense_context",
 ] as const
 
 export const clineSaySchema = z.enum(clineSays)
@@ -1012,6 +1015,18 @@ export const toolProgressStatusSchema = z.object({
 export type ToolProgressStatus = z.infer<typeof toolProgressStatusSchema>
 
 /**
+ * ContextCondense
+ */
+
+export const contextCondenseSchema = z.object({
+	cost: z.number(),
+	prevContextTokens: z.number(),
+	newContextTokens: z.number(),
+})
+
+export type ContextCondense = z.infer<typeof contextCondenseSchema>
+
+/**
  * ClineMessage
  */
 
@@ -1027,6 +1042,7 @@ export const clineMessageSchema = z.object({
 	conversationHistoryIndex: z.number().optional(),
 	checkpoint: z.record(z.string(), z.unknown()).optional(),
 	progressStatus: toolProgressStatusSchema.optional(),
+	contextCondense: contextCondenseSchema.optional(),
 })
 
 export type ClineMessage = z.infer<typeof clineMessageSchema>
