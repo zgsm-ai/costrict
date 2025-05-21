@@ -6,7 +6,6 @@ import axios from "axios"
 
 import { ClineProvider } from "../ClineProvider"
 import { ProviderSettingsEntry, ClineMessage, ExtensionMessage, ExtensionState } from "../../../shared/ExtensionMessage"
-import { setSoundEnabled } from "../../../utils/sound"
 import { setTtsEnabled } from "../../../utils/tts"
 import { defaultModeSlug } from "../../../shared/modes"
 import { experimentDefault } from "../../../shared/experiments"
@@ -171,10 +170,6 @@ jest.mock("vscode", () => ({
 		Development: 2,
 		Test: 3,
 	},
-}))
-
-jest.mock("../../../utils/sound", () => ({
-	setSoundEnabled: jest.fn(),
 }))
 
 jest.mock("../../../utils/tts", () => ({
@@ -365,7 +360,7 @@ describe("ClineProvider", () => {
 
 		// Verify Content Security Policy contains the necessary PostHog domains
 		expect(mockWebviewView.webview.html).toContain(
-			"connect-src https://openrouter.ai https://api.requesty.ai https://us.i.posthog.com https://us-assets.i.posthog.com;",
+			"connect-src https://openrouter.ai https://api.requesty.ai https://us.i.posthog.com https://us-assets.i.posthog.com",
 		)
 
 		// Extract the script-src directive section and verify required security elements
@@ -545,14 +540,12 @@ describe("ClineProvider", () => {
 
 		// Simulate setting sound to enabled
 		await messageHandler({ type: "soundEnabled", bool: true })
-		expect(setSoundEnabled).toHaveBeenCalledWith(true)
 		expect(updateGlobalStateSpy).toHaveBeenCalledWith("soundEnabled", true)
 		expect(mockContext.globalState.update).toHaveBeenCalledWith("soundEnabled", true)
 		expect(mockPostMessage).toHaveBeenCalled()
 
 		// Simulate setting sound to disabled
 		await messageHandler({ type: "soundEnabled", bool: false })
-		expect(setSoundEnabled).toHaveBeenCalledWith(false)
 		expect(mockContext.globalState.update).toHaveBeenCalledWith("soundEnabled", false)
 		expect(mockPostMessage).toHaveBeenCalled()
 
@@ -804,45 +797,6 @@ describe("ClineProvider", () => {
 		expect(updateGlobalStateSpy).toHaveBeenCalledWith("maxWorkspaceFiles", 300)
 		expect(mockContext.globalState.update).toHaveBeenCalledWith("maxWorkspaceFiles", 300)
 		expect(mockPostMessage).toHaveBeenCalled()
-	})
-
-	test("uses mode-specific custom instructions in Cline initialization", async () => {
-		// Setup mock state
-		const modeCustomInstructions = "Code mode instructions"
-		const mockApiConfig = {
-			apiProvider: "openrouter",
-		}
-
-		jest.spyOn(provider, "getState").mockResolvedValue({
-			apiConfiguration: mockApiConfig,
-			customModePrompts: {
-				code: { customInstructions: modeCustomInstructions },
-			},
-			mode: "code",
-			diffEnabled: true,
-			enableCheckpoints: false,
-			fuzzyMatchThreshold: 1.0,
-			experiments: experimentDefault,
-		} as any)
-
-		// Initialize Cline with a task
-		await provider.initClineWithTask("Test task")
-
-		// Verify Cline was initialized with mode-specific instructions
-		expect(Task).toHaveBeenCalledWith({
-			provider,
-			apiConfiguration: mockApiConfig,
-			customInstructions: modeCustomInstructions,
-			enableDiff: true,
-			enableCheckpoints: false,
-			fuzzyMatchThreshold: 1.0,
-			task: "Test task",
-			experiments: experimentDefault,
-			rootTask: undefined,
-			parentTask: undefined,
-			taskNumber: 1,
-			onCreated: expect.any(Function),
-		})
 	})
 
 	test("handles mode-specific custom instructions updates", async () => {

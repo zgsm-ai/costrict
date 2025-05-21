@@ -3,7 +3,7 @@ import Mocha from "mocha"
 import { glob } from "glob"
 import * as vscode from "vscode"
 
-import type { RooCodeAPI } from "../../../src/exports/roo-code"
+import { type RooCodeAPI, Package, RooCodeSettings } from "@roo-code/types"
 
 import { waitFor } from "./utils"
 
@@ -12,7 +12,7 @@ declare global {
 }
 
 export async function run() {
-	const extension = vscode.extensions.getExtension<RooCodeAPI>("zgsm-ai.zgsm")
+	const extension = vscode.extensions.getExtension<RooCodeAPI>(`${Package.publisher}.${Package.name}`)
 
 	if (!extension) {
 		throw new Error("Extension not found")
@@ -35,9 +35,9 @@ export async function run() {
 		zgsmRedirectUri: "/login/ok",
 		zgsmClientId: "vscode",
 		isZgsmApiKeyValid: true,
-	})
+	} as unknown as RooCodeSettings)
 
-	await vscode.commands.executeCommand("vscode-zgsm.SidebarProvider.focus")
+	await vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
 	await waitFor(() => api.isReady())
 
 	// Expose the API to the tests.
