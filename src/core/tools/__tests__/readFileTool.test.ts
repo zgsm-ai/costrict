@@ -349,7 +349,7 @@ describe("read_file tool with maxReadFileLine setting", () => {
 			const originalMockImplementation = mockedExtractTextFromFile.getMockImplementation()
 			// Create a special mock implementation that doesn't call addLineNumbers
 			mockedExtractTextFromFile.mockImplementation(() => {
-				return Promise.resolve(numberedFileContent)
+				return Promise.resolve("1 | Line 1\n2 | Line 2\n3 | Line 3\n")
 			})
 
 			// Reset the spy to clear any previous calls
@@ -372,7 +372,7 @@ describe("read_file tool with maxReadFileLine setting", () => {
 			expect(mockedExtractTextFromFile).toHaveBeenCalledWith(absoluteFilePath)
 			expect(mockedReadLines).not.toHaveBeenCalled()
 			// Create a custom expected XML with lines="1-3" for binary files
-			const expectedXml = `<file><path>${testFilePath}</path>\n<content lines="1-3">\n${numberedFileContent}</content>\n</file>`
+			const expectedXml = `<file><path>${testFilePath}</path>\n<content lines="1-3">\n1 | Line 1\n2 | Line 2\n3 | Line 3\n</content>\n</file>`
 			expect(result).toBe(expectedXml)
 		})
 	})
