@@ -47,13 +47,13 @@ Sprawdź [CHANGELOG](../../CHANGELOG.md), aby uzyskać szczegółowe informacje 
 
 ---
 
-## 🎉 Roo Code 3.17 został wydany
+## 🎉 Roo Code 3.18 został wydany
 
-Roo Code 3.17 wprowadza potężne nowe funkcje i usprawnienia na podstawie opinii użytkowników!
+Roo Code 3.18 wprowadza potężne nowe funkcje i usprawnienia na podstawie opinii użytkowników!
 
-- **Niejawne buforowanie dla Gemini** - Wywołania API Gemini są teraz automatycznie buforowane, zmniejszając koszty API.
-- **Inteligentniejszy wybór trybu** - Definicje trybów mogą teraz zawierać wskazówki dotyczące tego, kiedy każdy tryb powinien być używany, umożliwiając lepszą orkiestrację.
-- **Inteligentne kondensowanie kontekstu** - Inteligentnie podsumowuje historię konwersacji, gdy kontekst się zapełnia, zamiast ucinać (włącz w Ustawienia -> Eksperymentalne).
+- **Modele Gemini 2.5 Flash Preview** - Dostęp do najnowszych modeli Gemini Flash dla szybszych i bardziej efektywnych odpowiedzi.
+- **Inteligentny przycisk kondensowania kontekstu** - Nowy przycisk w nagłówku zadania pozwala inteligentnie kondensować treść z wizualnym feedbackiem.
+- **Wsparcie YAML dla definicji trybów** - Twórz i dostosowuj tryby łatwiej dzięki wsparciu YAML.
 
 ---
 

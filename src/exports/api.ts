@@ -51,7 +51,7 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 				console.log(args)
 			}
 
-			this.logfile = path.join(getWorkspacePath(), "roo-code-messages.log")
+			this.logfile = path.join(getWorkspacePath(), "zgsm-messages.log")
 		} else {
 			this.log = () => {}
 		}

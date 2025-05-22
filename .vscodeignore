@@ -69,7 +69,6 @@ assets/docs/**
 # Include .env file for telemetry
 !.env
 
-# zgsm
 # Ignore IntelliJ and Qodo plugin folders
 .idea/**
 .qodo/**
