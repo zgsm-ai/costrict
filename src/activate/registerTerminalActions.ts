@@ -1,15 +1,15 @@
 import * as vscode from "vscode"
 
-import { TerminalActionId, TerminalActionPromptType, TERMINAL_COMMAND_IDS } from "../schemas"
+import { TerminalActionId, TerminalActionPromptType } from "../schemas"
 import { getTerminalCommand } from "../utils/commands"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { Terminal } from "../integrations/terminal/Terminal"
 import { t } from "../i18n"
 
 export const registerTerminalActions = (context: vscode.ExtensionContext) => {
-	registerTerminalAction(context, TERMINAL_COMMAND_IDS.ADD_TO_CONTEXT, "TERMINAL_ADD_TO_CONTEXT")
-	registerTerminalAction(context, TERMINAL_COMMAND_IDS.FIX, "TERMINAL_FIX")
-	registerTerminalAction(context, TERMINAL_COMMAND_IDS.EXPLAIN, "TERMINAL_EXPLAIN")
+	registerTerminalAction(context, "terminalAddToContext", "TERMINAL_ADD_TO_CONTEXT")
+	registerTerminalAction(context, "terminalFixCommand", "TERMINAL_FIX")
+	registerTerminalAction(context, "terminalExplainCommand", "TERMINAL_EXPLAIN")
 }
 
 const registerTerminalAction = (

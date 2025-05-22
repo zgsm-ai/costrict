@@ -20,7 +20,6 @@ import {
 	CodeActionName,
 	TerminalActionId,
 	TerminalActionPromptType,
-	TERMINAL_COMMAND_IDS,
 } from "../../schemas"
 import { t } from "../../i18n"
 import { setPanel } from "../../activate/registerCommands"
@@ -329,7 +328,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		const { customSupportPrompts } = await visibleProvider.getState()
 		const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
 
-		if (command === TERMINAL_COMMAND_IDS.ADD_TO_CONTEXT) {
+		if (command === "terminalAddToContext") {
 			await visibleProvider.postMessageToWebview({ type: "invoke", invoke: "setChatBoxMessage", text: prompt })
 			return
 		}
