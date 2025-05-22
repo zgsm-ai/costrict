@@ -47,13 +47,13 @@ Consultez le [CHANGELOG](../../CHANGELOG.md) pour des mises à jour détaillées
 
 ---
 
-## 🎉 Roo Code 3.17 est sorti
+## 🎉 Roo Code 3.18 est sorti
 
-Roo Code 3.17 apporte de nouvelles fonctionnalités puissantes et des améliorations basées sur vos commentaires !
+Roo Code 3.18 apporte de nouvelles fonctionnalités puissantes et des améliorations basées sur vos commentaires !
 
-- **Mise en cache implicite pour Gemini** - Les appels API Gemini sont désormais automatiquement mis en cache, réduisant les coûts d'API.
-- **Sélection de mode plus intelligente** - Les définitions de mode peuvent maintenant inclure des indications sur quand chaque mode doit être utilisé, permettant une meilleure orchestration.
-- **Condensation intelligente du contexte** - Résume intelligemment l'historique des conversations lorsque le contexte est plein au lieu de le tronquer (activez-le dans Paramètres -> Expérimental).
+- **Modèles de prévisualisation Gemini 2.5 Flash** - Accédez aux derniers modèles Gemini Flash pour des réponses plus rapides et plus efficaces.
+- **Bouton intelligent de condensation du contexte** - Nouveau bouton dans l'en-tête des tâches qui vous permet de condenser intelligemment le contenu avec un retour visuel.
+- **Support YAML pour les définitions de mode** - Créez et personnalisez des modes plus facilement avec le support YAML.
 
 ---
 

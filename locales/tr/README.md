@@ -47,13 +47,13 @@ Detaylı güncellemeler ve düzeltmeler için [CHANGELOG](../../CHANGELOG.md) do
 
 ---
 
-## 🎉 Roo Code 3.17 Yayınlandı
+## 🎉 Roo Code 3.18 Yayınlandı
 
-Roo Code 3.17 geri bildirimlerinize dayanarak güçlü yeni özellikler ve iyileştirmeler getiriyor!
+Roo Code 3.18 geri bildirimlerinize dayanarak güçlü yeni özellikler ve iyileştirmeler getiriyor!
 
-- **Gemini için Örtük Önbelleğe Alma** - Gemini API çağrıları artık otomatik olarak önbelleğe alınarak API maliyetleri azaltılıyor.
-- **Daha Akıllı Mod Seçimi** - Mod tanımları artık her modun ne zaman kullanılması gerektiği konusunda yönlendirme içerebiliyor, daha iyi orkestrasyon sağlıyor.
-- **Akıllı Bağlam Yoğunlaştırma** - Bağlam dolduğunda, kırpmak yerine konuşma geçmişini akıllıca özetliyor (Ayarlar -> Deneysel bölümünden etkinleştirin).
+- **Gemini 2.5 Flash Önizleme Modelleri** - Daha hızlı ve daha verimli yanıtlar için en yeni Gemini Flash modellerine erişim.
+- **Akıllı Bağlam Yoğunlaştırma Düğmesi** - Görev başlığındaki yeni düğme, görsel geri bildirimle içeriği akıllıca yoğunlaştırmanızı sağlıyor.
+- **Mod Tanımlamaları için YAML Desteği** - YAML desteği ile modları daha kolay oluşturun ve özelleştirin.
 
 ---
 

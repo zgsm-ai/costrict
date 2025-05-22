@@ -47,13 +47,13 @@ Consulteu el [CHANGELOG](../../CHANGELOG.md) per a actualitzacions i correccions
 
 ---
 
-## 🎉 Roo Code 3.17 Llançat
+## 🎉 Roo Code 3.18 Llançat
 
-Roo Code 3.17 aporta noves i potents funcionalitats i millores basades en els vostres comentaris!
+Roo Code 3.18 aporta noves i potents funcionalitats i millores basades en els vostres comentaris!
 
-- **Memòria cau implícita per a Gemini** - Les crides a l'API de Gemini ara es desen automàticament a la memòria cau, reduint els costos d'API.
-- **Selecció de mode més intel·ligent** - Les definicions de mode ara poden incloure orientació sobre quan s'ha d'utilitzar cada mode, permetent una millor orquestració.
-- **Condensació intel·ligent del context** - Resumeix de manera intel·ligent l'historial de converses quan el context s'omple en lloc de truncar-lo (activeu-ho a Configuració -> Experimental).
+- **Models de vista prèvia Gemini 2.5 Flash** - Accediu als últims models Gemini Flash per obtenir respostes més ràpides i eficients.
+- **Botó intel·ligent de condensació de context** - Un nou botó a la capçalera de tasques us permet condensar contingut de manera intel·ligent amb retroalimentació visual.
+- **Suport YAML per a definicions de mode** - Creeu i personalitzeu modes més fàcilment amb suport YAML.
 
 ---
 
