@@ -127,44 +127,35 @@ export const ZgsmAI = ({
 
 	return (
 		<>
-			<VSCodeTextField
-				value={apiConfiguration?.zgsmBaseUrl || ""}
-				type="url"
-				onInput={handleInputChange("zgsmBaseUrl")}
-				placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
-					zgsmBaseUrl: apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl,
-				})}
-				className="w-full">
-				<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
-			</VSCodeTextField>
+			<div className="mb-4">
+				<div className="flex justify-between items-center mb-2">
+					<label className="block font-medium">{t("settings:providers.zgsmBaseUrl")}</label>
+				</div>
+				<div className="flex items-center mb-2">
+					<VSCodeTextField
+						className="flex-1 mr-2"
+						value={apiConfiguration?.zgsmBaseUrl || ""}
+						type="url"
+						onInput={handleInputChange("zgsmBaseUrl")}
+						placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
+							zgsmBaseUrl: apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl,
+						})}></VSCodeTextField>
+
+					<VSCodeButton
+						appearance="icon"
+						title={t(
+							!apiConfiguration?.zgsmApiKey
+								? "settings:providers.getZgsmApiKey"
+								: "settings:providers.getZgsmApiKeyAgain",
+						)}
+						onClick={handleSubmit}>
+						<span className="codicon codicon-sign-in"></span>
+					</VSCodeButton>
+				</div>
+			</div>
 
 			{!fromWelcomeView && (
 				<>
-					<div className="mb-4">
-						<div className="flex justify-between items-center mb-2">
-							<label className="block font-medium">{t("settings:providers.zgsmApiKey")}</label>
-						</div>
-						<div className="flex items-center mb-2">
-							<VSCodeTextField
-								value={apiConfiguration?.zgsmApiKey || ""}
-								type="password"
-								className="flex-1 mr-2"
-								onInput={handleInputChange("zgsmApiKey")}
-								placeholder={t("settings:placeholders.apiKey")}></VSCodeTextField>
-
-							<VSCodeButton
-								appearance="icon"
-								title={t(
-									!apiConfiguration?.zgsmApiKey
-										? "settings:providers.getZgsmApiKey"
-										: "settings:providers.getZgsmApiKeyAgain",
-								)}
-								onClick={handleSubmit}>
-								<span className="codicon codicon-sign-in"></span>
-							</VSCodeButton>
-						</div>
-					</div>
-
 					<ModelPicker
 						apiConfiguration={apiConfiguration}
 						setApiConfigurationField={setApiConfigurationField}

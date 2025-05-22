@@ -30,6 +30,7 @@ import { loadLocalLanguageExtensions } from "./common/lang-util"
 import { ClineProvider } from "../../src/core/webview/ClineProvider"
 import { defaultZgsmAuthConfig } from "../../src/zgsmAuth/config"
 import { getZgsmModels } from "../../src/api/providers/zgsm"
+import { getCommand } from "../../src/utils/commands"
 
 /**
  * Initialization entry
@@ -112,31 +113,31 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 	registerZGSMCodeActions(context)
 	// Register the 'Start Chat' command
 	context.subscriptions.push(
-		vscode.commands.registerCommand("vscode-zgsm.chat", () => {
-			vscode.commands.executeCommand("vscode-zgsm.SidebarProvider.focus")
+		vscode.commands.registerCommand(getCommand("chat"), () => {
+			vscode.commands.executeCommand(getCommand("SidebarProvider.focus"))
 		}),
 	)
 	// Register the 'Logout' command
 	context.subscriptions.push(
-		vscode.commands.registerCommand("vscode-zgsm.view.logout", () => {
+		vscode.commands.registerCommand(getCommand("view.logout"), () => {
 			cvProvider.logout()
 		}),
 	)
 	// Register the command for clearing sessions
 	context.subscriptions.push(
-		vscode.commands.registerCommand("vscode-zgsm.clearSession", () => {
+		vscode.commands.registerCommand(getCommand("clearSession"), () => {
 			context.globalState.update("chatgpt-session-token", null)
 		}),
 	)
 	// Register the 'User Manual' command
 	context.subscriptions.push(
-		vscode.commands.registerCommand("vscode-zgsm.view.userHelperDoc", () => {
+		vscode.commands.registerCommand(getCommand("view.userHelperDoc"), () => {
 			cvProvider.userHelperDocPanel()
 		}),
 	)
 	// Register the 'Report Issue' command
 	context.subscriptions.push(
-		vscode.commands.registerCommand("vscode-zgsm.view.issue", () => {
+		vscode.commands.registerCommand(getCommand("view.issue"), () => {
 			cvProvider.userFeedbackIssue()
 		}),
 	)

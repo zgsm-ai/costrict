@@ -9,7 +9,7 @@ import pWaitFor from "p-wait-for"
 import { serializeError } from "serialize-error"
 
 // schemas
-import { TokenUsage, ToolUsage, ToolName } from "../../schemas"
+import { TokenUsage, ToolUsage, ToolName, ContextCondense } from "../../schemas"
 
 // api
 import { ApiHandler, buildApiHandler } from "../../api"
@@ -60,11 +60,7 @@ import { SYSTEM_PROMPT } from "../prompts/system"
 import { ToolRepetitionDetector } from "../tools/ToolRepetitionDetector"
 import { FileContextTracker } from "../context-tracking/FileContextTracker"
 import { RooIgnoreController } from "../ignore/RooIgnoreController"
-import {
-	type AssistantMessageContent,
-	parseAssistantMessageV2 as parseAssistantMessage,
-	presentAssistantMessage,
-} from "../assistant-message"
+import { type AssistantMessageContent, parseAssistantMessage, presentAssistantMessage } from "../assistant-message"
 import { truncateConversationIfNeeded } from "../sliding-window"
 import { ClineProvider } from "../webview/ClineProvider"
 import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-replace"
@@ -79,6 +75,9 @@ import {
 	checkpointDiff,
 } from "../checkpoints"
 import { processUserContentMentions } from "../mentions/processUserContentMentions"
+import { ApiMessage } from "../task-persistence/apiMessages"
+import { getMessagesSinceLastSummary, summarizeConversation } from "../condense"
+import { maybeRemoveImageBlocks } from "../../api/transform/image-cleaning"
 
 export type ClineEvents = {
 	message: [{ action: "created" | "updated"; message: ClineMessage }]
@@ -97,7 +96,6 @@ export type ClineEvents = {
 export type TaskOptions = {
 	provider: ClineProvider
 	apiConfiguration: ProviderSettings
-	customInstructions?: string
 	enableDiff?: boolean
 	enableCheckpoints?: boolean
 	fuzzyMatchThreshold?: number
@@ -131,12 +129,12 @@ export class Task extends EventEmitter<ClineEvents> {
 	isPaused: boolean = false
 	pausedModeSlug: string = defaultModeSlug
 	private pauseInterval: NodeJS.Timeout | undefined
-	customInstructions?: string
 
 	// API
 	readonly apiConfiguration: ProviderSettings
 	api: ApiHandler
 	private lastApiRequestTime?: number
+	private consecutiveAutoApprovedRequestsCount: number = 0
 
 	toolRepetitionDetector: ToolRepetitionDetector
 	rooIgnoreController?: RooIgnoreController
@@ -155,7 +153,7 @@ export class Task extends EventEmitter<ClineEvents> {
 	didEditFile: boolean = false
 
 	// LLM Messages & Chat Messages
-	apiConversationHistory: (Anthropic.MessageParam & { ts?: number })[] = []
+	apiConversationHistory: ApiMessage[] = []
 	clineMessages: ClineMessage[] = []
 
 	// Ask
@@ -191,7 +189,6 @@ export class Task extends EventEmitter<ClineEvents> {
 	constructor({
 		provider,
 		apiConfiguration,
-		customInstructions,
 		enableDiff = false,
 		enableCheckpoints = true,
 		fuzzyMatchThreshold = 1.0,
@@ -231,7 +228,6 @@ export class Task extends EventEmitter<ClineEvents> {
 
 		this.urlContentFetcher = new UrlContentFetcher(provider.context)
 		this.browserSession = new BrowserSession(provider.context)
-		this.customInstructions = customInstructions
 		this.diffEnabled = enableDiff
 		this.fuzzyMatchThreshold = fuzzyMatchThreshold
 		this.consecutiveMistakeLimit = consecutiveMistakeLimit
@@ -284,7 +280,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 	// API Messages
 
-	private async getSavedApiConversationHistory(): Promise<Anthropic.MessageParam[]> {
+	private async getSavedApiConversationHistory(): Promise<ApiMessage[]> {
 		return readApiMessages({ taskId: this.taskId, globalStoragePath: this.globalStoragePath })
 	}
 
@@ -294,7 +290,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		await this.saveApiConversationHistory()
 	}
 
-	async overwriteApiConversationHistory(newHistory: Anthropic.MessageParam[]) {
+	async overwriteApiConversationHistory(newHistory: ApiMessage[]) {
 		this.apiConversationHistory = newHistory
 		await this.saveApiConversationHistory()
 	}
@@ -355,7 +351,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 			await this.providerRef.deref()?.updateTaskHistory(historyItem)
 		} catch (error) {
-			console.error("Failed to save cline messages:", error)
+			console.error("Failed to save Roo messages:", error)
 		}
 	}
 
@@ -377,7 +373,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		// simply removes the reference to this instance, but the instance is
 		// still alive until this promise resolves or rejects.)
 		if (this.abort) {
-			throw new Error(`[Cline#ask] task ${this.taskId}.${this.instanceId} aborted`)
+			throw new Error(`[RooCode#ask] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 
 		let askTs: number
@@ -485,6 +481,32 @@ export class Task extends EventEmitter<ClineEvents> {
 		}
 	}
 
+	public async condenseContext(): Promise<void> {
+		const systemPrompt = await this.getSystemPrompt()
+		const {
+			messages,
+			summary,
+			cost,
+			newContextTokens = 0,
+		} = await summarizeConversation(this.apiConversationHistory, this.api, systemPrompt)
+		if (!summary) {
+			return
+		}
+		await this.overwriteApiConversationHistory(messages)
+		const { contextTokens } = this.getTokenUsage()
+		const contextCondense: ContextCondense = { summary, cost, newContextTokens, prevContextTokens: contextTokens }
+		await this.say(
+			"condense_context",
+			undefined /* text */,
+			undefined /* images */,
+			false /* partial */,
+			undefined /* checkpoint */,
+			undefined /* progressStatus */,
+			{ isNonInteractive: true } /* options */,
+			contextCondense,
+		)
+	}
+
 	async say(
 		type: ClineSay,
 		text?: string,
@@ -495,9 +517,10 @@ export class Task extends EventEmitter<ClineEvents> {
 		options: {
 			isNonInteractive?: boolean
 		} = {},
+		contextCondense?: ContextCondense,
 	): Promise<undefined> {
 		if (this.abort) {
-			throw new Error(`[Cline#say] task ${this.taskId}.${this.instanceId} aborted`)
+			throw new Error(`[RooCode#say] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 
 		if (partial !== undefined) {
@@ -522,7 +545,15 @@ export class Task extends EventEmitter<ClineEvents> {
 						this.lastMessageTs = sayTs
 					}
 
-					await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images, partial })
+					await this.addToClineMessages({
+						ts: sayTs,
+						type: "say",
+						say: type,
+						text,
+						images,
+						partial,
+						contextCondense,
+					})
 				}
 			} else {
 				// New now have a complete version of a previously partial message.
@@ -552,7 +583,7 @@ export class Task extends EventEmitter<ClineEvents> {
 						this.lastMessageTs = sayTs
 					}
 
-					await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images })
+					await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images, contextCondense })
 				}
 			}
 		} else {
@@ -567,7 +598,15 @@ export class Task extends EventEmitter<ClineEvents> {
 				this.lastMessageTs = sayTs
 			}
 
-			await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images, checkpoint })
+			await this.addToClineMessages({
+				ts: sayTs,
+				type: "say",
+				say: type,
+				text,
+				images,
+				checkpoint,
+				contextCondense,
+			})
 		}
 	}
 
@@ -628,7 +667,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		} catch (error) {
 			this.providerRef
 				.deref()
-				?.log(`Error failed to add reply from subtast into conversation of parent task, error: ${error}`)
+				?.log(`Error failed to add reply from subtask into conversation of parent task, error: ${error}`)
 
 			throw error
 		}
@@ -697,8 +736,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 		// Make sure that the api conversation history can be resumed by the API,
 		// even if it goes out of sync with cline messages.
-		let existingApiConversationHistory: Anthropic.Messages.MessageParam[] =
-			await this.getSavedApiConversationHistory()
+		let existingApiConversationHistory: ApiMessage[] = await this.getSavedApiConversationHistory()
 
 		// v2.0 xml tags refactor caveat: since we don't use tools anymore, we need to replace all tool use blocks with a text block since the API disallows conversations with tool uses and no tool schema
 		const conversationWithoutToolBlocks = existingApiConversationHistory.map((message) => {
@@ -742,7 +780,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		// if the last message is a user message, we can need to get the assistant message before it to see if it made tool calls, and if so, fill in the remaining tool responses with 'interrupted'
 
 		let modifiedOldUserContent: Anthropic.Messages.ContentBlockParam[] // either the last message if its user message, or the user message before the last (assistant) message
-		let modifiedApiConversationHistory: Anthropic.Messages.MessageParam[] // need to remove the last user message to replace with new modified user message
+		let modifiedApiConversationHistory: ApiMessage[] // need to remove the last user message to replace with new modified user message
 		if (existingApiConversationHistory.length > 0) {
 			const lastMessage = existingApiConversationHistory[existingApiConversationHistory.length - 1]
 
@@ -768,7 +806,7 @@ export class Task extends EventEmitter<ClineEvents> {
 					modifiedOldUserContent = []
 				}
 			} else if (lastMessage.role === "user") {
-				const previousAssistantMessage: Anthropic.Messages.MessageParam | undefined =
+				const previousAssistantMessage: ApiMessage | undefined =
 					existingApiConversationHistory[existingApiConversationHistory.length - 2]
 
 				const existingUserContent: Anthropic.Messages.ContentBlockParam[] = Array.isArray(lastMessage.content)
@@ -963,7 +1001,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		includeFileDetails: boolean = false,
 	): Promise<boolean> {
 		if (this.abort) {
-			throw new Error(`[Cline#recursivelyMakeClineRequests] task ${this.taskId}.${this.instanceId} aborted`)
+			throw new Error(`[RooCode#recursivelyMakeRooRequests] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 
 		if (this.consecutiveMistakeCount >= this.consecutiveMistakeLimit) {
@@ -990,10 +1028,6 @@ export class Task extends EventEmitter<ClineEvents> {
 
 			this.consecutiveMistakeCount = 0
 		}
-
-		// Get previous api req's index to check token usage and determine if we
-		// need to truncate conversation history.
-		const previousApiReqIndex = findLastIndex(this.clineMessages, (m) => m.say === "api_req_started")
 
 		// In this Cline request loop, we need to check if this task instance
 		// has been asked to wait for a subtask to finish before continuing.
@@ -1153,7 +1187,7 @@ export class Task extends EventEmitter<ClineEvents> {
 			// Yields only if the first chunk is successful, otherwise will
 			// allow the user to retry the request (most likely due to rate
 			// limit error, which gets thrown on the first chunk).
-			const stream = this.attemptApiRequest(previousApiReqIndex)
+			const stream = this.attemptApiRequest()
 			let assistantMessage = ""
 			let reasoningMessage = ""
 			this.isStreaming = true
@@ -1259,7 +1293,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 			// Need to call here in case the stream was aborted.
 			if (this.abort || this.abandoned) {
-				throw new Error(`[Cline#recursivelyMakeClineRequests] task ${this.taskId}.${this.instanceId} aborted`)
+				throw new Error(`[RooCode#recursivelyMakeRooRequests] task ${this.taskId}.${this.instanceId} aborted`)
 			}
 
 			this.didCompleteReadingStream = true
@@ -1360,35 +1394,9 @@ export class Task extends EventEmitter<ClineEvents> {
 		}
 	}
 
-	public async *attemptApiRequest(previousApiReqIndex: number, retryAttempt: number = 0): ApiStream {
+	private async getSystemPrompt(): Promise<string> {
+		const { mcpEnabled } = (await this.providerRef.deref()?.getState()) ?? {}
 		let mcpHub: McpHub | undefined
-
-		const { apiConfiguration, mcpEnabled, autoApprovalEnabled, alwaysApproveResubmit, requestDelaySeconds } =
-			(await this.providerRef.deref()?.getState()) ?? {}
-
-		let rateLimitDelay = 0
-
-		// Only apply rate limiting if this isn't the first request
-		if (this.lastApiRequestTime) {
-			const now = Date.now()
-			const timeSinceLastRequest = now - this.lastApiRequestTime
-			const rateLimit = apiConfiguration?.rateLimitSeconds || 0
-			rateLimitDelay = Math.ceil(Math.max(0, rateLimit * 1000 - timeSinceLastRequest) / 1000)
-		}
-
-		// Only show rate limiting message if we're not retrying. If retrying, we'll include the delay there.
-		if (rateLimitDelay > 0 && retryAttempt === 0) {
-			// Show countdown timer
-			for (let i = rateLimitDelay; i > 0; i--) {
-				const delayMessage = `Rate limiting for ${i} seconds...`
-				await this.say("api_req_retry_delayed", delayMessage, undefined, true)
-				await delay(1000)
-			}
-		}
-
-		// Update last request time before making the request
-		this.lastApiRequestTime = Date.now()
-
 		if (mcpEnabled ?? true) {
 			const provider = this.providerRef.deref()
 
@@ -1415,6 +1423,7 @@ export class Task extends EventEmitter<ClineEvents> {
 			browserViewportSize,
 			mode,
 			customModePrompts,
+			customInstructions,
 			experiments,
 			enableMcpServerCreation,
 			browserToolEnabled,
@@ -1423,7 +1432,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 		const { customModes } = (await this.providerRef.deref()?.getState()) ?? {}
 
-		const systemPrompt = await (async () => {
+		return await (async () => {
 			const provider = this.providerRef.deref()
 
 			if (!provider) {
@@ -1440,7 +1449,7 @@ export class Task extends EventEmitter<ClineEvents> {
 				mode,
 				customModePrompts,
 				customModes,
-				this.customInstructions,
+				customInstructions,
 				this.diffEnabled,
 				experiments,
 				enableMcpServerCreation,
@@ -1448,26 +1457,39 @@ export class Task extends EventEmitter<ClineEvents> {
 				rooIgnoreInstructions,
 			)
 		})()
+	}
 
-		// If the previous API request's total token usage is close to the
-		// context window, truncate the conversation history to free up space
-		// for the new request.
-		if (previousApiReqIndex >= 0) {
-			const previousRequest = this.clineMessages[previousApiReqIndex]?.text
+	public async *attemptApiRequest(retryAttempt: number = 0): ApiStream {
+		const { apiConfiguration, autoApprovalEnabled, alwaysApproveResubmit, requestDelaySeconds, experiments } =
+			(await this.providerRef.deref()?.getState()) ?? {}
 
-			if (!previousRequest) {
-				return
+		let rateLimitDelay = 0
+
+		// Only apply rate limiting if this isn't the first request
+		if (this.lastApiRequestTime) {
+			const now = Date.now()
+			const timeSinceLastRequest = now - this.lastApiRequestTime
+			const rateLimit = apiConfiguration?.rateLimitSeconds || 0
+			rateLimitDelay = Math.ceil(Math.max(0, rateLimit * 1000 - timeSinceLastRequest) / 1000)
+		}
+
+		// Only show rate limiting message if we're not retrying. If retrying, we'll include the delay there.
+		if (rateLimitDelay > 0 && retryAttempt === 0) {
+			// Show countdown timer
+			for (let i = rateLimitDelay; i > 0; i--) {
+				const delayMessage = `Rate limiting for ${i} seconds...`
+				await this.say("api_req_retry_delayed", delayMessage, undefined, true)
+				await delay(1000)
 			}
+		}
 
-			const {
-				tokensIn = 0,
-				tokensOut = 0,
-				cacheWrites = 0,
-				cacheReads = 0,
-			}: ClineApiReqInfo = JSON.parse(previousRequest)
+		// Update last request time before making the request
+		this.lastApiRequestTime = Date.now()
 
-			const totalTokens = tokensIn + tokensOut + cacheWrites + cacheReads
+		const systemPrompt = await this.getSystemPrompt()
 
+		const { contextTokens } = this.getTokenUsage()
+		if (contextTokens) {
 			// Default max tokens value for thinking models when no specific
 			// value is set.
 			const DEFAULT_THINKING_MODEL_MAX_TOKENS = 16_384
@@ -1480,44 +1502,54 @@ export class Task extends EventEmitter<ClineEvents> {
 
 			const contextWindow = modelInfo.contextWindow
 
-			const trimmedMessages = await truncateConversationIfNeeded({
+			const autoCondenseContext = experiments?.autoCondenseContext ?? false
+			const truncateResult = await truncateConversationIfNeeded({
 				messages: this.apiConversationHistory,
-				totalTokens,
+				totalTokens: contextTokens,
 				maxTokens,
 				contextWindow,
 				apiHandler: this.api,
+				autoCondenseContext,
+				systemPrompt,
 			})
-
-			if (trimmedMessages !== this.apiConversationHistory) {
-				await this.overwriteApiConversationHistory(trimmedMessages)
+			if (truncateResult.messages !== this.apiConversationHistory) {
+				await this.overwriteApiConversationHistory(truncateResult.messages)
+			}
+			if (truncateResult.summary) {
+				const { summary, cost, prevContextTokens, newContextTokens = 0 } = truncateResult
+				const contextCondense: ContextCondense = { summary, cost, newContextTokens, prevContextTokens }
+				await this.say(
+					"condense_context",
+					undefined /* text */,
+					undefined /* images */,
+					false /* partial */,
+					undefined /* checkpoint */,
+					undefined /* progressStatus */,
+					{ isNonInteractive: true } /* options */,
+					contextCondense,
+				)
 			}
 		}
 
-		// Clean conversation history by:
-		// 1. Converting to Anthropic.MessageParam by spreading only the API-required properties.
-		// 2. Converting image blocks to text descriptions if model doesn't support images.
-		const cleanConversationHistory = this.apiConversationHistory.map(({ role, content }) => {
-			// Handle array content (could contain image blocks).
-			if (Array.isArray(content)) {
-				if (!this.api.getModel().info.supportsImages) {
-					// Convert image blocks to text descriptions.
-					content = content.map((block) => {
-						if (block.type === "image") {
-							// Convert image blocks to text descriptions.
-							// Note: We can't access the actual image content/url due to API limitations,
-							// but we can indicate that an image was present in the conversation.
-							return {
-								type: "text",
-								text: "[Referenced image in conversation]",
-							}
-						}
-						return block
-					})
-				}
-			}
+		const messagesSinceLastSummary = getMessagesSinceLastSummary(this.apiConversationHistory)
+		const cleanConversationHistory = maybeRemoveImageBlocks(messagesSinceLastSummary, this.api).map(
+			({ role, content }) => ({ role, content }),
+		)
 
-			return { role, content }
-		})
+		// Check if we've reached the maximum number of auto-approved requests
+		const { allowedMaxRequests } = (await this.providerRef.deref()?.getState()) ?? {}
+		const maxRequests = allowedMaxRequests || Infinity
+
+		// Increment the counter for each new API request
+		this.consecutiveAutoApprovedRequestsCount++
+
+		if (this.consecutiveAutoApprovedRequestsCount > maxRequests) {
+			const { response } = await this.ask("auto_approval_max_req_reached", JSON.stringify({ count: maxRequests }))
+			// If we get past the promise, it means the user approved and did not start a new task
+			if (response === "yesButtonClicked") {
+				this.consecutiveAutoApprovedRequestsCount = 0
+			}
+		}
 
 		const stream = this.api.createMessage(systemPrompt, cleanConversationHistory)
 		const iterator = stream[Symbol.asyncIterator]()
@@ -1581,7 +1613,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 				// Delegate generator output from the recursive call with
 				// incremented retry count.
-				yield* this.attemptApiRequest(previousApiReqIndex, retryAttempt + 1)
+				yield* this.attemptApiRequest(retryAttempt + 1)
 
 				return
 			} else {
@@ -1599,7 +1631,7 @@ export class Task extends EventEmitter<ClineEvents> {
 				await this.say("api_req_retried")
 
 				// Delegate generator output from the recursive call.
-				yield* this.attemptApiRequest(previousApiReqIndex)
+				yield* this.attemptApiRequest()
 				return
 			}
 		}
@@ -1635,7 +1667,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		return combineApiRequests(combineCommandSequences(messages))
 	}
 
-	public getTokenUsage() {
+	public getTokenUsage(): TokenUsage {
 		return getApiMetrics(this.combineMessages(this.clineMessages.slice(1)))
 	}
 

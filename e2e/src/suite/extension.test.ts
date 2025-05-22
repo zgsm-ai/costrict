@@ -1,24 +1,56 @@
 import * as assert from "assert"
 import * as vscode from "vscode"
 
+import { Package } from "@roo-code/types"
+
 suite("zgsm Extension", () => {
 	test("Commands should be registered", async () => {
 		const expectedCommands = [
-			"vscode-zgsm.plusButtonClicked",
-			"vscode-zgsm.mcpButtonClicked",
-			"vscode-zgsm.historyButtonClicked",
-			"vscode-zgsm.popoutButtonClicked",
-			"vscode-zgsm.settingsButtonClicked",
-			"vscode-zgsm.openInNewTab",
-			"vscode-zgsm.explainCode",
-			"vscode-zgsm.fixCode",
-			"vscode-zgsm.improveCode",
+			"zgsm.plusButtonClicked",
+			"zgsm.mcpButtonClicked",
+			"zgsm.historyButtonClicked",
+			"zgsm.popoutButtonClicked",
+			"zgsm.settingsButtonClicked",
+			"zgsm.openInNewTab",
+			"zgsm.explainCode",
+			"zgsm.fixCode",
+			"zgsm.improveCode",
+			"SidebarProvider.open",
+			"SidebarProvider.focus",
+			"SidebarProvider.resetViewLocation",
+			"SidebarProvider.toggleVisibility",
+			"SidebarProvider.removeView",
+			"activationCompleted",
+			"plusButtonClicked",
+			"mcpButtonClicked",
+			"promptsButtonClicked",
+			"popoutButtonClicked",
+			"openInNewTab",
+			"settingsButtonClicked",
+			"historyButtonClicked",
+			"showHumanRelayDialog",
+			"registerHumanRelayCallback",
+			"unregisterHumanRelayCallback",
+			"handleHumanRelayResponse",
+			"newTask",
+			"setCustomStoragePath",
+			"focusInput",
+			"acceptInput",
+			"explainCode",
+			"fixCode",
+			"improveCode",
+			"addToContext",
+			"terminalAddToContext",
+			"terminalFixCommand",
+			"terminalExplainCommand",
 		]
 
-		const commands = await vscode.commands.getCommands(true)
+		const commands = new Set(
+			(await vscode.commands.getCommands(true)).filter((cmd) => cmd.startsWith(Package.name)),
+		)
 
-		for (const cmd of expectedCommands) {
-			assert.ok(commands.includes(cmd), `Command ${cmd} should be registered`)
+		for (const command of expectedCommands) {
+			assert.ok(commands.has(`${Package.name}.${command}`), `Command ${command} should be registered`)
 		}
 	})
 })

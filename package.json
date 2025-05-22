@@ -53,140 +53,144 @@
 	"contributes": {
 		"submenus": [
 			{
-				"id": "vscode-zgsm.terminalMenu",
+				"id": "zgsm.contextMenu",
 				"label": "%extension.displayName%"
 			},
 			{
 				"id": "zhuge-shenma",
+				"label": "%extension.displayName%"
+			},
+			{
+				"id": "zgsm.terminalMenu",
 				"label": "%extension.displayName%"
 			}
 		],
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "vscode-zgsm-ActivityBar",
+					"id": "zgsm-ActivityBar",
 					"title": "%extension.displayName%",
 					"icon": "assets/images/shenma_robot_logo_big.png"
 				}
 			]
 		},
 		"views": {
-			"vscode-zgsm-ActivityBar": [
+			"zgsm-ActivityBar": [
 				{
 					"type": "webview",
-					"id": "vscode-zgsm.SidebarProvider",
+					"id": "zgsm.SidebarProvider",
 					"name": ""
 				}
 			]
 		},
 		"commands": [
 			{
-				"command": "vscode-zgsm.plusButtonClicked",
+				"command": "zgsm.plusButtonClicked",
 				"title": "%command.newTask.title%",
 				"icon": "$(add)"
 			},
 			{
-				"command": "vscode-zgsm.mcpButtonClicked",
+				"command": "zgsm.mcpButtonClicked",
 				"title": "%command.mcpServers.title%",
 				"icon": "$(server)"
 			},
 			{
-				"command": "vscode-zgsm.promptsButtonClicked",
+				"command": "zgsm.promptsButtonClicked",
 				"title": "%command.prompts.title%",
 				"icon": "$(notebook)"
 			},
 			{
-				"command": "vscode-zgsm.historyButtonClicked",
+				"command": "zgsm.historyButtonClicked",
 				"title": "%command.history.title%",
 				"icon": "$(history)"
 			},
 			{
-				"command": "vscode-zgsm.popoutButtonClicked",
+				"command": "zgsm.popoutButtonClicked",
 				"title": "%command.openInEditor.title%",
 				"icon": "$(link-external)"
 			},
 			{
-				"command": "vscode-zgsm.settingsButtonClicked",
+				"command": "zgsm.settingsButtonClicked",
 				"title": "%command.settings.title%",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "vscode-zgsm.helpButtonClicked",
+				"command": "zgsm.helpButtonClicked",
 				"title": "%command.documentation.title%",
 				"icon": "$(question)"
 			},
 			{
-				"command": "vscode-zgsm.openInNewTab",
+				"command": "zgsm.openInNewTab",
 				"title": "%command.openInNewTab.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "vscode-zgsm.explainCode",
+				"command": "zgsm.explainCode",
 				"title": "%command.explainCode.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "vscode-zgsm.fixCode",
+				"command": "zgsm.fixCode",
 				"title": "%command.fixCode.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "vscode-zgsm.improveCode",
+				"command": "zgsm.improveCode",
 				"title": "%command.improveCode.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "vscode-zgsm.addToContext",
+				"command": "zgsm.addToContext",
 				"title": "%command.addToContext.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "vscode-zgsm.newTask",
+				"command": "zgsm.newTask",
 				"title": "%command.newTask.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "vscode-zgsm.terminalAddToContext",
+				"command": "zgsm.terminalAddToContext",
 				"title": "%command.terminal.addToContext.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "vscode-zgsm.terminalFixCommand",
+				"command": "zgsm.terminalFixCommand",
 				"title": "%command.terminal.fixCommand.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "vscode-zgsm.terminalExplainCommand",
+				"command": "zgsm.terminalExplainCommand",
 				"title": "%command.terminal.explainCommand.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "vscode-zgsm.terminalFixCommandInCurrentTask",
+				"command": "zgsm.terminalFixCommandInCurrentTask",
 				"title": "%command.terminal.fixCommandInCurrentTask.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "vscode-zgsm.terminalExplainCommandInCurrentTask",
+				"command": "zgsm.terminalExplainCommandInCurrentTask",
 				"title": "%command.terminal.explainCommandInCurrentTask.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "vscode-zgsm.setCustomStoragePath",
+				"command": "zgsm.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "vscode-zgsm.focusInput",
+				"command": "zgsm.focusInput",
 				"title": "%command.focusInput.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "vscode-zgsm.acceptInput",
+				"command": "zgsm.acceptInput",
 				"title": "%command.acceptInput.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "vscode-zgsm.view.userHelperDoc",
+				"command": "zgsm.view.userHelperDoc",
 				"title": "%command.view.userHelperDoc.title%",
 				"icon": {
 					"light": "assets/images/shenma_help_icon_lightmode.svg",
@@ -194,7 +198,7 @@
 				}
 			},
 			{
-				"command": "vscode-zgsm.view.logout",
+				"command": "zgsm.view.logout",
 				"title": "%command.view.logout.title%",
 				"icon": {
 					"light": "assets/images/shenma_logout_icon_lightmode.svg",
@@ -202,7 +206,7 @@
 				}
 			},
 			{
-				"command": "vscode-zgsm.view.issue",
+				"command": "zgsm.view.issue",
 				"title": "%command.view.issue.title%",
 				"icon": {
 					"light": "assets/images/issue.svg",
@@ -210,39 +214,39 @@
 				}
 			},
 			{
-				"command": "vscode-zgsm.explain",
+				"command": "zgsm.explain",
 				"title": "%command.explain.title%"
 			},
 			{
-				"command": "vscode-zgsm.addComment",
+				"command": "zgsm.addComment",
 				"title": "%command.addComment.title%"
 			},
 			{
-				"command": "vscode-zgsm.addTests",
+				"command": "zgsm.addTests",
 				"title": "%command.addTests.title%"
 			},
 			{
-				"command": "vscode-zgsm.codeReview",
+				"command": "zgsm.codeReview",
 				"title": "%command.codeReview.title%"
 			},
 			{
-				"command": "vscode-zgsm.addDebugCode",
+				"command": "zgsm.addDebugCode",
 				"title": "%command.addDebugCode.title%"
 			},
 			{
-				"command": "vscode-zgsm.addStrongerCode",
+				"command": "zgsm.addStrongerCode",
 				"title": "%command.addStrongerCode.title%"
 			},
 			{
-				"command": "vscode-zgsm.simplifyCode",
+				"command": "zgsm.simplifyCode",
 				"title": "%command.simplifyCode.title%"
 			},
 			{
-				"command": "vscode-zgsm.performanceOptimization",
+				"command": "zgsm.performanceOptimization",
 				"title": "%command.performanceOptimization.title%"
 			},
 			{
-				"command": "vscode-zgsm.chat",
+				"command": "zgsm.chat",
 				"title": "%command.chat.title%"
 			},
 			{
@@ -260,163 +264,163 @@
 			],
 			"zhuge-shenma": [
 				{
-					"command": "vscode-zgsm.addToContext",
+					"command": "zgsm.addToContext",
 					"group": "zhuge-shenma@1"
 				},
 				{
-					"command": "vscode-zgsm.explainCode",
+					"command": "zgsm.explainCode",
 					"group": "zhuge-shenma@2"
 				},
 				{
-					"command": "vscode-zgsm.fixCode",
+					"command": "zgsm.fixCode",
 					"group": "zhuge-shenma@3"
 				},
 				{
-					"command": "vscode-zgsm.improveCode",
+					"command": "zgsm.improveCode",
 					"group": "zhuge-shenma@4"
 				},
 				{
-					"command": "vscode-zgsm.addComment",
+					"command": "zgsm.addComment",
 					"group": "zhuge-shenma@5",
 					"when": "editorHasSelection"
 				},
 				{
-					"command": "vscode-zgsm.codeReview",
+					"command": "zgsm.codeReview",
 					"group": "zhuge-shenma@6",
 					"when": "editorHasSelection"
 				},
 				{
-					"command": "vscode-zgsm.addDebugCode",
+					"command": "zgsm.addDebugCode",
 					"group": "zhuge-shenma@7",
 					"when": "editorHasSelection"
 				},
 				{
-					"command": "vscode-zgsm.addStrongerCode",
+					"command": "zgsm.addStrongerCode",
 					"group": "zhuge-shenma@8",
 					"when": "editorHasSelection"
 				},
 				{
-					"command": "vscode-zgsm.simplifyCode",
+					"command": "zgsm.simplifyCode",
 					"group": "zhuge-shenma@9",
 					"when": "editorHasSelection"
 				},
 				{
-					"command": "vscode-zgsm.performanceOptimization",
+					"command": "zgsm.performanceOptimization",
 					"group": "zhuge-shenma@10",
 					"when": "editorHasSelection"
 				},
 				{
-					"command": "vscode-zgsm.view.issue",
+					"command": "zgsm.view.issue",
 					"group": "zissue@1"
 				}
 			],
 			"terminal/context": [
 				{
-					"submenu": "vscode-zgsm.terminalMenu",
+					"submenu": "zgsm.terminalMenu",
 					"group": "navigation"
 				}
 			],
-			"vscode-zgsm.terminalMenu": [
+			"zgsm.terminalMenu": [
 				{
-					"command": "vscode-zgsm.terminalAddToContext",
+					"command": "zgsm.terminalAddToContext",
 					"group": "1_actions@1"
 				},
 				{
-					"command": "vscode-zgsm.terminalFixCommand",
+					"command": "zgsm.terminalFixCommand",
 					"group": "1_actions@2"
 				},
 				{
-					"command": "vscode-zgsm.terminalExplainCommand",
+					"command": "zgsm.terminalExplainCommand",
 					"group": "1_actions@3"
 				}
 			],
 			"view/title": [
 				{
-					"command": "vscode-zgsm.plusButtonClicked",
+					"command": "zgsm.plusButtonClicked",
 					"group": "navigation@1",
-					"when": "view == vscode-zgsm.SidebarProvider"
+					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "vscode-zgsm.promptsButtonClicked",
+					"command": "zgsm.promptsButtonClicked",
 					"group": "navigation@2",
-					"when": "view == vscode-zgsm.SidebarProvider"
+					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "vscode-zgsm.mcpButtonClicked",
+					"command": "zgsm.mcpButtonClicked",
 					"group": "navigation@3",
-					"when": "view == vscode-zgsm.SidebarProvider"
+					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "vscode-zgsm.historyButtonClicked",
+					"command": "zgsm.historyButtonClicked",
 					"group": "navigation@4",
-					"when": "view == vscode-zgsm.SidebarProvider"
+					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "vscode-zgsm.popoutButtonClicked",
+					"command": "zgsm.popoutButtonClicked",
 					"group": "navigation@5",
-					"when": "view == vscode-zgsm.SidebarProvider"
+					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "vscode-zgsm.settingsButtonClicked",
+					"command": "zgsm.settingsButtonClicked",
 					"group": "navigation@6",
-					"when": "view == vscode-zgsm.SidebarProvider"
+					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "vscode-zgsm.helpButtonClicked",
+					"command": "zgsm.helpButtonClicked",
 					"group": "navigation@7",
-					"when": "view == vscode-zgsm.SidebarProvider"
+					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "vscode-zgsm.view.userHelperDoc",
-					"when": "view == vscode-zgsm.view",
+					"command": "zgsm.view.userHelperDoc",
+					"when": "view == zgsm.view",
 					"group": "navigation"
 				},
 				{
-					"command": "vscode-zgsm.view.logout",
-					"when": "view == vscode-zgsm.view",
+					"command": "zgsm.view.logout",
+					"when": "view == zgsm.view",
 					"group": "navigation"
 				},
 				{
-					"command": "vscode-zgsm.view.issue",
-					"when": "view == vscode-zgsm.view",
+					"command": "zgsm.view.issue",
+					"when": "view == zgsm.view",
 					"group": "navigation"
 				}
 			],
 			"editor/title": [
 				{
-					"command": "vscode-zgsm.plusButtonClicked",
+					"command": "zgsm.plusButtonClicked",
 					"group": "navigation@1",
-					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
 				},
 				{
-					"command": "vscode-zgsm.promptsButtonClicked",
+					"command": "zgsm.promptsButtonClicked",
 					"group": "navigation@2",
-					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
 				},
 				{
-					"command": "vscode-zgsm.mcpButtonClicked",
+					"command": "zgsm.mcpButtonClicked",
 					"group": "navigation@3",
-					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
 				},
 				{
-					"command": "vscode-zgsm.historyButtonClicked",
+					"command": "zgsm.historyButtonClicked",
 					"group": "navigation@4",
-					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
 				},
 				{
-					"command": "vscode-zgsm.popoutButtonClicked",
+					"command": "zgsm.popoutButtonClicked",
 					"group": "navigation@5",
-					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
 				},
 				{
-					"command": "vscode-zgsm.settingsButtonClicked",
+					"command": "zgsm.settingsButtonClicked",
 					"group": "navigation@6",
-					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
 				},
 				{
-					"command": "vscode-zgsm.helpButtonClicked",
+					"command": "zgsm.helpButtonClicked",
 					"group": "navigation@7",
-					"when": "activeWebviewPanelId == vscode-zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
 				}
 			]
 		},
@@ -425,7 +429,7 @@
 				"title": "%settings.title%",
 				"order": 2,
 				"properties": {
-					"features.allowedCommands": {
+					"zgsm.allowedCommands": {
 						"type": "array",
 						"items": {
 							"type": "string"
@@ -440,7 +444,7 @@
 						],
 						"description": "%commands.allowedCommands.description%"
 					},
-					"features.vsCodeLmModelSelector": {
+					"zgsm.vsCodeLmModelSelector": {
 						"type": "object",
 						"properties": {
 							"vendor": {
@@ -454,12 +458,12 @@
 						},
 						"description": "%settings.vsCodeLmModelSelector.description%"
 					},
-					"features.customStoragePath": {
+					"zgsm.customStoragePath": {
 						"type": "string",
 						"default": "",
 						"description": "%settings.customStoragePath.description%"
 					},
-					"features.showNotification": {
+					"zgsm.showNotification": {
 						"type": "boolean",
 						"default": false,
 						"description": "%auth.response.showNotification.description%"
@@ -626,7 +630,7 @@
 		"test:extension-esm": "vitest run",
 		"test:webview": "cd webview-ui && npm run test",
 		"prepare": "husky",
-		"publish:marketplace": "vsce publish && ovsx publish",
+		"publish:marketplace": "npx vsce publish && npx ovsx publish",
 		"publish": "npm run build && changeset publish && npm install --package-lock-only",
 		"version-packages": "changeset version && npm install --package-lock-only",
 		"vscode:prepublish": "npm run package",
@@ -713,6 +717,7 @@
 		"vscode-material-icons": "^0.1.1",
 		"web-tree-sitter": "^0.22.6",
 		"workerpool": "^9.2.0",
+		"yaml": "^2.8.0",
 		"zod": "^3.24.2"
 	},
 	"devDependencies": {
@@ -750,6 +755,7 @@
 		"nock": "^14.0.4",
 		"npm-run-all2": "^8.0.1",
 		"os": "^0.1.1",
+		"ovsx": "0.10.2",
 		"prettier": "^3.4.2",
 		"rimraf": "^6.0.1",
 		"semver": "^7.5.4",

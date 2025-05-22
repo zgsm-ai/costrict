@@ -1,5 +1,7 @@
 import * as vscode from "vscode"
 import { EditorUtils } from "../integrations/editor/EditorUtils"
+import { CodeActionName, CodeActionId } from "../schemas"
+import { getCodeActionCommand, getCommand } from "../utils/commands"
 
 export const ACTION_NAMES = {
 	EXPLAIN: "Shenma: Explain Code",
@@ -21,42 +23,19 @@ export const ACTION_NAMES = {
 } as const
 
 export const COMMAND_IDS = {
-	EXPLAIN: "vscode-zgsm.explainCode",
-	FIX: "vscode-zgsm.fixCode",
-	IMPROVE: "vscode-zgsm.improveCode",
-	ADD_TO_CONTEXT: "vscode-zgsm.addToContext",
-	NEW_TASK: "vscode-zgsm.newTask",
-	ZGSM_EXPLAIN: "vscode-zgsm.explain",
-	ZGSM_ADD_COMMENT: "vscode-zgsm.addComment",
-	ZGSM_CODE_REVIEW: "vscode-zgsm.codeReview",
-	ZGSM_ADD_DEBUG_CODE: "vscode-zgsm.addDebugCode",
-	ZGSM_ADD_STRONG_CODE: "vscode-zgsm.addStrongerCode",
-	ZGSM_SIMPLIFY_CODE: "vscode-zgsm.simplifyCode",
-	ZGSM_PERFORMANCE: "vscode-zgsm.performanceOptimization",
+	EXPLAIN: getCommand("explainCode"),
+	FIX: getCommand("fixCode"),
+	IMPROVE: getCommand("improveCode"),
+	ADD_TO_CONTEXT: getCommand("addToContext"),
+	NEW_TASK: getCommand("newTask"),
+	ZGSM_EXPLAIN: getCommand("explain"),
+	ZGSM_ADD_COMMENT: getCommand("addComment"),
+	ZGSM_CODE_REVIEW: getCommand("codeReview"),
+	ZGSM_ADD_DEBUG_CODE: getCommand("addDebugCode"),
+	ZGSM_ADD_STRONG_CODE: getCommand("addStrongerCode"),
+	ZGSM_SIMPLIFY_CODE: getCommand("simplifyCode"),
+	ZGSM_PERFORMANCE: getCommand("performanceOptimization"),
 } as const
-
-export type CodeActionName = "EXPLAIN" | "FIX" | "IMPROVE" | "ADD_TO_CONTEXT" | "NEW_TASK"
-| "ZGSM_EXPLAIN"
-| "ZGSM_ADD_COMMENT"
-| "ZGSM_CODE_REVIEW"
-| "ZGSM_ADD_DEBUG_CODE"
-| "ZGSM_ADD_STRONG_CODE"
-| "ZGSM_SIMPLIFY_CODE"
-| "ZGSM_PERFORMANCE"
-
-export type CodeActionId =
-	| "vscode-zgsm.explainCode"
-	| "vscode-zgsm.fixCode"
-	| "vscode-zgsm.improveCode"
-	| "vscode-zgsm.addToContext"
-	| "vscode-zgsm.newTask"
-	| "vscode-zgsm.explain"
-	| "vscode-zgsm.addComment"
-	| "vscode-zgsm.codeReview"
-	| "vscode-zgsm.addDebugCode"
-	| "vscode-zgsm.addStrongerCode"
-	| "vscode-zgsm.simplifyCode"
-	| "vscode-zgsm.performanceOptimization"
 
 export const ACTION_TITLES: Record<CodeActionName, string> = {
 	EXPLAIN: "Explain with Shenma",
@@ -88,7 +67,7 @@ export class CodeActionProvider implements vscode.CodeActionProvider {
 		args: any[],
 	): vscode.CodeAction {
 		const action = new vscode.CodeAction(title, kind)
-		action.command = { command, title, arguments: args }
+		action.command = { command: getCodeActionCommand(command), title, arguments: args }
 		return action
 	}
 
@@ -111,7 +90,7 @@ export class CodeActionProvider implements vscode.CodeActionProvider {
 				this.createAction(
 					ACTION_TITLES.ADD_TO_CONTEXT,
 					vscode.CodeActionKind.QuickFix,
-					COMMAND_IDS.ADD_TO_CONTEXT,
+					COMMAND_IDS.ADD_TO_CONTEXT as CodeActionId,
 					[
 						filePath,
 						effectiveRange.text,
@@ -128,32 +107,47 @@ export class CodeActionProvider implements vscode.CodeActionProvider {
 
 				if (relevantDiagnostics.length > 0) {
 					actions.push(
-						this.createAction(ACTION_TITLES.FIX, vscode.CodeActionKind.QuickFix, COMMAND_IDS.FIX, [
-							filePath,
-							effectiveRange.text,
-							effectiveRange.range.start.line + 1,
-							effectiveRange.range.end.line + 1,
-							relevantDiagnostics.map(EditorUtils.createDiagnosticData),
-						]),
+						this.createAction(
+							ACTION_TITLES.FIX,
+							vscode.CodeActionKind.QuickFix,
+							COMMAND_IDS.FIX as CodeActionId,
+							[
+								filePath,
+								effectiveRange.text,
+								effectiveRange.range.start.line + 1,
+								effectiveRange.range.end.line + 1,
+								relevantDiagnostics.map(EditorUtils.createDiagnosticData),
+							],
+						),
 					)
 				}
 			} else {
 				actions.push(
-					this.createAction(ACTION_TITLES.EXPLAIN, vscode.CodeActionKind.QuickFix, COMMAND_IDS.EXPLAIN, [
-						filePath,
-						effectiveRange.text,
-						effectiveRange.range.start.line + 1,
-						effectiveRange.range.end.line + 1,
-					]),
+					this.createAction(
+						ACTION_TITLES.EXPLAIN,
+						vscode.CodeActionKind.QuickFix,
+						COMMAND_IDS.EXPLAIN as CodeActionId,
+						[
+							filePath,
+							effectiveRange.text,
+							effectiveRange.range.start.line + 1,
+							effectiveRange.range.end.line + 1,
+						],
+					),
 				)
 
 				actions.push(
-					this.createAction(ACTION_TITLES.IMPROVE, vscode.CodeActionKind.QuickFix, COMMAND_IDS.IMPROVE, [
-						filePath,
-						effectiveRange.text,
-						effectiveRange.range.start.line + 1,
-						effectiveRange.range.end.line + 1,
-					]),
+					this.createAction(
+						ACTION_TITLES.IMPROVE,
+						vscode.CodeActionKind.QuickFix,
+						COMMAND_IDS.IMPROVE as CodeActionId,
+						[
+							filePath,
+							effectiveRange.text,
+							effectiveRange.range.start.line + 1,
+							effectiveRange.range.end.line + 1,
+						],
+					),
 				)
 			}
 

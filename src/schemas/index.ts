@@ -8,6 +8,111 @@ import { Equals, Keys, AssertEqual } from "../utils/type-fu"
 import { zgsmProviderKey } from "../shared/api"
 
 /**
+ * Extension
+ */
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { publisher, name, version } from "../../package.json"
+
+// These ENV variables can be defined by ESBuild when building the extension
+// in order to override the values in package.json. This allows us to build
+// different extension variants with the same package.json file.
+// The build process still needs to emit a modified package.json for consumption
+// by VSCode, but that build artifact is not used during the transpile step of
+// the build, so we still need this override mechanism.
+export const Package = {
+	publisher: process.env.PKG_PUBLISHER || publisher,
+	name: process.env.PKG_NAME || name,
+	version: process.env.PKG_VERSION || version,
+	outputChannel: process.env.PKG_OUTPUT_CHANNEL || "Shenma",
+} as const
+
+/**
+ * CodeAction
+ */
+
+export const codeActionIds = ["explainCode", "fixCode", "improveCode", "addToContext", "newTask"] as const
+
+export type CodeActionId =
+	| (typeof codeActionIds)[number]
+	| "zgsm.explainCode"
+	| "zgsm.fixCode"
+	| "zgsm.improveCode"
+	| "zgsm.addToContext"
+	| "zgsm.newTask"
+	| "zgsm.explain"
+	| "zgsm.addComment"
+	| "zgsm.codeReview"
+	| "zgsm.addDebugCode"
+	| "zgsm.addStrongerCode"
+	| "zgsm.simplifyCode"
+	| "zgsm.performanceOptimization"
+export type CodeActionName =
+	| "EXPLAIN"
+	| "FIX"
+	| "IMPROVE"
+	| "ADD_TO_CONTEXT"
+	| "NEW_TASK"
+	| "ZGSM_EXPLAIN"
+	| "ZGSM_ADD_COMMENT"
+	| "ZGSM_CODE_REVIEW"
+	| "ZGSM_ADD_DEBUG_CODE"
+	| "ZGSM_ADD_STRONG_CODE"
+	| "ZGSM_SIMPLIFY_CODE"
+	| "ZGSM_PERFORMANCE"
+/**
+ * TerminalAction
+ */
+
+// export const terminalActionIds = ["terminalAddToContext", "terminalFixCommand", "terminalExplainCommand"] as const
+export const TERMINAL_COMMAND_IDS = {
+	ADD_TO_CONTEXT: "zgsm.terminalAddToContext",
+	FIX: "zgsm.terminalFixCommand",
+	EXPLAIN: "zgsm.terminalExplainCommand",
+} as const
+export const terminalActionIds = [
+	TERMINAL_COMMAND_IDS.ADD_TO_CONTEXT,
+	TERMINAL_COMMAND_IDS.FIX,
+	TERMINAL_COMMAND_IDS.EXPLAIN,
+] as const
+export type TerminalActionId = (typeof terminalActionIds)[number]
+
+export type TerminalActionName = "ADD_TO_CONTEXT" | "FIX" | "EXPLAIN"
+
+export type TerminalActionPromptType = `TERMINAL_${TerminalActionName}`
+
+/**
+ * Command
+ */
+
+export const commandIds = [
+	"activationCompleted",
+
+	"plusButtonClicked",
+	"promptsButtonClicked",
+	"mcpButtonClicked",
+	"historyButtonClicked",
+	"popoutButtonClicked",
+	"settingsButtonClicked",
+
+	"openInNewTab",
+
+	"showHumanRelayDialog",
+	"registerHumanRelayCallback",
+	"unregisterHumanRelayCallback",
+	"handleHumanRelayResponse",
+
+	"newTask",
+	"helpButtonClicked",
+	"setCustomStoragePath",
+
+	"focusInput",
+	"acceptInput",
+] as const
+
+export type CommandId = (typeof commandIds)[number]
+
+/**
  * ProviderName
  */
 
@@ -314,7 +419,7 @@ export type CommandExecutionStatus = z.infer<typeof commandExecutionStatusSchema
  * ExperimentId
  */
 
-export const experimentIds = ["powerSteering"] as const
+export const experimentIds = ["autoCondenseContext", "powerSteering"] as const
 
 export const experimentIdsSchema = z.enum(experimentIds)
 
@@ -325,6 +430,7 @@ export type ExperimentId = z.infer<typeof experimentIdsSchema>
  */
 
 const experimentsSchema = z.object({
+	autoCondenseContext: z.boolean(),
 	powerSteering: z.boolean(),
 })
 
@@ -716,6 +822,7 @@ export const globalSettingsSchema = z.object({
 	alwaysAllowSubtasks: z.boolean().optional(),
 	alwaysAllowExecute: z.boolean().optional(),
 	allowedCommands: z.array(z.string()).optional(),
+	allowedMaxRequests: z.number().optional(),
 
 	browserToolEnabled: z.boolean().optional(),
 	browserViewportSize: z.string().optional(),
@@ -795,6 +902,7 @@ const globalSettingsRecord: GlobalSettingsRecord = {
 	alwaysAllowSubtasks: undefined,
 	alwaysAllowExecute: undefined,
 	allowedCommands: undefined,
+	allowedMaxRequests: undefined,
 
 	browserToolEnabled: undefined,
 	browserViewportSize: undefined,
@@ -940,6 +1048,7 @@ export const clineAsks = [
 	"mistake_limit_reached",
 	"browser_action_launch",
 	"use_mcp_server",
+	"auto_approval_max_req_reached",
 ] as const
 
 export const clineAskSchema = z.enum(clineAsks)
@@ -970,6 +1079,7 @@ export const clineSays = [
 	"checkpoint_saved",
 	"rooignore_error",
 	"diff_error",
+	"condense_context",
 ] as const
 
 export const clineSaySchema = z.enum(clineSays)
@@ -988,6 +1098,19 @@ export const toolProgressStatusSchema = z.object({
 export type ToolProgressStatus = z.infer<typeof toolProgressStatusSchema>
 
 /**
+ * ContextCondense
+ */
+
+export const contextCondenseSchema = z.object({
+	cost: z.number(),
+	prevContextTokens: z.number(),
+	newContextTokens: z.number(),
+	summary: z.string(),
+})
+
+export type ContextCondense = z.infer<typeof contextCondenseSchema>
+
+/**
  * ClineMessage
  */
 
@@ -1003,6 +1126,7 @@ export const clineMessageSchema = z.object({
 	conversationHistoryIndex: z.number().optional(),
 	checkpoint: z.record(z.string(), z.unknown()).optional(),
 	progressStatus: toolProgressStatusSchema.optional(),
+	contextCondense: contextCondenseSchema.optional(),
 })
 
 export type ClineMessage = z.infer<typeof clineMessageSchema>
@@ -1253,6 +1377,7 @@ export type TypeDefinition = {
 
 export const typeDefinitions: TypeDefinition[] = [
 	{ schema: globalSettingsSchema, identifier: "GlobalSettings" },
+	{ schema: providerNamesSchema, identifier: "ProviderName" },
 	{ schema: providerSettingsSchema, identifier: "ProviderSettings" },
 	{ schema: providerSettingsEntrySchema, identifier: "ProviderSettingsEntry" },
 	{ schema: clineMessageSchema, identifier: "ClineMessage" },

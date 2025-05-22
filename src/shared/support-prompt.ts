@@ -32,7 +32,26 @@ interface SupportPromptConfig {
 	template: string
 }
 
-const supportPromptConfigs: Record<string, SupportPromptConfig> = {
+type SupportPromptType =
+	| "ENHANCE"
+	| "EXPLAIN"
+	| "FIX"
+	| "IMPROVE"
+	| "ADD_TO_CONTEXT"
+	| "TERMINAL_ADD_TO_CONTEXT"
+	| "TERMINAL_FIX"
+	| "TERMINAL_EXPLAIN"
+	| "NEW_TASK"
+	| "ZGSM_EXPLAIN"
+	| "ZGSM_ADD_COMMENT"
+	| "ZGSM_CODE_REVIEW"
+	| "ZGSM_ADD_DEBUG_CODE"
+	| "ZGSM_ADD_STRONG_CODE"
+	| "ZGSM_SIMPLIFY_CODE"
+	| "ZGSM_PERFORMANCE"
+	| "ZGSM_ADD_TEST"
+
+const supportPromptConfigs: Record<SupportPromptType, SupportPromptConfig> = {
 	ENHANCE: {
 		template: `Generate an enhanced version of this prompt (reply with only the enhanced prompt - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes):
 
@@ -199,8 +218,6 @@ Please provide a clear and concise explanation of what this code does, including
 `,
 	},
 } as const
-
-type SupportPromptType = keyof typeof supportPromptConfigs
 
 export const supportPrompt = {
 	default: Object.fromEntries(Object.entries(supportPromptConfigs).map(([key, config]) => [key, config.template])),

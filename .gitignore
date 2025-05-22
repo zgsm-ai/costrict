@@ -8,9 +8,12 @@ mock/
 
 .DS_Store
 
+# IDEs
+.idea
+
 # Builds
 bin/
-roo-cline-*.vsix
+*.vsix
 
 # Local prompts and rules
 /local-prompts
@@ -36,3 +39,6 @@ logs
 
 # Vite development
 .vite-port
+
+# IntelliJ and Qodo plugin folders
+.idea/

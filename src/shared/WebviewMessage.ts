@@ -61,6 +61,7 @@ export interface WebviewMessage {
 		| "alwaysAllowBrowser"
 		| "alwaysAllowMcp"
 		| "alwaysAllowModeSwitch"
+		| "allowedMaxRequests"
 		| "alwaysAllowSubtasks"
 		| "playSound"
 		| "playTts"
@@ -134,6 +135,8 @@ export interface WebviewMessage {
 		| "searchFiles"
 		| "toggleApiConfigPin"
 		| "openExternalRelogin"
+		| "setHistoryPreviewCollapsed"
+		| "condenseTaskContextRequest"
 	text?: string
 	disabled?: boolean
 	askResponse?: ClineAskResponse
