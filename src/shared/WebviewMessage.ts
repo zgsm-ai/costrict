@@ -63,6 +63,7 @@ export interface WebviewMessage {
 		| "alwaysAllowModeSwitch"
 		| "allowedMaxRequests"
 		| "alwaysAllowSubtasks"
+		| "autoCondenseContextPercent"
 		| "playSound"
 		| "playTts"
 		| "stopTts"

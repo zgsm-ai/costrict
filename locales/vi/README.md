@@ -47,13 +47,13 @@ Kiểm tra [CHANGELOG](../../CHANGELOG.md) để biết thông tin chi tiết v�
 
 ---
 
-## 🎉 Đã Phát Hành Roo Code 3.17
+## 🎉 Đã Phát Hành Roo Code 3.18
 
-Roo Code 3.17 mang đến những tính năng mạnh mẽ mới và cải tiến dựa trên phản hồi của bạn!
+Roo Code 3.18 mang đến những tính năng mạnh mẽ mới và cải tiến dựa trên phản hồi của bạn!
 
-- **Bộ nhớ đệm ngầm cho Gemini** - Các cuộc gọi API Gemini hiện được tự động lưu vào bộ nhớ đệm, giảm chi phí API.
-- **Lựa chọn chế độ thông minh hơn** - Định nghĩa chế độ giờ đây có thể bao gồm hướng dẫn về thời điểm mỗi chế độ nên được sử dụng, cho phép điều phối tốt hơn.
-- **Nén ngữ cảnh thông minh** - Tóm tắt thông minh lịch sử hội thoại khi ngữ cảnh đầy thay vì cắt bớt (bật trong Cài đặt -> Thử nghiệm).
+- **Các mô hình Gemini 2.5 Flash Preview** - Truy cập các mô hình Gemini Flash mới nhất để có phản hồi nhanh hơn và hiệu quả hơn.
+- **Nút nén ngữ cảnh thông minh** - Nút mới trong tiêu đề tác vụ cho phép bạn nén nội dung một cách thông minh với phản hồi trực quan.
+- **Hỗ trợ YAML cho định nghĩa chế độ** - Tạo và tùy chỉnh các chế độ dễ dàng hơn với hỗ trợ YAML.
 
 ---
 
