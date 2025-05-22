@@ -5,7 +5,7 @@ import { Info, Download, Upload, TriangleAlert } from "lucide-react"
 
 import { VSCodeCheckbox, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 
-import { TelemetrySetting } from "../../../../src/shared/TelemetrySetting"
+import { TelemetrySetting } from "@roo/shared/TelemetrySetting"
 
 import { vscode } from "@/utils/vscode"
 import { cn } from "@/lib/utils"
@@ -59,16 +59,19 @@ export const About = ({ version, telemetrySetting, setTelemetrySetting, classNam
 					/>
 				</div>
 
-				<div className="flex items-center gap-2 mt-2">
-					<Button onClick={() => vscode.postMessage({ type: "exportSettings" })}>
+				<div className="flex flex-wrap items-center gap-2 mt-2">
+					<Button onClick={() => vscode.postMessage({ type: "exportSettings" })} className="w-28">
 						<Upload className="p-0.5" />
 						{t("settings:footer.settings.export")}
 					</Button>
-					<Button onClick={() => vscode.postMessage({ type: "importSettings" })}>
+					<Button onClick={() => vscode.postMessage({ type: "importSettings" })} className="w-28">
 						<Download className="p-0.5" />
 						{t("settings:footer.settings.import")}
 					</Button>
-					<Button variant="destructive" onClick={() => vscode.postMessage({ type: "resetState" })}>
+					<Button
+						variant="destructive"
+						onClick={() => vscode.postMessage({ type: "resetState" })}
+						className="w-28">
 						<TriangleAlert className="p-0.5" />
 						{t("settings:footer.settings.reset")}
 					</Button>

@@ -20,6 +20,6 @@
 		"useDefineForClassFields": true,
 		"useUnknownInCatchVariables": false
 	},
-	"include": ["src/**/*", "scripts/**/*", ".changeset/**/*", "zgsm/src/**/*"],
-	"exclude": ["node_modules", ".vscode-test", "webview-ui"]
+	"include": ["src/**/*", "scripts/**/*", ".changeset/**/*", "zgsm/**/*"],
+	"exclude": ["node_modules", ".vscode-test", "webview-ui", ".idea", ".qodo"]
 }

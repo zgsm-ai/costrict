@@ -1,4 +1,3 @@
-
 /**
  * Truncates file content to prevent performance issues from large files
  * @param content - The original file content to be processed
@@ -6,26 +5,26 @@
  * @returns The processed content (potentially truncated)
  */
 export function truncateContent(content: string, maxReadFileLine: number = 500): string {
-    // Maximum number of lines allowed
-    const MAX_LINES = maxReadFileLine > 0 ? maxReadFileLine : 500;
-    // Maximum number of characters allowed
-    const MAX_CHARS = 20000;
+	// Maximum number of lines allowed
+	const MAX_LINES = maxReadFileLine > 0 ? maxReadFileLine : 500
+	// Maximum number of characters allowed
+	const MAX_CHARS = 20000
 
-    // First check if the content exceeds the line limit
-    // Split content into array by newlines to count lines
-    const lines = content.split('\n');
-    if (lines.length > MAX_LINES) {
-        // If exceeds line limit, keep only first 500 lines
-        // Use join('\n') to recombine content and add newline at end to maintain format
-        return lines.slice(0, MAX_LINES).join('\n') + '\n';
-    }
+	// First check if the content exceeds the line limit
+	// Split content into array by newlines to count lines
+	const lines = content.split("\n")
+	if (lines.length > MAX_LINES) {
+		// If exceeds line limit, keep only first 500 lines
+		// Use join('\n') to recombine content and add newline at end to maintain format
+		return lines.slice(0, MAX_LINES).join("\n") + "\n"
+	}
 
-    // Then check if total character count exceeds limit
-    if (content.length > MAX_CHARS) {
-        // If exceeds character limit, keep only first 20000 characters
-        return content.substring(0, MAX_CHARS);
-    }
+	// Then check if total character count exceeds limit
+	if (content.length > MAX_CHARS) {
+		// If exceeds character limit, keep only first 20000 characters
+		return content.substring(0, MAX_CHARS)
+	}
 
-    // If content doesn't exceed any limits, return original
-    return content;
+	// If content doesn't exceed any limits, return original
+	return content
 }

@@ -1,7 +1,14 @@
 import * as vscode from "vscode"
 import delay from "delay"
 
+import { CommandId, Package } from "../schemas"
+import { getCommand } from "../utils/commands"
 import { ClineProvider } from "../core/webview/ClineProvider"
+import { ContextProxy } from "../core/config/ContextProxy"
+import { telemetryService } from "../services/telemetry/TelemetryService"
+
+import { registerHumanRelayCallback, unregisterHumanRelayCallback, handleHumanRelayResponse } from "./humanRelay"
+import { handleNewTask } from "./handleTask"
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -9,14 +16,11 @@ import { ClineProvider } from "../core/webview/ClineProvider"
 export function getVisibleProviderOrLog(outputChannel: vscode.OutputChannel): ClineProvider | undefined {
 	const visibleProvider = ClineProvider.getVisibleInstance()
 	if (!visibleProvider) {
-		outputChannel.appendLine("Cannot find any visible Cline instances.")
+		outputChannel.appendLine("Cannot find any visible Shenma instances.")
 		return undefined
 	}
 	return visibleProvider
 }
-
-import { registerHumanRelayCallback, unregisterHumanRelayCallback, handleHumanRelayResponse } from "./humanRelay"
-import { handleNewTask } from "./handleTask"
 
 // Store panel references in both modes
 let sidebarPanel: vscode.WebviewView | undefined = undefined
@@ -53,79 +57,137 @@ export type RegisterCommandOptions = {
 }
 
 export const registerCommands = (options: RegisterCommandOptions) => {
-	const { context, outputChannel } = options
+	const { context } = options
 
-	for (const [command, callback] of Object.entries(getCommandsMap(options))) {
+	for (const [id, callback] of Object.entries(getCommandsMap(options))) {
+		const command = getCommand(id as CommandId)
 		context.subscriptions.push(vscode.commands.registerCommand(command, callback))
 	}
 }
 
-const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOptions) => {
-	return {
-		"vscode-zgsm.activationCompleted": () => {},
-		"vscode-zgsm.plusButtonClicked": async () => {
-			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
-			await visibleProvider.removeClineFromStack()
-			await visibleProvider.postStateToWebview()
-			await visibleProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
-		},
-		"vscode-zgsm.mcpButtonClicked": () => {
-			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
-			visibleProvider.postMessageToWebview({ type: "action", action: "mcpButtonClicked" })
-		},
-		"vscode-zgsm.promptsButtonClicked": () => {
-			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
-			visibleProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" })
-		},
-		"vscode-zgsm.popoutButtonClicked": () => openClineInNewTab({ context, outputChannel }),
-		"vscode-zgsm.openInNewTab": () => openClineInNewTab({ context, outputChannel }),
-		"vscode-zgsm.settingsButtonClicked": () => {
-			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
-			visibleProvider.postMessageToWebview({ type: "action", action: "settingsButtonClicked" })
-		},
-		"vscode-zgsm.historyButtonClicked": () => {
-			const visibleProvider = getVisibleProviderOrLog(outputChannel)
-			if (!visibleProvider) return
-			visibleProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" })
-		},
-		"vscode-zgsm.helpButtonClicked": () => {
-			vscode.env.openExternal(vscode.Uri.parse("https://zgsm.ai"))
-		},
-		"vscode-zgsm.showHumanRelayDialog": (params: { requestId: string; promptText: string }) => {
+const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOptions): Record<CommandId, any> => ({
+	activationCompleted: () => {},
+	plusButtonClicked: async () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		telemetryService.captureTitleButtonClicked("plus")
+
+		await visibleProvider.removeClineFromStack()
+		await visibleProvider.postStateToWebview()
+		await visibleProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+	},
+	mcpButtonClicked: () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		telemetryService.captureTitleButtonClicked("mcp")
+
+		visibleProvider.postMessageToWebview({ type: "action", action: "mcpButtonClicked" })
+	},
+	promptsButtonClicked: () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		telemetryService.captureTitleButtonClicked("prompts")
+
+		visibleProvider.postMessageToWebview({ type: "action", action: "promptsButtonClicked" })
+	},
+	popoutButtonClicked: () => {
+		telemetryService.captureTitleButtonClicked("popout")
+
+		return openClineInNewTab({ context, outputChannel })
+	},
+	openInNewTab: () => openClineInNewTab({ context, outputChannel }),
+	settingsButtonClicked: () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		telemetryService.captureTitleButtonClicked("settings")
+
+		visibleProvider.postMessageToWebview({ type: "action", action: "settingsButtonClicked" })
+		// Also explicitly post the visibility message to trigger scroll reliably
+		visibleProvider.postMessageToWebview({ type: "action", action: "didBecomeVisible" })
+	},
+	historyButtonClicked: () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		telemetryService.captureTitleButtonClicked("history")
+
+		visibleProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" })
+	},
+	helpButtonClicked: () => {
+		vscode.env.openExternal(vscode.Uri.parse("https://zgsm.ai"))
+	},
+	showHumanRelayDialog: (params: { requestId: string; promptText: string }) => {
+		const panel = getPanel()
+
+		if (panel) {
+			panel?.webview.postMessage({
+				type: "showHumanRelayDialog",
+				requestId: params.requestId,
+				promptText: params.promptText,
+			})
+		}
+	},
+	registerHumanRelayCallback: registerHumanRelayCallback,
+	unregisterHumanRelayCallback: unregisterHumanRelayCallback,
+	handleHumanRelayResponse: handleHumanRelayResponse,
+	newTask: handleNewTask,
+	setCustomStoragePath: async () => {
+		const { promptForCustomStoragePath } = await import("../utils/storage")
+		await promptForCustomStoragePath()
+	},
+	focusInput: async () => {
+		try {
 			const panel = getPanel()
 
-			if (panel) {
-				panel?.webview.postMessage({
-					type: "showHumanRelayDialog",
-					requestId: params.requestId,
-					promptText: params.promptText,
-				})
+			if (!panel) {
+				await vscode.commands.executeCommand(`workbench.view.extension.${Package.name}-ActivityBar`)
+			} else if (panel === tabPanel) {
+				panel.reveal(vscode.ViewColumn.Active, false)
+			} else if (panel === sidebarPanel) {
+				await vscode.commands.executeCommand(`${ClineProvider.sideBarId}.focus`)
+				provider.postMessageToWebview({ type: "action", action: "focusInput" })
 			}
-		},
-		"vscode-zgsm.registerHumanRelayCallback": registerHumanRelayCallback,
-		"vscode-zgsm.unregisterHumanRelayCallback": unregisterHumanRelayCallback,
-		"vscode-zgsm.handleHumanRelayResponse": handleHumanRelayResponse,
-		"vscode-zgsm.newTask": handleNewTask,
-		"vscode-zgsm.setCustomStoragePath": async () => {
-			const { promptForCustomStoragePath } = await import("../shared/storagePathManager")
-			await promptForCustomStoragePath()
-		},
-		"vscode-zgsm.focusInput": () => {
-			provider.postMessageToWebview({ type: "action", action: "focusInput" })
-		},
-	}
-}
+		} catch (error) {
+			outputChannel.appendLine(`Error focusing input: ${error}`)
+		}
+	},
+	acceptInput: () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		visibleProvider.postMessageToWebview({ type: "acceptInput" })
+	},
+})
 
 export const openClineInNewTab = async ({ context, outputChannel }: Omit<RegisterCommandOptions, "provider">) => {
 	// (This example uses webviewProvider activation event which is necessary to
 	// deserialize cached webview, but since we use retainContextWhenHidden, we
 	// don't need to use that event).
 	// https://github.com/microsoft/vscode-extension-samples/blob/main/webview-sample/src/extension.ts
-	const tabProvider = new ClineProvider(context, outputChannel, "editor")
+	const contextProxy = await ContextProxy.getInstance(context)
+	const tabProvider = new ClineProvider(context, outputChannel, "editor", contextProxy)
 	const lastCol = Math.max(...vscode.window.visibleTextEditors.map((editor) => editor.viewColumn || 0))
 
 	// Check if there are any visible text editors, otherwise open a new group
@@ -149,7 +211,13 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 
 	// TODO: Use better svg icon with light and dark variants (see
 	// https://stackoverflow.com/questions/58365687/vscode-extension-iconpath).
-	newPanel.iconPath = vscode.Uri.joinPath(context.extensionUri, "zgsm", "images", "zhuge_shenma_rebot_logo_big.png")
+	newPanel.iconPath = vscode.Uri.joinPath(
+		context.extensionUri,
+		"zgsm",
+		"assets",
+		"images",
+		"shenma_robot_logo_big.png",
+	)
 	// newPanel.iconPath = {
 	// 	light: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "panel_light.png"),
 	// 	dark: vscode.Uri.joinPath(context.extensionUri, "assets", "icons", "panel_dark.png"),
@@ -157,10 +225,26 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 
 	await tabProvider.resolveWebviewView(newPanel)
 
+	// Add listener for visibility changes to notify webview
+	newPanel.onDidChangeViewState(
+		(e) => {
+			const panel = e.webviewPanel
+			if (panel.visible) {
+				panel.webview.postMessage({ type: "action", action: "didBecomeVisible" }) // Use the same message type as in SettingsView.tsx
+			}
+		},
+		null, // First null is for `thisArgs`
+		context.subscriptions, // Register listener for disposal
+	)
+
 	// Handle panel closing events.
-	newPanel.onDidDispose(() => {
-		setPanel(undefined, "tab")
-	})
+	newPanel.onDidDispose(
+		() => {
+			setPanel(undefined, "tab")
+		},
+		null,
+		context.subscriptions, // Also register dispose listener
+	)
 
 	// Lock the editor group so clicking on files doesn't open them over the panel.
 	await delay(100)

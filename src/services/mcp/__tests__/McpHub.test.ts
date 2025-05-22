@@ -1,7 +1,6 @@
-import type { McpHub as McpHubType } from "../McpHub"
+import type { McpHub as McpHubType, McpConnection } from "../McpHub"
 import type { ClineProvider } from "../../../core/webview/ClineProvider"
 import type { ExtensionContext, Uri } from "vscode"
-import type { McpConnection } from "../McpHub"
 import { ServerConfigSchema } from "../McpHub"
 
 const fs = require("fs/promises")
@@ -37,7 +36,6 @@ describe("McpHub", () => {
 
 	// Store original console methods
 	const originalConsoleError = console.error
-	const mockSettingsPath = "/mock/settings/path/mcp_settings.json"
 
 	beforeEach(() => {
 		jest.clearAllMocks()

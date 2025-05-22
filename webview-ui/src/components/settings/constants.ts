@@ -1,5 +1,5 @@
 import {
-	ApiProvider,
+	ProviderName,
 	ModelInfo,
 	anthropicModels,
 	bedrockModels,
@@ -9,9 +9,17 @@ import {
 	openAiNativeModels,
 	vertexModels,
 	zgsmProviderKey,
-} from "../../../../src/shared/api"
+	xaiModels,
+	groqModels,
+	chutesModels,
+} from "@roo/shared/api"
+import i18next from "i18next"
 
-export const MODELS_BY_PROVIDER: Partial<Record<ApiProvider, Record<string, ModelInfo>>> = {
+export { REASONING_MODELS, PROMPT_CACHING_MODELS } from "@roo/shared/api"
+
+export { AWS_REGIONS } from "@roo/shared/aws_regions"
+
+export const MODELS_BY_PROVIDER: Partial<Record<ProviderName, Record<string, ModelInfo>>> = {
 	anthropic: anthropicModels,
 	bedrock: bedrockModels,
 	deepseek: deepSeekModels,
@@ -19,6 +27,9 @@ export const MODELS_BY_PROVIDER: Partial<Record<ApiProvider, Record<string, Mode
 	mistral: mistralModels,
 	"openai-native": openAiNativeModels,
 	vertex: vertexModels,
+	xai: xaiModels,
+	groq: groqModels,
+	chutes: chutesModels,
 }
 
 export const PROVIDERS = [
@@ -29,7 +40,7 @@ export const PROVIDERS = [
 	{ value: "openai-native", label: "OpenAI" },
 	{ value: "openai", label: "OpenAI Compatible" },
 	{ value: "vertex", label: "GCP Vertex AI" },
-	{ value: "bedrock", label: "AWS Bedrock" },
+	{ value: "bedrock", label: "Amazon Bedrock" },
 	{ value: "glama", label: "Glama" },
 	{ value: "vscode-lm", label: "VS Code LM API" },
 	{ value: "mistral", label: "Mistral" },
@@ -38,9 +49,18 @@ export const PROVIDERS = [
 	{ value: "unbound", label: "Unbound" },
 	{ value: "requesty", label: "Requesty" },
 	{ value: "human-relay", label: "Human Relay" },
+	{ value: "xai", label: "xAI (Grok)" },
+	{ value: "groq", label: "Groq" },
+	{ value: "chutes", label: "Chutes AI" },
+	{ value: "litellm", label: "LiteLLM" },
 ].sort((a, b) => a.label.localeCompare(b.label))
 
-PROVIDERS.unshift({ value: zgsmProviderKey, label: "Zgsm" })
+PROVIDERS.unshift({
+	value: zgsmProviderKey,
+	get label() {
+		return i18next.t("settings:providers.zgsm")
+	},
+})
 
 export const VERTEX_REGIONS = [
 	{ value: "us-east5", label: "us-east5" },

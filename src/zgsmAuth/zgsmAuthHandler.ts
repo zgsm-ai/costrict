@@ -4,7 +4,6 @@ import { ClineProvider } from "../core/webview/ClineProvider"
 import { ApiConfiguration } from "../shared/api"
 import * as os from "os"
 import * as querystring from "querystring"
-import { getZgsmModels } from "../api/providers/zgsm"
 import { logger } from "../utils/logging"
 
 /**
@@ -60,60 +59,27 @@ export function createHeaders(dict: Record<string, any> = {}): Record<string, an
 }
 
 /**
- * Common function to handle post-login operations
- */
-export async function afterZgsmPostLogin({
-	apiConfiguration,
-	provider,
-	configName,
-	accessToken,
-}: {
-	apiConfiguration: ApiConfiguration
-	provider: ClineProvider
-	configName: string
-	accessToken: string
-}) {
-	try {
-		const [zgsmModels, zgsmDefaultModelId, err] = await getZgsmModels(
-			apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl || defaultZgsmAuthConfig.baseUrl,
-			accessToken,
-			apiConfiguration.openAiHostHeader,
-		)
-
-		await provider.upsertApiConfiguration(configName, {
-			...apiConfiguration,
-			zgsmModelId: apiConfiguration.zgsmModelId || zgsmDefaultModelId,
-			zgsmDefaultModelId,
-		})
-
-		provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId, errorObj: err })
-	} catch (error) {
-		logger.error("Failed to get Shenma models:", error)
-		throw error
-	}
-}
-
-/**
  * Handle ZGSM OAuth message
  * @param authUrl Authentication URL
  * @param apiConfiguration API configuration
  * @param provider ClineProvider instance
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function handleZgsmLogin(
 	authUrl: string,
-	apiConfiguration: ApiConfiguration,
-	provider: ClineProvider,
+	apiConfiguration?: ApiConfiguration,
+	provider?: ClineProvider,
 ): Promise<void> {
 	// Open authentication link
 	await vscode.env.openExternal(vscode.Uri.parse(authUrl))
 
 	// Save apiConfiguration for use after successful authentication
 	if (apiConfiguration) {
-		await provider.updateApiConfiguration(apiConfiguration)
+		await provider?.upsertProviderProfile((await provider.getState()).currentApiConfigName, apiConfiguration)
 	}
 
 	// Send message to webview to notify that authentication has started
-	provider.postMessageToWebview({ type: "state", state: await provider.getStateToPostToWebview() })
+	// provider.postMessageToWebview({ type: "state", state: await provider.getStateToPostToWebview() })
 }
 
 /**
@@ -124,14 +90,7 @@ export async function handleZgsmLogin(
  */
 export async function getZgsmAccessToken(code: string, apiConfiguration?: ApiConfiguration) {
 	try {
-		const baseUrl =
-			apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl || defaultZgsmAuthConfig.baseUrl
-		const redirectUri =
-			apiConfiguration?.customZgsmRedirectUri ||
-			`${baseUrl}${apiConfiguration?.zgsmRedirectUri || defaultZgsmAuthConfig.redirectUri}`
-		const tokenUrl =
-			apiConfiguration?.customZgsmTokenUrl ||
-			`${baseUrl}${apiConfiguration?.zgsmTokenUrl || defaultZgsmAuthConfig.tokenUrl}`
+		const { redirectUri, tokenUrl } = await defaultZgsmAuthConfig.getAuthUrls(apiConfiguration?.zgsmBaseUrl)
 
 		// Prefer configuration in apiConfiguration, if not exist, use environment settings
 		const clientId = apiConfiguration?.zgsmClientId || defaultZgsmAuthConfig.clientId

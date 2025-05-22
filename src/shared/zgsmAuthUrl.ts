@@ -1,26 +1,21 @@
+import { defaultZgsmAuthConfig } from "../zgsmAuth/config"
 import { ApiConfiguration } from "./api"
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getZgsmAuthUrl(stateId: string, apiConfiguration?: ApiConfiguration, uriScheme?: string) {
 	// const { loginUrl, clientId, redirectUri } = getAuthConfig()
 	const scopes = ["openid", "profile", "email"]
-	const baseUrl = `${apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl}`
+	const baseUrl = `${apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl || defaultZgsmAuthConfig.baseUrl}`
 	const params = [
 		["response_type", "code"],
 		["client_id", `${apiConfiguration?.zgsmClientId}`],
-		[
-			"redirect_uri",
-			apiConfiguration?.customZgsmRedirectUri
-				? apiConfiguration?.customZgsmRedirectUri
-				: `${baseUrl}${apiConfiguration?.zgsmRedirectUri}`,
-		],
+		["redirect_uri", `${baseUrl}${apiConfiguration?.zgsmRedirectUri}`],
 		["state", stateId],
 		["scope", scopes.join(" ")],
 	]
 	const searchParams = new URLSearchParams(params)
 
-	return apiConfiguration?.customZgsmLoginUrl
-		? `${apiConfiguration.customZgsmLoginUrl}?${searchParams.toString()}`
-		: `${baseUrl}${apiConfiguration?.zgsmLoginUrl}?${searchParams.toString()}`
+	return `${baseUrl}${apiConfiguration?.zgsmLoginUrl}?${searchParams.toString()}`
 }
 
 /**

@@ -3,7 +3,7 @@ import Mocha from "mocha"
 import { glob } from "glob"
 import * as vscode from "vscode"
 
-import type { RooCodeAPI } from "../../../src/exports/roo-code"
+import { type RooCodeAPI, Package, RooCodeSettings } from "@roo-code/types"
 
 import { waitFor } from "./utils"
 
@@ -12,30 +12,32 @@ declare global {
 }
 
 export async function run() {
-	const extension = vscode.extensions.getExtension<RooCodeAPI>("RooVeterinaryInc.roo-cline")
+	const extension = vscode.extensions.getExtension<RooCodeAPI>(`${Package.publisher}.${Package.name}`)
 
 	if (!extension) {
 		throw new Error("Extension not found")
 	}
 
 	const api = extension.isActive ? extension.exports : await extension.activate()
-
 	await api.setConfiguration({
-		apiProvider: "openrouter" as const,
-		openRouterApiKey: process.env.OPENROUTER_API_KEY!,
-		openRouterModelId: "google/gemini-2.0-flash-001",
-		openRouterModelInfo: {
-			maxTokens: 8192,
-			contextWindow: 1000000,
-			supportsImages: true,
-			supportsPromptCache: false,
-			inputPrice: 0.1,
-			outputPrice: 0.4,
-			thinking: false,
-		},
-	})
+		apiProvider: "zgsm" as const,
+		zgsmBaseUrl: "https://zgsm.sangfor.com",
+		zgsmApiKey: process.env.OPENROUTER_API_KEY!, // Replaced with "zgsm" but key is still used
+		zgsmModelId: "deepseek-v3",
+		zgsmDefaultBaseUrl: "https://zgsm.sangfor.com",
+		zgsmDefaultModelId: "deepseek-v3",
+		zgsmSite: "https://zgsm.ai",
+		zgsmLoginUrl: "/realms/gw/protocol/openid-connect/auth",
+		zgsmLogoutUrl: "/realms/gw/protocol/openid-connect/logout",
+		zgsmTokenUrl: "/realms/gw/protocol/openid-connect/token",
+		zgsmCompletionUrl: "/v2",
+		zgsmDownloadUrl: "/downloads",
+		zgsmRedirectUri: "/login/ok",
+		zgsmClientId: "vscode",
+		isZgsmApiKeyValid: true,
+	} as unknown as RooCodeSettings)
 
-	await vscode.commands.executeCommand("vscode-zgsm.SidebarProvider.focus")
+	await vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
 	await waitFor(() => api.isReady())
 
 	// Expose the API to the tests.

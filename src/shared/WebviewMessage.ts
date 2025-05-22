@@ -1,5 +1,6 @@
 import { z } from "zod"
-import { ApiConfiguration, ApiProvider } from "./api"
+
+import { ProviderSettings } from "./api"
 import { Mode, PromptComponent, ModeConfig } from "./modes"
 
 export type ClineAskResponse = "yesButtonClicked" | "noButtonClicked" | "messageResponse"
@@ -11,9 +12,10 @@ export type AudioType = "notification" | "celebration" | "progress_loop"
 export interface WebviewMessage {
 	type:
 		| "zgsmLogin"
-		| "refreshZgsmModels"
+		| "requestZgsmModels"
 		| "apiConfiguration"
 		| "deleteMultipleTasksWithIds"
+		| "setHistoryPreviewCollapsed"
 		| "currentApiConfigName"
 		| "saveApiConfiguration"
 		| "upsertApiConfiguration"
@@ -32,6 +34,7 @@ export interface WebviewMessage {
 		| "webviewDidLaunch"
 		| "newTask"
 		| "askResponse"
+		| "terminalOperation"
 		| "clearTask"
 		| "didShowAnnouncement"
 		| "selectImages"
@@ -42,21 +45,25 @@ export interface WebviewMessage {
 		| "importSettings"
 		| "exportSettings"
 		| "resetState"
+		| "flushRouterModels"
+		| "requestRouterModels"
+		| "requestOpenAiModels"
 		| "requestOllamaModels"
 		| "requestLmStudioModels"
+		| "requestVsCodeLmModels"
 		| "openImage"
 		| "openFile"
 		| "openMention"
 		| "cancelTask"
-		| "refreshOpenRouterModels"
-		| "refreshGlamaModels"
-		| "refreshUnboundModels"
-		| "refreshRequestyModels"
-		| "refreshOpenAiModels"
+		| "updateVSCodeSetting"
+		| "getVSCodeSetting"
+		| "vsCodeSetting"
 		| "alwaysAllowBrowser"
 		| "alwaysAllowMcp"
 		| "alwaysAllowModeSwitch"
+		| "allowedMaxRequests"
 		| "alwaysAllowSubtasks"
+		| "autoCondenseContextPercent"
 		| "playSound"
 		| "playTts"
 		| "stopTts"
@@ -66,7 +73,6 @@ export interface WebviewMessage {
 		| "soundVolume"
 		| "diffEnabled"
 		| "enableCheckpoints"
-		| "checkpointStorage"
 		| "browserViewportSize"
 		| "screenshotQuality"
 		| "remoteBrowserHost"
@@ -84,13 +90,20 @@ export interface WebviewMessage {
 		| "deleteMessage"
 		| "terminalOutputLineLimit"
 		| "terminalShellIntegrationTimeout"
+		| "terminalShellIntegrationDisabled"
+		| "terminalCommandDelay"
+		| "terminalPowershellCounter"
+		| "terminalZshClearEolMark"
+		| "terminalZshOhMy"
+		| "terminalZshP10k"
+		| "terminalZdotdir"
+		| "terminalCompressProgressBar"
 		| "mcpEnabled"
 		| "enableMcpServerCreation"
 		| "searchCommits"
 		| "alwaysApproveResubmit"
 		| "requestDelaySeconds"
 		| "setApiConfigPassword"
-		| "requestVsCodeLmModels"
 		| "mode"
 		| "updatePrompt"
 		| "updateSupportPrompt"
@@ -123,10 +136,12 @@ export interface WebviewMessage {
 		| "searchFiles"
 		| "toggleApiConfigPin"
 		| "openExternalRelogin"
+		| "setHistoryPreviewCollapsed"
+		| "condenseTaskContextRequest"
 	text?: string
 	disabled?: boolean
 	askResponse?: ClineAskResponse
-	apiConfiguration?: ApiConfiguration
+	apiConfiguration?: ProviderSettings
 	images?: string[]
 	bool?: boolean
 	value?: number
@@ -141,6 +156,7 @@ export interface WebviewMessage {
 	dataUrls?: string[]
 	values?: Record<string, any>
 	query?: string
+	setting?: string
 	slug?: string
 	modeConfig?: ModeConfig
 	timeout?: number
@@ -148,6 +164,9 @@ export interface WebviewMessage {
 	source?: "global" | "project"
 	requestId?: string
 	ids?: string[]
+	hasSystemPromptOverride?: boolean
+	terminalOperation?: "continue" | "abort"
+	historyPreviewCollapsed?: boolean
 	authUrl?: string
 	url?: string
 }

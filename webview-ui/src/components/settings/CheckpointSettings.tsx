@@ -1,9 +1,9 @@
 import { HTMLAttributes } from "react"
 import { useAppTranslation } from "@/i18n/TranslationContext"
-import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
+import { VSCodeCheckbox, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { GitBranch } from "lucide-react"
-
-import { CheckpointStorage } from "../../../../src/shared/checkpoints"
+import { Trans } from "react-i18next"
+import { buildDocLink } from "@src/utils/docLinks"
 
 import { SetCachedStateField } from "./types"
 import { SectionHeader } from "./SectionHeader"
@@ -11,16 +11,10 @@ import { Section } from "./Section"
 
 type CheckpointSettingsProps = HTMLAttributes<HTMLDivElement> & {
 	enableCheckpoints?: boolean
-	checkpointStorage?: CheckpointStorage
-	setCachedStateField: SetCachedStateField<"enableCheckpoints" | "checkpointStorage">
+	setCachedStateField: SetCachedStateField<"enableCheckpoints">
 }
 
-export const CheckpointSettings = ({
-	enableCheckpoints,
-	checkpointStorage = "task",
-	setCachedStateField,
-	...props
-}: CheckpointSettingsProps) => {
+export const CheckpointSettings = ({ enableCheckpoints, setCachedStateField, ...props }: CheckpointSettingsProps) => {
 	const { t } = useAppTranslation()
 	return (
 		<div {...props}>
@@ -40,9 +34,15 @@ export const CheckpointSettings = ({
 						}}>
 						<span className="font-medium">{t("settings:checkpoints.enable.label")}</span>
 					</VSCodeCheckbox>
-					<p className="text-vscode-descriptionForeground text-sm mt-0">
-						{t("settings:checkpoints.enable.description")}
-					</p>
+					<div className="text-vscode-descriptionForeground text-sm mt-1">
+						<Trans i18nKey="settings:checkpoints.enable.description">
+							<VSCodeLink
+								href={buildDocLink("features/checkpoints", "settings_checkpoints")}
+								style={{ display: "inline" }}>
+								{" "}
+							</VSCodeLink>
+						</Trans>
+					</div>
 				</div>
 			</Section>
 		</div>

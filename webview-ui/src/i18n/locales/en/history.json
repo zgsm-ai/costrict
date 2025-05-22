@@ -1,6 +1,6 @@
 {
-	"recentTasks": "Recent Tasks",
-	"viewAll": "View All",
+	"recentTasks": "Tasks",
+	"viewAll": "View All Tasks",
 	"tokens": "Tokens: ↑{{in}} ↓{{out}}",
 	"cache": "Cache: +{{writes}} → {{reads}}",
 	"apiCost": "API Cost: ${{cost}}",
@@ -26,13 +26,14 @@
 	"delete": "Delete",
 	"exitSelection": "Exit Selection",
 	"selectionMode": "Selection Mode",
-	"deselectAll": "Deselect All",
-	"selectAll": "Select All",
+	"deselectAll": "Deselect all",
+	"selectAll": "Select all",
 	"selectedItems": "Selected {{selected}}/{{total}} items",
 	"clearSelection": "Clear Selection",
 	"deleteSelected": "Delete Selected",
 	"deleteTasks": "Delete Tasks",
 	"confirmDeleteTasks": "Are you sure you want to delete {{count}} tasks?",
 	"deleteTasksWarning": "Deleted tasks cannot be recovered. Please make sure you want to proceed.",
-	"deleteItems": "Delete {{count}} Items"
+	"deleteItems": "Delete {{count}} Items",
+	"showAllWorkspaces": "Show tasks from all workspaces"
 }

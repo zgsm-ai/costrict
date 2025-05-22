@@ -19,6 +19,7 @@ import { getUuid } from "../common/util"
 import { getFullLineCode, getVscodeTempFileDir, getWebviewContent } from "../common/vscode-util"
 import { getLanguageByFilePath } from "../common/lang-util"
 import { t } from "../../../src/i18n"
+import { getCommand } from "../../../src/utils/commands"
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
 	private static instance: ChatViewProvider // Singleton, ensuring a globally unique instance
@@ -28,7 +29,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
 	constructor(public context: vscode.ExtensionContext) {
 		vscode.window.createTextEditorDecorationType({
-			gutterIconPath: vscode.Uri.file(context.asAbsolutePath("images/ai-rotate.svg")),
+			gutterIconPath: vscode.Uri.file(context.asAbsolutePath("assets/images/ai-rotate.svg")),
 			gutterIconSize: "contain",
 			rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
 		})
@@ -250,7 +251,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 				)
 				.then(async (selection) => {
 					if (selection && selection.title === "View details") {
-						await vscode.commands.executeCommand("vscode-zgsm.view.focus")
+						await vscode.commands.executeCommand(getCommand("view.focus"))
 						setTimeout(() => {
 							this.invokeCallback(message, message.params.data)
 						}, 500)
@@ -264,7 +265,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 				})
 				.then((selection) => {
 					if (selection && selection.title === "Open the chat window") {
-						vscode.commands.executeCommand("vscode-zgsm.view.focus")
+						vscode.commands.executeCommand(getCommand("view.focus"))
 						setTimeout(() => {
 							this.invokeCallback(message, message.params.data)
 						}, 500)
@@ -373,7 +374,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 	 * After the codelens button event is triggered, send a request to the webview to have a conversation with the LLM
 	 */
 	public codeLensButtonSend(codelensParams: any) {
-		vscode.commands.executeCommand("vscode-zgsm.view.focus")
+		vscode.commands.executeCommand(getCommand("view.focus"))
 		setTimeout(
 			() => {
 				try {

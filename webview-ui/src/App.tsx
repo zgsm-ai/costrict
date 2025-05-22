@@ -2,20 +2,20 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useEvent } from "react-use"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
-import { ExtensionMessage } from "../../src/shared/ExtensionMessage"
+import { ExtensionMessage } from "@roo/shared/ExtensionMessage"
 import TranslationProvider from "./i18n/TranslationContext"
 
 import { vscode } from "./utils/vscode"
 import { telemetryClient } from "./utils/TelemetryClient"
 import { ExtensionStateContextProvider, useExtensionState } from "./context/ExtensionStateContext"
-import ChatView from "./components/chat/ChatView"
+import ChatView, { ChatViewRef } from "./components/chat/ChatView"
 import HistoryView from "./components/history/HistoryView"
 import SettingsView, { SettingsViewRef } from "./components/settings/SettingsView"
 import WelcomeView from "./components/welcome/WelcomeView"
 import McpView from "./components/mcp/McpView"
 import PromptsView from "./components/prompts/PromptsView"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
-import { zgsmProviderKey } from "../../src/shared/api"
+// import { zgsmProviderKey } from "../../src/shared/api"
 
 type Tab = "settings" | "history" | "mcp" | "prompts" | "chat"
 
@@ -35,8 +35,8 @@ const App = () => {
 		telemetrySetting,
 		telemetryKey,
 		machineId,
-		apiConfiguration,
-		setApiConfiguration,
+		// apiConfiguration,
+		// setApiConfiguration,
 	} = useExtensionState()
 
 	const [showAnnouncement, setShowAnnouncement] = useState(false)
@@ -53,6 +53,7 @@ const App = () => {
 	})
 
 	const settingsRef = useRef<SettingsViewRef>(null)
+	const chatViewRef = useRef<ChatViewRef>(null)
 
 	const switchTab = useCallback((newTab: Tab) => {
 		setCurrentSection(undefined)
@@ -85,23 +86,11 @@ const App = () => {
 				setHumanRelayDialogState({ isOpen: true, requestId, promptText })
 			}
 
-			if (message.type === "zgsmModels" && message.zgsmDefaultModelId) {
-				setApiConfiguration({
-					zgsmModelId:
-						apiConfiguration?.apiProvider === zgsmProviderKey
-							? apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId
-							: message.zgsmDefaultModelId,
-					zgsmDefaultModelId: message.zgsmDefaultModelId,
-				})
+			if (message.type === "acceptInput") {
+				chatViewRef.current?.acceptInput()
 			}
 		},
-		[
-			switchTab,
-			setApiConfiguration,
-			apiConfiguration?.apiProvider,
-			apiConfiguration?.zgsmModelId,
-			apiConfiguration?.zgsmDefaultModelId,
-		],
+		[switchTab],
 	)
 
 	useEvent("message", onMessage)
@@ -136,13 +125,13 @@ const App = () => {
 			{tab === "mcp" && <McpView onDone={() => switchTab("chat")} />}
 			{tab === "history" && <HistoryView onDone={() => switchTab("chat")} />}
 			{tab === "settings" && (
-				<SettingsView ref={settingsRef} onDone={() => switchTab("chat")} targetSection={currentSection} />
+				<SettingsView ref={settingsRef} onDone={() => setTab("chat")} targetSection={currentSection} />
 			)}
 			<ChatView
+				ref={chatViewRef}
 				isHidden={tab !== "chat"}
 				showAnnouncement={showAnnouncement}
 				hideAnnouncement={() => setShowAnnouncement(false)}
-				showHistoryView={() => switchTab("history")}
 			/>
 			<HumanRelayDialog
 				isOpen={humanRelayDialogState.isOpen}

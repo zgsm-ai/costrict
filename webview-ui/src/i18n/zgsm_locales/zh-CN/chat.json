@@ -10,7 +10,12 @@
 		"didRead": "诸葛神码已读取此文件：",
 		"wantsToEdit": "诸葛神码想要编辑此文件：",
 		"wantsToEditOutsideWorkspace": "诸葛神码想要编辑工作区外的此文件：",
-		"wantsToCreate": "诸葛神码想要创建新文件："
+		"wantsToCreate": "诸葛神码想要创建新文件：",
+		"wantsToSearchReplace": "诸葛神码需要在此文件中搜索和替换:",
+		"didSearchReplace": "诸葛神码已完成搜索和替换:",
+		"wantsToInsert": "诸葛神码需要在此文件中插入内容:",
+		"wantsToInsertWithLineNumber": "诸葛神码需要在第 {{lineNumber}} 行插入内容:",
+		"wantsToInsertAtEnd": "诸葛神码需要在文件末尾添加内容:"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "诸葛神码想要查看此目录中的顶层文件：",
@@ -42,5 +47,12 @@
 	"troubleMessage": "诸葛神码遇到了一些问题...",
 	"browser": {
 		"rooWantsToUse": "诸葛神码想要使用浏览器："
+	},
+	"autoApprove": {
+		"description": "允许诸葛神码直接执行操作无需确认，请谨慎启用。前往<settingsLink>设置</settingsLink>调整"
+	},
+	"announcement": {
+		"title": "🎉 诸葛神码 {{version}} 已发布",
+		"description": "诸葛神码 {{version}} 带来基于您反馈的新功能和改进。"
 	}
 }

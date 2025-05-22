@@ -1,10 +1,10 @@
 import * as assert from "assert"
 
-import type { ClineMessage } from "../../../src/exports/roo-code"
+import type { ClineMessage } from "@roo-code/types"
 
 import { waitUntilCompleted } from "./utils"
 
-suite("Roo Code Modes", () => {
+suite("zgsm Modes", () => {
 	test("Should handle switching modes correctly", async () => {
 		const api = globalThis.api
 

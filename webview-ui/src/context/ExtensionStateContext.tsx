@@ -1,26 +1,30 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react"
 import { useEvent } from "react-use"
-import { ApiConfigMeta, ExtensionMessage, ExtensionState } from "../../../src/shared/ExtensionMessage"
-import { ApiConfiguration } from "../../../src/shared/api"
-import { vscode } from "../utils/vscode"
-import { convertTextMateToHljs } from "../utils/textMateToHljs"
-import { findLastIndex } from "../../../src/shared/array"
-import { McpServer } from "../../../src/shared/mcp"
-import { checkExistKey } from "../../../src/shared/checkExistApiConfig"
-import { Mode, CustomModePrompts, defaultModeSlug, defaultPrompts, ModeConfig } from "../../../src/shared/modes"
-import { CustomSupportPrompts } from "../../../src/shared/support-prompt"
-import { experimentDefault, ExperimentId } from "../../../src/shared/experiments"
-import { TelemetrySetting } from "../../../src/shared/TelemetrySetting"
+
+import { ProviderSettingsEntry, ExtensionMessage, ExtensionState } from "@roo/shared/ExtensionMessage"
+import { ProviderSettings } from "@roo/shared/api"
+import { findLastIndex } from "@roo/shared/array"
+import { McpServer } from "@roo/shared/mcp"
+import { checkExistKey } from "@roo/shared/checkExistApiConfig"
+import { Mode, CustomModePrompts, defaultModeSlug, defaultPrompts, ModeConfig } from "@roo/shared/modes"
+import { CustomSupportPrompts } from "@roo/shared/support-prompt"
+import { experimentDefault, ExperimentId } from "@roo/shared/experiments"
+import { TelemetrySetting } from "@roo/shared/TelemetrySetting"
+
+import { vscode } from "@src/utils/vscode"
+import { convertTextMateToHljs } from "@src/utils/textMateToHljs"
 
 export interface ExtensionStateContextType extends ExtensionState {
+	historyPreviewCollapsed?: boolean // Add the new state property
 	didHydrateState: boolean
 	showWelcome: boolean
 	theme: any
 	mcpServers: McpServer[]
+	hasSystemPromptOverride?: boolean
 	currentCheckpoint?: string
 	filePaths: string[]
 	openedTabs: Array<{ label: string; isActive: boolean; path?: string }>
-	setApiConfiguration: (config: ApiConfiguration) => void
+	setApiConfiguration: (config: ProviderSettings) => void
 	setCustomInstructions: (value?: string) => void
 	setAlwaysAllowReadOnly: (value: boolean) => void
 	setAlwaysAllowReadOnlyOutsideWorkspace: (value: boolean) => void
@@ -35,10 +39,15 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setShowRooIgnoredFiles: (value: boolean) => void
 	setShowAnnouncement: (value: boolean) => void
 	setAllowedCommands: (value: string[]) => void
+	setAllowedMaxRequests: (value: number | undefined) => void
 	setSoundEnabled: (value: boolean) => void
 	setSoundVolume: (value: number) => void
 	terminalShellIntegrationTimeout?: number
 	setTerminalShellIntegrationTimeout: (value: number) => void
+	terminalShellIntegrationDisabled?: boolean
+	setTerminalShellIntegrationDisabled: (value: boolean) => void
+	terminalZdotdir?: boolean
+	setTerminalZdotdir: (value: boolean) => void
 	setTtsEnabled: (value: boolean) => void
 	setTtsSpeed: (value: number) => void
 	setDiffEnabled: (value: boolean) => void
@@ -59,7 +68,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	requestDelaySeconds: number
 	setRequestDelaySeconds: (value: number) => void
 	setCurrentApiConfigName: (value: string) => void
-	setListApiConfigMeta: (value: ApiConfigMeta[]) => void
+	setListApiConfigMeta: (value: ProviderSettingsEntry[]) => void
 	mode: Mode
 	setMode: (value: Mode) => void
 	setCustomModePrompts: (value: CustomModePrompts) => void
@@ -84,6 +93,11 @@ export interface ExtensionStateContextType extends ExtensionState {
 	pinnedApiConfigs?: Record<string, boolean>
 	setPinnedApiConfigs: (value: Record<string, boolean>) => void
 	togglePinnedApiConfig: (configName: string) => void
+	terminalCompressProgressBar?: boolean
+	setTerminalCompressProgressBar: (value: boolean) => void
+	setHistoryPreviewCollapsed: (value: boolean) => void
+	autoCondenseContextPercent: number
+	setAutoCondenseContextPercent: (value: number) => void
 }
 
 export const ExtensionStateContext = createContext<ExtensionStateContextType | undefined>(undefined)
@@ -122,13 +136,13 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		taskHistory: [],
 		shouldShowAnnouncement: false,
 		allowedCommands: [],
+		allowedMaxRequests: Infinity,
 		soundEnabled: false,
 		soundVolume: 0.5,
 		ttsEnabled: false,
 		ttsSpeed: 1.0,
 		diffEnabled: false,
 		enableCheckpoints: true,
-		checkpointStorage: "task",
 		fuzzyMatchThreshold: 1.0,
 		language: "en", // Default language code
 		writeDelayMs: 1000,
@@ -158,6 +172,12 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		renderContext: "sidebar",
 		maxReadFileLine: 500, // Default max read file line limit
 		pinnedApiConfigs: {}, // Empty object for pinned API configs
+		terminalZshOhMy: false, // Default Oh My Zsh integration setting
+		terminalZshP10k: false, // Default Powerlevel10k integration setting
+		terminalZdotdir: false, // Default ZDOTDIR handling setting
+		terminalCompressProgressBar: true, // Default to compress progress bar output
+		historyPreviewCollapsed: false, // Initialize the new state (default to expanded)
+		autoCondenseContextPercent: 100,
 	})
 
 	const [didHydrateState, setDidHydrateState] = useState(false)
@@ -165,14 +185,14 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 	const [theme, setTheme] = useState<any>(undefined)
 	const [filePaths, setFilePaths] = useState<string[]>([])
 	const [openedTabs, setOpenedTabs] = useState<Array<{ label: string; isActive: boolean; path?: string }>>([])
-
 	const [mcpServers, setMcpServers] = useState<McpServer[]>([])
 	const [currentCheckpoint, setCurrentCheckpoint] = useState<string>()
 
 	const setListApiConfigMeta = useCallback(
-		(value: ApiConfigMeta[]) => setState((prevState) => ({ ...prevState, listApiConfigMeta: value })),
+		(value: ProviderSettingsEntry[]) => setState((prevState) => ({ ...prevState, listApiConfigMeta: value })),
 		[],
 	)
+
 	const handleMessage = useCallback(
 		(event: MessageEvent) => {
 			const message: ExtensionMessage = event.data
@@ -273,6 +293,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setAlwaysAllowSubtasks: (value) => setState((prevState) => ({ ...prevState, alwaysAllowSubtasks: value })),
 		setShowAnnouncement: (value) => setState((prevState) => ({ ...prevState, shouldShowAnnouncement: value })),
 		setAllowedCommands: (value) => setState((prevState) => ({ ...prevState, allowedCommands: value })),
+		setAllowedMaxRequests: (value) => setState((prevState) => ({ ...prevState, allowedMaxRequests: value })),
 		setSoundEnabled: (value) => setState((prevState) => ({ ...prevState, soundEnabled: value })),
 		setSoundVolume: (value) => setState((prevState) => ({ ...prevState, soundVolume: value })),
 		setTtsEnabled: (value) => setState((prevState) => ({ ...prevState, ttsEnabled: value })),
@@ -288,6 +309,9 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			setState((prevState) => ({ ...prevState, terminalOutputLineLimit: value })),
 		setTerminalShellIntegrationTimeout: (value) =>
 			setState((prevState) => ({ ...prevState, terminalShellIntegrationTimeout: value })),
+		setTerminalShellIntegrationDisabled: (value) =>
+			setState((prevState) => ({ ...prevState, terminalShellIntegrationDisabled: value })),
+		setTerminalZdotdir: (value) => setState((prevState) => ({ ...prevState, terminalZdotdir: value })),
 		setMcpEnabled: (value) => setState((prevState) => ({ ...prevState, mcpEnabled: value })),
 		setEnableMcpServerCreation: (value) =>
 			setState((prevState) => ({ ...prevState, enableMcpServerCreation: value })),
@@ -311,6 +335,8 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setAwsUsePromptCache: (value) => setState((prevState) => ({ ...prevState, awsUsePromptCache: value })),
 		setMaxReadFileLine: (value) => setState((prevState) => ({ ...prevState, maxReadFileLine: value })),
 		setPinnedApiConfigs: (value) => setState((prevState) => ({ ...prevState, pinnedApiConfigs: value })),
+		setTerminalCompressProgressBar: (value) =>
+			setState((prevState) => ({ ...prevState, terminalCompressProgressBar: value })),
 		togglePinnedApiConfig: (configId) =>
 			setState((prevState) => {
 				const currentPinned = prevState.pinnedApiConfigs || {}
@@ -326,6 +352,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 
 				return { ...prevState, pinnedApiConfigs: newPinned }
 			}),
+		setHistoryPreviewCollapsed: (value) =>
+			setState((prevState) => ({ ...prevState, historyPreviewCollapsed: value })), // Implement the setter
+		setAutoCondenseContextPercent: (value) =>
+			setState((prevState) => ({ ...prevState, autoCondenseContextPercent: value })),
 	}
 
 	return <ExtensionStateContext.Provider value={contextValue}>{children}</ExtensionStateContext.Provider>
@@ -333,8 +363,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 
 export const useExtensionState = () => {
 	const context = useContext(ExtensionStateContext)
+
 	if (context === undefined) {
 		throw new Error("useExtensionState must be used within an ExtensionStateContextProvider")
 	}
+
 	return context
 }

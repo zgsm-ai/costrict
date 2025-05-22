@@ -4,15 +4,13 @@ import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
 
 import { ClineProvider } from "./ClineProvider"
-import { CheckpointStorage, Language, ApiConfigMeta } from "../../schemas"
+import { Language, ProviderSettings, GlobalState, Package } from "../../schemas"
 import { changeLanguage, t } from "../../i18n"
-import { ApiConfiguration } from "../../shared/api"
+import { RouterName, toRouterName } from "../../shared/api"
 import { supportPrompt } from "../../shared/support-prompt"
-import { GlobalFileNames } from "../../shared/globalFileNames"
-
 import { checkoutDiffPayloadSchema, checkoutRestorePayloadSchema, WebviewMessage } from "../../shared/WebviewMessage"
 import { checkExistKey } from "../../shared/checkExistApiConfig"
-import { EXPERIMENT_IDS, experimentDefault, ExperimentId } from "../../shared/experiments"
+import { experimentDefault } from "../../shared/experiments"
 import { Terminal } from "../../integrations/terminal/Terminal"
 import { openFile, openImage } from "../../integrations/misc/open-file"
 import { selectImages } from "../../integrations/misc/process-images"
@@ -20,17 +18,12 @@ import { getTheme } from "../../integrations/theme/getTheme"
 import { discoverChromeHostUrl, tryChromeHostUrl } from "../../services/browser/browserDiscovery"
 import { searchWorkspaceFiles } from "../../services/search/file-search"
 import { fileExistsAtPath } from "../../utils/fs"
-import { playSound, setSoundEnabled, setSoundVolume } from "../../utils/sound"
 import { playTts, setTtsEnabled, setTtsSpeed, stopTts } from "../../utils/tts"
 import { singleCompletionHandler } from "../../utils/single-completion-handler"
 import { searchCommits } from "../../utils/git"
 import { exportSettings, importSettings } from "../config/importExport"
-import { getOpenRouterModels } from "../../api/providers/openrouter"
-import { getGlamaModels } from "../../api/providers/glama"
-import { getUnboundModels } from "../../api/providers/unbound"
-import { getRequestyModels } from "../../api/providers/requesty"
 import { getOpenAiModels } from "../../api/providers/openai"
-import { getZgsmModels } from "../../api/providers/zgsm"
+import { canParseURL, getZgsmModels } from "../../api/providers/zgsm"
 import { getOllamaModels } from "../../api/providers/ollama"
 import { getVsCodeLmModels } from "../../api/providers/vscode-lm"
 import { getLmStudioModels } from "../../api/providers/lmstudio"
@@ -38,12 +31,14 @@ import { openMention } from "../mentions"
 import { telemetryService } from "../../services/telemetry/TelemetryService"
 import { TelemetrySetting } from "../../shared/TelemetrySetting"
 import { getWorkspacePath } from "../../utils/path"
-import { Mode, defaultModeSlug, getModeBySlug, getGroupName } from "../../shared/modes"
-import { getDiffStrategy } from "../diff/DiffStrategy"
-import { SYSTEM_PROMPT } from "../prompts/system"
-import { buildApiHandler } from "../../api"
-import { GlobalState } from "../../schemas"
+import { Mode, defaultModeSlug } from "../../shared/modes"
 import { handleZgsmLogin } from "../../zgsmAuth/zgsmAuthHandler"
+import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
+import { generateSystemPrompt } from "./generateSystemPrompt"
+import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
+import { getCommand } from "../../utils/commands"
+
+const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
 export const webviewMessageHandler = async (provider: ClineProvider, message: WebviewMessage) => {
 	// Utility functions provided for concise get/update of global state via contextProxy API.
@@ -58,115 +53,17 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await updateGlobalState("customModes", customModes)
 
 			provider.postStateToWebview()
-			provider.workspaceTracker?.initializeFilePaths() // don't await
+			provider.workspaceTracker?.initializeFilePaths() // Don't await.
 
 			getTheme().then((theme) => provider.postMessageToWebview({ type: "theme", text: JSON.stringify(theme) }))
 
-			// If MCP Hub is already initialized, update the webview with current server list
+			// If MCP Hub is already initialized, update the webview with
+			// current server list.
 			const mcpHub = provider.getMcpHub()
+
 			if (mcpHub) {
-				provider.postMessageToWebview({
-					type: "mcpServers",
-					mcpServers: mcpHub.getAllServers(),
-				})
+				provider.postMessageToWebview({ type: "mcpServers", mcpServers: mcpHub.getAllServers() })
 			}
-
-			// Post last cached models in case the call to endpoint fails.
-			provider.readModelsFromCache(GlobalFileNames.openRouterModels).then((openRouterModels) => {
-				if (openRouterModels) {
-					provider.postMessageToWebview({ type: "openRouterModels", openRouterModels })
-				}
-			})
-
-			// GUI relies on model info to be up-to-date to provide
-			// the most accurate pricing, so we need to fetch the
-			// latest details on launch.
-			// We do this for all users since many users switch
-			// between api providers and if they were to switch back
-			// to OpenRouter it would be showing outdated model info
-			// if we hadn't retrieved the latest at this point
-			// (see normalizeApiConfiguration > openrouter).
-			const { apiConfiguration: currentApiConfig } = await provider.getState()
-			getOpenRouterModels(currentApiConfig).then(async (openRouterModels) => {
-				if (Object.keys(openRouterModels).length > 0) {
-					await provider.writeModelsToCache(GlobalFileNames.openRouterModels, openRouterModels)
-					await provider.postMessageToWebview({ type: "openRouterModels", openRouterModels })
-
-					// Update model info in state (this needs to be
-					// done here since we don't want to update state
-					// while settings is open, and we may refresh
-					// models there).
-					const { apiConfiguration } = await provider.getState()
-
-					if (apiConfiguration.openRouterModelId) {
-						await updateGlobalState(
-							"openRouterModelInfo",
-							openRouterModels[apiConfiguration.openRouterModelId],
-						)
-						await provider.postStateToWebview()
-					}
-				}
-			})
-
-			provider.readModelsFromCache(GlobalFileNames.glamaModels).then((glamaModels) => {
-				if (glamaModels) {
-					provider.postMessageToWebview({ type: "glamaModels", glamaModels })
-				}
-			})
-
-			getGlamaModels().then(async (glamaModels) => {
-				if (Object.keys(glamaModels).length > 0) {
-					await provider.writeModelsToCache(GlobalFileNames.glamaModels, glamaModels)
-					await provider.postMessageToWebview({ type: "glamaModels", glamaModels })
-
-					const { apiConfiguration } = await provider.getState()
-
-					if (apiConfiguration.glamaModelId) {
-						await updateGlobalState("glamaModelInfo", glamaModels[apiConfiguration.glamaModelId])
-						await provider.postStateToWebview()
-					}
-				}
-			})
-
-			provider.readModelsFromCache(GlobalFileNames.unboundModels).then((unboundModels) => {
-				if (unboundModels) {
-					provider.postMessageToWebview({ type: "unboundModels", unboundModels })
-				}
-			})
-
-			getUnboundModels().then(async (unboundModels) => {
-				if (Object.keys(unboundModels).length > 0) {
-					await provider.writeModelsToCache(GlobalFileNames.unboundModels, unboundModels)
-					await provider.postMessageToWebview({ type: "unboundModels", unboundModels })
-
-					const { apiConfiguration } = await provider.getState()
-
-					if (apiConfiguration?.unboundModelId) {
-						await updateGlobalState("unboundModelInfo", unboundModels[apiConfiguration.unboundModelId])
-						await provider.postStateToWebview()
-					}
-				}
-			})
-
-			provider.readModelsFromCache(GlobalFileNames.requestyModels).then((requestyModels) => {
-				if (requestyModels) {
-					provider.postMessageToWebview({ type: "requestyModels", requestyModels })
-				}
-			})
-
-			getRequestyModels().then(async (requestyModels) => {
-				if (Object.keys(requestyModels).length > 0) {
-					await provider.writeModelsToCache(GlobalFileNames.requestyModels, requestyModels)
-					await provider.postMessageToWebview({ type: "requestyModels", requestyModels })
-
-					const { apiConfiguration } = await provider.getState()
-
-					if (apiConfiguration.requestyModelId) {
-						await updateGlobalState("requestyModelInfo", requestyModels[apiConfiguration.requestyModelId])
-						await provider.postStateToWebview()
-					}
-				}
-			})
 
 			provider.providerSettingsManager
 				.listConfig()
@@ -193,19 +90,12 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 
 					if (currentConfigName) {
 						if (!(await provider.providerSettingsManager.hasConfig(currentConfigName))) {
-							// current config name not valid, get first config in list
-							await updateGlobalState("currentApiConfigName", listApiConfig?.[0]?.name)
-							if (listApiConfig?.[0]?.name) {
-								const apiConfig = await provider.providerSettingsManager.loadConfig(
-									listApiConfig?.[0]?.name,
-								)
+							// Current config name not valid, get first config in list.
+							const name = listApiConfig[0]?.name
+							await updateGlobalState("currentApiConfigName", name)
 
-								await Promise.all([
-									updateGlobalState("listApiConfigMeta", listApiConfig),
-									provider.postMessageToWebview({ type: "listApiConfig", listApiConfig }),
-									provider.updateApiConfiguration(apiConfig),
-								])
-								await provider.postStateToWebview()
+							if (name) {
+								await provider.activateProviderProfile({ name })
 								return
 							}
 						}
@@ -232,21 +122,10 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			provider.isViewLaunched = true
 			break
 		case "newTask":
-			// Code that should run in response to the hello message command
-			//vscode.window.showInformationMessage(message.text!)
-
-			// Send a message to our webview.
-			// You can send any JSON serializable data.
-			// Could also do this in extension .ts
-			//provider.postMessageToWebview({ type: "text", text: `Extension: ${Date.now()}` })
-			// initializing new instance of Cline will make sure that any agentically running promises in old instance don't affect our new task. this essentially creates a fresh slate for the new task
+			// Initializing new instance of Cline will make sure that any
+			// agentically running promises in old instance don't affect our new
+			// task. This essentially creates a fresh slate for the new task.
 			await provider.initClineWithTask(message.text, message.images)
-			break
-		case "apiConfiguration":
-			if (message.apiConfiguration) {
-				await provider.updateApiConfiguration(message.apiConfiguration)
-			}
-			await provider.postStateToWebview()
 			break
 		case "customInstructions":
 			await provider.updateCustomInstructions(message.text)
@@ -283,12 +162,25 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await updateGlobalState("alwaysAllowModeSwitch", message.bool)
 			await provider.postStateToWebview()
 			break
+		case "allowedMaxRequests":
+			await updateGlobalState("allowedMaxRequests", message.value)
+			await provider.postStateToWebview()
+			break
 		case "alwaysAllowSubtasks":
 			await updateGlobalState("alwaysAllowSubtasks", message.bool)
 			await provider.postStateToWebview()
 			break
 		case "askResponse":
 			provider.getCurrentCline()?.handleWebviewAskResponse(message.askResponse!, message.text, message.images)
+			break
+		case "autoCondenseContextPercent":
+			await updateGlobalState("autoCondenseContextPercent", message.value)
+			await provider.postStateToWebview()
+			break
+		case "terminalOperation":
+			if (message.terminalOperation) {
+				provider.getCurrentCline()?.handleTerminalOperation(message.terminalOperation)
+			}
 			break
 		case "clearTask":
 			// clear task resets the current session and allows for a new task to be started, if this session is a subtask - it allows the parent task to be resumed
@@ -311,6 +203,9 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "showTaskWithId":
 			provider.showTaskWithId(message.text!)
+			break
+		case "condenseTaskContextRequest":
+			provider.condenseTaskContext(message.text!)
 			break
 		case "deleteTaskWithId":
 			provider.deleteTaskWithId(message.text!)
@@ -362,19 +257,23 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 		case "exportTaskWithId":
 			provider.exportTaskWithId(message.text!)
 			break
-		case "importSettings":
-			const { success } = await importSettings({
+		case "importSettings": {
+			const result = await importSettings({
 				providerSettingsManager: provider.providerSettingsManager,
 				contextProxy: provider.contextProxy,
+				customModesManager: provider.customModesManager,
 			})
 
-			if (success) {
+			if (result.success) {
 				provider.settingsImportedAt = Date.now()
 				await provider.postStateToWebview()
 				await vscode.window.showInformationMessage(t("common:info.settings_imported"))
+			} else if (result.error) {
+				await vscode.window.showErrorMessage(t("common:errors.settings_import_failed", { error: result.error }))
 			}
 
 			break
+		}
 		case "exportSettings":
 			await exportSettings({
 				providerSettingsManager: provider.providerSettingsManager,
@@ -384,65 +283,63 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "resetState":
 			await provider.resetState()
+
+			const { apiConfiguration: config } = await provider.getState()
+			const [initZgsmModels, initZgsmDefaultModelId] = await getZgsmModels(
+				provider?.context?.globalState?.get?.("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl,
+			)
+
+			await defaultZgsmAuthConfig.initProviderConfig(provider, {
+				zgsmModels: initZgsmModels,
+				zgsmDefaultModelId: initZgsmDefaultModelId,
+				apiModelId: config.apiModelId || initZgsmDefaultModelId,
+			})
 			break
-		case "refreshOpenRouterModels": {
-			const { apiConfiguration: configForRefresh } = await provider.getState()
-			const openRouterModels = await getOpenRouterModels(configForRefresh)
-
-			if (Object.keys(openRouterModels).length > 0) {
-				await provider.writeModelsToCache(GlobalFileNames.openRouterModels, openRouterModels)
-				await provider.postMessageToWebview({ type: "openRouterModels", openRouterModels })
-			}
-
+		case "flushRouterModels":
+			const routerName: RouterName = toRouterName(message.text)
+			await flushModels(routerName)
 			break
-		}
-		case "refreshGlamaModels":
-			const glamaModels = await getGlamaModels()
+		case "requestRouterModels":
+			const { apiConfiguration } = await provider.getState()
 
-			if (Object.keys(glamaModels).length > 0) {
-				await provider.writeModelsToCache(GlobalFileNames.glamaModels, glamaModels)
-				await provider.postMessageToWebview({ type: "glamaModels", glamaModels })
-			}
+			const [openRouterModels, requestyModels, glamaModels, unboundModels, litellmModels] = await Promise.all([
+				getModels("openrouter", apiConfiguration.openRouterApiKey),
+				getModels("requesty", apiConfiguration.requestyApiKey),
+				getModels("glama", apiConfiguration.glamaApiKey),
+				getModels("unbound", apiConfiguration.unboundApiKey),
+				getModels("litellm", apiConfiguration.litellmApiKey, apiConfiguration.litellmBaseUrl),
+			])
 
+			provider.postMessageToWebview({
+				type: "routerModels",
+				routerModels: {
+					openrouter: openRouterModels,
+					requesty: requestyModels,
+					glama: glamaModels,
+					unbound: unboundModels,
+					litellm: litellmModels,
+				},
+			})
 			break
-		case "refreshUnboundModels":
-			const unboundModels = await getUnboundModels()
-
-			if (Object.keys(unboundModels).length > 0) {
-				await provider.writeModelsToCache(GlobalFileNames.unboundModels, unboundModels)
-				await provider.postMessageToWebview({ type: "unboundModels", unboundModels })
-			}
-
-			break
-		case "refreshRequestyModels":
-			const requestyModels = await getRequestyModels()
-
-			if (Object.keys(requestyModels).length > 0) {
-				await provider.writeModelsToCache(GlobalFileNames.requestyModels, requestyModels)
-				await provider.postMessageToWebview({ type: "requestyModels", requestyModels })
-			}
-
-			break
-		case "refreshOpenAiModels":
+		case "requestOpenAiModels":
 			if (message?.values?.baseUrl && message?.values?.apiKey) {
 				const openAiModels = await getOpenAiModels(
 					message?.values?.baseUrl,
 					message?.values?.apiKey,
-					message?.values?.hostHeader,
+					message?.values?.openAiHeaders,
 				)
+
 				provider.postMessageToWebview({ type: "openAiModels", openAiModels })
 			}
 
 			break
-		case "refreshZgsmModels":
-			if (message?.values?.baseUrl && message?.values?.apiKey) {
-				const [zgsmModels, zgsmDefaultModelId, err] = await getZgsmModels(
-					message?.values?.baseUrl,
-					message?.values?.apiKey,
-					message?.values?.hostHeader,
-				)
-				provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId, errorObj: err })
-			}
+		case "requestZgsmModels":
+			const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
+				message?.values?.baseUrl || defaultZgsmAuthConfig.baseUrl,
+				message?.values?.apiKey,
+				message?.values?.hostHeader,
+			)
+			provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId })
 
 			break
 		case "requestOllamaModels":
@@ -464,7 +361,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			openImage(message.text!)
 			break
 		case "openFile":
-			openFile(message.text!, message.values as { create?: boolean; content?: string })
+			openFile(message.text!, message.values as { create?: boolean; content?: string; line?: number })
 			break
 		case "openMention":
 			openMention(message.text)
@@ -503,16 +400,29 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "allowedCommands":
 			await provider.context.globalState.update("allowedCommands", message.commands)
-			// Also update workspace settings
+
+			// Also update workspace settings.
 			await vscode.workspace
-				.getConfiguration("features")
+				.getConfiguration(Package.name)
 				.update("allowedCommands", message.commands, vscode.ConfigurationTarget.Global)
+
 			break
+		case "openCustomModesSettings": {
+			const customModesFilePath = await provider.customModesManager.getCustomModesFilePath()
+
+			if (customModesFilePath) {
+				openFile(customModesFilePath)
+			}
+
+			break
+		}
 		case "openMcpSettings": {
 			const mcpSettingsFilePath = await provider.getMcpHub()?.getMcpSettingsFilePath()
+
 			if (mcpSettingsFilePath) {
 				openFile(mcpSettingsFilePath)
 			}
+
 			break
 		}
 		case "openProjectMcpSettings": {
@@ -528,20 +438,16 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			try {
 				await fs.mkdir(rooDir, { recursive: true })
 				const exists = await fileExistsAtPath(mcpPath)
+
 				if (!exists) {
 					await fs.writeFile(mcpPath, JSON.stringify({ mcpServers: {} }, null, 2))
 				}
+
 				await openFile(mcpPath)
 			} catch (error) {
 				vscode.window.showErrorMessage(t("common:errors.create_mcp_json", { error: `${error}` }))
 			}
-			break
-		}
-		case "openCustomModesSettings": {
-			const customModesFilePath = await provider.customModesManager.getCustomModesFilePath()
-			if (customModesFilePath) {
-				openFile(customModesFilePath)
-			}
+
 			break
 		}
 		case "deleteMcpServer": {
@@ -612,22 +518,15 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await updateGlobalState("enableMcpServerCreation", message.bool ?? true)
 			await provider.postStateToWebview()
 			break
-		case "playSound":
-			if (message.audioType) {
-				const soundPath = path.join(provider.context.extensionPath, "audio", `${message.audioType}.wav`)
-				playSound(soundPath)
-			}
-			break
+		// playSound handler removed - now handled directly in the webview
 		case "soundEnabled":
 			const soundEnabled = message.bool ?? true
 			await updateGlobalState("soundEnabled", soundEnabled)
-			setSoundEnabled(soundEnabled) // Add this line to update the sound utility
 			await provider.postStateToWebview()
 			break
 		case "soundVolume":
 			const soundVolume = message.value ?? 0.5
 			await updateGlobalState("soundVolume", soundVolume)
-			setSoundVolume(soundVolume)
 			await provider.postStateToWebview()
 			break
 		case "ttsEnabled":
@@ -663,12 +562,6 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await updateGlobalState("enableCheckpoints", enableCheckpoints)
 			await provider.postStateToWebview()
 			break
-		case "checkpointStorage":
-			console.log(`[ClineProvider] checkpointStorage: ${message.text}`)
-			const checkpointStorage = message.text ?? "task"
-			await updateGlobalState("checkpointStorage", checkpointStorage as CheckpointStorage)
-			await provider.postStateToWebview()
-			break
 		case "browserViewportSize":
 			const browserViewportSize = message.text ?? "900x600"
 			await updateGlobalState("browserViewportSize", browserViewportSize)
@@ -693,6 +586,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			if (!message.text) {
 				// Use testBrowserConnection for auto-discovery
 				const chromeHostUrl = await discoverChromeHostUrl()
+
 				if (chromeHostUrl) {
 					// Send the result back to the webview
 					await provider.postMessageToWebview({
@@ -712,6 +606,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 				// Test the provided URL
 				const customHostUrl = message.text
 				const hostIsValid = await tryChromeHostUrl(message.text)
+
 				// Send the result back to the webview
 				await provider.postMessageToWebview({
 					type: "browserConnectionResult",
@@ -725,6 +620,42 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 		case "fuzzyMatchThreshold":
 			await updateGlobalState("fuzzyMatchThreshold", message.value)
 			await provider.postStateToWebview()
+			break
+		case "updateVSCodeSetting": {
+			const { setting, value } = message
+
+			if (setting !== undefined && value !== undefined) {
+				if (ALLOWED_VSCODE_SETTINGS.has(setting)) {
+					await vscode.workspace.getConfiguration().update(setting, value, true)
+				} else {
+					vscode.window.showErrorMessage(`Cannot update restricted VSCode setting: ${setting}`)
+				}
+			}
+
+			break
+		}
+		case "getVSCodeSetting":
+			const { setting } = message
+
+			if (setting) {
+				try {
+					await provider.postMessageToWebview({
+						type: "vsCodeSetting",
+						setting,
+						value: vscode.workspace.getConfiguration().get(setting),
+					})
+				} catch (error) {
+					console.error(`Failed to get VSCode setting ${message.setting}:`, error)
+
+					await provider.postMessageToWebview({
+						type: "vsCodeSetting",
+						setting,
+						error: `Failed to get setting: ${error.message}`,
+						value: undefined,
+					})
+				}
+			}
+
 			break
 		case "alwaysApproveResubmit":
 			await updateGlobalState("alwaysApproveResubmit", message.bool ?? true)
@@ -747,6 +678,62 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await provider.postStateToWebview()
 			if (message.value !== undefined) {
 				Terminal.setShellIntegrationTimeout(message.value)
+			}
+			break
+		case "terminalShellIntegrationDisabled":
+			await updateGlobalState("terminalShellIntegrationDisabled", message.bool)
+			await provider.postStateToWebview()
+			if (message.bool !== undefined) {
+				Terminal.setShellIntegrationDisabled(message.bool)
+			}
+			break
+		case "terminalCommandDelay":
+			await updateGlobalState("terminalCommandDelay", message.value)
+			await provider.postStateToWebview()
+			if (message.value !== undefined) {
+				Terminal.setCommandDelay(message.value)
+			}
+			break
+		case "terminalPowershellCounter":
+			await updateGlobalState("terminalPowershellCounter", message.bool)
+			await provider.postStateToWebview()
+			if (message.bool !== undefined) {
+				Terminal.setPowershellCounter(message.bool)
+			}
+			break
+		case "terminalZshClearEolMark":
+			await updateGlobalState("terminalZshClearEolMark", message.bool)
+			await provider.postStateToWebview()
+			if (message.bool !== undefined) {
+				Terminal.setTerminalZshClearEolMark(message.bool)
+			}
+			break
+		case "terminalZshOhMy":
+			await updateGlobalState("terminalZshOhMy", message.bool)
+			await provider.postStateToWebview()
+			if (message.bool !== undefined) {
+				Terminal.setTerminalZshOhMy(message.bool)
+			}
+			break
+		case "terminalZshP10k":
+			await updateGlobalState("terminalZshP10k", message.bool)
+			await provider.postStateToWebview()
+			if (message.bool !== undefined) {
+				Terminal.setTerminalZshP10k(message.bool)
+			}
+			break
+		case "terminalZdotdir":
+			await updateGlobalState("terminalZdotdir", message.bool)
+			await provider.postStateToWebview()
+			if (message.bool !== undefined) {
+				Terminal.setTerminalZdotdir(message.bool)
+			}
+			break
+		case "terminalCompressProgressBar":
+			await updateGlobalState("terminalCompressProgressBar", message.bool)
+			await provider.postStateToWebview()
+			if (message.bool !== undefined) {
+				Terminal.setCompressProgressBar(message.bool)
 			}
 			break
 		case "mode":
@@ -934,6 +921,10 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await updateGlobalState("maxReadFileLine", message.value)
 			await provider.postStateToWebview()
 			break
+		case "setHistoryPreviewCollapsed": // Add the new case handler
+			await updateGlobalState("historyPreviewCollapsed", message.bool ?? false)
+			// No need to call postStateToWebview here as the UI already updated optimistically
+			break
 		case "toggleApiConfigPin":
 			if (message.text) {
 				const currentPinned = getGlobalState("pinnedApiConfigs") ?? {}
@@ -963,41 +954,36 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 					const { apiConfiguration, customSupportPrompts, listApiConfigMeta, enhancementApiConfigId } =
 						await provider.getState()
 
-					// Try to get enhancement config first, fall back to current config
-					let configToUse: ApiConfiguration = apiConfiguration
-					if (enhancementApiConfigId) {
-						const config = listApiConfigMeta?.find((c: ApiConfigMeta) => c.id === enhancementApiConfigId)
-						if (config?.name) {
-							const loadedConfig = await provider.providerSettingsManager.loadConfig(config.name)
-							if (loadedConfig.apiProvider) {
-								configToUse = loadedConfig
-							}
+					// Try to get enhancement config first, fall back to current config.
+					let configToUse: ProviderSettings = apiConfiguration
+
+					if (enhancementApiConfigId && !!listApiConfigMeta.find(({ id }) => id === enhancementApiConfigId)) {
+						const { name: _, ...providerSettings } = await provider.providerSettingsManager.getProfile({
+							id: enhancementApiConfigId,
+						})
+
+						if (providerSettings.apiProvider) {
+							configToUse = providerSettings
 						}
 					}
 
 					const enhancedPrompt = await singleCompletionHandler(
 						configToUse,
-						supportPrompt.create(
-							"ENHANCE",
-							{
-								userInput: message.text,
-							},
-							customSupportPrompts,
-						),
+						supportPrompt.create("ENHANCE", { userInput: message.text }, customSupportPrompts),
 					)
 
-					await provider.postMessageToWebview({
-						type: "enhancedPrompt",
-						text: enhancedPrompt,
-					})
+					// Capture telemetry for prompt enhancement.
+					const currentCline = provider.getCurrentCline()
+					telemetryService.capturePromptEnhanced(currentCline?.taskId)
+
+					await provider.postMessageToWebview({ type: "enhancedPrompt", text: enhancedPrompt })
 				} catch (error) {
 					provider.log(
 						`Error enhancing prompt: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
 					)
+
 					vscode.window.showErrorMessage(t("common:errors.enhance_prompt"))
-					await provider.postMessageToWebview({
-						type: "enhancedPrompt",
-					})
+					await provider.postMessageToWebview({ type: "enhancedPrompt" })
 				}
 			}
 			break
@@ -1104,9 +1090,9 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "upsertApiConfiguration":
 			if (message.text && message.apiConfiguration) {
-				await provider.upsertApiConfiguration(message.text, {
+				await provider.upsertProviderProfile(message.text, {
 					...message.apiConfiguration,
-					zgsmBaseUrl: `${message.apiConfiguration.zgsmBaseUrl}`.replace(/\/+$/, ""),
+					zgsmBaseUrl: `${message.apiConfiguration.zgsmBaseUrl || ""}`.trim().replace(/\/+$/, ""),
 				})
 			}
 			break
@@ -1119,30 +1105,23 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 						break
 					}
 
-					// Load the old configuration to get its ID
-					const oldConfig = await provider.providerSettingsManager.loadConfig(oldName)
+					// Load the old configuration to get its ID.
+					const { id } = await provider.providerSettingsManager.getProfile({ name: oldName })
 
-					// Create a new configuration with the same ID
-					const newConfig = {
-						...message.apiConfiguration,
-						id: oldConfig.id, // Preserve the ID
-					}
+					// Create a new configuration with the new name and old ID.
+					await provider.providerSettingsManager.saveConfig(newName, { ...message.apiConfiguration, id })
 
-					// Save with the new name but same ID
-					await provider.providerSettingsManager.saveConfig(newName, newConfig)
+					// Delete the old configuration.
 					await provider.providerSettingsManager.deleteConfig(oldName)
 
-					const listApiConfig = await provider.providerSettingsManager.listConfig()
-
-					// Update listApiConfigMeta first to ensure UI has latest data
-					await updateGlobalState("listApiConfigMeta", listApiConfig)
-					await updateGlobalState("currentApiConfigName", newName)
-
-					await provider.postStateToWebview()
+					// Re-activate to update the global settings related to the
+					// currently activated provider profile.
+					await provider.activateProviderProfile({ name: newName })
 				} catch (error) {
 					provider.log(
 						`Error rename api configuration: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
 					)
+
 					vscode.window.showErrorMessage(t("common:errors.rename_api_config"))
 				}
 			}
@@ -1150,16 +1129,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 		case "loadApiConfiguration":
 			if (message.text) {
 				try {
-					const apiConfig = await provider.providerSettingsManager.loadConfig(message.text)
-					const listApiConfig = await provider.providerSettingsManager.listConfig()
-
-					await Promise.all([
-						updateGlobalState("listApiConfigMeta", listApiConfig),
-						updateGlobalState("currentApiConfigName", message.text),
-						provider.updateApiConfiguration(apiConfig),
-					])
-
-					await provider.postStateToWebview()
+					await provider.activateProviderProfile({ name: message.text })
 				} catch (error) {
 					provider.log(
 						`Error load api configuration: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
@@ -1171,18 +1141,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 		case "loadApiConfigurationById":
 			if (message.text) {
 				try {
-					const { config: apiConfig, name } = await provider.providerSettingsManager.loadConfigById(
-						message.text,
-					)
-					const listApiConfig = await provider.providerSettingsManager.listConfig()
-
-					await Promise.all([
-						updateGlobalState("listApiConfigMeta", listApiConfig),
-						updateGlobalState("currentApiConfigName", name),
-						provider.updateApiConfiguration(apiConfig),
-					])
-
-					await provider.postStateToWebview()
+					await provider.activateProviderProfile({ id: message.text })
 				} catch (error) {
 					provider.log(
 						`Error load api configuration by ID: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
@@ -1203,29 +1162,25 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 					break
 				}
 
+				const oldName = message.text
+
+				const newName = (await provider.providerSettingsManager.listConfig()).filter(
+					(c) => c.name !== oldName,
+				)[0]?.name
+
+				if (!newName) {
+					vscode.window.showErrorMessage(t("common:errors.delete_api_config"))
+					return
+				}
+
 				try {
-					await provider.providerSettingsManager.deleteConfig(message.text)
-					const listApiConfig = await provider.providerSettingsManager.listConfig()
-
-					// Update listApiConfigMeta first to ensure UI has latest data
-					await updateGlobalState("listApiConfigMeta", listApiConfig)
-
-					// If this was the current config, switch to first available
-					const currentApiConfigName = getGlobalState("currentApiConfigName")
-
-					if (message.text === currentApiConfigName && listApiConfig?.[0]?.name) {
-						const apiConfig = await provider.providerSettingsManager.loadConfig(listApiConfig[0].name)
-						await Promise.all([
-							updateGlobalState("currentApiConfigName", listApiConfig[0].name),
-							provider.updateApiConfiguration(apiConfig),
-						])
-					}
-
-					await provider.postStateToWebview()
+					await provider.providerSettingsManager.deleteConfig(oldName)
+					await provider.activateProviderProfile({ name: newName })
 				} catch (error) {
 					provider.log(
 						`Error delete api configuration: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
 					)
+
 					vscode.window.showErrorMessage(t("common:errors.delete_api_config"))
 				}
 			}
@@ -1305,7 +1260,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "humanRelayResponse":
 			if (message.requestId && message.text) {
-				vscode.commands.executeCommand("vscode-zgsm.handleHumanRelayResponse", {
+				vscode.commands.executeCommand(getCommand("handleHumanRelayResponse"), {
 					requestId: message.requestId,
 					text: message.text,
 					cancelled: false,
@@ -1315,7 +1270,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 
 		case "humanRelayCancel":
 			if (message.requestId) {
-				vscode.commands.executeCommand("vscode-zgsm.handleHumanRelayResponse", {
+				vscode.commands.executeCommand(getCommand("handleHumanRelayResponse"), {
 					requestId: message.requestId,
 					cancelled: true,
 				})
@@ -1330,85 +1285,12 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await provider.postStateToWebview()
 			break
 		}
+
 		case "zgsmLogin":
-			if (message.authUrl && message.apiConfiguration) {
-				await handleZgsmLogin(message.authUrl, message.apiConfiguration, provider)
-			}
-			break
 		case "openExternalRelogin":
-			if (message.url) {
-				const uri = vscode.Uri.parse(message.url)
-				vscode.env.openExternal(uri)
+			if (message.url && canParseURL(message.url)) {
+				await handleZgsmLogin(message.url, message.apiConfiguration!, provider)
 			}
 			break
 	}
-}
-
-const generateSystemPrompt = async (provider: ClineProvider, message: WebviewMessage) => {
-	const {
-		apiConfiguration,
-		customModePrompts,
-		customInstructions,
-		browserViewportSize,
-		diffEnabled,
-		mcpEnabled,
-		fuzzyMatchThreshold,
-		experiments,
-		enableMcpServerCreation,
-		browserToolEnabled,
-		language,
-	} = await provider.getState()
-
-	// Create diffStrategy based on current model and settings.
-	const diffStrategy = getDiffStrategy({
-		model: apiConfiguration.apiModelId || apiConfiguration.openRouterModelId || "",
-		experiments,
-		fuzzyMatchThreshold,
-	})
-
-	const cwd = provider.cwd
-
-	const mode = message.mode ?? defaultModeSlug
-	const customModes = await provider.customModesManager.getCustomModes()
-
-	const rooIgnoreInstructions = provider.getCurrentCline()?.rooIgnoreController?.getInstructions()
-
-	// Determine if browser tools can be used based on model support, mode, and user settings
-	let modelSupportsComputerUse = false
-
-	// Create a temporary API handler to check if the model supports computer use
-	// This avoids relying on an active Cline instance which might not exist during preview
-	try {
-		const tempApiHandler = buildApiHandler(apiConfiguration)
-		modelSupportsComputerUse = tempApiHandler.getModel().info.supportsComputerUse ?? false
-	} catch (error) {
-		console.error("Error checking if model supports computer use:", error)
-	}
-
-	// Check if the current mode includes the browser tool group
-	const modeConfig = getModeBySlug(mode, customModes)
-	const modeSupportsBrowser = modeConfig?.groups.some((group) => getGroupName(group) === "browser") ?? false
-
-	// Only enable browser tools if the model supports it, the mode includes browser tools,
-	// and browser tools are enabled in settings
-	const canUseBrowserTool = modelSupportsComputerUse && modeSupportsBrowser && (browserToolEnabled ?? true)
-
-	const systemPrompt = await SYSTEM_PROMPT(
-		provider.context,
-		cwd,
-		canUseBrowserTool,
-		mcpEnabled ? provider.getMcpHub() : undefined,
-		diffStrategy,
-		browserViewportSize ?? "900x600",
-		mode,
-		customModePrompts,
-		customModes,
-		customInstructions,
-		diffEnabled,
-		experiments,
-		enableMcpServerCreation,
-		language,
-		rooIgnoreInstructions,
-	)
-	return systemPrompt
 }

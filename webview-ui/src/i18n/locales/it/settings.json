@@ -4,7 +4,9 @@
 		"done": "Fatto",
 		"cancel": "Annulla",
 		"reset": "Ripristina",
-		"select": "Seleziona"
+		"select": "Seleziona",
+		"add": "Aggiungi intestazione",
+		"remove": "Rimuovi"
 	},
 	"header": {
 		"title": "Impostazioni",
@@ -20,21 +22,20 @@
 	},
 	"sections": {
 		"providers": "Fornitori",
-		"autoApprove": "Approvazione automatica",
-		"browser": "Browser / Uso del computer",
+		"autoApprove": "Auto-approvazione",
+		"browser": "Accesso computer",
 		"checkpoints": "Punti di controllo",
 		"notifications": "Notifiche",
-		"contextManagement": "Gestione del contesto",
+		"contextManagement": "Contesto",
 		"terminal": "Terminal",
-		"advanced": "Avanzate",
-		"experimental": "Funzionalità sperimentali",
+		"experimental": "Sperimentale",
 		"language": "Lingua",
 		"about": "Informazioni su Roo Code"
 	},
 	"autoApprove": {
 		"description": "Permetti a Roo di eseguire automaticamente operazioni senza richiedere approvazione. Abilita queste impostazioni solo se ti fidi completamente dell'IA e comprendi i rischi di sicurezza associati.",
 		"readOnly": {
-			"label": "Approva sempre operazioni di sola lettura",
+			"label": "Leggi",
 			"description": "Quando abilitato, Roo visualizzerà automaticamente i contenuti della directory e leggerà i file senza richiedere di cliccare sul pulsante Approva.",
 			"outsideWorkspace": {
 				"label": "Includi file al di fuori dell'area di lavoro",
@@ -42,7 +43,7 @@
 			}
 		},
 		"write": {
-			"label": "Approva sempre operazioni di scrittura",
+			"label": "Scrivi",
 			"description": "Crea e modifica automaticamente i file senza richiedere approvazione",
 			"delayLabel": "Ritardo dopo le scritture per consentire alla diagnostica di rilevare potenziali problemi",
 			"outsideWorkspace": {
@@ -51,39 +52,43 @@
 			}
 		},
 		"browser": {
-			"label": "Approva sempre azioni del browser",
-			"description": "Esegui automaticamente azioni del browser senza richiedere approvazione",
-			"note": "Nota: Si applica solo quando il modello supporta l'uso del computer"
+			"label": "Browser",
+			"description": "Esegui automaticamente azioni del browser senza richiedere approvazione. Nota: Si applica solo quando il modello supporta l'uso del computer"
 		},
 		"retry": {
-			"label": "Riprova sempre le richieste API fallite",
+			"label": "Riprova",
 			"description": "Riprova automaticamente le richieste API fallite quando il server restituisce una risposta di errore",
 			"delayLabel": "Ritardo prima di riprovare la richiesta"
 		},
 		"mcp": {
-			"label": "Approva sempre strumenti MCP",
+			"label": "MCP",
 			"description": "Abilita l'approvazione automatica dei singoli strumenti MCP nella vista Server MCP (richiede sia questa impostazione che la casella \"Consenti sempre\" dello strumento)"
 		},
 		"modeSwitch": {
-			"label": "Approva sempre cambi di modalità",
+			"label": "Modalità",
 			"description": "Passa automaticamente tra diverse modalità senza richiedere approvazione"
 		},
 		"subtasks": {
-			"label": "Approva sempre creazione e completamento di attività secondarie",
+			"label": "Sottoattività",
 			"description": "Consenti la creazione e il completamento di attività secondarie senza richiedere approvazione"
 		},
 		"execute": {
-			"label": "Approva sempre operazioni di esecuzione consentite",
+			"label": "Esegui",
 			"description": "Esegui automaticamente i comandi del terminale consentiti senza richiedere approvazione",
 			"allowedCommands": "Comandi di auto-esecuzione consentiti",
 			"allowedCommandsDescription": "Prefissi di comando che possono essere auto-eseguiti quando \"Approva sempre operazioni di esecuzione\" è abilitato. Aggiungi * per consentire tutti i comandi (usare con cautela).",
 			"commandPlaceholder": "Inserisci prefisso comando (es. 'git ')",
 			"addButton": "Aggiungi"
+		},
+		"apiRequestLimit": {
+			"title": "Richieste massime",
+			"description": "Esegui automaticamente questo numero di richieste API prima di chiedere l'approvazione per continuare con l'attività.",
+			"unlimited": "Illimitato"
 		}
 	},
 	"providers": {
-		"configProfile": "Profilo di configurazione",
 		"providerDocumentation": "Documentazione {{provider}}",
+		"configProfile": "Profilo di configurazione",
 		"description": "Salva diverse configurazioni API per passare rapidamente tra fornitori e impostazioni.",
 		"apiProvider": "Fornitore API",
 		"model": "Modello",
@@ -101,7 +106,7 @@
 		"searchPlaceholder": "Cerca profili",
 		"noMatchFound": "Nessun profilo corrispondente trovato",
 		"vscodeLmDescription": "L'API del Modello di Linguaggio di VS Code consente di eseguire modelli forniti da altre estensioni di VS Code (incluso, ma non limitato a, GitHub Copilot). Il modo più semplice per iniziare è installare le estensioni Copilot e Copilot Chat dal VS Code Marketplace.",
-		"awsCustomArnUse": "Inserisci un ARN AWS Bedrock valido per il modello che desideri utilizzare. Esempi di formato:",
+		"awsCustomArnUse": "Inserisci un ARN Amazon Bedrock valido per il modello che desideri utilizzare. Esempi di formato:",
 		"awsCustomArnDesc": "Assicurati che la regione nell'ARN corrisponda alla regione AWS selezionata sopra.",
 		"openRouterApiKey": "Chiave API OpenRouter",
 		"getOpenRouterApiKey": "Ottieni chiave API OpenRouter",
@@ -111,14 +116,27 @@
 		"useCustomBaseUrl": "Usa URL base personalizzato",
 		"useHostHeader": "Usa intestazione Host personalizzata",
 		"useLegacyFormat": "Usa formato API OpenAI legacy",
+		"customHeaders": "Intestazioni personalizzate",
+		"headerName": "Nome intestazione",
+		"headerValue": "Valore intestazione",
+		"noCustomHeaders": "Nessuna intestazione personalizzata definita. Fai clic sul pulsante + per aggiungerne una.",
 		"requestyApiKey": "Chiave API Requesty",
+		"refreshModels": {
+			"label": "Aggiorna modelli",
+			"hint": "Riapri le impostazioni per vedere i modelli più recenti."
+		},
 		"getRequestyApiKey": "Ottieni chiave API Requesty",
 		"openRouterTransformsText": "Comprimi prompt e catene di messaggi alla dimensione del contesto (<a>Trasformazioni OpenRouter</a>)",
 		"anthropicApiKey": "Chiave API Anthropic",
 		"getAnthropicApiKey": "Ottieni chiave API Anthropic",
+		"anthropicUseAuthToken": "Passa la chiave API Anthropic come header di autorizzazione invece di X-Api-Key",
+		"chutesApiKey": "Chiave API Chutes",
+		"getChutesApiKey": "Ottieni chiave API Chutes",
 		"deepSeekApiKey": "Chiave API DeepSeek",
 		"getDeepSeekApiKey": "Ottieni chiave API DeepSeek",
 		"geminiApiKey": "Chiave API Gemini",
+		"getGroqApiKey": "Ottieni chiave API Groq",
+		"groqApiKey": "Chiave API Groq",
 		"getGeminiApiKey": "Ottieni chiave API Gemini",
 		"openAiApiKey": "Chiave API OpenAI",
 		"openAiBaseUrl": "URL base",
@@ -127,6 +145,10 @@
 		"getMistralApiKey": "Ottieni chiave API Mistral / Codestral",
 		"codestralBaseUrl": "URL base Codestral (opzionale)",
 		"codestralBaseUrlDesc": "Imposta un URL opzionale per i modelli Codestral.",
+		"xaiApiKey": "Chiave API xAI",
+		"getXaiApiKey": "Ottieni chiave API xAI",
+		"litellmApiKey": "Chiave API LiteLLM",
+		"litellmBaseUrl": "URL base LiteLLM",
 		"awsCredentials": "Credenziali AWS",
 		"awsProfile": "Profilo AWS",
 		"awsProfileName": "Nome profilo AWS",
@@ -168,6 +190,8 @@
 		},
 		"unboundApiKey": "Chiave API Unbound",
 		"getUnboundApiKey": "Ottieni chiave API Unbound",
+		"unboundRefreshModelsSuccess": "Lista dei modelli aggiornata! Ora puoi selezionare tra gli ultimi modelli.",
+		"unboundInvalidApiKey": "Chiave API non valida. Controlla la tua chiave API e riprova.",
 		"humanRelay": {
 			"description": "Non è richiesta alcuna chiave API, ma l'utente dovrà aiutare a copiare e incollare le informazioni nella chat web AI.",
 			"instructions": "Durante l'uso, apparirà una finestra di dialogo e il messaggio corrente verrà automaticamente copiato negli appunti. Dovrai incollarlo nelle versioni web dell'AI (come ChatGPT o Claude), quindi copiare la risposta dell'AI nella finestra di dialogo e fare clic sul pulsante di conferma."
@@ -224,12 +248,19 @@
 		"rateLimitSeconds": {
 			"label": "Limite di frequenza",
 			"description": "Tempo minimo tra le richieste API."
-		}
+		},
+		"reasoningEffort": {
+			"label": "Sforzo di ragionamento del modello",
+			"high": "Alto",
+			"medium": "Medio",
+			"low": "Basso"
+		},
+		"setReasoningLevel": "Abilita sforzo di ragionamento"
 	},
 	"browser": {
 		"enable": {
 			"label": "Abilita strumento browser",
-			"description": "Quando abilitato, Roo può utilizzare un browser per interagire con siti web quando si utilizzano modelli che supportano l'uso del computer."
+			"description": "Quando abilitato, Roo può utilizzare un browser per interagire con siti web quando si utilizzano modelli che supportano l'uso del computer. <0>Scopri di più</0>"
 		},
 		"viewport": {
 			"label": "Dimensione viewport",
@@ -257,7 +288,7 @@
 	"checkpoints": {
 		"enable": {
 			"label": "Abilita punti di controllo automatici",
-			"description": "Quando abilitato, Roo creerà automaticamente punti di controllo durante l'esecuzione dei compiti, facilitando la revisione delle modifiche o il ritorno a stati precedenti."
+			"description": "Quando abilitato, Roo creerà automaticamente punti di controllo durante l'esecuzione dei compiti, facilitando la revisione delle modifiche o il ritorno a stati precedenti. <0>Scopri di più</0>"
 		}
 	},
 	"notifications": {
@@ -294,13 +325,57 @@
 		}
 	},
 	"terminal": {
+		"basic": {
+			"label": "Impostazioni terminale: Base",
+			"description": "Impostazioni base del terminale"
+		},
+		"advanced": {
+			"label": "Impostazioni terminale: Avanzate",
+			"description": "Le seguenti opzioni potrebbero richiedere il riavvio del terminale per applicare l'impostazione."
+		},
 		"outputLineLimit": {
 			"label": "Limite output terminale",
-			"description": "Numero massimo di righe da includere nell'output del terminale durante l'esecuzione dei comandi. Quando superato, le righe verranno rimosse dal centro, risparmiando token."
+			"description": "Numero massimo di righe da includere nell'output del terminale durante l'esecuzione dei comandi. Quando superato, le righe verranno rimosse dal centro, risparmiando token. <0>Scopri di più</0>"
 		},
 		"shellIntegrationTimeout": {
 			"label": "Timeout integrazione shell del terminale",
-			"description": "Tempo massimo di attesa per l'inizializzazione dell'integrazione della shell prima di eseguire i comandi. Per gli utenti con tempi di avvio della shell lunghi, questo valore potrebbe dover essere aumentato se si vedono errori \"Shell Integration Unavailable\" nel terminale."
+			"description": "Tempo massimo di attesa per l'inizializzazione dell'integrazione della shell prima di eseguire i comandi. Per gli utenti con tempi di avvio della shell lunghi, questo valore potrebbe dover essere aumentato se si vedono errori \"Shell Integration Unavailable\" nel terminale. <0>Scopri di più</0>"
+		},
+		"shellIntegrationDisabled": {
+			"label": "Disabilita l'integrazione della shell del terminale",
+			"description": "Abilita questa opzione se i comandi del terminale non funzionano correttamente o se vedi errori 'Shell Integration Unavailable'. Questo utilizza un metodo più semplice per eseguire i comandi, bypassando alcune funzionalità avanzate del terminale. <0>Scopri di più</0>"
+		},
+		"commandDelay": {
+			"label": "Ritardo comando terminale",
+			"description": "Ritardo in millisecondi da aggiungere dopo l'esecuzione del comando. L'impostazione predefinita di 0 disabilita completamente il ritardo. Questo può aiutare a garantire che l'output del comando sia catturato completamente nei terminali con problemi di temporizzazione. Nella maggior parte dei terminali viene implementato impostando `PROMPT_COMMAND='sleep N'` e Powershell aggiunge `start-sleep` alla fine di ogni comando. In origine era una soluzione per il bug VSCode#237208 e potrebbe non essere necessario. <0>Scopri di più</0>"
+		},
+		"compressProgressBar": {
+			"label": "Comprimi output barre di progresso",
+			"description": "Quando abilitato, elabora l'output del terminale con ritorni a capo (\\r) per simulare come un terminale reale visualizzerebbe il contenuto. Questo rimuove gli stati intermedi delle barre di progresso, mantenendo solo lo stato finale, il che conserva spazio di contesto per informazioni più rilevanti. <0>Scopri di più</0>"
+		},
+		"powershellCounter": {
+			"label": "Abilita soluzione temporanea contatore PowerShell",
+			"description": "Quando abilitato, aggiunge un contatore ai comandi PowerShell per garantire la corretta esecuzione dei comandi. Questo aiuta con i terminali PowerShell che potrebbero avere problemi con la cattura dell'output. <0>Scopri di più</0>"
+		},
+		"zshClearEolMark": {
+			"label": "Cancella marcatore fine riga ZSH",
+			"description": "Quando abilitato, cancella il marcatore di fine riga ZSH impostando PROMPT_EOL_MARK=''. Questo previene problemi con l'interpretazione dell'output dei comandi quando termina con caratteri speciali come '%'. <0>Scopri di più</0>"
+		},
+		"zshOhMy": {
+			"label": "Abilita integrazione Oh My Zsh",
+			"description": "Quando abilitato, imposta ITERM_SHELL_INTEGRATION_INSTALLED=Yes per abilitare le funzionalità di integrazione della shell Oh My Zsh. L'applicazione di questa impostazione potrebbe richiedere il riavvio dell'IDE. <0>Scopri di più</0>"
+		},
+		"zshP10k": {
+			"label": "Abilita integrazione Powerlevel10k",
+			"description": "Quando abilitato, imposta POWERLEVEL9K_TERM_SHELL_INTEGRATION=true per abilitare le funzionalità di integrazione della shell Powerlevel10k. <0>Scopri di più</0>"
+		},
+		"zdotdir": {
+			"label": "Abilita gestione ZDOTDIR",
+			"description": "Quando abilitato, crea una directory temporanea per ZDOTDIR per gestire correttamente l'integrazione della shell zsh. Questo assicura che l'integrazione della shell VSCode funzioni correttamente con zsh mantenendo la tua configurazione zsh. <0>Scopri di più</0>"
+		},
+		"inheritEnv": {
+			"label": "Eredita variabili d'ambiente",
+			"description": "Quando abilitato, il terminale eredita le variabili d'ambiente dal processo padre di VSCode, come le impostazioni di integrazione della shell definite nel profilo utente. Questo attiva direttamente l'impostazione globale di VSCode `terminal.integrated.inheritEnv`. <0>Scopri di più</0>"
 		}
 	},
 	"advanced": {
@@ -328,6 +403,14 @@
 	},
 	"experimental": {
 		"warning": "⚠️",
+		"autoCondenseContextPercent": {
+			"label": "Soglia per attivare la condensazione intelligente del contesto",
+			"description": "Quando la finestra di contesto raggiunge questa soglia, Roo la condenserà automaticamente."
+		},
+		"AUTO_CONDENSE_CONTEXT": {
+			"name": "Attiva automaticamente la condensazione intelligente del contesto",
+			"description": "La condensazione intelligente del contesto utilizza una chiamata LLM per riassumere la conversazione precedente quando la finestra di contesto dell'attività raggiunge una soglia preimpostata, invece di eliminare i messaggi vecchi quando il contesto si riempie."
+		},
 		"DIFF_STRATEGY_UNIFIED": {
 			"name": "Usa strategia diff unificata sperimentale",
 			"description": "Abilita la strategia diff unificata sperimentale. Questa strategia potrebbe ridurre il numero di tentativi causati da errori del modello, ma può causare comportamenti imprevisti o modifiche errate. Abilitala solo se comprendi i rischi e sei disposto a rivedere attentamente tutte le modifiche."
@@ -348,6 +431,10 @@
 			"name": "Usa strumento diff multi-blocco sperimentale",
 			"description": "Quando abilitato, Roo utilizzerà lo strumento diff multi-blocco. Questo tenterà di aggiornare più blocchi di codice nel file in una singola richiesta."
 		}
+	},
+	"promptCaching": {
+		"label": "Disattiva la cache dei prompt",
+		"description": "Quando selezionato, Roo non utilizzerà la cache dei prompt per questo modello."
 	},
 	"temperature": {
 		"useCustom": "Usa temperatura personalizzata",
@@ -385,8 +472,7 @@
 		"useCustomModel": "Usa personalizzato: {{modelId}}"
 	},
 	"footer": {
-		"feedback": "Se hai domande o feedback, sentiti libero di aprire un issue su <githubLink>github.com/RooVetGit/Roo-Code</githubLink> o unirti a <redditLink>reddit.com/r/RooCode</redditLink> o <discordLink>discord.gg/roocode</discordLink>",
-		"version": "Roo Code v{{version}}",
+		"feedback": "Se hai domande o feedback, sentiti libero di aprire un issue su <githubLink>github.com/RooCodeInc/Roo-Code</githubLink> o unirti a <redditLink>reddit.com/r/RooCode</redditLink> o <discordLink>discord.gg/roocode</discordLink>",
 		"telemetry": {
 			"label": "Consenti segnalazioni anonime di errori e utilizzo",
 			"description": "Aiuta a migliorare Roo Code inviando dati di utilizzo anonimi e segnalazioni di errori. Non vengono mai inviati codice, prompt o informazioni personali. Consulta la nostra politica sulla privacy per maggiori dettagli."
@@ -403,7 +489,7 @@
 	},
 	"validation": {
 		"apiKey": "È necessario fornire una chiave API valida.",
-		"awsRegion": "È necessario scegliere una regione per utilizzare AWS Bedrock.",
+		"awsRegion": "È necessario scegliere una regione per utilizzare Amazon Bedrock.",
 		"googleCloud": "È necessario fornire un ID progetto e una regione Google Cloud validi.",
 		"modelId": "È necessario fornire un ID modello valido.",
 		"modelSelector": "È necessario fornire un selettore di modello valido.",

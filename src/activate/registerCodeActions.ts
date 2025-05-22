@@ -1,55 +1,28 @@
 import * as vscode from "vscode"
 
-import { ACTION_NAMES, COMMAND_IDS } from "../core/CodeActionProvider"
-import { EditorUtils } from "../core/EditorUtils"
+import { CodeActionId, CodeActionName } from "../schemas"
+import { getCodeActionCommand } from "../utils/commands"
+import { EditorUtils } from "../integrations/editor/EditorUtils"
 import { ClineProvider } from "../core/webview/ClineProvider"
+import { COMMAND_IDS } from "./CodeActionProvider"
 
 export const registerCodeActions = (context: vscode.ExtensionContext) => {
-	registerCodeActionPair(
-		context,
-		COMMAND_IDS.EXPLAIN,
-		"EXPLAIN",
-		"What would you like Shenma to explain?",
-		"E.g. How does the error handling work?",
-	)
-
-	registerCodeActionPair(
-		context,
-		COMMAND_IDS.FIX,
-		"FIX",
-		"What would you like Shenma to fix?",
-		"E.g. Maintain backward compatibility",
-	)
-
-	registerCodeActionPair(
-		context,
-		COMMAND_IDS.IMPROVE,
-		"IMPROVE",
-		"What would you like Shenma to improve?",
-		"E.g. Focus on performance optimization",
-	)
-
-	registerCodeAction(context, COMMAND_IDS.ADD_TO_CONTEXT, "ADD_TO_CONTEXT")
+	registerCodeAction(context, COMMAND_IDS.EXPLAIN as CodeActionId, "EXPLAIN")
+	registerCodeAction(context, COMMAND_IDS.FIX as CodeActionId, "FIX")
+	registerCodeAction(context, COMMAND_IDS.IMPROVE as CodeActionId, "IMPROVE")
+	registerCodeAction(context, COMMAND_IDS.ADD_TO_CONTEXT as CodeActionId, "ADD_TO_CONTEXT")
 }
 
-const registerCodeAction = (
+export const registerCodeAction = (
 	context: vscode.ExtensionContext,
-	command: string,
-	promptType: keyof typeof ACTION_NAMES,
-	inputPrompt?: string,
-	inputPlaceholder?: string,
+	command: CodeActionId,
+	promptType: CodeActionName,
 ) => {
-	// let userInput: string | undefined
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	let userInput: string | undefined
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand(command, async (...args: any[]) => {
-			// if (inputPrompt) {
-			// 	userInput = await vscode.window.showInputBox({
-			// 		prompt: inputPrompt,
-			// 		placeHolder: inputPlaceholder,
-			// 	})
-			// }
-
+		vscode.commands.registerCommand(getCodeActionCommand(command), async (...args: any[]) => {
 			// Handle both code action and direct command cases.
 			let filePath: string
 			let selectedText: string
@@ -63,7 +36,11 @@ const registerCodeAction = (
 			} else {
 				// Called directly from command palette.
 				const context = EditorUtils.getEditorContext()
-				if (!context) return
+
+				if (!context) {
+					return
+				}
+
 				;({ filePath, selectedText, startLine, endLine, diagnostics } = context)
 			}
 
@@ -78,18 +55,4 @@ const registerCodeAction = (
 			await ClineProvider.handleCodeAction(command, promptType, params)
 		}),
 	)
-}
-
-export const registerCodeActionPair = (
-	context: vscode.ExtensionContext,
-	baseCommand: string,
-	promptType: keyof typeof ACTION_NAMES,
-	inputPrompt?: string,
-	inputPlaceholder?: string,
-) => {
-	// Register new task version.
-	registerCodeAction(context, baseCommand, promptType, inputPrompt, inputPlaceholder)
-
-	// Register current task version.
-	registerCodeAction(context, `${baseCommand}InCurrentTask`, promptType, inputPrompt, inputPlaceholder)
 }

@@ -4,7 +4,9 @@
 		"done": "Fertig",
 		"cancel": "Abbrechen",
 		"reset": "Zurücksetzen",
-		"select": "Auswählen"
+		"select": "Auswählen",
+		"add": "Header hinzufügen",
+		"remove": "Entfernen"
 	},
 	"header": {
 		"title": "Einstellungen",
@@ -20,21 +22,20 @@
 	},
 	"sections": {
 		"providers": "Anbieter",
-		"autoApprove": "Automatische Genehmigung",
-		"browser": "Browser / Computer-Nutzung",
+		"autoApprove": "Auto-Genehmigung",
+		"browser": "Computerzugriff",
 		"checkpoints": "Kontrollpunkte",
 		"notifications": "Benachrichtigungen",
-		"contextManagement": "Kontext-Management",
+		"contextManagement": "Kontext",
 		"terminal": "Terminal",
-		"advanced": "Erweitert",
-		"experimental": "Experimentelle Funktionen",
+		"experimental": "Experimentell",
 		"language": "Sprache",
 		"about": "Über Roo Code"
 	},
 	"autoApprove": {
 		"description": "Erlaubt Roo, Operationen automatisch ohne Genehmigung durchzuführen. Aktiviere diese Einstellungen nur, wenn du der KI vollständig vertraust und die damit verbundenen Sicherheitsrisiken verstehst.",
 		"readOnly": {
-			"label": "Schreibgeschützte Operationen immer genehmigen",
+			"label": "Lesen",
 			"description": "Wenn aktiviert, wird Roo automatisch Verzeichnisinhalte anzeigen und Dateien lesen, ohne dass du auf die Genehmigen-Schaltfläche klicken musst.",
 			"outsideWorkspace": {
 				"label": "Dateien außerhalb des Arbeitsbereichs einbeziehen",
@@ -42,7 +43,7 @@
 			}
 		},
 		"write": {
-			"label": "Schreiboperationen immer genehmigen",
+			"label": "Schreiben",
 			"description": "Dateien automatisch erstellen und bearbeiten ohne Genehmigung",
 			"delayLabel": "Verzögerung nach Schreibvorgängen, damit Diagnosefunktionen potenzielle Probleme erkennen können",
 			"outsideWorkspace": {
@@ -51,39 +52,43 @@
 			}
 		},
 		"browser": {
-			"label": "Browser-Aktionen immer genehmigen",
-			"description": "Browser-Aktionen automatisch ohne Genehmigung durchführen",
-			"note": "Hinweis: Gilt nur, wenn das Modell Computer-Nutzung unterstützt"
+			"label": "Browser",
+			"description": "Browser-Aktionen automatisch ohne Genehmigung durchführen. Hinweis: Gilt nur, wenn das Modell Computer-Nutzung unterstützt"
 		},
 		"retry": {
-			"label": "Fehlgeschlagene API-Anfragen immer wiederholen",
+			"label": "Wiederholung",
 			"description": "Fehlgeschlagene API-Anfragen automatisch wiederholen, wenn der Server eine Fehlerantwort zurückgibt",
 			"delayLabel": "Verzögerung vor dem Wiederholen der Anfrage"
 		},
 		"mcp": {
-			"label": "MCP-Tools immer genehmigen",
+			"label": "MCP",
 			"description": "Automatische Genehmigung einzelner MCP-Tools in der MCP-Server-Ansicht aktivieren (erfordert sowohl diese Einstellung als auch das 'Immer erlauben'-Kontrollkästchen des Tools)"
 		},
 		"modeSwitch": {
-			"label": "Moduswechsel immer genehmigen",
+			"label": "Modus",
 			"description": "Automatisch zwischen verschiedenen Modi wechseln ohne Genehmigung"
 		},
 		"subtasks": {
-			"label": "Erstellung & Abschluss von Unteraufgaben immer genehmigen",
+			"label": "Teilaufgaben",
 			"description": "Erstellung und Abschluss von Unteraufgaben ohne Genehmigung erlauben"
 		},
 		"execute": {
-			"label": "Erlaubte Ausführungsoperationen immer genehmigen",
+			"label": "Ausführen",
 			"description": "Erlaubte Terminal-Befehle automatisch ohne Genehmigung ausführen",
 			"allowedCommands": "Erlaubte Auto-Ausführungsbefehle",
 			"allowedCommandsDescription": "Befehlspräfixe, die automatisch ausgeführt werden können, wenn 'Ausführungsoperationen immer genehmigen' aktiviert ist. Fügen Sie * hinzu, um alle Befehle zu erlauben (mit Vorsicht verwenden).",
 			"commandPlaceholder": "Befehlspräfix eingeben (z.B. 'git ')",
 			"addButton": "Hinzufügen"
+		},
+		"apiRequestLimit": {
+			"title": "Maximale Anfragen",
+			"description": "Automatisch so viele API-Anfragen stellen, bevor du um die Erlaubnis gebeten wirst, mit der Aufgabe fortzufahren.",
+			"unlimited": "Unbegrenzt"
 		}
 	},
 	"providers": {
-		"configProfile": "Konfigurationsprofil",
 		"providerDocumentation": "{{provider}}-Dokumentation",
+		"configProfile": "Konfigurationsprofil",
 		"description": "Speichern Sie verschiedene API-Konfigurationen, um schnell zwischen Anbietern und Einstellungen zu wechseln.",
 		"apiProvider": "API-Anbieter",
 		"model": "Modell",
@@ -101,7 +106,7 @@
 		"searchPlaceholder": "Profile durchsuchen",
 		"noMatchFound": "Keine passenden Profile gefunden",
 		"vscodeLmDescription": "Die VS Code Language Model API ermöglicht das Ausführen von Modellen, die von anderen VS Code-Erweiterungen bereitgestellt werden (einschließlich, aber nicht beschränkt auf GitHub Copilot). Der einfachste Weg, um zu starten, besteht darin, die Erweiterungen Copilot und Copilot Chat aus dem VS Code Marketplace zu installieren.",
-		"awsCustomArnUse": "Geben Sie eine gültige AWS Bedrock ARN für das Modell ein, das Sie verwenden möchten. Formatbeispiele:",
+		"awsCustomArnUse": "Geben Sie eine gültige Amazon Bedrock ARN für das Modell ein, das Sie verwenden möchten. Formatbeispiele:",
 		"awsCustomArnDesc": "Stellen Sie sicher, dass die Region in der ARN mit Ihrer oben ausgewählten AWS-Region übereinstimmt.",
 		"openRouterApiKey": "OpenRouter API-Schlüssel",
 		"getOpenRouterApiKey": "OpenRouter API-Schlüssel erhalten",
@@ -111,14 +116,27 @@
 		"useCustomBaseUrl": "Benutzerdefinierte Basis-URL verwenden",
 		"useHostHeader": "Benutzerdefinierten Host-Header verwenden",
 		"useLegacyFormat": "Altes OpenAI API-Format verwenden",
+		"customHeaders": "Benutzerdefinierte Headers",
+		"headerName": "Header-Name",
+		"headerValue": "Header-Wert",
+		"noCustomHeaders": "Keine benutzerdefinierten Headers definiert. Klicke auf die + Schaltfläche, um einen hinzuzufügen.",
 		"requestyApiKey": "Requesty API-Schlüssel",
+		"refreshModels": {
+			"label": "Modelle aktualisieren",
+			"hint": "Bitte öffne die Einstellungen erneut, um die neuesten Modelle zu sehen."
+		},
 		"getRequestyApiKey": "Requesty API-Schlüssel erhalten",
 		"openRouterTransformsText": "Prompts und Nachrichtenketten auf Kontextgröße komprimieren (<a>OpenRouter Transformationen</a>)",
 		"anthropicApiKey": "Anthropic API-Schlüssel",
 		"getAnthropicApiKey": "Anthropic API-Schlüssel erhalten",
+		"anthropicUseAuthToken": "Anthropic API-Schlüssel als Authorization-Header anstelle von X-Api-Key übergeben",
+		"chutesApiKey": "Chutes API-Schlüssel",
+		"getChutesApiKey": "Chutes API-Schlüssel erhalten",
 		"deepSeekApiKey": "DeepSeek API-Schlüssel",
 		"getDeepSeekApiKey": "DeepSeek API-Schlüssel erhalten",
 		"geminiApiKey": "Gemini API-Schlüssel",
+		"getGroqApiKey": "Groq API-Schlüssel erhalten",
+		"groqApiKey": "Groq API-Schlüssel",
 		"getGeminiApiKey": "Gemini API-Schlüssel erhalten",
 		"openAiApiKey": "OpenAI API-Schlüssel",
 		"openAiBaseUrl": "Basis-URL",
@@ -127,6 +145,10 @@
 		"getMistralApiKey": "Mistral / Codestral API-Schlüssel erhalten",
 		"codestralBaseUrl": "Codestral Basis-URL (Optional)",
 		"codestralBaseUrlDesc": "Legen Sie eine alternative URL für das Codestral-Modell fest.",
+		"xaiApiKey": "xAI API-Schlüssel",
+		"getXaiApiKey": "xAI API-Schlüssel erhalten",
+		"litellmApiKey": "LiteLLM API-Schlüssel",
+		"litellmBaseUrl": "LiteLLM Basis-URL",
 		"awsCredentials": "AWS Anmeldedaten",
 		"awsProfile": "AWS Profil",
 		"awsProfileName": "AWS Profilname",
@@ -168,6 +190,8 @@
 		},
 		"unboundApiKey": "Unbound API-Schlüssel",
 		"getUnboundApiKey": "Unbound API-Schlüssel erhalten",
+		"unboundRefreshModelsSuccess": "Modellliste aktualisiert! Sie können jetzt aus den neuesten Modellen auswählen.",
+		"unboundInvalidApiKey": "Ungültiger API-Schlüssel. Bitte überprüfen Sie Ihren API-Schlüssel und versuchen Sie es erneut.",
 		"humanRelay": {
 			"description": "Es ist kein API-Schlüssel erforderlich, aber der Benutzer muss beim Kopieren und Einfügen der Informationen in den Web-Chat-KI helfen.",
 			"instructions": "Während der Verwendung wird ein Dialogfeld angezeigt und die aktuelle Nachricht wird automatisch in die Zwischenablage kopiert. Du musst diese in Web-Versionen von KI (wie ChatGPT oder Claude) einfügen, dann die Antwort der KI zurück in das Dialogfeld kopieren und auf die Bestätigungsschaltfläche klicken."
@@ -224,12 +248,19 @@
 		"rateLimitSeconds": {
 			"label": "Ratenbegrenzung",
 			"description": "Minimale Zeit zwischen API-Anfragen."
-		}
+		},
+		"reasoningEffort": {
+			"label": "Modell-Denkaufwand",
+			"high": "Hoch",
+			"medium": "Mittel",
+			"low": "Niedrig"
+		},
+		"setReasoningLevel": "Denkaufwand aktivieren"
 	},
 	"browser": {
 		"enable": {
 			"label": "Browser-Tool aktivieren",
-			"description": "Wenn aktiviert, kann Roo einen Browser verwenden, um mit Websites zu interagieren, wenn Modelle verwendet werden, die Computer-Nutzung unterstützen."
+			"description": "Wenn aktiviert, kann Roo einen Browser verwenden, um mit Websites zu interagieren, wenn Modelle verwendet werden, die Computer-Nutzung unterstützen. <0>Mehr erfahren</0>"
 		},
 		"viewport": {
 			"label": "Viewport-Größe",
@@ -257,7 +288,7 @@
 	"checkpoints": {
 		"enable": {
 			"label": "Automatische Kontrollpunkte aktivieren",
-			"description": "Wenn aktiviert, erstellt Roo automatisch Kontrollpunkte während der Aufgabenausführung, was die Überprüfung von Änderungen oder die Rückkehr zu früheren Zuständen erleichtert."
+			"description": "Wenn aktiviert, erstellt Roo automatisch Kontrollpunkte während der Aufgabenausführung, was die Überprüfung von Änderungen oder die Rückkehr zu früheren Zuständen erleichtert. <0>Mehr erfahren</0>"
 		}
 	},
 	"notifications": {
@@ -294,13 +325,57 @@
 		}
 	},
 	"terminal": {
+		"basic": {
+			"label": "Terminal-Einstellungen: Grundlegend",
+			"description": "Grundlegende Terminal-Einstellungen"
+		},
+		"advanced": {
+			"label": "Terminal-Einstellungen: Erweitert",
+			"description": "Die folgenden Optionen erfordern möglicherweise einen Terminal-Neustart, um die Einstellung zu übernehmen."
+		},
 		"outputLineLimit": {
 			"label": "Terminal-Ausgabelimit",
-			"description": "Maximale Anzahl von Zeilen, die in der Terminal-Ausgabe bei der Ausführung von Befehlen enthalten sein sollen. Bei Überschreitung werden Zeilen aus der Mitte entfernt, wodurch Token gespart werden."
+			"description": "Maximale Anzahl von Zeilen, die in der Terminal-Ausgabe bei der Ausführung von Befehlen enthalten sein sollen. Bei Überschreitung werden Zeilen aus der Mitte entfernt, wodurch Token gespart werden. <0>Mehr erfahren</0>"
 		},
 		"shellIntegrationTimeout": {
 			"label": "Terminal-Shell-Integrationszeit-Limit",
-			"description": "Maximale Wartezeit für die Shell-Integration, bevor Befehle ausgeführt werden. Für Benutzer mit langen Shell-Startzeiten muss dieser Wert möglicherweise erhöht werden, wenn Sie Fehler vom Typ \"Shell Integration Unavailable\" im Terminal sehen."
+			"description": "Maximale Wartezeit für die Shell-Integration, bevor Befehle ausgeführt werden. Für Benutzer mit langen Shell-Startzeiten musst du diesen Wert möglicherweise erhöhen, wenn du Fehler vom Typ \"Shell Integration Unavailable\" im Terminal siehst. <0>Mehr erfahren</0>"
+		},
+		"shellIntegrationDisabled": {
+			"label": "Terminal-Shell-Integration deaktivieren",
+			"description": "Aktiviere dies, wenn Terminalbefehle nicht korrekt funktionieren oder du Fehler wie 'Shell Integration Unavailable' siehst. Dies verwendet eine einfachere Methode zur Ausführung von Befehlen und umgeht einige erweiterte Terminalfunktionen. <0>Mehr erfahren</0>"
+		},
+		"commandDelay": {
+			"label": "Terminal-Befehlsverzögerung",
+			"description": "Verzögerung in Millisekunden, die nach der Befehlsausführung hinzugefügt wird. Die Standardeinstellung von 0 deaktiviert die Verzögerung vollständig. Dies kann dazu beitragen, dass die Befehlsausgabe in Terminals mit Timing-Problemen vollständig erfasst wird. In den meisten Terminals wird dies durch Setzen von `PROMPT_COMMAND='sleep N'` implementiert, und Powershell fügt `start-sleep` am Ende jedes Befehls hinzu. Ursprünglich war dies eine Lösung für VSCode-Bug#237208 und ist möglicherweise nicht mehr erforderlich. <0>Mehr erfahren</0>"
+		},
+		"compressProgressBar": {
+			"label": "Fortschrittsbalken-Ausgabe komprimieren",
+			"description": "Wenn aktiviert, verarbeitet diese Option Terminal-Ausgaben mit Wagenrücklaufzeichen (\\r), um zu simulieren, wie ein echtes Terminal Inhalte anzeigen würde. Dies entfernt Zwischenzustände von Fortschrittsbalken und behält nur den Endzustand bei, wodurch Kontextraum für relevantere Informationen gespart wird. <0>Mehr erfahren</0>"
+		},
+		"powershellCounter": {
+			"label": "PowerShell-Zähler-Workaround aktivieren",
+			"description": "Wenn aktiviert, fügt einen Zähler zu PowerShell-Befehlen hinzu, um die korrekte Befehlsausführung sicherzustellen. Dies hilft bei PowerShell-Terminals, die Probleme mit der Ausgabeerfassung haben könnten. <0>Mehr erfahren</0>"
+		},
+		"zshClearEolMark": {
+			"label": "ZSH-Zeilenende-Markierung löschen",
+			"description": "Wenn aktiviert, wird die ZSH-Zeilenende-Markierung durch Setzen von PROMPT_EOL_MARK='' gelöscht. Dies verhindert Probleme bei der Interpretation der Befehlsausgabe, wenn diese mit Sonderzeichen wie '%' endet. <0>Mehr erfahren</0>"
+		},
+		"zshOhMy": {
+			"label": "Oh My Zsh-Integration aktivieren",
+			"description": "Wenn aktiviert, wird ITERM_SHELL_INTEGRATION_INSTALLED=Yes gesetzt, um die Shell-Integrationsfunktionen von Oh My Zsh zu aktivieren. Das Anwenden dieser Einstellung erfordert möglicherweise einen Neustart der IDE. <0>Mehr erfahren</0>"
+		},
+		"zshP10k": {
+			"label": "Powerlevel10k-Integration aktivieren",
+			"description": "Wenn aktiviert, wird POWERLEVEL9K_TERM_SHELL_INTEGRATION=true gesetzt, um die Shell-Integrationsfunktionen von Powerlevel10k zu aktivieren. <0>Mehr erfahren</0>"
+		},
+		"zdotdir": {
+			"label": "ZDOTDIR-Behandlung aktivieren",
+			"description": "Erstellt bei Aktivierung ein temporäres Verzeichnis für ZDOTDIR, um die zsh-Shell-Integration korrekt zu handhaben. Dies stellt sicher, dass die VSCode-Shell-Integration mit zsh funktioniert und dabei deine zsh-Konfiguration erhalten bleibt. <0>Mehr erfahren</0>"
+		},
+		"inheritEnv": {
+			"label": "Umgebungsvariablen übernehmen",
+			"description": "Wenn aktiviert, übernimmt das Terminal Umgebungsvariablen vom übergeordneten VSCode-Prozess, wie z.B. in Benutzerprofilen definierte Shell-Integrationseinstellungen. Dies schaltet direkt die globale VSCode-Einstellung `terminal.integrated.inheritEnv` um. <0>Mehr erfahren</0>"
 		}
 	},
 	"advanced": {
@@ -328,6 +403,14 @@
 	},
 	"experimental": {
 		"warning": "⚠️",
+		"autoCondenseContextPercent": {
+			"label": "Schwellenwert für intelligente Kontextkomprimierung",
+			"description": "Wenn das Kontextfenster diesen Schwellenwert erreicht, wird Roo es automatisch komprimieren."
+		},
+		"AUTO_CONDENSE_CONTEXT": {
+			"name": "Intelligente Kontextkomprimierung automatisch auslösen",
+			"description": "Intelligente Kontextkomprimierung verwendet einen LLM-Aufruf, um das vorherige Gespräch zusammenzufassen, wenn das Kontextfenster der Aufgabe einen voreingestellten Schwellenwert erreicht, anstatt alte Nachrichten zu verwerfen, wenn der Kontext voll ist."
+		},
 		"DIFF_STRATEGY_UNIFIED": {
 			"name": "Experimentelle einheitliche Diff-Strategie verwenden",
 			"description": "Aktiviert die experimentelle einheitliche Diff-Strategie. Diese Strategie könnte die Anzahl der durch Modellfehler verursachten Wiederholungen reduzieren, kann aber unerwartetes Verhalten oder falsche Bearbeitungen verursachen. Nur aktivieren, wenn du die Risiken verstehst und bereit bist, alle Änderungen sorgfältig zu überprüfen."
@@ -348,6 +431,10 @@
 			"name": "Experimentelles Multi-Block-Diff-Werkzeug verwenden",
 			"description": "Wenn aktiviert, verwendet Roo das Multi-Block-Diff-Werkzeug. Dies versucht, mehrere Codeblöcke in der Datei in einer Anfrage zu aktualisieren."
 		}
+	},
+	"promptCaching": {
+		"label": "Prompt-Caching deaktivieren",
+		"description": "Wenn aktiviert, wird Roo für dieses Modell kein Prompt-Caching verwenden."
 	},
 	"temperature": {
 		"useCustom": "Benutzerdefinierte Temperatur verwenden",
@@ -385,8 +472,7 @@
 		"useCustomModel": "Benutzerdefiniert verwenden: {{modelId}}"
 	},
 	"footer": {
-		"feedback": "Wenn du Fragen oder Feedback hast, kannst du gerne ein Issue auf <githubLink>github.com/RooVetGit/Roo-Code</githubLink> öffnen oder <redditLink>reddit.com/r/RooCode</redditLink> oder <discordLink>discord.gg/roocode</discordLink> beitreten",
-		"version": "Roo Code v{{version}}",
+		"feedback": "Wenn du Fragen oder Feedback hast, kannst du gerne ein Issue auf <githubLink>github.com/RooCodeInc/Roo-Code</githubLink> öffnen oder <redditLink>reddit.com/r/RooCode</redditLink> oder <discordLink>discord.gg/roocode</discordLink> beitreten",
 		"telemetry": {
 			"label": "Anonyme Fehler- und Nutzungsberichte zulassen",
 			"description": "Helfen Sie, Roo Code zu verbessern, indem Sie anonyme Nutzungsdaten und Fehlerberichte senden. Es werden niemals Code, Prompts oder persönliche Informationen gesendet. Weitere Details finden Sie in unserer Datenschutzrichtlinie."
@@ -403,7 +489,7 @@
 	},
 	"validation": {
 		"apiKey": "Du musst einen gültigen API-Schlüssel angeben.",
-		"awsRegion": "Du musst eine Region für AWS Bedrock auswählen.",
+		"awsRegion": "Du musst eine Region für Amazon Bedrock auswählen.",
 		"googleCloud": "Du musst eine gültige Google Cloud Projekt-ID und Region angeben.",
 		"modelId": "Du musst eine gültige Modell-ID angeben.",
 		"modelSelector": "Du musst einen gültigen Modell-Selektor angeben.",

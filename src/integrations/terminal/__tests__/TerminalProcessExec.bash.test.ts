@@ -1,16 +1,20 @@
-// src/integrations/terminal/__tests__/TerminalProcessExec.bash.test.ts
+// npx jest src/integrations/terminal/__tests__/TerminalProcessExec.bash.test.ts
 
 import * as vscode from "vscode"
 import { execSync } from "child_process"
-import { TerminalProcess, ExitCodeDetails } from "../TerminalProcess"
+
+import { ExitCodeDetails } from "../types"
+import { TerminalProcess } from "../TerminalProcess"
 import { Terminal } from "../Terminal"
 import { TerminalRegistry } from "../TerminalRegistry"
+
 // Mock the vscode module
 jest.mock("vscode", () => {
 	// Store event handlers so we can trigger them in tests
 	const eventHandlers = {
 		startTerminalShellExecution: null,
 		endTerminalShellExecution: null,
+		closeTerminal: null,
 	}
 
 	return {
@@ -29,6 +33,10 @@ jest.mock("vscode", () => {
 				eventHandlers.endTerminalShellExecution = handler
 				return { dispose: jest.fn() }
 			}),
+			onDidCloseTerminal: jest.fn().mockImplementation((handler) => {
+				eventHandlers.closeTerminal = handler
+				return { dispose: jest.fn() }
+			}),
 		},
 		ThemeIcon: class ThemeIcon {
 			constructor(id: string) {
@@ -43,6 +51,10 @@ jest.mock("vscode", () => {
 		__eventHandlers: eventHandlers,
 	}
 })
+
+jest.mock("execa", () => ({
+	execa: jest.fn(),
+}))
 
 // Create a mock stream that uses real command output with realistic chunking
 function createRealCommandStream(command: string): { stream: AsyncIterable<string>; exitCode: number } {
@@ -216,7 +228,6 @@ async function testTerminalCommand(
 		const exitDetails = TerminalProcess.interpretExitCode(exitCode)
 
 		// Set a timeout to avoid hanging tests
-		let timeoutId: NodeJS.Timeout
 		const timeoutPromise = new Promise<void>((_, reject) => {
 			timeoutId = setTimeout(() => {
 				reject(new Error("Test timed out after 1000ms"))
