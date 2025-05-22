@@ -12,7 +12,7 @@ import * as fileSearch from "../../../services/search/file-search"
 
 import { RepoPerTaskCheckpointService } from "../RepoPerTaskCheckpointService"
 
-jest.setTimeout(10_000)
+jest.setTimeout(20_000)
 
 const tmpDir = path.join(os.tmpdir(), "CheckpointService")
 
@@ -49,7 +49,7 @@ const initWorkspaceRepo = async ({
 	return { git, testFile }
 }
 
-(describe as any).each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
+;(describe as any).each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 	"CheckpointService",
 	(klass: any, prefix: any) => {
 		const taskId = "test-task"

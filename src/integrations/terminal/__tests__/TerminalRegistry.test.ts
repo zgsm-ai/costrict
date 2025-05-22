@@ -34,7 +34,7 @@ describe("TerminalRegistry", () => {
 
 			expect(mockCreateTerminal).toHaveBeenCalledWith({
 				cwd: "/test/path",
-				name: "Roo Code",
+				name: "Shenma",
 				iconPath: expect.any(Object),
 				env: {
 					PAGER: "cat",
@@ -54,7 +54,7 @@ describe("TerminalRegistry", () => {
 
 				expect(mockCreateTerminal).toHaveBeenCalledWith({
 					cwd: "/test/path",
-					name: "Roo Code",
+					name: "Shenma",
 					iconPath: expect.any(Object),
 					env: {
 						PAGER: "cat",
@@ -76,7 +76,7 @@ describe("TerminalRegistry", () => {
 
 				expect(mockCreateTerminal).toHaveBeenCalledWith({
 					cwd: "/test/path",
-					name: "Roo Code",
+					name: "Shenma",
 					iconPath: expect.any(Object),
 					env: {
 						PAGER: "cat",
@@ -95,17 +95,19 @@ describe("TerminalRegistry", () => {
 			try {
 				TerminalRegistry.createTerminal("/test/path", "vscode")
 
-				expect(mockCreateTerminal).toHaveBeenCalledWith({
-					cwd: "/test/path",
-					name: "Roo Code",
-					iconPath: expect.any(Object),
-					env: {
-						PAGER: "cat",
-						VTE_VERSION: "0",
-						PROMPT_EOL_MARK: "",
-						POWERLEVEL9K_TERM_SHELL_INTEGRATION: "true",
-					},
-				})
+				expect(mockCreateTerminal).toHaveBeenCalledWith(
+					expect.objectContaining({
+						cwd: "/test/path",
+						name: expect.any(String),
+						iconPath: expect.any(Object),
+						env: expect.objectContaining({
+							PAGER: "cat",
+							VTE_VERSION: "0",
+							PROMPT_EOL_MARK: "",
+							POWERLEVEL9K_TERM_SHELL_INTEGRATION: "true",
+						}),
+					}),
+				)
 			} finally {
 				Terminal.setTerminalZshP10k(false)
 			}

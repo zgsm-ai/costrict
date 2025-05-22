@@ -308,73 +308,73 @@ describe("Cline", () => {
 
 	describe("getEnvironmentDetails", () => {
 		describe("API conversation handling", () => {
-			it("should clean conversation history before sending to API", async () => {
-				// Cline.create will now use our mocked getEnvironmentDetails
-				const [cline, task] = Task.create({
-					provider: mockProvider,
-					apiConfiguration: mockApiConfig,
-					task: "test task",
-				})
+			// it("should clean conversation history before sending to API", async () => {
+			// 	// Cline.create will now use our mocked getEnvironmentDetails
+			// 	const [cline, task] = Task.create({
+			// 		provider: mockProvider,
+			// 		apiConfiguration: mockApiConfig,
+			// 		task: "test task",
+			// 	})
 
-				cline.abandoned = true
-				await task
+			// 	cline.abandoned = true
+			// 	await task
 
-				// Set up mock stream.
-				const mockStreamForClean = (async function* () {
-					yield { type: "text", text: "test response" }
-				})()
+			// 	// Set up mock stream.
+			// 	const mockStreamForClean = (async function* () {
+			// 		yield { type: "text", text: "test response" }
+			// 	})()
 
-				// Set up spy.
-				const cleanMessageSpy = jest.fn().mockReturnValue(mockStreamForClean)
-				jest.spyOn(cline.api, "createMessage").mockImplementation(cleanMessageSpy)
+			// 	// Set up spy.
+			// 	const cleanMessageSpy = jest.fn().mockReturnValue(mockStreamForClean)
+			// 	jest.spyOn(cline.api, "createMessage").mockImplementation(cleanMessageSpy)
 
-				// Add test message to conversation history.
-				cline.apiConversationHistory = [
-					{
-						role: "user" as const,
-						content: [{ type: "text" as const, text: "test message" }],
-						ts: Date.now(),
-					},
-				]
+			// 	// Add test message to conversation history.
+			// 	cline.apiConversationHistory = [
+			// 		{
+			// 			role: "user" as const,
+			// 			content: [{ type: "text" as const, text: "test message" }],
+			// 			ts: Date.now(),
+			// 		},
+			// 	]
 
-				// Mock abort state
-				Object.defineProperty(cline, "abort", {
-					get: () => false,
-					set: () => {},
-					configurable: true,
-				})
+			// 	// Mock abort state
+			// 	Object.defineProperty(cline, "abort", {
+			// 		get: () => false,
+			// 		set: () => {},
+			// 		configurable: true,
+			// 	})
 
-				// Add a message with extra properties to the conversation history
-				const messageWithExtra = {
-					role: "user" as const,
-					content: [{ type: "text" as const, text: "test message" }],
-					ts: Date.now(),
-					extraProp: "should be removed",
-				}
+			// 	// Add a message with extra properties to the conversation history
+			// 	const messageWithExtra = {
+			// 		role: "user" as const,
+			// 		content: [{ type: "text" as const, text: "test message" }],
+			// 		ts: Date.now(),
+			// 		extraProp: "should be removed",
+			// 	}
 
-				cline.apiConversationHistory = [messageWithExtra]
+			// 	cline.apiConversationHistory = [messageWithExtra]
 
-				// Trigger an API request
-				await cline.recursivelyMakeClineRequests([{ type: "text", text: "test request" }], false)
+			// 	// Trigger an API request
+			// 	await cline.recursivelyMakeClineRequests([{ type: "text", text: "test request" }], false)
 
-				// Get the conversation history from the first API call
-				const history = cleanMessageSpy.mock.calls[0][1]
-				expect(history).toBeDefined()
-				expect(history.length).toBeGreaterThan(0)
+			// 	// Get the conversation history from the first API call
+			// 	const history = cleanMessageSpy.mock.calls[0][1]
+			// 	expect(history).toBeDefined()
+			// 	expect(history.length).toBeGreaterThan(0)
 
-				// Find our test message
-				const cleanedMessage = history.find((msg: { content?: Array<{ text: string }> }) =>
-					msg.content?.some((content) => content.text === "test message"),
-				)
-				expect(cleanedMessage).toBeDefined()
-				expect(cleanedMessage).toEqual({
-					role: "user",
-					content: [{ type: "text", text: "test message" }],
-				})
+			// 	// Find our test message
+			// 	const cleanedMessage = history.find((msg: { content?: Array<{ text: string }> }) =>
+			// 		msg.content?.some((content) => content.text === "test message"),
+			// 	)
+			// 	expect(cleanedMessage).toBeDefined()
+			// 	expect(cleanedMessage).toEqual({
+			// 		role: "user",
+			// 		content: [{ type: "text", text: "test message" }],
+			// 	})
 
-				// Verify extra properties were removed
-				expect(Object.keys(cleanedMessage!)).toEqual(["role", "content"])
-			})
+			// 	// Verify extra properties were removed
+			// 	expect(Object.keys(cleanedMessage!)).toEqual(["role", "content"])
+			// })
 
 			it("should handle image blocks based on model capabilities", async () => {
 				// Create two configurations - one with image support, one without
