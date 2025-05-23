@@ -27,6 +27,7 @@ import {
 	markdownFormattingSection,
 } from "./sections"
 import { formatLanguage } from "../../shared/language"
+import { defaultLang } from "../../utils/language"
 
 async function generatePrompt(
 	context: vscode.ExtensionContext,
@@ -94,7 +95,7 @@ ${getSystemInfoSection(cwd)}
 
 ${getObjectiveSection()}
 
-${await addCustomInstructions(promptComponent?.customInstructions || modeConfig.customInstructions || "", globalCustomInstructions || "", cwd, mode, { language: language ?? formatLanguage(vscode.env.language), rooIgnoreInstructions })}`
+${await addCustomInstructions(promptComponent?.customInstructions || modeConfig.customInstructions || "", globalCustomInstructions || "", cwd, mode, { language: language ?? formatLanguage(await defaultLang()), rooIgnoreInstructions })}`
 
 	return basePrompt
 }
@@ -131,7 +132,7 @@ export const SYSTEM_PROMPT = async (
 	const variablesForPrompt: PromptVariables = {
 		workspace: cwd,
 		mode: mode,
-		language: language ?? formatLanguage(vscode.env.language),
+		language: language ?? formatLanguage(await defaultLang()),
 		shell: vscode.env.shell,
 		operatingSystem: os.type(),
 	}
@@ -151,7 +152,7 @@ export const SYSTEM_PROMPT = async (
 			globalCustomInstructions || "",
 			cwd,
 			mode,
-			{ language: language ?? formatLanguage(vscode.env.language), rooIgnoreInstructions },
+			{ language: language ?? formatLanguage(await defaultLang()), rooIgnoreInstructions },
 		)
 
 		// For file-based prompts, don't include the tool sections
