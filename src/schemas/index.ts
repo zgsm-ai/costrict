@@ -31,22 +31,23 @@ export const Package = {
  * CodeAction
  */
 
-export const codeActionIds = ["explainCode", "fixCode", "improveCode", "addToContext", "newTask"] as const
+export const codeActionIds = [
+	"explainCode",
+	"fixCode",
+	"improveCode",
+	"addToContext",
+	"newTask",
+	"explain",
+	"addComment",
+	"codeReview",
+	"addDebugCode",
+	"addStrongerCode",
+	"simplifyCode",
+	"performanceOptimization",
+] as const
 
-export type CodeActionId =
-	| (typeof codeActionIds)[number]
-	| "zgsm.explainCode"
-	| "zgsm.fixCode"
-	| "zgsm.improveCode"
-	| "zgsm.addToContext"
-	| "zgsm.newTask"
-	| "zgsm.explain"
-	| "zgsm.addComment"
-	| "zgsm.codeReview"
-	| "zgsm.addDebugCode"
-	| "zgsm.addStrongerCode"
-	| "zgsm.simplifyCode"
-	| "zgsm.performanceOptimization"
+export type CodeActionId = (typeof codeActionIds)[number]
+
 export type CodeActionName =
 	| "EXPLAIN"
 	| "FIX"
@@ -64,17 +65,8 @@ export type CodeActionName =
  * TerminalAction
  */
 
-// export const terminalActionIds = ["terminalAddToContext", "terminalFixCommand", "terminalExplainCommand"] as const
-export const TERMINAL_COMMAND_IDS = {
-	ADD_TO_CONTEXT: "zgsm.terminalAddToContext",
-	FIX: "zgsm.terminalFixCommand",
-	EXPLAIN: "zgsm.terminalExplainCommand",
-} as const
-export const terminalActionIds = [
-	TERMINAL_COMMAND_IDS.ADD_TO_CONTEXT,
-	TERMINAL_COMMAND_IDS.FIX,
-	TERMINAL_COMMAND_IDS.EXPLAIN,
-] as const
+export const terminalActionIds = ["terminalAddToContext", "terminalFixCommand", "terminalExplainCommand"] as const
+
 export type TerminalActionId = (typeof terminalActionIds)[number]
 
 export type TerminalActionName = "ADD_TO_CONTEXT" | "FIX" | "EXPLAIN"
