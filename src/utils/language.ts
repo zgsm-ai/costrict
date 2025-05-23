@@ -1,4 +1,4 @@
-import { osLocale } from "os-locale"
+import * as osLocale from "os-locale"
 import * as vscode from "vscode"
 
 /**
@@ -20,7 +20,7 @@ async function getDefaultLanguage(): Promise<string> {
         return vscodeLanguage;
     }
 
-    const osLang = await osLocale();
+    const osLang = await osLocale.osLocale();
     console.log(`[language] VS Code language is English or not set, determined OS locale: ${osLang}`);
     return osLang;
 }
