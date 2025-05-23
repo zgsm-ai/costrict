@@ -340,6 +340,10 @@ describe("SYSTEM_PROMPT", () => {
 	})
 
 	it("should include vscode language in custom instructions", async () => {
+		// Reset language cache before test
+		const { resetLanguageCache } = jest.requireActual("../../../utils/language")
+		resetLanguageCache()
+
 		// Mock vscode.env.language
 		const vscode = jest.requireMock("vscode")
 		vscode.env = { language: "es" }
@@ -363,8 +367,9 @@ describe("SYSTEM_PROMPT", () => {
 		expect(prompt).toContain("Language Preference:")
 		expect(prompt).toContain('You should always speak and think in the "es" language')
 
-		// Reset mock
+		// Reset mock and cache
 		vscode.env = { language: "en" }
+		resetLanguageCache()
 	})
 
 	it("should include custom mode role definition at top and instructions at bottom", async () => {

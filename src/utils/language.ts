@@ -8,6 +8,13 @@ import * as vscode from "vscode"
 let languageCache: Promise<string> | null = null;
 
 /**
+ * Reset the language cache. Used primarily for testing.
+ */
+export const resetLanguageCache = (): void => {
+    languageCache = null;
+};
+
+/**
  * Get the default language for the application.
  * First checks VS Code's configured language, uses it if not English.
  * Otherwise falls back to the operating system's locale.
