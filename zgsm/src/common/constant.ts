@@ -47,9 +47,6 @@ export const COMPLETION_CONST = {
 	collectInterval: 3000, // Timer interval for collecting code snippets
 }
 
-// Extension ID corresponds to publisher.name in package.json
-export const EXTENSION_ID = "zgsm-ai.zgsm"
-
 // VSCode related
 export const VSCODE_CONST = {
 	checkSpin: "$(check~spin)", // Checkmark icon

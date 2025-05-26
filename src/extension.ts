@@ -93,7 +93,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerCommands({ context, outputChannel, provider })
 
 	// Check if this is a new installation or upgrade
-	const currentVersion = vscode.extensions.getExtension("zgsm-ai.zgsm")?.packageJSON.version
+	const currentVersion = vscode.extensions.getExtension(Package.extensionId)?.packageJSON.version
 	const lastVersion = context.globalState.get<string>("lastVersion")
 
 	// If this is a new installation or upgrade, automatically open the sidebar

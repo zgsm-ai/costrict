@@ -5,6 +5,7 @@ import { ApiConfiguration } from "../shared/api"
 import * as os from "os"
 import * as querystring from "querystring"
 import { logger } from "../utils/logging"
+import { Package } from "../schemas"
 
 /**
  * Get local IP address
@@ -43,7 +44,7 @@ function getLocalIP(): string {
  */
 export function createHeaders(dict: Record<string, any> = {}): Record<string, any> {
 	// Get extended information
-	const extension = vscode.extensions.getExtension("zgsm-ai.zgsm")
+	const extension = vscode.extensions.getExtension(Package.extensionId)
 	const extVersion = extension?.packageJSON.version || ""
 	const ideVersion = vscode.version || ""
 	const hostIp = getLocalIP()

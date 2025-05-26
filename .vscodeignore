@@ -38,6 +38,16 @@ out/**
 ellipsis.yaml
 knip.json
 
+images/**
+
+!images/issue-dark.svg
+!images/issue.svg
+!images/zhuge_ai_help_doc_icon_darkmode.svg
+!images/zhuge_ai_help_doc_icon_lightmode.svg
+!images/zhuge_shenma_logo_icon.woff
+!images/zhuge_shenma_logo.svg
+!images/zhuge_shenma_rebot_logo_big.png
+
 # Ignore all webview-ui files except the build directory.
 # https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/frameworks/hello-world-react-cra/.vscodeignore
 webview-ui/src/**

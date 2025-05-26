@@ -5,7 +5,6 @@ import { getTerminalCommand } from "../utils/commands"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { Terminal } from "../integrations/terminal/Terminal"
 import { t } from "../i18n"
-
 export const registerTerminalActions = (context: vscode.ExtensionContext) => {
 	registerTerminalAction(context, "terminalAddToContext", "TERMINAL_ADD_TO_CONTEXT")
 	registerTerminalAction(context, "terminalFixCommand", "TERMINAL_FIX")
@@ -16,6 +15,7 @@ const registerTerminalAction = (
 	context: vscode.ExtensionContext,
 	command: TerminalActionId,
 	promptType: TerminalActionPromptType,
+	inputPrompt?: string,
 ) => {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(getTerminalCommand(command), async (args: any) => {
@@ -30,9 +30,18 @@ const registerTerminalAction = (
 				return
 			}
 
-			await ClineProvider.handleTerminalAction(command, promptType, {
+			const params: Record<string, any> = {
 				terminalContent: content,
-			})
+			}
+
+			if (inputPrompt) {
+				params.userInput =
+					(await vscode.window.showInputBox({
+						prompt: inputPrompt,
+					})) ?? ""
+			}
+
+			await ClineProvider.handleTerminalAction(command, promptType, params)
 		}),
 	)
 }

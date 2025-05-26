@@ -37,6 +37,7 @@ import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
 import { generateSystemPrompt } from "./generateSystemPrompt"
 import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 import { getCommand } from "../../utils/commands"
+import { initZgsmApiConfiguration } from "../../shared/zgsmInitialize"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 
@@ -283,17 +284,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			break
 		case "resetState":
 			await provider.resetState()
-
-			const { apiConfiguration: config } = await provider.getState()
-			const [initZgsmModels, initZgsmDefaultModelId] = await getZgsmModels(
-				provider?.context?.globalState?.get?.("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl,
-			)
-
-			await defaultZgsmAuthConfig.initProviderConfig(provider, {
-				zgsmModels: initZgsmModels,
-				zgsmDefaultModelId: initZgsmDefaultModelId,
-				apiModelId: config.apiModelId || initZgsmDefaultModelId,
-			})
+			await initZgsmApiConfiguration(provider)
 			break
 		case "flushRouterModels":
 			const routerName: RouterName = toRouterName(message.text)
@@ -339,7 +330,10 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 				message?.values?.apiKey,
 				message?.values?.hostHeader,
 			)
-			provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId })
+			const { apiConfiguration: requestZgsmConfig } = await provider.getState()
+			const id = requestZgsmConfig.zgsmModelId || requestZgsmConfig.apiModelId || zgsmDefaultModelId
+
+			provider.postMessageToWebview({ type: "zgsmModels", zgsmModels, zgsmDefaultModelId: id })
 
 			break
 		case "requestOllamaModels":

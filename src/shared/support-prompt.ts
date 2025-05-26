@@ -222,7 +222,7 @@ Please provide a clear and concise explanation of what this code does, including
 export const supportPrompt = {
 	default: Object.fromEntries(Object.entries(supportPromptConfigs).map(([key, config]) => [key, config.template])),
 	get: (customSupportPrompts: Record<string, any> | undefined, type: SupportPromptType): string => {
-		return customSupportPrompts?.[type] ?? supportPromptConfigs[type].template
+		return `${customSupportPrompts?.[type] ?? supportPromptConfigs[type].template}\n`
 	},
 	create: (type: SupportPromptType, params: PromptParams, customSupportPrompts?: Record<string, any>): string => {
 		const template = supportPrompt.get(customSupportPrompts, type)

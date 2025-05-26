@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import { EditorUtils } from "../integrations/editor/EditorUtils"
 import { CodeActionName, CodeActionId } from "../schemas"
-import { getCodeActionCommand, getCommand } from "../utils/commands"
+import { getCodeActionCommand } from "../utils/commands"
 
 export const ACTION_NAMES = {
 	EXPLAIN: "Shenma: Explain Code",
@@ -23,18 +23,18 @@ export const ACTION_NAMES = {
 } as const
 
 export const COMMAND_IDS = {
-	EXPLAIN: getCommand("explainCode"),
-	FIX: getCommand("fixCode"),
-	IMPROVE: getCommand("improveCode"),
-	ADD_TO_CONTEXT: getCommand("addToContext"),
-	NEW_TASK: getCommand("newTask"),
-	ZGSM_EXPLAIN: getCommand("explain"),
-	ZGSM_ADD_COMMENT: getCommand("addComment"),
-	ZGSM_CODE_REVIEW: getCommand("codeReview"),
-	ZGSM_ADD_DEBUG_CODE: getCommand("addDebugCode"),
-	ZGSM_ADD_STRONG_CODE: getCommand("addStrongerCode"),
-	ZGSM_SIMPLIFY_CODE: getCommand("simplifyCode"),
-	ZGSM_PERFORMANCE: getCommand("performanceOptimization"),
+	EXPLAIN: "explainCode",
+	FIX: "fixCode",
+	IMPROVE: "improveCode",
+	ADD_TO_CONTEXT: "addToContext",
+	NEW_TASK: "newTask",
+	ZGSM_EXPLAIN: "explain",
+	ZGSM_ADD_COMMENT: "addComment",
+	ZGSM_CODE_REVIEW: "codeReview",
+	ZGSM_ADD_DEBUG_CODE: "addDebugCode",
+	ZGSM_ADD_STRONG_CODE: "addStrongerCode",
+	ZGSM_SIMPLIFY_CODE: "simplifyCode",
+	ZGSM_PERFORMANCE: "performanceOptimization",
 } as const
 
 export const ACTION_TITLES: Record<CodeActionName, string> = {
@@ -44,7 +44,6 @@ export const ACTION_TITLES: Record<CodeActionName, string> = {
 	ADD_TO_CONTEXT: "Add to Shenma",
 	NEW_TASK: "New Shenma Task",
 
-	// todo: @monkeydluffy6017 Pull Request #114
 	ZGSM_EXPLAIN: "Shenma: ZGSM_EXPLAIN",
 	ZGSM_ADD_COMMENT: "Shenma: ZGSM_ADD_COMMENT",
 	ZGSM_CODE_REVIEW: "Shenma: ZGSM_CODE_REVIEW",

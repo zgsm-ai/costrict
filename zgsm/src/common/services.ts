@@ -9,7 +9,7 @@
  */
 import * as vscode from "vscode"
 import { getExtensionsLatestVersion } from "./api"
-import { EXTENSION_ID, configCompletion, configCodeLens, ZGSM_API_KEY, ZGSM_BASE_URL } from "./constant"
+import { configCompletion, configCodeLens, ZGSM_API_KEY, ZGSM_BASE_URL } from "./constant"
 import { envSetting } from "./env"
 import { Logger } from "./log-util"
 import { LangSetting, LangSwitch, LangDisables, getLanguageByFilePath } from "./lang-util"
@@ -19,6 +19,7 @@ import { ApiConfiguration, zgsmProviderKey } from "../../../src/shared/api"
 import { CompletionClient } from "../codeCompletion/completionClient"
 import { generateZgsmAuthUrl } from "../../../src/shared/zgsmAuthUrl"
 import { checkExistKey } from "../../../src/shared/checkExistApiConfig"
+import { Package } from "../../../src/schemas"
 /**
  * Set up a timer to periodically check for extension updates and programming language settings
  */
@@ -47,7 +48,7 @@ async function updateExtensions(context: vscode.ExtensionContext): Promise<void>
 		return
 	}
 	// Get extension information
-	const extension = vscode.extensions.getExtension(EXTENSION_ID)
+	const extension = vscode.extensions.getExtension(Package.extensionId)
 	if (!extension) {
 		return
 	}
@@ -78,7 +79,7 @@ async function updateExtensions(context: vscode.ExtensionContext): Promise<void>
 				// User clicked the "Confirm" button
 				Logger.log(`User clicked the "Confirm" button`)
 				try {
-					vscode.commands.executeCommand("workbench.extensions.search", EXTENSION_ID)
+					vscode.commands.executeCommand("workbench.extensions.search", Package.extensionId)
 				} catch (err) {
 					Logger.error(err)
 				}
@@ -106,14 +107,14 @@ function isTimeToCheck(context: vscode.ExtensionContext): boolean {
 		const maxIntervalStr = formatTimeDifference(envSetting.updateExtensionsTimeInterval)
 		if (timeDiff > envSetting.updateExtensionsTimeInterval) {
 			Logger.info(
-				`Last check time for zgsm-ai.zgsm extension: ${lastChecked}, waiting time ${timeDiffStr} exceeded ${maxIntervalStr}, need to check again`,
+				`Last check time for ${Package.extensionId} extension: ${lastChecked}, waiting time ${timeDiffStr} exceeded ${maxIntervalStr}, need to check again`,
 			)
 			// Check for updates every 12 hours
 			globalState.update(ZGSM_LASTTIME_CHECKED, currentTime)
 			return true
 		}
 		Logger.info(
-			`Last check time for zgsm-ai.zgsm extension: ${lastChecked}, waiting time ${timeDiffStr} is less than ${maxIntervalStr}, no need to update`,
+			`Last check time for ${Package.extensionId} extension: ${lastChecked}, waiting time ${timeDiffStr} is less than ${maxIntervalStr}, no need to update`,
 		)
 	}
 	return false
@@ -126,7 +127,9 @@ function isIgnoreVersion(context: vscode.ExtensionContext, extensionVersion: str
 	const globalState = context.globalState
 	const zgsmIgnoreVersion = globalState.get(ZGSM_IGNORE_VERSION) as string
 	if (zgsmIgnoreVersion === extensionVersion) {
-		Logger.info(`zgsm-ai.zgsm extension update ignored version ${ZGSM_IGNORE_VERSION}: ${zgsmIgnoreVersion} `)
+		Logger.info(
+			`${Package.extensionId} extension update ignored version ${ZGSM_IGNORE_VERSION}: ${zgsmIgnoreVersion} `,
+		)
 		return true
 	}
 	return false

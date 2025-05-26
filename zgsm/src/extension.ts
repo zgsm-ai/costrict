@@ -1,3 +1,4 @@
+import { initZgsmApiConfiguration } from "./../../src/shared/zgsmInitialize"
 /**
  * Copyright (c) 2024 - Sangfor LTD.
  *
@@ -7,17 +8,13 @@
  * copies or substantial portions of the Software.
  */
 import * as vscode from "vscode"
-// import Auth0AuthenticationProvider from './common/authProvider';
 import { registerZGSMCodeActions } from "./chatView/chat-view-menu"
-import { ChatViewProvider } from "./chatView/chat-view-provider"
 import { shortKeyCut } from "./codeCompletion/completionCommands"
 import { CompletionStatusBar } from "./codeCompletion/completionStatusBar"
 import { AICompletionProvider } from "./codeCompletion/completionProvider"
 import { codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codeLens/codeLensCallBackFunc"
 import { MyCodeLensProvider } from "./codeLens/codeLensProvider"
 import { configCompletion, configCodeLens, OPENAI_CLIENT_NOT_INITIALIZED, ZGSM_API_KEY } from "./common/constant"
-// import { initEnv, updateEnv } from "./common/env"
-// import { Logger } from "./common/log-util"
 import {
 	setupExtensionUpdater,
 	doExtensionOnce,
@@ -29,7 +26,6 @@ import { printLogo } from "./common/vscode-util"
 import { loadLocalLanguageExtensions } from "./common/lang-util"
 import { ClineProvider } from "../../src/core/webview/ClineProvider"
 import { defaultZgsmAuthConfig } from "../../src/zgsmAuth/config"
-import { getZgsmModels } from "../../src/api/providers/zgsm"
 import { getCommand } from "../../src/utils/commands"
 
 /**
@@ -37,21 +33,9 @@ import { getCommand } from "../../src/utils/commands"
  */
 async function initialize(provider: ClineProvider) {
 	printLogo()
-	// initEnv()
 	initLangSetting()
-
 	loadLocalLanguageExtensions()
-
-	const { apiConfiguration } = await provider.getState()
-	const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
-		provider?.context?.globalState?.get?.("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl,
-	)
-
-	await defaultZgsmAuthConfig.initProviderConfig(provider, {
-		zgsmModels,
-		zgsmDefaultModelId,
-		apiModelId: apiConfiguration.apiModelId || zgsmDefaultModelId,
-	})
+	await initZgsmApiConfiguration(provider)
 }
 
 /**
@@ -61,13 +45,11 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 	await initialize(provider)
 
 	// TODO: it will cause coredump
-	// const authProvider = Auth0AuthenticationProvider.getInstance(context);
 	// authProvider.checkToken();
 
 	setupExtensionUpdater(context)
 	doExtensionOnce(context)
 	CompletionStatusBar.create(context)
-	const cvProvider = ChatViewProvider.getInstance(context)
 
 	context.subscriptions.push(
 		// Register codelens related commands
@@ -117,28 +99,17 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 			vscode.commands.executeCommand(getCommand("SidebarProvider.focus"))
 		}),
 	)
-	// Register the 'Logout' command
-	context.subscriptions.push(
-		vscode.commands.registerCommand(getCommand("view.logout"), () => {
-			cvProvider.logout()
-		}),
-	)
-	// Register the command for clearing sessions
-	context.subscriptions.push(
-		vscode.commands.registerCommand(getCommand("clearSession"), () => {
-			context.globalState.update("chatgpt-session-token", null)
-		}),
-	)
+
 	// Register the 'User Manual' command
 	context.subscriptions.push(
 		vscode.commands.registerCommand(getCommand("view.userHelperDoc"), () => {
-			cvProvider.userHelperDocPanel()
+			vscode.env.openExternal(vscode.Uri.parse(`${defaultZgsmAuthConfig.zgsmSite}`))
 		}),
 	)
 	// Register the 'Report Issue' command
 	context.subscriptions.push(
 		vscode.commands.registerCommand(getCommand("view.issue"), () => {
-			cvProvider.userFeedbackIssue()
+			vscode.env.openExternal(vscode.Uri.parse(`${defaultZgsmAuthConfig.baseUrl}/issue/`))
 		}),
 	)
 	// get zgsmApiKey without webview resolve
