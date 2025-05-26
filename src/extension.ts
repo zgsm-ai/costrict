@@ -36,6 +36,7 @@ import {
 import { initializeI18n } from "./i18n"
 import { getCommand } from "./utils/commands"
 import { defaultLang } from "./utils/language"
+import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -90,14 +91,20 @@ export async function activate(context: vscode.ExtensionContext) {
 	registerCommands({ context, outputChannel, provider })
 
 	// Check if this is a new installation or upgrade
-	const currentVersion = vscode.extensions.getExtension(Package.extensionId)?.packageJSON.version
-	const lastVersion = context.globalState.get<string>("lastVersion")
+	const lifecycle = new PluginLifecycleManager(context)
 
-	// If this is a new installation or upgrade, automatically open the sidebar
-	if (!lastVersion || lastVersion !== currentVersion) {
-		await vscode.commands.executeCommand(getCommand("SidebarProvider.focus"))
-		// Update the stored version number
-		await context.globalState.update("lastVersion", currentVersion)
+	const installType = await lifecycle.getInstallType()
+
+	// If this is a new installation, reinstall or upgrade, automatically open the sidebar
+	switch (installType) {
+		case InstallType.First:
+		case InstallType.Upgrade:
+		case InstallType.Reinstall:
+			// open the sidebar
+			await vscode.commands.executeCommand(getCommand("SidebarProvider.focus"))
+			break
+		case InstallType.Unchanged:
+			break
 	}
 
 	/**
