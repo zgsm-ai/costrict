@@ -38,8 +38,9 @@ describe("RooTips Component", () => {
 		})
 
 		test("renders only the top two tips", () => {
-			// Ensure only two tips are present (check by link role)
-			expect(screen.getAllByRole("link")).toHaveLength(2)
+			// Ensure only two tips are present (check by description text)
+			const descriptions = screen.getAllByText(/rooTips\..*\.description/)
+			expect(descriptions).toHaveLength(2)
 		})
 	})
 })
