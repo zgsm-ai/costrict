@@ -10,7 +10,7 @@ mock/
 
 # IDEs
 .idea
-
+.history
 # Builds
 bin/
 *.vsix

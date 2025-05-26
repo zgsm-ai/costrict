@@ -374,26 +374,25 @@ export async function getZgsmModels(
 ): Promise<[string[], string | undefined, (AxiosError | undefined)?]> {
 	baseUrl = baseUrl || defaultZgsmAuthConfig.baseUrl
 
-	if (!canParseURL(baseUrl)) {
-		throw new Error(`Invalid ZGSM base URL: ${baseUrl}`)
-	}
-
-	const config: Record<string, any> = {}
-	const headers: Record<string, string> = createHeaders({})
-
-	if (apiKey) {
-		headers["Authorization"] = `Bearer ${apiKey}`
-	}
-
-	if (hostHeader) {
-		headers["Host"] = hostHeader
-	}
-
-	if (Object.keys(headers).length > 0) {
-		config["headers"] = headers
-	}
-
 	try {
+		if (!canParseURL(baseUrl)) {
+			throw new Error(`Invalid ZGSM base URL: ${baseUrl}`)
+		}
+
+		const config: Record<string, any> = {}
+		const headers: Record<string, string> = createHeaders({})
+
+		if (apiKey) {
+			headers["Authorization"] = `Bearer ${apiKey}`
+		}
+
+		if (hostHeader) {
+			headers["Host"] = hostHeader
+		}
+
+		if (Object.keys(headers).length > 0) {
+			config["headers"] = headers
+		}
 		const response = await axios.get(`${baseUrl}/v1/models`, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 

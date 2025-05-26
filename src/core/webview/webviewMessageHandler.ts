@@ -1286,5 +1286,8 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 				await handleZgsmLogin(message.url, message.apiConfiguration!, provider)
 			}
 			break
+		case "docslink":
+			await vscode.window.showInformationMessage("文档完善中，敬请期待...")
+			break
 	}
 }
