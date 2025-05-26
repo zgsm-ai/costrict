@@ -165,16 +165,6 @@
 				"category": "Terminal"
 			},
 			{
-				"command": "zgsm.terminalFixCommandInCurrentTask",
-				"title": "%command.terminal.fixCommandInCurrentTask.title%",
-				"category": "Terminal"
-			},
-			{
-				"command": "zgsm.terminalExplainCommandInCurrentTask",
-				"title": "%command.terminal.explainCommandInCurrentTask.title%",
-				"category": "Terminal"
-			},
-			{
 				"command": "zgsm.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
 				"category": "%configuration.title%"

@@ -80,6 +80,7 @@ export default defineConfig({
 	},
 	define: {
 		"process.platform": JSON.stringify(process.platform),
+		"process.env.ZGSM_BASE_URL": JSON.stringify(process.env.ZGSM_BASE_URL || ""),
 		"process.env.VSCODE_TEXTMATE_DEBUG": JSON.stringify(process.env.VSCODE_TEXTMATE_DEBUG),
 	},
 	optimizeDeps: {

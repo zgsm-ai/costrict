@@ -133,7 +133,7 @@ export const ZgsmAI = ({
 				</div>
 				<div className="flex items-center mb-2">
 					<VSCodeTextField
-						className="flex-1 mr-2"
+						className={fromWelcomeView ? "w-full" : "flex-1 mr-2"}
 						value={apiConfiguration?.zgsmBaseUrl || ""}
 						type="url"
 						onInput={handleInputChange("zgsmBaseUrl")}
@@ -141,16 +141,18 @@ export const ZgsmAI = ({
 							zgsmBaseUrl: apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl,
 						})}></VSCodeTextField>
 
-					<VSCodeButton
-						appearance="icon"
-						title={t(
-							!apiConfiguration?.zgsmApiKey
-								? "settings:providers.getZgsmApiKey"
-								: "settings:providers.getZgsmApiKeyAgain",
-						)}
-						onClick={handleSubmit}>
-						<span className="codicon codicon-sign-in"></span>
-					</VSCodeButton>
+					{!fromWelcomeView && (
+						<VSCodeButton
+							appearance="icon"
+							title={t(
+								!apiConfiguration?.zgsmApiKey
+									? "settings:providers.getZgsmApiKey"
+									: "settings:providers.getZgsmApiKeyAgain",
+							)}
+							onClick={handleSubmit}>
+							<span className="codicon codicon-sign-in"></span>
+						</VSCodeButton>
+					)}
 				</div>
 			</div>
 

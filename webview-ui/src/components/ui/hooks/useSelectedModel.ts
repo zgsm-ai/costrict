@@ -80,7 +80,10 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 					routerModels: routerModels.data,
 					openRouterModelProviders: openRouterModelProviders.data,
 				})
-			: { id: anthropicDefaultModelId, info: undefined }
+			: {
+					id: apiConfiguration?.zgsmModelId || apiConfiguration?.zgsmDefaultModelId || "deepseek-v3",
+					info: undefined,
+				}
 
 	return {
 		provider,

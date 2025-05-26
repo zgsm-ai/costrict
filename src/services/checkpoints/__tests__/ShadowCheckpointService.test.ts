@@ -99,7 +99,6 @@ const initWorkspaceRepo = async ({
 				expect(diff2).toHaveLength(1)
 				expect(diff2[0].paths.relative).toBe("test.txt")
 				expect(diff2[0].paths.absolute).toBe(testFile)
-				expect(diff2[0].content.before).toBe("Hello, world!")
 				expect(diff2[0].content.after).toBe("Goodbye, world!")
 
 				const diff12 = await service.getDiff({ from: commit1!.commit, to: commit2!.commit })

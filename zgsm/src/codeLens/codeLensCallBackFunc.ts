@@ -10,7 +10,6 @@
  */
 import * as vscode from "vscode"
 import { getLanguageClass } from "../langClass/factory"
-// import { ChatViewProvider } from "../chatView/chat-view-provider";
 import { CODELENS_CONST, CODELENS_FUNC } from "../common/constant"
 import { throttle } from "../common/util"
 import { getLanguageByFilePath } from "../common/lang-util"

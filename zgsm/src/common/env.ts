@@ -9,6 +9,7 @@
 import * as vscode from "vscode"
 import { Logger } from "./log-util"
 import { getLocalIP } from "./util"
+import { Package } from "../../../src/schemas"
 
 const baseEnvSetting = {
 	baseUrl: "https://zgsm.sangfor.com", // Base URL of Shenma backend
@@ -66,7 +67,7 @@ let envClient = baseEnvClient
  * Automatically obtain client identification information
  */
 function fetchEnvClient() {
-	const extension = vscode.extensions.getExtension("zgsm-ai.zgsm")
+	const extension = vscode.extensions.getExtension(Package.extensionId)
 	if (!envClient.extVersion) {
 		envClient.extVersion = extension?.packageJSON.version || ""
 	}

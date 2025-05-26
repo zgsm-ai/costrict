@@ -304,8 +304,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		// TODO: Improve type safety for promptType.
 		const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
 
-		// if (command === "addToContext") {
-		if (command.endsWith("addToContext")) {
+		if (command === "addToContext") {
 			await visibleProvider.postMessageToWebview({ type: "invoke", invoke: "setChatBoxMessage", text: prompt })
 			return
 		}

@@ -395,8 +395,6 @@ export async function getZgsmModels(
 
 	try {
 		const response = await axios.get(`${baseUrl}/v1/models`, config)
-		console.log("response", response)
-
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 
 		modelsCache = new WeakRef([...new Set<string>(modelsArray)])

@@ -78,7 +78,7 @@ describe("Code Action Prompts", () => {
 			})
 
 			expect(prompt).toBe(
-				"Generate an enhanced version of this prompt (reply with only the enhanced prompt - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes):\n\ntest",
+				"Generate an enhanced version of this prompt (reply with only the enhanced prompt - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes):\n\ntest\n",
 			)
 			// Verify it ignores parameters since ENHANCE template doesn't use any
 			expect(prompt).not.toContain(testFilePath)
@@ -97,7 +97,7 @@ describe("Code Action Prompts", () => {
 				endLine: "1",
 				diagnostics: [],
 			})
-			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\``
+			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\`\n`
 			expect(prompt).toBe(expected)
 		})
 
@@ -110,7 +110,7 @@ describe("Code Action Prompts", () => {
 				endLine: "20",
 				diagnostics,
 			})
-			const expected = `${testFilePath}:10-20\n\`\`\`\n${testCode}\n\`\`\``
+			const expected = `${testFilePath}:10-20\n\`\`\`\n${testCode}\n\`\`\`\n`
 			expect(prompt).toBe(expected)
 		})
 
@@ -123,7 +123,7 @@ describe("Code Action Prompts", () => {
 				startLine: "5",
 				endLine: "15",
 			})
-			const expected = `${testFilePath}:5-15\n\`\`\`\n${testCode}\n\`\`\``
+			const expected = `${testFilePath}:5-15\n\`\`\`\n${testCode}\n\`\`\`\n`
 			expect(prompt).toBe(expected)
 		})
 
@@ -135,7 +135,7 @@ describe("Code Action Prompts", () => {
 				startLine: "1",
 				endLine: "1",
 			}) // 'status' is missing
-			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\``
+			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\`\n`
 			expect(prompt).toBe(expected)
 		})
 
@@ -147,7 +147,7 @@ describe("Code Action Prompts", () => {
 				startLine: "1",
 				endLine: "1",
 			})
-			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\``
+			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\`\n`
 			expect(prompt).toBe(expected)
 		})
 
@@ -158,7 +158,7 @@ describe("Code Action Prompts", () => {
 				startLine: "1",
 				endLine: "1",
 			})
-			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\``
+			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\`\n`
 			expect(prompt).toBe(expected)
 		})
 
@@ -171,7 +171,7 @@ describe("Code Action Prompts", () => {
 				startLine: "1",
 				endLine: "1",
 			}) // Convert to strings
-			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\``
+			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\`\n`
 			expect(prompt).toBe(expected)
 		})
 
@@ -184,7 +184,7 @@ describe("Code Action Prompts", () => {
 				startLine: "1",
 				endLine: "1",
 			})
-			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\``
+			const expected = `${testFilePath}:1-1\n\`\`\`\n${testCode}\n\`\`\`\n`
 			expect(prompt).toBe(expected)
 		})
 
@@ -198,7 +198,7 @@ describe("Code Action Prompts", () => {
 				endLine: "1",
 				diagnostics: [],
 			})
-			const expected = `${testFilePath}:1-1\n\`\`\`\n${bashText}\n\`\`\``
+			const expected = `${testFilePath}:1-1\n\`\`\`\n${bashText}\n\`\`\`\n`
 			expect(prompt).toBe(expected)
 		})
 	})

@@ -186,6 +186,11 @@ const extensionConfig = {
 			},
 		},
 	],
+	define: {
+		"process.env.NODE_ENV": production ? '"production"' : '"development"',
+		"process.env.ZGSM_BASE_URL": JSON.stringify(process.env.ZGSM_BASE_URL || ""),
+		// 可以添加更多环境变量
+	},
 	entryPoints: ["src/extension.ts"],
 	format: "cjs",
 	sourcesContent: false,

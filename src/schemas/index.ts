@@ -20,11 +20,18 @@ import { publisher, name, version } from "../../package.json"
 // The build process still needs to emit a modified package.json for consumption
 // by VSCode, but that build artifact is not used during the transpile step of
 // the build, so we still need this override mechanism.
+
+const pkgPublisher = process.env.PKG_PUBLISHER || publisher
+const pkgName = process.env.PKG_NAME || name
+const pkgVersion = process.env.PKG_VERSION || version
+const pkgOutputChannel = process.env.PKG_OUTPUT_CHANNEL || "Shenma"
+
 export const Package = {
 	publisher: process.env.PKG_PUBLISHER || publisher,
-	name: process.env.PKG_NAME || name,
-	version: process.env.PKG_VERSION || version,
-	outputChannel: process.env.PKG_OUTPUT_CHANNEL || "Shenma",
+	name: pkgName,
+	version: pkgVersion,
+	outputChannel: pkgOutputChannel,
+	extensionId: `${pkgPublisher}.${pkgName}`,
 } as const
 
 /**

@@ -348,11 +348,22 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 	)
 	const handleAfterLogin = useCallback(
 		(apiKey: string) => {
-			setApiConfigurationField("zgsmApiKey", apiKey)
+			if (!apiKey) return
+
+			setCachedState((prevState) => {
+				const state = { ...prevState, ...extensionState }
+				return {
+					...state,
+					apiConfiguration: {
+						...state.apiConfiguration,
+						zgsmApiKey: apiKey,
+					},
+				}
+			})
 			handleSubmit()
 			onDone()
 		},
-		[handleSubmit, onDone, setApiConfigurationField],
+		[extensionState, handleSubmit, onDone],
 	)
 
 	useImperativeHandle(ref, () => ({ checkUnsaveChanges }), [checkUnsaveChanges])

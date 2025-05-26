@@ -55,7 +55,8 @@ const supportPromptConfigs: Record<SupportPromptType, SupportPromptConfig> = {
 	ENHANCE: {
 		template: `Generate an enhanced version of this prompt (reply with only the enhanced prompt - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes):
 
-\${userInput}`,
+\${userInput}
+`,
 	},
 	EXPLAIN: {
 		template: `Explain the following code from file path \${filePath}:\${startLine}-\${endLine}
@@ -105,7 +106,8 @@ Provide the improved code along with explanations for each enhancement.`,
 		template: `\${filePath}:\${startLine}-\${endLine}
 \`\`\`
 \${selectedText}
-\`\`\``,
+\`\`\`
+`,
 	},
 	TERMINAL_ADD_TO_CONTEXT: {
 		template: `\${userInput}

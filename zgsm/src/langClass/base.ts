@@ -21,6 +21,8 @@ export class LangName {
 	public static C = "c"
 	public static GO = "go"
 	public static PYTHON = "python"
+	public static TS = "typescript"
+	public static JS = "javascript"
 }
 
 /**

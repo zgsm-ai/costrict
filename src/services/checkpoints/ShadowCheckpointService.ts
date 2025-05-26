@@ -262,7 +262,9 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 
 			const start = Date.now()
 			await this.git.clean("f", ["-d", "-f"])
-			await this.git.reset(["--hard", commitHash])
+			// Clean up commit hash by removing any non-alphanumeric characters
+			const cleanCommitHash = commitHash.replace(/[^a-f0-9]/g, "")
+			await this.git.reset(["--hard", cleanCommitHash, "--"])
 
 			// Remove all checkpoints after the specified commitHash.
 			const checkpointIndex = this._checkpoints.indexOf(commitHash)
@@ -297,18 +299,43 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 		await this.stageAll(this.git)
 
 		this.log(`[${this.constructor.name}#getDiff] diffing ${to ? `${from}..${to}` : `${from}..HEAD`}`)
-		const { files } = to ? await this.git.diffSummary([`${from}..${to}`]) : await this.git.diffSummary([from])
+		// Clean up commit hashes by removing any non-alphanumeric characters
+		const cleanFrom = from.replace(/[^a-f0-9]/g, "")
+		const cleanTo = to?.replace(/[^a-f0-9]/g, "")
+		const diffOptions = ["-U0"] // 确保获取完整内容
+		const { files } = cleanTo
+			? await this.git.diffSummary([...diffOptions, `${cleanFrom}..${cleanTo}`, "--"])
+			: await this.git.diffSummary([...diffOptions, cleanFrom, "--"])
 
 		const cwdPath = (await this.getShadowGitConfigWorktree(this.git)) || this.workspaceDir || ""
 
 		for (const file of files) {
 			const relPath = file.file
 			const absPath = path.join(cwdPath, relPath)
-			const before = await this.git.show([`${from}:${relPath}`]).catch(() => "")
+			this.log(`[${this.constructor.name}#getDiff] getting before content for ${from}:${relPath}`)
+			const before = await this.git.show([`${from}:${relPath}`]).catch((e) => {
+				this.log(
+					`[${this.constructor.name}#getDiff] failed to get before content for ${relPath}: ${e instanceof Error ? e.message : String(e)}`,
+				)
+				return ""
+			})
 
+			this.log(
+				`[${this.constructor.name}#getDiff] getting after content for ${to ? `${to}:${relPath}` : absPath}`,
+			)
 			const after = to
-				? await this.git.show([`${to}:${relPath}`]).catch(() => "")
-				: await fs.readFile(absPath, "utf8").catch(() => "")
+				? await this.git.show([`${to}:${relPath}`]).catch((e) => {
+						this.log(
+							`[${this.constructor.name}#getDiff] failed to get after content for ${relPath}: ${e instanceof Error ? e.message : String(e)}`,
+						)
+						return ""
+					})
+				: await fs.readFile(absPath, "utf8").catch((e) => {
+						this.log(
+							`[${this.constructor.name}#getDiff] failed to read file ${absPath}: ${e instanceof Error ? e.message : String(e)}`,
+						)
+						return ""
+					})
 
 			result.push({ paths: { relative: relPath, absolute: absPath }, content: { before, after } })
 		}

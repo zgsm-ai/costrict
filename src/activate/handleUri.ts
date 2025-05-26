@@ -54,7 +54,6 @@ export const handleUri = async (uri: vscode.Uri) => {
 			break
 		}
 		case "/callback": {
-			// todo:
 			const code = query.get("code")
 			const state = query.get("state")
 			const token = query.get("token")

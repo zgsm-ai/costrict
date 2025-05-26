@@ -30,8 +30,6 @@
 	"command.terminal.addToContext.title": "將終端內容加入至上下文",
 	"command.terminal.fixCommand.title": "修復此指令",
 	"command.terminal.explainCommand.title": "解釋此指令",
-	"command.terminal.fixCommandInCurrentTask.title": "修復此指令（目前任務）",
-	"command.terminal.explainCommandInCurrentTask.title": "解釋此指令（目前任務）",
 	"command.setCustomStoragePath.title": "設定自訂儲存路徑",
 	"command.focusInput.title": "聚焦輸入框",
 	"intelligentCodeCompletion.title": "智慧程式碼補全",

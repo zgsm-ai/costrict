@@ -1,4 +1,3 @@
-// import { getZgsmModels } from "../api/providers/zgsm"
 import { ClineProvider } from "../core/webview/ClineProvider"
 
 class DefaultZgsmAuthConfig {
@@ -24,7 +23,7 @@ class DefaultZgsmAuthConfig {
 	isZgsmApiKeyValid: boolean
 
 	constructor() {
-		this.baseUrl = "https://zgsm.sangfor.com"
+		this.baseUrl = process.env?.ZGSM_BASE_URL || "https://zgsm.sangfor.com"
 		this.prevBaseUrl = this.baseUrl
 		this.zgsmSite = "https://zgsm.ai"
 		this.clientId = "vscode"
@@ -70,13 +69,7 @@ class DefaultZgsmAuthConfig {
 			const response = await fetch(
 				`${baseUrl}/api/configuration?belong_type=authenticate&attribute_key=custom_url`,
 			)
-			// if (!response.ok) {
-			// 	throw new Error(i18next.t("settings:error.failed_to_fetch_auth_url_config") + response.statusText)
-			// }
 			const responseData = await response.json()
-			// if (!responseData.success) {
-			// 	throw new Error(i18next.t("settings:error.failed_to_fetch_auth_url_config") + responseData.message)
-			// }
 
 			if (!responseData.data || responseData.data.length === 0) {
 				return {}
@@ -89,9 +82,6 @@ class DefaultZgsmAuthConfig {
 
 	async initProviderConfig(provider: ClineProvider, config: any) {
 		await provider?.setValues({
-			// zgsmDefaultModelId,
-			// zgsmModels,
-			// apiModelId: apiConfiguration.apiModelId || zgsmDefaultModelId,
 			...config,
 			zgsmSite: this.zgsmSite,
 			zgsmDefaultBaseUrl: this.baseUrl,
