@@ -55,7 +55,8 @@ const supportPromptConfigs: Record<SupportPromptType, SupportPromptConfig> = {
 	ENHANCE: {
 		template: `Generate an enhanced version of this prompt (reply with only the enhanced prompt - no conversation, explanations, lead-in, bullet points, placeholders, or surrounding quotes):
 
-\${userInput}`,
+\${userInput}
+`,
 	},
 	EXPLAIN: {
 		template: `Explain the following code from file path \${filePath}:\${startLine}-\${endLine}
@@ -105,7 +106,8 @@ Provide the improved code along with explanations for each enhancement.`,
 		template: `\${filePath}:\${startLine}-\${endLine}
 \`\`\`
 \${selectedText}
-\`\`\``,
+\`\`\`
+`,
 	},
 	TERMINAL_ADD_TO_CONTEXT: {
 		template: `\${userInput}
@@ -222,7 +224,7 @@ Please provide a clear and concise explanation of what this code does, including
 export const supportPrompt = {
 	default: Object.fromEntries(Object.entries(supportPromptConfigs).map(([key, config]) => [key, config.template])),
 	get: (customSupportPrompts: Record<string, any> | undefined, type: SupportPromptType): string => {
-		return `${customSupportPrompts?.[type] ?? supportPromptConfigs[type].template}\n`
+		return customSupportPrompts?.[type] ?? supportPromptConfigs[type].template
 	},
 	create: (type: SupportPromptType, params: PromptParams, customSupportPrompts?: Record<string, any>): string => {
 		const template = supportPrompt.get(customSupportPrompts, type)

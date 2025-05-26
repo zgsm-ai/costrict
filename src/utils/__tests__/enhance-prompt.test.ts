@@ -54,14 +54,14 @@ describe("enhancePrompt", () => {
 					userInput: "Test prompt",
 				},
 				{
-					ENHANCE: customEnhancePromptWithTemplate,
+					ENHANCE: customEnhancePromptWithTemplate + "\n",
 				},
 			),
 		)
 
 		expect(result).toBe("Enhanced prompt")
 		const handler = buildApiHandler(mockApiConfig)
-		expect((handler as any).completePrompt).toHaveBeenCalledWith(`${customEnhancePrompt}\n\nTest prompt`)
+		expect((handler as any).completePrompt).toHaveBeenCalledWith(`${customEnhancePrompt}\n\nTest prompt\n`)
 	})
 
 	it("throws error for empty prompt input", async () => {
