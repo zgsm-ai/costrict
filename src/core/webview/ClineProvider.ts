@@ -63,6 +63,7 @@ import { WebviewMessage } from "../../shared/WebviewMessage"
 import { getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
 // import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 import { CompletionStatusBar } from "../../../zgsm/src/codeCompletion/completionStatusBar"
+import { defaultLang } from "../../utils/language"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -1441,7 +1442,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			telemetryKey,
 			machineId,
 			showRooIgnoredFiles: showRooIgnoredFiles ?? true,
-			language: language ?? formatLanguage(vscode.env.language),
+			language: language ?? formatLanguage(await defaultLang()),
 			renderContext: this.renderContext,
 			maxReadFileLine: maxReadFileLine ?? 500,
 			settingsImportedAt: this.settingsImportedAt,
@@ -1528,7 +1529,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			terminalZdotdir: stateValues.terminalZdotdir ?? false,
 			terminalCompressProgressBar: stateValues.terminalCompressProgressBar ?? true,
 			mode: stateValues.mode ?? defaultModeSlug,
-			language: stateValues.language ?? formatLanguage(vscode.env.language),
+			language: stateValues.language ?? formatLanguage(await defaultLang()),
 			mcpEnabled: stateValues.mcpEnabled ?? true,
 			enableMcpServerCreation: stateValues.enableMcpServerCreation ?? true,
 			alwaysApproveResubmit: stateValues.alwaysApproveResubmit ?? true,

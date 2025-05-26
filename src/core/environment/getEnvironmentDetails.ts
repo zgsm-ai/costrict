@@ -16,6 +16,7 @@ import { arePathsEqual } from "../../utils/path"
 import { formatResponse } from "../prompts/responses"
 
 import { Task } from "../task/Task"
+import { defaultLang } from "../../utils/language"
 
 export async function getEnvironmentDetails(cline: Task, includeFileDetails: boolean = false) {
 	let details = ""
@@ -214,7 +215,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 	const modeDetails = await getFullModeDetails(currentMode, customModes, customModePrompts, {
 		cwd: cline.cwd,
 		globalCustomInstructions,
-		language: language ?? formatLanguage(vscode.env.language),
+		language: language ?? formatLanguage(await defaultLang()),
 	})
 
 	details += `\n\n# Current Mode\n`

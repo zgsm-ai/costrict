@@ -25,7 +25,6 @@ import { telemetryService } from "./services/telemetry/TelemetryService"
 import { API } from "./exports/api"
 import { migrateSettings } from "./utils/migrateSettings"
 import { formatLanguage } from "./shared/language"
-import { osLocale } from "os-locale"
 
 import {
 	handleUri,
@@ -36,6 +35,7 @@ import {
 } from "./activate"
 import { initializeI18n } from "./i18n"
 import { getCommand } from "./utils/commands"
+import { defaultLang } from "./utils/language"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -62,11 +62,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Initialize telemetry service after environment variables are loaded.
 	telemetryService.initialize()
 
-	// Get system locale
-	const systemLocale = await osLocale()
-
 	// Initialize i18n for internationalization support
-	initializeI18n(context.globalState.get("language") ?? formatLanguage(systemLocale))
+	initializeI18n(context.globalState.get("language") ?? formatLanguage(await defaultLang()))
 
 	// Initialize terminal shell execution handlers.
 	TerminalRegistry.initialize()

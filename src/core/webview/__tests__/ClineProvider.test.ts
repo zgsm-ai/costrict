@@ -496,11 +496,19 @@ describe("ClineProvider", () => {
 	})
 
 	test("language is set to VSCode language", async () => {
+		// Reset language cache before test
+		const { resetLanguageCache } = jest.requireActual("../../../utils/language")
+		resetLanguageCache()
+
 		// Mock VSCode language as Spanish
 		;(vscode.env as any).language = "pt-BR"
 
 		const state = await provider.getState()
 		expect(state.language).toBe("pt-BR")
+
+		// Reset mock and cache
+		;(vscode.env as any).language = "en"
+		resetLanguageCache()
 	})
 
 	test("diffEnabled defaults to true when not set", async () => {
