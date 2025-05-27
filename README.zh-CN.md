@@ -64,6 +64,6 @@
 
 ### 提交代码
 
-诸葛神码项目采用 Github Forking 工作流：[诸葛神码项目代码贡献流程](./fork.md)
+诸葛神码项目采用 Github Forking 工作流：[诸葛神码项目代码贡献流程](https://github.com/zgsm-ai/zgsm/blob/main/assets/docs/devel/zh-CN/fork.md)
 
 
