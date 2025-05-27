@@ -160,15 +160,14 @@ export function validateModelId(apiConfiguration: ProviderSettings, routerModels
 	return undefined
 }
 
-const VALID_PROTOCOLS = ["http:", "https:"]
+const VALID_PROTOCOLS = ["http://", "https://"]
 
 // Validates if a string is a valid URL
 export const isValidUrl = (url: string) => {
 	try {
-		const parsedUrl = new URL(url)
-		// only allow http or https
-		return VALID_PROTOCOLS.includes(parsedUrl.protocol)
-	} catch (e) {
+		const parsed = new URL(url)
+		return VALID_PROTOCOLS.includes(parsed.protocol + "//")
+	} catch {
 		return false
 	}
 }

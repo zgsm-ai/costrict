@@ -11,13 +11,21 @@ import { getRequestyAuthUrl, getOpenRouterAuthUrl } from "@src/oauth/urls"
 import RooHero from "./RooHero"
 import knuthShuffle from "knuth-shuffle-seeded"
 import { initiateZgsmLogin } from "../../utils/zgsmAuth"
-import { zgsmProviderKey } from "../../../../src/shared/api"
+import { ProviderSettings, zgsmProviderKey } from "../../../../src/shared/api"
 
 const WelcomeView = () => {
 	const { apiConfiguration, currentApiConfigName, setApiConfiguration, uriScheme, machineId } = useExtensionState()
 	const { t } = useAppTranslation()
 	const [errorMessage, setErrorMessage] = useState<string | undefined>()
-	// const [baseUrlErrorMessage, setBaseUrlErrorMessage] = useState<string | undefined>()
+	// Memoize the setApiConfigurationField function to pass to ApiOptions阿斯顿阿斯顿
+	const setApiConfigurationFieldForApiOptions = useCallback(
+		<K extends keyof ProviderSettings>(field: K, value: ProviderSettings[K]) => {
+			if (apiConfiguration && apiConfiguration[field] !== value) {
+				setApiConfiguration({ [field]: value })
+			}
+		},
+		[setApiConfiguration, apiConfiguration], // setApiConfiguration from context is stable
+	)
 
 	const handleSubmit = useCallback(() => {
 		const error = apiConfiguration ? validateApiConfiguration(apiConfiguration) : undefined
@@ -119,7 +127,7 @@ const WelcomeView = () => {
 						fromWelcomeView
 						apiConfiguration={apiConfiguration || {}}
 						uriScheme={uriScheme}
-						setApiConfigurationField={(field, value) => setApiConfiguration({ [field]: value })}
+						setApiConfigurationField={setApiConfigurationFieldForApiOptions}
 						errorMessage={errorMessage}
 						setErrorMessage={setErrorMessage}
 					/>

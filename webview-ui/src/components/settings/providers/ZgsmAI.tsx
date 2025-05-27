@@ -16,6 +16,7 @@ import { ModelPicker } from "../ModelPicker"
 import { R1FormatSetting } from "../R1FormatSetting"
 import { ReasoningEffort } from "../ReasoningEffort"
 import { initiateZgsmLogin } from "@/utils/zgsmAuth"
+import { isValidUrl } from "@/utils/validate"
 
 type OpenAICompatibleProps = {
 	apiConfiguration: ProviderSettings
@@ -102,7 +103,11 @@ export const ZgsmAI = ({
 		) =>
 			(event: E | Event) => {
 				const val = transform(event as E)
-				setApiConfigurationField(field, `${val || ""}`.trim().replace(/\/+$/, ""))
+				if (field === "zgsmBaseUrl" && isValidUrl(val as string)) {
+					setApiConfigurationField(field, (val as string).replace(/\/$/, ""))
+				} else {
+					setApiConfigurationField(field, val)
+				}
 			},
 		[setApiConfigurationField],
 	)
