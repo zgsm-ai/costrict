@@ -124,7 +124,7 @@ export const ZgsmAI = ({
 		}
 	}, [])
 
-	const handleSubmit = useCallback(() => {
+	const handleRelogin = useCallback(() => {
 		initiateZgsmLogin(apiConfiguration, uriScheme)
 	}, [apiConfiguration, uriScheme])
 
@@ -147,16 +147,17 @@ export const ZgsmAI = ({
 						})}></VSCodeTextField>
 
 					{!fromWelcomeView && (
-						<VSCodeButton
-							appearance="icon"
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={handleRelogin}
 							title={t(
 								!apiConfiguration?.zgsmApiKey
 									? "settings:providers.getZgsmApiKey"
 									: "settings:providers.getZgsmApiKeyAgain",
-							)}
-							onClick={handleSubmit}>
-							<span className="codicon codicon-sign-in"></span>
-						</VSCodeButton>
+							)}>
+							<span className="codicon codicon-sign-in" style={{ fontSize: "20px" }} />
+						</Button>
 					)}
 				</div>
 			</div>
