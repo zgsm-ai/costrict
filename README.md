@@ -1,6 +1,6 @@
 # Shenma | AI Programming Assistant
 
-English | [Simplified Chinese](./README.zh-CN.md)
+English | [简体中文](./README.zh-CN.md)
 
 <img src="./assets/images/shenma_robot_logo_big.png" alt="zhuge logo" height="150px" align="right" />
 

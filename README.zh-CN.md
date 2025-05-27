@@ -50,12 +50,20 @@
 
 ## 如何贡献
 
-欢迎贡献代码，贡献流程可以参考 [How To Contribute](assets/docs/devel/zh-CN/how-to-contribute.md)。
+诸葛神码是由友好的用户、贡献者、提交者和项目管理委员会成员共同开发和维护的开源项目。
 
-## 社区
+欢迎所有人以多种方式加入并为项目做出贡献，不仅限于代码贡献。诸如上报问题、报告漏洞、提议新功能、改进文档、完善网站、组织活动或撰写博客文章等贡献均受到欢迎和认可。
 
-You are encouraged to communicate most things via [GitHub issues](https://github.com/zgsm-ai/zgsm/issues/new/choose) or pull requests.
+本文档是诸葛神码社区新成员入门贡献项目的指南。
 
-## License
+### 上报问题
 
-IAM is licensed under the MIT. See [LICENSE](LICENSE) for the full license text.
+首先确保该问题尚未报告，您可以在 GitHub 的 [Issues](https://github.com/zgsm-ai/zgsm/issues) 下进行搜索。
+
+如果您无法找到一个开放的问题来解决该问题，可以 [新建 Issue](https://github.com/zgsm-ai/zgsm/issues/new/choose)。请确保包含一个标题和清晰的描述，尽可能多的相关信息，以及一个代码示例或可执行的测试用例，以方便其他维护者复现该问题。
+
+### 提交代码
+
+诸葛神码项目采用 Github Forking 工作流：[诸葛神码项目代码贡献流程](https://github.com/zgsm-ai/zgsm/blob/main/assets/docs/devel/zh-CN/fork.md)
+
+

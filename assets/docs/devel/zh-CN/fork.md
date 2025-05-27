@@ -1,5 +1,7 @@
 # 诸葛神码项目代码贡献流程
 
+诸葛神码项目遵循 Angular 规范：[诸葛神码项目 commit message 规范](./commit-message.md)
+
 诸葛神码项目采用 Github Forking 工作流。
 
 Github Forking 工作流详细步骤如下：
