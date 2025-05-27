@@ -1,3 +1,4 @@
+import { ZgsmLoginManager } from "./../../src/zgsmAuth/newLogin"
 import { initZgsmApiConfiguration } from "./../../src/shared/zgsmInitialize"
 /**
  * Copyright (c) 2024 - Sangfor LTD.
@@ -32,6 +33,15 @@ import { getCommand } from "../../src/utils/commands"
  * Initialization entry
  */
 async function initialize(provider: ClineProvider) {
+	ZgsmLoginManager.setProvider(provider)
+	const status = await ZgsmLoginManager.getInstance().checkLoginStatus()
+
+	console.log("login status", status)
+
+	// if (status === LoginStatus.LOGGED_OUT) {
+	// 	await ZgsmLoginManager.getInstance().startLogin()
+	// }
+
 	printLogo()
 	initLangSetting()
 	loadLocalLanguageExtensions()
