@@ -42,7 +42,7 @@ import AutoApproveMenu from "./AutoApproveMenu"
 // import TelemetryBanner from "../common/TelemetryBanner"
 import SystemPromptWarning from "./SystemPromptWarning"
 import { CheckpointWarning } from "./CheckpointWarning"
-import { buildDocLink } from "@src/utils/docLinks"
+// import { buildDocLink } from "@src/utils/docLinks"
 
 export interface ChatViewProps {
 	isHidden: boolean
@@ -1333,7 +1333,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 								i18nKey="chat:about"
 								components={{
 									DocsLink: (
-										<a href={buildDocLink("", "welcome")} target="_blank" rel="noopener noreferrer">
+										// <a href={buildDocLink("", "welcome")} target="_blank" rel="noopener noreferrer">
+										// 	the docs
+										// </a>
+										<a href={"https://zgsm.ai/"} target="_blank" rel="noopener noreferrer">
 											the docs
 										</a>
 									),

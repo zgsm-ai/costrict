@@ -12,6 +12,7 @@ export type AudioType = "notification" | "celebration" | "progress_loop"
 export interface WebviewMessage {
 	type:
 		| "zgsmLogin"
+		| "docslink"
 		| "requestZgsmModels"
 		| "apiConfiguration"
 		| "deleteMultipleTasksWithIds"

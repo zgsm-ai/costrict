@@ -524,10 +524,10 @@ const PromptsView = ({ onDone }: PromptsViewProps) => {
 						<Trans i18nKey="prompts:modes.createModeHelpText">
 							<VSCodeLink
 								href={buildDocLink("basic-usage/using-modes", "prompts_view_modes")}
-								style={{ display: "inline" }}></VSCodeLink>
+								style={{ display: "none" }}></VSCodeLink>
 							<VSCodeLink
 								href={buildDocLink("features/custom-modes", "prompts_view_modes")}
-								style={{ display: "inline" }}></VSCodeLink>
+								style={{ display: "none" }}></VSCodeLink>
 						</Trans>
 					</div>
 
@@ -1071,7 +1071,7 @@ const PromptsView = ({ onDone }: PromptsViewProps) => {
 													"features/footgun-prompting",
 													"prompts_advanced_system_prompt",
 												)}
-												style={{ display: "inline" }}></VSCodeLink>
+												style={{ display: "none" }}></VSCodeLink>
 										),
 										"2": <strong />,
 									}}
@@ -1091,7 +1091,7 @@ const PromptsView = ({ onDone }: PromptsViewProps) => {
 									"features/custom-instructions#global-custom-instructions",
 									"prompts_global_custom_instructions",
 								)}
-								style={{ display: "inline" }}></VSCodeLink>
+								style={{ display: "none" }}></VSCodeLink>
 						</Trans>
 					</div>
 					<VSCodeTextArea

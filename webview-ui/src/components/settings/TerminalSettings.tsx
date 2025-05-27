@@ -123,7 +123,7 @@ export const TerminalSettings = ({
 											"features/shell-integration#terminal-output-limit",
 											"settings_terminal_output_limit",
 										)}
-										style={{ display: "inline" }}>
+										style={{ display: "none" }}>
 										{" "}
 									</VSCodeLink>
 								</Trans>
@@ -145,7 +145,7 @@ export const TerminalSettings = ({
 											"features/shell-integration#compress-progress-bar-output",
 											"settings_terminal_compress_progress_bar",
 										)}
-										style={{ display: "inline" }}>
+										style={{ display: "none" }}>
 										{" "}
 									</VSCodeLink>
 								</Trans>
@@ -187,7 +187,7 @@ export const TerminalSettings = ({
 											"features/shell-integration#inherit-environment-variables",
 											"settings_terminal_inherit_env",
 										)}
-										style={{ display: "inline" }}>
+										style={{ display: "none" }}>
 										{" "}
 									</VSCodeLink>
 								</Trans>
@@ -211,7 +211,7 @@ export const TerminalSettings = ({
 											"features/shell-integration#disable-terminal-shell-integration",
 											"settings_terminal_shell_integration_disabled",
 										)}
-										style={{ display: "inline" }}>
+										style={{ display: "none" }}>
 										{" "}
 									</VSCodeLink>
 								</Trans>
@@ -248,7 +248,7 @@ export const TerminalSettings = ({
 													"features/shell-integration#terminal-shell-integration-timeout",
 													"settings_terminal_shell_integration_timeout",
 												)}
-												style={{ display: "inline" }}>
+												style={{ display: "none" }}>
 												{" "}
 											</VSCodeLink>
 										</Trans>
@@ -281,7 +281,7 @@ export const TerminalSettings = ({
 													"features/shell-integration#terminal-command-delay",
 													"settings_terminal_command_delay",
 												)}
-												style={{ display: "inline" }}>
+												style={{ display: "none" }}>
 												{" "}
 											</VSCodeLink>
 										</Trans>
@@ -306,7 +306,7 @@ export const TerminalSettings = ({
 													"features/shell-integration#enable-powershell-counter-workaround",
 													"settings_terminal_powershell_counter",
 												)}
-												style={{ display: "inline" }}>
+												style={{ display: "none" }}>
 												{" "}
 											</VSCodeLink>
 										</Trans>
@@ -331,7 +331,7 @@ export const TerminalSettings = ({
 													"features/shell-integration#clear-zsh-eol-mark",
 													"settings_terminal_zsh_clear_eol_mark",
 												)}
-												style={{ display: "inline" }}>
+												style={{ display: "none" }}>
 												{" "}
 											</VSCodeLink>
 										</Trans>
@@ -352,7 +352,7 @@ export const TerminalSettings = ({
 													"features/shell-integration#enable-oh-my-zsh-integration",
 													"settings_terminal_zsh_oh_my",
 												)}
-												style={{ display: "inline" }}>
+												style={{ display: "none" }}>
 												{" "}
 											</VSCodeLink>
 										</Trans>
@@ -373,7 +373,7 @@ export const TerminalSettings = ({
 													"features/shell-integration#enable-powerlevel10k-integration",
 													"settings_terminal_zsh_p10k",
 												)}
-												style={{ display: "inline" }}>
+												style={{ display: "none" }}>
 												{" "}
 											</VSCodeLink>
 										</Trans>
@@ -394,7 +394,7 @@ export const TerminalSettings = ({
 													"features/shell-integration#enable-zdotdir-handling",
 													"settings_terminal_zdotdir",
 												)}
-												style={{ display: "inline" }}>
+												style={{ display: "none" }}>
 												{" "}
 											</VSCodeLink>
 										</Trans>

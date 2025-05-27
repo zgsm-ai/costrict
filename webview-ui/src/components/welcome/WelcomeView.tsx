@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
-import { isValidUrl, validateApiConfiguration } from "@src/utils/validate"
+import { validateApiConfiguration } from "@src/utils/validate"
 import { vscode } from "@src/utils/vscode"
 import ApiOptions from "../settings/ApiOptions"
 import { Tab, TabContent } from "../common/Tab"
@@ -27,19 +27,6 @@ const WelcomeView = () => {
 		}
 
 		setErrorMessage(undefined)
-
-		const zgsmBaseUrl = apiConfiguration?.zgsmBaseUrl
-		// Check if the base URL is valid
-		if (zgsmBaseUrl) {
-			const isValid = isValidUrl(zgsmBaseUrl)
-
-			if (!isValid) {
-				// setBaseUrlErrorMessage(t("welcome:baseUrlInvalidMsg"))
-				return
-			}
-		}
-
-		// setBaseUrlErrorMessage(undefined)
 
 		if (apiConfiguration?.apiProvider === zgsmProviderKey) {
 			// Initiate ZGSM login process
@@ -135,8 +122,6 @@ const WelcomeView = () => {
 						setApiConfigurationField={(field, value) => setApiConfiguration({ [field]: value })}
 						errorMessage={errorMessage}
 						setErrorMessage={setErrorMessage}
-						// baseUrlErrorMessage={baseUrlErrorMessage}
-						// setBaseUrlErrorMessage={setBaseUrlErrorMessage}
 					/>
 				</div>
 			</TabContent>

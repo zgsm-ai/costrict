@@ -1,9 +1,11 @@
 import i18next from "i18next"
 
-import { ProviderSettings, isRouterName, RouterModels } from "@roo/shared/api"
+import { ProviderSettings, isRouterName, RouterModels, zgsmProviderKey } from "@roo/shared/api"
 
 export function validateApiConfiguration(apiConfiguration: ProviderSettings): string | undefined {
 	switch (apiConfiguration.apiProvider) {
+		case zgsmProviderKey:
+			return validateZgsmBaseUrl(apiConfiguration)
 		case "openrouter":
 			if (!apiConfiguration.openRouterApiKey) {
 				return i18next.t("settings:validation.apiKey")
@@ -169,4 +171,12 @@ export const isValidUrl = (url: string) => {
 	} catch (e) {
 		return false
 	}
+}
+
+export function validateZgsmBaseUrl(apiConfiguration: ProviderSettings): string | undefined {
+	if (!apiConfiguration.zgsmBaseUrl || isValidUrl(apiConfiguration.zgsmBaseUrl)) {
+		return undefined
+	}
+
+	return i18next.t("welcome:baseUrlInvalidMsg")
 }

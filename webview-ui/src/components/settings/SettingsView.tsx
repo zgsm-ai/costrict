@@ -366,6 +366,16 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		[extensionState, handleSubmit, onDone],
 	)
 
+	const handleSave = useCallback(
+		(then: () => void) => {
+			if (!isSettingValid) return
+			setCachedState((prevState) => ({ ...prevState, ...extensionState }))
+			handleSubmit()
+			then()
+		},
+		[extensionState, handleSubmit, isSettingValid],
+	)
+
 	useImperativeHandle(ref, () => ({ checkUnsaveChanges }), [checkUnsaveChanges])
 
 	const onConfirmDialogResult = useCallback(
@@ -484,7 +494,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					<h3 className="text-vscode-foreground m-0">{t("settings:header.title")}</h3>
 				</div>
 				<div className="flex gap-2">
-					<Button
+					{/* <Button
 						variant={isSettingValid ? "default" : "secondary"}
 						className={!isSettingValid ? "!border-vscode-errorForeground" : ""}
 						title={
@@ -498,11 +508,18 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						disabled={!isChangeDetected || !isSettingValid}
 						data-testid="save-button">
 						{t("settings:common.save")}
-					</Button>
+					</Button> */}
 					<Button
-						variant="secondary"
-						title={t("settings:header.doneButtonTooltip")}
-						onClick={() => checkUnsaveChanges(onDone)}>
+						title={
+							!isSettingValid
+								? errorMessage
+								: isChangeDetected
+									? t("settings:header.saveButtonTooltip")
+									: t("settings:header.nothingChangedTooltip")
+						}
+						className={!isSettingValid ? "!border-vscode-errorForeground" : ""}
+						data-testid="save-button"
+						onClick={() => handleSave(onDone)}>
 						{t("settings:common.done")}
 					</Button>
 				</div>

@@ -1,7 +1,7 @@
 import { useCallback } from "react"
 import { useTranslation, Trans } from "react-i18next"
 import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
-import { buildDocLink } from "../../utils/docLinks"
+// import { buildDocLink } from "../../utils/docLinks"
 
 export const CommandExecutionError = () => {
 	const { t } = useTranslation()
@@ -28,12 +28,15 @@ export const CommandExecutionError = () => {
 						}}
 					/>
 				</div>
-				<a
+				<a href={"https://zgsm.sangfor.com/issue/"} className="underline" style={{ color: "inherit" }}>
+					{t("chat:shellIntegration.troubleshooting")}
+				</a>
+				{/* <a
 					href={buildDocLink("troubleshooting/shell-integration/", "error_tooltip")}
 					className="underline"
 					style={{ color: "inherit" }}>
 					{t("chat:shellIntegration.troubleshooting")}
-				</a>
+				</a> */}
 			</div>
 		</div>
 	)

@@ -136,22 +136,27 @@ jest.mock("@/components/ui", () => ({
 
 // Mock window.postMessage to trigger state hydration
 const mockPostMessage = (state: any) => {
+	const fullState = {
+		version: "1.0.0",
+		clineMessages: [],
+		taskHistory: [],
+		shouldShowAnnouncement: false,
+		allowedCommands: [],
+		alwaysAllowExecute: false,
+		ttsEnabled: false,
+		ttsSpeed: 1,
+		soundEnabled: false,
+		soundVolume: 0.5,
+		...state,
+	}
+
+	// Expose state for validation
+	;(window as any).__TEST_STATE__ = fullState
+
 	window.postMessage(
 		{
 			type: "state",
-			state: {
-				version: "1.0.0",
-				clineMessages: [],
-				taskHistory: [],
-				shouldShowAnnouncement: false,
-				allowedCommands: [],
-				alwaysAllowExecute: false,
-				ttsEnabled: false,
-				ttsSpeed: 1,
-				soundEnabled: false,
-				soundVolume: 0.5,
-				...state,
-			},
+			state: fullState,
 		},
 		"*",
 	)
@@ -488,8 +493,9 @@ describe("SettingsView - Allowed Commands", () => {
 			const doneButton = screen.getByText("settings:common.done")
 			fireEvent.click(doneButton)
 
-			// Check that unsaved changes dialog is shown
-			expect(screen.getByText("settings:unsavedChangesDialog.title")).toBeInTheDocument()
+			// Verify that save button shows no changes tooltip
+			const saveButton = screen.getByTestId("save-button")
+			expect(saveButton).toHaveAttribute("title", "settings:header.nothingChangedTooltip")
 		})
 
 		it("renders with targetSection prop", () => {
