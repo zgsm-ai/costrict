@@ -4,6 +4,7 @@
 		"description": "When enabled, Shenma will be able to interact with MCP servers for advanced functionality. If you're not using MCP, you can disable this to reduce Shenma's token usage."
 	},
 	"enableServerCreation": {
-		"description": "When enabled, Shenma can help you create new MCP servers via commands like \"add a new tool to...\". If you don't need to create MCP servers you can disable this to reduce Shenma's token usage."
+		"description": "When enabled, Shenma can help you create new MCP servers via commands like \"add a new tool to...\". If you don't need to create MCP servers you can disable this to reduce Shenma's token usage.",
+		"hint": "Hint: To reduce API token costs, disable this setting when you are not actively asking Shenma to create a new MCP server."
 	}
 }

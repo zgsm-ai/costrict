@@ -12,6 +12,34 @@
 		"types": {
 			"ENHANCE": {
 				"description": "Use prompt enhancement to get tailored suggestions or improvements for your inputs. This ensures Shenma understands your intent and provides the best possible responses. Available via the ✨ icon in chat."
+			},
+			"ZGSM_ADD_COMMENT": {
+				"label": "Add code comments",
+				"description": "Add comment explanations to code, available in code actions (lightbulb icon in editor) and editor context menu (right click on selected code)."
+			},
+			"ZGSM_CODE_REVIEW": {
+				"label": "Code review",
+				"description": "Check code quality issues and provide improvement suggestions, available in code actions (lightbulb icon in editor) and editor context menu (right click on selected code)."
+			},
+			"ZGSM_ADD_DEBUG_CODE": {
+				"label": "Add debug code",
+				"description": "Enhance code debuggability by adding logs and debug code, available in code actions (lightbulb icon in editor) and editor context menu (right click on selected code)."
+			},
+			"ZGSM_ADD_STRONG_CODE": {
+				"label": "Strengthen code robustness",
+				"description": "Improve code robustness by adding exception handling and parameter validation, available in code actions (lightbulb icon in editor) and editor context menu (right click on selected code)."
+			},
+			"ZGSM_SIMPLIFY_CODE": {
+				"label": "Simplify code",
+				"description": "Remove invalid parts and simplify code structure, available in code actions (lightbulb icon in editor) and editor context menu (right click on selected code)."
+			},
+			"ZGSM_PERFORMANCE": {
+				"label": "Performance optimization",
+				"description": "Provide code performance optimization suggestions, focusing on efficiency issues, available in code actions (lightbulb icon in editor) and editor context menu (right click on selected code)."
+			},
+			"ZGSM_ADD_TEST": {
+				"label": "Add tests",
+				"description": "Generate unit tests for code, available in code actions (lightbulb icon in editor) and editor context menu (right click on selected code)."
 			}
 		}
 	},
