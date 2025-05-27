@@ -27,3 +27,5 @@ export function generateZgsmAuthUrl(apiConfiguration: ApiConfiguration, uriSchem
 	const stateId = Math.random().toString(36).substring(2) + Date.now().toString(36)
 	return getZgsmAuthUrl(stateId, apiConfiguration, uriScheme)
 }
+
+export const generateZgsmStateId = () => Math.random().toString(36).substring(2) + Date.now().toString(36)

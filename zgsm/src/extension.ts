@@ -1,4 +1,4 @@
-import { ZgsmLoginManager } from "./../../src/zgsmAuth/newLogin"
+import { ZgsmLoginManager } from "../../src/zgsmAuth/zgsmLoginManager"
 import { initZgsmApiConfiguration } from "./../../src/shared/zgsmInitialize"
 /**
  * Copyright (c) 2024 - Sangfor LTD.

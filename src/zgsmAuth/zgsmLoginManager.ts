@@ -2,9 +2,6 @@ import * as vscode from "vscode"
 import axios from "axios"
 import { ClineProvider } from "../core/webview/ClineProvider"
 
-// 生成唯一ID
-export const uuid = () => Math.random().toString(36).substring(2) + Date.now().toString(36)
-
 // 登录状态枚举
 export enum LoginStatus {
 	LOGGED_OUT = "logged_out",
@@ -87,11 +84,17 @@ export class ZgsmLoginManager {
 		if (!apiKey) {
 			return LoginStatus.LOGGED_OUT
 		}
-
+		const state = ZgsmLoginManager.provider.getValue("zgsmStateId")
+		const refreshToken = ZgsmLoginManager.provider.getValue("zgsmRefreshToken")
 		try {
 			const response = await axios.post<LoginState>(
-				this.statusUrl,
-				{},
+				this.tokenUrl,
+				{
+					machine_code: ZgsmLoginManager.getMachineCode(),
+					uri_scheme: vscode.env.uriScheme,
+					state,
+					refresh_token: refreshToken,
+				},
 				{
 					headers: {
 						Authorization: `Bearer ${apiKey}`,
