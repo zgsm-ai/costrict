@@ -491,7 +491,7 @@ const ApiOptions = ({
 				/>
 			)}
 
-			{!fromWelcomeView && (
+			{!fromWelcomeView && (selectedProvider !== zgsmProviderKey || !!apiConfiguration?.useZgsmCustomConfig) && (
 				<>
 					<DiffSettingsControl
 						diffEnabled={apiConfiguration.diffEnabled}
