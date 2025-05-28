@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { useEvent } from "react-use"
 import { Checkbox } from "vscrui"
-import { VSCodeButton, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
+import { VSCodeButton, VSCodeCheckbox, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import { convertHeadersToObject } from "../utils/headers"
 
 import { ModelInfo, ReasoningEffort as ReasoningEffortType } from "@roo/schemas"
@@ -16,6 +16,7 @@ import { ModelPicker } from "../ModelPicker"
 import { R1FormatSetting } from "../R1FormatSetting"
 import { ReasoningEffort } from "../ReasoningEffort"
 import { initiateZgsmLogin } from "@/utils/zgsmAuth"
+import { isValidUrl } from "@/utils/validate"
 
 type OpenAICompatibleProps = {
 	apiConfiguration: ProviderSettings
@@ -31,6 +32,7 @@ export const ZgsmAI = ({
 	uriScheme,
 }: OpenAICompatibleProps) => {
 	const { t } = useAppTranslation()
+	const [zgsmCustomConfig, setZgsmCustomConfig] = useState(!!apiConfiguration?.useZgsmCustomConfig)
 
 	const [azureApiVersionSelected, setAzureApiVersionSelected] = useState(!!apiConfiguration?.azureApiVersion)
 	const [openAiLegacyFormatSelected, setOpenAiLegacyFormatSelected] = useState(!!apiConfiguration?.openAiLegacyFormat)
@@ -102,7 +104,11 @@ export const ZgsmAI = ({
 		) =>
 			(event: E | Event) => {
 				const val = transform(event as E)
-				setApiConfigurationField(field, `${val || ""}`.trim().replace(/\/+$/, ""))
+				if (field === "zgsmBaseUrl" && isValidUrl(val as string)) {
+					setApiConfigurationField(field, (val as string).replace(/\/$/, ""))
+				} else {
+					setApiConfigurationField(field, val)
+				}
 			},
 		[setApiConfigurationField],
 	)
@@ -119,7 +125,7 @@ export const ZgsmAI = ({
 		}
 	}, [])
 
-	const handleSubmit = useCallback(() => {
+	const handleRelogin = useCallback(() => {
 		initiateZgsmLogin(apiConfiguration, uriScheme)
 	}, [apiConfiguration, uriScheme])
 
@@ -142,20 +148,20 @@ export const ZgsmAI = ({
 						})}></VSCodeTextField>
 
 					{!fromWelcomeView && (
-						<VSCodeButton
-							appearance="icon"
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={handleRelogin}
 							title={t(
 								!apiConfiguration?.zgsmApiKey
 									? "settings:providers.getZgsmApiKey"
 									: "settings:providers.getZgsmApiKeyAgain",
-							)}
-							onClick={handleSubmit}>
-							<span className="codicon codicon-sign-in"></span>
-						</VSCodeButton>
+							)}>
+							<span className="codicon codicon-sign-in" style={{ fontSize: "20px" }} />
+						</Button>
 					)}
 				</div>
 			</div>
-
 			{!fromWelcomeView && (
 				<>
 					<ModelPicker
@@ -167,6 +173,24 @@ export const ZgsmAI = ({
 						serviceName="OpenAI"
 						serviceUrl={apiConfiguration?.zgsmBaseUrl || ""}
 					/>
+					<div>
+						<VSCodeCheckbox
+							checked={zgsmCustomConfig}
+							onChange={(e: any) => {
+								const isChecked = e.target.checked
+								setApiConfigurationField("useZgsmCustomConfig", isChecked)
+								setZgsmCustomConfig(isChecked)
+							}}>
+							<label className="block font-medium mb-1">
+								{t("settings:providers.useZgsmCustomConfig")}
+							</label>
+						</VSCodeCheckbox>
+					</div>
+				</>
+			)}
+
+			{!fromWelcomeView && zgsmCustomConfig && (
+				<>
 					<R1FormatSetting
 						onChange={handleInputChange("openAiR1FormatEnabled", noTransform)}
 						openAiR1FormatEnabled={apiConfiguration?.openAiR1FormatEnabled ?? false}

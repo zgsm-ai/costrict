@@ -31,7 +31,8 @@
 		},
 		"customModel": {
 			"capabilities": "配置您的自定义OpenAI兼容模型的功能和定价。在指定模型功能时要小心，因为它们会影响诸葛神码的表现。"
-		}
+		},
+		"useZgsmCustomConfig": "使用自定义配置"
 	},
 	"browser": {
 		"enable": {

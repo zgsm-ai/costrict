@@ -622,6 +622,7 @@ const zgsmSchema = z.object({
 	zgsmClientSecret: z.string().optional(),
 	zgsmStateId: z.string().optional(),
 	zgsmRefreshToken: z.string().optional(),
+	useZgsmCustomConfig: z.boolean().optional(),
 	isZgsmApiKeyValid: z.boolean().optional(),
 })
 
@@ -702,6 +703,7 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmClientSecret: undefined,
 	zgsmStateId: undefined,
 	zgsmRefreshToken: undefined,
+	useZgsmCustomConfig: undefined,
 	isZgsmApiKeyValid: undefined,
 	// Anthropic
 	apiModelId: undefined,

@@ -145,14 +145,14 @@ const McpView = ({ onDone }: McpViewProps) => {
 								fontSize: "12px",
 								color: "var(--vscode-descriptionForeground)",
 							}}>
-							<VSCodeLink
+							{/* <VSCodeLink
 								href={buildDocLink(
 									"features/mcp/using-mcp-in-roo#editing-mcp-settings-files",
 									"mcp_edit_settings",
 								)}
 								style={{ display: "inline" }}>
 								{t("mcp:learnMoreEditingSettings")}
-							</VSCodeLink>
+							</VSCodeLink> */}
 						</div>
 					</>
 				)}

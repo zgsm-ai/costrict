@@ -401,6 +401,11 @@ const PromptsView = ({ onDone }: PromptsViewProps) => {
 		return () => window.removeEventListener("message", handler)
 	}, [])
 
+	// support prompts
+	const filteredSupportPrompts = useMemo(() => {
+		return Object.keys(supportPrompt.default).filter((key) => key !== "ZGSM_EXPLAIN")
+	}, [])
+
 	const updateSupportPrompt = (type: SupportPromptType, value: string | undefined) => {
 		vscode.postMessage({
 			type: "updateSupportPrompt",
@@ -1145,7 +1150,7 @@ const PromptsView = ({ onDone }: PromptsViewProps) => {
 								<SelectValue placeholder={t("settings:common.select")} />
 							</SelectTrigger>
 							<SelectContent>
-								{Object.keys(supportPrompt.default).map((type) => (
+								{filteredSupportPrompts.map((type) => (
 									<SelectItem key={type} value={type} data-testid={`${type}-option`}>
 										{t(`prompts:supportPrompts.types.${type}.label`)}
 									</SelectItem>
