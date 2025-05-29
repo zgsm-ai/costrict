@@ -14,10 +14,11 @@ import SettingsView, { SettingsViewRef } from "./components/settings/SettingsVie
 import WelcomeView from "./components/welcome/WelcomeView"
 import McpView from "./components/mcp/McpView"
 import PromptsView from "./components/prompts/PromptsView"
+import CodeReviewPage from "./components/code-review"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
 // import { zgsmProviderKey } from "../../src/shared/api"
 
-type Tab = "settings" | "history" | "mcp" | "prompts" | "chat"
+type Tab = "settings" | "history" | "mcp" | "prompts" | "chat" | "codeReview"
 
 const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]>, Tab>> = {
 	chatButtonClicked: "chat",
@@ -25,6 +26,7 @@ const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]
 	promptsButtonClicked: "prompts",
 	mcpButtonClicked: "mcp",
 	historyButtonClicked: "history",
+	codeReviewButtonClicked: "codeReview",
 }
 
 const App = () => {
@@ -111,6 +113,12 @@ const App = () => {
 	// Tell the extension that we are ready to receive messages.
 	useEffect(() => vscode.postMessage({ type: "webviewDidLaunch" }), [])
 
+	const onIssueClick = useCallback((issueId: string) => {
+		vscode.postMessage({ type: "checkReviewSuggestion", issueId })
+	}, [])
+	const onTaskCancel = useCallback(() => {
+		vscode.postMessage({ type: "cancelReviewTask" })
+	}, [])
 	if (!didHydrateState) {
 		return null
 	}
@@ -127,6 +135,7 @@ const App = () => {
 			{tab === "settings" && (
 				<SettingsView ref={settingsRef} onDone={() => setTab("chat")} targetSection={currentSection} />
 			)}
+			{tab === "codeReview" && <CodeReviewPage onIssueClick={onIssueClick} onTaskCancel={onTaskCancel} />}
 			<ChatView
 				ref={chatViewRef}
 				isHidden={tab !== "chat"}

@@ -63,6 +63,10 @@
 			{
 				"id": "zgsm.terminalMenu",
 				"label": "%extension.displayName%"
+			},
+			{
+				"id": "shenma.explorerSubmenu",
+				"label": "%extension.displayName%"
 			}
 		],
 		"viewsContainers": {
@@ -118,6 +122,11 @@
 				"command": "zgsm.helpButtonClicked",
 				"title": "%command.documentation.title%",
 				"icon": "$(question)"
+			},
+			{
+				"command": "zgsm.codeReviewButtonClicked",
+				"title": "%command.codeReview.title%",
+				"icon": "$(bug)"
 			},
 			{
 				"command": "zgsm.openInNewTab",
@@ -243,6 +252,24 @@
 				"command": "zgsm-completion.shortKeyCut",
 				"title": "%command.shortKeyCut.title%",
 				"shortTitle": "%command.shortKeyCut.title%"
+			},
+			{
+				"command": "zgsm.reviewFilesAndFolders",
+				"title": "%command.codeReview.title%"
+			},
+			{
+				"command": "zgsm.reviewRepo",
+				"title": "%command.reviewRepo.title%"
+			},
+			{
+				"command": "zgsm.acceptIssue",
+				"title": "Accept",
+				"icon": "$(check)"
+			},
+			{
+				"command": "zgsm.rejectIssue",
+				"title": "Reject",
+				"icon": "$(circle-slash)"
 			}
 		],
 		"menus": {
@@ -304,6 +331,22 @@
 					"group": "zissue@1"
 				}
 			],
+			"explorer/context": [
+				{
+					"submenu": "shenma.explorerSubmenu",
+					"group": "navigation@5"
+				}
+			],
+			"shenma.explorerSubmenu": [
+				{
+					"command": "zgsm.reviewFilesAndFolders",
+					"group": "shenma.explorerSubmenu@1"
+				},
+				{
+					"command": "zgsm.reviewRepo",
+					"group": "shenma.explorerSubmenu@2"
+				}
+			],
 			"terminal/context": [
 				{
 					"submenu": "zgsm.terminalMenu",
@@ -353,6 +396,11 @@
 				{
 					"command": "zgsm.settingsButtonClicked",
 					"group": "navigation@6",
+					"when": "view == zgsm.SidebarProvider"
+				},
+				{
+					"command": "zgsm.codeReviewButtonClicked",
+					"group": "navigation@7",
 					"when": "view == zgsm.SidebarProvider"
 				},
 				{
@@ -411,6 +459,18 @@
 					"command": "zgsm.helpButtonClicked",
 					"group": "navigation@7",
 					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
+				}
+			],
+			"comments/commentThread/title": [
+				{
+					"command": "zgsm.acceptIssue",
+					"group": "navigation@1",
+					"when": "commentThread == ShenmaCodeReview"
+				},
+				{
+					"command": "zgsm.rejectIssue",
+					"group": "navigation@2",
+					"when": "commentThread == ShenmaCodeReview"
 				}
 			]
 		},

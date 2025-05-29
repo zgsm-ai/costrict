@@ -107,6 +107,12 @@ export const commandIds = [
 
 	"focusInput",
 	"acceptInput",
+	"codeReview",
+	"reviewFilesAndFolders",
+	"reviewRepo",
+	"codeReviewButtonClicked",
+	"acceptIssue",
+	"rejectIssue",
 ] as const
 
 export type CommandId = (typeof commandIds)[number]

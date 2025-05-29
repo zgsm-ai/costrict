@@ -6,9 +6,14 @@ import { getCommand } from "../utils/commands"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { ContextProxy } from "../core/config/ContextProxy"
 import { telemetryService } from "../services/telemetry/TelemetryService"
+import { CodeReviewService } from "../services/codeReview/codeReviewService"
 
 import { registerHumanRelayCallback, unregisterHumanRelayCallback, handleHumanRelayResponse } from "./humanRelay"
 import { handleNewTask } from "./handleTask"
+import { ReviewTarget, ReviewTargetType } from "../services/codeReview/types"
+import { ReviewComment } from "../services/codeReview/reviewComment"
+import { IssueStatus } from "../shared/codeReview"
+import { toRelativePath } from "../utils/path"
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -178,6 +183,86 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		}
 
 		visibleProvider.postMessageToWebview({ type: "acceptInput" })
+	},
+	codeReviewButtonClicked: async () => {
+		let visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			visibleProvider = await ClineProvider.getInstance()
+		}
+
+		visibleProvider?.postMessageToWebview({ type: "action", action: "codeReviewButtonClicked" })
+	},
+	codeReview: () => {
+		const codeReviewService = CodeReviewService.getInstance()
+		const provider = codeReviewService.getProvider()
+		const editor = vscode.window.activeTextEditor
+		if (!provider || !editor) {
+			return
+		}
+		const fileUri = editor.document.uri
+		const range = editor.selection
+		const cwd = provider.cwd.toPosix()
+		provider.startReviewTask([
+			{
+				type: ReviewTargetType.CODE,
+				file_path: toRelativePath(fileUri.fsPath.toPosix(), cwd),
+				line_range: [range.start.line, range.end.line],
+			},
+		])
+	},
+	reviewFilesAndFolders: async (_: vscode.Uri, selectedUris: vscode.Uri[]) => {
+		const codeReviewService = CodeReviewService.getInstance()
+		const provider = codeReviewService.getProvider()
+
+		if (!provider) {
+			return
+		}
+		const cwd = provider.cwd.toPosix()
+		const targets: ReviewTarget[] = await Promise.all(
+			selectedUris.map(async (uri) => {
+				const stat = await vscode.workspace.fs.stat(uri)
+				return {
+					type: stat.type === vscode.FileType.Directory ? ReviewTargetType.FOLDER : ReviewTargetType.FILE,
+					file_path: toRelativePath(uri.fsPath.toPosix(), cwd),
+				}
+			}),
+		)
+		provider.startReviewTask(targets)
+	},
+	reviewRepo: async () => {
+		const codeReviewService = CodeReviewService.getInstance()
+		const provider = codeReviewService.getProvider()
+
+		if (!provider) {
+			return
+		}
+		provider.startReviewTask([
+			{
+				type: ReviewTargetType.FOLDER,
+				file_path: "",
+			},
+		])
+	},
+	acceptIssue: async (thread: vscode.CommentThread) => {
+		const codeReviewService = CodeReviewService.getInstance()
+		const provider = codeReviewService.getProvider()
+
+		if (!provider) {
+			return
+		}
+		const comments = thread.comments as ReviewComment[]
+		provider.updateIssueStatus(comments, IssueStatus.ACCEPT)
+	},
+	rejectIssue: async (thread: vscode.CommentThread) => {
+		const codeReviewService = CodeReviewService.getInstance()
+		const provider = codeReviewService.getProvider()
+
+		if (!provider) {
+			return
+		}
+		const comments = thread.comments as ReviewComment[]
+		provider.updateIssueStatus(comments, IssueStatus.REJECT)
 	},
 })
 

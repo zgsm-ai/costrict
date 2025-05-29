@@ -11,6 +11,8 @@ export type AudioType = "notification" | "celebration" | "progress_loop"
 
 export interface WebviewMessage {
 	type:
+		| "cancelReviewTask"
+		| "checkReviewSuggestion"
 		| "zgsmLogin"
 		| "docslink"
 		| "requestZgsmModels"
@@ -170,6 +172,7 @@ export interface WebviewMessage {
 	historyPreviewCollapsed?: boolean
 	authUrl?: string
 	url?: string
+	issueId?: string
 }
 
 export const checkoutDiffPayloadSchema = z.object({

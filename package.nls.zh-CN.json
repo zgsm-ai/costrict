@@ -33,6 +33,7 @@
 	"command.setCustomStoragePath.title": "设置自定义存储路径",
 	"command.focusInput.title": "聚焦输入框",
 	"command.acceptInput.title": "接受输入/建议",
+	"command.reviewRepo.title": "扫描仓库",
 	"commands.allowedCommands.description": "当启用'始终批准执行操作'时可以自动执行的命令",
 	"configuration.title": "Shenma",
 	"intelligentCodeCompletion.title": "智能代码补全",
