@@ -72,17 +72,17 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 
 	const { id, info } =
 		apiConfiguration &&
-		typeof routerModels.data !== "undefined" &&
-		typeof openRouterModelProviders.data !== "undefined"
+		(provider === zgsmProviderKey ||
+			(typeof routerModels.data !== "undefined" && typeof openRouterModelProviders.data !== "undefined"))
 			? getSelectedModel({
 					provider,
 					apiConfiguration,
-					routerModels: routerModels.data,
-					openRouterModelProviders: openRouterModelProviders.data,
+					routerModels: routerModels.data as RouterModels,
+					openRouterModelProviders: openRouterModelProviders.data as Record<string, ModelInfo>,
 				})
 			: {
 					id: apiConfiguration?.zgsmModelId || apiConfiguration?.zgsmDefaultModelId || "deepseek-v3",
-					info: provider === zgsmProviderKey ? zgsmModelInfos.default : undefined,
+					info: undefined,
 				}
 
 	return {
