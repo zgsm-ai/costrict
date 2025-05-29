@@ -208,10 +208,7 @@ function getSelectedModel({
 		}
 		case "zgsm": {
 			const id = (apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId) ?? ""
-			const info =
-				apiConfiguration?.openAiCustomModelInfo ||
-				getZgsmSelectedModelInfo(zgsmModelInfos, id) ||
-				zgsmModelInfos.default
+			const info = getZgsmSelectedModelInfo(zgsmModelInfos, id) || zgsmModelInfos.default
 			return { id, info }
 		}
 		case "ollama": {
