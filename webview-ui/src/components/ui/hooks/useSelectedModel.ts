@@ -82,7 +82,7 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 				})
 			: {
 					id: apiConfiguration?.zgsmModelId || apiConfiguration?.zgsmDefaultModelId || "deepseek-v3",
-					info: undefined,
+					info: provider === zgsmProviderKey ? zgsmModelInfos.default : undefined,
 				}
 
 	return {
