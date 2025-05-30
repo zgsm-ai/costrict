@@ -17,9 +17,11 @@ import { DateFormat, formatTime, formatTimeDifference } from "./util"
 import { t } from "../../../src/i18n"
 import { ApiConfiguration, zgsmProviderKey } from "../../../src/shared/api"
 import { CompletionClient } from "../codeCompletion/completionClient"
-import { generateZgsmAuthUrl } from "../../../src/shared/zgsmAuthUrl"
+// import { generateZgsmAuthUrl } from "../../../src/shared/zgsmAuthUrl"
 import { checkExistKey } from "../../../src/shared/checkExistApiConfig"
 import { Package } from "../../../src/schemas"
+import { handleZgsmLogin } from "../../../src/zgsmAuth/zgsmAuthHandler"
+import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 /**
  * Set up a timer to periodically check for extension updates and programming language settings
  */
@@ -394,7 +396,7 @@ function statusBarForbidCallback(editor: vscode.TextEditor) {
 		})
 }
 
-function statusBarloginCallback(apiConfiguration: ApiConfiguration) {
+function statusBarloginCallback(provider?: ClineProvider, apiConfiguration?: ApiConfiguration) {
 	const reLoginText = t("common:window.error.login_again")
 	vscode.window
 		.showErrorMessage(t("common:window.error.failed_to_get_login_info"), reLoginText)
@@ -402,9 +404,7 @@ function statusBarloginCallback(apiConfiguration: ApiConfiguration) {
 			if (selection !== reLoginText) {
 				return
 			}
-			// re-login
-			const authUrl = generateZgsmAuthUrl(apiConfiguration, vscode.env.uriScheme)
-			vscode.env.openExternal(vscode.Uri.parse(authUrl))
+			handleZgsmLogin(provider, apiConfiguration)
 		})
 }
 
@@ -441,7 +441,7 @@ export async function handleStatusBarClick() {
 	const needLogin = (!isLogin && hasView) || (!hasView && !zgsmApiKey) || hasValidKey
 
 	if (needLogin) {
-		statusBarloginCallback({
+		statusBarloginCallback(provider, {
 			...apiConfiguration,
 			zgsmBaseUrl: hasView
 				? apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl

@@ -1,4 +1,3 @@
-import { ZgsmLoginManager } from "../../src/zgsmAuth/zgsmLoginManager"
 import { initZgsmApiConfiguration } from "./../../src/shared/zgsmInitialize"
 /**
  * Copyright (c) 2024 - Sangfor LTD.
@@ -34,7 +33,6 @@ import { getCommand } from "../../src/utils/commands"
  * Initialization entry
  */
 async function initialize(provider: ClineProvider) {
-	ZgsmLoginManager.setProvider(provider)
 	printLogo()
 	initLangSetting()
 	loadLocalLanguageExtensions()
@@ -123,19 +121,6 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 		: CompletionStatusBar.fail({
 				message: OPENAI_CLIENT_NOT_INITIALIZED,
 			})
-
-	// const status = await ZgsmLoginManager.getInstance().checkLoginStatus().then((status) => {
-	// 	if (status === LoginStatus.LOGGED_OUT) {
-
-	// 	}
-	// })
-
-	// console.log("login status", status)
-
-	// if (status === LoginStatus.LOGGED_OUT) {
-	// 	await ZgsmLoginManager.getInstance().startLogin()
-	// }
-	// ZgsmLoginManager.getInstance().checkLoginState()
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function

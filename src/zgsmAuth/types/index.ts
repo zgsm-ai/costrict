@@ -1,12 +1,8 @@
-// 登录状态枚举
 export enum LoginStatus {
 	LOGGED_OUT = "logged_out",
-	ACTIVED = "actived",
-	EXPIRED = "expired",
-	UNKNOWN = "unknown",
+	LOGGED_IN = "logged_in",
 }
 
-// 登录状态接口
 export interface LoginState {
 	status: LoginStatus
 	message: string
@@ -14,7 +10,6 @@ export interface LoginState {
 	access_token?: string
 }
 
-// Token接口
 export interface TokenResponse {
 	access_token: string
 	refresh_token: string

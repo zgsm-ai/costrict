@@ -68,9 +68,9 @@ export function createHeaders(dict: Record<string, any> = {}): Record<string, an
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function handleZgsmLogin(
-	authUrl: string,
-	apiConfiguration?: ApiConfiguration,
+	// authUrl?: string,
 	provider?: ClineProvider,
+	apiConfiguration?: ApiConfiguration,
 ): Promise<void> {
 	// Open authentication link
 	// await vscode.env.openExternal(vscode.Uri.parse(authUrl))

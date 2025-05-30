@@ -37,6 +37,7 @@ import { initializeI18n } from "./i18n"
 import { getCommand } from "./utils/commands"
 import { defaultLang } from "./utils/language"
 import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
+import { ZgsmLoginManager } from "./zgsmAuth/zgsmLoginManager"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -166,7 +167,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 		context.subscriptions.push(watcher)
 	}
+	ZgsmLoginManager.setProvider(provider)
 
+	if (provider.getValue("zgsmRefreshToken")) {
+		ZgsmLoginManager.getInstance().startRefreshToken()
+	}
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }
 
