@@ -33,7 +33,7 @@ export const About = ({ version, telemetrySetting, setTelemetrySetting, classNam
 			</SectionHeader>
 
 			<Section>
-				<div>
+				<div style={{ display: "none" }}>
 					<VSCodeCheckbox
 						checked={telemetrySetting === "enabled"}
 						onChange={(e: any) => {
