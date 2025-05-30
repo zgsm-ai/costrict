@@ -63,6 +63,9 @@
 		}
 	},
 	"experimental": {
+		"autoCondenseContextPercent": {
+			"description": "當上下文窗口達到此閾值時，諸葛神碼將自動壓縮它。"
+		},
 		"SEARCH_AND_REPLACE": {
 			"description": "啟用實驗性的搜索和替換工具，允許諸葛神碼在一個請求中替換搜索詞的多實例。"
 		},
@@ -84,5 +87,8 @@
 		"telemetry": {
 			"description": "通過發送匿名使用數據和錯誤報告來幫助改進諸葛神碼。不會發送代碼、提示或個人信息。有關更多詳情，請參閱我們的隱私政策。"
 		}
+	},
+	"promptCaching": {
+		"description": "選中後，諸葛神碼將不會為此模型使用提示詞快取。"
 	}
 }

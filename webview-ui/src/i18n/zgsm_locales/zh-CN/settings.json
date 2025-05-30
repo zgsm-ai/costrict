@@ -63,6 +63,9 @@
 		}
 	},
 	"experimental": {
+		"autoCondenseContextPercent": {
+			"description": "当上下文窗口达到此阈值时，诸葛神码将自动压缩它。"
+		},
 		"SEARCH_AND_REPLACE": {
 			"description": "启用实验性的搜索和替换工具，允许诸葛神码在一个请求中替换搜索词的多实例。"
 		},
@@ -84,5 +87,8 @@
 		"telemetry": {
 			"description": "通过发送匿名使用数据和错误报告来帮助改进诸葛神码。不会发送代码、提示或个人信息。有关更多详情，请参阅我们的隐私政策。"
 		}
+	},
+	"promptCaching": {
+		"description": "选中后，诸葛神码将不会为此模型使用提示词缓存。"
 	}
 }

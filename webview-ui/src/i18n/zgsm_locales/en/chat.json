@@ -54,5 +54,14 @@
 	"announcement": {
 		"title": "🎉 Shenma {{version}} Released",
 		"description": "Shenma {{version}} brings new features and improvements based on your feedback."
+	},
+	"onboarding": "<strong>The task list in this workspace is empty. </strong> Please enter a task below to get started.",
+	"ask": {
+		"autoApprovedRequestLimitReached": {
+			"description": "Shenma has reached the auto-approval limit of {{count}} API requests. Would you like to reset the count and continue the task?"
+		}
+	},
+	"shellIntegration": {
+		"description": "This command is running without shell integration. You can disable this warning in <settingsLink>Shenma Settings</settingsLink> <strong>Terminal</strong>, or troubleshoot terminal integration via the link below."
 	}
 }

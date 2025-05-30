@@ -63,6 +63,9 @@
 		}
 	},
 	"experimental": {
+		"autoCondenseContextPercent": {
+			"description": "When the context window reaches this threshold, Shenma will automatically condense it."
+		},
 		"SEARCH_AND_REPLACE": {
 			"description": "Enable the experimental search and replace tool, allowing Shenma to replace multiple instances of a search term in one request."
 		},
@@ -84,5 +87,8 @@
 		"telemetry": {
 			"description": "Help improve Shenma by sending anonymous usage data and error reports. No code, prompts, or personal information is ever sent. See our privacy policy for more details."
 		}
+	},
+	"promptCaching": {
+		"description": "When checked, Shenma will not use prompt caching for this model."
 	}
 }
