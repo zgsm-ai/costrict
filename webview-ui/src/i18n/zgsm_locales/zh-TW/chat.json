@@ -54,5 +54,14 @@
 	"announcement": {
 		"title": "🎉 諸葛神碼 {{version}} 已發布",
 		"description": "諸葛神碼 {{version}} 帶來基於您意見回饋的新功能與改進。"
+	},
+	"onboarding": "<strong>此工作區中的任務列表為空。</strong> 請在下方輸入任務開始。",
+	"ask": {
+		"autoApprovedRequestLimitReached": {
+			"description": "諸葛神碼已達到 {{count}} 次 API 請求的自動批准限制。您想重設計數並繼續任務嗎？"
+		}
+	},
+	"shellIntegration": {
+		"description": "您的命令正在沒有 VSCode 終端 Shell 整合的情況下執行。若要隱藏此警告，您可以在 <settingsLink>諸葛神碼 設定</settingsLink> 的 <strong>Terminal</strong> 區段中停用 Shell 整合，或使用下方連結排查 VSCode 終端整合問題。"
 	}
 }

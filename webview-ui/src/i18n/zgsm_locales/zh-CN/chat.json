@@ -54,5 +54,14 @@
 	"announcement": {
 		"title": "🎉 诸葛神码 {{version}} 已发布",
 		"description": "诸葛神码 {{version}} 带来基于您反馈的新功能和改进。"
+	},
+	"onboarding": "<strong>此工作区中的任务列表为空。</strong> 请在下方输入任务开始。",
+	"ask": {
+		"autoApprovedRequestLimitReached": {
+			"description": "诸葛神码已达到 {{count}} 次 API 请求的自动批准限制。您想重置计数并继续任务吗？"
+		}
+	},
+	"shellIntegration": {
+		"description": "您的命令正在没有 VSCode 终端 shell 集成的情况下执行。要隐藏此警告，您可以在 <settingsLink>诸葛神码 设置</settingsLink>的 <strong>Terminal</strong> 部分禁用 shell 集成，或使用下方链接排查 VSCode 终端集成问题。"
 	}
 }

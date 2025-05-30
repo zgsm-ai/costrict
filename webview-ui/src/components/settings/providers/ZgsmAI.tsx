@@ -146,18 +146,17 @@ export const ZgsmAI = ({
 						placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
 							zgsmBaseUrl: apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl,
 						})}></VSCodeTextField>
-
 					{!fromWelcomeView && (
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleRelogin}
-							title={t(
-								!apiConfiguration?.zgsmApiKey
-									? "settings:providers.getZgsmApiKey"
-									: "settings:providers.getZgsmApiKeyAgain",
-							)}>
-							<span className="codicon codicon-sign-in" style={{ fontSize: "20px" }} />
+						<Button variant="secondary" onClick={handleRelogin}>
+							<div className="flex">
+								<span>
+									{t(
+										!apiConfiguration?.zgsmApiKey
+											? "settings:providers.getZgsmApiKey"
+											: "settings:providers.getZgsmApiKeyAgain",
+									)}
+								</span>
+							</div>
 						</Button>
 					)}
 				</div>

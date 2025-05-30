@@ -21,7 +21,7 @@
 		"zgsmBaseUrl": "诸葛神码 Base Url",
 		"zgsmApiKey": "诸葛神码 API 密钥",
 		"getZgsmApiKey": "登录诸葛神码",
-		"getZgsmApiKeyAgain": "重新登录诸葛神码",
+		"getZgsmApiKeyAgain": "重新登录",
 		"zgsmDefaultBaseUrl": "默认: {{zgsmBaseUrl}}",
 		"lmStudio": {
 			"description": "LM Studio允许您在本地计算机上运行模型。有关如何入门的说明，请参阅他们的<a>快速入门指南</a>。您还需要启动LM Studio的<b>本地服务器</b>功能才能在此扩展中使用它。<span>注意：</span>诸葛神码使用复杂的提示，最适合与Claude模型配合使用。功能较弱的模型可能无法按预期工作。"
@@ -63,6 +63,9 @@
 		}
 	},
 	"experimental": {
+		"autoCondenseContextPercent": {
+			"description": "当上下文窗口达到此阈值时，诸葛神码将自动压缩它。"
+		},
 		"SEARCH_AND_REPLACE": {
 			"description": "启用实验性的搜索和替换工具，允许诸葛神码在一个请求中替换搜索词的多实例。"
 		},
@@ -84,5 +87,8 @@
 		"telemetry": {
 			"description": "通过发送匿名使用数据和错误报告来帮助改进诸葛神码。不会发送代码、提示或个人信息。有关更多详情，请参阅我们的隐私政策。"
 		}
+	},
+	"promptCaching": {
+		"description": "选中后，诸葛神码将不会为此模型使用提示词缓存。"
 	}
 }
