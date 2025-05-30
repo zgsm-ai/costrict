@@ -73,7 +73,7 @@ export async function handleZgsmLogin(
 	provider?: ClineProvider,
 ): Promise<void> {
 	// Open authentication link
-	await vscode.env.openExternal(vscode.Uri.parse(authUrl))
+	// await vscode.env.openExternal(vscode.Uri.parse(authUrl))
 
 	// Save apiConfiguration for use after successful authentication
 	if (apiConfiguration) {

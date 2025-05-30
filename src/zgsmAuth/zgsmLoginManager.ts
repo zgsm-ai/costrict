@@ -61,10 +61,20 @@ export class ZgsmLoginManager {
 		if (this.logining) return
 
 		await this.initUrls()
+		const state = generateZgsmStateId()
 		this.stopRefreshToken()
+		await vscode.env.openExternal(
+			vscode.Uri.parse(
+				this.loginUrl +
+					"?" +
+					this.getParams(state)
+						.map((p) => p.join("="))
+						.join("&"),
+			),
+		)
+
 		this.canFetchStauts = true
 		this.logining = true
-		const state = generateZgsmStateId()
 
 		try {
 			const { access_token, refresh_token } = await this.fetchToken()
@@ -114,13 +124,7 @@ export class ZgsmLoginManager {
 		this.logining = true
 		state = state || generateZgsmStateId()
 
-		const params = [
-			["machine_code", ZgsmLoginManager.getMachineCode()],
-			["state", state],
-			["plugin_version", Package.version],
-			["vscode_version", vscode.version],
-			["uri_scheme", vscode.env.uriScheme],
-		]
+		const params = this.getParams(state)
 
 		try {
 			const res = await fetch(this.tokenUrl + "?" + params.map((p) => p.join("=")).join("&"), {
@@ -143,13 +147,7 @@ export class ZgsmLoginManager {
 		{ access_token, refresh_token }: { access_token: string; refresh_token: string },
 	) {
 		await this.initUrls()
-		const params = [
-			["machine_code", ZgsmLoginManager.getMachineCode()],
-			["state", state || generateZgsmStateId()],
-			["plugin_version", Package.version],
-			["vscode_version", vscode.version],
-			["uri_scheme", vscode.env.uriScheme],
-		]
+		const params = this.getParams(state)
 
 		const res = await fetch(this.statusUrl + "?" + params.map((p) => p.join("=")).join("&"), {
 			method: "POST",
@@ -189,6 +187,15 @@ export class ZgsmLoginManager {
 		clearTimeout(this.pollingInterval as NodeJS.Timeout)
 	}
 
+	public getParams(state: string) {
+		return [
+			["machine_code", ZgsmLoginManager.getMachineCode()],
+			["state", state],
+			["plugin_version", Package.version],
+			["vscode_version", vscode.version],
+			["uri_scheme", vscode.env.uriScheme],
+		]
+	}
 	// // 检查登录状态
 	// public async checkLoginStatus(): Promise<LoginStatus> {
 	// 	await this.initUrls()
