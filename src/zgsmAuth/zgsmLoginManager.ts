@@ -6,19 +6,29 @@ import { generateZgsmStateId } from "../shared/zgsmAuthUrl"
 import { Package } from "../schemas"
 import delay from "delay"
 
+// 根据以下需求，在当前代码基础上重构优化代码：
+// 1.用户 vscode.env.openExternal 打开外部登陆页，然后开始轮询(api tokenUrl， 不需要带上 Authorization: `Bearer ${refresh_token}` )获取用户 token (两种token: access_token, refresh_token)
+// 2.如果 token 获取成功，则停止轮询，并返回 token（access_token, refresh_token）
+// 3.使用 token 获取用户状态（api statusUrl 需要带上 Authorization: `Bearer ${access_token}`）
+// 4.如果用户状态为登录状态，则停止轮询，将 state, access_token, refresh_token  通过 upsertProviderProfile 写入 vscode
+// 5.开始轮询 refresh_token 获取新的 token（api tokenUrl， 需要带上 Authorization: `Bearer ${refresh_token}` ）
 export class ZgsmLoginManager {
 	private static instance: ZgsmLoginManager
 	public static provider: ClineProvider
 	public static stateId: string
 
-	public static machineCode: string
+	private static get machineCode(): string {
+		return vscode.env.machineId
+	}
+
 	private pollingInterval: NodeJS.Timeout | null = null
 	private baseUrl: string = ""
 	private loginUrl: string = ""
 	private tokenUrl: string = ""
 	private statusUrl: string = ""
 	private logoutUrl: string = ""
-	private canFetchStauts = false
+	private isPollingToken = false
+	private isPollingStatus = false
 	private abortControllers: AbortController[] = []
 	public static setProvider(provider: ClineProvider) {
 		ZgsmLoginManager.provider = provider
@@ -57,12 +67,34 @@ export class ZgsmLoginManager {
 		this.logoutUrl = `${this.baseUrl}/oidc_auth/plugin/logout`
 	}
 
+	private validateUrls() {
+		if (!this.loginUrl || !this.tokenUrl || !this.statusUrl || !this.logoutUrl) {
+			throw new Error("URLs are not initialized. Call initUrls() first")
+		}
+	}
+
 	public async startLogin() {
 		this.abortControllers.forEach((controller) => controller.abort())
 		this.abortControllers = []
-		await this.initUrls()
-		const state = generateZgsmStateId()
 		this.stopRefreshToken()
+		await this.initUrls()
+
+		const state = generateZgsmStateId()
+		await this.openLoginPage(state)
+
+		try {
+			const { access_token, refresh_token } = await this.pollForToken(state)
+			await this.pollForLoginStatus(access_token)
+			await this.saveTokens(state, access_token, refresh_token)
+			this.startRefreshToken()
+		} catch (error) {
+			console.error("Login failed:", error)
+			throw error
+		}
+	}
+
+	private async openLoginPage(state: string) {
+		this.validateUrls()
 		await vscode.env.openExternal(
 			vscode.Uri.parse(
 				this.loginUrl +
@@ -72,128 +104,231 @@ export class ZgsmLoginManager {
 						.join("&"),
 			),
 		)
+	}
 
-		this.canFetchStauts = true
+	private async pollForToken(state: string): Promise<{ access_token: string; refresh_token: string }> {
+		return new Promise(async (resolve, reject) => {
+			this.isPollingToken = true
+			const maxAttempts = 25
+			const interval = 2000
+			let attempts = 0
 
+			const poll = async () => {
+				if (!this.isPollingToken || attempts >= maxAttempts) {
+					this.isPollingToken = false
+					reject(new Error("Token polling timeout"))
+					return
+				}
+
+				attempts++
+				try {
+					const tokens = await this.fetchToken(state)
+					if (tokens?.access_token && tokens?.refresh_token) {
+						this.isPollingToken = false
+						resolve(tokens)
+						return
+					}
+				} catch (error) {
+					console.log("Token polling attempt failed:", error)
+				}
+
+				setTimeout(poll, interval)
+			}
+
+			await poll()
+		})
+	}
+
+	private async pollForLoginStatus(access_token: string) {
+		this.isPollingStatus = true
 		try {
-			const { access_token, refresh_token } = await this.fetchToken()
-
 			await Promise.race([
-				this.checkLoginState(state, {
-					access_token,
-					refresh_token,
-				}),
+				this.checkLoginStatus(access_token),
 				new Promise((_, reject) =>
 					setTimeout(
 						() => {
-							this.canFetchStauts = false
-							reject(new Error("Timeout"))
+							this.isPollingStatus = false
+							reject(new Error("Status check timeout"))
 						},
 						1000 * 60 * 5,
 					),
 				),
 			])
-
-			const config = await ZgsmLoginManager.provider.getState()
-
-			await ZgsmLoginManager.provider
-				.upsertProviderProfile(
-					config.currentApiConfigName,
-					Object.assign(config.apiConfiguration, {
-						zgsmApiKey: access_token,
-						zgsmRefreshToken: refresh_token,
-						zgsmStateId: state,
-					}),
-				)
-				.then(async () => {
-					await ZgsmLoginManager.provider.postMessageToWebview({
-						type: "afterZgsmPostLogin",
-						values: { apiKey: access_token },
-					})
-					// this.startRefreshToken()
-				})
-		} catch (error) {
-			console.log(error)
+		} finally {
+			this.isPollingStatus = false
 		}
 	}
 
-	public async fetchToken(state?: string, refresh_token?: string) {
+	private async saveTokens(state: string, access_token: string, refresh_token: string) {
+		const config = await ZgsmLoginManager.provider.getState()
+		await ZgsmLoginManager.provider.upsertProviderProfile(config.currentApiConfigName, {
+			...config.apiConfiguration,
+			zgsmApiKey: access_token,
+			zgsmRefreshToken: refresh_token,
+			zgsmStateId: state,
+		})
+		await ZgsmLoginManager.provider.postMessageToWebview({
+			type: "afterZgsmPostLogin",
+			values: { apiKey: access_token },
+		})
+	}
+
+	public async fetchToken(
+		state?: string,
+		refresh_token?: string,
+	): Promise<{ access_token: string; refresh_token: string }> {
 		await this.initUrls()
-		this.canFetchStauts = true
+		this.validateUrls()
 		state = state || generateZgsmStateId()
 
 		const params = this.getParams(state)
-
 		const abortController = new AbortController()
 		this.abortControllers.push(abortController)
 
 		try {
-			const res = await fetch(this.tokenUrl + "?" + params.map((p) => p.join("=")).join("&"), {
-				// refresh_token 为空时，使用 refresh_token 获取 token
+			const url = `${this.tokenUrl}?${params.map((p) => p.join("=")).join("&")}`
+			const res = await fetch(url, {
 				signal: abortController.signal,
-				headers: refresh_token
-					? {
-							Authorization: `Bearer ${refresh_token}`,
-						}
-					: {},
+				headers: refresh_token ? { Authorization: `Bearer ${refresh_token}` } : {},
 			})
 
-			return await res.json()
+			if (!res.ok) {
+				throw new Error(`Token fetch failed with status ${res.status}`)
+			}
+
+			const data = await res.json()
+
+			if (!data.access_token || !data.refresh_token) {
+				throw new Error("Invalid token response")
+			}
+
+			return {
+				access_token: data.access_token,
+				refresh_token: data.refresh_token,
+			}
 		} catch (error) {
-			console.log(error)
+			console.error("Failed to fetch token:", error)
+			throw error
+		} finally {
+			this.abortControllers = this.abortControllers.filter((c) => c !== abortController)
 		}
 	}
 
-	public async checkLoginState(
-		state: string,
-		{ access_token, refresh_token }: { access_token: string; refresh_token: string },
-	) {
-		await delay(3000)
+	private async checkLoginStatus(access_token: string): Promise<void> {
+		await this.initUrls()
+		this.validateUrls()
+		const controller = new AbortController()
+		this.abortControllers.push(controller)
+		const { signal } = controller
+
 		try {
-			await this.initUrls()
-			const params = this.getParams(state)
-			const abortController = new AbortController()
-			this.abortControllers.push(abortController)
-			const res = await fetch(this.statusUrl + "?" + params.map((p) => p.join("=")).join("&"), {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${access_token}`,
-				},
-				signal: abortController.signal,
-			})
-
-			if (res.ok) {
-				this.canFetchStauts = false
+			const { apiConfiguration } = await ZgsmLoginManager.provider.getState()
+			const state = apiConfiguration.zgsmStateId
+			if (!state) {
+				throw new Error("No state available")
 			}
+			const params = this.getParams(state)
 
-			if (this.canFetchStauts) {
-				await this.checkLoginState(state, {
-					access_token,
-					refresh_token,
+			while (this.isPollingStatus) {
+				const res = await fetch(`${this.statusUrl}?${params.map((p) => p.join("=")).join("&")}`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${access_token}`,
+					},
+					signal,
 				})
+
+				if (!res.ok) {
+					throw new Error(`Status check failed with status ${res.status}`)
+				}
+
+				const data = await res.json()
+				if (data.state === "login") {
+					return
+				}
+
+				await delay(1000)
 			}
 		} catch (error) {
-			console.log(error)
+			if (error.name !== "AbortError") {
+				console.error("Status check error:", error)
+				throw error
+			}
+		} finally {
+			this.abortControllers = this.abortControllers.filter((c) => c !== controller)
 		}
 	}
 
 	public async startRefreshToken() {
-		await this.initUrls()
-		const { apiConfiguration } = await ZgsmLoginManager.provider.getState()
+		try {
+			await this.initUrls()
+			const { apiConfiguration, currentApiConfigName } = await ZgsmLoginManager.provider.getState()
 
-		await this.fetchToken(apiConfiguration.zgsmStateId, apiConfiguration.zgsmRefreshToken)
+			if (!apiConfiguration.zgsmRefreshToken) {
+				throw new Error("No refresh token available")
+			}
 
-		this.pollingInterval = setTimeout(
-			() => {
-				this.startRefreshToken()
-			},
-			1000 * 60 * 60,
-		)
+			const { access_token, refresh_token } = await this.fetchToken(
+				apiConfiguration.zgsmStateId,
+				apiConfiguration.zgsmRefreshToken,
+			)
+
+			// 更新存储的token
+			await ZgsmLoginManager.provider.upsertProviderProfile(currentApiConfigName, {
+				...apiConfiguration,
+				zgsmApiKey: access_token,
+				zgsmRefreshToken: refresh_token,
+			})
+
+			// 设置下一次刷新
+			this.pollingInterval = setTimeout(
+				() => this.startRefreshToken(),
+				1000 * 60 * 60, // 1小时
+			)
+		} catch (error) {
+			console.error("Failed to refresh token:", error)
+			// 在失败情况下，缩短重试间隔
+			this.pollingInterval = setTimeout(
+				() => this.startRefreshToken(),
+				1000 * 60 * 5, // 5分钟
+			)
+		}
 	}
 
 	public async stopRefreshToken() {
 		clearTimeout(this.pollingInterval as NodeJS.Timeout)
+	}
+
+	public async logout() {
+		try {
+			await this.initUrls()
+			this.validateUrls()
+			const { apiConfiguration, currentApiConfigName } = await ZgsmLoginManager.provider.getState()
+			const state = apiConfiguration.zgsmStateId
+			if (!state) {
+				throw new Error("No state available")
+			}
+			const params = this.getParams(state)
+
+			await fetch(`${this.logoutUrl}?${params.map((p) => p.join("=")).join("&")}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			})
+
+			// 清除本地存储的token
+			await ZgsmLoginManager.provider.upsertProviderProfile(currentApiConfigName, {
+				...apiConfiguration,
+				zgsmApiKey: "",
+				zgsmRefreshToken: "",
+				zgsmStateId: "",
+			})
+		} catch (error) {
+			console.error("Logout failed:", error)
+			throw error
+		}
 	}
 
 	public getParams(state: string) {
@@ -205,149 +340,4 @@ export class ZgsmLoginManager {
 			["uri_scheme", vscode.env.uriScheme],
 		]
 	}
-	// // 检查登录状态
-	// public async checkLoginStatus(): Promise<LoginStatus> {
-	// 	await this.initUrls()
-
-	// 	// 从 provider 获取 apiConfiguration
-	// 	const apiKey = ZgsmLoginManager.provider.getValue("apiKey")
-
-	// 	if (!apiKey) {
-	// 		return LoginStatus.LOGGED_OUT
-	// 	}
-	// 	const state = ZgsmLoginManager.provider.getValue("zgsmStateId")
-	// 	const refreshToken = ZgsmLoginManager.provider.getValue("zgsmRefreshToken")
-	// 	try {
-	// 		const response = await axios.post<LoginState>(
-	// 			this.tokenUrl,
-	// 			{
-	// 				machine_code: ZgsmLoginManager.getMachineCode(),
-	// 				uri_scheme: vscode.env.uriScheme,
-	// 				state,
-	// 				refresh_token: refreshToken,
-	// 			},
-	// 			{
-	// 				headers: {
-	// 					Authorization: `Bearer ${apiKey}`,
-	// 				},
-	// 			},
-	// 		)
-
-	// 		return response.data.status
-	// 	} catch (error) {
-	// 		console.error("检查登录状态失败:", error)
-	// 		return LoginStatus.UNKNOWN
-	// 	}
-	// }
-
-	// // 开始登录流程
-	// public async startLogin(): Promise<void> {
-	// 	await this.initUrls()
-	// 	// 打开登录页面
-	// 	const loginUrl = `${this.loginUrl}?machine_code=${ZgsmLoginManager.getMachineCode()}`
-	// 	vscode.env.openExternal(vscode.Uri.parse(loginUrl))
-
-	// 	// 开始轮询登录状态
-	// 	this.startPolling()
-	// }
-
-	// // 开始轮询
-	// private async startPolling(): Promise<void> {
-	// 	if (this.pollingInterval) {
-	// 		clearInterval(this.pollingInterval)
-	// 	}
-
-	// 	this.pollingInterval = setInterval(async () => {
-	// 		try {
-	// 			const response = await axios.get<LoginState>(
-	// 				`${this.loginUrl}?machine_code=${ZgsmLoginManager.getMachineCode()}`,
-	// 			)
-
-	// 			if (response.data.status === LoginStatus.ACTIVED) {
-	// 				// 登录成功，获取token
-	// 				await this.getToken()
-	// 				this.stopPolling()
-	// 			}
-	// 		} catch (error) {
-	// 			console.error("轮询登录状态失败:", error)
-	// 		}
-	// 	}, 3000) // 每3秒轮询一次
-	// }
-
-	// // 停止轮询
-	// private stopPolling(): void {
-	// 	if (this.pollingInterval) {
-	// 		clearInterval(this.pollingInterval)
-	// 		this.pollingInterval = null
-	// 	}
-	// }
-
-	// // 获取token
-	// private async getToken(): Promise<void> {
-	// 	try {
-	// 		const state = ZgsmLoginManager.provider.getValue("zgsmStateId")
-	// 		const refreshToken = ZgsmLoginManager.provider.getValue("zgsmRefreshToken")
-	// 		const response = await axios.post<TokenResponse>(this.tokenUrl, {
-	// 			machine_code: ZgsmLoginManager.getMachineCode(),
-	// 			uri_scheme: vscode.env.uriScheme,
-	// 			state,
-	// 			refresh_token: refreshToken,
-	// 		})
-
-	// 		// 更新 apiKey
-	// 		await ZgsmLoginManager.provider.setValue("apiKey", response.data.access_token)
-
-	// 		vscode.window.showInformationMessage("登录成功！")
-	// 	} catch (error) {
-	// 		console.error("获取token失败:", error)
-	// 		vscode.window.showErrorMessage("获取token失败，请重试！")
-	// 	}
-	// }
-
-	// // 登出
-	// public async logout(): Promise<void> {
-	// 	await this.initUrls()
-
-	// 	// 从 provider 获取 apiKey
-	// 	const apiKey = ZgsmLoginManager.provider.getValue("apiKey")
-
-	// 	if (!apiKey) {
-	// 		return
-	// 	}
-
-	// 	try {
-	// 		await axios.post(
-	// 			this.logoutUrl,
-	// 			{
-	// 				machine_code: ZgsmLoginManager.getMachineCode(),
-	// 				uri_scheme: vscode.env.uriScheme,
-	// 				state: ZgsmLoginManager.stateId,
-	// 			},
-	// 			{
-	// 				headers: {
-	// 					Authorization: `Bearer ${apiKey}`,
-	// 				},
-	// 			},
-	// 		)
-
-	// 		// 清除 apiKey
-	// 		await ZgsmLoginManager.provider.setValue("apiKey", undefined)
-
-	// 		vscode.window.showInformationMessage("登出成功！")
-	// 	} catch (error) {
-	// 		console.error("登出失败:", error)
-	// 		vscode.window.showErrorMessage("登出失败，请重试！")
-	// 	}
-	// }
-
-	// // 启动token过期检测
-	// public startTokenExpirationCheck(): void {
-	// 	setInterval(async () => {
-	// 		const status = await this.checkLoginStatus()
-	// 		if (status === LoginStatus.EXPIRED) {
-	// 			vscode.window.showWarningMessage("登录已过期，请重新登录！")
-	// 			await this.logout()
-	// 		}
-	// 	}, 60000) // 每分钟检查一次
-	// }
 }
