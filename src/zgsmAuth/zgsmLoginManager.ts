@@ -1,9 +1,8 @@
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
-import { LoginStatus } from "./types"
+import { LoginState, LoginStatus } from "./types"
 import { generateZgsmStateId } from "../shared/zgsmAuthUrl"
 import { Package } from "../schemas"
-import delay from "delay"
 
 export class ZgsmLoginManager {
 	private static instance: ZgsmLoginManager
@@ -17,8 +16,9 @@ export class ZgsmLoginManager {
 	private statusUrl: string = ""
 	private logoutUrl: string = ""
 	private isPollingToken = false
+	private isPollingTokenTimer?: NodeJS.Timeout
 	private isPollingStatus = false
-	private abortControllers: AbortController[] = []
+	private isPollingStatusTimer?: NodeJS.Timeout
 	public static setProvider(provider: ClineProvider) {
 		ZgsmLoginManager.provider = provider
 	}
@@ -57,12 +57,16 @@ export class ZgsmLoginManager {
 	}
 
 	public async startLogin() {
-		this.abortControllers.forEach((controller) => controller.abort())
-		this.abortControllers = []
+		clearTimeout(this.isPollingStatusTimer)
+		clearTimeout(this.isPollingTokenTimer)
+
 		this.stopRefreshToken()
 		this.initUrls()
 
 		const state = generateZgsmStateId()
+		ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] startLogin.stopRefreshToken`)
+		ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] generateZgsmStateId: ${state}`)
+
 		await this.openLoginPage(state)
 
 		try {
@@ -78,68 +82,98 @@ export class ZgsmLoginManager {
 
 	private async openLoginPage(state: string) {
 		this.validateUrls()
-		await vscode.env.openExternal(
-			vscode.Uri.parse(
-				this.loginUrl +
-					"?" +
-					this.getParams(state)
-						.map((p) => p.join("="))
-						.join("&"),
-			),
-		)
+		const pageUrl =
+			this.loginUrl +
+			"?" +
+			this.getParams(state)
+				.map((p) => p.join("="))
+				.join("&")
+		ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] openLoginPage: ${pageUrl}`)
+
+		await vscode.env.openExternal(vscode.Uri.parse(pageUrl))
 	}
 
 	private async pollForToken(state: string): Promise<{ access_token: string; refresh_token: string }> {
 		return new Promise(async (resolve, reject) => {
 			this.isPollingToken = true
-			const maxAttempts = 25
-			const interval = 2000
+			const maxAttempts = 20 * 5
+			const interval = 3000
 			let attempts = 0
+			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] pollForToken attempts: ${attempts}`)
 
 			const poll = async () => {
 				if (!this.isPollingToken || attempts >= maxAttempts) {
 					this.isPollingToken = false
 					reject(new Error("Token polling timeout"))
+					ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] pollForToken timeout`)
+
 					return
 				}
 
 				attempts++
 				try {
 					const tokens = await this.fetchToken(state)
+					ZgsmLoginManager.provider.log(
+						`[ZgsmLoginManager:${state}] fetchToken response: ${JSON.stringify(tokens, null, 2)}`,
+					)
+
 					if (tokens?.access_token && tokens?.refresh_token) {
+						// if (tokens?.access_token && tokens?.refresh_token && tokens?.state === state) {
 						this.isPollingToken = false
 						resolve(tokens)
 						return
 					}
 				} catch (error) {
-					console.log("Token polling attempt failed:", error)
+					ZgsmLoginManager.provider.log(
+						`[ZgsmLoginManager:${state}] Token polling attempt failed: ${error.message}`,
+					)
 				}
 
-				setTimeout(poll, interval)
+				this.isPollingTokenTimer = setTimeout(poll, interval)
 			}
 
 			await poll()
 		})
 	}
 
-	private async pollForLoginStatus(state?: string, access_token?: string) {
-		this.isPollingStatus = true
-		try {
-			await Promise.race([
-				this.checkLoginStatus(state, access_token),
-				new Promise((_, reject) =>
-					setTimeout(
-						() => {
-							this.isPollingStatus = false
-							reject(new Error("Status check timeout"))
-						},
-						1000 * 60 * 5,
-					),
-				),
-			])
-		} finally {
-			this.isPollingStatus = false
-		}
+	private async pollForLoginStatus(state?: string, access_token?: string): Promise<LoginState> {
+		return new Promise(async (resolve, reject) => {
+			this.isPollingStatus = true
+			const maxAttempts = 20 * 5
+			const interval = 3000
+			let attempts = 0
+			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] pollForLoginStatus attempts: ${attempts}`)
+
+			const poll = async () => {
+				if (!this.isPollingStatus || attempts >= maxAttempts) {
+					this.isPollingStatus = false
+					reject(new Error("Token polling timeout"))
+					ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] pollForLoginStatus timeout`)
+
+					return
+				}
+
+				attempts++
+				try {
+					const data = await this.checkLoginStatus(state, access_token)
+
+					if (data?.status === LoginStatus.LOGGED_IN) {
+						// if (tokens?.access_token && tokens?.refresh_token && tokens?.state === state) {
+						this.isPollingStatus = false
+						resolve(data)
+						return
+					}
+				} catch (error) {
+					ZgsmLoginManager.provider.log(
+						`[ZgsmLoginManager:${state}] Token polling attempt failed: ${error.message}`,
+					)
+				}
+
+				this.isPollingStatusTimer = setTimeout(poll, interval)
+			}
+
+			await poll()
+		})
 	}
 
 	private async saveTokens(state: string, access_token: string, refresh_token: string) {
@@ -159,23 +193,26 @@ export class ZgsmLoginManager {
 	public async fetchToken(
 		state?: string,
 		refresh_token?: string,
-	): Promise<{ access_token: string; refresh_token: string }> {
+	): Promise<{ access_token: string; refresh_token: string; state: string }> {
 		this.initUrls()
 		this.validateUrls()
 		state = state || generateZgsmStateId()
 
 		const params = this.getParams(state, [refresh_token ? "machine_code" : ""])
-		const abortController = new AbortController()
-		this.abortControllers.push(abortController)
 
 		try {
 			const url = `${this.tokenUrl}?${params.map((p) => p.join("=")).join("&")}`
+			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] fetchToken url:  ${url}`)
+			ZgsmLoginManager.provider.log(
+				`[ZgsmLoginManager:${state}] fetchToken headers:  ${JSON.stringify(refresh_token ? { Authorization: `Bearer ${refresh_token}` } : {}, null, 2)}`,
+			)
 			const res = await fetch(url, {
-				signal: abortController.signal,
 				headers: refresh_token ? { Authorization: `Bearer ${refresh_token}` } : {},
 			})
 
 			if (!res.ok) {
+				ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] fetchToken error:  ${await res.text()}`)
+
 				throw new Error(`Token fetch failed with status ${res.status}`)
 			}
 
@@ -185,24 +222,17 @@ export class ZgsmLoginManager {
 				throw new Error("Invalid token response")
 			}
 
-			return {
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-			}
+			return data
 		} catch (error) {
 			console.error("Failed to fetch token:", error)
+			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Failed to fetch token: ${error.message}`)
 			throw error
-		} finally {
-			this.abortControllers = this.abortControllers.filter((c) => c !== abortController)
 		}
 	}
 
-	private async checkLoginStatus(state?: string, access_token?: string): Promise<void> {
+	private async checkLoginStatus(state?: string, access_token?: string) {
 		this.initUrls()
 		this.validateUrls()
-		const controller = new AbortController()
-		this.abortControllers.push(controller)
-		const { signal } = controller
 
 		try {
 			const { apiConfiguration } = await ZgsmLoginManager.provider.getState()
@@ -212,41 +242,42 @@ export class ZgsmLoginManager {
 			}
 			const params = this.getParams(stateid, [access_token ? "machine_code" : ""])
 
-			while (this.isPollingStatus) {
-				const res = await fetch(`${this.statusUrl}?${params.map((p) => p.join("=")).join("&")}`, {
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${access_token}`,
-					},
-					signal,
-				})
+			const url = `${this.statusUrl}?${params.map((p) => p.join("=")).join("&")}`
+			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] checkLoginStatus url:  ${url}`)
+			ZgsmLoginManager.provider.log(
+				`[ZgsmLoginManager:${state}] checkLoginStatus headers:  ${JSON.stringify(access_token ? { Authorization: `Bearer ${access_token}` } : {}, null, 2)}`,
+			)
+			const res = await fetch(url, {
+				headers: {
+					Authorization: `Bearer ${access_token}`,
+				},
+			})
 
-				if (!res.ok) {
-					throw new Error(`Status check failed with status ${res.status}`)
-				}
+			if (!res.ok) {
+				ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] checkLoginStatus error: ${await res.text()}`)
 
-				const data = await res.json()
-				if (data.state === state && data.status === LoginStatus.LOGGED_IN) {
-					return
-				}
-
-				await delay(3000)
+				throw new Error(`Status check failed with status ${res.status}`)
 			}
+
+			const data = await res.json()
+			ZgsmLoginManager.provider.log(
+				`[ZgsmLoginManager:${state}] checkLoginStatus response: ${JSON.stringify(data, null, 2)}`,
+			)
+
+			return data as LoginState
 		} catch (error) {
-			if (error.name !== "AbortError") {
-				console.error("Status check error:", error)
-				throw error
-			}
-		} finally {
-			this.abortControllers = this.abortControllers.filter((c) => c !== controller)
+			console.error("Status check error:", error)
+			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Status check error: ${error.message}`)
+			throw error
 		}
 	}
 
 	public async startRefreshToken() {
+		let state
 		try {
 			this.initUrls()
 			const { apiConfiguration, currentApiConfigName } = await ZgsmLoginManager.provider.getState()
-
+			state = apiConfiguration.zgsmStateId
 			if (!apiConfiguration.zgsmRefreshToken) {
 				throw new Error("No refresh token available")
 			}
@@ -267,6 +298,8 @@ export class ZgsmLoginManager {
 			this.pollingInterval = setTimeout(() => this.startRefreshToken(), 1000 * 60 * 60)
 		} catch (error) {
 			console.error("Failed to refresh token:", error)
+			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Failed to refresh token: ${error.message}`)
+
 			this.pollingInterval = setTimeout(() => this.startRefreshToken(), 5000)
 		}
 	}
@@ -276,20 +309,20 @@ export class ZgsmLoginManager {
 	}
 
 	public async logout() {
+		let state
 		try {
 			this.initUrls()
 			this.validateUrls()
 			const { apiConfiguration, currentApiConfigName } = await ZgsmLoginManager.provider.getState()
-			const state = apiConfiguration.zgsmStateId
+			state = apiConfiguration.zgsmStateId
 			if (!state) {
 				throw new Error("No state available")
 			}
-			const params = this.getParams(state)
-
-			await fetch(`${this.logoutUrl}?${params.map((p) => p.join("=")).join("&")}`, {
-				method: "POST",
+			const params = this.getParams(state, ["machine_code"])
+			const url = `${this.logoutUrl}?${params.map((p) => p.join("=")).join("&")}`
+			await fetch(url, {
 				headers: {
-					"Content-Type": "application/json",
+					Authorization: `Bearer ${apiConfiguration.zgsmApiKey}`,
 				},
 			})
 
@@ -301,13 +334,14 @@ export class ZgsmLoginManager {
 			})
 		} catch (error) {
 			console.error("Logout failed:", error)
+			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Logout failed: ${error.message}`)
 			throw error
 		}
 	}
 
 	public getParams(state: string, ignore: string[] = []) {
 		return [
-			["machine_code", vscode.env.machineId],
+			["machine_code", vscode.env.machineId + "|test"],
 			["state", state],
 			["plugin_version", Package.version],
 			["vscode_version", vscode.version],
