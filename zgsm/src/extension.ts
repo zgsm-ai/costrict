@@ -28,20 +28,13 @@ import { loadLocalLanguageExtensions } from "./common/lang-util"
 import { ClineProvider } from "../../src/core/webview/ClineProvider"
 import { defaultZgsmAuthConfig } from "../../src/zgsmAuth/config"
 import { getCommand } from "../../src/utils/commands"
+// import { LoginStatus } from "../../src/zgsmAuth/types"
 
 /**
  * Initialization entry
  */
 async function initialize(provider: ClineProvider) {
 	ZgsmLoginManager.setProvider(provider)
-	const status = await ZgsmLoginManager.getInstance().checkLoginStatus()
-
-	console.log("login status", status)
-
-	// if (status === LoginStatus.LOGGED_OUT) {
-	// 	await ZgsmLoginManager.getInstance().startLogin()
-	// }
-
 	printLogo()
 	initLangSetting()
 	loadLocalLanguageExtensions()
@@ -130,6 +123,19 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 		: CompletionStatusBar.fail({
 				message: OPENAI_CLIENT_NOT_INITIALIZED,
 			})
+
+	// const status = await ZgsmLoginManager.getInstance().checkLoginStatus().then((status) => {
+	// 	if (status === LoginStatus.LOGGED_OUT) {
+
+	// 	}
+	// })
+
+	// console.log("login status", status)
+
+	// if (status === LoginStatus.LOGGED_OUT) {
+	// 	await ZgsmLoginManager.getInstance().startLogin()
+	// }
+	// ZgsmLoginManager.getInstance().checkLoginState()
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
