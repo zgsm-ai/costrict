@@ -4,6 +4,7 @@ import { ClineProvider } from "../core/webview/ClineProvider"
 // import { LoginState, LoginStatus, TokenResponse } from "./types"
 import { generateZgsmStateId } from "../shared/zgsmAuthUrl"
 import { Package } from "../schemas"
+import delay from "delay"
 
 export class ZgsmLoginManager {
 	private static instance: ZgsmLoginManager
@@ -147,6 +148,7 @@ export class ZgsmLoginManager {
 		state: string,
 		{ access_token, refresh_token }: { access_token: string; refresh_token: string },
 	) {
+		await delay(3000)
 		try {
 			await this.initUrls()
 			const params = this.getParams(state)
@@ -165,7 +167,7 @@ export class ZgsmLoginManager {
 				this.canFetchStauts = false
 			}
 
-			if (!this.canFetchStauts) {
+			if (this.canFetchStauts) {
 				await this.checkLoginState(state, {
 					access_token,
 					refresh_token,
