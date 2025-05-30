@@ -18,7 +18,7 @@
 	},
 	"providers": {
 		"getZgsmApiKey": "Login to Shenma",
-		"getZgsmApiKeyAgain": "Re-login to Shenma",
+		"getZgsmApiKeyAgain": "Re-login",
 		"zgsm": "Shenma",
 		"zgsmApiKey": "Shenma API Key",
 		"zgsmBaseUrl": "Shenma Base Url",

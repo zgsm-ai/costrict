@@ -21,7 +21,7 @@
 		"zgsmBaseUrl": "諸葛神碼 Base Url",
 		"zgsmApiKey": "諸葛神碼 API 密鑰",
 		"getZgsmApiKey": "登入諸葛神碼",
-		"getZgsmApiKeyAgain": "重新登入諸葛神碼",
+		"getZgsmApiKeyAgain": "重新登入",
 		"zgsmDefaultBaseUrl": "預設: {{zgsmBaseUrl}}",
 		"lmStudio": {
 			"description": "LM Studio允許您在本地電腦上運行模型。有關如何入門的說明，請參閱他們的<a>快速入門指南</a>。您還需要啟動LM Studio的<b>本地伺服器</b>功能才能在此擴展中使用它。<span>注意：</span>諸葛神碼使用複雜的提示，最適合與Claude模型配合使用。功能較弱的模型可能無法按預期工作。"
