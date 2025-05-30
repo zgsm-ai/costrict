@@ -18,8 +18,7 @@ export class ZgsmLoginManager {
 	private statusUrl: string = ""
 	private logoutUrl: string = ""
 	private canFetchStauts = false
-	private logining = false
-
+	private abortControllers: AbortController[] = []
 	public static setProvider(provider: ClineProvider) {
 		ZgsmLoginManager.provider = provider
 	}
@@ -58,8 +57,8 @@ export class ZgsmLoginManager {
 	}
 
 	public async startLogin() {
-		if (this.logining) return
-
+		this.abortControllers.forEach((controller) => controller.abort())
+		this.abortControllers = []
 		await this.initUrls()
 		const state = generateZgsmStateId()
 		this.stopRefreshToken()
@@ -74,7 +73,6 @@ export class ZgsmLoginManager {
 		)
 
 		this.canFetchStauts = true
-		this.logining = true
 
 		try {
 			const { access_token, refresh_token } = await this.fetchToken()
@@ -121,14 +119,17 @@ export class ZgsmLoginManager {
 	public async fetchToken(state?: string, refresh_token?: string) {
 		await this.initUrls()
 		this.canFetchStauts = true
-		this.logining = true
 		state = state || generateZgsmStateId()
 
 		const params = this.getParams(state)
 
+		const abortController = new AbortController()
+		this.abortControllers.push(abortController)
+
 		try {
 			const res = await fetch(this.tokenUrl + "?" + params.map((p) => p.join("=")).join("&"), {
 				// refresh_token 为空时，使用 refresh_token 获取 token
+				signal: abortController.signal,
 				headers: refresh_token
 					? {
 							Authorization: `Bearer ${refresh_token}`,
@@ -146,26 +147,32 @@ export class ZgsmLoginManager {
 		state: string,
 		{ access_token, refresh_token }: { access_token: string; refresh_token: string },
 	) {
-		await this.initUrls()
-		const params = this.getParams(state)
-
-		const res = await fetch(this.statusUrl + "?" + params.map((p) => p.join("=")).join("&"), {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${access_token}`,
-			},
-		})
-
-		if (res.ok) {
-			this.canFetchStauts = false
-		}
-
-		if (!this.canFetchStauts) {
-			await this.checkLoginState(state, {
-				access_token,
-				refresh_token,
+		try {
+			await this.initUrls()
+			const params = this.getParams(state)
+			const abortController = new AbortController()
+			this.abortControllers.push(abortController)
+			const res = await fetch(this.statusUrl + "?" + params.map((p) => p.join("=")).join("&"), {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${access_token}`,
+				},
+				signal: abortController.signal,
 			})
+
+			if (res.ok) {
+				this.canFetchStauts = false
+			}
+
+			if (!this.canFetchStauts) {
+				await this.checkLoginState(state, {
+					access_token,
+					refresh_token,
+				})
+			}
+		} catch (error) {
+			console.log(error)
 		}
 	}
 
