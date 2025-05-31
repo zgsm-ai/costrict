@@ -341,7 +341,7 @@ export class ZgsmLoginManager {
 
 	public getParams(state: string, ignore: string[] = []) {
 		return [
-			["machine_code", vscode.env.machineId + "|test"],
+			["machine_code", vscode.env.machineId],
 			["state", state],
 			["plugin_version", Package.version],
 			["vscode_version", vscode.version],
