@@ -52,6 +52,18 @@ let extensionContext: vscode.ExtensionContext
 // This method is called when your extension is activated.
 // Your extension is activated the very first time the command is executed.
 export async function activate(context: vscode.ExtensionContext) {
+	const hasReloaded = context.globalState.get<boolean>("hasReloadedOnUpgrade") ?? false
+	const allCommands = await vscode.commands.getCommands(true)
+
+	if (!allCommands.includes(getCommand("SidebarProvider.focus"))) {
+		await context.globalState.update("hasReloadedOnUpgrade", true)
+
+		!hasReloaded && (await vscode.commands.executeCommand("workbench.action.reloadWindow"))
+		return
+	}
+
+	await context.globalState.update("hasReloadedOnUpgrade", false)
+
 	extensionContext = context
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
 	context.subscriptions.push(outputChannel)
