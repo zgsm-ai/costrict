@@ -2,17 +2,11 @@ name: Bug Report
 description: Clearly report a bug with detailed repro steps
 labels: ["bug"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        **Thanks for your report!** Please check existing issues first:  
-        👉 https://github.com/zgsm-ai/zgsm/issues
-
   - type: input
     id: version
     attributes:
       label: App Version
-      description: What version of Shenma are you using? (e.g., v1.3.2)
+      description: Specify exactly which version you're using (e.g., v3.3.1)
     validations:
       required: true
 
@@ -20,6 +14,8 @@ body:
     id: provider
     attributes:
       label: API Provider
+      description: Choose the API provider involved
+      multiple: false
       options:
         - Zgsm
         - Anthropic
@@ -65,31 +61,28 @@ body:
   - type: textarea
     id: steps
     attributes:
-      label: 🔁 Steps to Reproduce
+      label: Detailed Steps to Reproduce
       description: |
-        Help us see what you saw. Give clear, numbered steps:
-
-        1. Setup (OS, extension version, settings)
-        2. Exact actions (clicks, input, files, commands)
-        3. What happened after each step
-
-        Think like you're writing a recipe. Without this, we can't reproduce the issue.
+        List the exact steps someone must follow to reproduce this bug:
+        1. Starting conditions (software state, settings, environment)
+        2. Precise actions taken (every click, selection, input)
+        3. Clearly observe and report outcomes
+      value: |
+        1.
+        2.
+        3.
     validations:
       required: true
 
   - type: textarea
-    id: what-happened
-    attributes:
-      label: 💥 Outcome Summary (Optional)
-      description: |
-        Recap what went wrong in one or two lines. Use this if the bug is weird, unexpected, or needs extra context.
-
-        Example: "Expected code to run, but got an empty response and no error."
-      placeholder: Expected ___, but got ___.
-
-  - type: textarea
     id: logs
     attributes:
-      label: 📄 Relevant Logs or Errors
-      description: Paste API logs, terminal output, or errors here. Use triple backticks (```) for code formatting.
+      label: Relevant API Request Output
+      description: Paste relevant API logs or outputs here (formatted automatically as code)
       render: shell
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Include extra details, screenshots, or related issues.
