@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
-import { LoginState, LoginStatus } from "./types"
+import { LoginState, LoginStatus, TokenResponse } from "./types"
 import { generateZgsmStateId } from "../shared/zgsmAuthUrl"
 import { Package } from "../schemas"
 
@@ -93,7 +93,7 @@ export class ZgsmLoginManager {
 		await vscode.env.openExternal(vscode.Uri.parse(pageUrl))
 	}
 
-	private async pollForToken(state: string): Promise<{ access_token: string; refresh_token: string }> {
+	private async pollForToken(state: string): Promise<TokenResponse> {
 		return new Promise(async (resolve, reject) => {
 			this.isPollingToken = true
 			const maxAttempts = 20 * 5
@@ -117,8 +117,7 @@ export class ZgsmLoginManager {
 						`[ZgsmLoginManager:${state}] fetchToken response: ${JSON.stringify(tokens, null, 2)}`,
 					)
 
-					if (tokens?.access_token && tokens?.refresh_token) {
-						// if (tokens?.access_token && tokens?.refresh_token && tokens?.state === state) {
+					if (tokens?.access_token && tokens?.refresh_token && tokens?.state === state) {
 						this.isPollingToken = false
 						resolve(tokens)
 						return
@@ -157,8 +156,7 @@ export class ZgsmLoginManager {
 				try {
 					const data = await this.checkLoginStatus(state, access_token)
 
-					if (data?.status === LoginStatus.LOGGED_IN) {
-						// if (tokens?.access_token && tokens?.refresh_token && tokens?.state === state) {
+					if (data?.status === LoginStatus.LOGGED_IN && data?.state === state) {
 						this.isPollingStatus = false
 						resolve(data)
 						return
@@ -190,10 +188,7 @@ export class ZgsmLoginManager {
 		})
 	}
 
-	public async fetchToken(
-		state?: string,
-		refresh_token?: string,
-	): Promise<{ access_token: string; refresh_token: string; state: string }> {
+	public async fetchToken(state?: string, refresh_token?: string): Promise<TokenResponse> {
 		this.initUrls()
 		this.validateUrls()
 		state = state || generateZgsmStateId()
