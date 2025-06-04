@@ -1721,9 +1721,9 @@ function getTaskRequestError(error: any) {
 
 		const _err = defaultApiErrors[error.status] || unknownError
 
-		return `${t("apiErrors:request.error_details")}\n\n${_err.status}\n\n${t("apiErrors:request.solution")}\n\n${_err.solution}`
+		return `${t("apiErrors:request.http_code")}\n\n${error.status}\n\n${t("apiErrors:request.error_details")}\n\n${_err.status}\n\n${t("apiErrors:request.solution")}\n\n${_err.solution}`
 	} else if (!error.message) {
-		return `${t("apiErrors:request.error_details")}\n\n${unknownError.status}\n\n${t("apiErrors:request.solution")}\n\n${unknownError.solution}`
+		return `${t("apiErrors:request.http_code")}\n\n${error.status}\n\n${t("apiErrors:request.error_details")}\n\n${unknownError.status}\n\n${t("apiErrors:request.solution")}\n\n${unknownError.solution}`
 	}
 
 	return error.message
