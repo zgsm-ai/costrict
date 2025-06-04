@@ -2,16 +2,20 @@ import React, { useCallback } from "react"
 import { Slider } from "@/components/ui"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
+import { ProviderSettings } from "@roo/schemas"
+import { zgsmProviderKey } from "@roo/shared/api"
 
 interface DiffSettingsControlProps {
 	diffEnabled?: boolean
 	fuzzyMatchThreshold?: number
+	apiConfiguration: ProviderSettings
 	onChange: (field: "diffEnabled" | "fuzzyMatchThreshold", value: any) => void
 }
 
 export const DiffSettingsControl: React.FC<DiffSettingsControlProps> = ({
 	diffEnabled = true,
 	fuzzyMatchThreshold = 1.0,
+	apiConfiguration,
 	onChange,
 }) => {
 	const { t } = useAppTranslation()
@@ -41,7 +45,7 @@ export const DiffSettingsControl: React.FC<DiffSettingsControlProps> = ({
 				</div>
 			</div>
 
-			{diffEnabled && (
+			{diffEnabled && apiConfiguration.apiProvider !== zgsmProviderKey && (
 				<div className="flex flex-col gap-3 pl-3 border-l-2 border-vscode-button-background">
 					<div>
 						<label className="block font-medium mb-1">

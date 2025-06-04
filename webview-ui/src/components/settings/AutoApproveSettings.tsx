@@ -10,6 +10,8 @@ import { SetCachedStateField } from "./types"
 import { SectionHeader } from "./SectionHeader"
 import { Section } from "./Section"
 import { AutoApproveToggle } from "./AutoApproveToggle"
+import { ProviderSettings } from "@roo/schemas"
+import { zgsmProviderKey } from "@roo/shared/api"
 
 type AutoApproveSettingsProps = HTMLAttributes<HTMLDivElement> & {
 	alwaysAllowReadOnly?: boolean
@@ -25,6 +27,7 @@ type AutoApproveSettingsProps = HTMLAttributes<HTMLDivElement> & {
 	alwaysAllowSubtasks?: boolean
 	alwaysAllowExecute?: boolean
 	allowedCommands?: string[]
+	apiConfiguration: ProviderSettings
 	setCachedStateField: SetCachedStateField<
 		| "alwaysAllowReadOnly"
 		| "alwaysAllowReadOnlyOutsideWorkspace"
@@ -56,6 +59,7 @@ export const AutoApproveSettings = ({
 	alwaysAllowSubtasks,
 	alwaysAllowExecute,
 	allowedCommands,
+	apiConfiguration,
 	setCachedStateField,
 	...props
 }: AutoApproveSettingsProps) => {
@@ -142,26 +146,28 @@ export const AutoApproveSettings = ({
 								{t("settings:autoApprove.write.outsideWorkspace.description")}
 							</div>
 						</div>
-						<div>
-							<div className="flex items-center gap-2">
-								<Slider
-									min={0}
-									max={5000}
-									step={100}
-									value={[writeDelayMs]}
-									onValueChange={([value]) => setCachedStateField("writeDelayMs", value)}
-									data-testid="write-delay-slider"
-								/>
-								<span className="w-20">{writeDelayMs}ms</span>
+						{apiConfiguration.apiProvider !== zgsmProviderKey && (
+							<div>
+								<div className="flex items-center gap-2">
+									<Slider
+										min={0}
+										max={5000}
+										step={100}
+										value={[writeDelayMs]}
+										onValueChange={([value]) => setCachedStateField("writeDelayMs", value)}
+										data-testid="write-delay-slider"
+									/>
+									<span className="w-20">{writeDelayMs}ms</span>
+								</div>
+								<div className="text-vscode-descriptionForeground text-sm mt-1">
+									{t("settings:autoApprove.write.delayLabel")}
+								</div>
 							</div>
-							<div className="text-vscode-descriptionForeground text-sm mt-1">
-								{t("settings:autoApprove.write.delayLabel")}
-							</div>
-						</div>
+						)}
 					</div>
 				)}
 
-				{alwaysApproveResubmit && (
+				{alwaysApproveResubmit && apiConfiguration.apiProvider !== zgsmProviderKey && (
 					<div className="flex flex-col gap-3 pl-3 border-l-2 border-vscode-button-background">
 						<div className="flex items-center gap-4 font-bold">
 							<span className="codicon codicon-refresh" />
