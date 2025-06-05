@@ -1,5 +1,9 @@
 # Shenma Change Log
 
+## [1.4.2]
+- Update zgsm provider and error handling improvements
+- Update vscode engine requirement to ^1.86.2
+
 ## [1.4.1]
 - Update svg and add re-login button
 - Adds onboarding messages and new settings descriptions
