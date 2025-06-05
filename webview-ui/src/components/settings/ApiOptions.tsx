@@ -494,6 +494,7 @@ const ApiOptions = ({
 			{!fromWelcomeView && (selectedProvider !== zgsmProviderKey || !!apiConfiguration?.useZgsmCustomConfig) && (
 				<>
 					<DiffSettingsControl
+						apiConfiguration={apiConfiguration}
 						diffEnabled={apiConfiguration.diffEnabled}
 						fuzzyMatchThreshold={apiConfiguration.fuzzyMatchThreshold}
 						onChange={(field, value) => setApiConfigurationField(field, value)}
@@ -504,6 +505,7 @@ const ApiOptions = ({
 						maxValue={2}
 					/>
 					<RateLimitSecondsControl
+						apiConfiguration={apiConfiguration}
 						value={apiConfiguration.rateLimitSeconds || 0}
 						onChange={(value) => setApiConfigurationField("rateLimitSeconds", value)}
 					/>

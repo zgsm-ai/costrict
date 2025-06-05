@@ -48,7 +48,7 @@ export async function taskMetadata({
 	const historyItem: HistoryItem = {
 		id: taskId,
 		number: taskNumber,
-		ts: lastRelevantMessage.ts,
+		ts: lastRelevantMessage?.ts,
 		task: taskMessage.text ?? "",
 		tokensIn: tokenUsage.totalTokensIn,
 		tokensOut: tokenUsage.totalTokensOut,
