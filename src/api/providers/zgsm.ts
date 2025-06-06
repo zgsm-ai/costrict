@@ -162,7 +162,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 						...defaultHeaders,
 						"zgsm-task-id": this.taskId,
 						"zgsm-client-id": vscode.env.machineId,
-						"zgsm-project-path": getWorkspacePath(),
+						"zgsm-project-path": encodeURIComponent(getWorkspacePath()),
 					},
 				}),
 			)
