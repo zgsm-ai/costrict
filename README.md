@@ -4,7 +4,16 @@ English | [简体中文](./README.zh-CN.md)
 
 <img src="./assets/images/shenma_robot_logo_big.png" alt="zhuge logo" height="150px" align="right" />
 
-Shenma is a free and open-source AI programmer with powerful code generation capabilities that understand you better than programmers. It makes your daily work from "writing code" to easier "asking questions" and "reviewing code". Compared to other tools, we are more secure and reliable, supporting enterprise private deployment, and most importantly, we are completely free.
+**Shenma - The Serious Programming AI Assistant for Enterprises**
+
+In enterprise software development, code quality and logical integrity are non-negotiable. Shenma is engineered to meet this critical demand. It's more than just a code generator; it's an AI programming assistant meticulously crafted for the delivery of **serious enterprise products**.
+
+**Addressing the Core Need**: Unlike general-purpose AI copilots, Shenma's core mission is to ensure that the generated code **strictly adheres to your logical design**, delivering **truly controllable quality**. This empowers your team to shift its focus from tedious implementation to high-value architectural design and code reviews, dramatically boosting both efficiency and project quality.
+
+**Secure, Reliable, and In Your Control**: We are committed to being **free and open-source**, while also offering **enterprise-grade private deployment** options to guarantee the security of your core code assets.
+
+Choose Shenma, and let AI become your most trusted programming strategist.
+
 
 ## Features
 
@@ -58,4 +67,4 @@ Communicate via [GitHub Issues](https://github.com/zgsm-ai/zgsm/issues/new/choos
 
 ## License
 
-Licensed under MIT. See [LICENSE](LICENSE) for full text.
+[Apache 2.0 © 2025 Sangfor, Inc.](./LICENSE)
