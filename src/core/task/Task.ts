@@ -133,7 +133,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 	// API
 	readonly apiConfiguration: ProviderSettings
-	api: ApiHandler
+	api: ApiHandler & { setTaskId?: (taskId: string) => void }
 	private lastApiRequestTime?: number
 	private consecutiveAutoApprovedRequestsCount: number = 0
 
@@ -1559,7 +1559,7 @@ export class Task extends EventEmitter<ClineEvents> {
 				this.consecutiveAutoApprovedRequestsCount = 0
 			}
 		}
-
+		this.api?.setTaskId?.(this.taskId)
 		const stream = this.api.createMessage(systemPrompt, cleanConversationHistory)
 		const iterator = stream[Symbol.asyncIterator]()
 
