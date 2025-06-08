@@ -1620,12 +1620,25 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			return
 		}
 
+		await this.clearHistory()
 		await this.contextProxy.resetAllState()
 		await this.providerSettingsManager.resetAllConfigs()
 		await this.customModesManager.resetCustomModes()
 		await this.removeClineFromStack()
 		await this.postStateToWebview()
 		await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+	}
+
+	async clearHistory() {
+		try {
+			const history = this.getGlobalState("taskHistory") ?? []
+
+			for (const historyItem of history) {
+				await this.deleteTaskWithId(historyItem.id)
+			}
+		} catch (error) {
+			this.log(error.message)
+		}
 	}
 
 	// logging
