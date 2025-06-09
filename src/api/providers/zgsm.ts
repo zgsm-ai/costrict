@@ -8,7 +8,6 @@ import {
 	azureOpenAiDefaultApiVersion,
 	ModelInfo,
 	// openAiModelInfoSaneDefaults,
-	zgsmModelInfos,
 } from "../../shared/api"
 import { SingleCompletionHandler } from "../index"
 import { convertToOpenAiMessages } from "../transform/openai-format"
@@ -21,6 +20,7 @@ import { DEEP_SEEK_DEFAULT_TEMPERATURE } from "./constants"
 import { createHeaders } from "../../zgsmAuth/zgsmAuthHandler"
 import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 import { getWorkspacePath } from "../../utils/path"
+import { getZgsmSelectedModelInfo } from "../../shared/getZgsmSelectedModelInfo"
 
 export const defaultHeaders = {
 	"HTTP-Referer": "https://github.com/zgsm-ai/zgsm",
@@ -244,9 +244,11 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 	}
 
 	override getModel(): { id: string; info: ModelInfo } {
+		const id = `${this.options.zgsmModelId || this.options.zgsmDefaultModelId || defaultModelCache}`
+
 		return {
-			id: `${this.options.zgsmModelId || this.options.zgsmDefaultModelId || defaultModelCache}`,
-			info: this.options.openAiCustomModelInfo || zgsmModelInfos.default,
+			id,
+			info: this.options.openAiCustomModelInfo || getZgsmSelectedModelInfo(id),
 		}
 	}
 
