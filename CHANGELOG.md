@@ -1,5 +1,9 @@
 # Shenma Change Log
 
+## [1.4.3]
+- Add clearHistory method for task history cleanup when reset extension
+- Fix known issues
+
 ## [1.4.2]
 - Update zgsm provider and error handling improvements
 - Update vscode engine requirement to ^1.86.2
