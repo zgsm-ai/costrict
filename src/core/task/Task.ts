@@ -1484,7 +1484,6 @@ export class Task extends EventEmitter<ClineEvents> {
 		} = (await this.providerRef.deref()?.getState()) ?? {}
 
 		let rateLimitDelay = 0
-		// const isManual = (this.consecutiveAutoApprovedRequestsCount === 0 && !this.lastApiRequestTime)
 		// Only apply rate limiting if this isn't the first request
 		if (this.lastApiRequestTime) {
 			const now = Date.now()
