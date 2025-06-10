@@ -1836,6 +1836,19 @@ export type ModelRecord = Record<string, ModelInfo>
 export type RouterModels = Record<RouterName, ModelRecord>
 
 export const allModels: Record<string, any> = {
+	"qwen25-vl-32b": {
+		maxTokens: 32768,
+		contextWindow: 128_000,
+		supportsImages: true,
+		supportsComputerUse: false,
+		supportsPromptCache: false,
+		inputPrice: 1.5, // 暂定价格
+		outputPrice: 6.0, // 暂定价格
+		cacheWritesPrice: 1.8,
+		cacheReadsPrice: 0.15,
+		reasoningEffort: 3,
+		description: "通义千问25B多模态模型，支持32K上下文，具备文本和视觉能力",
+	},
 	...anthropicModels,
 	...bedrockModels,
 	...geminiModels,
