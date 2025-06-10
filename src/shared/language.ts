@@ -26,6 +26,12 @@ export const LANGUAGES: Record<Language, string> = {
 	"zh-TW": "繁體中文",
 }
 
+export const ZGSM_LANGUAGES = {
+	en: LANGUAGES.en,
+	"zh-CN": LANGUAGES["zh-CN"],
+	"zh-TW": LANGUAGES["zh-TW"],
+}
+
 /**
  * Formats a VSCode locale string to ensure the region code is uppercase.
  * For example, transforms "en-us" to "en-US" or "fr-ca" to "fr-CA".

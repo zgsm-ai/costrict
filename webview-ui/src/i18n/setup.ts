@@ -1,12 +1,14 @@
 import i18next from "i18next"
 import { initReactI18next } from "react-i18next"
 import { zgsmTranslations, mergeLanguageResources } from "./zgsm-setup"
+import { ZGSM_LANGUAGES } from "@roo/shared/language"
 
 // Build translations object
 const translations: Record<string, Record<string, any>> = {}
 
 // Dynamically load locale files
 const localeFiles = import.meta.glob("./locales/**/*.json", { eager: true })
+const ALLOW_LANGUAGES = Object.keys(ZGSM_LANGUAGES)
 
 // Process all locale files
 Object.entries(localeFiles).forEach(([path, module]) => {
@@ -16,7 +18,7 @@ Object.entries(localeFiles).forEach(([path, module]) => {
 
 	if (match) {
 		const [, language, namespace] = match
-
+		if (!ALLOW_LANGUAGES.includes(language)) return
 		// Initialize language object if it doesn't exist
 		if (!translations[language]) {
 			translations[language] = {}
@@ -48,7 +50,7 @@ i18next.use(initReactI18next).init({
 
 export function loadTranslations() {
 	Object.entries(mergedTranslations).forEach(([lang, namespaces]) => {
-	// Object.entries(translations).forEach(([lang, namespaces]) => {
+		// Object.entries(translations).forEach(([lang, namespaces]) => {
 		try {
 			Object.entries(namespaces).forEach(([namespace, resources]) => {
 				i18next.addResourceBundle(lang, namespace, resources, true, true)

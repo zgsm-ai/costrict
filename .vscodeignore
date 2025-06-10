@@ -40,6 +40,36 @@ knip.json
 
 images/**
 
+src/i18n/locales/es 
+src/i18n/locales/fr 
+src/i18n/locales/hi 
+src/i18n/locales/it 
+src/i18n/locales/ja 
+src/i18n/locales/ko 
+src/i18n/locales/nl 
+src/i18n/locales/pl 
+src/i18n/locales/pt-BR 
+src/i18n/locales/ru 
+src/i18n/locales/tr 
+src/i18n/locales/vi 
+src/i18n/locales/ca 
+src/i18n/locales/de
+
+zgsm/webview-ui/src/i18n/locales/es 
+zgsm/webview-ui/src/i18n/locales/fr 
+zgsm/webview-ui/src/i18n/locales/hi 
+zgsm/webview-ui/src/i18n/locales/it 
+zgsm/webview-ui/src/i18n/locales/ja 
+zgsm/webview-ui/src/i18n/locales/ko 
+zgsm/webview-ui/src/i18n/locales/nl 
+zgsm/webview-ui/src/i18n/locales/pl 
+zgsm/webview-ui/src/i18n/locales/pt-BR 
+zgsm/webview-ui/src/i18n/locales/ru 
+zgsm/webview-ui/src/i18n/locales/tr 
+zgsm/webview-ui/src/i18n/locales/vi 
+zgsm/webview-ui/src/i18n/locales/ca 
+zgsm/webview-ui/src/i18n/locales/de
+
 !images/issue-dark.svg
 !images/issue.svg
 !images/zhuge_ai_help_doc_icon_darkmode.svg
@@ -71,6 +101,22 @@ webview-ui/node_modules/**
 
 # Ignore doc assets
 assets/docs/**
+
+# Exclude specific NLS files
+package.nls.es.json
+package.nls.fr.json
+package.nls.hi.json
+package.nls.it.json
+package.nls.ja.json
+package.nls.ko.json
+package.nls.nl.json
+package.nls.pl.json
+package.nls.pt-BR.json
+package.nls.ru.json
+package.nls.tr.json
+package.nls.vi.json
+package.nls.ca.json
+package.nls.de.json
 
 # Include icons and images
 !assets/icons/**

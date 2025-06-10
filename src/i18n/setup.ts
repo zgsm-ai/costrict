@@ -1,5 +1,6 @@
 import i18next from "i18next"
 import { zgsmTranslations, mergeLanguageResources } from "../../zgsm/src/i18n/setup"
+import { ZGSM_LANGUAGES } from "../shared/language"
 
 // Build translations object
 const translations: Record<string, Record<string, any>> = {}
@@ -19,10 +20,12 @@ if (!isTestEnv) {
 		try {
 			// Find all language directories
 			const languageDirs = fs.readdirSync(localesDir, { withFileTypes: true })
+			const ALLOW_LANGUAGES = Object.keys(ZGSM_LANGUAGES)
 
 			const languages = languageDirs
 				.filter((dirent: { isDirectory: () => boolean }) => dirent.isDirectory())
 				.map((dirent: { name: string }) => dirent.name)
+				.filter((language: string) => ALLOW_LANGUAGES.includes(language))
 
 			// Process each language
 			languages.forEach((language: string) => {
