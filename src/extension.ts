@@ -37,6 +37,9 @@ import { initializeI18n } from "./i18n"
 import { getCommand } from "./utils/commands"
 import { defaultLang } from "./utils/language"
 import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
+import { ZgsmCodeBaseService } from "./core/codebase/client"
+import { defaultZgsmAuthConfig } from "./zgsmAuth/config"
+import { initZgsmCodeBase } from "./core/codebase"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -53,6 +56,7 @@ let extensionContext: vscode.ExtensionContext
 // Your extension is activated the very first time the command is executed.
 export async function activate(context: vscode.ExtensionContext) {
 	const hasReloaded = context.globalState.get<boolean>("hasReloadedOnUpgrade") ?? false
+
 	const allCommands = await vscode.commands.getCommands(true)
 
 	if (!allCommands.includes(getCommand("SidebarProvider.focus"))) {
@@ -93,6 +97,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
 	telemetryService.setProvider(provider)
 	await zgsm.activate(context, provider)
+	const zgsmApiKey = provider.getValue("zgsmApiKey")
+	const zgsmBaseUrl = provider.getValue("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl
+
+	ZgsmCodeBaseService.setProvider(provider)
 
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, provider, {
@@ -178,12 +186,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 		context.subscriptions.push(watcher)
 	}
+	if (zgsmApiKey) {
+		initZgsmCodeBase(zgsmBaseUrl, zgsmApiKey)
+	}
 
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }
 
 // This method is called when your extension is deactivated.
 export async function deactivate() {
+	ZgsmCodeBaseService.stopSync()
 	await zgsm.deactivate()
 
 	// Clean up MCP server manager
