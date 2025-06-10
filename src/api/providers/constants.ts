@@ -1,6 +1,6 @@
 export const DEFAULT_HEADERS = {
-	"HTTP-Referer": "https://github.com/RooCodeInc/Roo-Cline",
-	"X-Title": "Roo Code",
+	"HTTP-Referer": "https://github.com/zgsm-ai/zgsm",
+	"X-Title": "Shenma",
 }
 
 export const ANTHROPIC_DEFAULT_MAX_TOKENS = 8192
