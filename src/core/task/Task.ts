@@ -133,7 +133,11 @@ export class Task extends EventEmitter<ClineEvents> {
 
 	// API
 	readonly apiConfiguration: ProviderSettings
-	api: ApiHandler & { setTaskId?: (taskId: string) => void }
+	api: ApiHandler & {
+		setTaskId?: (taskId: string) => void
+		setChatType?: (type: "user" | "system") => void
+		getChatType?: () => "user" | "system"
+	}
 	private lastApiRequestTime?: number
 	private consecutiveAutoApprovedRequestsCount: number = 0
 
@@ -254,6 +258,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 		if (startTask) {
 			if (task || images) {
+				this.api?.setChatType?.("user")
 				this.startTask(task, images)
 			} else if (historyItem) {
 				this.resumeTaskFromHistory()
@@ -269,6 +274,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		let promise
 
 		if (images || task) {
+			instance.api?.setChatType?.("user")
 			promise = instance.startTask(task, images)
 		} else if (historyItem) {
 			promise = instance.resumeTaskFromHistory()
@@ -468,10 +474,16 @@ export class Task extends EventEmitter<ClineEvents> {
 		return result
 	}
 
-	async handleWebviewAskResponse(askResponse: ClineAskResponse, text?: string, images?: string[]) {
+	async handleWebviewAskResponse(
+		askResponse: ClineAskResponse,
+		text?: string,
+		images?: string[],
+		chatType?: "system" | "user",
+	) {
 		this.askResponse = askResponse
 		this.askResponseText = text
 		this.askResponseImages = images
+		this.api.setChatType?.(chatType || "system")
 	}
 
 	async handleTerminalOperation(terminalOperation: "continue" | "abort") {
@@ -1184,7 +1196,6 @@ export class Task extends EventEmitter<ClineEvents> {
 			this.presentAssistantMessageHasPendingUpdates = false
 
 			await this.diffViewProvider.reset()
-
 			// Yields only if the first chunk is successful, otherwise will
 			// allow the user to retry the request (most likely due to rate
 			// limit error, which gets thrown on the first chunk).
@@ -1195,6 +1206,8 @@ export class Task extends EventEmitter<ClineEvents> {
 
 			try {
 				for await (const chunk of stream) {
+					this.api?.setChatType?.("system")
+
 					if (!chunk) {
 						// Sometimes chunk is undefined, no idea that can cause
 						// it, but this workaround seems to fix it.
@@ -1471,7 +1484,6 @@ export class Task extends EventEmitter<ClineEvents> {
 		} = (await this.providerRef.deref()?.getState()) ?? {}
 
 		let rateLimitDelay = 0
-
 		// Only apply rate limiting if this isn't the first request
 		if (this.lastApiRequestTime) {
 			const now = Date.now()
@@ -1559,6 +1571,7 @@ export class Task extends EventEmitter<ClineEvents> {
 				this.consecutiveAutoApprovedRequestsCount = 0
 			}
 		}
+
 		this.api?.setTaskId?.(this.taskId)
 		const stream = this.api.createMessage(systemPrompt, cleanConversationHistory)
 		const iterator = stream[Symbol.asyncIterator]()
@@ -1614,6 +1627,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 				// Delegate generator output from the recursive call with
 				// incremented retry count.
+				this.api?.setChatType?.("system")
 				yield* this.attemptApiRequest(retryAttempt + 1)
 
 				return
@@ -1632,6 +1646,7 @@ export class Task extends EventEmitter<ClineEvents> {
 				await this.say("api_req_retried")
 
 				// Delegate generator output from the recursive call.
+				this.api?.setChatType?.("system")
 				yield* this.attemptApiRequest()
 				return
 			}

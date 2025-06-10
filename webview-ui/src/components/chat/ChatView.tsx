@@ -429,12 +429,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	}, [])
 
 	const handleSendMessage = useCallback(
-		(text: string, images: string[]) => {
+		(text: string, images: string[], chatType = "system") => {
 			text = text.trim()
 
 			if (text || images.length > 0) {
 				if (messages.length === 0) {
-					vscode.postMessage({ type: "newTask", text, images })
+					vscode.postMessage({ type: "newTask", text, images, values: { chatType } })
 				} else if (clineAsk) {
 					switch (clineAsk) {
 						case "followup":
@@ -447,7 +447,13 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						case "resume_task":
 						case "resume_completed_task":
 						case "mistake_limit_reached":
-							vscode.postMessage({ type: "askResponse", askResponse: "messageResponse", text, images })
+							vscode.postMessage({
+								type: "askResponse",
+								askResponse: "messageResponse",
+								text,
+								images,
+								values: { chatType },
+							})
 							break
 						// There is no other case that a textfield should be enabled.
 					}
@@ -1481,7 +1487,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				placeholderText={placeholderText}
 				selectedImages={selectedImages}
 				setSelectedImages={setSelectedImages}
-				onSend={() => handleSendMessage(inputValue, selectedImages)}
+				onSend={() => handleSendMessage(inputValue, selectedImages, "user")}
 				onSelectImages={selectImages}
 				shouldDisableImages={shouldDisableImages}
 				onHeightChange={() => {
