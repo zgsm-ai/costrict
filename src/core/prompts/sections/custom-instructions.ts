@@ -1,7 +1,7 @@
 import fs from "fs/promises"
 import path from "path"
 
-import { LANGUAGES, isLanguage } from "../../../shared/language"
+import { ZGSM_LANGUAGES as LANGUAGES, isLanguage } from "../../../shared/language"
 import { Dirent } from "fs"
 
 /**

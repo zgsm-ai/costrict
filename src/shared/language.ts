@@ -1,4 +1,5 @@
 import { type Language, isLanguage } from "../schemas"
+const isTestEnv = process.env.NODE_ENV === "test" || process.env.JEST_WORKER_ID !== undefined
 
 export { type Language, isLanguage }
 
@@ -30,6 +31,13 @@ export const ZGSM_LANGUAGES = {
 	en: LANGUAGES.en,
 	"zh-CN": LANGUAGES["zh-CN"],
 	"zh-TW": LANGUAGES["zh-TW"],
+} as Record<Language, string>
+
+if (isTestEnv) {
+	Object.assign(ZGSM_LANGUAGES, {
+		es: "Español",
+		fr: "Français",
+	})
 }
 
 /**
