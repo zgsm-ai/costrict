@@ -1850,6 +1850,19 @@ export const allModels: Record<string, any> = {
 	"anthropic/claude-3-7-sonnet": glamaDefaultModelInfo,
 	"anthropic/claude-3-7-sonnet-latest": requestyDefaultModelInfo,
 	"anthropic/claude-3-5-sonnet-20241022": unboundDefaultModelInfo,
+	"qwen25-vl-32b": {
+		maxTokens: 32768,
+		contextWindow: 128_000,
+		supportsImages: true,
+		supportsComputerUse: false,
+		supportsPromptCache: false,
+		inputPrice: 1.5,
+		outputPrice: 6.0,
+		cacheWritesPrice: 1.8,
+		cacheReadsPrice: 0.15,
+		reasoningEffort: 3,
+		description: "Qwen2.5-VL Multimodal Model，maximum supporting 128K context, with text and visual capabilities",
+	},
 }
 
 export const zgsmProviderKey = "zgsm"
