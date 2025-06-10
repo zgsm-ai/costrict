@@ -70,6 +70,9 @@ const copyWasmFiles = {
 	},
 }
 
+// Includes locale directories list
+const INCLUDES_LOCALES = ["zh-CN", "zh-TW", "en"]
+
 // Simple function to copy locale files
 function copyLocaleFiles() {
 	const srcDir = path.join(__dirname, "src", "i18n", "locales")
@@ -88,7 +91,7 @@ function copyLocaleFiles() {
 		fs.mkdirSync(outDir, { recursive: true })
 	} catch (e) {}
 
-	// Function to copy directory recursively
+	// Function to copy directory recursively with exclusions
 	function copyDir(src, dest) {
 		const entries = fs.readdirSync(src, { withFileTypes: true })
 
@@ -97,6 +100,10 @@ function copyLocaleFiles() {
 			const destPath = path.join(dest, entry.name)
 
 			if (entry.isDirectory()) {
+				if (!INCLUDES_LOCALES.includes(entry.name)) {
+					console.log(`Skipping excluded locale: ${entry.name}`)
+					continue
+				}
 				// Create directory and copy contents
 				fs.mkdirSync(destPath, { recursive: true })
 				copyDir(srcPath, destPath)

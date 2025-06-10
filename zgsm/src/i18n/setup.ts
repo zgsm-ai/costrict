@@ -2,6 +2,7 @@ import i18next from "i18next"
 import * as fs from "fs"
 import * as path from "path"
 import { LanguageResources, TranslationResource } from "./types"
+import { ZGSM_LANGUAGES } from "../../../src/shared/language"
 
 // Load translations from directory
 const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
@@ -14,10 +15,12 @@ const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
 			return result
 		}
 
+		const ALLOW_LANGUAGES = Object.keys(ZGSM_LANGUAGES)
 		const languageDirs = fs
 			.readdirSync(dirPath, { withFileTypes: true })
 			.filter((dirent: { isDirectory: () => boolean }) => dirent.isDirectory())
 			.map((dirent: { name: string }) => dirent.name)
+			.filter((language: string) => ALLOW_LANGUAGES.includes(language))
 
 		languageDirs.forEach((language: string) => {
 			const langPath = path.join(dirPath, language)
