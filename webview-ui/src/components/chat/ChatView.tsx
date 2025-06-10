@@ -429,7 +429,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	}, [])
 
 	const handleSendMessage = useCallback(
-		(text: string, images: string[], chatType = "auto") => {
+		(text: string, images: string[], chatType = "system") => {
 			text = text.trim()
 
 			if (text || images.length > 0) {
@@ -1487,7 +1487,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				placeholderText={placeholderText}
 				selectedImages={selectedImages}
 				setSelectedImages={setSelectedImages}
-				onSend={() => handleSendMessage(inputValue, selectedImages, "manual")}
+				onSend={() => handleSendMessage(inputValue, selectedImages, "user")}
 				onSelectImages={selectImages}
 				shouldDisableImages={shouldDisableImages}
 				onHeightChange={() => {

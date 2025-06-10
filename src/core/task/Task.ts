@@ -135,8 +135,8 @@ export class Task extends EventEmitter<ClineEvents> {
 	readonly apiConfiguration: ProviderSettings
 	api: ApiHandler & {
 		setTaskId?: (taskId: string) => void
-		setChatType?: (type: "manual" | "auto") => void
-		getChatType?: () => "manual" | "auto"
+		setChatType?: (type: "user" | "system") => void
+		getChatType?: () => "user" | "system"
 	}
 	private lastApiRequestTime?: number
 	private consecutiveAutoApprovedRequestsCount: number = 0
@@ -258,7 +258,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 		if (startTask) {
 			if (task || images) {
-				this.api?.setChatType?.("manual")
+				this.api?.setChatType?.("user")
 				this.startTask(task, images)
 			} else if (historyItem) {
 				this.resumeTaskFromHistory()
@@ -274,7 +274,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		let promise
 
 		if (images || task) {
-			instance.api?.setChatType?.("manual")
+			instance.api?.setChatType?.("user")
 			promise = instance.startTask(task, images)
 		} else if (historyItem) {
 			promise = instance.resumeTaskFromHistory()
@@ -478,12 +478,12 @@ export class Task extends EventEmitter<ClineEvents> {
 		askResponse: ClineAskResponse,
 		text?: string,
 		images?: string[],
-		chatType?: "auto" | "manual",
+		chatType?: "system" | "user",
 	) {
 		this.askResponse = askResponse
 		this.askResponseText = text
 		this.askResponseImages = images
-		this.api.setChatType?.(chatType || "auto")
+		this.api.setChatType?.(chatType || "system")
 	}
 
 	async handleTerminalOperation(terminalOperation: "continue" | "abort") {
@@ -1206,7 +1206,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 			try {
 				for await (const chunk of stream) {
-					this.api?.setChatType?.("auto")
+					this.api?.setChatType?.("system")
 
 					if (!chunk) {
 						// Sometimes chunk is undefined, no idea that can cause
@@ -1627,7 +1627,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 				// Delegate generator output from the recursive call with
 				// incremented retry count.
-				this.api?.setChatType?.("auto")
+				this.api?.setChatType?.("system")
 				yield* this.attemptApiRequest(retryAttempt + 1)
 
 				return
@@ -1646,7 +1646,7 @@ export class Task extends EventEmitter<ClineEvents> {
 				await this.say("api_req_retried")
 
 				// Delegate generator output from the recursive call.
-				this.api?.setChatType?.("auto")
+				this.api?.setChatType?.("system")
 				yield* this.attemptApiRequest()
 				return
 			}

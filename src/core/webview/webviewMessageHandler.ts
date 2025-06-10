@@ -178,7 +178,7 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 					message.askResponse!,
 					message.text,
 					message.images,
-					message?.values?.chatType || "auto",
+					message?.values?.chatType || "system",
 				)
 			break
 		case "autoCondenseContextPercent":
