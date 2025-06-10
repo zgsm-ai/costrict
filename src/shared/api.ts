@@ -1852,7 +1852,7 @@ export const allModels: Record<string, any> = {
 	"anthropic/claude-3-5-sonnet-20241022": unboundDefaultModelInfo,
 	"qwen25-vl-32b": {
 		maxTokens: 32768,
-		contextWindow: 128_000,
+		contextWindow: 64_000,
 		supportsImages: true,
 		supportsComputerUse: false,
 		supportsPromptCache: false,
@@ -1861,7 +1861,7 @@ export const allModels: Record<string, any> = {
 		cacheWritesPrice: 1.8,
 		cacheReadsPrice: 0.15,
 		reasoningEffort: 3,
-		description: "Qwen2.5-VL Multimodal Model，maximum supporting 128K context, with text and visual capabilities",
+		description: "Qwen2.5-VL Multimodal Model，maximum supporting 64K context, with text and visual capabilities",
 	},
 }
 
