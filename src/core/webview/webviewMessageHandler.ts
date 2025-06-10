@@ -172,7 +172,14 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await provider.postStateToWebview()
 			break
 		case "askResponse":
-			provider.getCurrentCline()?.handleWebviewAskResponse(message.askResponse!, message.text, message.images)
+			provider
+				.getCurrentCline()
+				?.handleWebviewAskResponse(
+					message.askResponse!,
+					message.text,
+					message.images,
+					message?.values?.chatType || "auto",
+				)
 			break
 		case "autoCondenseContextPercent":
 			await updateGlobalState("autoCondenseContextPercent", message.value)

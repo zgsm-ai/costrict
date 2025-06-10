@@ -36,6 +36,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 	protected options: OpenAiHandlerOptions
 	private client: OpenAI
 	private taskId = ""
+	private chatType?: "manual" | "auto"
 
 	constructor(options: OpenAiHandlerOptions) {
 		super()
@@ -160,6 +161,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				Object.assign(isAzureAiInference ? { path: AZURE_AI_INFERENCE_PATH } : {}, {
 					headers: {
 						...defaultHeaders,
+						"x-quota-deduct": `${this.chatType === "manual"}`,
 						"zgsm-task-id": this.taskId,
 						"zgsm-client-id": vscode.env.machineId,
 						"zgsm-project-path": encodeURI(getWorkspacePath()),
@@ -366,6 +368,14 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	setTaskId(taskId: string): void {
 		this.taskId = taskId
+	}
+
+	setChatType(type: "manual" | "auto"): void {
+		this.chatType = type
+	}
+
+	getChatType() {
+		return this.chatType
 	}
 }
 
