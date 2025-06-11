@@ -91,6 +91,14 @@ export class CodeReviewService {
 		return apiConfiguration.zgsmClientId || ""
 	}
 
+	private async getBaseUrl(): Promise<string> {
+		if (!this.clineProvider) {
+			return ""
+		}
+		const { apiConfiguration } = await this.clineProvider.getState()
+		return apiConfiguration.zgsmBaseUrl || "https://zgsm.sangfor.com"
+	}
+
 	// ===== Task Management Methods =====
 
 	/**
@@ -113,7 +121,7 @@ export class CodeReviewService {
 		// Get workspace information from ClineProvider
 		const workspace = this.clineProvider?.cwd.toPosix() || ""
 		const clientId = await this.getClientId()
-
+		const baseUrl = await this.getBaseUrl()
 		try {
 			// Call API to create review task
 			const requestParams = {
@@ -123,6 +131,7 @@ export class CodeReviewService {
 			}
 
 			const taskResponse = await createReviewTaskAPI(requestParams, {
+				baseUrl,
 				signal: this.taskAbortController.signal,
 			})
 
@@ -243,9 +252,10 @@ export class CodeReviewService {
 		if (!this.currentTask) {
 			throw new Error("No active task")
 		}
-
+		const baseUrl = await this.getBaseUrl()
 		// Call API to update issue status on server
 		const result = await updateIssueStatusAPI(issueId, this.currentTask.taskId, status, {
+			baseUrl,
 			signal: this.taskAbortController?.signal,
 		})
 		// Check if API call was successful
@@ -369,7 +379,7 @@ export class CodeReviewService {
 	private async startPolling(taskId: string, clientId: string): Promise<void> {
 		let offset = 0
 		const pollInterval = 2000 // 2 seconds
-
+		const baseUrl = await this.getBaseUrl()
 		while (this.currentTask && !this.currentTask.isCompleted) {
 			// Check if task was aborted
 			if (this.taskAbortController?.signal.aborted) {
@@ -379,6 +389,7 @@ export class CodeReviewService {
 			try {
 				// Call API to get incremental results
 				const result = await getReviewResultsAPI(taskId, offset, clientId, {
+					baseUrl,
 					signal: this.taskAbortController?.signal,
 				})
 
