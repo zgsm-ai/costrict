@@ -1282,7 +1282,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	}
 
 	return (
-		<div className={isHidden ? "hidden" : "fixed top-0 left-0 right-0 bottom-0 flex flex-col overflow-hidden"}>
+		<div className={isHidden ? "hidden" : "fixed top-[28px] left-0 right-0 bottom-0 flex flex-col overflow-hidden"}>
 			{showAnnouncement && <Announcement hideAnnouncement={hideAnnouncement} />}
 			{task ? (
 				<>
@@ -1369,11 +1369,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			//    This ensures it takes its natural height when there's space
 			//    but becomes scrollable when the viewport is too small
 			*/}
-			{!task && (
+			{/*!task && (
 				<div className="mb-[-2px] flex-initial min-h-0">
 					<AutoApproveMenu />
 				</div>
-			)}
+			) */}
 
 			{task && (
 				<>

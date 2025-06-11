@@ -19,15 +19,19 @@ const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
 	onTaskCancel,
 }) => {
 	return (
-		<div>
-			<TaskStatusBar
-				taskStatus={taskStatus}
-				progress={progress}
-				issues={issues}
-				errorMessage={errorMessage}
-				onTaskCancel={onTaskCancel}
-			/>
-			<CodeReviewContent issues={issues} taskStatus={taskStatus} onIssueClick={onIssueClick} />
+		<div className="flex flex-col h-full">
+			<div className="flex-shrink-0 px-5">
+				<TaskStatusBar
+					taskStatus={taskStatus}
+					progress={progress}
+					issues={issues}
+					errorMessage={errorMessage}
+					onTaskCancel={onTaskCancel}
+				/>
+			</div>
+			<div className="flex-1 overflow-hidden">
+				<CodeReviewContent issues={issues} taskStatus={taskStatus} onIssueClick={onIssueClick} />
+			</div>
 		</div>
 	)
 }

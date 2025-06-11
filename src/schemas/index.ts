@@ -93,6 +93,7 @@ export const commandIds = [
 	"historyButtonClicked",
 	"popoutButtonClicked",
 	"settingsButtonClicked",
+	"moreButtonClicked",
 
 	"openInNewTab",
 
@@ -107,6 +108,7 @@ export const commandIds = [
 
 	"focusInput",
 	"acceptInput",
+
 	"codeReview",
 	"reviewFilesAndFolders",
 	"reviewRepo",

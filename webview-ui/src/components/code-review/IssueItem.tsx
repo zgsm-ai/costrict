@@ -19,7 +19,7 @@ const IssueItem: React.FC<IssueItemProps> = ({ issue, onIssueClick }) => {
 	})
 	return (
 		<div
-			className="w-full flex hover:bg-vscode-list-hoverBackground cursor-pointer mt-[2px]"
+			className="w-full flex hover:bg-vscode-list-hoverBackground cursor-pointer mt-[2px] pr-5"
 			style={{ opacity: isNotInitial ? 0.6 : 1 }}
 			onClick={() => onIssueClick(issue.id)}>
 			<div className="w-[2px]" style={{ backgroundColor: colors[issue.severity] }}></div>

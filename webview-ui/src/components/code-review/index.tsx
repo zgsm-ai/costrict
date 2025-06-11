@@ -20,7 +20,7 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ onIssueClick, onTaskCan
 	}
 
 	return (
-		<>
+		<div className="fixed top-[28px] left-0 right-0 bottom-0 flex flex-col overflow-hidden">
 			<CodeReviewPanel
 				issues={issues} // To be sourced from context
 				taskStatus={status}
@@ -29,7 +29,7 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ onIssueClick, onTaskCan
 				onIssueClick={onIssueClick}
 				onTaskCancel={onTaskCancel}
 			/>
-		</>
+		</div>
 	)
 }
 

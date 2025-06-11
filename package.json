@@ -67,6 +67,11 @@
 			{
 				"id": "shenma.explorerSubmenu",
 				"label": "%extension.displayName%"
+			},
+			{
+				"id": "zgsm.moreDropdownMenu",
+				"label": "More Actions",
+				"icon": "$(ellipsis)"
 			}
 		],
 		"viewsContainers": {
@@ -122,6 +127,11 @@
 				"command": "zgsm.helpButtonClicked",
 				"title": "%command.documentation.title%",
 				"icon": "$(question)"
+			},
+			{
+				"command": "zgsm.moreButtonClicked",
+				"title": "more",
+				"icon": "$(ellipsis)"
 			},
 			{
 				"command": "zgsm.codeReviewButtonClicked",
@@ -334,7 +344,7 @@
 			"explorer/context": [
 				{
 					"submenu": "shenma.explorerSubmenu",
-					"group": "navigation@5"
+					"group": "1_modification@1"
 				}
 			],
 			"shenma.explorerSubmenu": [
@@ -369,96 +379,50 @@
 			],
 			"view/title": [
 				{
-					"command": "zgsm.plusButtonClicked",
+					"command": "zgsm.promptsButtonClicked",
 					"group": "navigation@1",
 					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "zgsm.promptsButtonClicked",
+					"command": "zgsm.mcpButtonClicked",
 					"group": "navigation@2",
 					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "zgsm.mcpButtonClicked",
+					"command": "zgsm.settingsButtonClicked",
 					"group": "navigation@3",
 					"when": "view == zgsm.SidebarProvider"
 				},
 				{
-					"command": "zgsm.historyButtonClicked",
+					"submenu": "zgsm.moreDropdownMenu",
 					"group": "navigation@4",
 					"when": "view == zgsm.SidebarProvider"
-				},
-				{
-					"command": "zgsm.popoutButtonClicked",
-					"group": "navigation@5",
-					"when": "view == zgsm.SidebarProvider"
-				},
-				{
-					"command": "zgsm.settingsButtonClicked",
-					"group": "navigation@6",
-					"when": "view == zgsm.SidebarProvider"
-				},
-				{
-					"command": "zgsm.codeReviewButtonClicked",
-					"group": "navigation@7",
-					"when": "view == zgsm.SidebarProvider"
-				},
-				{
-					"command": "zgsm.helpButtonClicked",
-					"group": "navigation@7",
-					"when": "view == zgsm.SidebarProvider"
-				},
-				{
-					"command": "zgsm.view.userHelperDoc",
-					"when": "view == zgsm.view",
-					"group": "navigation"
-				},
-				{
-					"command": "zgsm.view.logout",
-					"when": "view == zgsm.view",
-					"group": "navigation"
-				},
-				{
-					"command": "zgsm.view.issue",
-					"when": "view == zgsm.view",
-					"group": "navigation"
 				}
 			],
 			"editor/title": [
 				{
-					"command": "zgsm.plusButtonClicked",
+					"command": "zgsm.settingsButtonClicked",
 					"group": "navigation@1",
 					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
 				},
 				{
-					"command": "zgsm.promptsButtonClicked",
+					"submenu": "zgsm.moreDropdownMenu",
 					"group": "navigation@2",
 					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
+				}
+			],
+			"zgsm.moreDropdownMenu": [
+				{
+					"command": "zgsm.view.userHelperDoc",
+					"group": "top@1"
 				},
 				{
-					"command": "zgsm.mcpButtonClicked",
-					"group": "navigation@3",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
+					"command": "zgsm.view.issue",
+					"group": "top@2"
 				},
 				{
-					"command": "zgsm.historyButtonClicked",
-					"group": "navigation@4",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
-				},
-				{
-					"command": "zgsm.popoutButtonClicked",
-					"group": "navigation@5",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
-				},
-				{
-					"command": "zgsm.settingsButtonClicked",
-					"group": "navigation@6",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
-				},
-				{
-					"command": "zgsm.helpButtonClicked",
-					"group": "navigation@7",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
+					"command": "zgsm.openInNewTab",
+					"group": "top@3"
 				}
 			],
 			"comments/commentThread/title": [

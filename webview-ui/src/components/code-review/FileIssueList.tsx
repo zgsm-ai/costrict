@@ -30,7 +30,7 @@ const FileIssueList: React.FC<FileIssueListProps> = ({ fileName, issues, onIssue
 
 	return (
 		<div className="w-full" style={{ opacity: allIssuesProcessed ? 0.4 : 1 }}>
-			<div className="flex justify-between">
+			<div className="flex justify-between pr-5">
 				<div className="flex items-center gap-2">
 					<SetiFileIcon fileName={fileName} size={16} />
 					<span>{fileName}</span>

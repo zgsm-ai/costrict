@@ -113,9 +113,9 @@ const CodeReviewContent: React.FC<CodeReviewContentProps> = ({ issues, taskStatu
 	)
 
 	return (
-		<div>
+		<div className="flex flex-col h-full">
 			{taskStatus === TaskStatus.COMPLETED && (
-				<div className="flex mb-4 justify-between items-center">
+				<div className="flex mb-4 justify-between items-center flex-shrink-0 px-5">
 					<TaskSummary issues={filteredIssues} />
 					<Popover>
 						<PopoverTrigger>
@@ -129,8 +129,11 @@ const CodeReviewContent: React.FC<CodeReviewContentProps> = ({ issues, taskStatu
 							</div>
 						</PopoverTrigger>
 						<PopoverContent
-							className="!border-transparent bg-popover outline-1 outline-solid outline-vscode-menu-border mr-2"
-							style={{ boxShadow: "0 2px 8px var(--color-vscode-widget-shadow)" }}>
+							className="!border-transparent bg-popover mr-2 rounded-[5px]"
+							style={{
+								boxShadow: "0 2px 8px var(--color-vscode-widget-shadow)",
+								outline: "1px solid var(--color-vscode-menu-border)",
+							}}>
 							<div className="flex flex-col">
 								<div className="mb-4">
 									<div className="flex items-center mb-2">
@@ -188,10 +191,17 @@ const CodeReviewContent: React.FC<CodeReviewContentProps> = ({ issues, taskStatu
 					</Popover>
 				</div>
 			)}
-			<div className="flex flex-col space-y-4">
-				{Object.entries(groupedIssues).map(([filePath, fileIssues]) => (
-					<FileIssueList key={filePath} fileName={filePath} issues={fileIssues} onIssueClick={onIssueClick} />
-				))}
+			<div className="flex-1 overflow-y-auto pl-5">
+				<div className="flex flex-col space-y-4">
+					{Object.entries(groupedIssues).map(([filePath, fileIssues]) => (
+						<FileIssueList
+							key={filePath}
+							fileName={filePath}
+							issues={fileIssues}
+							onIssueClick={onIssueClick}
+						/>
+					))}
+				</div>
 			</div>
 		</div>
 	)
