@@ -21,6 +21,7 @@ import { createReviewTaskAPI, getReviewResultsAPI, updateIssueStatusAPI } from "
 import { ExtensionMessage } from "../../shared/ExtensionMessage"
 import { ReviewComment } from "./reviewComment"
 import path from "node:path"
+import type { AxiosRequestConfig } from "axios"
 
 /**
  * Code Review Service - Singleton
@@ -84,19 +85,22 @@ export class CodeReviewService {
 		this.commentService = commentService
 	}
 	private async getClientId(): Promise<string> {
-		if (!this.clineProvider) {
-			return ""
-		}
-		const { apiConfiguration } = await this.clineProvider.getState()
-		return apiConfiguration.zgsmClientId || ""
+		return vscode.env.machineId
 	}
 
-	private async getBaseUrl(): Promise<string> {
+	private async getRequestOptions(): Promise<AxiosRequestConfig> {
 		if (!this.clineProvider) {
-			return ""
+			return {}
 		}
 		const { apiConfiguration } = await this.clineProvider.getState()
-		return apiConfiguration.zgsmBaseUrl || "https://zgsm.sangfor.com"
+		const apiKey = apiConfiguration.zgsmApiKey
+		const baseURL = apiConfiguration.zgsmBaseUrl || "https://zgsm.sangfor.com"
+		return {
+			baseURL,
+			headers: {
+				Authorization: `Bearer ${apiKey}`,
+			},
+		}
 	}
 
 	// ===== Task Management Methods =====
@@ -121,7 +125,7 @@ export class CodeReviewService {
 		// Get workspace information from ClineProvider
 		const workspace = this.clineProvider?.cwd.toPosix() || ""
 		const clientId = await this.getClientId()
-		const baseUrl = await this.getBaseUrl()
+		const requestOptions = await this.getRequestOptions()
 		try {
 			// Call API to create review task
 			const requestParams = {
@@ -131,7 +135,7 @@ export class CodeReviewService {
 			}
 
 			const taskResponse = await createReviewTaskAPI(requestParams, {
-				baseUrl,
+				...requestOptions,
 				signal: this.taskAbortController.signal,
 			})
 
@@ -252,10 +256,10 @@ export class CodeReviewService {
 		if (!this.currentTask) {
 			throw new Error("No active task")
 		}
-		const baseUrl = await this.getBaseUrl()
+		const requestOptions = await this.getRequestOptions()
 		// Call API to update issue status on server
 		const result = await updateIssueStatusAPI(issueId, this.currentTask.taskId, status, {
-			baseUrl,
+			...requestOptions,
 			signal: this.taskAbortController?.signal,
 		})
 		// Check if API call was successful
@@ -379,7 +383,7 @@ export class CodeReviewService {
 	private async startPolling(taskId: string, clientId: string): Promise<void> {
 		let offset = 0
 		const pollInterval = 2000 // 2 seconds
-		const baseUrl = await this.getBaseUrl()
+		const requestOptions = await this.getRequestOptions()
 		while (this.currentTask && !this.currentTask.isCompleted) {
 			// Check if task was aborted
 			if (this.taskAbortController?.signal.aborted) {
@@ -389,7 +393,7 @@ export class CodeReviewService {
 			try {
 				// Call API to get incremental results
 				const result = await getReviewResultsAPI(taskId, offset, clientId, {
-					baseUrl,
+					...requestOptions,
 					signal: this.taskAbortController?.signal,
 				})
 

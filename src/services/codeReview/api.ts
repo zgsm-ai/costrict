@@ -16,6 +16,7 @@ import {
 	UpdateIssueStatusResponse,
 } from "./types"
 import { IssueStatus } from "../../shared/codeReview"
+import type { AxiosRequestConfig } from "axios"
 
 /**
  * Create a new code review task
@@ -41,10 +42,7 @@ import { IssueStatus } from "../../shared/codeReview"
  */
 export async function createReviewTaskAPI(
 	params: ReviewTaskRequest,
-	options: {
-		baseUrl?: string
-		signal?: AbortSignal
-	} = {},
+	options: AxiosRequestConfig = {},
 ): Promise<ReviewTaskResponse> {
 	const { client_id: clientId, workspace, targets } = params
 	// Validate input parameters
@@ -80,11 +78,8 @@ export async function createReviewTaskAPI(
 	}
 
 	try {
-		const { baseUrl, signal } = options
 		// Send POST request to create review task
-		const response = await axiosInstance.post<ReviewTaskResponse>(`${baseUrl || ""}/api/v1/review_tasks`, params, {
-			signal,
-		})
+		const response = await axiosInstance.post<ReviewTaskResponse>(`/api/v1/review_tasks`, params, options)
 
 		return response.data
 	} catch (error) {
@@ -118,10 +113,7 @@ export async function getReviewResultsAPI(
 	reviewTaskId: string,
 	offset: number = 0,
 	client_id: string = "",
-	options: {
-		baseUrl?: string
-		signal?: AbortSignal
-	} = {},
+	options: AxiosRequestConfig = {},
 ): Promise<ReviewTaskResult> {
 	// Validate input parameters
 	if (!reviewTaskId || reviewTaskId.trim() === "") {
@@ -133,15 +125,14 @@ export async function getReviewResultsAPI(
 	}
 
 	try {
-		const { baseUrl, signal } = options
 		// Construct query URL with offset parameter
-		const url = `${baseUrl || ""}/api/v1/review_tasks/${encodeURIComponent(reviewTaskId)}/issues/increment`
+		const url = `/api/v1/review_tasks/${encodeURIComponent(reviewTaskId)}/issues/increment`
 		const params = offset > 0 ? { offset, client_id } : { client_id }
 
 		// Send GET request to get review results
 		const response = await axiosInstance.get<ReviewTaskResult>(url, {
 			params,
-			signal,
+			...options,
 		})
 
 		return response.data
@@ -178,10 +169,7 @@ export async function updateIssueStatusAPI(
 	issueId: string,
 	reviewTaskId: string,
 	status: IssueStatus,
-	options: {
-		baseUrl?: string
-		signal?: AbortSignal
-	} = {},
+	options: AxiosRequestConfig = {},
 ): Promise<{ success: boolean; message?: string }> {
 	// Validate input parameters
 	if (!issueId || issueId.trim() === "") {
@@ -205,14 +193,11 @@ export async function updateIssueStatusAPI(
 	}
 
 	try {
-		const { baseUrl, signal } = options
 		// Send PUT request to update issue status
 		const { data } = await axiosInstance.put<UpdateIssueStatusResponse>(
-			`${baseUrl || ""}/api/v1/issues/${encodeURIComponent(issueId)}/status`,
+			`/api/v1/issues/${encodeURIComponent(issueId)}/status`,
 			requestBody,
-			{
-				signal,
-			},
+			options,
 		)
 
 		// Check if the operation was successful
