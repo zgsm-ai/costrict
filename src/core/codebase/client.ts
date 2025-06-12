@@ -5,7 +5,6 @@ import { FileDownloader } from "./fileDownloader"
 import * as path from "path"
 import getPort, { portNumbers } from "get-port"
 import * as fs from "fs"
-import fetch from "node-fetch"
 import { exec } from "child_process"
 import {
 	SyncServiceClient,

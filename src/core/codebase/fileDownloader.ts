@@ -1,6 +1,5 @@
 import * as fs from "fs"
 import * as crypto from "crypto"
-import fetch from "node-fetch"
 
 export class FileDownloader {
 	private readonly downloadUrl: string
