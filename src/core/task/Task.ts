@@ -1586,7 +1586,7 @@ export class Task extends EventEmitter<ClineEvents> {
 			this.isWaitingForFirstChunk = false
 			// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 			if (autoApprovalEnabled && alwaysApproveResubmit) {
-				const errorMsg = getTaskRequestError(error)
+				const errorMsg = getTaskRequestError(error, this.taskId, this.instanceId)
 
 				const baseDelay = requestDelaySeconds || 5
 				let exponentialDelay = Math.ceil(baseDelay * Math.pow(2, retryAttempt))
@@ -1714,7 +1714,7 @@ export class Task extends EventEmitter<ClineEvents> {
 	}
 }
 
-function getTaskRequestError(error: any) {
+function getTaskRequestError(error: any, taskId: string, instanceId: string) {
 	if (error.error?.metadata?.raw) {
 		return JSON.stringify(error.error.metadata.raw, null, 2)
 	}
@@ -1735,6 +1735,8 @@ function getTaskRequestError(error: any) {
 		} as Record<number | string, { status: string; solution: string }>
 
 		const _err = defaultApiErrors[error.status] || unknownError
+
+		console.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: `, error.message)
 
 		return `${t("apiErrors:request.http_code")}\n\n${error.status}\n\n${t("apiErrors:request.error_details")}\n\n${_err.status}\n\n${t("apiErrors:request.solution")}\n\n${_err.solution}`
 	} else if (!error.message) {

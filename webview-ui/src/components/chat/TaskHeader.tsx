@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { memo, useRef, useState } from "react"
 import { useWindowSize } from "react-use"
 import { useTranslation } from "react-i18next"
@@ -95,7 +96,7 @@ const TaskHeader = ({
 					</Button>
 				</div>
 				{/* Collapsed state: Track context and cost if we have any */}
-				{!isTaskExpanded && contextWindow > 0 && (
+				{/* {!isTaskExpanded && contextWindow > 0 && (
 					<div className={`w-full flex flex-row gap-1 h-auto`}>
 						<ContextWindowProgress
 							contextWindow={contextWindow}
@@ -104,7 +105,7 @@ const TaskHeader = ({
 						/>
 						{!!totalCost && <VSCodeBadge>${totalCost.toFixed(2)}</VSCodeBadge>}
 					</div>
-				)}
+				)} */}
 				{/* Expanded state: Show task text and images */}
 				{isTaskExpanded && (
 					<>
@@ -128,21 +129,23 @@ const TaskHeader = ({
 							{isTaskExpanded && contextWindow > 0 && (
 								<div
 									className={`w-full flex ${windowWidth < 400 ? "flex-col" : "flex-row"} gap-1 h-auto`}>
-									<div className="flex items-center gap-1 flex-shrink-0">
+									{/* <div className="flex items-center gap-1 flex-shrink-0">
 										<span className="font-bold" data-testid="context-window-label">
 											{t("chat:task.contextWindow")}
 										</span>
-									</div>
-									<ContextWindowProgress
+									</div> */}
+									{/* <ContextWindowProgress
 										contextWindow={contextWindow}
 										contextTokens={contextTokens || 0}
 										maxTokens={getMaxTokensForModel(model, apiConfiguration)}
-									/>
+									/> */}
 								</div>
 							)}
 							<div className="flex justify-between items-center h-[20px]">
 								<div className="flex items-center gap-1 flex-wrap">
-									<span className="font-bold">{t("chat:task.tokens")}</span>
+									<span className="font-bold">
+										{tokensIn > 0 || tokensOut > 0 ? t("chat:task.tokens") : ""}
+									</span>
 									{typeof tokensIn === "number" && tokensIn > 0 && (
 										<span className="flex items-center gap-0.5">
 											<i className="codicon codicon-arrow-up text-xs font-bold" />

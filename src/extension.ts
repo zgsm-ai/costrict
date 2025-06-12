@@ -72,8 +72,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Migrate old settings to new
 	await migrateSettings(context, outputChannel)
 
-	// Initialize telemetry service after environment variables are loaded.
-	telemetryService.initialize()
+	// // Initialize telemetry service after environment variables are loaded.
+	// telemetryService.initialize()
 
 	// Initialize i18n for internationalization support
 	initializeI18n(context.globalState.get("language") ?? formatLanguage(await defaultLang()))
