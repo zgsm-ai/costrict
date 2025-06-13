@@ -1,5 +1,9 @@
 # Shenma Change Log
 
+## [1.4.5]
+- Prompts optimization
+- Optimize logs
+
 ## [1.4.4]
 - Add qwen25-vl-32b model info to support imege input
 - Code optimization
