@@ -358,6 +358,7 @@ type ProviderSettings = {
 	zgsmClientSecret?: string | undefined
 	useZgsmCustomConfig?: boolean | undefined
 	isZgsmApiKeyValid?: boolean | undefined
+	zgsmApiKeyUpdatedAt?: number | undefined
 }
 
 export type { ProviderSettings }
@@ -790,6 +791,7 @@ type IpcMessage =
 								zgsmClientSecret?: string | undefined
 								useZgsmCustomConfig?: boolean | undefined
 								isZgsmApiKeyValid?: boolean | undefined
+								zgsmApiKeyUpdatedAt?: number | undefined
 								currentApiConfigName?: string | undefined
 								listApiConfigMeta?:
 									| {
@@ -1286,6 +1288,7 @@ type TaskCommand =
 					zgsmClientSecret?: string | undefined
 					useZgsmCustomConfig?: boolean | undefined
 					isZgsmApiKeyValid?: boolean | undefined
+					zgsmApiKeyUpdatedAt?: number | undefined
 					currentApiConfigName?: string | undefined
 					listApiConfigMeta?:
 						| {

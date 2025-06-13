@@ -622,6 +622,7 @@ const zgsmSchema = z.object({
 	zgsmClientSecret: z.string().optional(),
 	useZgsmCustomConfig: z.boolean().optional(),
 	isZgsmApiKeyValid: z.boolean().optional(),
+	zgsmApiKeyUpdatedAt: z.number().optional(),
 })
 
 export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProvider", [
@@ -701,6 +702,7 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmClientSecret: undefined,
 	useZgsmCustomConfig: undefined,
 	isZgsmApiKeyValid: undefined,
+	zgsmApiKeyUpdatedAt: undefined,
 	// Anthropic
 	apiModelId: undefined,
 	apiKey: undefined,
