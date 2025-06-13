@@ -231,7 +231,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 	const isSettingValid = !errorMessage
 
 	const handleSubmit = useCallback(
-		(zgsmApiKey?: string) => {
+		(zgsmConfig?: ProviderSettings) => {
 			if (isSettingValid) {
 				vscode.postMessage({ type: "language", text: language })
 				vscode.postMessage({ type: "alwaysAllowReadOnly", bool: alwaysAllowReadOnly })
@@ -286,7 +286,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					text: currentApiConfigName,
 					apiConfiguration: {
 						...apiConfiguration,
-						zgsmApiKey: zgsmApiKey || apiConfiguration.zgsmApiKey,
+						...zgsmConfig,
+						zgsmApiKey: zgsmConfig?.zgsmApiKey || apiConfiguration.zgsmApiKey,
 					},
 				})
 				vscode.postMessage({ type: "telemetrySetting", text: telemetrySetting })
@@ -357,20 +358,21 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		[isChangeDetected],
 	)
 	const handleAfterLogin = useCallback(
-		(apiKey: string) => {
-			if (!apiKey) return
+		(zgsmConfig: ProviderSettings) => {
+			if (!zgsmConfig.apiKey) return
 
 			setCachedState((prevState) => {
 				const state = { ...prevState, ...extensionState }
+
 				return {
 					...state,
 					apiConfiguration: {
 						...state.apiConfiguration,
-						zgsmApiKey: apiKey,
+						...zgsmConfig,
 					},
 				}
 			})
-			handleSubmit(apiKey)
+			handleSubmit(zgsmConfig)
 			onDone()
 		},
 		[extensionState, handleSubmit, onDone],
@@ -486,7 +488,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			}
 
 			if (message.type === "afterZgsmPostLogin") {
-				handleAfterLogin(message.values?.apiKey ?? "")
+				handleAfterLogin(message.values || {})
 			}
 		}
 
