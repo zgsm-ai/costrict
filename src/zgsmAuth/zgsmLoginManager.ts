@@ -338,6 +338,7 @@ export class ZgsmLoginManager {
 		return [
 			["machine_code", vscode.env.machineId],
 			["state", state],
+			["provider", "casdoor"],
 			["plugin_version", Package.version],
 			["vscode_version", vscode.version],
 			["uri_scheme", vscode.env.uriScheme],
