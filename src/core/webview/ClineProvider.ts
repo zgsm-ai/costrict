@@ -1120,7 +1120,10 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		)
 		await this.upsertProviderProfile(currentApiConfigName, newConfiguration)
 		// handleZgsmAuthCallback
-		await this.postMessageToWebview({ type: "afterZgsmPostLogin", values: { apiKey } })
+		await this.postMessageToWebview({
+			type: "afterZgsmPostLogin",
+			values: { zgsmApiKey: apiKey, zgsmApiKeyUpdatedAt },
+		})
 		vscode.window.showInformationMessage("Shenma login successful")
 
 		CompletionStatusBar.complete()
