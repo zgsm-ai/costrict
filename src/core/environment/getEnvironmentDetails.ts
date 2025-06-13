@@ -46,7 +46,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 		details += "\n(No visible files)"
 	}
 
-	details += "\n\n# VSCode Open Tabs"
+	details += "\n\n# The file currently open by the user is"
 	const { maxOpenTabsContext } = state ?? {}
 	const maxTabs = maxOpenTabsContext ?? 20
 	const openTabPaths = vscode.window.tabGroups.all

@@ -10,6 +10,7 @@ import { serializeError } from "serialize-error"
 
 // schemas
 import { TokenUsage, ToolUsage, ToolName, ContextCondense } from "../../schemas"
+import { isLanguage } from "../../schemas"
 
 // api
 import { ApiHandler, buildApiHandler } from "../../api"
@@ -33,6 +34,7 @@ import { HistoryItem } from "../../shared/HistoryItem"
 import { ClineAskResponse } from "../../shared/WebviewMessage"
 import { defaultModeSlug } from "../../shared/modes"
 import { DiffStrategy } from "../../shared/tools"
+import { LANGUAGES } from "../../shared/language"
 
 // services
 import { UrlContentFetcher } from "../../services/browser/UrlContentFetcher"
@@ -1090,6 +1092,15 @@ export class Task extends EventEmitter<ClineEvents> {
 		// results.
 		const finalUserContent = [...parsedUserContent, { type: "text" as const, text: environmentDetails }]
 
+		// Add language preference to user content if available
+		const { language } = (await this.providerRef.deref()?.getState()) ?? {}
+		if (language) {
+				const languageName = isLanguage(language) ? LANGUAGES[language] : language
+				await this.addToApiConversationHistory({
+						role: "user",
+						content: `\nPlease also follow these instructions in all of your responses if relevant to my query. No need to acknowledge these instructions directly in your response.\n\nAlways respond in ${languageName}\nYou must use a tool in your response! \n# Reminder: Instructions for Tool Use\n\nTool uses are formatted using XML-style tags. The tool name is enclosed in opening and closing tags, and each parameter is similarly enclosed within its own set of tags. Here's the structure:\n\n<tool_name>\n<parameter1_name>value1</parameter1_name>\n<parameter2_name>value2</parameter2_name>\n...\n</tool_name>\n\nFor example:\n\n<attempt_completion>\n<result>\nI have completed the task...\n</result>\n</attempt_completion>\n\nAlways adhere to this format for all tool uses to ensure proper parsing and execution.\n\n# Next Steps\n\nIf you have completed the user's task, use the attempt_completion tool. \nIf you require additional information from the user, use the ask_followup_question tool. \nOtherwise, if you have not completed the task and do not need additional information, then proceed with the next step of the task.\nWhen creating multiple folders using the command, please use mkidr - p path1; mkdir -p path2.\n(This is an automated message, so do not respond to it conversationally.)`,
+				})
+		}
 		await this.addToApiConversationHistory({ role: "user", content: finalUserContent })
 		telemetryService.captureConversationMessage(this.taskId, "user")
 

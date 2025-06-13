@@ -138,7 +138,7 @@ describe("getEnvironmentDetails", () => {
 		expect(result).toContain("<environment_details>")
 		expect(result).toContain("</environment_details>")
 		expect(result).toContain("# VSCode Visible Files")
-		expect(result).toContain("# VSCode Open Tabs")
+		expect(result).toContain("# The file currently open by the user is")
 		expect(result).toContain("# Current Time")
 		expect(result).toContain("# Current Context Size (Tokens)")
 		expect(result).toContain("# Current Cost")
