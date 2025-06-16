@@ -1,5 +1,8 @@
 # Shenma Change Log
 
+## [1.4.6]
+- Fix known issues
+
 ## [1.4.5]
 - Prompts optimization
 - Optimize logs
