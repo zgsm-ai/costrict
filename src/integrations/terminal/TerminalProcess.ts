@@ -117,6 +117,9 @@ export class TerminalProcess extends BaseTerminalProcess {
 		if (isPowerShell) {
 			let commandToExecute = command
 
+			// Convert Unix shell syntax to PowerShell compatible syntax
+			commandToExecute = this.convertToPowerShellSyntax(commandToExecute)
+
 			// Only add the PowerShell counter workaround if enabled
 			if (Terminal.getPowershellCounter()) {
 				commandToExecute += ` ; "(Shenma/PS Workaround: ${this.terminal.cmdCounter++})" > $null`
@@ -462,5 +465,43 @@ export class TerminalProcess extends BaseTerminalProcess {
 		}
 
 		return match133 !== undefined ? match133 : match633
+	}
+
+	/**
+	 * Convert Unix shell syntax to PowerShell compatible syntax
+	 * @param command The original command string
+	 * @returns PowerShell compatible command string
+	 */
+	private convertToPowerShellSyntax(command: string): string {
+		let convertedCommand = command
+
+		// Handle quoted strings to avoid converting operators inside quotes
+		const quotedParts: string[] = []
+		let tempCommand = convertedCommand
+
+		// Temporarily replace quoted content
+		tempCommand = tempCommand.replace(/"[^"]*"/g, (match) => {
+			quotedParts.push(match)
+			return `__QUOTE_${quotedParts.length - 1}__`
+		})
+
+		// Convert && (logical AND) to PowerShell semicolon separator
+		// PowerShell 5.x doesn't support &&, so we use ; for sequential execution
+		tempCommand = tempCommand.replace(/\s*&&\s*/g, " ; ")
+
+		// Convert || (logical OR) to PowerShell error handling pattern
+		// This is a basic conversion - for more complex logic, proper error handling would be needed
+		tempCommand = tempCommand.replace(/\s*\|\|\s*/g, " ; ")
+
+		// Restore quoted strings
+		tempCommand = tempCommand.replace(/__QUOTE_(\d+)__/g, (_, i) => quotedParts[parseInt(i)])
+
+		// Log the conversion for debugging
+		if (tempCommand !== command) {
+			console.log(`[PowerShell Syntax Conversion] Original: ${command}`)
+			console.log(`[PowerShell Syntax Conversion] Converted: ${tempCommand}`)
+		}
+
+		return tempCommand
 	}
 }
