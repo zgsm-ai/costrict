@@ -359,7 +359,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 	)
 	const handleAfterLogin = useCallback(
 		(zgsmConfig: ProviderSettings) => {
-			if (!zgsmConfig.apiKey) return
+			if (!zgsmConfig.zgsmApiKey) return
 
 			setCachedState((prevState) => {
 				const state = { ...prevState, ...extensionState }
