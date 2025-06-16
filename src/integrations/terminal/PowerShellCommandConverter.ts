@@ -3,6 +3,44 @@
  * Converts Unix shell syntax to PowerShell compatible syntax
  */
 
+/**
+ * Convert Unix shell syntax to PowerShell compatible syntax
+ * @param command The original command string
+ * @returns PowerShell compatible command string
+ */
+export function convertToPowerShellSyntax(command: string): string {
+	let convertedCommand = command
+
+	// Handle quoted strings to avoid converting operators inside quotes
+	const quotedParts: string[] = []
+	let tempCommand = convertedCommand
+
+	// Temporarily replace quoted content
+	tempCommand = tempCommand.replace(/"[^"]*"/g, (match) => {
+		quotedParts.push(match)
+		return `__QUOTE_${quotedParts.length - 1}__`
+	})
+
+	// Convert && (logical AND) to PowerShell semicolon separator
+	// PowerShell 5.x doesn't support &&, so we use ; for sequential execution
+	tempCommand = tempCommand.replace(/\s*&&\s*/g, " ; ")
+
+	// Convert || (logical OR) to PowerShell error handling pattern
+	// This is a basic conversion - for more complex logic, proper error handling would be needed
+	tempCommand = tempCommand.replace(/\s*\|\|\s*/g, " ; ")
+
+	// Restore quoted strings
+	tempCommand = tempCommand.replace(/__QUOTE_(\d+)__/g, (_, i) => quotedParts[parseInt(i)])
+
+	// Log the conversion for debugging
+	if (tempCommand !== command) {
+		console.log(`[PowerShell Syntax Conversion] Original: ${command}`)
+		console.log(`[PowerShell Syntax Conversion] Converted: ${tempCommand}`)
+	}
+
+	return tempCommand
+}
+
 export class PowerShellCommandConverter {
 	/**
 	 * Convert Unix shell syntax to PowerShell compatible syntax
