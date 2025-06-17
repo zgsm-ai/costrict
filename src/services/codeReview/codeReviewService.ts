@@ -22,6 +22,7 @@ import { ExtensionMessage } from "../../shared/ExtensionMessage"
 import { ReviewComment } from "./reviewComment"
 import path from "node:path"
 import type { AxiosRequestConfig } from "axios"
+import { createLogger, ILogger } from "../../utils/logger"
 
 /**
  * Code Review Service - Singleton
@@ -44,11 +45,13 @@ export class CodeReviewService {
 	// Issue management and caching
 	private cachedIssues: Map<string, ReviewIssue> = new Map()
 	private currentActiveIssueId: string | null = null
-
+	private logger: ILogger
 	/**
 	 * Private constructor for singleton pattern
 	 */
-	private constructor() {}
+	private constructor() {
+		this.logger = createLogger("Shenma")
+	}
 
 	/**
 	 * Get singleton instance
@@ -133,7 +136,7 @@ export class CodeReviewService {
 				workspace,
 				targets,
 			}
-
+			this.logger.info("Starting code review task")
 			const taskResponse = await createReviewTaskAPI(requestParams, {
 				...requestOptions,
 				signal: this.taskAbortController.signal,
@@ -159,6 +162,7 @@ export class CodeReviewService {
 			// Clean up on error
 			this.taskAbortController = null
 			this.currentTask = null
+			this.logger.error(error)
 			throw error
 		}
 	}
@@ -246,48 +250,65 @@ export class CodeReviewService {
 	 * @param status - New status to set
 	 */
 	async updateIssueStatus(issueId: string, status: IssueStatus): Promise<void> {
+		this.logger.info(`Updating issue status: issueId=${issueId}, status=${status}`)
+
 		// Check if the issue exists in cache
 		const issue = this.getCachedIssue(issueId)
 		if (!issue) {
+			this.logger.error(`Issue not found in cache: ${issueId}`)
 			throw new Error(`Issue ${issueId} not found`)
 		}
 
 		// Check if task is active
 		if (!this.currentTask) {
+			this.logger.error("No active task found when updating issue status")
 			throw new Error("No active task")
 		}
+
 		const requestOptions = await this.getRequestOptions()
-		// Call API to update issue status on server
-		const result = await updateIssueStatusAPI(issueId, this.currentTask.taskId, status, {
-			...requestOptions,
-			signal: this.taskAbortController?.signal,
-		})
-		// Check if API call was successful
-		if (!result.success) {
-			throw new Error(`Failed to update issue status: ${result.message}`)
-		}
 
-		// Create updated issue copy and update cache only after successful API call
-		const updatedIssue = { ...issue, status }
-		this.updateCachedIssues([updatedIssue])
+		try {
+			// Call API to update issue status on server
+			this.logger.info(
+				`Calling API to update issue status: issueId=${issueId}, taskId=${this.currentTask.taskId}`,
+			)
+			const result = await updateIssueStatusAPI(issueId, this.currentTask.taskId, status, {
+				...requestOptions,
+				signal: this.taskAbortController?.signal,
+			})
 
-		// Remove comment thread if this is the current active issue and status is not INITIAL
-		if (this.currentActiveIssueId === issueId && status !== IssueStatus.INITIAL) {
-			if (this.commentService) {
-				await this.commentService.disposeCommentThread(issueId)
+			// Check if API call was successful
+			if (!result.success) {
+				this.logger.error(`API call failed to update issue status: ${result.message}`)
+				throw new Error(`Failed to update issue status: ${result.message}`)
 			}
-			this.currentActiveIssueId = null
-		}
+			this.logger.info(`Successfully updated issue status on server: issueId=${issueId}, status=${status}`)
 
-		// Send status update message to WebView
-		this.sendMessageToWebview({
-			type: "issueStatusUpdated",
-			values: {
-				issueId,
-				status,
-				issue: updatedIssue,
-			},
-		})
+			// Create updated issue copy and update cache only after successful API call
+			const updatedIssue = { ...issue, status }
+			this.updateCachedIssues([updatedIssue])
+
+			// Remove comment thread if this is the current active issue and status is not INITIAL
+			if (this.currentActiveIssueId === issueId && status !== IssueStatus.INITIAL) {
+				if (this.commentService) {
+					await this.commentService.disposeCommentThread(issueId)
+				}
+				this.currentActiveIssueId = null
+			}
+
+			// Send status update message to WebView
+			this.sendMessageToWebview({
+				type: "issueStatusUpdated",
+				values: {
+					issueId,
+					status,
+					issue: updatedIssue,
+				},
+			})
+		} catch (error) {
+			this.logger.error(`Failed to update issue status: issueId=${issueId}, error=${error}`)
+			throw error
+		}
 	}
 
 	// ===== State Query Methods =====
@@ -384,50 +405,53 @@ export class CodeReviewService {
 		let offset = 0
 		const pollInterval = 2000 // 2 seconds
 		const requestOptions = await this.getRequestOptions()
+		this.logger.info("Starting polling for review results")
 		while (this.currentTask && !this.currentTask.isCompleted) {
 			// Check if task was aborted
 			if (this.taskAbortController?.signal.aborted) {
+				this.logger.info("Polling aborted")
 				break
 			}
 
 			try {
 				// Call API to get incremental results
-				const result = await getReviewResultsAPI(taskId, offset, clientId, {
+				const { data } = await getReviewResultsAPI(taskId, offset, clientId, {
 					...requestOptions,
 					signal: this.taskAbortController?.signal,
 				})
+				const { issues, is_done, progress, total, next_offset } = data
 
 				// Process new issues if any
-				if (result.data.issues.length > 0) {
-					this.updateCachedIssues(result.data.issues)
+				if (issues.length > 0) {
+					this.updateCachedIssues(issues)
 
 					// Send issues updated message with unified event
 					this.sendReviewTaskUpdateMessage(TaskStatus.RUNNING, {
 						issues: this.getAllCachedIssues(),
-						progress: result.data.progress,
+						progress,
 					})
 				}
 
 				// Update task progress
 				if (this.currentTask) {
-					this.currentTask.progress = result.data.progress
-					this.currentTask.total = result.data.total
+					this.currentTask.progress = progress
+					this.currentTask.total = total
 
 					// Send progress update message with unified event
 					this.sendReviewTaskUpdateMessage(TaskStatus.RUNNING, {
 						issues: this.getAllCachedIssues(),
-						progress: result.data.progress,
+						progress,
 					})
 				}
 
 				// Check if task is completed
-				if (result.data.is_done) {
+				if (is_done) {
 					this.completeTask()
 					break
 				}
 
 				// Update offset for next iteration
-				offset = result.data.next_offset
+				offset = next_offset
 
 				// Wait before next poll
 				await this.delay(pollInterval)
@@ -473,7 +497,7 @@ export class CodeReviewService {
 	 * @param error - Error that occurred during polling
 	 */
 	private handlePollingError(error: any): void {
-		console.error("Polling error:", error)
+		this.logger.error("Polling error:", error)
 		// TODO: Implement retry logic or error recovery if needed
 	}
 
@@ -513,7 +537,7 @@ export class CodeReviewService {
 		try {
 			await this.updateIssueStatus(this.currentActiveIssueId, IssueStatus.IGNORE)
 		} catch (error) {
-			console.error("Failed to auto-ignore current issue:", error)
+			this.logger.error("Failed to auto-ignore current issue:", error)
 			// Don't throw error to prevent blocking the main flow
 		}
 	}
@@ -561,5 +585,13 @@ export class CodeReviewService {
 				data,
 			},
 		})
+	}
+
+	public dispose(): void {
+		this.currentTask = null
+		this.taskAbortController = null
+		this.cachedIssues.clear()
+		this.currentActiveIssueId = null
+		this.commentService?.dispose()
 	}
 }

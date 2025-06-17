@@ -146,7 +146,7 @@ const CodeReviewContent: React.FC<CodeReviewContentProps> = ({ issues, taskStatu
 											return (
 												<div
 													key={key}
-													className={`${key} flex justify-center items-center rounded-[20px] py-[3px] px-4 cursor-pointer transition-all duration-200`}
+													className={`flex justify-center items-center rounded-[20px] py-[3px] px-4 cursor-pointer transition-all duration-200`}
 													style={{
 														backgroundColor: isSelected
 															? activeColor[severityLevel]

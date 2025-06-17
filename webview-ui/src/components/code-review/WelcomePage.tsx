@@ -1,5 +1,5 @@
 import { useAppTranslation } from "@/i18n/TranslationContext"
-import logo from "@/assets/logo.svg"
+import RooHero from "@src/components/welcome/RooHero"
 
 const WelcomePage = () => {
 	const { t } = useAppTranslation()
@@ -7,9 +7,7 @@ const WelcomePage = () => {
 	return (
 		<div className="welcome-page-container flex flex-col items-center justify-start h-full w-full bg-vscode-sideBar-background text-vscode-foreground pt-[100px] px-[10px]">
 			<div className="welcome-page flex flex-col items-center w-full max-w-[500px] text-center">
-				<div className="image-placeholder w-[60px] h-[60px] mb-6 flex items-center justify-center">
-					<img src={logo} alt="logo" className="w-[60px] h-[60px]" />
-				</div>
+				<RooHero />
 
 				<div className="title text-[16px] font-semibold text-vscode-editorInfo-foreground">
 					{t("codereview:welcomePage.title")}

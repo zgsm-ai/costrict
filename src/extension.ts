@@ -39,6 +39,7 @@ import { initializeI18n } from "./i18n"
 import { getCommand } from "./utils/commands"
 import { defaultLang } from "./utils/language"
 import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
+import { createLogger, deactivate as loggerDeactivate } from "./utils/logger"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -68,6 +69,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	extensionContext = context
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
+	createLogger(Package.outputChannel, { channel: outputChannel })
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.name} extension activated`)
 
@@ -198,4 +200,5 @@ export async function deactivate() {
 	await McpServerManager.cleanup(extensionContext)
 	telemetryService.shutdown()
 	TerminalRegistry.cleanup()
+	loggerDeactivate()
 }

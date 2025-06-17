@@ -13,7 +13,6 @@ interface FileIssueListProps {
 const FileIssueList: React.FC<FileIssueListProps> = ({ fileName, issues, onIssueClick }) => {
 	const [isExpanded, setIsExpanded] = useState(true)
 
-	// 检查是否所有 issue 的状态都不是 INITIAL 和 IGNORE（即都被处理了）
 	const allIssuesProcessed = useMemo(() => {
 		return (
 			issues.length > 0 &&
@@ -21,7 +20,6 @@ const FileIssueList: React.FC<FileIssueListProps> = ({ fileName, issues, onIssue
 		)
 	}, [issues])
 
-	// 当所有 issue 都被处理时，自动收起文件列表
 	useEffect(() => {
 		if (allIssuesProcessed) {
 			setIsExpanded(false)

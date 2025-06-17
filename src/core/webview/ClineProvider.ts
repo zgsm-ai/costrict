@@ -247,6 +247,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 		// Unregister from McpServerManager
 		McpServerManager.unregisterProvider(this)
+		this.codeReviewService.dispose()
 	}
 
 	public static getVisibleInstance(): ClineProvider | undefined {
