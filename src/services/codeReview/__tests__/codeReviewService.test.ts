@@ -50,6 +50,15 @@ jest.mock(
 			Editing: 0,
 			Preview: 1,
 		},
+		window: {
+			createOutputChannel: jest.fn().mockReturnValue({
+				appendLine: jest.fn(),
+				dispose: jest.fn(),
+			}),
+		},
+		env: {
+			machineId: "test-client",
+		},
 	}),
 	{ virtual: true },
 )
@@ -81,7 +90,8 @@ const mockClineProvider = {
 	},
 	getState: jest.fn().mockResolvedValue({
 		apiConfiguration: {
-			zgsmClientId: "test-client",
+			zgsmApiKey: "mockapikey",
+			zgsmBaseUrl: "https://zgsm.sangfor.com",
 		},
 	}),
 } as unknown as ClineProvider
@@ -1014,7 +1024,8 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 			},
 			getState: jest.fn().mockResolvedValue({
 				apiConfiguration: {
-					zgsmClientId: "test-client",
+					zgsmApiKey: "mockapikey",
+					zgsmBaseUrl: "https://zgsm.sangfor.com",
 				},
 			}),
 		} as unknown as ClineProvider
@@ -1079,6 +1090,10 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 			await codeReviewService.setActiveIssue("issue-2")
 
 			expect(mockUpdateIssueStatusAPI).toHaveBeenCalledWith("issue-1", "task-123", IssueStatus.IGNORE, {
+				baseURL: "https://zgsm.sangfor.com",
+				headers: {
+					Authorization: "Bearer mockapikey",
+				},
 				signal: expect.any(AbortSignal),
 			})
 			expect(codeReviewService.getCurrentActiveIssueId()).toBe("issue-2")
@@ -1099,7 +1114,6 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 		it("should continue setting new active issue even if auto-ignore fails", async () => {
 			// Mock updateIssueStatusAPI to fail
 			mockUpdateIssueStatusAPI.mockRejectedValue(new Error("API Error"))
-			const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {})
 
 			// Set first issue as active
 			await codeReviewService.setActiveIssue("issue-1")
@@ -1107,10 +1121,8 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 			// Set second issue as active (auto-ignore should fail but continue)
 			await codeReviewService.setActiveIssue("issue-2")
 
-			expect(consoleSpy).toHaveBeenCalledWith("Failed to auto-ignore current issue:", expect.any(Error))
+			// The error is logged via logger, not console, and doesn't prevent setting new active issue
 			expect(codeReviewService.getCurrentActiveIssueId()).toBe("issue-2")
-
-			consoleSpy.mockRestore()
 		})
 
 		it("should not auto-ignore current issue when its status is not INITIAL", async () => {
@@ -1252,6 +1264,10 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 			await codeReviewService.updateIssueStatus("issue-1", IssueStatus.ACCEPT)
 
 			expect(mockUpdateIssueStatusAPI).toHaveBeenCalledWith("issue-1", "task-123", IssueStatus.ACCEPT, {
+				baseURL: "https://zgsm.sangfor.com",
+				headers: {
+					Authorization: "Bearer mockapikey",
+				},
 				signal: expect.any(AbortSignal),
 			})
 
@@ -1277,6 +1293,10 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 			await codeReviewService.updateIssueStatus("issue-1", IssueStatus.IGNORE)
 
 			expect(mockUpdateIssueStatusAPI).toHaveBeenCalledWith("issue-1", "task-123", IssueStatus.IGNORE, {
+				baseURL: "https://zgsm.sangfor.com",
+				headers: {
+					Authorization: "Bearer mockapikey",
+				},
 				signal: expect.any(AbortSignal),
 			})
 
@@ -1290,6 +1310,10 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 			await codeReviewService.updateIssueStatus("issue-1", IssueStatus.REJECT)
 
 			expect(mockUpdateIssueStatusAPI).toHaveBeenCalledWith("issue-1", "task-123", IssueStatus.REJECT, {
+				baseURL: "https://zgsm.sangfor.com",
+				headers: {
+					Authorization: "Bearer mockapikey",
+				},
 				signal: expect.any(AbortSignal),
 			})
 
@@ -1420,6 +1444,10 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 			await codeReviewService.updateIssueStatus("issue-1", IssueStatus.ACCEPT)
 
 			expect(mockUpdateIssueStatusAPI).toHaveBeenCalledWith("issue-1", "task-123", IssueStatus.ACCEPT, {
+				baseURL: "https://zgsm.sangfor.com",
+				headers: {
+					Authorization: "Bearer mockapikey",
+				},
 				signal: mockAbortController.signal,
 			})
 		})
@@ -1431,6 +1459,10 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 			await codeReviewService.updateIssueStatus("issue-1", IssueStatus.ACCEPT)
 
 			expect(mockUpdateIssueStatusAPI).toHaveBeenCalledWith("issue-1", "task-123", IssueStatus.ACCEPT, {
+				baseURL: "https://zgsm.sangfor.com",
+				headers: {
+					Authorization: "Bearer mockapikey",
+				},
 				signal: undefined,
 			})
 		})
