@@ -68,6 +68,7 @@ import { defaultLang } from "../../utils/language"
 import { ReviewTarget, ReviewTargetType } from "../../services/codeReview/types"
 import { IssueStatus } from "../../shared/codeReview"
 import { ReviewComment } from "../../services/codeReview/reviewComment"
+import { initZgsmCodeBase } from "../codebase"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -1139,6 +1140,8 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			type: "afterZgsmPostLogin",
 			values: { zgsmApiKey: apiKey, zgsmApiKeyUpdatedAt },
 		})
+		initZgsmCodeBase(`${apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}`, apiKey)
+
 		vscode.window.showInformationMessage("Shenma login successful")
 
 		CompletionStatusBar.complete()

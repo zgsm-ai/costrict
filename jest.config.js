@@ -31,6 +31,7 @@ module.exports = {
 		"^delay$": "<rootDir>/src/__mocks__/delay.js",
 		"^p-wait-for$": "<rootDir>/src/__mocks__/p-wait-for.js",
 		"^serialize-error$": "<rootDir>/src/__mocks__/serialize-error.js",
+		"^get-port$": "<rootDir>/src/__mocks__/get-port.js",
 		"^strip-ansi$": "<rootDir>/src/__mocks__/strip-ansi.js",
 		"^default-shell$": "<rootDir>/src/__mocks__/default-shell.js",
 		"^os-name$": "<rootDir>/src/__mocks__/os-name.js",
@@ -40,7 +41,7 @@ module.exports = {
 		"^@src/(.*)$": "<rootDir>/webview-ui/src/$1",
 	},
 	transformIgnorePatterns: [
-		"node_modules/(?!(@modelcontextprotocol|delay|p-wait-for|serialize-error|strip-ansi|default-shell|os-name|os-locale|strip-bom)/)",
+		"node_modules/(?!(@modelcontextprotocol|delay|p-wait-for|serialize-error|strip-ansi|default-shell|os-name|os-locale|strip-bom|get-port)/)",
 	],
 	roots: ["<rootDir>/src", "<rootDir>/webview-ui/src", "<rootDir>/zgsm/src"],
 	modulePathIgnorePatterns: [".vscode-test"],
