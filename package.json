@@ -65,7 +65,7 @@
 				"label": "%extension.displayName%"
 			},
 			{
-				"id": "shenma.explorerSubmenu",
+				"id": "zgsm.explorerSubmenu",
 				"label": "%extension.displayName%"
 			},
 			{
@@ -343,18 +343,18 @@
 			],
 			"explorer/context": [
 				{
-					"submenu": "shenma.explorerSubmenu",
+					"submenu": "zgsm.explorerSubmenu",
 					"group": "1_modification@1"
 				}
 			],
-			"shenma.explorerSubmenu": [
+			"zgsm.explorerSubmenu": [
 				{
 					"command": "zgsm.reviewFilesAndFolders",
-					"group": "shenma.explorerSubmenu@1"
+					"group": "zgsm.explorerSubmenu@1"
 				},
 				{
 					"command": "zgsm.reviewRepo",
-					"group": "shenma.explorerSubmenu@2"
+					"group": "zgsm.explorerSubmenu@2"
 				}
 			],
 			"terminal/context": [

@@ -33,7 +33,7 @@
 	"command.terminal.fixCommand.title": "Fix This Command",
 	"command.terminal.explainCommand.title": "Explain This Command",
 	"command.acceptInput.title": "Accept Input/Suggestion",
-	"command.reviewRepo.title": "Scan Repo",
+	"command.reviewRepo.title": "Review Repo",
 	"commands.allowedCommands.description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled",
 	"configuration.title": "Shenma",
 	"intelligentCodeCompletion.title": "Intelligent Code Completion",
