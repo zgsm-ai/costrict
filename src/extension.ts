@@ -40,6 +40,9 @@ import { getCommand } from "./utils/commands"
 import { defaultLang } from "./utils/language"
 import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
 import { createLogger, deactivate as loggerDeactivate } from "./utils/logger"
+import { ZgsmCodeBaseSyncService } from "./core/codebase/client"
+import { defaultZgsmAuthConfig } from "./zgsmAuth/config"
+import { initZgsmCodeBase } from "./core/codebase"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -97,7 +100,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
 	telemetryService.setProvider(provider)
 	await zgsm.activate(context, provider)
-
+	const zgsmApiKey = provider.getValue("zgsmApiKey")
+	const zgsmBaseUrl = provider.getValue("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl
 	const commentService = CommentService.getInstance()
 	const codeReviewService = CodeReviewService.getInstance()
 	codeReviewService.setProvider(provider)
@@ -187,12 +191,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 		context.subscriptions.push(watcher)
 	}
-
+	if (zgsmApiKey) {
+		initZgsmCodeBase(zgsmBaseUrl, zgsmApiKey)
+	}
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }
 
 // This method is called when your extension is deactivated.
 export async function deactivate() {
+	ZgsmCodeBaseSyncService.stopSync()
+
 	await zgsm.deactivate()
 
 	// Clean up MCP server manager
