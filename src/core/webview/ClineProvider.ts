@@ -43,6 +43,7 @@ import { Terminal } from "../../integrations/terminal/Terminal"
 import { downloadTask } from "../../integrations/misc/export-markdown"
 import { getTheme } from "../../integrations/theme/getTheme"
 import WorkspaceTracker from "../../integrations/workspace/WorkspaceTracker"
+import { CodeReviewService } from "../../services/codeReview/codeReviewService"
 import { McpHub } from "../../services/mcp/McpHub"
 import { McpServerManager } from "../../services/mcp/McpServerManager"
 import { ShadowCheckpointService } from "../../services/checkpoints/ShadowCheckpointService"
@@ -64,6 +65,9 @@ import { getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
 // import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 import { CompletionStatusBar } from "../../../zgsm/src/codeCompletion/completionStatusBar"
 import { defaultLang } from "../../utils/language"
+import { ReviewTarget, ReviewTargetType } from "../../services/codeReview/types"
+import { IssueStatus } from "../../shared/codeReview"
+import { ReviewComment } from "../../services/codeReview/reviewComment"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -95,6 +99,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 	public readonly latestAnnouncementId = "may-21-2025-3-18" // Update for v3.18.0 announcement
 	public readonly providerSettingsManager: ProviderSettingsManager
 	public readonly customModesManager: CustomModesManager
+	public codeReviewService: CodeReviewService
 
 	private isMovingView = false
 	private movingDisposeTimer?: NodeJS.Timeout
@@ -131,6 +136,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			.catch((error) => {
 				this.log(`Failed to initialize MCP Hub: ${error}`)
 			})
+		this.codeReviewService = CodeReviewService.getInstance()
 	}
 
 	// Adds a new Cline instance to clineStack, marking the start of a new task.
@@ -241,6 +247,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 		// Unregister from McpServerManager
 		McpServerManager.unregisterProvider(this)
+		this.codeReviewService.dispose()
 	}
 
 	public static getVisibleInstance(): ClineProvider | undefined {
@@ -300,10 +307,18 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		}
 
 		const { customSupportPrompts } = await visibleProvider.getState()
-
+		if (promptType === "ZGSM_CODE_REVIEW") {
+			visibleProvider.startReviewTask([
+				{
+					type: ReviewTargetType.CODE,
+					file_path: params.filePath as string,
+					line_range: [Number(params.startLine), Number(params.endLine)],
+				},
+			])
+			return
+		}
 		// TODO: Improve type safety for promptType.
 		const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
-
 		if (command === "addToContext") {
 			await visibleProvider.postMessageToWebview({ type: "invoke", invoke: "setChatBoxMessage", text: prompt })
 			return
@@ -1738,5 +1753,27 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		}
 
 		return properties
+	}
+
+	// code review
+	public async startReviewTask(targets: ReviewTarget[]) {
+		await this.codeReviewService.startReviewTask(targets)
+		const visibleProvider = await ClineProvider.getInstance()
+		if (visibleProvider) {
+			this.codeReviewService.setProvider(visibleProvider)
+			visibleProvider.postMessageToWebview({
+				type: "action",
+				action: "codeReviewButtonClicked",
+			})
+		}
+	}
+
+	public async updateIssueStatus(comments: ReviewComment[], status: IssueStatus) {
+		comments.forEach(async (comment) => {
+			await this.codeReviewService.updateIssueStatus(comment.id, status)
+		})
+	}
+	public async cancelReviewTask() {
+		await this.codeReviewService.cancelCurrentTask()
 	}
 }

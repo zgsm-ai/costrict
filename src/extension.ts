@@ -22,6 +22,8 @@ import { DIFF_VIEW_URI_SCHEME } from "./integrations/editor/DiffViewProvider"
 import { TerminalRegistry } from "./integrations/terminal/TerminalRegistry"
 import { McpServerManager } from "./services/mcp/McpServerManager"
 import { telemetryService } from "./services/telemetry/TelemetryService"
+import { CodeReviewService } from "./services/codeReview/codeReviewService"
+import { CommentService } from "./integrations/comment"
 import { API } from "./exports/api"
 import { migrateSettings } from "./utils/migrateSettings"
 import { formatLanguage } from "./shared/language"
@@ -37,6 +39,7 @@ import { initializeI18n } from "./i18n"
 import { getCommand } from "./utils/commands"
 import { defaultLang } from "./utils/language"
 import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
+import { createLogger, deactivate as loggerDeactivate } from "./utils/logger"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -66,6 +69,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	extensionContext = context
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
+	createLogger(Package.outputChannel, { channel: outputChannel })
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.name} extension activated`)
 
@@ -93,6 +97,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
 	telemetryService.setProvider(provider)
 	await zgsm.activate(context, provider)
+
+	const commentService = CommentService.getInstance()
+	const codeReviewService = CodeReviewService.getInstance()
+	codeReviewService.setProvider(provider)
+	codeReviewService.setCommentService(commentService)
 
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, provider, {
@@ -191,4 +200,5 @@ export async function deactivate() {
 	await McpServerManager.cleanup(extensionContext)
 	telemetryService.shutdown()
 	TerminalRegistry.cleanup()
+	loggerDeactivate()
 }

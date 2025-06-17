@@ -42,12 +42,12 @@ export const rightMenus: ChatMenuItem[] = [
 		actionName: CODELENS_FUNC.addComment.actionName,
 		category: "zhuge-shenma",
 	},
-	{
-		command: getCommand("codeReview"),
-		key: CODELENS_FUNC.codeReview.key,
-		actionName: CODELENS_FUNC.codeReview.actionName,
-		category: "zhuge-shenma",
-	},
+	// {
+	// 	command: getCommand("codeReview"),
+	// 	key: CODELENS_FUNC.codeReview.key,
+	// 	actionName: CODELENS_FUNC.codeReview.actionName,
+	// 	category: "zhuge-shenma",
+	// },
 	{
 		command: getCommand("addDebugCode"),
 		key: CODELENS_FUNC.addDebugCode.key,
@@ -91,13 +91,13 @@ export const registerZGSMCodeActions = (context: vscode.ExtensionContext) => {
 		// "E.g. Add comments to the code",
 	)
 
-	registerCodeActionPair(
-		context,
-		COMMAND_IDS.ZGSM_CODE_REVIEW as CodeActionId,
-		"ZGSM_CODE_REVIEW",
-		// "What would you like Shenma to do?",
-		// "E.g. Check for code quality issues and provide suggestions to the code",
-	)
+	// registerCodeActionPair(
+	// 	context,
+	// 	COMMAND_IDS.ZGSM_CODE_REVIEW as CodeActionId,
+	// 	"ZGSM_CODE_REVIEW",
+	// 	// "What would you like Shenma to do?",
+	// 	// "E.g. Check for code quality issues and provide suggestions to the code",
+	// );
 
 	registerCodeActionPair(
 		context,

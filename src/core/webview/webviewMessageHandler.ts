@@ -1296,5 +1296,11 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 		case "docslink":
 			await vscode.window.showInformationMessage("文档完善中，敬请期待...")
 			break
+		case "checkReviewSuggestion":
+			await provider.codeReviewService.setActiveIssue(message.issueId!)
+			break
+		case "cancelReviewTask":
+			await provider.cancelReviewTask()
+			break
 	}
 }
