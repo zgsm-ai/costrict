@@ -419,6 +419,7 @@ export async function getZgsmModels(
 		if (Object.keys(headers).length > 0) {
 			config["headers"] = headers
 		}
+		config.timeout = 5000
 		const response = await axios.get(`${baseUrl}/v1/models`, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 

@@ -100,13 +100,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
 	telemetryService.setProvider(provider)
 	await zgsm.activate(context, provider)
+	ZgsmCodeBaseSyncService.setProvider(provider)
 	const zgsmApiKey = provider.getValue("zgsmApiKey")
 	const zgsmBaseUrl = provider.getValue("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl
 	const commentService = CommentService.getInstance()
 	const codeReviewService = CodeReviewService.getInstance()
 	codeReviewService.setProvider(provider)
 	codeReviewService.setCommentService(commentService)
-
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, provider, {
 			webviewOptions: { retainContextWhenHidden: true },
