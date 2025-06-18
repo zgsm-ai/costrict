@@ -311,16 +311,12 @@ export class ZgsmCodeBaseSyncService {
 	async killProcess(processName = "codebaseSyncer"): Promise<void> {
 		try {
 			if (this.platform === "windows") {
-				await new Promise((resolve) => {
-					exec(`taskkill /F /IM "${processName}.exe"`, resolve)
-				})
+				await execPromise(`taskkill /F /IM "${processName}.exe"`)
 			} else {
-				await new Promise((resolve) => {
-					exec(`pkill -f ${processName} || true`, resolve) // Add ||true to avoid errors when process doesn't exist
-				})
+				await execPromise(`pkill -f ${processName} || true`)
 			}
 		} catch (err) {
-			console.error(`Failed to kill process: ${err}`)
+			console.error(`[killProcess] Failed to kill process: ${err.message}`)
 		}
 	}
 
