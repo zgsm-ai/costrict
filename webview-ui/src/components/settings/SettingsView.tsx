@@ -602,13 +602,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				{/* Content area */}
 				<TabContent className="p-0 flex-1 overflow-auto">
 					{/* Credit Section */}
-					{activeTab === "credit" && (
-						<Credit
-							version={version}
-							telemetrySetting={telemetrySetting}
-							setTelemetrySetting={setTelemetrySetting}
-						/>
-					)}
+					{activeTab === "credit" && <Credit apiConfiguration={apiConfiguration} />}
 					{/* Providers Section */}
 					{activeTab === "providers" && (
 						<div>

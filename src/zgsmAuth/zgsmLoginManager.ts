@@ -3,6 +3,7 @@ import { ClineProvider } from "../core/webview/ClineProvider"
 import { LoginState, LoginStatus, TokenResponse } from "./types"
 import { generateZgsmStateId } from "../shared/zgsmAuthUrl"
 import { Package } from "../schemas"
+import { computeHash } from "../../zgsm/src/common/util"
 
 export class ZgsmLoginManager {
 	private static instance: ZgsmLoginManager
@@ -176,15 +177,17 @@ export class ZgsmLoginManager {
 
 	private async saveTokens(state: string, access_token: string, refresh_token: string) {
 		const config = await ZgsmLoginManager.provider.getState()
+		const zgsmTokenHash = computeHash(access_token)
 		await ZgsmLoginManager.provider.upsertProviderProfile(config.currentApiConfigName, {
 			...config.apiConfiguration,
 			zgsmApiKey: access_token,
 			zgsmRefreshToken: refresh_token,
 			zgsmStateId: state,
+			zgsmTokenHash,
 		})
 		await ZgsmLoginManager.provider.postMessageToWebview({
 			type: "afterZgsmPostLogin",
-			values: { apiKey: access_token },
+			values: { zgsmApiKey: access_token, zgsmTokenHash },
 		})
 	}
 
@@ -286,6 +289,7 @@ export class ZgsmLoginManager {
 				...apiConfiguration,
 				zgsmApiKey: access_token,
 				zgsmRefreshToken: refresh_token,
+				zgsmTokenHash: computeHash(access_token),
 			})
 			ZgsmLoginManager.provider.setValue("zgsmApiKey", access_token)
 			ZgsmLoginManager.provider.setValue("zgsmRefreshToken", refresh_token)
@@ -326,6 +330,7 @@ export class ZgsmLoginManager {
 				zgsmApiKey: "",
 				zgsmRefreshToken: "",
 				zgsmStateId: "",
+				zgsmTokenHash: "",
 			})
 		} catch (error) {
 			console.error("Logout failed:", error)

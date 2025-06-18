@@ -64,6 +64,7 @@ import { getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
 // import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 import { CompletionStatusBar } from "../../../zgsm/src/codeCompletion/completionStatusBar"
 import { defaultLang } from "../../utils/language"
+import { computeHash } from "../../../zgsm/src/common/util"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -1098,11 +1099,13 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			}
 		}
 		const zgsmApiKeyUpdatedAt = Date.now()
+		const zgsmTokenHash = computeHash(apiKey)
 
 		const newConfiguration: ApiConfiguration = {
 			...apiConfiguration,
 			zgsmModelId: apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId,
 			zgsmApiKey: apiKey,
+			zgsmTokenHash,
 			isZgsmApiKeyValid: true,
 			zgsmApiKeyUpdatedAt,
 		}
@@ -1111,6 +1114,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			{
 				zgsmBaseUrl: newConfiguration.zgsmBaseUrl,
 				zgsmApiKey: apiKey,
+				zgsmTokenHash,
 				isZgsmApiKeyValid: true,
 				zgsmApiKeyUpdatedAt,
 			},
@@ -1122,7 +1126,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		// handleZgsmAuthCallback
 		await this.postMessageToWebview({
 			type: "afterZgsmPostLogin",
-			values: { zgsmApiKey: apiKey, zgsmApiKeyUpdatedAt },
+			values: { zgsmApiKey: apiKey, zgsmApiKeyUpdatedAt, zgsmTokenHash },
 		})
 		vscode.window.showInformationMessage("Shenma login successful")
 
