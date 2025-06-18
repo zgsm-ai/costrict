@@ -127,7 +127,7 @@ export class CodeReviewService {
 		this.taskAbortController = new AbortController()
 
 		// Get workspace information from ClineProvider
-		const workspace = this.clineProvider?.cwd.toPosix() || ""
+		const workspace = this.clineProvider?.cwd || ""
 		const clientId = await this.getClientId()
 		const requestOptions = await this.getRequestOptions()
 		try {
@@ -556,7 +556,7 @@ export class CodeReviewService {
 			"images",
 			"shenma_robot_logo.png",
 		)
-		const cwd = this.clineProvider!.cwd.toPosix()
+		const cwd = this.clineProvider!.cwd
 		return {
 			issueId: issue.id,
 			fileUri: vscode.Uri.file(path.resolve(cwd, issue.file_path)),
