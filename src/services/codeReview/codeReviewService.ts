@@ -22,6 +22,7 @@ import { ExtensionMessage } from "../../shared/ExtensionMessage"
 import { ReviewComment } from "./reviewComment"
 import path from "node:path"
 import type { AxiosRequestConfig } from "axios"
+import { Package } from "../../schemas"
 import { createLogger, ILogger } from "../../utils/logger"
 
 /**
@@ -50,7 +51,7 @@ export class CodeReviewService {
 	 * Private constructor for singleton pattern
 	 */
 	private constructor() {
-		this.logger = createLogger("Shenma")
+		this.logger = createLogger(Package.outputChannel)
 	}
 
 	/**
@@ -121,12 +122,13 @@ export class CodeReviewService {
 
 		// Abort current task if exists
 		await this.abortCurrentTask()
+		this.commentService?.clearAllCommentThreads()
 
 		// Create new AbortController for this task
 		this.taskAbortController = new AbortController()
 
 		// Get workspace information from ClineProvider
-		const workspace = this.clineProvider?.cwd.toPosix() || ""
+		const workspace = this.clineProvider?.cwd || ""
 		const clientId = await this.getClientId()
 		const requestOptions = await this.getRequestOptions()
 		try {
@@ -419,7 +421,7 @@ export class CodeReviewService {
 					...requestOptions,
 					signal: this.taskAbortController?.signal,
 				})
-				const { issues, is_done, progress, total, next_offset } = data
+				const { issues, is_done, progress, total, next_offset, is_task_failed, error_msg } = data
 
 				// Process new issues if any
 				if (issues.length > 0) {
@@ -446,6 +448,9 @@ export class CodeReviewService {
 
 				// Check if task is completed
 				if (is_done) {
+					if (is_task_failed) {
+						throw new Error(error_msg)
+					}
 					this.completeTask()
 					break
 				}
@@ -553,9 +558,9 @@ export class CodeReviewService {
 			this.clineProvider!.contextProxy.extensionUri,
 			"assets",
 			"images",
-			"shenma_robot_logo.png",
+			"shenma.svg",
 		)
-		const cwd = this.clineProvider!.cwd.toPosix()
+		const cwd = this.clineProvider!.cwd
 		return {
 			issueId: issue.id,
 			fileUri: vscode.Uri.file(path.resolve(cwd, issue.file_path)),

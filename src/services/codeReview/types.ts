@@ -142,6 +142,10 @@ export interface ReviewTaskResult {
 		next_offset: number
 		/** List of issues */
 		issues: ReviewIssue[]
+		/** Whether the task is failed */
+		is_task_failed?: boolean
+		/** Error message */
+		error_msg?: string
 	}
 }
 

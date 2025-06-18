@@ -67,11 +67,10 @@ export async function createReviewTaskAPI(
 		if (!target.type) {
 			throw new Error("type is required for each target")
 		}
-
 		// Validate line_range for CODE type
 		if (target.type === "code" && target.line_range) {
 			const [start, end] = target.line_range
-			if (start < 1 || end < 1 || start > end) {
+			if (start < 0 || end < 0 || start > end) {
 				throw new Error("Invalid line_range: start and end must be positive numbers and start <= end")
 			}
 		}

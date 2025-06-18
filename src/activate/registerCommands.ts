@@ -209,11 +209,11 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		}
 		const fileUri = editor.document.uri
 		const range = editor.selection
-		const cwd = provider.cwd.toPosix()
+		const cwd = provider.cwd
 		provider.startReviewTask([
 			{
 				type: ReviewTargetType.CODE,
-				file_path: toRelativePath(fileUri.fsPath.toPosix(), cwd),
+				file_path: toRelativePath(fileUri.fsPath, cwd),
 				line_range: [range.start.line, range.end.line],
 			},
 		])
@@ -225,13 +225,13 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		if (!provider) {
 			return
 		}
-		const cwd = provider.cwd.toPosix()
+		const cwd = provider.cwd
 		const targets: ReviewTarget[] = await Promise.all(
 			selectedUris.map(async (uri) => {
 				const stat = await vscode.workspace.fs.stat(uri)
 				return {
 					type: stat.type === vscode.FileType.Directory ? ReviewTargetType.FOLDER : ReviewTargetType.FILE,
-					file_path: toRelativePath(uri.fsPath.toPosix(), cwd),
+					file_path: toRelativePath(uri.fsPath, cwd),
 				}
 			}),
 		)

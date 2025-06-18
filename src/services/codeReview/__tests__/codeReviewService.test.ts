@@ -73,9 +73,7 @@ jest.mock("../api", () => ({
 // Mock ClineProvider
 const mockClineProvider = {
 	postMessageToWebview: jest.fn(),
-	cwd: {
-		toPosix: jest.fn().mockReturnValue("/test/workspace"),
-	},
+	cwd: "/test/workspace",
 	contextProxy: {
 		extensionUri: {
 			scheme: "file",
@@ -1007,9 +1005,7 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 		// Create mock ClineProvider
 		mockClineProvider = {
 			postMessageToWebview: jest.fn(),
-			cwd: {
-				toPosix: jest.fn().mockReturnValue("/test/workspace"),
-			},
+			cwd: "/test/workspace",
 			contextProxy: {
 				extensionUri: {
 					scheme: "file",
