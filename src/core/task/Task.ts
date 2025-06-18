@@ -1689,7 +1689,9 @@ export class Task extends EventEmitter<ClineEvents> {
 	}
 
 	public getTaskRequestError(error: any, taskId: string, instanceId: string) {
-		const rawError = error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message
+		const rawError = error.error?.metadata?.raw
+			? JSON.stringify(error.error.metadata.raw, null, 2)
+			: error?.cause?.message || error?.message
 		const unknownError = { status: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
 		const defaultApiErrors = {
 			401: { status: t("apiErrors:status.401"), solution: t("apiErrors:solution.401") },
@@ -1704,6 +1706,14 @@ export class Task extends EventEmitter<ClineEvents> {
 			undefined: { status: t("apiErrors:status.undefined"), solution: t("apiErrors:solution.undefined") },
 		} as Record<number | string, { status: string; solution: string }>
 		const _err = defaultApiErrors[error.status] || unknownError
+
+		if (!error.status) {
+			_err.status = rawError
+
+			if (error?.type === "server_error") {
+				_err.solution = defaultApiErrors["500"].solution
+			}
+		}
 
 		this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
 
