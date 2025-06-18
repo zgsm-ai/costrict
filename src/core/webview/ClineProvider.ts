@@ -1097,17 +1097,33 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 				throw error
 			}
 		}
+		const zgsmApiKeyUpdatedAt = Date.now()
 
 		const newConfiguration: ApiConfiguration = {
 			...apiConfiguration,
-			zgsmApiKey: apiKey,
 			zgsmModelId: apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId,
+			zgsmApiKey: apiKey,
 			isZgsmApiKeyValid: true,
+			zgsmApiKeyUpdatedAt,
 		}
 
+		await this.providerSettingsManager.saveMergeConfig(
+			{
+				zgsmBaseUrl: newConfiguration.zgsmBaseUrl,
+				zgsmApiKey: apiKey,
+				isZgsmApiKeyValid: true,
+				zgsmApiKeyUpdatedAt,
+			},
+			(name, { apiProvider }) => {
+				return apiProvider === zgsmProviderKey && name !== currentApiConfigName
+			},
+		)
 		await this.upsertProviderProfile(currentApiConfigName, newConfiguration)
 		// handleZgsmAuthCallback
-		await this.postMessageToWebview({ type: "afterZgsmPostLogin", values: { apiKey } })
+		await this.postMessageToWebview({
+			type: "afterZgsmPostLogin",
+			values: { zgsmApiKey: apiKey, zgsmApiKeyUpdatedAt },
+		})
 		vscode.window.showInformationMessage("Shenma login successful")
 
 		CompletionStatusBar.complete()
