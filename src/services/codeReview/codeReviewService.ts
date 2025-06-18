@@ -22,6 +22,7 @@ import { ExtensionMessage } from "../../shared/ExtensionMessage"
 import { ReviewComment } from "./reviewComment"
 import path from "node:path"
 import type { AxiosRequestConfig } from "axios"
+import { Package } from "../../schemas"
 import { createLogger, ILogger } from "../../utils/logger"
 
 /**
@@ -50,7 +51,7 @@ export class CodeReviewService {
 	 * Private constructor for singleton pattern
 	 */
 	private constructor() {
-		this.logger = createLogger("Shenma")
+		this.logger = createLogger(Package.outputChannel)
 	}
 
 	/**
