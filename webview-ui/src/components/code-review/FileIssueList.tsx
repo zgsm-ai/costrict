@@ -43,7 +43,7 @@ const FileIssueList: React.FC<FileIssueListProps> = ({ fileName, issues, onIssue
 			</div>
 			{isExpanded && (
 				<div className="w-full mt-2">
-					{issues.map((issue) => (
+					{(issues ?? []).map((issue) => (
 						<IssueItem key={issue.id} issue={issue} onIssueClick={onIssueClick} />
 					))}
 				</div>
