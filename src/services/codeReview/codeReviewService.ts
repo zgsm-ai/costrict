@@ -122,6 +122,7 @@ export class CodeReviewService {
 
 		// Abort current task if exists
 		await this.abortCurrentTask()
+		this.commentService?.clearAllCommentThreads()
 
 		// Create new AbortController for this task
 		this.taskAbortController = new AbortController()
@@ -420,7 +421,7 @@ export class CodeReviewService {
 					...requestOptions,
 					signal: this.taskAbortController?.signal,
 				})
-				const { issues, is_done, progress, total, next_offset } = data
+				const { issues, is_done, progress, total, next_offset, is_task_failed, error_msg } = data
 
 				// Process new issues if any
 				if (issues.length > 0) {
@@ -447,6 +448,9 @@ export class CodeReviewService {
 
 				// Check if task is completed
 				if (is_done) {
+					if (is_task_failed) {
+						throw new Error(error_msg)
+					}
 					this.completeTask()
 					break
 				}
@@ -554,7 +558,7 @@ export class CodeReviewService {
 			this.clineProvider!.contextProxy.extensionUri,
 			"assets",
 			"images",
-			"shenma_robot_logo.png",
+			"shenma.svg",
 		)
 		const cwd = this.clineProvider!.cwd
 		return {
