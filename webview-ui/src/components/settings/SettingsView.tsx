@@ -23,6 +23,7 @@ import {
 	Globe,
 	Info,
 	LucideIcon,
+	ChartPie,
 } from "lucide-react"
 
 import { ExperimentId } from "@roo/shared/experiments"
@@ -61,6 +62,7 @@ import { TerminalSettings } from "./TerminalSettings"
 import { ExperimentalSettings } from "./ExperimentalSettings"
 import { LanguageSettings } from "./LanguageSettings"
 import { About } from "./About"
+import { Credit } from "./Credit"
 import { Section } from "./Section"
 import { cn } from "@/lib/utils"
 
@@ -76,6 +78,7 @@ export interface SettingsViewRef {
 }
 
 const sectionNames = [
+	"credit",
 	"providers",
 	"autoApprove",
 	"browser",
@@ -442,6 +445,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 	const sections: { id: SectionName; icon: LucideIcon }[] = useMemo(
 		() => [
 			{ id: "providers", icon: Webhook },
+			{ id: "credit", icon: ChartPie },
 			{ id: "autoApprove", icon: CheckCheck },
 			{ id: "browser", icon: SquareMousePointer },
 			{ id: "checkpoints", icon: GitBranch },
@@ -597,6 +601,14 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 				{/* Content area */}
 				<TabContent className="p-0 flex-1 overflow-auto">
+					{/* Credit Section */}
+					{activeTab === "credit" && (
+						<Credit
+							version={version}
+							telemetrySetting={telemetrySetting}
+							setTelemetrySetting={setTelemetrySetting}
+						/>
+					)}
 					{/* Providers Section */}
 					{activeTab === "providers" && (
 						<div>

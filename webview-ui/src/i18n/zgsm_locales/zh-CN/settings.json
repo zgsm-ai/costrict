@@ -1,6 +1,7 @@
 {
 	"sections": {
-		"about": "关于诸葛神码"
+		"about": "关于诸葛神码",
+		"credit": "Credit 用量管理"
 	},
 	"autoApprove": {
 		"description": "允许诸葛神码自动执行操作而无需批准。只有在您完全信任AI并了解相关安全风险的情况下才启用这些设置。",
