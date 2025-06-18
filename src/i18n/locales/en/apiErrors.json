@@ -9,6 +9,7 @@
 		"502": "Gateway error, service temporarily unavailable",
 		"503": "Service temporarily unavailable",
 		"504": "Gateway timeout",
+		"undefined": "Network connection error",
 		"unknown": "Unknown error"
 	},
 	"solution": {
@@ -21,6 +22,7 @@
 		"502": "1. Try again later\n2. Try switching models\n3. Contact administrator",
 		"503": "1. Try again later\n2. Try switching models\n3. Contact administrator",
 		"504": "1. Try again later\n2. Try switching models\n3. Contact administrator",
+		"undefined": "1. Check your network connection\n2. Check proxy and firewall settings\n3. Contact administrator",
 		"unknown": "Contact administrator"
 	},
 	"request": {
