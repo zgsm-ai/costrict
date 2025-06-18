@@ -13,6 +13,7 @@ import { Logger } from "../common/log-util"
 import { workspace } from "vscode"
 import { AxiosError } from "axios"
 import { createAuthenticatedHeaders } from "../common/api"
+import * as vscode from "vscode"
 import {
 	configCompletion,
 	settings,
@@ -257,6 +258,21 @@ export class CompletionClient {
 
 		this.openai.baseURL = `${config.baseUrl}${config.completionUrl}`
 		this.openai.apiKey = config.apiKey
+		// machineId
+		const client_id = vscode.env.machineId
+		// project_dir
+		let workspaceFolder = ""
+		if (vscode.workspace.workspaceFolders) {
+			workspaceFolder = vscode.workspace.workspaceFolders[0].uri.fsPath
+		}
+
+		const editor = vscode.window.activeTextEditor
+		// file_path
+		let relativePath = ""
+		if (editor) {
+			const filePath = editor.document.uri.fsPath
+			relativePath = vscode.workspace.asRelativePath(filePath)
+		}
 
 		return this.openai.completions.create(
 			{
@@ -279,8 +295,9 @@ export class CompletionClient {
 					language_id: cp.doc.language,
 					beta_mode: this.betaMode,
 					calculate_hide_score: scores,
-					file_project_path: "",
-					project_path: "",
+					client_id: client_id,
+					file_project_path: relativePath,
+					project_path: workspaceFolder,
 					code_path: "",
 					user_id: "",
 					repo: repo,
