@@ -336,9 +336,13 @@ export class ZgsmCodeBaseSyncService {
 				}
 				const port = await getPort({ port: portNumbers(51353, 65535) })
 				const address = `localhost:${port}`
-
-				const command =
-					this.platform === "windows" ? `"${targetPath}" -grpc ${address}` : `${targetPath} -grpc ${address}`
+				const args = [
+					`-clientid ${this.clientId}`,
+					`-server ${this.serverEndpoint}`,
+					`-token ${this.accessToken}`,
+					`-grpc ${address}`,
+				].join(" ")
+				const command = this.platform === "windows" ? `"${targetPath}" ${args}` : `${targetPath} ${args}`
 				const process = exec(command, processOptions)
 				process.unref()
 
