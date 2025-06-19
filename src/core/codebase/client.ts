@@ -71,7 +71,7 @@ export class ZgsmCodeBaseSyncService {
 		ZgsmCodeBaseSyncService.providerRef = new WeakRef(provider)
 	}
 
-	static async getInstance() {
+	static getInstance() {
 		if (!ZgsmCodeBaseSyncService._instance) {
 			return (ZgsmCodeBaseSyncService._instance = new ZgsmCodeBaseSyncService())
 		}
