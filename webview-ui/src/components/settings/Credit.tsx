@@ -1,4 +1,4 @@
-import { HTMLAttributes } from "react"
+import { HTMLAttributes, useEffect, useState } from "react"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { ChartPie } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -13,8 +13,18 @@ type CreditProps = HTMLAttributes<HTMLDivElement> & {
 
 export const Credit = ({ apiConfiguration, className, ...props }: CreditProps) => {
 	const { t } = useAppTranslation()
-	// const href
-	const href = `${apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}/?state=${apiConfiguration.zgsmTokenHash || ""}`
+	const [hash, setHash] = useState("")
+
+	useEffect(() => {
+		const computeHash = async () => {
+			const result = await hashToken(apiConfiguration.zgsmApiKey || "")
+			setHash(result)
+		}
+		computeHash()
+	}, [apiConfiguration.zgsmApiKey])
+
+	const href = `${apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}/?state=${hash}`
+
 	return (
 		<div className={cn("flex flex-col gap-2", className)} {...props}>
 			<SectionHeader
@@ -27,12 +37,19 @@ export const Credit = ({ apiConfiguration, className, ...props }: CreditProps) =
 				</div>
 			</SectionHeader>
 			<Section>
-				{JSON.stringify(apiConfiguration)}
-				{href}
-				<VSCodeButtonLink href={href} target="_blank" type="button" disabled={!apiConfiguration.zgsmTokenHash}>
+				<VSCodeButtonLink href={href} target="_blank" type="button" disabled={!hash}>
 					{t("查看 Credit 用量")}
 				</VSCodeButtonLink>
 			</Section>
 		</div>
 	)
+}
+
+async function hashToken(token: string) {
+	const encoder = new TextEncoder()
+	const data = encoder.encode(token)
+	const hashBuffer = await crypto.subtle.digest("SHA-256", data)
+	return Array.from(new Uint8Array(hashBuffer))
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("")
 }
