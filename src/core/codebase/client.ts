@@ -11,6 +11,7 @@ import {
 	RegisterSyncResponse,
 	ShareAccessTokenResponse,
 	VersionResponse,
+	SyncCodebaseResponse,
 } from "./types/codebase_syncer"
 import { ClineProvider } from "../webview/ClineProvider"
 import { getWorkspacePath } from "../../utils/path"
@@ -220,6 +221,28 @@ export class ZgsmCodeBaseSyncService {
 		})
 	}
 
+	async syncCodebase(): Promise<SyncCodebaseResponse> {
+		return this.retryWrapper("syncCodebase", () => {
+			return new Promise((resolve, reject) => {
+				if (!this.client) {
+					return reject(new Error("client not init!"))
+				}
+
+				this.client.syncCodebase(
+					{
+						clientId: this.clientId,
+						workspacePath: this.workspacePath,
+						workspaceName: this.workspaceName,
+					},
+					(err: grpc.ServiceError | null, response?: SyncCodebaseResponse) => {
+						if (err) return reject(err)
+						resolve(response!)
+					},
+				)
+			})
+		})
+	}
+
 	async download(version: string): Promise<void> {
 		// 1. Get version information
 		const packagesData = await this.getVersionList()
@@ -383,6 +406,15 @@ export class ZgsmCodeBaseSyncService {
 			this.curVersion = version
 			this.registerSyncPoll()
 		})
+	}
+
+	public async startSyncCodebase(): Promise<void> {
+		if (!this.client) {
+			const { version } = await this.updateCheck()
+			await this.runSync(version)
+			return
+		}
+		await this.syncCodebase()
 	}
 
 	registerSyncPoll() {

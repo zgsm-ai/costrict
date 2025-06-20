@@ -33,6 +33,19 @@ message RegisterSyncResponse {
     string message = 2;         // Message
 }
 
+// Sync codebase request
+message SyncCodebaseRequest {
+    string client_id = 1;        // Client ID
+    string workspace_path = 2;     // Workspace path
+    string workspace_name = 3;     // Workspace name
+}
+
+// Sync codebase response
+message SyncCodebaseResponse {
+    bool success = 1;           // Whether succeeded
+    string message = 2;         // Message
+}
+
 // Unregister workspace sync
 message UnregisterSyncRequest {
     string client_id = 1;        // Client ID
@@ -62,6 +75,9 @@ message VersionResponse {
 service SyncService {
     // Register project sync
     rpc RegisterSync(RegisterSyncRequest) returns (RegisterSyncResponse);
+
+    // Sync codebase
+    rpc SyncCodebase(SyncCodebaseRequest) returns (SyncCodebaseResponse);
 
     // Unregister project sync
     rpc UnregisterSync(UnregisterSyncRequest) returns (google.protobuf.Empty);

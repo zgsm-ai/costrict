@@ -59,6 +59,24 @@ export interface RegisterSyncResponse {
 	message: string
 }
 
+/** Sync codebase request */
+export interface SyncCodebaseRequest {
+	/** Client ID */
+	clientId: string
+	/** Workspace path */
+	workspacePath: string
+	/** Workspace name */
+	workspaceName: string
+}
+
+/** Sync codebase response */
+export interface SyncCodebaseResponse {
+	/** Whether succeeded */
+	success: boolean
+	/** Message */
+	message: string
+}
+
 /** Unregister workspace sync */
 export interface UnregisterSyncRequest {
 	/** Client ID */
@@ -426,6 +444,174 @@ export const RegisterSyncResponse: MessageFns<RegisterSyncResponse> = {
 	},
 	fromPartial<I extends Exact<DeepPartial<RegisterSyncResponse>, I>>(object: I): RegisterSyncResponse {
 		const message = createBaseRegisterSyncResponse()
+		message.success = object.success ?? false
+		message.message = object.message ?? ""
+		return message
+	},
+}
+
+function createBaseSyncCodebaseRequest(): SyncCodebaseRequest {
+	return { clientId: "", workspacePath: "", workspaceName: "" }
+}
+
+export const SyncCodebaseRequest: MessageFns<SyncCodebaseRequest> = {
+	encode(message: SyncCodebaseRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.clientId !== "") {
+			writer.uint32(10).string(message.clientId)
+		}
+		if (message.workspacePath !== "") {
+			writer.uint32(18).string(message.workspacePath)
+		}
+		if (message.workspaceName !== "") {
+			writer.uint32(26).string(message.workspaceName)
+		}
+		return writer
+	},
+
+	decode(input: BinaryReader | Uint8Array, length?: number): SyncCodebaseRequest {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input)
+		const end = length === undefined ? reader.len : reader.pos + length
+		const message = createBaseSyncCodebaseRequest()
+		while (reader.pos < end) {
+			const tag = reader.uint32()
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break
+					}
+
+					message.clientId = reader.string()
+					continue
+				}
+				case 2: {
+					if (tag !== 18) {
+						break
+					}
+
+					message.workspacePath = reader.string()
+					continue
+				}
+				case 3: {
+					if (tag !== 26) {
+						break
+					}
+
+					message.workspaceName = reader.string()
+					continue
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break
+			}
+			reader.skip(tag & 7)
+		}
+		return message
+	},
+
+	fromJSON(object: any): SyncCodebaseRequest {
+		return {
+			clientId: isSet(object.clientId) ? globalThis.String(object.clientId) : "",
+			workspacePath: isSet(object.workspacePath) ? globalThis.String(object.workspacePath) : "",
+			workspaceName: isSet(object.workspaceName) ? globalThis.String(object.workspaceName) : "",
+		}
+	},
+
+	toJSON(message: SyncCodebaseRequest): unknown {
+		const obj: any = {}
+		if (message.clientId !== "") {
+			obj.clientId = message.clientId
+		}
+		if (message.workspacePath !== "") {
+			obj.workspacePath = message.workspacePath
+		}
+		if (message.workspaceName !== "") {
+			obj.workspaceName = message.workspaceName
+		}
+		return obj
+	},
+
+	create<I extends Exact<DeepPartial<SyncCodebaseRequest>, I>>(base?: I): SyncCodebaseRequest {
+		return SyncCodebaseRequest.fromPartial(base ?? ({} as any))
+	},
+	fromPartial<I extends Exact<DeepPartial<SyncCodebaseRequest>, I>>(object: I): SyncCodebaseRequest {
+		const message = createBaseSyncCodebaseRequest()
+		message.clientId = object.clientId ?? ""
+		message.workspacePath = object.workspacePath ?? ""
+		message.workspaceName = object.workspaceName ?? ""
+		return message
+	},
+}
+
+function createBaseSyncCodebaseResponse(): SyncCodebaseResponse {
+	return { success: false, message: "" }
+}
+
+export const SyncCodebaseResponse: MessageFns<SyncCodebaseResponse> = {
+	encode(message: SyncCodebaseResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.success !== false) {
+			writer.uint32(8).bool(message.success)
+		}
+		if (message.message !== "") {
+			writer.uint32(18).string(message.message)
+		}
+		return writer
+	},
+
+	decode(input: BinaryReader | Uint8Array, length?: number): SyncCodebaseResponse {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input)
+		const end = length === undefined ? reader.len : reader.pos + length
+		const message = createBaseSyncCodebaseResponse()
+		while (reader.pos < end) {
+			const tag = reader.uint32()
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 8) {
+						break
+					}
+
+					message.success = reader.bool()
+					continue
+				}
+				case 2: {
+					if (tag !== 18) {
+						break
+					}
+
+					message.message = reader.string()
+					continue
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break
+			}
+			reader.skip(tag & 7)
+		}
+		return message
+	},
+
+	fromJSON(object: any): SyncCodebaseResponse {
+		return {
+			success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
+			message: isSet(object.message) ? globalThis.String(object.message) : "",
+		}
+	},
+
+	toJSON(message: SyncCodebaseResponse): unknown {
+		const obj: any = {}
+		if (message.success !== false) {
+			obj.success = message.success
+		}
+		if (message.message !== "") {
+			obj.message = message.message
+		}
+		return obj
+	},
+
+	create<I extends Exact<DeepPartial<SyncCodebaseResponse>, I>>(base?: I): SyncCodebaseResponse {
+		return SyncCodebaseResponse.fromPartial(base ?? ({} as any))
+	},
+	fromPartial<I extends Exact<DeepPartial<SyncCodebaseResponse>, I>>(object: I): SyncCodebaseResponse {
+		const message = createBaseSyncCodebaseResponse()
 		message.success = object.success ?? false
 		message.message = object.message ?? ""
 		return message
@@ -800,6 +986,18 @@ export const SyncServiceService = {
 			Buffer.from(RegisterSyncResponse.encode(value).finish()),
 		responseDeserialize: (value: Buffer): RegisterSyncResponse => RegisterSyncResponse.decode(value),
 	},
+	/** Sync codebase */
+	syncCodebase: {
+		path: "/codebase_syncer.SyncService/SyncCodebase",
+		requestStream: false,
+		responseStream: false,
+		requestSerialize: (value: SyncCodebaseRequest): Buffer =>
+			Buffer.from(SyncCodebaseRequest.encode(value).finish()),
+		requestDeserialize: (value: Buffer): SyncCodebaseRequest => SyncCodebaseRequest.decode(value),
+		responseSerialize: (value: SyncCodebaseResponse): Buffer =>
+			Buffer.from(SyncCodebaseResponse.encode(value).finish()),
+		responseDeserialize: (value: Buffer): SyncCodebaseResponse => SyncCodebaseResponse.decode(value),
+	},
 	/** Unregister project sync */
 	unregisterSync: {
 		path: "/codebase_syncer.SyncService/UnregisterSync",
@@ -838,6 +1036,8 @@ export const SyncServiceService = {
 export interface SyncServiceServer extends UntypedServiceImplementation {
 	/** Register project sync */
 	registerSync: handleUnaryCall<RegisterSyncRequest, RegisterSyncResponse>
+	/** Sync codebase */
+	syncCodebase: handleUnaryCall<SyncCodebaseRequest, SyncCodebaseResponse>
 	/** Unregister project sync */
 	unregisterSync: handleUnaryCall<UnregisterSyncRequest, Empty>
 	/** Share AccessToken (transmitted in plaintext, server-side encrypted storage) */
@@ -862,6 +1062,22 @@ export interface SyncServiceClient extends Client {
 		metadata: Metadata,
 		options: Partial<CallOptions>,
 		callback: (error: ServiceError | null, response: RegisterSyncResponse) => void,
+	): ClientUnaryCall
+	/** Sync codebase */
+	syncCodebase(
+		request: SyncCodebaseRequest,
+		callback: (error: ServiceError | null, response: SyncCodebaseResponse) => void,
+	): ClientUnaryCall
+	syncCodebase(
+		request: SyncCodebaseRequest,
+		metadata: Metadata,
+		callback: (error: ServiceError | null, response: SyncCodebaseResponse) => void,
+	): ClientUnaryCall
+	syncCodebase(
+		request: SyncCodebaseRequest,
+		metadata: Metadata,
+		options: Partial<CallOptions>,
+		callback: (error: ServiceError | null, response: SyncCodebaseResponse) => void,
 	): ClientUnaryCall
 	/** Unregister project sync */
 	unregisterSync(
