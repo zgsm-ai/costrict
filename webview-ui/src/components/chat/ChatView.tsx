@@ -431,7 +431,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const handleSendMessage = useCallback(
 		(text: string, images: string[], chatType = "system") => {
 			text = text.trim()
-
+			// format @/image:xxxx as empty
+			text = text.replace(/@\/image:[^\s]+/g, "").trim()
 			if (text || images.length > 0) {
 				if (messages.length === 0) {
 					vscode.postMessage({ type: "newTask", text, images, values: { chatType } })
@@ -1369,11 +1370,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			//    This ensures it takes its natural height when there's space
 			//    but becomes scrollable when the viewport is too small
 			*/}
-			{!task && (
+			{/* {!task && (
 				<div className="mb-[-2px] flex-initial min-h-0">
 					<AutoApproveMenu />
 				</div>
-			)}
+			)} */}
 
 			{task && (
 				<>

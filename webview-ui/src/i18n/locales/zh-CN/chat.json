@@ -96,7 +96,7 @@
 	"addImages": "添加图片到消息",
 	"sendMessage": "发送消息",
 	"typeMessage": "输入消息...",
-	"typeTask": "在此处输入您的任务...",
+	"typeTask": "请输入，@添加上下文，/切换模式",
 	"addContext": "@添加上下文，/切换模式",
 	"dragFiles": "Shift+拖拽文件",
 	"dragFilesImages": "Shift+拖拽文件/图片",
@@ -260,5 +260,6 @@
 			"description": "Roo 已达到 {{count}} 次 API 请求的自动批准限制。您想重置计数并继续任务吗？",
 			"button": "重置并继续"
 		}
-	}
+	},
+	"addContextBtn": "@ 添加上下文"
 }
