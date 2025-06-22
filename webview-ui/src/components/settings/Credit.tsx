@@ -27,18 +27,15 @@ export const Credit = ({ apiConfiguration, className, ...props }: CreditProps) =
 
 	return (
 		<div className={cn("flex flex-col gap-2", className)} {...props}>
-			<SectionHeader
-				description={t(
-					"诸葛神码官方提供了多种高级模型，不同模型的每次请求消耗的Credit不同，当Credit消耗完后，该模型将不可用。",
-				)}>
+			<SectionHeader description={t("settings:sections.credit.description")}>
 				<div className="flex items-center gap-2">
 					<ChartPie className="w-4" />
-					<div>{t("settings:sections.credit")}</div>
+					<div>{t("settings:sections.credit.title")}</div>
 				</div>
 			</SectionHeader>
 			<Section>
 				<VSCodeButtonLink href={href} target="_blank" type="button" disabled={!hash}>
-					{t("查看 Credit 用量")}
+					{t("settings:sections.credit.homepage")}
 				</VSCodeButtonLink>
 			</Section>
 		</div>
