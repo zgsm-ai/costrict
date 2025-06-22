@@ -180,9 +180,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(watcher)
 	}
 	ZgsmLoginManager.setProvider(provider)
+	context.subscriptions.push(ZgsmLoginManager.getInstance())
 
 	if (provider.getValue("zgsmRefreshToken")) {
-		ZgsmLoginManager.getInstance().startRefreshToken()
+		ZgsmLoginManager.getInstance().startRefreshToken(true)
 	}
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }

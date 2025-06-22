@@ -3,13 +3,14 @@ import { ClineProvider } from "../core/webview/ClineProvider"
 import { LoginState, LoginStatus, TokenResponse } from "./types"
 import { generateZgsmStateId } from "../shared/zgsmAuthUrl"
 import { Package } from "../schemas"
+import { parseJwt } from "../utils/jwt"
 
 export class ZgsmLoginManager {
 	private static instance: ZgsmLoginManager
 	public static provider: ClineProvider
 	public static stateId: string
 
-	private pollingInterval: NodeJS.Timeout | null = null
+	private pollingInterval?: NodeJS.Timeout
 	private baseUrl: string = ""
 	private loginUrl: string = ""
 	private tokenUrl: string = ""
@@ -267,7 +268,7 @@ export class ZgsmLoginManager {
 		}
 	}
 
-	public async startRefreshToken() {
+	public async startRefreshToken(immediate = false) {
 		let state
 		try {
 			this.initUrls()
@@ -290,7 +291,10 @@ export class ZgsmLoginManager {
 			ZgsmLoginManager.provider.setValue("zgsmApiKey", access_token)
 			ZgsmLoginManager.provider.setValue("zgsmRefreshToken", refresh_token)
 
-			this.pollingInterval = setTimeout(() => this.startRefreshToken(), 1000 * 60 * 60)
+			this.pollingInterval = setTimeout(
+				() => this.startRefreshToken(),
+				immediate ? 0 : this.getZgsmRefreshTokenInterval(refresh_token),
+			)
 		} catch (error) {
 			console.error("Failed to refresh token:", error)
 			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Failed to refresh token: ${error.message}`)
@@ -343,5 +347,16 @@ export class ZgsmLoginManager {
 			["vscode_version", vscode.version],
 			["uri_scheme", vscode.env.uriScheme],
 		].filter(([key]) => !ignore.includes(key))
+	}
+
+	getZgsmRefreshTokenInterval(token: string) {
+		const { exp } = parseJwt(token)
+		return Math.min((exp - 1800) * 1000 - Date.now(), 2147483647)
+	}
+
+	dispose() {
+		this.stopRefreshToken()
+		clearTimeout(this.isPollingTokenTimer)
+		clearTimeout(this.isPollingStatusTimer)
 	}
 }
