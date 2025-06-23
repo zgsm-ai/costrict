@@ -17,9 +17,8 @@ import { getWorkspacePath } from "../../utils/path"
 import { PackageInfo, PackagesResponse } from "./types"
 
 export class ZgsmCodeBaseSyncService {
-	private static providerRef: WeakRef<ClineProvider>
+	private static providerRef: ClineProvider | undefined
 	private static _instance: ZgsmCodeBaseSyncService
-
 	private registerSyncTimeout?: NodeJS.Timeout
 	private clientDaemonPollTimeout?: NodeJS.Timeout
 	private clientUpdatePollTimeout?: NodeJS.Timeout
@@ -27,7 +26,7 @@ export class ZgsmCodeBaseSyncService {
 	private curVersion = ""
 	private accessToken = ""
 	private serverEndpoint = ""
-
+	private childPid?: number // Record codebaseSyncer process PID
 	public client?: SyncServiceClient
 
 	get clientId() {
@@ -67,8 +66,15 @@ export class ZgsmCodeBaseSyncService {
 		}
 	}
 
-	static async setProvider(provider: ClineProvider) {
-		ZgsmCodeBaseSyncService.providerRef = new WeakRef(provider)
+	static setProvider(provider: ClineProvider) {
+		ZgsmCodeBaseSyncService.providerRef = provider
+	}
+
+	static getProvider(): ClineProvider {
+		if (!ZgsmCodeBaseSyncService.providerRef) {
+			throw new Error("provider is not initialized!")
+		}
+		return ZgsmCodeBaseSyncService.providerRef
 	}
 
 	static getInstance() {
@@ -80,17 +86,15 @@ export class ZgsmCodeBaseSyncService {
 
 	static async stopSync() {
 		const _instance = ZgsmCodeBaseSyncService.getInstance()
-
 		if (!_instance) return
 		_instance.stopRegisterSyncPoll()
 		_instance.stopClientDaemonPoll()
 		_instance.stopClientUpdatePoll()
-
 		try {
 			await _instance.unregisterSync()
 			_instance.client?.close()
-		} catch (error) {
-			console.error(error.message)
+		} catch (error: any) {
+			_instance.log(error.message, "error")
 		}
 	}
 
@@ -221,19 +225,24 @@ export class ZgsmCodeBaseSyncService {
 	}
 
 	async download(version: string): Promise<void> {
-		// 1. Get version information
+		// 1. Check public key
+		if (!process.env.ZGSM_PUBLIC_KEY) {
+			this.log("Missing ZGSM_PUBLIC_KEY environment variable, unable to verify downloaded file!", "error")
+			vscode.window.showErrorMessage(
+				"Missing ZGSM_PUBLIC_KEY environment variable, unable to verify downloaded file!",
+			)
+			throw new Error("Missing ZGSM_PUBLIC_KEY")
+		}
+		// 2. Get version information
 		const packagesData = await this.getVersionList()
-
-		// 2. Get package information
+		// 3. Get package information
 		const packageInfoUrl = `${this.apiBase}${packagesData.latest.infoUrl}`
 		const packageInfoResponse = await fetch(packageInfoUrl)
 		const packageInfo = (await packageInfoResponse.json()) as PackageInfo
 		const { major, minor, micro } = packagesData.latest.versionId
-
 		const { targetDir, targetPath } = this.getTargetPath(version || `${major}.${minor}.${micro}`)
 		await fs.promises.mkdir(targetDir, { recursive: true })
-
-		// 3. Use FileDownloader to download and verify the file
+		// 4. Download and verify
 		const downloadUrl = `${this.apiBase}${packagesData.latest.packageUrl}`
 		const downloader = new FileDownloader({
 			downloadUrl,
@@ -243,7 +252,6 @@ export class ZgsmCodeBaseSyncService {
 			publicKey: process.env.ZGSM_PUBLIC_KEY!,
 			platform: this.platform,
 		})
-
 		await downloader.download()
 	}
 
@@ -261,24 +269,21 @@ export class ZgsmCodeBaseSyncService {
 	// Check if grpc client needs to be updated
 	async updateCheck() {
 		try {
-			const provider = ZgsmCodeBaseSyncService.providerRef.deref()
-			if (!provider) throw new Error("provider not init!")
-
+			const provider = ZgsmCodeBaseSyncService.providerRef
+			if (!provider) throw new Error("provider is not initialized!")
 			const json = await this.getVersionList()
-
 			if (!json.versions.length) {
 				throw new Error("Failed to get version list")
 			}
-
 			const { major, minor, micro } = json.latest.versionId
 			const latestVersion = `${major}.${minor}.${micro}`
-
 			const { targetPath } = await this.getTargetPath(latestVersion)
 			return {
 				updated: await this.fileExists(targetPath),
 				version: latestVersion,
 			}
-		} catch (error) {
+		} catch (error: any) {
+			this.log(error.message, "warn")
 			return {
 				updated: false,
 				version: "",
@@ -310,22 +315,28 @@ export class ZgsmCodeBaseSyncService {
 
 	async killProcess(processName = "codebaseSyncer"): Promise<void> {
 		try {
+			if (this.childPid) {
+				// First try to kill process by PID
+				process.kill(this.childPid, "SIGTERM")
+				this.log(`Killed codebaseSyncer process via PID(${this.childPid})`)
+				this.childPid = undefined
+				return
+			}
 			if (this.platform === "windows") {
 				await execPromise(`taskkill /F /IM "${processName}.exe"`)
 			} else {
 				await execPromise(`pkill -f ${processName} || true`)
 			}
-		} catch (err) {
-			console.error(`[killProcess] Failed to kill process: ${err.message}`)
+			this.log(`Killed codebaseSyncer process by name`)
+		} catch (err: any) {
+			this.log(`[killProcess] Failed to terminate process: ${err.message}`, "warn")
 		}
 	}
 
 	// 2. Start new process with retry mechanism
 	async startProcess(version: string, maxRetries = 5): Promise<void> {
 		let attempts = 0
-
 		const { targetPath } = this.getTargetPath(version)
-
 		while (attempts < maxRetries) {
 			attempts++
 			try {
@@ -343,18 +354,19 @@ export class ZgsmCodeBaseSyncService {
 					`-grpc ${address}`,
 				].join(" ")
 				const command = this.platform === "windows" ? `"${targetPath}" ${args}` : `${targetPath} ${args}`
-				const process = exec(command, processOptions)
-				process.unref()
-
+				const child = exec(command, processOptions)
+				child.unref()
+				this.childPid = child.pid // Record PID
+				this.log(`Starting codebaseSyncer process, PID=${child.pid}, command: ${command}`)
 				// Wait a moment to check if the process is still running
 				await new Promise((resolve) => setTimeout(resolve, attempts * 1000))
 				const isRunning = await this.isProcessRunning()
 				this.address = address
 				if (isRunning) return
-			} catch (err) {
-				console.error(`Failed to start process (attempt ${attempts}/${maxRetries}): ${err}`)
+			} catch (err: any) {
+				this.log(`Failed to start process (attempt ${attempts}/${maxRetries}): ${err.message}`, "warn")
 				if (attempts >= maxRetries) {
-					throw new Error(`Failed after max retries (${maxRetries})`)
+					throw new Error(`Failed to start codebaseSyncer process after multiple retries`)
 				}
 			}
 		}
@@ -469,7 +481,31 @@ export class ZgsmCodeBaseSyncService {
 			this.clientDaemonPollTimeout = undefined
 		}
 	}
+
+	/**
+	 * Log output, directly calls provider.log
+	 */
+	private log(message: string, type: "info" | "warn" | "error" = "info") {
+		const provider = ZgsmCodeBaseSyncService.providerRef
+		if (provider && typeof provider.log === "function") {
+			provider.log(message)
+		} else {
+			// fallback
+			const prefix = "[CodebaseSync] "
+			switch (type) {
+				case "warn":
+					console.warn(prefix + message)
+					break
+				case "error":
+					console.error(prefix + message)
+					break
+				default:
+					console.log(prefix + message)
+			}
+		}
+	}
 }
+
 function execPromise(command: string): Promise<string> {
 	return new Promise((resolve, reject) => {
 		exec(command, (error, stdout) => {
