@@ -396,14 +396,25 @@ function statusBarForbidCallback(editor: vscode.TextEditor) {
 		})
 }
 
-function statusBarloginCallback(provider?: ClineProvider, apiConfiguration?: ApiConfiguration) {
-	const reLoginText = t("common:window.error.login_again")
-	vscode.window
-		.showErrorMessage(t("common:window.error.failed_to_get_login_info"), reLoginText)
+export function statusBarloginCallback(
+	provider?: ClineProvider,
+	apiConfiguration?: ApiConfiguration,
+	opt?: {
+		cb?: () => void
+		errorTitle?: string
+		btnText?: string
+	},
+) {
+	const reLoginText = opt?.btnText || t("common:window.error.login_again")
+	return vscode.window
+		.showErrorMessage(opt?.errorTitle || t("common:window.error.failed_to_get_login_info"), reLoginText)
 		.then(async (selection) => {
 			if (selection !== reLoginText) {
+				opt?.cb?.()
 				return
 			}
+
+			opt?.cb?.()
 			// re-login
 			handleZgsmLogin(provider, apiConfiguration)
 		})

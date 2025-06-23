@@ -982,6 +982,7 @@ export type SecretState = Pick<
 	ProviderSettings,
 	| "apiKey"
 	| "zgsmApiKey"
+	| "zgsmRefreshToken"
 	| "glamaApiKey"
 	| "openRouterApiKey"
 	| "awsAccessKey"
@@ -1005,6 +1006,7 @@ type SecretStateRecord = Record<Keys<SecretState>, undefined>
 const secretStateRecord: SecretStateRecord = {
 	apiKey: undefined,
 	zgsmApiKey: undefined,
+	zgsmRefreshToken: undefined,
 	glamaApiKey: undefined,
 	openRouterApiKey: undefined,
 	awsAccessKey: undefined,

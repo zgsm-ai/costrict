@@ -4,6 +4,8 @@ import { LoginState, LoginStatus, TokenResponse } from "./types"
 import { generateZgsmStateId } from "../shared/zgsmAuthUrl"
 import { Package } from "../schemas"
 import { parseJwt } from "../utils/jwt"
+import { statusBarloginCallback } from "../../zgsm/src/common/services"
+import { t } from "../i18n"
 
 export class ZgsmLoginManager {
 	private static instance: ZgsmLoginManager
@@ -20,6 +22,9 @@ export class ZgsmLoginManager {
 	private isPollingTokenTimer?: NodeJS.Timeout
 	private isPollingStatus = false
 	private isPollingStatusTimer?: NodeJS.Timeout
+	hasLoginTip: boolean = false
+	logining: boolean = false
+	fetchTokenAttempt: number = 0
 	public static setProvider(provider: ClineProvider) {
 		ZgsmLoginManager.provider = provider
 	}
@@ -58,6 +63,7 @@ export class ZgsmLoginManager {
 	}
 
 	public async startLogin() {
+		this.logining = true
 		clearTimeout(this.isPollingStatusTimer)
 		clearTimeout(this.isPollingTokenTimer)
 
@@ -78,6 +84,8 @@ export class ZgsmLoginManager {
 		} catch (error) {
 			console.error("Login failed:", error)
 			throw error
+		} finally {
+			this.logining = false
 		}
 	}
 
@@ -206,6 +214,17 @@ export class ZgsmLoginManager {
 				headers: refresh_token ? { Authorization: `Bearer ${refresh_token}` } : {},
 			})
 
+			if (res.status === 401 && !this.hasLoginTip && !this.logining) {
+				this.hasLoginTip = true
+
+				statusBarloginCallback(undefined, undefined, {
+					errorTitle: t("common:window.error.login_expired"),
+					cb: () => {
+						this.hasLoginTip = false
+					},
+				})
+			}
+
 			if (!res.ok) {
 				ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] fetchToken error:  ${await res.text()}`)
 
@@ -298,8 +317,11 @@ export class ZgsmLoginManager {
 		} catch (error) {
 			console.error("Failed to refresh token:", error)
 			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Failed to refresh token: ${error.message}`)
-
-			this.pollingInterval = setTimeout(() => this.startRefreshToken(), 5000)
+			if (++this.fetchTokenAttempt < 5) {
+				this.pollingInterval = setTimeout(() => this.startRefreshToken(), 5000)
+			} else {
+				this.fetchTokenAttempt = 0
+			}
 		}
 	}
 
