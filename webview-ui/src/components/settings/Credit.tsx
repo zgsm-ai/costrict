@@ -23,7 +23,7 @@ export const Credit = ({ apiConfiguration, className, ...props }: CreditProps) =
 		computeHash()
 	}, [apiConfiguration.zgsmApiKey])
 
-	const href = `${apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}/?state=${hash}`
+	const href = `${apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}/credit/manager/?state=${hash}`
 
 	return (
 		<div className={cn("flex flex-col gap-2", className)} {...props}>
