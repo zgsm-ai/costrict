@@ -156,5 +156,8 @@
 			"input_prompt": "你想让诸葛神码做什么？",
 			"input_placeholder": "例如：添加注释到代码"
 		}
+	},
+	"review": {
+		"tips": "代码同步中，请稍候，Code Review 即将开始"
 	}
 }

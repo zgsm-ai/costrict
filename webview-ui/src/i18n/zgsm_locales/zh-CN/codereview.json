@@ -18,5 +18,6 @@
 		"running": "正在进行code review，{{progress}}%",
 		"cancel": "取消执行",
 		"completed": "代码质量非常高，未检查出任何问题"
-	}
+	},
+	"tips": "若代码行数发生修改，问题行定位可能会不准确"
 }

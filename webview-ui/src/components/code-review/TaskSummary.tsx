@@ -24,7 +24,7 @@ const TaskSummary: React.FC<TaskSummaryProps> = ({ issues }) => {
 	}, [issues])
 
 	return (
-		<div className="flex items-center gap-4 text-vscode-list-activeSelectionForeground">
+		<div className="flex items-center gap-4 text-vscode-editor-foreground">
 			<span>Files: {statistics.filesCount}</span>
 			<span>Bugs: {statistics.bugsCount}</span>
 			<span>Accept: {statistics.acceptCount}</span>

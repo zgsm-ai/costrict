@@ -5,30 +5,50 @@ import { useAppTranslation } from "@/i18n/TranslationContext"
 
 interface TaskStatusBarProps {
 	taskStatus: TaskStatus
-	progress: number
+	progress: number | null
+	message: string
 	errorMessage: string
 	issues: ReviewIssue[]
 	onTaskCancel: () => void
 }
 
-const TaskStatusBar: React.FC<TaskStatusBarProps> = ({ taskStatus, progress, issues, errorMessage, onTaskCancel }) => {
+const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
+	taskStatus,
+	progress,
+	issues,
+	message,
+	errorMessage,
+	onTaskCancel,
+}) => {
 	const { t } = useAppTranslation()
 
 	return (
 		<div className="flex items-center mt-5">
 			{taskStatus === TaskStatus.RUNNING && (
 				<div className="mb-4">
-					<div className="flex items-center">
-						<div
-							className="w-4 h-4 rounded-full border-2 border-transparent animate-spin"
-							style={{ borderTopColor: "rgba(23, 112, 230, 0.7)" }}
-						/>
-						<span className="ml-2">
-							{t("codereview:taskStatusBar.running", { progress: Math.round(progress * 100) })}
-						</span>
-						<span className="ml-2 text-[#1876F2] cursor-pointer" onClick={() => onTaskCancel()}>
-							{t("codereview:taskStatusBar.cancel")}
-						</span>
+					<div>
+						<div className="flex items-center">
+							<div
+								className="w-4 h-4 rounded-full border-2 border-transparent animate-spin"
+								style={{ borderTopColor: "rgba(23, 112, 230, 0.7)" }}
+							/>
+							{progress !== null && (
+								<div>
+									<span className="ml-2">
+										{t("codereview:taskStatusBar.running", {
+											progress: Math.round(progress * 100),
+										})}
+									</span>
+									<span className="ml-2 text-[#1876F2] cursor-pointer" onClick={() => onTaskCancel()}>
+										{t("codereview:taskStatusBar.cancel")}
+									</span>
+								</div>
+							)}
+							{message && <span className="ml-2">{message}</span>}
+						</div>
+						{progress !== null && (
+							<div className="text-neutral-500 italic text-sm mt-2">{t("codereview:tips")}</div>
+						)}
 					</div>
 				</div>
 			)}

@@ -5,8 +5,9 @@ import { ReviewIssue, TaskStatus } from "@roo/shared/codeReview"
 interface CodeReviewPanelProps {
 	issues: ReviewIssue[]
 	taskStatus: TaskStatus
-	progress: number
+	progress: number | null
 	errorMessage: string
+	message: string
 	onIssueClick: (issueId: string) => void
 	onTaskCancel: () => void
 }
@@ -14,6 +15,7 @@ const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
 	issues,
 	taskStatus,
 	progress,
+	message,
 	errorMessage,
 	onIssueClick,
 	onTaskCancel,
@@ -25,6 +27,7 @@ const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
 					taskStatus={taskStatus}
 					progress={progress}
 					issues={issues}
+					message={message}
 					errorMessage={errorMessage}
 					onTaskCancel={onTaskCancel}
 				/>

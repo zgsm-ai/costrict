@@ -408,15 +408,6 @@ export class ZgsmCodeBaseSyncService {
 		})
 	}
 
-	public async startSyncCodebase(): Promise<void> {
-		if (!this.client) {
-			const { version } = await this.updateCheck()
-			await this.runSync(version)
-			return
-		}
-		await this.syncCodebase()
-	}
-
 	registerSyncPoll() {
 		const sync = () => {
 			this.registerSync()

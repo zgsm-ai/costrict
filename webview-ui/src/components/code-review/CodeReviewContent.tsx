@@ -115,80 +115,87 @@ const CodeReviewContent: React.FC<CodeReviewContentProps> = ({ issues, taskStatu
 	return (
 		<div className="flex flex-col h-full">
 			{taskStatus === TaskStatus.COMPLETED && (
-				<div className="flex mb-4 justify-between items-center flex-shrink-0 px-5">
-					<TaskSummary issues={filteredIssues} />
-					<Popover>
-						<PopoverTrigger>
-							<div className="relative">
-								<i className={`codicon codicon-filter cursor-pointer`}></i>
-								{showNotificationDot && (
-									<div
-										className="absolute top-[2px] right-0 w-[5px] h-[5px] bg-red-500 rounded-full"
-										style={{ transform: "translate(50%, -50%)" }}></div>
-								)}
-							</div>
-						</PopoverTrigger>
-						<PopoverContent
-							className="!border-transparent bg-popover mr-2 rounded-[5px]"
-							style={{
-								boxShadow: "0 2px 8px var(--color-vscode-widget-shadow)",
-								outline: "1px solid var(--color-vscode-menu-border)",
-							}}>
-							<div className="flex flex-col">
-								<div className="mb-4">
-									<div className="flex items-center mb-2">
-										{t("codereview:codeReviewContent.severityLabel")}
+				<div className="px-5 mb-4">
+					<div className="flex justify-between items-center flex-shrink-0">
+						<TaskSummary issues={filteredIssues} />
+						<Popover>
+							<PopoverTrigger>
+								<div className="relative">
+									<i className={`codicon codicon-filter cursor-pointer`}></i>
+									{showNotificationDot && (
+										<div
+											className="absolute top-[2px] right-0 w-[5px] h-[5px] bg-red-500 rounded-full"
+											style={{ transform: "translate(50%, -50%)" }}></div>
+									)}
+								</div>
+							</PopoverTrigger>
+							<PopoverContent
+								className="!border-transparent bg-popover mr-2 rounded-[5px]"
+								style={{
+									boxShadow: "0 2px 8px var(--color-vscode-widget-shadow)",
+									outline: "1px solid var(--color-vscode-menu-border)",
+								}}>
+								<div className="flex flex-col">
+									<div className="mb-4">
+										<div className="flex items-center mb-2">
+											{t("codereview:codeReviewContent.severityLabel")}
+										</div>
+										<div className="flex items-center gap-2">
+											{Object.entries(severity).map(([key, { label }]) => {
+												const severityLevel = parseInt(key) as SeverityLevel
+												const isSelected = isSeveritySelected(severityLevel)
+												return (
+													<div
+														key={key}
+														className={`flex justify-center items-center rounded-[20px] py-[3px] px-4 cursor-pointer transition-all duration-200`}
+														style={{
+															backgroundColor: isSelected
+																? activeColor[severityLevel]
+																: normalColor[severityLevel],
+															color: isSelected
+																? "var(--vscode-list-activeSelectionForeground)"
+																: activeColor[severityLevel],
+														}}
+														onClick={() => toggleSeverity(severityLevel)}>
+														{label}
+													</div>
+												)
+											})}
+										</div>
 									</div>
-									<div className="flex items-center gap-2">
-										{Object.entries(severity).map(([key, { label }]) => {
-											const severityLevel = parseInt(key) as SeverityLevel
-											const isSelected = isSeveritySelected(severityLevel)
-											return (
-												<div
-													key={key}
-													className={`flex justify-center items-center rounded-[20px] py-[3px] px-4 cursor-pointer transition-all duration-200`}
-													style={{
-														backgroundColor: isSelected
-															? activeColor[severityLevel]
-															: normalColor[severityLevel],
-														color: isSelected
-															? "var(--vscode-list-activeSelectionForeground)"
-															: activeColor[severityLevel],
-													}}
-													onClick={() => toggleSeverity(severityLevel)}>
-													{label}
-												</div>
-											)
-										})}
+									<div>
+										<div className="flex items-center mb-2">
+											{t("codereview:codeReviewContent.issueLable")}
+										</div>
+										<div className="flex items-center gap-2 flex-wrap">
+											{uniqueIssueTypes.map((type) => {
+												const isSelected = isIssueTypeSelected(type)
+												return (
+													<div
+														key={type}
+														className={`h-4 truncate flex justify-center items-center px-4 py-3 rounded-[20px] cursor-pointer transition-all duration-200`}
+														style={{
+															backgroundColor: isSelected
+																? "#E6C000"
+																: "rgba(230,192,0,0.1)",
+															color: isSelected
+																? "var(--vscode-list-activeSelectionForeground)"
+																: "#E6C000",
+														}}
+														onClick={() => toggleIssueType(type)}>
+														{type}
+													</div>
+												)
+											})}
+										</div>
 									</div>
 								</div>
-								<div>
-									<div className="flex items-center mb-2">
-										{t("codereview:codeReviewContent.issueLable")}
-									</div>
-									<div className="flex items-center gap-2 flex-wrap">
-										{uniqueIssueTypes.map((type) => {
-											const isSelected = isIssueTypeSelected(type)
-											return (
-												<div
-													key={type}
-													className={`h-4 truncate flex justify-center items-center px-4 py-3 rounded-[20px] cursor-pointer transition-all duration-200`}
-													style={{
-														backgroundColor: isSelected ? "#E6C000" : "rgba(230,192,0,0.1)",
-														color: isSelected
-															? "var(--vscode-list-activeSelectionForeground)"
-															: "#E6C000",
-													}}
-													onClick={() => toggleIssueType(type)}>
-													{type}
-												</div>
-											)
-										})}
-									</div>
-								</div>
-							</div>
-						</PopoverContent>
-					</Popover>
+							</PopoverContent>
+						</Popover>
+					</div>
+					{!!issues.length && (
+						<div className="text-neutral-500 italic text-sm mt-2">{t("codereview:tips")}</div>
+					)}
 				</div>
 			)}
 			<div className="flex-1 overflow-y-auto pl-5">

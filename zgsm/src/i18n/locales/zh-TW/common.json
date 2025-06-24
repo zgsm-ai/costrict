@@ -152,5 +152,8 @@
 			"input_prompt": "你想讓諸葛神碼做什麼？",
 			"input_placeholder": "例如：添加註釋到程式碼"
 		}
+	},
+	"review": {
+		"tips": "代碼同步中，請稍後，Code Review 即將開始"
 	}
 }

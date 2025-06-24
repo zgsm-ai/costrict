@@ -239,6 +239,7 @@ export interface ReviewTask {
 
 export interface TaskData {
 	issues: ReviewIssue[]
-	progress: number
+	progress: number | null
 	error?: string
+	message?: string
 }

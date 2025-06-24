@@ -156,5 +156,8 @@
 			"aborted": "Please try again",
 			"unknown": "Please contact administrator"
 		}
+	},
+	"review": {
+		"tips": "CodeBase synchronization in progress, please wait. Code Review will start shortly."
 	}
 }

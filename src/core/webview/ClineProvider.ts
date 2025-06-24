@@ -66,7 +66,7 @@ import { getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
 import { CompletionStatusBar } from "../../../zgsm/src/codeCompletion/completionStatusBar"
 import { defaultLang } from "../../utils/language"
 import { ReviewTarget, ReviewTargetType } from "../../services/codeReview/types"
-import { IssueStatus } from "../../shared/codeReview"
+import { IssueStatus, TaskStatus } from "../../shared/codeReview"
 import { ReviewComment } from "../../services/codeReview/reviewComment"
 import { initZgsmCodeBase } from "../codebase"
 import { ZgsmCodeBaseSyncService } from "../codebase/client"
@@ -1761,8 +1761,6 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 	// code review
 	public async startReviewTask(targets: ReviewTarget[]) {
-		await ZgsmCodeBaseSyncService.getInstance().startSyncCodebase()
-		await this.codeReviewService.startReviewTask(targets)
 		const visibleProvider = await ClineProvider.getInstance()
 		if (visibleProvider) {
 			this.codeReviewService.setProvider(visibleProvider)
@@ -1770,6 +1768,13 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 				type: "action",
 				action: "codeReviewButtonClicked",
 			})
+			this.codeReviewService.sendReviewTaskUpdateMessage(TaskStatus.RUNNING, {
+				issues: [],
+				progress: null,
+				message: t("common:review.tips"),
+			})
+			await ZgsmCodeBaseSyncService.getInstance().syncCodebase()
+			await this.codeReviewService.startReviewTask(targets)
 		}
 	}
 
