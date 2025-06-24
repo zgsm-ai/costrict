@@ -1,6 +1,6 @@
 {
 	"status": {
-		"401": "Login expired",
+		"401": "Login expired\n Authentication time: {{iat}}\n Expiration time: {{exp}}",
 		"400": "Invalid request",
 		"403": "Forbidden access",
 		"404": "Resource not found",

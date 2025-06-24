@@ -1597,7 +1597,7 @@ export class Task extends EventEmitter<ClineEvents> {
 			this.isWaitingForFirstChunk = false
 			// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 			if (autoApprovalEnabled && alwaysApproveResubmit) {
-				const errorMsg = this.getTaskRequestError(error, this.taskId, this.instanceId)
+				const errorMsg = this.getTaskRequestError(error, this.taskId, this.instanceId, this.apiConfiguration)
 
 				const baseDelay = requestDelaySeconds || 5
 				let exponentialDelay = Math.ceil(baseDelay * Math.pow(2, retryAttempt))
@@ -1688,11 +1688,17 @@ export class Task extends EventEmitter<ClineEvents> {
 		return checkpointDiff(this, options)
 	}
 
-	public getTaskRequestError(error: any, taskId: string, instanceId: string) {
+	public getTaskRequestError(error: any, taskId: string, instanceId: string, apiConfiguration: ProviderSettings) {
 		const rawError = error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message
 		const unknownError = { status: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
 		const defaultApiErrors = {
-			401: { status: t("apiErrors:status.401"), solution: t("apiErrors:solution.401") },
+			401: {
+				status: t("apiErrors:status.401", {
+					exp: apiConfiguration.zgsmApiKeyExpiredAt,
+					iat: apiConfiguration.zgsmApiKeyUpdatedAt,
+				}),
+				solution: t("apiErrors:solution.401"),
+			},
 			400: { status: t("apiErrors:status.400"), solution: t("apiErrors:solution.400") },
 			403: { status: t("apiErrors:status.403"), solution: t("apiErrors:solution.403") },
 			404: { status: t("apiErrors:status.404"), solution: t("apiErrors:solution.404") },

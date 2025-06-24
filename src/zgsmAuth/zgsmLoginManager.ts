@@ -195,7 +195,8 @@ export class ZgsmLoginManager {
 
 	private async saveTokens(state: string, access_token: string, refresh_token: string) {
 		const config = await ZgsmLoginManager.provider.getState()
-		const zgsmApiKeyUpdatedAt = Date.now()
+		const zgsmApiKeyUpdatedAt = Date.now().toLocaleString()
+		const zgsmApiKeyExpiredAt = new Date(parseJwt(access_token).exp * 1000).toLocaleString()
 		const newConfiguration = {
 			...config.apiConfiguration,
 			zgsmModelId: config.apiConfiguration.zgsmModelId || config.apiConfiguration.zgsmDefaultModelId,
@@ -204,6 +205,7 @@ export class ZgsmLoginManager {
 			isZgsmApiKeyValid: true,
 			zgsmStateId: state,
 			zgsmApiKeyUpdatedAt,
+			zgsmApiKeyExpiredAt,
 		}
 
 		await ZgsmLoginManager.provider.providerSettingsManager.saveMergeConfig(
@@ -214,6 +216,7 @@ export class ZgsmLoginManager {
 				isZgsmApiKeyValid: newConfiguration.isZgsmApiKeyValid,
 				zgsmStateId: newConfiguration.zgsmStateId,
 				zgsmApiKeyUpdatedAt: newConfiguration.zgsmApiKeyUpdatedAt,
+				zgsmApiKeyExpiredAt: newConfiguration.zgsmApiKeyExpiredAt,
 			},
 			(name, { apiProvider }) => {
 				return apiProvider === zgsmProviderKey && name !== config.currentApiConfigName
