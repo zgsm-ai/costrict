@@ -20,6 +20,8 @@ import type { CommentThreadInfo } from "../../integrations/comment/types"
 import { createReviewTaskAPI, getReviewResultsAPI, updateIssueStatusAPI } from "./api"
 import { ExtensionMessage } from "../../shared/ExtensionMessage"
 import { ReviewComment } from "./reviewComment"
+import { t } from "../../i18n"
+import { statusBarloginCallback } from "../../../zgsm/src/common/services"
 import path from "node:path"
 import type { AxiosRequestConfig } from "axios"
 import { Package } from "../../schemas"
@@ -107,6 +109,18 @@ export class CodeReviewService {
 		}
 	}
 
+	private async handleAuthError() {
+		if (!this.clineProvider) return
+		this.sendReviewTaskUpdateMessage(TaskStatus.ERROR, {
+			issues: [],
+			progress: 0,
+			error: t("common:review.tip.login_expired"),
+		})
+		await statusBarloginCallback(undefined, undefined, {
+			errorTitle: t("common:review.statusbar.login_expired"),
+		})
+	}
+
 	// ===== Task Management Methods =====
 
 	/**
@@ -165,6 +179,9 @@ export class CodeReviewService {
 			this.taskAbortController = null
 			this.currentTask = null
 			this.logger.error(error)
+			if (error.name === "AuthError") {
+				await this.handleAuthError()
+			}
 			throw error
 		}
 	}
@@ -309,6 +326,9 @@ export class CodeReviewService {
 			})
 		} catch (error) {
 			this.logger.error(`Failed to update issue status: issueId=${issueId}, error=${error}`)
+			if (error.name === "AuthError") {
+				await this.handleAuthError()
+			}
 			throw error
 		}
 	}
@@ -465,7 +485,10 @@ export class CodeReviewService {
 				if (error.name === "AbortError") {
 					break
 				}
-
+				if (error.name === "AuthError") {
+					await this.handleAuthError()
+					break
+				}
 				// Send error message to webview with unified event
 				this.sendReviewTaskUpdateMessage(TaskStatus.ERROR, {
 					issues: this.getAllCachedIssues(),

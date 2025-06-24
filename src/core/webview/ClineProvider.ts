@@ -1771,7 +1771,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			this.codeReviewService.sendReviewTaskUpdateMessage(TaskStatus.RUNNING, {
 				issues: [],
 				progress: null,
-				message: t("common:review.tips"),
+				message: t("common:review.tip.codebase_sync"),
 			})
 			await ZgsmCodeBaseSyncService.getInstance().syncCodebase()
 			await this.codeReviewService.startReviewTask(targets)

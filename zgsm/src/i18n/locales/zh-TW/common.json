@@ -154,6 +154,12 @@
 		}
 	},
 	"review": {
-		"tips": "代碼同步中，請稍後，Code Review 即將開始"
+		"tip": {
+			"codebase_sync": "代碼同步中，請稍後，Code Review 即將開始",
+			"login_expired": "登入已過期，請重新登入。"
+		},
+		"statusbar": {
+			"login_expired": "無法取得登入資訊。請重新登入以使用 Code Review 服務。"
+		}
 	}
 }

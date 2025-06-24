@@ -78,7 +78,11 @@ export async function createReviewTaskAPI(
 
 	try {
 		// Send POST request to create review task
-		const response = await axiosInstance.post<ReviewTaskResponse>(`/api/v1/review_tasks`, params, options)
+		const response = await axiosInstance.post<ReviewTaskResponse>(
+			`/review-manager/api/v1/review_tasks`,
+			params,
+			options,
+		)
 
 		return response.data
 	} catch (error) {
@@ -125,7 +129,7 @@ export async function getReviewResultsAPI(
 
 	try {
 		// Construct query URL with offset parameter
-		const url = `/api/v1/review_tasks/${encodeURIComponent(reviewTaskId)}/issues/increment`
+		const url = `/review-manager/api/v1/review_tasks/${encodeURIComponent(reviewTaskId)}/issues/increment`
 		const params = offset > 0 ? { offset, client_id } : { client_id }
 
 		// Send GET request to get review results
@@ -194,7 +198,7 @@ export async function updateIssueStatusAPI(
 	try {
 		// Send PUT request to update issue status
 		const { data } = await axiosInstance.put<UpdateIssueStatusResponse>(
-			`/api/v1/issues/${encodeURIComponent(issueId)}/status`,
+			`/issue-manager/api/v1/issues/${encodeURIComponent(issueId)}/status`,
 			requestBody,
 			options,
 		)
