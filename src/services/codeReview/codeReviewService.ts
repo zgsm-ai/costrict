@@ -582,7 +582,7 @@ export class CodeReviewService {
 	 * @param status - Task status
 	 * @param data - Task data
 	 */
-	private sendReviewTaskUpdateMessage(status: TaskStatus, data: TaskData): void {
+	public sendReviewTaskUpdateMessage(status: TaskStatus, data: TaskData): void {
 		this.sendMessageToWebview({
 			type: "reviewTaskUpdate",
 			values: {

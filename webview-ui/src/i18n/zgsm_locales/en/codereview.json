@@ -18,5 +18,6 @@
 		"running": "Code review in progress, {{progress}}%",
 		"cancel": "Cancel",
 		"completed": "Code quality is excellent, no issues found"
-	}
+	},
+	"tips": "If the number of code lines changes, the identification of problematic lines may become inaccurate."
 }

@@ -100,7 +100,8 @@ export interface ReviewTaskPayload {
 	status: TaskStatus
 	data: {
 		issues: ReviewIssue[]
-		progress: number
+		progress: number | null
 		error?: string
+		message?: string
 	}
 }

@@ -1,5 +1,4 @@
 import * as vscode from "vscode"
-import { EventEmitter } from "events"
 import { inspect } from "util"
 
 /**
@@ -74,7 +73,6 @@ class ChannelLogger implements ILogger {
 	private readonly level: LogLevel
 	private readonly enabled: boolean
 	private readonly timeFn: () => string
-	private readonly emitter = new EventEmitter()
 
 	constructor(
 		private readonly name: string,
@@ -84,7 +82,7 @@ class ChannelLogger implements ILogger {
 		this.channel = opts.channel ?? vscode.window.createOutputChannel(name)
 		this.level = opts.level ?? LogLevel.Debug
 		this.enabled = opts.enabled ?? true
-		this.timeFn = opts.timeFn ?? (() => new Date().toISOString())
+		this.timeFn = opts.timeFn ?? (() => new Date().toLocaleString())
 	}
 
 	// ---------- ILogger 实现 ----------
@@ -108,16 +106,9 @@ class ChannelLogger implements ILogger {
 		if (this.flushHandle) {
 			clearImmediate(this.flushHandle)
 		}
-		this.emitter.removeAllListeners()
 
 		// 从缓存移除，防止内存泄漏
 		loggerRegistry.delete(this.name)
-	}
-
-	// ---------- 预留订阅能力 ----------
-
-	on(event: "log", listener: (line: string) => void): void {
-		this.emitter.on(event, listener)
 	}
 
 	// ---------- 内部辅助 ----------
@@ -133,7 +124,6 @@ class ChannelLogger implements ILogger {
 		const line = `${this.timeFn()} [${tag}] ` + [msg, ...args].map(this.safeToString).join(" ")
 
 		this.buffer.push(line)
-		this.emitter.emit("log", line)
 		this.scheduleFlush()
 	}
 
