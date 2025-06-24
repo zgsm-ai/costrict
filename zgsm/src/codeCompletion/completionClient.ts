@@ -29,6 +29,7 @@ import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { CompletionAcception } from "./completionDataInterface"
+import { getDependencyImports } from "./extractingImports"
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
@@ -287,9 +288,20 @@ export class CompletionClient {
 		const editor = vscode.window.activeTextEditor
 		// file_path
 		let relativePath = ""
+		let documentContent = ""
 		if (editor) {
 			const filePath = editor.document.uri.fsPath
 			relativePath = vscode.workspace.asRelativePath(filePath)
+			documentContent = editor.document.getText()
+		}
+		let importContent = ""
+
+		// Get import statements
+		try {
+			const imports = editor ? getDependencyImports(relativePath, documentContent) : []
+			importContent = imports.join("\n")
+		} catch {
+			importContent = ""
 		}
 
 		return this.openai.completions.create(
@@ -322,6 +334,7 @@ export class CompletionClient {
 					git_path: "",
 					parent_id: lastCompletion?.parentId,
 					trigger_mode: lastCompletion?.getAcception() === CompletionAcception.Accepted ? "continue" : "",
+					import_content: importContent,
 				},
 			},
 		)
