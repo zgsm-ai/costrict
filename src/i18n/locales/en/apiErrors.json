@@ -1,6 +1,6 @@
 {
 	"status": {
-		"401": "Unauthorized access",
+		"401": "Login expired",
 		"400": "Invalid request",
 		"403": "Forbidden access",
 		"404": "Resource not found",
@@ -9,10 +9,11 @@
 		"502": "Gateway error, service temporarily unavailable",
 		"503": "Service temporarily unavailable",
 		"504": "Gateway timeout",
+		"undefined": "Network connection error",
 		"unknown": "Unknown error"
 	},
 	"solution": {
-		"401": "1. Check if you are logged in\n2. Verify API Key validity\n3. Contact administrator",
+		"401": "1. Click ⚙️ in the top-right corner of the plugin -> Select provider [Shenma] -> Click [Re-login] button\n2. Contact administrator",
 		"400": "1. End the current task and start a new one.\n2. Try again using a different model.\n3. Contact administrator",
 		"403": "1. Check permission settings\n2. Contact administrator",
 		"404": "1. Verify request path/resource existence\n2. Contact administrator",
@@ -21,6 +22,7 @@
 		"502": "1. Try again later\n2. Try switching models\n3. Contact administrator",
 		"503": "1. Try again later\n2. Try switching models\n3. Contact administrator",
 		"504": "1. Try again later\n2. Try switching models\n3. Contact administrator",
+		"undefined": "1. Check your network connection\n2. Check proxy and firewall settings\n3. Contact administrator",
 		"unknown": "Contact administrator"
 	},
 	"request": {

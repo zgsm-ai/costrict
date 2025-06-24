@@ -1,6 +1,11 @@
 {
 	"sections": {
-		"about": "About Shenma"
+		"about": "About Shenma",
+		"credit": {
+			"title": "Credit Usage Management",
+			"description": "Zhuge Shenma officially provides multiple advanced models. Each model consumes a different amount of credits per request. Once your credits are used up, the model will no longer be available.",
+			"homepage": "View Credit Usage"
+		}
 	},
 	"autoApprove": {
 		"description": "Allow Shenma to automatically perform operations without requiring approval. Enable these settings only if you fully trust the AI and understand the associated security risks.",

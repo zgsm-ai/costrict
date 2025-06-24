@@ -352,6 +352,8 @@ type ProviderSettings = {
 	zgsmRedirectUri?: string | undefined
 	zgsmClientId?: string | undefined
 	zgsmClientSecret?: string | undefined
+	zgsmStateId?: string | undefined
+	zgsmRefreshToken?: string | undefined
 	useZgsmCustomConfig?: boolean | undefined
 	isZgsmApiKeyValid?: boolean | undefined
 	zgsmApiKeyUpdatedAt?: number | undefined
@@ -775,6 +777,8 @@ type IpcMessage =
 								zgsmRedirectUri?: string | undefined
 								zgsmClientId?: string | undefined
 								zgsmClientSecret?: string | undefined
+								zgsmStateId?: string | undefined
+								zgsmRefreshToken?: string | undefined
 								useZgsmCustomConfig?: boolean | undefined
 								isZgsmApiKeyValid?: boolean | undefined
 								zgsmApiKeyUpdatedAt?: number | undefined
@@ -1270,6 +1274,8 @@ type TaskCommand =
 					zgsmRedirectUri?: string | undefined
 					zgsmClientId?: string | undefined
 					zgsmClientSecret?: string | undefined
+					zgsmStateId?: string | undefined
+					zgsmRefreshToken?: string | undefined
 					useZgsmCustomConfig?: boolean | undefined
 					isZgsmApiKeyValid?: boolean | undefined
 					zgsmApiKeyUpdatedAt?: number | undefined

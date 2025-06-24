@@ -39,6 +39,7 @@ import { initializeI18n } from "./i18n"
 import { getCommand } from "./utils/commands"
 import { defaultLang } from "./utils/language"
 import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
+import { ZgsmLoginManager } from "./zgsmAuth/zgsmLoginManager"
 import { createLogger, deactivate as loggerDeactivate } from "./utils/logger"
 import { ZgsmCodeBaseSyncService } from "./core/codebase/client"
 import { defaultZgsmAuthConfig } from "./zgsmAuth/config"
@@ -191,6 +192,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 		context.subscriptions.push(watcher)
 	}
+	ZgsmLoginManager.setProvider(provider)
+	context.subscriptions.push(ZgsmLoginManager.getInstance())
+
+	if (provider.getValue("zgsmRefreshToken")) {
+		ZgsmLoginManager.getInstance().startRefreshToken(true)
+  }
 	if (zgsmApiKey) {
 		initZgsmCodeBase(zgsmBaseUrl, zgsmApiKey)
 	}

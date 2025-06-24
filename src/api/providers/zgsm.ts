@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI, { AzureOpenAI } from "openai"
-import axios, { AxiosError } from "axios"
+import axios, { AxiosError, AxiosRequestConfig } from "axios"
 
 import {
 	ApiHandlerOptions,
@@ -405,7 +405,7 @@ export async function getZgsmModels(
 			throw new Error(`Invalid ZGSM base URL: ${baseUrl}`)
 		}
 
-		const config: Record<string, any> = {}
+		const config: AxiosRequestConfig = {}
 		const headers: Record<string, string> = createHeaders({})
 
 		if (apiKey) {

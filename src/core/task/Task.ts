@@ -1095,11 +1095,11 @@ export class Task extends EventEmitter<ClineEvents> {
 		// Add language preference to user content if available
 		const { language } = (await this.providerRef.deref()?.getState()) ?? {}
 		if (language) {
-				const languageName = isLanguage(language) ? LANGUAGES[language] : language
-				await this.addToApiConversationHistory({
-						role: "user",
-						content: `\nPlease also follow these instructions in all of your responses if relevant to my query. No need to acknowledge these instructions directly in your response.\n\nAlways respond in ${languageName}\nYou must use a tool in your response! \n# Reminder: Instructions for Tool Use\n\nTool uses are formatted using XML-style tags. The tool name is enclosed in opening and closing tags, and each parameter is similarly enclosed within its own set of tags. Here's the structure:\n\n<tool_name>\n<parameter1_name>value1</parameter1_name>\n<parameter2_name>value2</parameter2_name>\n...\n</tool_name>\n\nFor example:\n\n<attempt_completion>\n<result>\nI have completed the task...\n</result>\n</attempt_completion>\n\nAlways adhere to this format for all tool uses to ensure proper parsing and execution.\n\n# Next Steps\n\nIf you have completed the user's task, use the attempt_completion tool. \nIf you require additional information from the user, use the ask_followup_question tool. \nOtherwise, if you have not completed the task and do not need additional information, then proceed with the next step of the task.\nWhen creating multiple folders using the command, please use mkidr - p path1; mkdir -p path2.\n(This is an automated message, so do not respond to it conversationally.)`,
-				})
+			const languageName = isLanguage(language) ? LANGUAGES[language] : language
+			await this.addToApiConversationHistory({
+				role: "user",
+				content: `\nPlease also follow these instructions in all of your responses if relevant to my query. No need to acknowledge these instructions directly in your response.\n\nAlways respond in ${languageName}\nYou must use a tool in your response! \n# Reminder: Instructions for Tool Use\n\nTool uses are formatted using XML-style tags. The tool name is enclosed in opening and closing tags, and each parameter is similarly enclosed within its own set of tags. Here's the structure:\n\n<tool_name>\n<parameter1_name>value1</parameter1_name>\n<parameter2_name>value2</parameter2_name>\n...\n</tool_name>\n\nFor example:\n\n<attempt_completion>\n<result>\nI have completed the task...\n</result>\n</attempt_completion>\n\nAlways adhere to this format for all tool uses to ensure proper parsing and execution.\n\n# Next Steps\n\nIf you have completed the user's task, use the attempt_completion tool. \nIf you require additional information from the user, use the ask_followup_question tool. \nOtherwise, if you have not completed the task and do not need additional information, then proceed with the next step of the task.\nWhen creating multiple folders using the command, please use mkidr - p path1; mkdir -p path2.\n(This is an automated message, so do not respond to it conversationally.)`,
+			})
 		}
 		await this.addToApiConversationHistory({ role: "user", content: finalUserContent })
 		telemetryService.captureConversationMessage(this.taskId, "user")
@@ -1597,7 +1597,7 @@ export class Task extends EventEmitter<ClineEvents> {
 			this.isWaitingForFirstChunk = false
 			// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 			if (autoApprovalEnabled && alwaysApproveResubmit) {
-				const errorMsg = getTaskRequestError(error, this.taskId, this.instanceId)
+				const errorMsg = this.getTaskRequestError(error, this.taskId, this.instanceId)
 
 				const baseDelay = requestDelaySeconds || 5
 				let exponentialDelay = Math.ceil(baseDelay * Math.pow(2, retryAttempt))
@@ -1688,6 +1688,28 @@ export class Task extends EventEmitter<ClineEvents> {
 		return checkpointDiff(this, options)
 	}
 
+	public getTaskRequestError(error: any, taskId: string, instanceId: string) {
+		const rawError = error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message
+		const unknownError = { status: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
+		const defaultApiErrors = {
+			401: { status: t("apiErrors:status.401"), solution: t("apiErrors:solution.401") },
+			400: { status: t("apiErrors:status.400"), solution: t("apiErrors:solution.400") },
+			403: { status: t("apiErrors:status.403"), solution: t("apiErrors:solution.403") },
+			404: { status: t("apiErrors:status.404"), solution: t("apiErrors:solution.404") },
+			429: { status: t("apiErrors:status.429"), solution: t("apiErrors:solution.429") },
+			500: { status: t("apiErrors:status.500"), solution: t("apiErrors:solution.500") },
+			502: { status: t("apiErrors:status.502"), solution: t("apiErrors:solution.502") },
+			503: { status: t("apiErrors:status.503"), solution: t("apiErrors:solution.503") },
+			504: { status: t("apiErrors:status.504"), solution: t("apiErrors:solution.504") },
+			undefined: { status: t("apiErrors:status.undefined"), solution: t("apiErrors:solution.undefined") },
+		} as Record<number | string, { status: string; solution: string }>
+		const _err = defaultApiErrors[error.status] || unknownError
+
+		this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
+
+		return `${t("apiErrors:request.error_details")}\n\n${_err.status}\n\n${t("apiErrors:request.solution")}\n\n${_err.solution}`
+	}
+
 	// Metrics
 
 	public combineMessages(messages: ClineMessage[]) {
@@ -1723,36 +1745,4 @@ export class Task extends EventEmitter<ClineEvents> {
 	public get cwd() {
 		return this.workspacePath
 	}
-}
-
-function getTaskRequestError(error: any, taskId: string, instanceId: string) {
-	if (error.error?.metadata?.raw) {
-		return JSON.stringify(error.error.metadata.raw, null, 2)
-	}
-
-	const unknownError = { status: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
-
-	if (error?.headers && error.headers["content-type"].includes("text/")) {
-		const defaultApiErrors = {
-			401: { status: t("apiErrors:status.401"), solution: t("apiErrors:solution.401") },
-			400: { status: t("apiErrors:status.400"), solution: t("apiErrors:solution.400") },
-			403: { status: t("apiErrors:status.403"), solution: t("apiErrors:solution.403") },
-			404: { status: t("apiErrors:status.404"), solution: t("apiErrors:solution.404") },
-			429: { status: t("apiErrors:status.429"), solution: t("apiErrors:solution.429") },
-			500: { status: t("apiErrors:status.500"), solution: t("apiErrors:solution.500") },
-			502: { status: t("apiErrors:status.502"), solution: t("apiErrors:solution.502") },
-			503: { status: t("apiErrors:status.503"), solution: t("apiErrors:solution.503") },
-			504: { status: t("apiErrors:status.504"), solution: t("apiErrors:solution.504") },
-		} as Record<number | string, { status: string; solution: string }>
-
-		const _err = defaultApiErrors[error.status] || unknownError
-
-		console.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: `, error.message)
-
-		return `${t("apiErrors:request.http_code")}\n\n${error.status}\n\n${t("apiErrors:request.error_details")}\n\n${_err.status}\n\n${t("apiErrors:request.solution")}\n\n${_err.solution}`
-	} else if (!error.message) {
-		return `${t("apiErrors:request.http_code")}\n\n${error.status}\n\n${t("apiErrors:request.error_details")}\n\n${unknownError.status}\n\n${t("apiErrors:request.solution")}\n\n${unknownError.solution}`
-	}
-
-	return error.message
 }

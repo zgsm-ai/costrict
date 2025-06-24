@@ -138,7 +138,6 @@ export interface WebviewMessage {
 		| "maxReadFileLine"
 		| "searchFiles"
 		| "toggleApiConfigPin"
-		| "openExternalRelogin"
 		| "setHistoryPreviewCollapsed"
 		| "condenseTaskContextRequest"
 	text?: string
