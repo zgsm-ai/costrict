@@ -109,15 +109,16 @@ export class ZgsmCodeBaseSyncService {
 	}
 
 	// Supported platforms: linux/windows/mac
-	private getTargetPath(version: string): { targetDir: string; targetPath: string } {
+	private getTargetPath(version: string): { targetDir: string; targetPath: string; cacheDir: string } {
 		const homeDir = this.platform === "windows" ? process.env.USERPROFILE : process.env.HOME
 		if (!homeDir) {
 			throw new Error("Failed to determine home directory path")
 		}
 
-		const targetDir = path.join(homeDir, ".zgsm", "bin", version, `${this.platform}_${this.arch}`)
+		const cacheDir = path.join(homeDir, ".zgsm", "bin")
+		const targetDir = path.join(cacheDir, version, `${this.platform}_${this.arch}`)
 		const targetPath = path.join(targetDir, `codebaseSyncer${this.platform === "windows" ? ".exe" : ""}`)
-		return { targetDir, targetPath }
+		return { targetDir, targetPath, cacheDir }
 	}
 
 	private async retryWrapper<T>(rid: string, fn: () => Promise<T>): Promise<T> {
@@ -152,7 +153,8 @@ export class ZgsmCodeBaseSyncService {
 				if (!this.client) {
 					return reject(new Error("client not init!"))
 				}
-
+				if (!this.workspacePath) return reject(new Error("no workspacePath!"))
+				if (!this.workspaceName) return reject(new Error("no workspaceName!"))
 				this.client.registerSync(
 					{
 						clientId: this.clientId,
@@ -174,6 +176,8 @@ export class ZgsmCodeBaseSyncService {
 				if (!this.client) {
 					return reject(new Error("client not init!"))
 				}
+				if (!this.workspacePath) return reject(new Error("no workspacePath!"))
+				if (!this.workspaceName) return reject(new Error("no workspaceName!"))
 				this.client.unregisterSync(
 					{
 						clientId: this.clientId,
@@ -232,6 +236,9 @@ export class ZgsmCodeBaseSyncService {
 					return reject(new Error("client not init!"))
 				}
 
+				if (!this.workspacePath) return reject(new Error("no workspacePath!"))
+				if (!this.workspaceName) return reject(new Error("no workspaceName!"))
+
 				this.client.syncCodebase(
 					{
 						clientId: this.clientId,
@@ -263,8 +270,33 @@ export class ZgsmCodeBaseSyncService {
 		const packageInfoResponse = await fetch(packageInfoUrl)
 		const packageInfo = (await packageInfoResponse.json()) as PackageInfo
 		const { major, minor, micro } = packagesData.latest.versionId
-		const { targetDir, targetPath } = this.getTargetPath(version || `${major}.${minor}.${micro}`)
+		version = version || `${major}.${minor}.${micro}`
+		const { targetDir, targetPath } = this.getTargetPath(version)
 		await fs.promises.mkdir(targetDir, { recursive: true })
+		await Promise.all(
+			packagesData.versions.map(async ({ versionId }, index) => {
+				if (index < 3) {
+					return
+				}
+
+				const { major, minor, micro } = versionId
+				const oldVersion = `${major}.${minor}.${micro}`
+
+				if (version === oldVersion) {
+					return
+				}
+
+				const { cacheDir } = this.getTargetPath(oldVersion)
+				const oldVersionPath = path.join(cacheDir, oldVersion)
+
+				try {
+					await fs.promises.rm(path.join(oldVersionPath, oldVersion), { recursive: true, force: true })
+				} catch (error) {
+					this.log(`[download] Failed to remove ${oldVersionPath}`, "warn")
+				}
+			}),
+		)
+
 		// 4. Download and verify
 		const downloadUrl = `${this.apiBase}${packagesData.latest.packageUrl}`
 		const downloader = new FileDownloader({
@@ -330,7 +362,7 @@ export class ZgsmCodeBaseSyncService {
 					throw new Error("Unsupported platform")
 			}
 		} catch (e) {
-			console.log(e.message)
+			this.log(`[isProcessRunning] Failed to process state check: ${e.message}`, "warn")
 
 			return false
 		}
