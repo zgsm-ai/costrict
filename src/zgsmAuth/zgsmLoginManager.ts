@@ -53,10 +53,10 @@ export class ZgsmLoginManager {
 			ZgsmLoginManager.provider.getValue("zgsmDefaultBaseUrl") ||
 			"https://zgsm.sangfor.com"
 
-		this.loginUrl = `${this.baseUrl}/oidc/auth/api/v1/plugin/login`
-		this.tokenUrl = `${this.baseUrl}/oidc/auth/api/v1/plugin/login/token`
-		this.statusUrl = `${this.baseUrl}/oidc/auth/api/v1/plugin/login/status`
-		this.logoutUrl = `${this.baseUrl}/oidc/auth/api/v1/plugin/logout`
+		this.loginUrl = `${this.baseUrl}/oidc-auth/api/v1/plugin/login`
+		this.tokenUrl = `${this.baseUrl}/oidc-auth/api/v1/plugin/login/token`
+		this.statusUrl = `${this.baseUrl}/oidc-auth/api/v1/plugin/login/status`
+		this.logoutUrl = `${this.baseUrl}/oidc-auth/api/v1/plugin/logout`
 	}
 
 	private validateUrls() {
