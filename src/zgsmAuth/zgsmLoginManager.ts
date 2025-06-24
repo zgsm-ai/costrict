@@ -195,7 +195,7 @@ export class ZgsmLoginManager {
 
 	private async saveTokens(state: string, access_token: string, refresh_token: string) {
 		const config = await ZgsmLoginManager.provider.getState()
-		const zgsmApiKeyUpdatedAt = Date.now().toLocaleString()
+		const zgsmApiKeyUpdatedAt = new Date().toLocaleString()
 		const zgsmApiKeyExpiredAt = new Date(parseJwt(access_token).exp * 1000).toLocaleString()
 		const newConfiguration = {
 			...config.apiConfiguration,
