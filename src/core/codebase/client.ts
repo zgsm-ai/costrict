@@ -43,7 +43,7 @@ export class ZgsmCodeBaseSyncService {
 	}
 
 	get apiBase() {
-		return `${this.serverEndpoint}/codebaseSyncer_cli_tools`
+		return `${this.serverEndpoint}/codebase-syncer/api/v1`
 	}
 
 	get platform() {
@@ -266,7 +266,7 @@ export class ZgsmCodeBaseSyncService {
 		// 2. Get version information
 		const packagesData = await this.getVersionList()
 		// 3. Get package information
-		const packageInfoUrl = `${this.apiBase}${packagesData.latest.infoUrl}`
+		const packageInfoUrl = formatterApiUrl(this.apiBase, packagesData.latest.infoUrl)
 		const packageInfoResponse = await fetch(packageInfoUrl)
 		const packageInfo = (await packageInfoResponse.json()) as PackageInfo
 		const { major, minor, micro } = packagesData.latest.versionId
@@ -298,7 +298,7 @@ export class ZgsmCodeBaseSyncService {
 		)
 
 		// 4. Download and verify
-		const downloadUrl = `${this.apiBase}${packagesData.latest.packageUrl}`
+		const downloadUrl = formatterApiUrl(this.apiBase, packagesData.latest.packageUrl)
 		const downloader = new FileDownloader({
 			downloadUrl,
 			targetPath,
@@ -311,7 +311,10 @@ export class ZgsmCodeBaseSyncService {
 	}
 
 	async getVersionList(): Promise<PackagesResponse> {
-		const packagesUrl = `${this.apiBase}/packages-${this.platform}-${this.arch}/1.0/packages-${this.platform}-${this.arch}.json`
+		const packagesUrl = formatterApiUrl(
+			this.apiBase,
+			`/packages-${this.platform}-${this.arch}/1.0/packages-${this.platform}-${this.arch}.json`,
+		)
 		return this.retryWrapper("getVersionList", async () => {
 			const response = await fetch(packagesUrl)
 			if (!response.ok) {
@@ -571,4 +574,8 @@ function execPromise(command: string): Promise<string> {
 			}
 		})
 	})
+}
+
+function formatterApiUrl(base: string, path: string) {
+	return `${base}${path.startsWith("/") ? "" : "/"}${path}`
 }

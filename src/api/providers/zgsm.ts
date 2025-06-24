@@ -42,7 +42,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		super()
 		this.options = options
 
-		const baseURL = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
+		const baseURL = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/chat-rag/api/v1`
 		const apiKey = this.options.zgsmApiKey || "not-provided"
 		const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl)
 		const urlHost = this._getUrlHost(this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl)
@@ -82,7 +82,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 
 	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
 		const modelInfo = this.getModel().info
-		const modelUrl = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
+		const modelUrl = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/chat-rag/api/v1`
 		const modelId = `${this.options.zgsmModelId || this.options.zgsmDefaultModelId || defaultModelCache}`
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const enabledLegacyFormat = this.options.openAiLegacyFormat ?? false
@@ -420,7 +420,7 @@ export async function getZgsmModels(
 			config["headers"] = headers
 		}
 		config.timeout = 5000
-		const response = await axios.get(`${baseUrl}/v1/models`, config)
+		const response = await axios.get(`${baseUrl}/oneapi/v1/models`, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 
 		modelsCache = new WeakRef([...new Set<string>(modelsArray)])
