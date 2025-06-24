@@ -115,8 +115,7 @@ describe("App", () => {
 		const settingsView = await screen.findByTestId("settings-view")
 		expect(settingsView).toBeInTheDocument()
 
-		const chatView = screen.getByTestId("chat-view")
-		expect(chatView.getAttribute("data-hidden")).toBe("true")
+		expect(screen.queryByTestId("chat-view")).not.toBeInTheDocument()
 	})
 
 	it("switches to history view when receiving historyButtonClicked action", async () => {
@@ -129,8 +128,7 @@ describe("App", () => {
 		const historyView = await screen.findByTestId("history-view")
 		expect(historyView).toBeInTheDocument()
 
-		const chatView = screen.getByTestId("chat-view")
-		expect(chatView.getAttribute("data-hidden")).toBe("true")
+		expect(screen.queryByTestId("chat-view")).not.toBeInTheDocument()
 	})
 
 	it("switches to MCP view when receiving mcpButtonClicked action", async () => {
@@ -143,8 +141,7 @@ describe("App", () => {
 		const mcpView = await screen.findByTestId("mcp-view")
 		expect(mcpView).toBeInTheDocument()
 
-		const chatView = screen.getByTestId("chat-view")
-		expect(chatView.getAttribute("data-hidden")).toBe("true")
+		expect(screen.queryByTestId("chat-view")).not.toBeInTheDocument()
 	})
 
 	it("switches to prompts view when receiving promptsButtonClicked action", async () => {
@@ -157,8 +154,7 @@ describe("App", () => {
 		const promptsView = await screen.findByTestId("prompts-view")
 		expect(promptsView).toBeInTheDocument()
 
-		const chatView = screen.getByTestId("chat-view")
-		expect(chatView.getAttribute("data-hidden")).toBe("true")
+		expect(screen.queryByTestId("chat-view")).not.toBeInTheDocument()
 	})
 
 	it("returns to chat view when clicking done in settings view", async () => {
@@ -174,7 +170,8 @@ describe("App", () => {
 			settingsView.click()
 		})
 
-		const chatView = screen.getByTestId("chat-view")
+		const chatView = await screen.findByTestId("chat-view")
+		expect(chatView).toBeInTheDocument()
 		expect(chatView.getAttribute("data-hidden")).toBe("false")
 		expect(screen.queryByTestId("settings-view")).not.toBeInTheDocument()
 	})
@@ -192,7 +189,8 @@ describe("App", () => {
 			viewElement.click()
 		})
 
-		const chatView = screen.getByTestId("chat-view")
+		const chatView = await screen.findByTestId("chat-view")
+		expect(chatView).toBeInTheDocument()
 		expect(chatView.getAttribute("data-hidden")).toBe("false")
 		expect(screen.queryByTestId(`${view}-view`)).not.toBeInTheDocument()
 	})

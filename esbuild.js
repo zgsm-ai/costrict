@@ -196,7 +196,7 @@ const extensionConfig = {
 	define: {
 		"process.env.NODE_ENV": production ? '"production"' : '"development"',
 		"process.env.ZGSM_BASE_URL": JSON.stringify(process.env.ZGSM_BASE_URL || ""),
-		// 可以添加更多环境变量
+		"process.env.ZGSM_PUBLIC_KEY": JSON.stringify(process.env.ZGSM_PUBLIC_KEY || ""),
 	},
 	entryPoints: ["src/extension.ts"],
 	format: "cjs",

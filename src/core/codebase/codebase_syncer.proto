@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package codebase_syncer;
+option go_package = "./;codebase_syncer";
+
+// Import necessary proto packages
+import "google/protobuf/empty.proto";
+
+// Token sharing request (encrypted storage)
+// Share AccessToken request (includes server_endpoint)
+message ShareAccessTokenRequest {
+    string client_id = 1;        // Client ID
+    string access_token = 2;     // Token
+    string server_endpoint = 3;  // Cloud service endpoint
+}
+
+// Share Token response
+message ShareAccessTokenResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// Register workspace sync
+message RegisterSyncRequest {
+    string client_id = 1;        // Client ID
+    string workspace_path = 2;     // Workspace path
+    string workspace_name = 3;     // Workspace name
+}
+
+// Register workspace sync response
+message RegisterSyncResponse {
+    bool success = 1;           // Whether succeeded
+    string message = 2;         // Message
+}
+
+// Sync codebase request
+message SyncCodebaseRequest {
+    string client_id = 1;        // Client ID
+    string workspace_path = 2;     // Workspace path
+    string workspace_name = 3;     // Workspace name
+}
+
+// Sync codebase response
+message SyncCodebaseResponse {
+    bool success = 1;           // Whether succeeded
+    string message = 2;         // Message
+}
+
+// Unregister workspace sync
+message UnregisterSyncRequest {
+    string client_id = 1;        // Client ID
+    string workspace_path = 2;     // Workspace path
+    string workspace_name = 3;     // Workspace name
+}
+
+// Version info request
+message VersionRequest {
+    string client_id = 1;  // Client ID
+}
+
+// Version info response
+message VersionResponse {
+    message Data {
+        string version = 1;  // Version number
+        string app_name = 2;  // Application name
+        string os_name = 3;  // OS name
+        string arch_name = 4;  // Architecture name
+    }
+    bool success = 1;           // Whether succeeded
+    string message = 2;         // Message
+    Data data = 3;              // Data
+}
+
+// Sync service definition
+service SyncService {
+    // Register project sync
+    rpc RegisterSync(RegisterSyncRequest) returns (RegisterSyncResponse);
+
+    // Sync codebase
+    rpc SyncCodebase(SyncCodebaseRequest) returns (SyncCodebaseResponse);
+
+    // Unregister project sync
+    rpc UnregisterSync(UnregisterSyncRequest) returns (google.protobuf.Empty);
+
+    // Share AccessToken (transmitted in plaintext, server-side encrypted storage)
+    rpc ShareAccessToken(ShareAccessTokenRequest) returns (ShareAccessTokenResponse);
+
+    // Get application name and version info
+    rpc GetVersion(VersionRequest) returns (VersionResponse);
+}

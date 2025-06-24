@@ -74,6 +74,8 @@ export interface ExtensionMessage {
 		| "commandExecutionStatus"
 		| "vsCodeSetting"
 		| "condenseTaskContextResponse"
+		| "reviewTaskUpdate"
+		| "issueStatusUpdated"
 	text?: string
 	action?:
 		| "chatButtonClicked"
@@ -83,6 +85,7 @@ export interface ExtensionMessage {
 		| "promptsButtonClicked"
 		| "didBecomeVisible"
 		| "focusInput"
+		| "codeReviewButtonClicked"
 	invoke?: "newChat" | "sendMessage" | "primaryButtonClick" | "secondaryButtonClick" | "setChatBoxMessage"
 	state?: ExtensionState
 	images?: string[]
