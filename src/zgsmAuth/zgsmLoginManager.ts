@@ -6,6 +6,9 @@ import { Package } from "../schemas"
 import { parseJwt } from "../utils/jwt"
 import { statusBarloginCallback } from "../../zgsm/src/common/services"
 import { t } from "../i18n"
+import { zgsmProviderKey } from "../shared/api"
+import { initZgsmCodeBase } from "../core/codebase"
+import { CompletionStatusBar } from "../../zgsm/src/codeCompletion/completionStatusBar"
 
 export class ZgsmLoginManager {
 	private static instance: ZgsmLoginManager
@@ -77,12 +80,19 @@ export class ZgsmLoginManager {
 		await this.openLoginPage(state)
 
 		try {
+			CompletionStatusBar.login()
 			const { access_token, refresh_token } = await this.pollForToken(state)
 			await this.pollForLoginStatus(state, access_token)
 			await this.saveTokens(state, access_token, refresh_token)
 			this.startRefreshToken()
+			vscode.window.showInformationMessage("login successful")
+
+			CompletionStatusBar.complete()
+			CompletionStatusBar.resetCommand()
 		} catch (error) {
-			console.error("Login failed:", error)
+			vscode.window.showErrorMessage(`Login failed: ${error.message}`)
+			CompletionStatusBar.fail(error)
+			CompletionStatusBar.resetCommand()
 			throw error
 		} finally {
 			this.logining = false
@@ -185,16 +195,40 @@ export class ZgsmLoginManager {
 
 	private async saveTokens(state: string, access_token: string, refresh_token: string) {
 		const config = await ZgsmLoginManager.provider.getState()
-		await ZgsmLoginManager.provider.upsertProviderProfile(config.currentApiConfigName, {
+		const zgsmApiKeyUpdatedAt = Date.now()
+		const newConfiguration = {
 			...config.apiConfiguration,
+			zgsmModelId: config.apiConfiguration.zgsmModelId || config.apiConfiguration.zgsmDefaultModelId,
 			zgsmApiKey: access_token,
 			zgsmRefreshToken: refresh_token,
+			isZgsmApiKeyValid: true,
 			zgsmStateId: state,
-		})
+			zgsmApiKeyUpdatedAt,
+		}
+
+		await ZgsmLoginManager.provider.providerSettingsManager.saveMergeConfig(
+			{
+				zgsmBaseUrl: newConfiguration.zgsmBaseUrl,
+				zgsmApiKey: newConfiguration.zgsmApiKey,
+				zgsmRefreshToken: refresh_token,
+				isZgsmApiKeyValid: newConfiguration.isZgsmApiKeyValid,
+				zgsmStateId: newConfiguration.zgsmStateId,
+				zgsmApiKeyUpdatedAt: newConfiguration.zgsmApiKeyUpdatedAt,
+			},
+			(name, { apiProvider }) => {
+				return apiProvider === zgsmProviderKey && name !== config.currentApiConfigName
+			},
+		)
+
+		await ZgsmLoginManager.provider.upsertProviderProfile(config.currentApiConfigName, newConfiguration)
 		await ZgsmLoginManager.provider.postMessageToWebview({
 			type: "afterZgsmPostLogin",
-			values: { zgsmApiKey: access_token },
+			values: { zgsmApiKey: access_token, zgsmApiKeyUpdatedAt },
 		})
+		initZgsmCodeBase(
+			`${config.apiConfiguration.zgsmBaseUrl || config.apiConfiguration.zgsmDefaultBaseUrl}`,
+			access_token,
+		)
 	}
 
 	public async fetchToken(state?: string, refresh_token?: string): Promise<TokenResponse> {

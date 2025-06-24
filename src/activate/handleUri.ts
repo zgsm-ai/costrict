@@ -2,19 +2,19 @@ import * as vscode from "vscode"
 
 import { ClineProvider } from "../core/webview/ClineProvider"
 
-const handleAuthWithoutVisibleProvider = async (provider: ClineProvider | undefined, params: URLSearchParams) => {
-	if (!provider) {
-		return
-	}
+// const handleAuthWithoutVisibleProvider = async (provider: ClineProvider | undefined, params: URLSearchParams) => {
+// 	if (!provider) {
+// 		return
+// 	}
 
-	const code = params.get("code")
-	const state = params.get("state")
-	const token = params.get("token")
+// 	const code = params.get("code")
+// 	const state = params.get("state")
+// 	const token = params.get("token")
 
-	if ((code && state) || token) {
-		await provider?.handleZgsmAuthCallback(code, state, token, false)
-	}
-}
+// 	if ((code && state) || token) {
+// 		await provider?.handleZgsmAuthCallback(code, state, token, false)
+// 	}
+// }
 
 export const handleUri = async (uri: vscode.Uri) => {
 	const path = uri.path
@@ -23,11 +23,10 @@ export const handleUri = async (uri: vscode.Uri) => {
 
 	// not open webview to re-login
 	if (!visibleProvider) {
-		if (path === "/callback") {
-			const cacheProvider = ClineProvider.getCacheInstances()
-			handleAuthWithoutVisibleProvider(cacheProvider, query)
-		}
-
+		// if (path === "/callback") {
+		// 	const cacheProvider = ClineProvider.getCacheInstances()
+		// 	handleAuthWithoutVisibleProvider(cacheProvider, query)
+		// }
 		return
 	}
 
@@ -53,15 +52,15 @@ export const handleUri = async (uri: vscode.Uri) => {
 			}
 			break
 		}
-		case "/callback": {
-			const code = query.get("code")
-			const state = query.get("state")
-			const token = query.get("token")
-			if ((code && state) || token) {
-				await visibleProvider.handleZgsmAuthCallback(code, state, token)
-			}
-			break
-		}
+		// case "/callback": {
+		// 	const code = query.get("code")
+		// 	const state = query.get("state")
+		// 	const token = query.get("token")
+		// 	if ((code && state) || token) {
+		// 		await visibleProvider.handleZgsmAuthCallback(code, state, token)
+		// 	}
+		// 	break
+		// }
 		default:
 			break
 	}

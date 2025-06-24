@@ -24,7 +24,7 @@ import {
 import { t } from "../../i18n"
 import { setPanel } from "../../activate/registerCommands"
 import {
-	ApiConfiguration,
+	// ApiConfiguration,
 	requestyDefaultModelId,
 	openRouterDefaultModelId,
 	glamaDefaultModelId,
@@ -61,14 +61,14 @@ import { telemetryService } from "../../services/telemetry/TelemetryService"
 import { getWorkspacePath } from "../../utils/path"
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import { WebviewMessage } from "../../shared/WebviewMessage"
-import { getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
+// import { getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
 // import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
-import { CompletionStatusBar } from "../../../zgsm/src/codeCompletion/completionStatusBar"
+// import { CompletionStatusBar } from "../../../zgsm/src/codeCompletion/completionStatusBar"
 import { defaultLang } from "../../utils/language"
 import { ReviewTarget, ReviewTargetType } from "../../services/codeReview/types"
 import { IssueStatus, TaskStatus } from "../../shared/codeReview"
 import { ReviewComment } from "../../services/codeReview/reviewComment"
-import { initZgsmCodeBase } from "../codebase"
+// import { initZgsmCodeBase } from "../codebase"
 import { ZgsmCodeBaseSyncService } from "../codebase/client"
 
 /**
@@ -1078,76 +1078,76 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 	// Zgsm
 
-	async handleZgsmAuthCallback(code: string | null, state: string | null, token: string | null, needVisible = true) {
-		let { apiConfiguration, currentApiConfigName } = await this.getState()
-		const visibleProvider = await ClineProvider.getInstance()
+	// async handleZgsmAuthCallback(code: string | null, state: string | null, token: string | null, needVisible = true) {
+	// 	let { apiConfiguration, currentApiConfigName } = await this.getState()
+	// 	const visibleProvider = await ClineProvider.getInstance()
 
-		if (!visibleProvider && needVisible) {
-			return
-		}
+	// 	if (!visibleProvider && needVisible) {
+	// 		return
+	// 	}
 
-		let apiKey = ""
+	// 	let apiKey = ""
 
-		CompletionStatusBar.login()
+	// 	CompletionStatusBar.login()
 
-		if (token) {
-			apiKey = token
-		} else if (code) {
-			try {
-				// Extract the base domain for the auth endpoint
-				const access_token = await getZgsmAccessToken(code, apiConfiguration)
+	// 	if (token) {
+	// 		apiKey = token
+	// 	} else if (code) {
+	// 		try {
+	// 			// Extract the base domain for the auth endpoint
+	// 			const access_token = await getZgsmAccessToken(code, apiConfiguration)
 
-				if (!access_token) {
-					throw new Error(`Failed to get access token`)
-				}
+	// 			if (!access_token) {
+	// 				throw new Error(`Failed to get access token`)
+	// 			}
 
-				apiKey = access_token
-			} catch (error) {
-				this.log(
-					`Error exchanging code for API key: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
-				)
-				vscode.window.showErrorMessage(error.message)
+	// 			apiKey = access_token
+	// 		} catch (error) {
+	// 			this.log(
+	// 				`Error exchanging code for API key: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
+	// 			)
+	// 			vscode.window.showErrorMessage(error.message)
 
-				CompletionStatusBar.fail(error)
-				CompletionStatusBar.resetCommand()
+	// 			CompletionStatusBar.fail(error)
+	// 			CompletionStatusBar.resetCommand()
 
-				throw error
-			}
-		}
-		const zgsmApiKeyUpdatedAt = Date.now()
+	// 			throw error
+	// 		}
+	// 	}
+	// 	const zgsmApiKeyUpdatedAt = Date.now()
 
-		const newConfiguration: ApiConfiguration = {
-			...apiConfiguration,
-			zgsmModelId: apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId,
-			zgsmApiKey: apiKey,
-			isZgsmApiKeyValid: true,
-			zgsmApiKeyUpdatedAt,
-		}
+	// 	const newConfiguration: ApiConfiguration = {
+	// 		...apiConfiguration,
+	// 		zgsmModelId: apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId,
+	// 		zgsmApiKey: apiKey,
+	// 		isZgsmApiKeyValid: true,
+	// 		zgsmApiKeyUpdatedAt,
+	// 	}
 
-		await this.providerSettingsManager.saveMergeConfig(
-			{
-				zgsmBaseUrl: newConfiguration.zgsmBaseUrl,
-				zgsmApiKey: apiKey,
-				isZgsmApiKeyValid: true,
-				zgsmApiKeyUpdatedAt,
-			},
-			(name, { apiProvider }) => {
-				return apiProvider === zgsmProviderKey && name !== currentApiConfigName
-			},
-		)
-		await this.upsertProviderProfile(currentApiConfigName, newConfiguration)
-		// handleZgsmAuthCallback
-		await this.postMessageToWebview({
-			type: "afterZgsmPostLogin",
-			values: { zgsmApiKey: apiKey, zgsmApiKeyUpdatedAt },
-		})
-		initZgsmCodeBase(`${apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}`, apiKey)
+	// 	await this.providerSettingsManager.saveMergeConfig(
+	// 		{
+	// 			zgsmBaseUrl: newConfiguration.zgsmBaseUrl,
+	// 			zgsmApiKey: apiKey,
+	// 			isZgsmApiKeyValid: true,
+	// 			zgsmApiKeyUpdatedAt,
+	// 		},
+	// 		(name, { apiProvider }) => {
+	// 			return apiProvider === zgsmProviderKey && name !== currentApiConfigName
+	// 		},
+	// 	)
+	// 	await this.upsertProviderProfile(currentApiConfigName, newConfiguration)
+	// 	// handleZgsmAuthCallback
+	// 	await this.postMessageToWebview({
+	// 		type: "afterZgsmPostLogin",
+	// 		values: { zgsmApiKey: apiKey, zgsmApiKeyUpdatedAt },
+	// 	})
+	// 	initZgsmCodeBase(`${apiConfiguration.zgsmBaseUrl || apiConfiguration.zgsmDefaultBaseUrl}`, apiKey)
 
-		vscode.window.showInformationMessage("Shenma login successful")
+	// 	vscode.window.showInformationMessage("Shenma login successful")
 
-		CompletionStatusBar.complete()
-		CompletionStatusBar.resetCommand()
-	}
+	// 	CompletionStatusBar.complete()
+	// 	CompletionStatusBar.resetCommand()
+	// }
 
 	// Glama
 
