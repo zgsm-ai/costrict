@@ -420,7 +420,7 @@ export async function getZgsmModels(
 			config["headers"] = headers
 		}
 		config.timeout = 5000
-		const response = await axios.get(`${baseUrl}/oneapi/v1/models`, config)
+		const response = await axios.get(`${baseUrl}/ai-gateway/api/v1/models`, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 
 		modelsCache = new WeakRef([...new Set<string>(modelsArray)])
