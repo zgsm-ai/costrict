@@ -28,6 +28,7 @@ import { CompletionScores } from "./completionScore"
 import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
+import { CompletionAcception } from "./completionDataInterface"
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
@@ -80,7 +81,11 @@ export class CompletionClient {
 	/**
 	 * Send a request to the LLM to obtain the code completion result at the completion point cp.
 	 */
-	public static async callApi(cp: CompletionPoint, scores: CompletionScores): Promise<string> {
+	public static async callApi(
+		cp: CompletionPoint,
+		scores: CompletionScores,
+		latestCompletion: CompletionPoint | undefined,
+	): Promise<string> {
 		const client = await this.getInstance()
 		if (!client) {
 			const provider = CompletionClient.providerRef.deref()
@@ -92,10 +97,11 @@ export class CompletionClient {
 		}
 
 		try {
-			const response = await client.doCallApi(cp, scores)
+			const response = await client.doCallApi(cp, scores, latestCompletion)
 
 			Logger.log(`Completion [${cp.id}]: Request succeeded`, response)
 			cp.fetched(client.acquireCompletionText(response))
+			cp.parentId = client.acquireCompletionId(response)
 			CompletionTrace.reportApiOk()
 			return cp.getContent()
 		} catch (err: unknown) {
@@ -226,10 +232,22 @@ export class CompletionClient {
 		return text
 	}
 
+	private acquireCompletionId(resp: Completion): string {
+		if (!resp || !resp.choices || resp.choices.length === 0 || !resp.id) {
+			return ""
+		}
+
+		return resp.id
+	}
+
 	/**
 	 * Initiate a request for code completion.
 	 */
-	private async doCallApi(cp: CompletionPoint, scores: CompletionScores): Promise<Completion> {
+	private async doCallApi(
+		cp: CompletionPoint,
+		scores: CompletionScores,
+		lastCompletion: CompletionPoint | undefined,
+	): Promise<Completion> {
 		if (!this.openai) {
 			throw new Error(OPENAI_CLIENT_NOT_INITIALIZED)
 		}
@@ -302,6 +320,8 @@ export class CompletionClient {
 					user_id: "",
 					repo: repo,
 					git_path: "",
+					parent_id: lastCompletion?.parentId,
+					trigger_mode: lastCompletion?.getAcception() === CompletionAcception.Accepted ? "continue" : "",
 				},
 			},
 		)
