@@ -54,6 +54,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				baseURL,
 				apiKey,
 				defaultHeaders,
+				timeout: 120000,
 				defaultQuery: { "api-version": this.options.azureApiVersion || "2024-05-01-preview" },
 			})
 		} else if (isAzureOpenAi) {
@@ -63,6 +64,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				baseURL,
 				apiKey,
 				apiVersion: this.options.azureApiVersion || azureOpenAiDefaultApiVersion,
+				timeout: 120000,
 				defaultHeaders: {
 					...defaultHeaders,
 					...(this.options.openAiHostHeader ? { Host: this.options.openAiHostHeader } : {}),
@@ -72,6 +74,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 			this.client = new OpenAI({
 				baseURL,
 				apiKey,
+				timeout: 120000,
 				defaultHeaders: {
 					...defaultHeaders,
 					...(this.options.openAiHostHeader ? { Host: this.options.openAiHostHeader } : {}),

@@ -233,7 +233,9 @@ export class ZgsmLoginManager {
 
 		await ZgsmLoginManager.provider.setValue("zgsmApiKey", access_token)
 		await ZgsmLoginManager.provider.setValue("zgsmRefreshToken", refresh_token)
-
+		ZgsmLoginManager.provider.log(
+			`[ZgsmLoginManager:${state}] saveTokens: ${JSON.stringify({ access_token, refresh_token }, null, 2)}}`,
+		)
 		initZgsmCodeBase(
 			`${config.apiConfiguration.zgsmBaseUrl || config.apiConfiguration.zgsmDefaultBaseUrl}`,
 			access_token,
