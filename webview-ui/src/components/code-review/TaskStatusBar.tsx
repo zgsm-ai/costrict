@@ -59,10 +59,16 @@ const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
 				</div>
 			)}
 			{taskStatus === TaskStatus.ERROR && (
-				<div className="mb-4">
-					<div className="flex items-center">
-						<InfoCircledIcon className="text-[#E64545] leading-[17px]" width={20} height={20} />
-						<span className="ml-2 text-[#E64545] leading-[17px]">{errorMessage ?? ""}</span>
+				<div className="w-full mb-4">
+					<div className="w-full flex items-start">
+						<InfoCircledIcon
+							className="text-[#E64545] leading-[17px] flex-shrink-0 mt-0.5"
+							width={20}
+							height={20}
+						/>
+						<span className="ml-2 text-[#E64545] leading-[17px] break-words flex-1 min-w-0">
+							{errorMessage ?? ""}
+						</span>
 					</div>
 				</div>
 			)}

@@ -15,7 +15,7 @@
 		"issueLable": "Label"
 	},
 	"taskStatusBar": {
-		"running": "Code review in progress, {{progress}}%",
+		"running": "Code Review in progress, {{progress}}%",
 		"cancel": "Cancel",
 		"completed": "Code quality is excellent, no issues found"
 	},
