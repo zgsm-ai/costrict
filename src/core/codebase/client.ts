@@ -491,9 +491,11 @@ export class ZgsmCodeBaseSyncService {
 		}
 
 		await this.runSync(version)
+
+		return version
 	}
 
-	clientDaemonPoll() {
+	clientDaemonPoll(version: string) {
 		if (this.clientDaemonPollTimeout) {
 			this.stopClientDaemonPoll()
 		}
@@ -506,7 +508,7 @@ export class ZgsmCodeBaseSyncService {
 			try {
 				const { data } = await this.getLocalClientInfo()
 
-				if (data?.version !== this.curVersion) {
+				if (data?.version !== version) {
 					throw new Error("Version is not match")
 				}
 
