@@ -44,6 +44,7 @@ import { createLogger, deactivate as loggerDeactivate } from "./utils/logger"
 import { ZgsmCodeBaseSyncService } from "./core/codebase/client"
 import { defaultZgsmAuthConfig } from "./zgsmAuth/config"
 import { initZgsmCodeBase } from "./core/codebase"
+import { parseJwt } from "./utils/jwt"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -195,12 +196,27 @@ export async function activate(context: vscode.ExtensionContext) {
 	ZgsmLoginManager.setProvider(provider)
 	context.subscriptions.push(ZgsmLoginManager.getInstance())
 
-	if (provider.getValue("zgsmRefreshToken")) {
-		ZgsmLoginManager.getInstance().startRefreshToken(true)
-  }
+	const zgsmRefreshToken = provider.getValue("zgsmRefreshToken")
+
+	if (zgsmRefreshToken) {
+		try {
+			const { exp } = parseJwt(zgsmRefreshToken)
+			const needlogin = exp * 1000 <= Date.now()
+
+			if (needlogin) {
+				ZgsmLoginManager.getInstance().openStatusBarloginDialog()
+			}
+
+			ZgsmLoginManager.getInstance().startRefreshToken()
+		} catch (error) {
+			provider.log(`Failed to parse zgsmRefreshToken: ${error.message}`)
+		}
+	}
+
 	if (zgsmApiKey) {
 		initZgsmCodeBase(zgsmBaseUrl, zgsmApiKey)
 	}
+
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }
 

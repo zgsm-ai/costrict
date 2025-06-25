@@ -258,14 +258,7 @@ export class ZgsmLoginManager {
 			})
 
 			if (res.status === 401 && !this.hasLoginTip && !this.logining) {
-				this.hasLoginTip = true
-
-				statusBarloginCallback(undefined, undefined, {
-					errorTitle: t("common:window.error.login_expired"),
-					cb: () => {
-						this.hasLoginTip = false
-					},
-				})
+				this.openStatusBarloginDialog()
 			}
 
 			if (!res.ok) {
@@ -292,6 +285,17 @@ export class ZgsmLoginManager {
 			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Failed to fetch token: ${error.message}`)
 			throw error
 		}
+	}
+
+	openStatusBarloginDialog() {
+		this.hasLoginTip = true
+
+		statusBarloginCallback(undefined, undefined, {
+			errorTitle: t("common:window.error.login_expired"),
+			cb: () => {
+				this.hasLoginTip = false
+			},
+		})
 	}
 
 	private async checkLoginStatus(state?: string, access_token?: string): Promise<LoginState> {
