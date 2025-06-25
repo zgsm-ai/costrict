@@ -43,7 +43,7 @@ export class ZgsmCodeBaseSyncService {
 	}
 
 	get apiBase() {
-		return `${this.serverEndpoint}/codebase-syncer/api/v1`
+		return `${this.serverEndpoint}/shenma/api/v1`
 	}
 
 	get platform() {
