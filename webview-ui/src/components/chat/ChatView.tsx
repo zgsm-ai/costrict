@@ -431,7 +431,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const handleSendMessage = useCallback(
 		(text: string, images: string[], chatType = "system") => {
 			text = text.trim()
-
+			// format @/image:xxxx as empty
+			text = text.replace(/@\/image:[^\s]+/g, "").trim()
 			if (text || images.length > 0) {
 				if (messages.length === 0) {
 					vscode.postMessage({ type: "newTask", text, images, values: { chatType } })

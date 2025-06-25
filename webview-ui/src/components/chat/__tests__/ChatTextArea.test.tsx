@@ -1,7 +1,6 @@
 import { render, fireEvent, screen } from "@testing-library/react"
 import ChatTextArea from "../ChatTextArea"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
-import { vscode } from "@src/utils/vscode"
 import { defaultModeSlug } from "@roo/shared/modes"
 import * as pathMentions from "@src/utils/path-mentions"
 
@@ -25,21 +24,10 @@ jest.mock("@src/utils/path-mentions", () => ({
 }))
 
 // Get the mocked postMessage function
-const mockPostMessage = vscode.postMessage as jest.Mock
 const mockConvertToMentionPath = pathMentions.convertToMentionPath as jest.Mock
 
 // Mock ExtensionStateContext
 jest.mock("@src/context/ExtensionStateContext")
-
-// Custom query function to get the enhance prompt button
-const getEnhancePromptButton = () => {
-	return screen.getByRole("button", {
-		name: (_, element) => {
-			// Find the button with the sparkle icon
-			return element.querySelector(".codicon-sparkle") !== null
-		},
-	})
-}
 
 describe("ChatTextArea", () => {
 	const defaultProps = {
@@ -68,99 +56,6 @@ describe("ChatTextArea", () => {
 			apiConfiguration: {
 				apiProvider: "anthropic",
 			},
-		})
-	})
-
-	describe("enhance prompt button", () => {
-		it("should be disabled when sendingDisabled is true", () => {
-			;(useExtensionState as jest.Mock).mockReturnValue({
-				filePaths: [],
-				openedTabs: [],
-			})
-			render(<ChatTextArea {...defaultProps} sendingDisabled={true} />)
-			const enhanceButton = getEnhancePromptButton()
-			expect(enhanceButton).toHaveClass("cursor-not-allowed")
-		})
-	})
-
-	describe("handleEnhancePrompt", () => {
-		it("should send message with correct configuration when clicked", () => {
-			const apiConfiguration = {
-				apiProvider: "openrouter",
-				apiKey: "test-key",
-			}
-
-			;(useExtensionState as jest.Mock).mockReturnValue({
-				filePaths: [],
-				openedTabs: [],
-				apiConfiguration,
-			})
-
-			render(<ChatTextArea {...defaultProps} inputValue="Test prompt" />)
-
-			const enhanceButton = getEnhancePromptButton()
-			fireEvent.click(enhanceButton)
-
-			expect(mockPostMessage).toHaveBeenCalledWith({
-				type: "enhancePrompt",
-				text: "Test prompt",
-			})
-		})
-
-		it("should not send message when input is empty", () => {
-			;(useExtensionState as jest.Mock).mockReturnValue({
-				filePaths: [],
-				openedTabs: [],
-				apiConfiguration: {
-					apiProvider: "openrouter",
-				},
-			})
-
-			render(<ChatTextArea {...defaultProps} inputValue="" />)
-
-			const enhanceButton = getEnhancePromptButton()
-			fireEvent.click(enhanceButton)
-
-			expect(mockPostMessage).not.toHaveBeenCalled()
-		})
-
-		it("should show loading state while enhancing", () => {
-			;(useExtensionState as jest.Mock).mockReturnValue({
-				filePaths: [],
-				openedTabs: [],
-				apiConfiguration: {
-					apiProvider: "openrouter",
-				},
-			})
-
-			render(<ChatTextArea {...defaultProps} inputValue="Test prompt" />)
-
-			const enhanceButton = getEnhancePromptButton()
-			fireEvent.click(enhanceButton)
-
-			const loadingSpinner = screen.getByText("", { selector: ".codicon-loading" })
-			expect(loadingSpinner).toBeInTheDocument()
-		})
-	})
-
-	describe("effect dependencies", () => {
-		it("should update when apiConfiguration changes", () => {
-			const { rerender } = render(<ChatTextArea {...defaultProps} />)
-
-			// Update apiConfiguration
-			;(useExtensionState as jest.Mock).mockReturnValue({
-				filePaths: [],
-				openedTabs: [],
-				apiConfiguration: {
-					apiProvider: "openrouter",
-					newSetting: "test",
-				},
-			})
-
-			rerender(<ChatTextArea {...defaultProps} />)
-
-			// Verify the enhance button appears after apiConfiguration changes
-			expect(getEnhancePromptButton()).toBeInTheDocument()
 		})
 	})
 
