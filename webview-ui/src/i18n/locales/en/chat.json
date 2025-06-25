@@ -97,7 +97,7 @@
 	"addImages": "Add images to message",
 	"sendMessage": "Send message",
 	"typeMessage": "Type a message...",
-	"typeTask": "Type here. Use @ to mention context, / to switch modes.",
+	"typeTask": "Type your task here...",
 	"addContext": "@ to add context, / to switch modes",
 	"dragFiles": "hold shift to drag in files",
 	"dragFilesImages": "hold shift to drag in files/images",
@@ -260,6 +260,5 @@
 			"description": "Roo has reached the auto-approved limit of {{count}} API request(s). Would you like to reset the count and proceed with the task?",
 			"button": "Reset and Continue"
 		}
-	},
-	"addContextBtn": "@ Add context"
+	}
 }
