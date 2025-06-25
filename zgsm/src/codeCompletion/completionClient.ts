@@ -13,6 +13,7 @@ import { Logger } from "../common/log-util"
 import { workspace } from "vscode"
 import { AxiosError } from "axios"
 import { createAuthenticatedHeaders } from "../common/api"
+import * as vscode from "vscode"
 import {
 	configCompletion,
 	settings,
@@ -27,6 +28,8 @@ import { CompletionScores } from "./completionScore"
 import { CompletionTrace } from "./completionTrace"
 import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
+import { CompletionAcception } from "./completionDataInterface"
+import { getDependencyImports } from "./extractingImports"
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
@@ -79,7 +82,11 @@ export class CompletionClient {
 	/**
 	 * Send a request to the LLM to obtain the code completion result at the completion point cp.
 	 */
-	public static async callApi(cp: CompletionPoint, scores: CompletionScores): Promise<string> {
+	public static async callApi(
+		cp: CompletionPoint,
+		scores: CompletionScores,
+		latestCompletion: CompletionPoint | undefined,
+	): Promise<string> {
 		const client = await this.getInstance()
 		if (!client) {
 			const provider = CompletionClient.providerRef.deref()
@@ -91,10 +98,11 @@ export class CompletionClient {
 		}
 
 		try {
-			const response = await client.doCallApi(cp, scores)
+			const response = await client.doCallApi(cp, scores, latestCompletion)
 
 			Logger.log(`Completion [${cp.id}]: Request succeeded`, response)
 			cp.fetched(client.acquireCompletionText(response))
+			cp.parentId = client.acquireCompletionId(response)
 			CompletionTrace.reportApiOk()
 			return cp.getContent()
 		} catch (err: unknown) {
@@ -225,10 +233,22 @@ export class CompletionClient {
 		return text
 	}
 
+	private acquireCompletionId(resp: Completion): string {
+		if (!resp || !resp.choices || resp.choices.length === 0 || !resp.id) {
+			return ""
+		}
+
+		return resp.id
+	}
+
 	/**
 	 * Initiate a request for code completion.
 	 */
-	private async doCallApi(cp: CompletionPoint, scores: CompletionScores): Promise<Completion> {
+	private async doCallApi(
+		cp: CompletionPoint,
+		scores: CompletionScores,
+		lastCompletion: CompletionPoint | undefined,
+	): Promise<Completion> {
 		if (!this.openai) {
 			throw new Error(OPENAI_CLIENT_NOT_INITIALIZED)
 		}
@@ -257,6 +277,32 @@ export class CompletionClient {
 
 		this.openai.baseURL = `${config.baseUrl}${config.completionUrl}`
 		this.openai.apiKey = config.apiKey
+		// machineId
+		const client_id = vscode.env.machineId
+		// project_dir
+		let workspaceFolder = ""
+		if (vscode.workspace.workspaceFolders) {
+			workspaceFolder = vscode.workspace.workspaceFolders[0].uri.fsPath
+		}
+
+		const editor = vscode.window.activeTextEditor
+		// file_path
+		let relativePath = ""
+		let documentContent = ""
+		if (editor) {
+			const filePath = editor.document.uri.fsPath
+			relativePath = vscode.workspace.asRelativePath(filePath)
+			documentContent = editor.document.getText()
+		}
+		let importContent = ""
+
+		// Get import statements
+		try {
+			const imports = editor ? getDependencyImports(relativePath, documentContent) : []
+			importContent = imports.join("\n")
+		} catch {
+			importContent = ""
+		}
 
 		return this.openai.completions.create(
 			{
@@ -279,12 +325,16 @@ export class CompletionClient {
 					language_id: cp.doc.language,
 					beta_mode: this.betaMode,
 					calculate_hide_score: scores,
-					file_project_path: "",
-					project_path: "",
+					client_id: client_id,
+					file_project_path: relativePath,
+					project_path: workspaceFolder,
 					code_path: "",
 					user_id: "",
 					repo: repo,
 					git_path: "",
+					parent_id: lastCompletion?.parentId,
+					trigger_mode: lastCompletion?.getAcception() === CompletionAcception.Accepted ? "continue" : "",
+					import_content: importContent,
 				},
 			},
 		)
