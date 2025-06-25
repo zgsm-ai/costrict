@@ -1689,7 +1689,7 @@ export class Task extends EventEmitter<ClineEvents> {
 	}
 
 	public getTaskRequestError(error: any, taskId: string, instanceId: string, apiConfiguration: ProviderSettings) {
-		// const isHtml = error?.headers && error.headers["content-type"].includes("text/")
+		const isHtml = error?.headers && error.headers["content-type"].includes("text/")
 		let rawError = error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message
 		const unknownError = { status: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
 
@@ -1712,12 +1712,12 @@ export class Task extends EventEmitter<ClineEvents> {
 			},
 			400: { status: rawError || t("apiErrors:status.400"), solution: t("apiErrors:solution.400") },
 			403: { status: rawError || t("apiErrors:status.403"), solution: t("apiErrors:solution.403") },
-			404: { status: rawError || t("apiErrors:status.404"), solution: t("apiErrors:solution.404") },
+			404: { status: isHtml ? t("apiErrors:status.404") : rawError, solution: t("apiErrors:solution.404") },
 			429: { status: rawError || t("apiErrors:status.429"), solution: t("apiErrors:solution.429") },
-			500: { status: rawError || t("apiErrors:status.500"), solution: t("apiErrors:solution.500") },
-			502: { status: rawError || t("apiErrors:status.502"), solution: t("apiErrors:solution.502") },
-			503: { status: rawError || t("apiErrors:status.503"), solution: t("apiErrors:solution.503") },
-			504: { status: rawError || t("apiErrors:status.504"), solution: t("apiErrors:solution.504") },
+			500: { status: isHtml ? t("apiErrors:status.500") : rawError, solution: t("apiErrors:solution.500") },
+			502: { status: isHtml ? t("apiErrors:status.502") : rawError, solution: t("apiErrors:solution.502") },
+			503: { status: isHtml ? t("apiErrors:status.503") : rawError, solution: t("apiErrors:solution.503") },
+			504: { status: isHtml ? t("apiErrors:status.504") : rawError, solution: t("apiErrors:solution.504") },
 			undefined: {
 				status: rawError || t("apiErrors:status.undefined"),
 				solution: t("apiErrors:solution.undefined"),
