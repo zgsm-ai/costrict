@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { ClineProvider } from "../core/webview/ClineProvider"
-import { LoginState, LoginStatus, TokenResponse } from "./types"
+import { LoginState, LoginStatus, LoginStatusResponse, LoginTokenResponse, LoginTokens } from "./types"
 import { generateZgsmStateId } from "../shared/zgsmAuthUrl"
 import { Package } from "../schemas"
 import { parseJwt } from "../utils/jwt"
@@ -112,7 +112,7 @@ export class ZgsmLoginManager {
 		await vscode.env.openExternal(vscode.Uri.parse(pageUrl))
 	}
 
-	private async pollForToken(state: string): Promise<TokenResponse> {
+	private async pollForToken(state: string): Promise<LoginTokens> {
 		return new Promise(async (resolve, reject) => {
 			this.isPollingToken = true
 			const maxAttempts = 20 * 5
@@ -193,7 +193,7 @@ export class ZgsmLoginManager {
 		})
 	}
 
-	private async saveTokens(state: string, access_token: string, refresh_token: string) {
+	private async saveTokens(state: string, access_token: string, refresh_token: string, silent = false) {
 		const config = await ZgsmLoginManager.provider.getState()
 		const zgsmApiKeyUpdatedAt = new Date().toLocaleString()
 		const zgsmApiKeyExpiredAt = new Date(parseJwt(access_token).exp * 1000).toLocaleString()
@@ -224,17 +224,23 @@ export class ZgsmLoginManager {
 		)
 
 		await ZgsmLoginManager.provider.upsertProviderProfile(config.currentApiConfigName, newConfiguration)
-		await ZgsmLoginManager.provider.postMessageToWebview({
-			type: "afterZgsmPostLogin",
-			values: { zgsmApiKey: access_token, zgsmApiKeyUpdatedAt },
-		})
+
+		!silent &&
+			(await ZgsmLoginManager.provider.postMessageToWebview({
+				type: "afterZgsmPostLogin",
+				values: { zgsmApiKey: access_token, zgsmApiKeyUpdatedAt },
+			}))
+
+		await ZgsmLoginManager.provider.setValue("zgsmApiKey", access_token)
+		await ZgsmLoginManager.provider.setValue("zgsmRefreshToken", refresh_token)
+
 		initZgsmCodeBase(
 			`${config.apiConfiguration.zgsmBaseUrl || config.apiConfiguration.zgsmDefaultBaseUrl}`,
 			access_token,
 		)
 	}
 
-	public async fetchToken(state?: string, refresh_token?: string): Promise<TokenResponse> {
+	public async fetchToken(state?: string, refresh_token?: string): Promise<LoginTokens> {
 		this.initUrls()
 		this.validateUrls()
 		state = state || generateZgsmStateId()
@@ -268,10 +274,16 @@ export class ZgsmLoginManager {
 				throw new Error(`Token fetch failed with status ${res.status}`)
 			}
 
-			const data = await res.json()
+			const { success, data, message } = (await res.json()) as LoginTokenResponse
+
+			if (!success) {
+				ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] fetchToken error:  ${message}`)
+
+				throw new Error(message)
+			}
 
 			if (!data.access_token || !data.refresh_token) {
-				throw new Error("Invalid token response")
+				throw new Error(`Invalid token response: ${JSON.stringify(data)}`)
 			}
 
 			return data
@@ -282,7 +294,7 @@ export class ZgsmLoginManager {
 		}
 	}
 
-	private async checkLoginStatus(state?: string, access_token?: string) {
+	private async checkLoginStatus(state?: string, access_token?: string): Promise<LoginState> {
 		this.initUrls()
 		this.validateUrls()
 
@@ -311,7 +323,14 @@ export class ZgsmLoginManager {
 				throw new Error(`Status check failed with status ${res.status}`)
 			}
 
-			const data = await res.json()
+			const { success, data, message } = (await res.json()) as LoginStatusResponse
+
+			if (!success) {
+				ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] checkLoginStatus error: ${message}`)
+
+				throw new Error(message)
+			}
+
 			ZgsmLoginManager.provider.log(
 				`[ZgsmLoginManager:${state}] checkLoginStatus response: ${JSON.stringify(data, null, 2)}`,
 			)
@@ -328,24 +347,23 @@ export class ZgsmLoginManager {
 		let state
 		try {
 			this.initUrls()
-			const { apiConfiguration, currentApiConfigName } = await ZgsmLoginManager.provider.getState()
+			const { apiConfiguration } = await ZgsmLoginManager.provider.getState()
 			state = apiConfiguration.zgsmStateId
 			if (!apiConfiguration.zgsmRefreshToken) {
 				throw new Error("No refresh token available")
 			}
 
-			const { access_token, refresh_token } = await this.fetchToken(
-				apiConfiguration.zgsmStateId,
-				apiConfiguration.zgsmRefreshToken,
-			)
+			const {
+				access_token,
+				refresh_token,
+				state: checkState,
+			} = await this.fetchToken(apiConfiguration.zgsmStateId, apiConfiguration.zgsmRefreshToken)
 
-			await ZgsmLoginManager.provider.upsertProviderProfile(currentApiConfigName, {
-				...apiConfiguration,
-				zgsmApiKey: access_token,
-				zgsmRefreshToken: refresh_token,
-			})
-			ZgsmLoginManager.provider.setValue("zgsmApiKey", access_token)
-			ZgsmLoginManager.provider.setValue("zgsmRefreshToken", refresh_token)
+			if (state === checkState) {
+				await this.saveTokens(state, access_token, refresh_token, true)
+			} else {
+				ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] State mismatch: ${checkState}`)
+			}
 
 			this.pollingInterval = setTimeout(
 				() => this.startRefreshToken(),
