@@ -84,7 +84,7 @@ export class ZgsmLoginManager {
 			const { access_token, refresh_token } = await this.pollForToken(state)
 			await this.pollForLoginStatus(state, access_token)
 			await this.saveTokens(state, access_token, refresh_token)
-			this.startRefreshToken()
+			this.startRefreshToken(access_token)
 			vscode.window.showInformationMessage("login successful")
 
 			CompletionStatusBar.complete()
@@ -349,41 +349,44 @@ export class ZgsmLoginManager {
 		}
 	}
 
-	public async startRefreshToken(immediate = false) {
-		let state
-		try {
+	public async startRefreshToken(access_token: string, immediate = false) {
+		const refresh = async (oldToken: string) => {
 			this.initUrls()
-			const { apiConfiguration } = await ZgsmLoginManager.provider.getState()
-			state = apiConfiguration.zgsmStateId
-			if (!apiConfiguration.zgsmRefreshToken) {
-				throw new Error("No refresh token available")
-			}
+			const zgsmRefreshToken = ZgsmLoginManager.provider.getValue("zgsmRefreshToken")
+			const zgsmStateId = ZgsmLoginManager.provider.getValue("zgsmStateId")
 
-			const {
-				access_token,
-				refresh_token,
-				state: checkState,
-			} = await this.fetchToken(apiConfiguration.zgsmStateId, apiConfiguration.zgsmRefreshToken)
+			try {
+				if (!zgsmRefreshToken) {
+					throw new Error("No refresh token available")
+				}
 
-			if (state === checkState) {
-				await this.saveTokens(state, access_token, refresh_token, true)
-			} else {
-				ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] State mismatch: ${checkState}`)
-			}
+				const {
+					access_token,
+					refresh_token,
+					state: checkState,
+				} = await this.fetchToken(zgsmStateId, zgsmRefreshToken)
 
-			this.pollingInterval = setTimeout(
-				() => this.startRefreshToken(),
-				immediate ? 0 : this.getZgsmRefreshTokenInterval(refresh_token),
-			)
-		} catch (error) {
-			console.error("Failed to refresh token:", error)
-			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Failed to refresh token: ${error.message}`)
-			if (++this.fetchTokenAttempt < 5) {
-				this.pollingInterval = setTimeout(() => this.startRefreshToken(), 5000)
-			} else {
-				this.fetchTokenAttempt = 0
+				if (zgsmStateId === checkState) {
+					await this.saveTokens(zgsmStateId, access_token, refresh_token, true)
+				} else {
+					ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${zgsmStateId}] State mismatch: ${checkState}`)
+				}
+				this.pollingInterval = setTimeout(refresh, this.getZgsmRefreshTokenInterval(access_token), access_token)
+			} catch (error) {
+				console.error("Failed to refresh token:", error)
+				ZgsmLoginManager.provider.log(
+					`[ZgsmLoginManager:${zgsmStateId}] Failed to refresh token: ${error.message}`,
+				)
+				this.pollingInterval = setTimeout(refresh, this.getZgsmRefreshTokenInterval(oldToken), oldToken)
 			}
 		}
+
+		if (immediate) {
+			refresh(access_token)
+			return
+		}
+
+		this.pollingInterval = setTimeout(refresh, this.getZgsmRefreshTokenInterval(access_token), access_token)
 	}
 
 	public async stopRefreshToken() {

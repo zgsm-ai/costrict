@@ -196,24 +196,19 @@ export async function activate(context: vscode.ExtensionContext) {
 	ZgsmLoginManager.setProvider(provider)
 	context.subscriptions.push(ZgsmLoginManager.getInstance())
 
-	const zgsmRefreshToken = provider.getValue("zgsmRefreshToken")
-
-	if (zgsmRefreshToken) {
+	if (zgsmApiKey) {
 		try {
-			const { exp } = parseJwt(zgsmRefreshToken)
+			const { exp } = parseJwt(zgsmApiKey)
 			const needlogin = exp * 1000 <= Date.now()
 
 			if (needlogin) {
 				ZgsmLoginManager.getInstance().openStatusBarloginDialog()
+			} else {
+				ZgsmLoginManager.getInstance().startRefreshToken(zgsmApiKey)
 			}
-
-			ZgsmLoginManager.getInstance().startRefreshToken()
 		} catch (error) {
 			provider.log(`Failed to parse zgsmRefreshToken: ${error.message}`)
 		}
-	}
-
-	if (zgsmApiKey) {
 		initZgsmCodeBase(zgsmBaseUrl, zgsmApiKey)
 	}
 
