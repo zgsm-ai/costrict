@@ -15,7 +15,7 @@
 		"issueLable": "標籤"
 	},
 	"taskStatusBar": {
-		"running": "正在進行code review，{{progress}}%",
+		"running": "正在進行 Code Review，{{progress}}%",
 		"cancel": "取消執行",
 		"completed": "代碼質量非常高，未檢查出任何問題"
 	},
