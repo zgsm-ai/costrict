@@ -14,6 +14,10 @@ Object.defineProperty(window, "postMessage", {
 // Mock the Radix UI Popover components
 jest.mock("@/components/ui", () => {
 	return {
+		Tooltip: ({ children }: { children: ReactNode }) => children,
+		TooltipContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+		TooltipProvider: ({ children }: { children: ReactNode }) => children,
+		TooltipTrigger: ({ children }: { children: ReactNode }) => children,
 		Popover: ({
 			children,
 			onOpenChange,

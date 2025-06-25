@@ -155,6 +155,7 @@ type GlobalSettings = {
 					  ]
 				)[]
 				source?: ("global" | "project") | undefined
+				tooltip?: string | undefined
 		  }[]
 		| undefined
 	customModePrompts?:
@@ -948,6 +949,7 @@ type IpcMessage =
 												  ]
 											)[]
 											source?: ("global" | "project") | undefined
+											tooltip?: string | undefined
 									  }[]
 									| undefined
 								customModePrompts?:
@@ -1448,6 +1450,7 @@ type TaskCommand =
 									  ]
 								)[]
 								source?: ("global" | "project") | undefined
+								tooltip?: string | undefined
 						  }[]
 						| undefined
 					customModePrompts?:
