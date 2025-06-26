@@ -83,7 +83,11 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		}
 	}
 
-	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
+	override async *createMessage(
+		systemPrompt: string,
+		messages: Anthropic.Messages.MessageParam[],
+		opt: any,
+	): ApiStream {
 		const modelInfo = this.getModel().info
 		const modelUrl = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/chat-rag/api/v1`
 		const modelId = `${this.options.zgsmModelId || this.options.zgsmDefaultModelId || defaultModelCache}`
@@ -164,6 +168,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				Object.assign(isAzureAiInference ? { path: AZURE_AI_INFERENCE_PATH } : {}, {
 					headers: {
 						...defaultHeaders,
+						"Accept-Language": opt.language || "en",
 						"x-quota-identity": this.chatType,
 						"zgsm-task-id": this.taskId,
 						"zgsm-client-id": vscode.env.machineId,

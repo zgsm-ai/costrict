@@ -1569,7 +1569,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		)
 
 		// Check if we've reached the maximum number of auto-approved requests
-		const { allowedMaxRequests } = (await this.providerRef.deref()?.getState()) ?? {}
+		const { allowedMaxRequests, language } = (await this.providerRef.deref()?.getState()) ?? {}
 		const maxRequests = allowedMaxRequests || Infinity
 
 		// Increment the counter for each new API request
@@ -1584,7 +1584,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		}
 
 		this.api?.setTaskId?.(this.taskId)
-		const stream = this.api.createMessage(systemPrompt, cleanConversationHistory)
+		const stream = this.api.createMessage(systemPrompt, cleanConversationHistory, { language })
 		const iterator = stream[Symbol.asyncIterator]()
 
 		try {

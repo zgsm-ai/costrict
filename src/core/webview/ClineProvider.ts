@@ -1679,8 +1679,10 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 	// logging
 
 	public log(message: string) {
-		this.outputChannel.appendLine(message)
-		console.log(message)
+		const time = new Date().toLocaleString()
+		const msg = `[${time}] ${message}`
+		this.outputChannel.appendLine(msg)
+		console.log(msg)
 	}
 
 	// integration tests
