@@ -247,13 +247,11 @@ export class ZgsmLoginManager {
 		await ZgsmLoginManager.provider.setValue("zgsmApiKey", access_token)
 		await ZgsmLoginManager.provider.setValue("zgsmRefreshToken", refresh_token)
 
-		if (!silent) {
-			sendTokens({
-				access_token,
-				refresh_token,
-				state,
-			})
-		}
+		sendTokens({
+			access_token,
+			refresh_token,
+			state,
+		})
 
 		ZgsmLoginManager.provider.log(
 			`[ZgsmLoginManager:${state}] saveTokens: ${JSON.stringify({ access_token, refresh_token }, null, 2)}}`,

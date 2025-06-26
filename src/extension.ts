@@ -204,7 +204,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		onTokensUpdate((tokens: { state: string; access_token: string; refresh_token: string }) => {
-			ZgsmLoginManager.getInstance().saveTokens(tokens.state, tokens.access_token, tokens.refresh_token, true)
+			ZgsmLoginManager.getInstance().saveTokens(tokens.state, tokens.access_token, tokens.refresh_token)
 			vscode.window.showInformationMessage(`Token 来自其他窗口已保存: ${tokens.access_token}`)
 		}),
 	)
