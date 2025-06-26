@@ -291,7 +291,7 @@ export class ZgsmCodeBaseSyncService {
 				const oldVersionPath = path.join(cacheDir, oldVersion)
 
 				try {
-					await fs.promises.rm(path.join(oldVersionPath, oldVersion), { recursive: true, force: true })
+					await fs.promises.rm(path.join(oldVersionPath), { recursive: true, force: true })
 				} catch (error) {
 					this.log(`[download] Failed to remove ${oldVersionPath}`, "warn")
 				}
