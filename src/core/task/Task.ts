@@ -1692,14 +1692,14 @@ export class Task extends EventEmitter<ClineEvents> {
 		const isHtml = error?.headers && error.headers["content-type"].includes("text/")
 		let rawError = error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message
 		const unknownError = { status: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
+		const flags = [rawError, "{" + rawError.split(", response body: {")[1]]
 
-		try {
-			const { message } = JSON.parse("{" + rawError.split(", response body: {")[1])
-			rawError = message
-		} catch (error) {
-			this.providerRef
-				.deref()
-				?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} SerializeError Raw Failed: ${rawError}`)
+		for (const item of flags) {
+			const { /* code,*/ message } = this.zgsmParse(item, rawError)
+			// todo: use code
+			if (message) {
+				return `${t("apiErrors:request.error_details")}\n\n${message}`
+			}
 		}
 
 		const defaultApiErrors = {
@@ -1728,6 +1728,23 @@ export class Task extends EventEmitter<ClineEvents> {
 		this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
 
 		return `${t("apiErrors:request.error_details")}\n\n${_err.status}\n\n${t("apiErrors:request.solution")}\n\n${_err.solution}`
+	}
+
+	public zgsmParse(errStr: string, rawError: string) {
+		try {
+			const { message, code } = JSON.parse(errStr)
+			this.providerRef
+				.deref()
+				?.log(
+					`[Shenma#apiErrors] task ${this.taskId}.${this.instanceId} SerializeError Raw Failed: ${message || rawError}\n\n (todo code: ${code})`,
+				)
+
+			return { message, code }
+		} catch (error) {
+			console.warn("[zgsmParse]", error.message)
+
+			return { message: "", code: "" }
+		}
 	}
 
 	// Metrics
