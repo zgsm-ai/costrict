@@ -1595,10 +1595,9 @@ export class Task extends EventEmitter<ClineEvents> {
 			this.isWaitingForFirstChunk = false
 		} catch (error) {
 			this.isWaitingForFirstChunk = false
+			const errorMsg = this.getTaskRequestError(error, this.taskId, this.instanceId, this.apiConfiguration)
 			// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 			if (autoApprovalEnabled && alwaysApproveResubmit) {
-				const errorMsg = this.getTaskRequestError(error, this.taskId, this.instanceId, this.apiConfiguration)
-
 				const baseDelay = requestDelaySeconds || 5
 				let exponentialDelay = Math.ceil(baseDelay * Math.pow(2, retryAttempt))
 
@@ -1643,10 +1642,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 				return
 			} else {
-				const { response } = await this.ask(
-					"api_req_failed",
-					error.message ?? JSON.stringify(serializeError(error), null, 2),
-				)
+				const { response } = await this.ask("api_req_failed", errorMsg)
 
 				if (response !== "yesButtonClicked") {
 					// This will never happen since if noButtonClicked, we will
