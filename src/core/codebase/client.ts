@@ -355,12 +355,16 @@ export class ZgsmCodeBaseSyncService {
 		try {
 			let output: string
 			switch (this.platform) {
-				case "windows":
-					output = await execPromise(`tasklist /fi "imagename eq ${processName}.exe"`)
-					return output.includes(processName)
+				case "windows": {
+					const exeName = processName.endsWith(".exe") ? processName : `${processName}.exe`
+					output = await execPromise(`tasklist /fi "imagename eq ${exeName}"`)
+					this.log(`[isProcessRunning] Windows tasklist output: ${output}`)
+					return output.toLowerCase().includes(exeName.toLowerCase())
+				}
 				case "darwin":
 				case "linux":
 					output = await execPromise(`pgrep -f ${processName}`)
+					this.log(`[isProcessRunning] Unix tasklist output: ${output}`)
 					return output.trim().length > 0
 				default:
 					throw new Error("Unsupported platform")
@@ -375,20 +379,26 @@ export class ZgsmCodeBaseSyncService {
 	async killProcess(processName = this.processName): Promise<void> {
 		try {
 			if (this.childPid) {
-				// First try to kill process by PID
-				process.kill(this.childPid, "SIGTERM")
-				this.log(`Killed ${processName} process via PID(${this.childPid})`)
-				this.childPid = undefined
-				return
+				try {
+					process.kill(this.childPid, "SIGKILL")
+					this.log(`Killed ${processName} process via PID(${this.childPid})`)
+					this.childPid = undefined
+					return
+				} catch (e: any) {
+					this.log(`[killProcess] Failed to kill PID ${this.childPid}: ${e?.message || e}`, "warn")
+				}
 			}
+
 			if (this.platform === "windows") {
-				await execPromise(`taskkill /F /IM "${processName}.exe"`)
+				const exeName = processName.endsWith(".exe") ? processName : `${processName}.exe`
+				await execPromise(`taskkill /F /IM "${exeName}" /T`)
 			} else {
-				await execPromise(`pkill -f ${processName} || true`)
+				await execPromise(`pkill -f "${processName}"`).catch(() => {})
 			}
+
 			this.log(`Killed ${processName} process by name`)
 		} catch (err: any) {
-			this.log(`[killProcess] Failed to terminate process: ${err.message}`, "warn")
+			this.log(`[killProcess] Failed to terminate process: ${err?.message || String(err)}`, "warn")
 		}
 	}
 
