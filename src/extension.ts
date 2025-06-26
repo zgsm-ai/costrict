@@ -41,6 +41,8 @@ import { defaultLang } from "./utils/language"
 import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
 import { ZgsmLoginManager } from "./zgsmAuth/zgsmLoginManager"
 import { createLogger, deactivate as loggerDeactivate } from "./utils/logger"
+import { startIPCServer } from "./zgsmAuth/ipc/server"
+import { connectIPC, onTokensUpdate } from "./zgsmAuth/ipc/client"
 import { ZgsmCodeBaseSyncService } from "./core/codebase/client"
 import { defaultZgsmAuthConfig } from "./zgsmAuth/config"
 import { initZgsmCodeBase } from "./core/codebase"
@@ -193,8 +195,19 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 		context.subscriptions.push(watcher)
 	}
+
+	startIPCServer()
+	connectIPC()
+
 	ZgsmLoginManager.setProvider(provider)
 	context.subscriptions.push(ZgsmLoginManager.getInstance())
+
+	context.subscriptions.push(
+		onTokensUpdate((tokens: { state: string; access_token: string; refresh_token: string }) => {
+			ZgsmLoginManager.getInstance().saveTokens(tokens.state, tokens.access_token, tokens.refresh_token, true)
+			vscode.window.showInformationMessage(`Token 来自其他窗口已保存: ${tokens.access_token}`)
+		}),
+	)
 
 	if (zgsmApiKey) {
 		try {

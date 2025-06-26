@@ -9,6 +9,7 @@ import { t } from "../i18n"
 import { zgsmProviderKey } from "../shared/api"
 import { initZgsmCodeBase } from "../core/codebase"
 import { CompletionStatusBar } from "../../zgsm/src/codeCompletion/completionStatusBar"
+import { sendTokens } from "./ipc/client"
 
 export class ZgsmLoginManager {
 	private static instance: ZgsmLoginManager
@@ -193,7 +194,7 @@ export class ZgsmLoginManager {
 		})
 	}
 
-	private async saveTokens(state: string, access_token: string, refresh_token: string, silent = false) {
+	public async saveTokens(state: string, access_token: string, refresh_token: string, silent = false) {
 		const config = await ZgsmLoginManager.provider.getState()
 		const zgsmApiKeyUpdatedAt = new Date().toLocaleString()
 		const zgsmApiKeyExpiredAt = new Date(parseJwt(access_token).exp * 1000).toLocaleString()
@@ -233,9 +234,17 @@ export class ZgsmLoginManager {
 
 		await ZgsmLoginManager.provider.setValue("zgsmApiKey", access_token)
 		await ZgsmLoginManager.provider.setValue("zgsmRefreshToken", refresh_token)
+
+		sendTokens({
+			access_token,
+			refresh_token,
+			state,
+		})
+
 		ZgsmLoginManager.provider.log(
 			`[ZgsmLoginManager:${state}] saveTokens: ${JSON.stringify({ access_token, refresh_token }, null, 2)}}`,
 		)
+
 		initZgsmCodeBase(
 			`${config.apiConfiguration.zgsmBaseUrl || config.apiConfiguration.zgsmDefaultBaseUrl}`,
 			access_token,
