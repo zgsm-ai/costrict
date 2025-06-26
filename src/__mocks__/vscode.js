@@ -7,6 +7,8 @@ const vscode = {
 		machineId: "test-machine-id",
 		sessionId: "test-session-id",
 		shell: "/bin/zsh",
+		machineId: "test-machine-id",
+		uriScheme: "vscode",
 	},
 	window: {
 		showInformationMessage: jest.fn(),
