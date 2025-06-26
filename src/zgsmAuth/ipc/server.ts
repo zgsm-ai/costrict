@@ -1,37 +1,84 @@
-import RootIPC from "node-ipc"
-const IPC = RootIPC.IPC
-import os from "os"
-import fs from "fs"
-import path from "path"
+import * as net from "net"
+import * as fs from "fs"
+import { getIPCPath } from "./utils"
 
-const ipc = new IPC()
-ipc.config.id = "roo-token-sync"
-ipc.config.retry = 1500
-ipc.config.silent = true
-
-const SOCKET_PATH = path.join(os.tmpdir(), "roo-token-sync")
-
-let currentTokens: any = null
-
-ipc.serve(() => {
-	ipc.server.on("sendTokens", (data) => {
-		currentTokens = data
-		// 广播给所有已连接客户端
-		ipc.server.broadcast("tokensUpdated", data)
-	})
-	ipc.server.on("getTokens", (data, socket) => {
-		ipc.server.emit(socket, "tokensUpdated", currentTokens)
-	})
-})
+const ipcPath = getIPCPath()
+let server: net.Server | null = null
+const clients: net.Socket[] = []
 
 export function startIPCServer() {
-	try {
-		fs.unlinkSync(SOCKET_PATH)
-	} catch {}
-	try {
-		ipc.serve()
-		ipc.server.start()
-	} catch (e) {
-		// 多个窗口可能启动服务端失败，可忽略
+	if (server) {
+		return
 	}
+
+	// This is the server logic that will be instantiated if no other server is running
+	const createServer = () => {
+		server = net.createServer((socket) => {
+			clients.push(socket)
+			socket.on("data", (data) => {
+				clients.forEach((client) => {
+					// Broadcast to all other clients
+					if (client !== socket && !client.destroyed) {
+						client.write(data)
+					}
+				})
+			})
+			socket.on("end", () => {
+				const index = clients.indexOf(socket)
+				if (index !== -1) {
+					clients.splice(index, 1)
+				}
+			})
+			socket.on("error", (err) => {
+				console.error("IPC socket error:", err)
+				const index = clients.indexOf(socket)
+				if (index !== -1) {
+					clients.splice(index, 1)
+				}
+			})
+		})
+
+		server.on("error", (err) => {
+			console.error("IPC server error:", err)
+		})
+
+		// Clean up old socket before listening
+		try {
+			if (fs.existsSync(ipcPath)) {
+				fs.unlinkSync(ipcPath)
+			}
+		} catch (e) {
+			console.error(`Unable to unlink socket ${ipcPath}`, e)
+		}
+
+		server.listen(ipcPath, () => {
+			console.log("IPC server started.")
+		})
+	}
+
+	// Try to connect to see if a server is already running
+	const testSocket = net.createConnection({ path: ipcPath })
+
+	testSocket.on("connect", () => {
+		// A server is already running.
+		console.log("IPC server already running.")
+		testSocket.end()
+	})
+
+	testSocket.on("error", (err: NodeJS.ErrnoException) => {
+		if (err.code === "ECONNREFUSED" || err.code === "ENOENT") {
+			// No server running, or stale socket. Start a new one.
+			createServer()
+		} else {
+			console.error("IPC test connection error:", err)
+		}
+	})
+}
+
+export function stopIPCServer() {
+	if (server) {
+		server.close()
+		server = null
+	}
+	clients.length = 0
 }

@@ -41,8 +41,8 @@ import { defaultLang } from "./utils/language"
 import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
 import { ZgsmLoginManager } from "./zgsmAuth/zgsmLoginManager"
 import { createLogger, deactivate as loggerDeactivate } from "./utils/logger"
-import { startIPCServer } from "./zgsmAuth/ipc/server"
-import { connectIPC, onTokensUpdate } from "./zgsmAuth/ipc/client"
+import { startIPCServer, stopIPCServer } from "./zgsmAuth/ipc/server"
+import { connectIPC, disconnectIPC, onTokensUpdate } from "./zgsmAuth/ipc/client"
 import { ZgsmCodeBaseSyncService } from "./core/codebase/client"
 import { defaultZgsmAuthConfig } from "./zgsmAuth/config"
 import { initZgsmCodeBase } from "./core/codebase"
@@ -231,8 +231,11 @@ export async function activate(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated.
 export async function deactivate() {
 	await ZgsmCodeBaseSyncService.stopSync()
-
 	await zgsm.deactivate()
+
+	// Clean up IPC connections
+	disconnectIPC()
+	stopIPCServer()
 
 	// Clean up MCP server manager
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
