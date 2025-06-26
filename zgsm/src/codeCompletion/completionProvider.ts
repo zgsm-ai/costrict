@@ -127,7 +127,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 					)
 					try {
 						// Execute the calculation and rendering logic here
-						const result = await this.doProvideInlineCompletionItems(document, cp)
+						const result = await this.doProvideInlineCompletionItems(document, cp, latest)
 						resolve(result)
 					} catch (error) {
 						// Handle the case where the Promise is rejected
@@ -348,6 +348,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 	private async doProvideInlineCompletionItems(
 		document: TextDocument,
 		cp: CompletionPoint,
+		latestCompletion: CompletionPoint | undefined, // It actually records whether the last code completion was adopted
 	): Promise<InlineCompletionItem[] | InlineCompletionList> {
 		// After the timeout, there is new input, and the current completion point cp is overwritten by the last completion point
 		let latest = CompletionCache.getLatest()
@@ -357,7 +358,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 		}
 		CompletionStatusBar.loading()
 		cp.submit()
-		return CompletionClient.callApi(cp, getHideScoreArgs(document, latest, cp))
+		return CompletionClient.callApi(cp, getHideScoreArgs(document, latest, cp), latestCompletion)
 			.then((response) => {
 				latest = CompletionCache.getLatest()
 				if (latest && cp.id != latest.id) {
@@ -432,6 +433,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 				if (completionText.replace(/\r\n/g, "\n") == changeText.replace(/\r\n/g, "\n")) {
 					Logger.info(`Completion [${cur.id}]: The completion content has been accepted: ${changeText}`)
 					cur.accept()
+					CompletionCache.cache(cur)
 					if (this.timer) {
 						clearTimeout(this.timer)
 						this.timer = undefined
