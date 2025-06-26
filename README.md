@@ -1,51 +1,50 @@
-# Shenma | AI Programming Assistant
+<div align="center">
+    <h1>Shenma</h1>
+    <h2>The Best AI Coder for Enterprise-Grade Programming</h2>
+</div>
+<br>
+<div align="center">
+English | <a href="./README.zh-CN.md.md" target="_blank">简体中文</a>
+</div>
+<br>
+<br>
 
-English | [简体中文](./README.zh-CN.md)
+<div align="center">
 
-<img src="./assets/images/shenma_robot_logo_big.png" alt="zhuge logo" height="150px" align="right" />
+<a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm" target="_blank"><img src="./assets/images/readme/download on vscode marketplace_en.png" alt="Download on VS Marketplace"></a>
+<img src="./assets/images/readme/rate review_en.png" alt="Rate Review">
 
-**Shenma - The Serious Programming AI Assistant for Enterprises**
+</div>
 
-In enterprise software development, code quality and logical integrity are non-negotiable. Shenma is engineered to meet this critical demand. It's more than just a code generator; it's an AI programming assistant meticulously crafted for the delivery of **serious enterprise products**.
-
-**Addressing the Core Need**: Unlike general-purpose AI copilots, Shenma's core mission is to ensure that the generated code **strictly adheres to your logical design**, delivering **truly controllable quality**. This empowers your team to shift its focus from tedious implementation to high-value architectural design and code reviews, dramatically boosting both efficiency and project quality.
-
-**Secure, Reliable, and In Your Control**: We are committed to being **free and open-source**, while also offering **enterprise-grade private deployment** options to guarantee the security of your core code assets.
-
-Choose Shenma, and let AI become your most trusted programming strategist.
-
+Shenma is a **free**, **open-source AI-assisted programming tool** that supports private deployment for enterprises, making it the optimal choice for enterprise serious programming. Its core capabilities are outstanding: Code Review, AI Agent, Code Completion, etc. Feature highlights include: enterprise-level code repository indexing, MCP service, multiple advanced free models, API/model customization, mode selection/customization, image context capabilities, and more. It supports multiple mainstream IDEs and leads the way in supporting VS Code. Compatible with popular languages including Python, Go, Java, JavaScript/TypeScript, and C/C++."
 
 ## Features
 
-- **Code Completion**: Automatically generates subsequent code based on cursor context, delivering instant results within seconds
+- **Code Review**: Code Review enables indexing and parsing of entire code repositories, implementing company-wide RAG (Retrieval-Augmented Generation) for coding knowledge. It adopts the strategy of "specialized checks by a multi-expert model" + "cross-confirmation by multiple models." It supports users in conducting code checks on functions, selected code lines, code files, and entire project files.
 
-![GIF](./assets/images/readme/completion.gif)
+<br>
 
-- **Intelligent Q&A**: Generate code and technical solutions directly in your workspace through natural language descriptions
+![reviewgif](./assets/images/readme/codereview.gif)
 
-![GIF](./assets/images/readme/chat.gif)
+![codereview](./assets/images/readme/codereview_en.png)
 
-- **Quick Menu**: Select the code and right-click to bring up the function menu, which is powerful and can meet all your code scenarios
+- **AI Agent**: The AI Agent can perform end-to-end tasks based on developer requirements, featuring capabilities including: autonomous decision-making, full-repository context retrieval, tool invocation, error repair, and terminal operation. While maintaining comparable effectiveness, it reduces costs by over 50% compared to other open-source alternatives.
 
-![GIF](./assets/images/readme/right-menu.gif)
+<br>
 
-- **More features**: Support MCP Server, Custom Modes, multiple model switching, context referencing, image and etc…Looking forward to your exploration
+![agentgif](./assets/images/readme/agent.gif)
 
-<img src="./assets/images/readme/features.png">
+![aiagent](./assets/images/readme/ai-agent_en.png)
 
-- **Multi-language Support**: Python, Go, Java, Vue, TypeScript, JavaScript, C/C++, Shell, Lua, PHP, Ruby, SQL, and other mainstream languages.
+- **Code Completion**: Code Completion automatically generates subsequent code based on the context around your cursor, delivering results in sub-second response times. It supports comment-based completion, variable completion, function completion, and more – all instantly accepted with a single Tab key press.
 
-- **Privacy & Security**: Full-stack code open source with support for local deployment, ensuring no sensitive data leaks.
+- **More features**: - **MCP Service**: Seamlessly integrates with the MCP open ecosystem to enable standardized system connectivity. You can Integrate external APIs、Connect to databases、Develop custom tools through MCP services. - **APIs & Model Customization**：Officially provided are multiple free advanced models like claude-sonnet-4; it also supports using third-party API providers such as Anthropic, OpenAI, etc.; you can also configure any API compatible with OpenAl; or use local models through I M Studio/Ollama - **Mode Customization**: We provide various default modes to adapt to different scenarios, such as the Code mode with outstanding coding capabilities and the Orchestrator mode skilled in complex task decomposition. You can also customize mode according to your needs. - **Context**: Shenma will automatically incorporate all repository data of large files into the context, and for code completion scenarios, it will also dynamically perceive the context based on the cursor position. You can also add files/folders, terminals, issues, etc. using the @ key to provide more precise context information for the input. - **Image**：You can click the image icon below the dialog box to upload an image, or you can hold down the Shift key to drag and drop the image into the input box. - **Quick Menu**: Select code, right-click to open the function menu, supported features include: Explain Code, Fix Code, Improve Code, Add Comments, Code Review, Add Logging, Enhance Robustness, Simplify Code, Optimize Performance, etc., which can meet all your code scenarios.
 
-## Software Architecture
+<br>
 
-### System Overview Diagram
+![completiongif](./assets/images/readme/completion.gif)
 
-<img src="./assets/images/readme/system.png">
-
-### Submodule Relationship Diagram
-
-<img src="./assets/images/readme/subsystem.png">
+![morefeature](./assets/images/readme/more-feature_en.png)
 
 ## Quick Start
 
