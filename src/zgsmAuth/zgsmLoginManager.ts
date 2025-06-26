@@ -196,6 +196,18 @@ export class ZgsmLoginManager {
 
 	public async saveTokens(state: string, access_token: string, refresh_token: string, silent = false) {
 		const config = await ZgsmLoginManager.provider.getState()
+		if (!access_token || !refresh_token) {
+			throw new Error("Access token or refresh token is missing")
+		}
+
+		if (
+			access_token === config.apiConfiguration.zgsmApiKey ||
+			refresh_token === config.apiConfiguration.zgsmRefreshToken
+		) {
+			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] saveTokens: tokens are already saved`)
+			return
+		}
+
 		const zgsmApiKeyUpdatedAt = new Date().toLocaleString()
 		const zgsmApiKeyExpiredAt = new Date(parseJwt(access_token).exp * 1000).toLocaleString()
 		const newConfiguration = {
