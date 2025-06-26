@@ -217,7 +217,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated.
 export async function deactivate() {
-	ZgsmCodeBaseSyncService.stopSync()
+	await ZgsmCodeBaseSyncService.stopSync()
 
 	await zgsm.deactivate()
 

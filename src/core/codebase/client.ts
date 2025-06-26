@@ -89,10 +89,10 @@ export class ZgsmCodeBaseSyncService {
 	static async stopSync() {
 		const _instance = ZgsmCodeBaseSyncService.getInstance()
 		if (!_instance) return
-		_instance.stopRegisterSyncPoll()
-		_instance.stopClientDaemonPoll()
-		_instance.stopClientUpdatePoll()
 		try {
+			_instance.stopClientDaemonPoll()
+			_instance.stopRegisterSyncPoll()
+			_instance.stopClientUpdatePoll()
 			await _instance.unregisterSync()
 			_instance.client?.close()
 		} catch (error: any) {
