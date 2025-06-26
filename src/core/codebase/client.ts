@@ -25,9 +25,10 @@ export class ZgsmCodeBaseSyncService {
 	private clientUpdatePollTimeout?: NodeJS.Timeout
 	private address = ""
 	private curVersion = ""
+	private processName = "shenma"
 	private accessToken = ""
 	private serverEndpoint = ""
-	private childPid?: number // Record codebaseSyncer process PID
+	private childPid?: number // Record processName process PID
 	public client?: SyncServiceClient
 
 	get clientId() {
@@ -117,7 +118,7 @@ export class ZgsmCodeBaseSyncService {
 
 		const cacheDir = path.join(homeDir, ".zgsm", "bin")
 		const targetDir = path.join(cacheDir, version, `${this.platform}_${this.arch}`)
-		const targetPath = path.join(targetDir, `codebaseSyncer${this.platform === "windows" ? ".exe" : ""}`)
+		const targetPath = path.join(targetDir, `${this.processName}${this.platform === "windows" ? ".exe" : ""}`)
 		return { targetDir, targetPath, cacheDir }
 	}
 
@@ -349,7 +350,7 @@ export class ZgsmCodeBaseSyncService {
 		}
 	}
 
-	async isProcessRunning(processName = "codebaseSyncer"): Promise<boolean> {
+	async isProcessRunning(processName = this.processName): Promise<boolean> {
 		// Skip retry for process checking as it's not a gRPC call
 		try {
 			let output: string
@@ -371,12 +372,12 @@ export class ZgsmCodeBaseSyncService {
 		}
 	}
 
-	async killProcess(processName = "codebaseSyncer"): Promise<void> {
+	async killProcess(processName = this.processName): Promise<void> {
 		try {
 			if (this.childPid) {
 				// First try to kill process by PID
 				process.kill(this.childPid, "SIGTERM")
-				this.log(`Killed codebaseSyncer process via PID(${this.childPid})`)
+				this.log(`Killed ${processName} process via PID(${this.childPid})`)
 				this.childPid = undefined
 				return
 			}
@@ -385,7 +386,7 @@ export class ZgsmCodeBaseSyncService {
 			} else {
 				await execPromise(`pkill -f ${processName} || true`)
 			}
-			this.log(`Killed codebaseSyncer process by name`)
+			this.log(`Killed ${processName} process by name`)
 		} catch (err: any) {
 			this.log(`[killProcess] Failed to terminate process: ${err.message}`, "warn")
 		}
@@ -415,7 +416,7 @@ export class ZgsmCodeBaseSyncService {
 				const child = exec(command, processOptions)
 				child.unref()
 				this.childPid = child.pid // Record PID
-				this.log(`Starting codebaseSyncer process, PID=${child.pid}, command: ${command}`)
+				this.log(`Starting ${this.processName} process, PID=${child.pid}, command: ${command}`)
 				// Wait a moment to check if the process is still running
 				await new Promise((resolve) => setTimeout(resolve, attempts * 1000))
 				const isRunning = await this.isProcessRunning()
@@ -424,7 +425,7 @@ export class ZgsmCodeBaseSyncService {
 			} catch (err: any) {
 				this.log(`Failed to start process (attempt ${attempts}/${maxRetries}): ${err.message}`, "warn")
 				if (attempts >= maxRetries) {
-					throw new Error(`Failed to start codebaseSyncer process after multiple retries`)
+					throw new Error(`Failed to start ${this.processName} process after multiple retries`)
 				}
 			}
 		}
