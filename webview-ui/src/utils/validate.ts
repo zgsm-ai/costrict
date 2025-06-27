@@ -51,6 +51,9 @@ export function validateApiConfiguration(apiConfiguration: ProviderSettings): st
 				return i18next.t("settings:validation.apiKey")
 			}
 			break
+		case "gemini-cli":
+			// OAuth-based provider, no API key validation needed
+			break
 		case "openai-native":
 			if (!apiConfiguration.openAiNativeApiKey) {
 				return i18next.t("settings:validation.apiKey")

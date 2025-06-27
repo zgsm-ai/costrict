@@ -12,6 +12,7 @@ import {
 	glamaDefaultModelId,
 	unboundDefaultModelId,
 	litellmDefaultModelId,
+	geminiCliDefaultModelId,
 } from "@roo/shared/api"
 
 import { vscode } from "@src/utils/vscode"
@@ -27,6 +28,7 @@ import {
 	Chutes,
 	DeepSeek,
 	Gemini,
+	GeminiCli,
 	Glama,
 	Groq,
 	LMStudio,
@@ -243,6 +245,11 @@ const ApiOptions = ({
 						setApiConfigurationField("litellmModelId", litellmDefaultModelId)
 					}
 					break
+				case "gemini-cli":
+					if (!apiConfiguration.apiModelId) {
+						setApiConfigurationField("apiModelId", geminiCliDefaultModelId)
+					}
+					break
 			}
 
 			setApiConfigurationField("apiProvider", value)
@@ -254,6 +261,7 @@ const ApiOptions = ({
 			apiConfiguration.unboundModelId,
 			apiConfiguration.requestyModelId,
 			apiConfiguration.litellmModelId,
+			apiConfiguration.apiModelId,
 		],
 	)
 
@@ -365,6 +373,10 @@ const ApiOptions = ({
 
 			{selectedProvider === "gemini" && (
 				<Gemini apiConfiguration={apiConfiguration} setApiConfigurationField={setApiConfigurationField} />
+			)}
+
+			{selectedProvider === "gemini-cli" && (
+				<GeminiCli apiConfiguration={apiConfiguration} setApiConfigurationField={setApiConfigurationField} />
 			)}
 
 			{selectedProvider === "openai" && (

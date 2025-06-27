@@ -1,5 +1,10 @@
 # Shenma Change Log
 
+## [1.4.8]
+- Add Gemini CLI provider
+- Fix known issues
+- Optimize Code
+
 ## [1.4.7]
 - Fix model outputs Unix system commands causing PowerShell execution failure
 - Add timeout for model request
