@@ -91,7 +91,7 @@ export class ZgsmLoginManager {
 			CompletionStatusBar.complete()
 			CompletionStatusBar.resetCommand()
 		} catch (error) {
-			vscode.window.showErrorMessage(`Login failed: ${error.message}`)
+			ZgsmLoginManager.provider.log(`${error.message}`)
 			CompletionStatusBar.fail(error)
 			CompletionStatusBar.resetCommand()
 			throw error
@@ -124,7 +124,7 @@ export class ZgsmLoginManager {
 			const poll = async () => {
 				if (!this.isPollingToken || attempts >= maxAttempts) {
 					this.isPollingToken = false
-					reject(new Error("Token polling timeout"))
+					reject(new Error("[pollForToken] Token polling timeout"))
 					ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] pollForToken timeout`)
 
 					return
@@ -166,7 +166,7 @@ export class ZgsmLoginManager {
 			const poll = async () => {
 				if (!this.isPollingStatus || attempts >= maxAttempts) {
 					this.isPollingStatus = false
-					reject(new Error("Token polling timeout"))
+					reject(new Error("[pollForLoginStatus] Token polling timeout"))
 					ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] pollForLoginStatus timeout`)
 
 					return
