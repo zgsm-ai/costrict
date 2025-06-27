@@ -1159,7 +1159,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 												: "bg-vscode-input-background",
 											"transition-background-color duration-150 ease-in-out",
 											"will-change-background-color",
-											"min-h-[90px]",
+											"min-h-[50px]",
 											"box-border",
 											"rounded",
 											"resize-none",
@@ -1334,6 +1334,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 											title={t("chat:addImages")}
 											disabled={shouldDisableImages}
 											onClick={onSelectImages}
+											opacity={shouldDisableImages ? 0.5 : 1}
 										/>
 										<IconButton
 											title={t("chat:sendMessage")}
