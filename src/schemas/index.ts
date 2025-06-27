@@ -135,6 +135,7 @@ export const providerNames = [
 	"vscode-lm",
 	"lmstudio",
 	"gemini",
+	"gemini-cli",
 	"openai-native",
 	"mistral",
 	"deepseek",
@@ -223,6 +224,9 @@ export const modelInfoSchema = z.object({
 	supportsImages: z.boolean().optional(),
 	supportsComputerUse: z.boolean().optional(),
 	supportsPromptCache: z.boolean(),
+	supportsReasoningBudget: z.boolean().optional(),
+	requiredReasoningBudget: z.boolean().optional(),
+	supportsReasoningEffort: z.boolean().optional(),
 	inputPrice: z.number().optional(),
 	outputPrice: z.number().optional(),
 	cacheWritesPrice: z.number().optional(),
@@ -560,6 +564,11 @@ const geminiSchema = apiModelIdProviderModelSchema.extend({
 	googleGeminiBaseUrl: z.string().optional(),
 })
 
+const geminiCliSchema = apiModelIdProviderModelSchema.extend({
+	geminiCliOAuthPath: z.string().optional(),
+	geminiCliProjectId: z.string().optional(),
+})
+
 const openAiNativeSchema = apiModelIdProviderModelSchema.extend({
 	openAiNativeApiKey: z.string().optional(),
 	openAiNativeBaseUrl: z.string().optional(),
@@ -648,6 +657,7 @@ export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProv
 	vsCodeLmSchema.merge(z.object({ apiProvider: z.literal("vscode-lm") })),
 	lmStudioSchema.merge(z.object({ apiProvider: z.literal("lmstudio") })),
 	geminiSchema.merge(z.object({ apiProvider: z.literal("gemini") })),
+	geminiCliSchema.merge(z.object({ apiProvider: z.literal("gemini-cli") })),
 	openAiNativeSchema.merge(z.object({ apiProvider: z.literal("openai-native") })),
 	mistralSchema.merge(z.object({ apiProvider: z.literal("mistral") })),
 	deepSeekSchema.merge(z.object({ apiProvider: z.literal("deepseek") })),
@@ -677,6 +687,7 @@ export const providerSettingsSchema = z
 	.merge(vsCodeLmSchema)
 	.merge(lmStudioSchema)
 	.merge(geminiSchema)
+	.merge(geminiCliSchema)
 	.merge(openAiNativeSchema)
 	.merge(mistralSchema)
 	.merge(deepSeekSchema)
@@ -772,6 +783,9 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	// Gemini
 	geminiApiKey: undefined,
 	googleGeminiBaseUrl: undefined,
+	// Gemini CLI
+	geminiCliOAuthPath: undefined,
+	geminiCliProjectId: undefined,
 	// OpenAI Native
 	openAiNativeApiKey: undefined,
 	openAiNativeBaseUrl: undefined,

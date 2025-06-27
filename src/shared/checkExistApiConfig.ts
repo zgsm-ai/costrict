@@ -6,7 +6,7 @@ export function checkExistKey(config: ProviderSettings | undefined) {
 	}
 
 	// Special case for human-relay and fake-ai and zgsm providers which don't need any configuration.
-	if (config.apiProvider === "human-relay" || config.apiProvider === "fake-ai") {
+	if (config.apiProvider && ["human-relay", "fake-ai", "gemini-cli"].includes(config.apiProvider)) {
 		return true
 	}
 	// Check all secret keys from the centralized SECRET_STATE_KEYS array.

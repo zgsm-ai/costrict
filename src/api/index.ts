@@ -13,6 +13,7 @@ import { OpenAiHandler } from "./providers/openai"
 import { OllamaHandler } from "./providers/ollama"
 import { LmStudioHandler } from "./providers/lmstudio"
 import { GeminiHandler } from "./providers/gemini"
+import { GeminiCliHandler } from "./providers/gemini-cli"
 import { OpenAiNativeHandler } from "./providers/openai-native"
 import { DeepSeekHandler } from "./providers/deepseek"
 import { ZgsmHandler } from "./providers/zgsm"
@@ -30,6 +31,11 @@ import { LiteLLMHandler } from "./providers/litellm"
 
 export interface SingleCompletionHandler {
 	completePrompt(prompt: string): Promise<string>
+}
+
+export interface ApiHandlerCreateMessageMetadata {
+	mode?: string
+	taskId: string
 }
 
 export interface ApiHandler {
@@ -76,6 +82,8 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 			return new LmStudioHandler(options)
 		case "gemini":
 			return new GeminiHandler(options)
+		case "gemini-cli":
+			return new GeminiCliHandler(options)
 		case "openai-native":
 			return new OpenAiNativeHandler(options)
 		case "deepseek":
