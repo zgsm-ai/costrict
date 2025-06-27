@@ -20,6 +20,7 @@ type GlobalSettings = {
 							| "vscode-lm"
 							| "lmstudio"
 							| "gemini"
+							| "gemini-cli"
 							| "openai-native"
 							| "mistral"
 							| "deepseek"
@@ -191,6 +192,7 @@ type ProviderName =
 	| "vscode-lm"
 	| "lmstudio"
 	| "gemini"
+	| "gemini-cli"
 	| "openai-native"
 	| "mistral"
 	| "deepseek"
@@ -219,6 +221,7 @@ type ProviderSettings = {
 				| "vscode-lm"
 				| "lmstudio"
 				| "gemini"
+				| "gemini-cli"
 				| "openai-native"
 				| "mistral"
 				| "deepseek"
@@ -277,6 +280,9 @@ type ProviderSettings = {
 				supportsImages?: boolean | undefined
 				supportsComputerUse?: boolean | undefined
 				supportsPromptCache: boolean
+				supportsReasoningBudget?: boolean | undefined
+				requiredReasoningBudget?: boolean | undefined
+				supportsReasoningEffort?: boolean | undefined
 				inputPrice?: number | undefined
 				outputPrice?: number | undefined
 				cacheWritesPrice?: number | undefined
@@ -324,6 +330,8 @@ type ProviderSettings = {
 	lmStudioSpeculativeDecodingEnabled?: boolean | undefined
 	geminiApiKey?: string | undefined
 	googleGeminiBaseUrl?: string | undefined
+	geminiCliOAuthPath?: string | undefined
+	geminiCliProjectId?: string | undefined
 	openAiNativeApiKey?: string | undefined
 	openAiNativeBaseUrl?: string | undefined
 	mistralApiKey?: string | undefined
@@ -379,6 +387,7 @@ type ProviderSettingsEntry = {
 				| "vscode-lm"
 				| "lmstudio"
 				| "gemini"
+				| "gemini-cli"
 				| "openai-native"
 				| "mistral"
 				| "deepseek"
@@ -652,6 +661,7 @@ type IpcMessage =
 											| "vscode-lm"
 											| "lmstudio"
 											| "gemini"
+											| "gemini-cli"
 											| "openai-native"
 											| "mistral"
 											| "deepseek"
@@ -710,6 +720,9 @@ type IpcMessage =
 											supportsImages?: boolean | undefined
 											supportsComputerUse?: boolean | undefined
 											supportsPromptCache: boolean
+											supportsReasoningBudget?: boolean | undefined
+											requiredReasoningBudget?: boolean | undefined
+											supportsReasoningEffort?: boolean | undefined
 											inputPrice?: number | undefined
 											outputPrice?: number | undefined
 											cacheWritesPrice?: number | undefined
@@ -757,6 +770,8 @@ type IpcMessage =
 								lmStudioSpeculativeDecodingEnabled?: boolean | undefined
 								geminiApiKey?: string | undefined
 								googleGeminiBaseUrl?: string | undefined
+								geminiCliOAuthPath?: string | undefined
+								geminiCliProjectId?: string | undefined
 								openAiNativeApiKey?: string | undefined
 								openAiNativeBaseUrl?: string | undefined
 								mistralApiKey?: string | undefined
@@ -810,6 +825,7 @@ type IpcMessage =
 														| "vscode-lm"
 														| "lmstudio"
 														| "gemini"
+														| "gemini-cli"
 														| "openai-native"
 														| "mistral"
 														| "deepseek"
@@ -1149,6 +1165,7 @@ type TaskCommand =
 								| "vscode-lm"
 								| "lmstudio"
 								| "gemini"
+								| "gemini-cli"
 								| "openai-native"
 								| "mistral"
 								| "deepseek"
@@ -1207,6 +1224,9 @@ type TaskCommand =
 								supportsImages?: boolean | undefined
 								supportsComputerUse?: boolean | undefined
 								supportsPromptCache: boolean
+								supportsReasoningBudget?: boolean | undefined
+								requiredReasoningBudget?: boolean | undefined
+								supportsReasoningEffort?: boolean | undefined
 								inputPrice?: number | undefined
 								outputPrice?: number | undefined
 								cacheWritesPrice?: number | undefined
@@ -1254,6 +1274,8 @@ type TaskCommand =
 					lmStudioSpeculativeDecodingEnabled?: boolean | undefined
 					geminiApiKey?: string | undefined
 					googleGeminiBaseUrl?: string | undefined
+					geminiCliOAuthPath?: string | undefined
+					geminiCliProjectId?: string | undefined
 					openAiNativeApiKey?: string | undefined
 					openAiNativeBaseUrl?: string | undefined
 					mistralApiKey?: string | undefined
@@ -1307,6 +1329,7 @@ type TaskCommand =
 											| "vscode-lm"
 											| "lmstudio"
 											| "gemini"
+											| "gemini-cli"
 											| "openai-native"
 											| "mistral"
 											| "deepseek"
