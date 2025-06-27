@@ -18,6 +18,9 @@ export const Credit = ({ apiConfiguration, className, ...props }: CreditProps) =
 	useEffect(() => {
 		const computeHash = async () => {
 			const result = await hashToken(apiConfiguration.zgsmApiKey || "")
+
+			console.log("New Credit hash: ", result)
+
 			setHash(result)
 		}
 		computeHash()
