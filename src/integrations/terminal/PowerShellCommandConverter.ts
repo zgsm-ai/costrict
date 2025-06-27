@@ -151,9 +151,9 @@ export function convertUnixToPowerShell(command: string): string {
 	// Convert logical operators
 	tempCommand = tempCommand.replace(/\s*&&\s*/g, " ; ")
 	tempCommand = tempCommand.replace(/\s*\|\|\s*/g, " ; ")
-
-	// Convert path separators (Unix / to Windows \, but preserve URLs)
-	tempCommand = tempCommand.replace(/([^:])\/([^\/\s]*)/g, "$1\\$2")
+	// // todo: Temporarily comment out to avoid slash replacement errors
+	// // Convert path separators (Unix / to Windows \, but preserve URLs)
+	// tempCommand = tempCommand.replace(/([^:])\/([^\/\s]*)/g, "$1\\$2")
 
 	// Apply common argument conversions
 	tempCommand = convertCommonArguments(tempCommand)
