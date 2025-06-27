@@ -407,7 +407,7 @@ export async function getZgsmModels(
 	hostHeader?: string,
 ): Promise<[string[], string | undefined, (AxiosError | undefined)?]> {
 	baseUrl = baseUrl || defaultZgsmAuthConfig.baseUrl
-
+	const modelsUrl = `${baseUrl}/ai-gateway/api/v1/models`
 	try {
 		if (!canParseURL(baseUrl)) {
 			throw new Error(`Invalid ZGSM base URL: ${baseUrl}`)
@@ -427,14 +427,14 @@ export async function getZgsmModels(
 		if (Object.keys(headers).length > 0) {
 			config["headers"] = headers
 		}
-		config.timeout = 5000
-		const response = await axios.get(`${baseUrl}/ai-gateway/api/v1/models`, config)
+		config.timeout = 3000
+		const response = await axios.get(modelsUrl, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 
 		modelsCache = new WeakRef([...new Set<string>(modelsArray)])
 		defaultModelCache = modelsArray[0]
 	} catch (error) {
-		console.error("Error fetching ZGSM models", error)
+		console.error(`[${new Date().toLocaleString()}] Error fetching ZGSM models`, modelsUrl, error)
 	} finally {
 		return [modelsCache.deref() || [], defaultModelCache]
 	}

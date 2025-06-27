@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import delay from "delay"
 
-import { CommandId, Package } from "../schemas"
+import { CommandId, Package, ProviderSettings } from "../schemas"
 import { getCommand } from "../utils/commands"
 import { ClineProvider } from "../core/webview/ClineProvider"
 import { ContextProxy } from "../core/config/ContextProxy"
@@ -279,7 +279,23 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 	// don't need to use that event).
 	// https://github.com/microsoft/vscode-extension-samples/blob/main/webview-sample/src/extension.ts
 	const contextProxy = await ContextProxy.getInstance(context)
-	const tabProvider = new ClineProvider(context, outputChannel, "editor", contextProxy)
+	const tabProvider = new ClineProvider(
+		context,
+		outputChannel,
+		"editor",
+		contextProxy,
+		async (providerSettings: ProviderSettings): Promise<ProviderSettings> => {
+			if (typeof providerSettings.zgsmApiKeyUpdatedAt !== "string") {
+				providerSettings.zgsmApiKeyUpdatedAt = `${providerSettings.zgsmApiKeyUpdatedAt ?? ""}`
+			}
+
+			if (typeof providerSettings.zgsmApiKeyExpiredAt !== "string") {
+				providerSettings.zgsmApiKeyExpiredAt = `${providerSettings.zgsmApiKeyExpiredAt ?? ""}`
+			}
+
+			return providerSettings
+		},
+	)
 	const lastCol = Math.max(...vscode.window.visibleTextEditors.map((editor) => editor.viewColumn || 0))
 
 	// Check if there are any visible text editors, otherwise open a new group

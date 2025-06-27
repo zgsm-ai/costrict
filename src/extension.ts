@@ -15,7 +15,7 @@ try {
 
 import "./utils/path" // Necessary to have access to String.prototype.toPosix.
 
-import { Package } from "./schemas"
+import { Package, ProviderSettings } from "./schemas"
 import { ContextProxy } from "./core/config/ContextProxy"
 import { ClineProvider } from "./core/webview/ClineProvider"
 import { DIFF_VIEW_URI_SCHEME } from "./integrations/editor/DiffViewProvider"
@@ -101,7 +101,23 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	const contextProxy = await ContextProxy.getInstance(context)
-	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
+	const provider = new ClineProvider(
+		context,
+		outputChannel,
+		"sidebar",
+		contextProxy,
+		async (providerSettings: ProviderSettings): Promise<ProviderSettings> => {
+			if (typeof providerSettings.zgsmApiKeyUpdatedAt !== "string") {
+				providerSettings.zgsmApiKeyUpdatedAt = `${providerSettings.zgsmApiKeyUpdatedAt}`
+			}
+
+			if (typeof providerSettings.zgsmApiKeyExpiredAt !== "string") {
+				providerSettings.zgsmApiKeyExpiredAt = `${providerSettings.zgsmApiKeyExpiredAt}`
+			}
+
+			return providerSettings
+		},
+	)
 	telemetryService.setProvider(provider)
 	await zgsm.activate(context, provider)
 	ZgsmCodeBaseSyncService.setProvider(provider)
