@@ -204,9 +204,8 @@ export async function updateIssueStatusAPI(
 		)
 
 		// Check if the operation was successful
-		const isSuccess = data.code === 0
 		return {
-			success: isSuccess,
+			success: data.success,
 			message: data.message,
 		}
 	} catch (error) {
