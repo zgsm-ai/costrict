@@ -1,51 +1,62 @@
-# 诸葛神码 | AI 编程助手
+<div align="center">
+    <h1>诸葛神码</h1>
+    <h2>企业严肃编程的最佳AI Coder</h2>
+</div>
+<br>
+<div align="center">
+<a href="./README.md" target="_blank">English</a> | 简体中文
+</div>
+<br>
+<br>
 
-[English](./README.md) | 简体中文
+<div align="center">
 
-<img src="./assets/images/shenma_robot_logo_big.png" alt="zhuge logo" height="150px" align="right" />
+<a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm" target="_blank"><img src="./assets/images/readme/download on vscode marketplace.png" alt="Download on VS Marketplace"></a>
+<img src="./assets/images/readme/rate review.png" alt="Rate Review">
 
-**诸得神码 - 企业的严肃编程AI助手**
+</div>
 
-在企业级软件开发中，代码质量与逻辑严谨性至关重要。为此，诸葛神码应运而生。我们不仅仅是一个代码生成工具，更是为**企业严肃产品交付**量身打造的AI编程助手。
+诸葛神码是一款免费开源的AI辅助编程工具，支持企业私有化部署，是企业严肃编程的最佳选择。核心场景能力突出：代码审查（Code Review）、智能体（ AI Agent）、代码补全（Code Completion）等，特性功能亮点十足：企业级代码仓库索引、MCP服务、多种高级免费模型、API/模型自定义、模式选择/自定义、图片上下文等。支持多种主流IDE工具，率先支持VS Code。支持Python、Go、 Java、JavaScript/TypeScript、C/C++等多种主流语言。
 
-**直面核心需求**：与追求通用能力的AI辅助驾驶不同，诸葛神码的核心使命是**确保AI生成的代码严格遵循您的逻辑设计**，实现真正的**质量可控**。它将帮助您的团队将重心从具体的编码实现，转移到更高价值的架构设计与代码审查上，显著提升研发效能与项目质量。
+## 产品特性 Features
 
-**安全可靠，完全掌控**：我们坚持**免费与开源**，并提供**企业级的私有化部署选项**，确保您的核心代码资产安全无虞。
+- **代码审查（Code Review）**：代码审查能够进行全量代码仓库的索引解析，公司级编码知识库RAG（增强检索） 在发现问题和确认问题上采用“多专家模型专项检查”+“多模型交叉确认”策略 支持用户对函数、选中代码行、代码文件和整个工程文件进行代码检查
 
-选择诸葛神码，让AI成为您最值得信赖的编程战略家。  
+<br>
 
+![reviewgif](./assets/images/readme/codereview.gif)
 
-## 功能特性
+![codereview](./assets/images/readme/codereview.png)
 
-- **代码补全**：根据光标的上下文代码，自动生成后续代码，快速秒级出码。
+- **智能体（AI Agent）:**： 智能体能够根据开发者的需求端到端完成任务，具备：自主决策、全仓库上下文检索、调用工具、错误修复、运行终端等能力。在效果一致的情况下，Token消耗成本相较其它开源软件，能节省 50%以上
 
-![GIF](./assets/readme/completion.gif)
+<br>
 
-- **智能问答**：通过自然语言描述，直接在编程工作区，即可生成代码和技术问答，省心省力
+![agentgif](./assets/images/readme/agent.gif)
 
-![GIF](./assets/images/readme/chat.gif)
+![aiagent](./assets/images/readme/ai-agent.png)
 
-- **快捷菜单**：选中代码，点击右键出现功能菜单，功能强大，能满足你所有的代码场景
+- **代码补全（Code Completion）**：代码自动补全，根据光标的上下文代码，自动生成后续代码，快速秒级出码 支持注释描述的补全，变量补全，函数补全等，Tab 一键采纳
 
-![GIF](./assets/images/readme/right-menu.gif)
+<br>
 
-- **更多特性**：支持MCP Server、自定义模式、丰富的模型切换、上下文引用和图片引用等等，期待您的探索
+![completiongif](./assets/images/readme/completion.gif)
 
-<img src="./assets/images/readme/features.png">
+<br>
 
-- **多语言支持**：支持 python、go、java、vue、typescript、javascript、c/c++、shell、lua、php、ruby、SQL等主流语言
+- **更多特性（More Features）**：
+    - **MCP 服务**：无缝对接MCP开放生态，实现标准化系统连接。您可以通过MCP服务集成外部 API、连接数据库或开发定制工具等
+    - **第三方API和模型自定义**: 官方提供了各种免费的高级模型，像claude-sonnet-4；也支持使用第三方API提供商如Anthropic、OpenAl等；您还可以配置任何与OpenAl兼容的API；或者通过I M Studio/Ollama使用本地模型
+    - **模式自定义**：我们提供了多种默认模式以适应不同场景，例如：代码能力突出的Code模式、擅长复杂任务拆解的Orchestrator模式。您也可以根据需求自定义模式
+    - **大仓库上下文**：诸葛神码会自动将大文件全仓库数据纳入上下文，对于代码补全场景也会根据光标位置动态感知上下文。 你也可以通过@键添加文件/文件夹、终端、问题等等给输入更精准的上下文信息
+    - **支持图片**：多模态模型支持上传图片，您可以点击对话框下方的图片icon上传图片，也可以按住shift键将图片拖拽到输入框内
+    - **快捷菜单**： 选中代码，点击右键出现功能菜单，支持：解释代码、修复代码、改进代码、添加注释、代码审查 、添加日志、增加容错、简化代码、优化性能等功能，能满足你所有的代码场景
 
-- **隐私安全**：全栈代码开源，支持服务本地化部署，杜绝敏感信息泄露
+![morefeature](./assets/images/readme/more-feature.png)
 
-## 软件架构
+## 更多帮助 For more assistance
 
-### 整体架构图
-
-<img src="./assets/images/readme/system.png">
-
-### 子模块关系图
-
-<img src="./assets/images/readme/subsystem.png">
+更多操作详情可访问诸葛神码官方文档： https://zgsm.ai/download
 
 ## 快速开始
 
