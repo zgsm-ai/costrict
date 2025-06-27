@@ -182,7 +182,8 @@ export interface UpdateIssueStatusRequest {
  */
 export interface UpdateIssueStatusResponse {
 	/** Response status code, 200 indicates success */
-	code: number
+	code: string
+	success: boolean
 	/** Response message */
 	message: string
 }

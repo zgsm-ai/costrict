@@ -37,9 +37,9 @@ function createAxiosInstance(): AxiosInstance {
 	instance.interceptors.response.use(
 		(response: AxiosResponse) => {
 			// Check for business logic errors (code !== 200)
-			if (response.data && typeof response.data === "object" && "code" in response.data) {
-				const { code, message } = response.data
-				if (code !== 0) {
+			if (response.data && typeof response.data === "object" && "success" in response.data) {
+				const { code, message, success } = response.data
+				if (!success) {
 					const error = new Error(message || "Business logic error")
 					;(error as any).code = code
 					;(error as any).data = response.data
