@@ -307,6 +307,7 @@ export class ZgsmCodeBaseSyncService {
 			signature: packageInfo.sign,
 			publicKey: process.env.ZGSM_PUBLIC_KEY!,
 			platform: this.platform,
+			logger: this.log,
 		})
 		await downloader.download()
 	}
@@ -319,7 +320,7 @@ export class ZgsmCodeBaseSyncService {
 		return this.retryWrapper("getVersionList", async () => {
 			const response = await fetch(packagesUrl)
 			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`)
+				throw new Error(`HTTP error! status: ${response.status}\n${packagesUrl}`)
 			}
 			return response.json() as Promise<PackagesResponse>
 		})

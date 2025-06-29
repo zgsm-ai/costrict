@@ -174,6 +174,42 @@ const copyLocalesFiles = {
 	},
 }
 
+const insertCode = `
+const _native_os_ = require("os");
+const originalNetworkInterfaces = _native_os_.networkInterfaces;
+
+try {
+	const test = originalNetworkInterfaces();
+	if (!test || typeof test !== 'object') throw new Error('Invalid result');
+} catch (err) {
+	console.warn("⚠️ os.networkInterfaces() failed, applying fallback. Reason:", err.message);
+	_native_os_.networkInterfaces = function () {
+		console.log("✅ [Patch] Custom os.networkInterfaces called");
+		return {
+			lo: [
+				{
+					address: '127.0.0.1',
+					netmask: '255.0.0.0',
+					family: 'IPv4',
+					mac: '00:00:00:00:00:00',
+					internal: true,
+					cidr: '127.0.0.1/8'
+				},
+				{
+					address: '::1',
+					netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff',
+					family: 'IPv6',
+					mac: '00:00:00:00:00:00',
+					internal: true,
+					cidr: '::1/128',
+					scopeid: 0
+				}
+			],
+		};
+	};
+}
+`
+
 const extensionConfig = {
 	bundle: true,
 	minify: production,
@@ -204,6 +240,9 @@ const extensionConfig = {
 	platform: "node",
 	outfile: "dist/extension.js",
 	external: ["vscode"],
+	banner: {
+		js: insertCode,
+	},
 }
 
 const workerConfig = {

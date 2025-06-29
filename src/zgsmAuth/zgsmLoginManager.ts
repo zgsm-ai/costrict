@@ -304,7 +304,6 @@ export class ZgsmLoginManager {
 
 			return data
 		} catch (error) {
-			console.error("Failed to fetch token:", error)
 			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Failed to fetch token: ${error.message}`)
 			throw error
 		}
@@ -364,7 +363,6 @@ export class ZgsmLoginManager {
 
 			return data as LoginState
 		} catch (error) {
-			console.error("Status check error:", error)
 			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Status check error: ${error.message}`)
 			throw error
 		}
@@ -394,7 +392,6 @@ export class ZgsmLoginManager {
 				}
 				this.pollingInterval = setTimeout(refresh, this.getZgsmRefreshTokenInterval(access_token), access_token)
 			} catch (error) {
-				console.error("Failed to refresh token:", error)
 				ZgsmLoginManager.provider.log(
 					`[ZgsmLoginManager:${zgsmStateId}] Failed to refresh token: ${error.message}`,
 				)
@@ -403,8 +400,7 @@ export class ZgsmLoginManager {
 		}
 
 		if (immediate) {
-			refresh(access_token)
-			return
+			return refresh(access_token)
 		}
 
 		this.pollingInterval = setTimeout(refresh, this.getZgsmRefreshTokenInterval(access_token), access_token)
@@ -439,7 +435,6 @@ export class ZgsmLoginManager {
 				zgsmStateId: "",
 			})
 		} catch (error) {
-			console.error("Logout failed:", error)
 			ZgsmLoginManager.provider.log(`[ZgsmLoginManager:${state}] Logout failed: ${error.message}`)
 			throw error
 		}

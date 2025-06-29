@@ -11,7 +11,7 @@ export class FileDownloader {
 	private retryCount = 0
 	private readonly maxRetries = 5
 	private readonly retryDelay = 2000
-
+	private readonly logger: (...args: any[]) => any
 	constructor(options: {
 		downloadUrl: string
 		targetPath: string
@@ -19,6 +19,7 @@ export class FileDownloader {
 		signature: string
 		publicKey: string
 		platform: string
+		logger: (...args: any[]) => any
 	}) {
 		this.downloadUrl = options.downloadUrl
 		this.targetPath = options.targetPath
@@ -26,10 +27,11 @@ export class FileDownloader {
 		this.signature = options.signature
 		this.publicKey = options.publicKey
 		this.platform = options.platform
+		this.logger = options.logger || console.log
 	}
 
 	public async download(): Promise<void> {
-		console.log(`Downloading file from: ${this.downloadUrl}`)
+		this.logger(`Downloading file from: ${this.downloadUrl}`)
 
 		while (this.retryCount < this.maxRetries) {
 			try {
@@ -51,18 +53,18 @@ export class FileDownloader {
 				if (this.retryCount >= this.maxRetries) {
 					throw new Error(`Download failed after ${this.maxRetries} attempts: ${error.message}`)
 				}
-				console.log(`Download attempt ${this.retryCount} failed, retrying in ${this.retryDelay}ms...`)
+				this.logger(`Download attempt ${this.retryCount} failed, retrying in ${this.retryDelay}ms...`)
 				await new Promise((resolve) => setTimeout(resolve, this.retryDelay))
 			}
 		}
 	}
 
 	private async verifyChecksum(buffer: Buffer): Promise<void> {
-		console.log(`Verifying MD5...`)
+		this.logger(`Verifying MD5...`)
 		if (!this.verifyMD5(buffer, this.checksum)) {
 			throw new Error("❌ MD5 verification failed")
 		}
-		console.log("✅ MD5 verification passed")
+		this.logger("✅ MD5 verification passed")
 	}
 
 	private verifyMD5(buffer: Buffer, expectedMD5: string): boolean {
@@ -71,11 +73,11 @@ export class FileDownloader {
 	}
 
 	private async verifySignature(): Promise<void> {
-		console.log(`Verifying signature...`)
+		this.logger(`Verifying signature...`)
 		if (!this.verifySignatureInternal(this.checksum, this.signature, this.publicKey)) {
 			throw new Error("❌ Signature verification failed")
 		}
-		console.log("✅ Signature verification passed")
+		this.logger("✅ Signature verification passed")
 	}
 
 	private verifySignatureInternal(checksum: string, signatureHex: string, publicKeyPem: string): boolean {
@@ -87,11 +89,11 @@ export class FileDownloader {
 	}
 
 	private async saveFile(buffer: Buffer): Promise<void> {
-		console.log(`Saving file to ${this.targetPath}...`)
+		this.logger(`Saving file to ${this.targetPath}...`)
 		await fs.promises.writeFile(this.targetPath, buffer)
 		if (this.platform !== "windows") {
 			await fs.promises.chmod(this.targetPath, 0o755)
 		}
-		console.log("✅ File saved successfully")
+		this.logger("✅ File saved successfully")
 	}
 }
