@@ -11,6 +11,10 @@ import { initZgsmCodeBase } from "../core/codebase"
 import { CompletionStatusBar } from "../../zgsm/src/codeCompletion/completionStatusBar"
 import { sendTokens } from "./ipc/client"
 
+const TOKEN_REFRESH_BUFFER = 1800
+const MAX_INTERVAL = 2147483647
+const EMERGENCY_INTERVAL = 5000
+
 export class ZgsmLoginManager {
 	private static instance: ZgsmLoginManager
 	public static provider: ClineProvider
@@ -453,7 +457,9 @@ export class ZgsmLoginManager {
 
 	getZgsmRefreshTokenInterval(token: string) {
 		const { exp } = parseJwt(token)
-		return Math.min((exp - 1800) * 1000 - Date.now(), 2147483647)
+		const interval = Math.min((exp - TOKEN_REFRESH_BUFFER) * 1000 - Date.now(), MAX_INTERVAL)
+
+		return interval <= 0 && this.hasLoginTip ? EMERGENCY_INTERVAL : interval
 	}
 
 	dispose() {
