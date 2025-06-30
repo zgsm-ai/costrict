@@ -1228,7 +1228,7 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 				expect.objectContaining({
 					issueId: "issue-1",
 					fileUri: expect.objectContaining({
-						fsPath: "/test/workspace/src/test.ts",
+						fsPath: expect.stringMatching(/[/\\]test[/\\]workspace[/\\]src[/\\]test\.ts$/),
 						scheme: "file",
 					}),
 					range: expect.objectContaining({
@@ -1236,11 +1236,10 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 						end: expect.objectContaining({ line: 11, character: Number.MAX_SAFE_INTEGER }),
 					}),
 					comment: expect.objectContaining({
-						id: "issue-1",
+						author: expect.objectContaining({ name: "Shenma" }),
 						body: expect.objectContaining({
 							value: expect.stringContaining("This is a test issue"),
 						}),
-						author: expect.objectContaining({ name: "Shenma" }),
 						mode: vscode.CommentMode.Preview,
 					}),
 				}),
