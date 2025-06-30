@@ -12,7 +12,7 @@ import { createAuthenticatedHeaders } from "../common/api"
 import { CompletionPoint } from "./completionPoint"
 import { getAcceptionString, getCorrectionString } from "./completionDataInterface"
 import { CompletionCache } from "./completionCache"
-import { writeLogsSync } from "../common/vscode-util"
+// import { writeLogsSync } from "../common/vscode-util"
 import * as vscode from "vscode"
 
 /**
@@ -51,9 +51,11 @@ export class CompletionTrace {
 	}
 
 	public static init(context: vscode.ExtensionContext) {
-		let client = this.getInstance(context)
+		const client = this.getInstance(context)
 		const memo: CompletionMemo | undefined = client.context.globalState.get("trace")
-		if (!memo) return
+		if (!memo) {
+			return
+		}
 		client.openApiTotal = memo.openapi_total
 		client.openApiError = memo.openapi_error
 		client.openApiCancel = memo.openapi_cancel
@@ -81,7 +83,7 @@ export class CompletionTrace {
 	 * Report an error in the completion API
 	 */
 	public static reportApiError(status: string): number {
-		let client = this.getInstance()
+		const client = this.getInstance()
 		client.openApiError++
 		client.openApiTotal++
 		let cnt = client.errors.get(status)
@@ -98,7 +100,7 @@ export class CompletionTrace {
 	 */
 	public static async uploadPoints(): Promise<number> {
 		const url = `${envSetting.baseUrl}/api/feedbacks/completions`
-		let client = this.getInstance()
+		const client = this.getInstance()
 		const datas = this.constructDatas()
 		if (datas.count === 0) {
 			return 0
@@ -109,11 +111,11 @@ export class CompletionTrace {
 		// writeLogsSync("completions.log", JSON.stringify(datas));
 		await client
 			.postDatas(url, datas)
-			.then((result) => {
+			.then(() => {
 				client.memoOk += datas.count
 				client.uploadOk++
 			})
-			.catch((err) => {
+			.catch(() => {
 				client.memoFailed += datas.count
 				client.uploadFailed++
 			})
@@ -124,7 +126,7 @@ export class CompletionTrace {
 	 * Upload accumulated errors
 	 */
 	public static async uploadMemo() {
-		let client = this.getInstance()
+		const client = this.getInstance()
 		const data: CompletionMemo = {
 			openapi_total: client.openApiTotal,
 			openapi_cancel: client.openApiCancel,
@@ -142,11 +144,11 @@ export class CompletionTrace {
 		const url = `${envSetting.baseUrl}/api/feedbacks/error`
 		await client
 			.postDatas(url, data)
-			.then((result) => {
+			.then(() => {
 				client.lastUploadError = client.openApiError
 				client.uploadOk++
 			})
-			.catch((err) => {
+			.catch(() => {
 				client.uploadFailed++
 			})
 	}
@@ -165,7 +167,7 @@ export class CompletionTrace {
 	/**
 	 * Construct data for reporting based on completion point information
 	 */
-	private static constructData(cp: CompletionPoint): any {
+	private static constructData(cp: CompletionPoint) {
 		return {
 			id: cp.id,
 			language: cp.doc.language,
@@ -183,12 +185,14 @@ export class CompletionTrace {
 	 * Build data for reporting completed completion points
 	 */
 	private static constructDatas() {
-		let datas = []
-		let all = CompletionCache.all()
+		const datas = []
+		const all = CompletionCache.all()
 		let n = 0
 		for (n = 0; n < all.length - 1; n++) {
-			let cp = all[n]
-			if (!cp.isFinished()) break
+			const cp = all[n]
+			if (!cp.isFinished()) {
+				break
+			}
 			datas.push(this.constructData(cp))
 		}
 		return {
@@ -199,19 +203,24 @@ export class CompletionTrace {
 	/**
 	 * Upload completion logs
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private async postDatas(url: string, data: any): Promise<string> {
-		return this.axios
-			.post(url, data, {
-				headers: createAuthenticatedHeaders(),
-			})
-			.then(function (response: { data: any }) {
-				response = response.data
-				Logger.debug(`Completion: post(${url}) succeeded`, data)
-				return Promise.resolve(response.data)
-			})
-			.catch(function (error: any) {
-				Logger.debug(`Completion: post(${url}) failed`, data)
-				return Promise.reject(error)
-			})
+		return (
+			this.axios
+				.post(url, data, {
+					headers: createAuthenticatedHeaders(),
+				})
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				.then(function (response: { data: any }) {
+					response = response.data
+					Logger.debug(`Completion: post(${url}) succeeded`, data)
+					return Promise.resolve(response.data)
+				})
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				.catch(function (error: any) {
+					Logger.debug(`Completion: post(${url}) failed`, data)
+					return Promise.reject(error)
+				})
+		)
 	}
 }

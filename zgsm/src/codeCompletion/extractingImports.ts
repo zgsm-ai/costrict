@@ -38,7 +38,7 @@ export function getDependencyImports(filePath: string, codeContent: string): str
 			}
 			break
 
-		case "go":
+		case "go": {
 			// Go uses `import "..."` or `import (...)`
 			let inImportBlock = false
 			for (const line of lines) {
@@ -62,7 +62,7 @@ export function getDependencyImports(filePath: string, codeContent: string): str
 				}
 			}
 			break
-
+		}
 		case "js":
 		case "ts":
 			// JavaScript and TypeScript use `import ... from ...` or `require(...)`
@@ -119,22 +119,3 @@ export function getDependencyImports(filePath: string, codeContent: string): str
 
 	return imports
 }
-
-function testExtractingImports() {
-	// Example usage:
-	const filePath = "example.ts"
-	const codeContent = `
-    import React from 'react';
-    import ReactDOM from 'react-dom';
-
-    const App = () => <div>Hello World!</div>;
-
-    ReactDOM.render(<App />, document.getElementById('root'));
-    `
-	// 输出运行时间
-	console.time("getDependencyImports")
-	const imports = getDependencyImports(filePath, codeContent)
-	console.timeEnd("getDependencyImports")
-}
-
-// testExtractingImports()

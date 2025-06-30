@@ -13,6 +13,13 @@ import { Logger } from "../common/log-util"
 import { statusBarCommand, turnOffCompletion, turnOnCompletion } from "./completionCommands"
 import { t } from "../../../src/i18n"
 
+interface IFailError {
+	message?: string
+	status?: number
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	[key: string]: any
+}
+
 /**
  * Status bar at the bottom right of vscode
  */
@@ -37,8 +44,9 @@ export class CompletionStatusBar {
 			Logger.log("Plugin exception, completionStatusBar instance is abnormally lost")
 			throw new Error("Plugin exception, completionStatusBar instance is abnormally lost")
 		}
-		const statusUpdateCallback = (callback: any, showIcon: boolean) => async () => {
-			await callback()
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const statusUpdateCallback = (callback: (...args: any[]) => any, showIcon: boolean) => async () => {
+			await callback?.()
 			if (showIcon) {
 				statusBar.show()
 			} else {
@@ -98,7 +106,7 @@ export class CompletionStatusBar {
 	/**
 	 * Completion failed
 	 */
-	public static fail(error: any) {
+	public static fail(error: IFailError) {
 		let codeMsg
 		let solutionMsg
 
