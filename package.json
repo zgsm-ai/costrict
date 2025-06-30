@@ -4,7 +4,7 @@
 	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
 	"version": "1.4.8",
-	"icon": "images/zhuge_shenma_rebot_logo_big.png",
+	"icon": "assets/images/shenma_robot_logo_big.png",
 	"galleryBanner": {
 		"color": "#617A91",
 		"theme": "dark"
