@@ -57,6 +57,7 @@ interface InputMapArrayProps {
 }
 
 const TextareaWrapper = styled.div`
+	position: relative;
 	textarea {
 		padding: 0;
 		border: none;
@@ -178,6 +179,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const [searchQuery, setSearchQuery] = useState("")
 		const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
 		const [isMouseDownOnMenu, setIsMouseDownOnMenu] = useState(false)
+		const highlightLayerRef = useRef<HTMLDivElement>(null)
 		const [selectedMenuIndex, setSelectedMenuIndex] = useState(-1)
 		const [selectedType, setSelectedType] = useState<ContextMenuOptionType | null>(null)
 		const [justDeletedSpaceAfterMention, setJustDeletedSpaceAfterMention] = useState(false)
@@ -653,9 +655,17 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		}, [])
 
 		const updateHighlights = useCallback(() => {
-			if (!textAreaRef.current) return
+			if (!textAreaRef.current || !highlightLayerRef.current) return
 
 			const text = textAreaRef.current.value
+
+			highlightLayerRef.current.innerHTML = text
+				.replace(/\n$/, "\n\n")
+				.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c] || c)
+				.replace(mentionRegexGlobal, '<mark class="mention-context-textarea-highlight">$&</mark>')
+
+			highlightLayerRef.current.scrollTop = textAreaRef.current.scrollTop
+			highlightLayerRef.current.scrollLeft = textAreaRef.current.scrollLeft
 
 			const layerSpamClass = cn("inline-block", "rounded-sm", "py-px px-1")
 
@@ -1109,6 +1119,27 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								</div>
 
 								<TextareaWrapper>
+									<div
+										ref={highlightLayerRef}
+										className={cn(
+											"absolute",
+											"inset-0",
+											"pointer-events-none",
+											"whitespace-pre-wrap",
+											"break-words",
+											"text-transparent",
+											"overflow-hidden",
+											"font-vscode-font-family",
+											"text-[12px]",
+											"leading-vscode-editor-line-height",
+											"py-[2px]",
+											"z-10",
+											"forced-color-adjust-none",
+										)}
+										style={{
+											color: "transparent",
+										}}
+									/>
 									<DynamicTextArea
 										ref={(el) => {
 											if (typeof ref === "function") {
