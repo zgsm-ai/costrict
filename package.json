@@ -280,6 +280,10 @@
 				"command": "zgsm.rejectIssue",
 				"title": "Reject",
 				"icon": "$(circle-slash)"
+			},
+			{
+				"command": "zgsm.addFileToContext",
+				"title": "%command.addFileToContext.title%"
 			}
 		],
 		"menus": {
@@ -355,6 +359,10 @@
 				{
 					"command": "zgsm.reviewRepo",
 					"group": "zgsm.explorerSubmenu@2"
+				},
+				{
+					"command": "zgsm.addFileToContext",
+					"group": "zgsm.explorerSubmenu@3"
 				}
 			],
 			"terminal/context": [

@@ -33,6 +33,7 @@
 	"command.setCustomStoragePath.title": "設定自訂儲存路徑",
 	"command.focusInput.title": "聚焦輸入框",
 	"command.reviewRepo.title": "掃描倉庫",
+	"command.addFileToContext.title": "添加上下文",
 	"intelligentCodeCompletion.title": "智慧程式碼補全",
 	"intelligentCodeCompletion.enabled.description": "啟用智慧程式碼補全",
 	"intelligentCodeCompletion.betaMode.description": "啟用測試版功能以獲得早期存取權。請查看版本說明了解功能列表。",

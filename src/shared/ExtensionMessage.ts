@@ -86,7 +86,13 @@ export interface ExtensionMessage {
 		| "didBecomeVisible"
 		| "focusInput"
 		| "codeReviewButtonClicked"
-	invoke?: "newChat" | "sendMessage" | "primaryButtonClick" | "secondaryButtonClick" | "setChatBoxMessage"
+	invoke?:
+		| "newChat"
+		| "sendMessage"
+		| "primaryButtonClick"
+		| "secondaryButtonClick"
+		| "setChatBoxMessage"
+		| "setChatBoxMessageByContext"
 	state?: ExtensionState
 	images?: string[]
 	filePaths?: string[]

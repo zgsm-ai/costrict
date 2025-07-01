@@ -115,6 +115,7 @@ export const commandIds = [
 	"codeReviewButtonClicked",
 	"acceptIssue",
 	"rejectIssue",
+	"addFileToContext",
 ] as const
 
 export type CommandId = (typeof commandIds)[number]

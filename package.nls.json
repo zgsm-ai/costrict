@@ -34,6 +34,7 @@
 	"command.terminal.explainCommand.title": "Explain This Command",
 	"command.acceptInput.title": "Accept Input/Suggestion",
 	"command.reviewRepo.title": "Review Repo",
+	"command.addFileToContext.title": "Add To Context",
 	"commands.allowedCommands.description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled",
 	"configuration.title": "Shenma",
 	"intelligentCodeCompletion.title": "Intelligent Code Completion",
