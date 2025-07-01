@@ -74,15 +74,20 @@ export const TabTrigger = forwardRef<
 		value: string
 		isSelected?: boolean
 		onSelect?: () => void
+		focusNeedRing?: boolean
 	}
->(({ children, className, value: _value, isSelected, onSelect, ...props }, ref) => {
+>(({ children, className, value: _value, isSelected, onSelect, focusNeedRing = true, ...props }, ref) => {
 	return (
 		<button
 			ref={ref}
 			role="tab"
 			aria-selected={isSelected}
 			tabIndex={isSelected ? 0 : -1}
-			className={cn("focus:outline-none focus:ring-2 focus:ring-vscode-focusBorder", className)}
+			className={cn(
+				"focus:outline-none focus:ring-vscode-focusBorder",
+				className,
+				focusNeedRing ? "focus:ring-2" : "",
+			)}
 			onClick={onSelect}
 			{...props}>
 			{children}

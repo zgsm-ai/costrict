@@ -70,6 +70,10 @@ jest.mock("vscode", () => {
 			createTextEditorDecorationType: jest.fn().mockReturnValue({
 				dispose: jest.fn(),
 			}),
+			createOutputChannel: jest.fn().mockReturnValue({
+				appendLine: jest.fn(),
+				dispose: jest.fn(),
+			}),
 			visibleTextEditors: [mockTextEditor],
 			tabGroups: {
 				all: [mockTabGroup],

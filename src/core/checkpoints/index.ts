@@ -73,8 +73,11 @@ export function getCheckpointService(cline: Task) {
 			log("[Cline#getCheckpointService] service initialized")
 
 			try {
+				const lastMessage = cline.clineMessages[cline.clineMessages.length - 1]
 				const isCheckpointNeeded =
-					typeof cline.clineMessages.find(({ say }) => say === "checkpoint_saved") === "undefined"
+					typeof cline.clineMessages.find(({ say }) => say === "checkpoint_saved") === "undefined" &&
+					cline.clineMessages.length > 0 &&
+					!(lastMessage?.type === "ask" && lastMessage?.ask === "api_req_failed")
 
 				cline.checkpointService = service
 				cline.checkpointServiceInitializing = false

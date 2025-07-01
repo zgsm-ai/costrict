@@ -10,6 +10,7 @@ import * as vscode from "vscode"
 import { Logger } from "../common/log-util"
 import { handleStatusBarClick } from "../common/services"
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Command = { command: string; callback: (...args: any[]) => any; thisArg?: any }
 
 /**

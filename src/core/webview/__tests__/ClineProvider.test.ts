@@ -35,6 +35,15 @@ jest.mock("fs/promises", () => ({
 jest.mock("axios", () => ({
 	get: jest.fn().mockResolvedValue({ data: { data: [] } }),
 	post: jest.fn(),
+	create: jest.fn().mockReturnValue({
+		get: jest.fn().mockResolvedValue({ data: { data: [] } }),
+		post: jest.fn(),
+		interceptors: {
+			response: {
+				use: jest.fn(),
+			},
+		},
+	}),
 }))
 
 jest.mock(
@@ -147,6 +156,10 @@ jest.mock("vscode", () => ({
 	window: {
 		showInformationMessage: jest.fn(),
 		showErrorMessage: jest.fn(),
+		createOutputChannel: jest.fn().mockReturnValue({
+			appendLine: jest.fn(),
+			dispose: jest.fn(),
+		}),
 	},
 	workspace: {
 		getConfiguration: jest.fn().mockReturnValue({

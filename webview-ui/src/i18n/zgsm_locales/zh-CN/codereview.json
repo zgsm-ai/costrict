@@ -1,0 +1,23 @@
+{
+	"welcomePage": {
+		"title": "诸葛神码",
+		"subtitle": "企业级最佳AI Coder",
+		"tips1": "1. 选择函数、代码块、多文件",
+		"tips2": "2. 点击鼠标右键，找到诸葛神码 > Code Review 一键触发"
+	},
+	"codeReviewContent": {
+		"severity": {
+			"high": "高",
+			"middle": "中",
+			"low": "低"
+		},
+		"severityLabel": "严重程度",
+		"issueLable": "标签"
+	},
+	"taskStatusBar": {
+		"running": "正在进行 Code Review，{{progress}}%",
+		"cancel": "取消执行",
+		"completed": "代码质量非常高，未检查出任何问题"
+	},
+	"tips": "若代码行数发生修改，问题行定位可能会不准确"
+}

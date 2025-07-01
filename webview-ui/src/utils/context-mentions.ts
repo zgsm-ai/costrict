@@ -95,6 +95,7 @@ export enum ContextMenuOptionType {
 	Git = "git",
 	NoResults = "noResults",
 	Mode = "mode", // Add mode type
+	base64 = "base64",
 }
 
 export interface ContextMenuQueryItem {

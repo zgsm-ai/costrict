@@ -7,6 +7,8 @@ const vscode = {
 		machineId: "test-machine-id",
 		sessionId: "test-session-id",
 		shell: "/bin/zsh",
+		machineId: "test-machine-id",
+		uriScheme: "vscode",
 	},
 	window: {
 		showInformationMessage: jest.fn(),
@@ -22,6 +24,7 @@ const vscode = {
 			}),
 			all: [],
 		},
+		showTextDocument: jest.fn(),
 	},
 	workspace: {
 		onDidSaveTextDocument: jest.fn(),
@@ -33,6 +36,7 @@ const vscode = {
 		fs: {
 			stat: jest.fn(),
 		},
+		openTextDocument: jest.fn(),
 	},
 	Disposable: class {
 		dispose() {}
@@ -98,6 +102,28 @@ const vscode = {
 			this.base = base
 			this.pattern = pattern
 		}
+	},
+	CommentMode: {
+		Editing: 0,
+		Preview: 1,
+	},
+	CommentThreadCollapsibleState: {
+		Collapsed: 0,
+		Expanded: 1,
+	},
+	comments: {
+		createCommentController: jest.fn().mockReturnValue({
+			createCommentThread: jest.fn(),
+			dispose: jest.fn(),
+			commentingRangeProvider: null,
+		}),
+	},
+	Selection: jest.fn(),
+	TextEditorRevealType: {
+		Default: 0,
+		InCenter: 1,
+		InCenterIfOutsideViewport: 2,
+		AtTop: 3,
 	},
 }
 

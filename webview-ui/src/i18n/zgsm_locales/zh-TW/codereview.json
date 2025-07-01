@@ -1,0 +1,23 @@
+{
+	"welcomePage": {
+		"title": "諸葛神碼",
+		"subtitle": "企業級最佳AI Coder",
+		"tips1": "1. 選擇函數、代碼塊、多文件",
+		"tips2": "2. 點擊鼠標右鍵，找到諸葛神碼 > Code Review 一鍵觸發"
+	},
+	"codeReviewContent": {
+		"severity": {
+			"high": "高",
+			"middle": "中",
+			"low": "低"
+		},
+		"severityLabel": "嚴重程度",
+		"issueLable": "標籤"
+	},
+	"taskStatusBar": {
+		"running": "正在進行 Code Review，{{progress}}%",
+		"cancel": "取消執行",
+		"completed": "代碼質量非常高，未檢查出任何問題"
+	},
+	"tips": "若代碼行數發生改變，問題行定位可能會不準確"
+}

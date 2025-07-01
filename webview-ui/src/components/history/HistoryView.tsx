@@ -349,7 +349,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 											</div>
 											{!item.totalCost && !isSelectionMode && (
 												<div className="flex flex-row gap-1">
-													<CopyButton itemTask={item.task} />
+													<CopyButton itemTask={item.task} btnClassName="opacity-100" />
 													<ExportButton itemId={item.id} />
 												</div>
 											)}
@@ -432,7 +432,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 												</div>
 												{!isSelectionMode && (
 													<div className="flex flex-row gap-1">
-														<CopyButton itemTask={item.task} />
+														<CopyButton itemTask={item.task} btnClassName="opacity-100" />
 														<ExportButton itemId={item.id} />
 													</div>
 												)}

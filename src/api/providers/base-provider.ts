@@ -10,7 +10,7 @@ import { countTokens } from "../../utils/countTokens"
  * Base class for API providers that implements common functionality.
  */
 export abstract class BaseProvider implements ApiHandler {
-	abstract createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream
+	abstract createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[], opt?: any): ApiStream
 	abstract getModel(): { id: string; info: ModelInfo }
 
 	/**

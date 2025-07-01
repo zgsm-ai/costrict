@@ -156,5 +156,14 @@
 			"input_prompt": "你想让诸葛神码做什么？",
 			"input_placeholder": "例如：添加注释到代码"
 		}
+	},
+	"review": {
+		"tip": {
+			"codebase_sync": "代码同步中，请稍候，Code Review 即将开始",
+			"login_expired": "登录已过期，请重新登录。"
+		},
+		"statusbar": {
+			"login_expired": "获取登录信息失败，请重新登录以使用 Code Review 功能"
+		}
 	}
 }

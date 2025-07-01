@@ -156,5 +156,14 @@
 			"aborted": "Please try again",
 			"unknown": "Please contact administrator"
 		}
+	},
+	"review": {
+		"tip": {
+			"codebase_sync": "CodeBase synchronization in progress, please wait. Code Review will start shortly.",
+			"login_expired": "Login has expired, please log in again."
+		},
+		"statusbar": {
+			"login_expired": "Failed to get login information. Please log in again to use the code review."
+		}
 	}
 }

@@ -57,6 +57,7 @@
 		"rehype-highlight": "^7.0.0",
 		"remark-gfm": "^4.0.1",
 		"remove-markdown": "^0.6.0",
+		"seti-icons": "^0.0.4",
 		"shell-quote": "^1.8.2",
 		"shiki": "^3.2.1",
 		"source-map": "^0.7.4",

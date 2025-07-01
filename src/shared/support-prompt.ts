@@ -44,7 +44,6 @@ type SupportPromptType =
 	| "NEW_TASK"
 	| "ZGSM_EXPLAIN"
 	| "ZGSM_ADD_COMMENT"
-	| "ZGSM_CODE_REVIEW"
 	| "ZGSM_ADD_DEBUG_CODE"
 	| "ZGSM_ADD_STRONG_CODE"
 	| "ZGSM_SIMPLIFY_CODE"
@@ -158,15 +157,6 @@ Please provide a clear and concise explanation of what this code does, including
 	},
 	ZGSM_ADD_COMMENT: {
 		template: `Add comments to the following code from file path \${filePath}:\${startLine}-\${endLine}
-\${userInput}
-
-\`\`\`
-\${selectedText}
-\`\`\`
-`,
-	},
-	ZGSM_CODE_REVIEW: {
-		template: `Check for code quality issues and provide suggestions to the following code from file path \${filePath}:\${startLine}-\${endLine}
 \${userInput}
 
 \`\`\`

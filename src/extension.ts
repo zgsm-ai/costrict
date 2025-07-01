@@ -15,13 +15,15 @@ try {
 
 import "./utils/path" // Necessary to have access to String.prototype.toPosix.
 
-import { Package } from "./schemas"
+import { Package, ProviderSettings } from "./schemas"
 import { ContextProxy } from "./core/config/ContextProxy"
 import { ClineProvider } from "./core/webview/ClineProvider"
 import { DIFF_VIEW_URI_SCHEME } from "./integrations/editor/DiffViewProvider"
 import { TerminalRegistry } from "./integrations/terminal/TerminalRegistry"
 import { McpServerManager } from "./services/mcp/McpServerManager"
 import { telemetryService } from "./services/telemetry/TelemetryService"
+import { CodeReviewService } from "./services/codeReview/codeReviewService"
+import { CommentService } from "./integrations/comment"
 import { API } from "./exports/api"
 import { migrateSettings } from "./utils/migrateSettings"
 import { formatLanguage } from "./shared/language"
@@ -37,6 +39,14 @@ import { initializeI18n } from "./i18n"
 import { getCommand } from "./utils/commands"
 import { defaultLang } from "./utils/language"
 import { InstallType, PluginLifecycleManager } from "./core/tools/pluginLifecycleManager"
+import { ZgsmLoginManager } from "./zgsmAuth/zgsmLoginManager"
+import { createLogger, deactivate as loggerDeactivate } from "./utils/logger"
+import { startIPCServer, stopIPCServer } from "./zgsmAuth/ipc/server"
+import { connectIPC, disconnectIPC, onTokensUpdate } from "./zgsmAuth/ipc/client"
+import { ZgsmCodeBaseSyncService } from "./core/codebase/client"
+import { defaultZgsmAuthConfig } from "./zgsmAuth/config"
+import { initZgsmCodeBase } from "./core/codebase"
+import { parseJwt } from "./utils/jwt"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -66,6 +76,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	extensionContext = context
 	outputChannel = vscode.window.createOutputChannel(Package.outputChannel)
+	createLogger(Package.outputChannel, { channel: outputChannel })
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.name} extension activated`)
 
@@ -90,10 +101,32 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	const contextProxy = await ContextProxy.getInstance(context)
-	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
+	const provider = new ClineProvider(
+		context,
+		outputChannel,
+		"sidebar",
+		contextProxy,
+		async (providerSettings: ProviderSettings): Promise<ProviderSettings> => {
+			if (typeof providerSettings.zgsmApiKeyUpdatedAt !== "string") {
+				providerSettings.zgsmApiKeyUpdatedAt = `${providerSettings.zgsmApiKeyUpdatedAt}`
+			}
+
+			if (typeof providerSettings.zgsmApiKeyExpiredAt !== "string") {
+				providerSettings.zgsmApiKeyExpiredAt = `${providerSettings.zgsmApiKeyExpiredAt}`
+			}
+
+			return providerSettings
+		},
+	)
 	telemetryService.setProvider(provider)
 	await zgsm.activate(context, provider)
-
+	ZgsmCodeBaseSyncService.setProvider(provider)
+	const zgsmApiKey = provider.getValue("zgsmApiKey")
+	const zgsmBaseUrl = provider.getValue("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl
+	const commentService = CommentService.getInstance()
+	const codeReviewService = CodeReviewService.getInstance()
+	codeReviewService.setProvider(provider)
+	codeReviewService.setCommentService(commentService)
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(ClineProvider.sideBarId, provider, {
 			webviewOptions: { retainContextWhenHidden: true },
@@ -179,16 +212,51 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(watcher)
 	}
 
+	startIPCServer()
+	connectIPC()
+
+	ZgsmLoginManager.setProvider(provider)
+	context.subscriptions.push(ZgsmLoginManager.getInstance())
+
+	context.subscriptions.push(
+		onTokensUpdate((tokens: { state: string; access_token: string; refresh_token: string }) => {
+			ZgsmLoginManager.getInstance().saveTokens(tokens.state, tokens.access_token, tokens.refresh_token)
+			provider.log(`new token from other window: ${tokens.access_token}`)
+		}),
+	)
+
+	if (zgsmApiKey) {
+		try {
+			const { exp } = parseJwt(zgsmApiKey)
+			const needlogin = exp * 1000 <= Date.now()
+
+			if (needlogin) {
+				ZgsmLoginManager.getInstance().openStatusBarloginDialog()
+			} else {
+				ZgsmLoginManager.getInstance().startRefreshToken(zgsmApiKey)
+			}
+		} catch (error) {
+			provider.log(`Failed to parse zgsmRefreshToken: ${error.message}`)
+		}
+		initZgsmCodeBase(zgsmBaseUrl, zgsmApiKey)
+	}
+
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }
 
 // This method is called when your extension is deactivated.
 export async function deactivate() {
+	await ZgsmCodeBaseSyncService.stopSync()
 	await zgsm.deactivate()
+
+	// Clean up IPC connections
+	disconnectIPC()
+	stopIPCServer()
 
 	// Clean up MCP server manager
 	outputChannel.appendLine(`${Package.name} extension deactivated`)
 	await McpServerManager.cleanup(extensionContext)
 	telemetryService.shutdown()
 	TerminalRegistry.cleanup()
+	loggerDeactivate()
 }

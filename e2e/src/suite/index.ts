@@ -30,7 +30,7 @@ export async function run() {
 		zgsmLoginUrl: "/realms/gw/protocol/openid-connect/auth",
 		zgsmLogoutUrl: "/realms/gw/protocol/openid-connect/logout",
 		zgsmTokenUrl: "/realms/gw/protocol/openid-connect/token",
-		zgsmCompletionUrl: "/v2",
+		zgsmCompletionUrl: "/code-completion/api/v1",
 		zgsmDownloadUrl: "/downloads",
 		zgsmRedirectUri: "/login/ok",
 		zgsmClientId: "vscode",

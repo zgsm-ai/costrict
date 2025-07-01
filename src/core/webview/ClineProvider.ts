@@ -24,7 +24,7 @@ import {
 import { t } from "../../i18n"
 import { setPanel } from "../../activate/registerCommands"
 import {
-	ApiConfiguration,
+	// ApiConfiguration,
 	requestyDefaultModelId,
 	openRouterDefaultModelId,
 	glamaDefaultModelId,
@@ -43,6 +43,7 @@ import { Terminal } from "../../integrations/terminal/Terminal"
 import { downloadTask } from "../../integrations/misc/export-markdown"
 import { getTheme } from "../../integrations/theme/getTheme"
 import WorkspaceTracker from "../../integrations/workspace/WorkspaceTracker"
+import { CodeReviewService } from "../../services/codeReview/codeReviewService"
 import { McpHub } from "../../services/mcp/McpHub"
 import { McpServerManager } from "../../services/mcp/McpServerManager"
 import { ShadowCheckpointService } from "../../services/checkpoints/ShadowCheckpointService"
@@ -60,10 +61,11 @@ import { telemetryService } from "../../services/telemetry/TelemetryService"
 import { getWorkspacePath } from "../../utils/path"
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import { WebviewMessage } from "../../shared/WebviewMessage"
-import { getZgsmAccessToken } from "../../zgsmAuth/zgsmAuthHandler"
-// import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
-import { CompletionStatusBar } from "../../../zgsm/src/codeCompletion/completionStatusBar"
 import { defaultLang } from "../../utils/language"
+import { ReviewTarget, ReviewTargetType } from "../../services/codeReview/types"
+import { IssueStatus, TaskStatus } from "../../shared/codeReview"
+import { ReviewComment } from "../../services/codeReview/reviewComment"
+import { ZgsmCodeBaseSyncService } from "../codebase/client"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -95,6 +97,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 	public readonly latestAnnouncementId = "may-21-2025-3-18" // Update for v3.18.0 announcement
 	public readonly providerSettingsManager: ProviderSettingsManager
 	public readonly customModesManager: CustomModesManager
+	public codeReviewService: CodeReviewService
 
 	private isMovingView = false
 	private movingDisposeTimer?: NodeJS.Timeout
@@ -104,6 +107,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		private readonly outputChannel: vscode.OutputChannel,
 		private readonly renderContext: "sidebar" | "editor" = "sidebar",
 		public readonly contextProxy: ContextProxy,
+		public beforeUpsertProviderSettings?: (providerSettings: ProviderSettings) => Promise<ProviderSettings>,
 	) {
 		super()
 
@@ -131,6 +135,9 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			.catch((error) => {
 				this.log(`Failed to initialize MCP Hub: ${error}`)
 			})
+		this.codeReviewService = CodeReviewService.getInstance()
+		this.beforeUpsertProviderSettings =
+			beforeUpsertProviderSettings ?? ((providerSettings) => Promise.resolve(providerSettings))
 	}
 
 	// Adds a new Cline instance to clineStack, marking the start of a new task.
@@ -241,6 +248,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 		// Unregister from McpServerManager
 		McpServerManager.unregisterProvider(this)
+		this.codeReviewService.dispose()
 	}
 
 	public static getVisibleInstance(): ClineProvider | undefined {
@@ -300,10 +308,19 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		}
 
 		const { customSupportPrompts } = await visibleProvider.getState()
-
+		if (promptType === "ZGSM_CODE_REVIEW") {
+			visibleProvider.startReviewTask([
+				{
+					type: ReviewTargetType.CODE,
+					file_path: params.filePath as string,
+					line_range: [Number(params.startLine), Number(params.endLine)],
+				},
+			])
+			return
+		}
 		// TODO: Improve type safety for promptType.
 		const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
-
+		await visibleProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
 		if (command === "addToContext") {
 			await visibleProvider.postMessageToWebview({ type: "invoke", invoke: "setChatBoxMessage", text: prompt })
 			return
@@ -844,6 +861,10 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		providerSettings: ProviderSettings,
 		activate: boolean = true,
 	): Promise<string | undefined> {
+		if (typeof this.beforeUpsertProviderSettings === "function") {
+			providerSettings = await this.beforeUpsertProviderSettings(providerSettings)
+		}
+
 		try {
 			// TODO: Do we need to be calling `activateProfile`? It's not
 			// clear to me what the source of truth should be; in some cases
@@ -1057,77 +1078,6 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		}
 
 		await this.upsertProviderProfile(currentApiConfigName, newConfiguration)
-	}
-
-	// Zgsm
-
-	async handleZgsmAuthCallback(code: string | null, state: string | null, token: string | null, needVisible = true) {
-		let { apiConfiguration, currentApiConfigName } = await this.getState()
-		const visibleProvider = await ClineProvider.getInstance()
-
-		if (!visibleProvider && needVisible) {
-			return
-		}
-
-		let apiKey = ""
-
-		CompletionStatusBar.login()
-
-		if (token) {
-			apiKey = token
-		} else if (code) {
-			try {
-				// Extract the base domain for the auth endpoint
-				const access_token = await getZgsmAccessToken(code, apiConfiguration)
-
-				if (!access_token) {
-					throw new Error(`Failed to get access token`)
-				}
-
-				apiKey = access_token
-			} catch (error) {
-				this.log(
-					`Error exchanging code for API key: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
-				)
-				vscode.window.showErrorMessage(error.message)
-
-				CompletionStatusBar.fail(error)
-				CompletionStatusBar.resetCommand()
-
-				throw error
-			}
-		}
-		const zgsmApiKeyUpdatedAt = Date.now()
-
-		const newConfiguration: ApiConfiguration = {
-			...apiConfiguration,
-			zgsmModelId: apiConfiguration.zgsmModelId || apiConfiguration.zgsmDefaultModelId,
-			zgsmApiKey: apiKey,
-			isZgsmApiKeyValid: true,
-			zgsmApiKeyUpdatedAt,
-		}
-
-		await this.providerSettingsManager.saveMergeConfig(
-			{
-				zgsmBaseUrl: newConfiguration.zgsmBaseUrl,
-				zgsmApiKey: apiKey,
-				isZgsmApiKeyValid: true,
-				zgsmApiKeyUpdatedAt,
-			},
-			(name, { apiProvider }) => {
-				return apiProvider === zgsmProviderKey && name !== currentApiConfigName
-			},
-		)
-		await this.upsertProviderProfile(currentApiConfigName, newConfiguration)
-		// handleZgsmAuthCallback
-		await this.postMessageToWebview({
-			type: "afterZgsmPostLogin",
-			values: { zgsmApiKey: apiKey, zgsmApiKeyUpdatedAt },
-		})
-		vscode.window.showInformationMessage("Shenma login successful")
-
-		CompletionStatusBar.complete()
-		CompletionStatusBar.resetCommand()
 	}
 
 	// Glama
@@ -1660,8 +1610,10 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 	// logging
 
 	public log(message: string) {
-		this.outputChannel.appendLine(message)
-		console.log(message)
+		const time = new Date().toLocaleString()
+		const msg = `[${time}] ${message}`
+		this.outputChannel.appendLine(msg)
+		console.log(msg)
 	}
 
 	// integration tests
@@ -1738,5 +1690,33 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		}
 
 		return properties
+	}
+
+	// code review
+	public async startReviewTask(targets: ReviewTarget[]) {
+		const visibleProvider = await ClineProvider.getInstance()
+		if (visibleProvider) {
+			this.codeReviewService.setProvider(visibleProvider)
+			visibleProvider.postMessageToWebview({
+				type: "action",
+				action: "codeReviewButtonClicked",
+			})
+			this.codeReviewService.sendReviewTaskUpdateMessage(TaskStatus.RUNNING, {
+				issues: [],
+				progress: null,
+				message: t("common:review.tip.codebase_sync"),
+			})
+			await ZgsmCodeBaseSyncService.getInstance().syncCodebase()
+			await this.codeReviewService.startReviewTask(targets)
+		}
+	}
+
+	public async updateIssueStatus(comments: ReviewComment[], status: IssueStatus) {
+		comments.forEach(async (comment) => {
+			await this.codeReviewService.updateIssueStatus(comment.id, status)
+		})
+	}
+	public async cancelReviewTask() {
+		await this.codeReviewService.cancelCurrentTask()
 	}
 }

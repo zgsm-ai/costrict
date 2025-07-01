@@ -28,7 +28,7 @@ class DefaultZgsmAuthConfig {
 		this.zgsmSite = "https://zgsm.ai"
 		this.clientId = "vscode"
 		this.clientSecret = "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l"
-		this.completionUrl = "/v2"
+		this.completionUrl = "/code-completion/api/v1"
 		this.downloadUrl = "/downloads"
 		this.loginUrl = DefaultZgsmAuthConfig.URL_TEMPLATES.loginUrlTpl
 		this.logoutUrl = DefaultZgsmAuthConfig.URL_TEMPLATES.logoutUrlTpl

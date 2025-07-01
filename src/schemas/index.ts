@@ -93,6 +93,7 @@ export const commandIds = [
 	"historyButtonClicked",
 	"popoutButtonClicked",
 	"settingsButtonClicked",
+	"moreButtonClicked",
 
 	"openInNewTab",
 
@@ -107,6 +108,13 @@ export const commandIds = [
 
 	"focusInput",
 	"acceptInput",
+
+	"codeReview",
+	"reviewFilesAndFolders",
+	"reviewRepo",
+	"codeReviewButtonClicked",
+	"acceptIssue",
+	"rejectIssue",
 ] as const
 
 export type CommandId = (typeof commandIds)[number]
@@ -331,6 +339,7 @@ export const modeConfigSchema = z.object({
 	customInstructions: z.string().optional(),
 	groups: groupEntryArraySchema,
 	source: z.enum(["global", "project"]).optional(),
+	tooltip: z.string().optional(),
 })
 
 export type ModeConfig = z.infer<typeof modeConfigSchema>
@@ -629,9 +638,12 @@ const zgsmSchema = z.object({
 	zgsmRedirectUri: z.string().optional(),
 	zgsmClientId: z.string().optional(),
 	zgsmClientSecret: z.string().optional(),
+	zgsmStateId: z.string().optional(),
+	zgsmRefreshToken: z.string().optional(),
 	useZgsmCustomConfig: z.boolean().optional(),
 	isZgsmApiKeyValid: z.boolean().optional(),
-	zgsmApiKeyUpdatedAt: z.number().optional(),
+	zgsmApiKeyUpdatedAt: z.string().optional(),
+	zgsmApiKeyExpiredAt: z.string().optional(),
 })
 
 export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProvider", [
@@ -711,9 +723,12 @@ const providerSettingsRecord: ProviderSettingsRecord = {
 	zgsmRedirectUri: undefined,
 	zgsmClientId: undefined,
 	zgsmClientSecret: undefined,
+	zgsmStateId: undefined,
+	zgsmRefreshToken: undefined,
 	useZgsmCustomConfig: undefined,
 	isZgsmApiKeyValid: undefined,
 	zgsmApiKeyUpdatedAt: undefined,
+	zgsmApiKeyExpiredAt: undefined,
 	// Anthropic
 	apiModelId: undefined,
 	apiKey: undefined,
@@ -992,6 +1007,7 @@ export type SecretState = Pick<
 	ProviderSettings,
 	| "apiKey"
 	| "zgsmApiKey"
+	| "zgsmRefreshToken"
 	| "glamaApiKey"
 	| "openRouterApiKey"
 	| "awsAccessKey"
@@ -1015,6 +1031,7 @@ type SecretStateRecord = Record<Keys<SecretState>, undefined>
 const secretStateRecord: SecretStateRecord = {
 	apiKey: undefined,
 	zgsmApiKey: undefined,
+	zgsmRefreshToken: undefined,
 	glamaApiKey: undefined,
 	openRouterApiKey: undefined,
 	awsAccessKey: undefined,

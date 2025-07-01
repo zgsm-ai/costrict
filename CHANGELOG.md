@@ -1,5 +1,13 @@
 # Shenma Change Log
 
+## [1.4.9]
+- Add CodeReview
+- Add Codebase
+- Enhanced Code Completion.
+- New Authentication Flow
+- Add Quota Management
+- Optimized UI
+
 ## [1.4.8]
 - Add Gemini CLI provider
 - Fix known issues

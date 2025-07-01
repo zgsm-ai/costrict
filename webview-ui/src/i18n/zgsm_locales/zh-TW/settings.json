@@ -1,6 +1,11 @@
 {
 	"sections": {
-		"about": "關於諸葛神碼"
+		"about": "關於諸葛神碼",
+		"credit": {
+			"title": "Credit 用量管理",
+			"description": "諸葛神碼官方提供多種高級模型，不同模型每次請求所消耗的 Credit 不同，當 Credit 消耗完畢後，該模型將無法使用。",
+			"homepage": "查看 Credit 用量"
+		}
 	},
 	"autoApprove": {
 		"description": "允許諸葛神碼自動執行操作而無需核准。只有在您完全信任AI並了解相關安全風險的情況下才啟用這些設定。",

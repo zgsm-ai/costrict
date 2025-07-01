@@ -1,6 +1,11 @@
 {
 	"sections": {
-		"about": "关于诸葛神码"
+		"about": "关于诸葛神码",
+		"credit": {
+			"title": "Credit 用量管理",
+			"description": "诸葛神码官方提供了多种高级模型，不同模型的每次请求消耗的Credit不同，当Credit消耗完后，该模型将不可用。",
+			"homepage": "查看 Credit 用量"
+		}
 	},
 	"autoApprove": {
 		"description": "允许诸葛神码自动执行操作而无需批准。只有在您完全信任AI并了解相关安全风险的情况下才启用这些设置。",

@@ -28,14 +28,14 @@ export class CompletionCache {
 	 * Look up the completion point by position
 	 */
 	static lookup(fpath: string, line: number, column: number): CompletionPoint | undefined {
-		let key = calcKey(fpath, line, column)
+		const key = calcKey(fpath, line, column)
 		return this.keys.get(key)
 	}
 	/**
 	 * Cache the completion point
 	 */
 	static cache(cp: CompletionPoint): CompletionPoint {
-		let copy = new CompletionPoint(
+		const copy = new CompletionPoint(
 			this.nextId(),
 			cp.doc,
 			cp.pos,

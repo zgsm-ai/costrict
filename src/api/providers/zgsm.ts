@@ -42,7 +42,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		super()
 		this.options = options
 
-		const baseURL = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
+		const baseURL = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/chat-rag/api/v1`
 		const apiKey = this.options.zgsmApiKey || "not-provided"
 		const isAzureAiInference = this._isAzureAiInference(this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl)
 		const urlHost = this._getUrlHost(this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl)
@@ -54,6 +54,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				baseURL,
 				apiKey,
 				defaultHeaders,
+				timeout: 120000,
 				defaultQuery: { "api-version": this.options.azureApiVersion || "2024-05-01-preview" },
 			})
 		} else if (isAzureOpenAi) {
@@ -63,6 +64,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				baseURL,
 				apiKey,
 				apiVersion: this.options.azureApiVersion || azureOpenAiDefaultApiVersion,
+				timeout: 120000,
 				defaultHeaders: {
 					...defaultHeaders,
 					...(this.options.openAiHostHeader ? { Host: this.options.openAiHostHeader } : {}),
@@ -72,6 +74,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 			this.client = new OpenAI({
 				baseURL,
 				apiKey,
+				timeout: 120000,
 				defaultHeaders: {
 					...defaultHeaders,
 					...(this.options.openAiHostHeader ? { Host: this.options.openAiHostHeader } : {}),
@@ -80,9 +83,13 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 		}
 	}
 
-	override async *createMessage(systemPrompt: string, messages: Anthropic.Messages.MessageParam[]): ApiStream {
+	override async *createMessage(
+		systemPrompt: string,
+		messages: Anthropic.Messages.MessageParam[],
+		opt: any,
+	): ApiStream {
 		const modelInfo = this.getModel().info
-		const modelUrl = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/v1`
+		const modelUrl = `${this.options.zgsmBaseUrl || this.options.zgsmDefaultBaseUrl}/chat-rag/api/v1`
 		const modelId = `${this.options.zgsmModelId || this.options.zgsmDefaultModelId || defaultModelCache}`
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const enabledLegacyFormat = this.options.openAiLegacyFormat ?? false
@@ -161,6 +168,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				Object.assign(isAzureAiInference ? { path: AZURE_AI_INFERENCE_PATH } : {}, {
 					headers: {
 						...defaultHeaders,
+						"Accept-Language": opt.language || "en",
 						"x-quota-identity": this.chatType,
 						"zgsm-task-id": this.taskId,
 						"zgsm-client-id": vscode.env.machineId,
@@ -399,7 +407,7 @@ export async function getZgsmModels(
 	hostHeader?: string,
 ): Promise<[string[], string | undefined, (AxiosError | undefined)?]> {
 	baseUrl = baseUrl || defaultZgsmAuthConfig.baseUrl
-
+	const modelsUrl = `${baseUrl}/ai-gateway/api/v1/models`
 	try {
 		if (!canParseURL(baseUrl)) {
 			throw new Error(`Invalid ZGSM base URL: ${baseUrl}`)
@@ -419,14 +427,14 @@ export async function getZgsmModels(
 		if (Object.keys(headers).length > 0) {
 			config["headers"] = headers
 		}
-		config.timeout = 5000
-		const response = await axios.get(`${baseUrl}/v1/models`, config)
+		config.timeout = 3000
+		const response = await axios.get(modelsUrl, config)
 		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
 
 		modelsCache = new WeakRef([...new Set<string>(modelsArray)])
 		defaultModelCache = modelsArray[0]
 	} catch (error) {
-		console.error("Error fetching ZGSM models", error)
+		console.error(`[${new Date().toLocaleString()}] Error fetching ZGSM models`, modelsUrl, error)
 	} finally {
 		return [modelsCache.deref() || [], defaultModelCache]
 	}

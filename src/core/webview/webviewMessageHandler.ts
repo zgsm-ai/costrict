@@ -23,7 +23,7 @@ import { singleCompletionHandler } from "../../utils/single-completion-handler"
 import { searchCommits } from "../../utils/git"
 import { exportSettings, importSettings } from "../config/importExport"
 import { getOpenAiModels } from "../../api/providers/openai"
-import { canParseURL, getZgsmModels } from "../../api/providers/zgsm"
+import { getZgsmModels } from "../../api/providers/zgsm"
 import { getOllamaModels } from "../../api/providers/ollama"
 import { getVsCodeLmModels } from "../../api/providers/vscode-lm"
 import { getLmStudioModels } from "../../api/providers/lmstudio"
@@ -1288,13 +1288,16 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 		}
 
 		case "zgsmLogin":
-		case "openExternalRelogin":
-			if (message.url && canParseURL(message.url)) {
-				await handleZgsmLogin(message.url, message.apiConfiguration!, provider)
-			}
+			await handleZgsmLogin(provider, message.apiConfiguration!)
 			break
 		case "docslink":
 			await vscode.window.showInformationMessage("文档完善中，敬请期待...")
+			break
+		case "checkReviewSuggestion":
+			await provider.codeReviewService.setActiveIssue(message.issueId!)
+			break
+		case "cancelReviewTask":
+			await provider.cancelReviewTask()
 			break
 	}
 }

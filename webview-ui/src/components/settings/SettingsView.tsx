@@ -23,6 +23,7 @@ import {
 	Globe,
 	Info,
 	LucideIcon,
+	ChartPie,
 } from "lucide-react"
 
 import { ExperimentId } from "@roo/shared/experiments"
@@ -61,6 +62,7 @@ import { TerminalSettings } from "./TerminalSettings"
 import { ExperimentalSettings } from "./ExperimentalSettings"
 import { LanguageSettings } from "./LanguageSettings"
 import { About } from "./About"
+import { Credit } from "./Credit"
 import { Section } from "./Section"
 import { cn } from "@/lib/utils"
 
@@ -76,6 +78,7 @@ export interface SettingsViewRef {
 }
 
 const sectionNames = [
+	"credit",
 	"providers",
 	"autoApprove",
 	"browser",
@@ -442,6 +445,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 	const sections: { id: SectionName; icon: LucideIcon }[] = useMemo(
 		() => [
 			{ id: "providers", icon: Webhook },
+			{ id: "credit", icon: ChartPie },
 			{ id: "autoApprove", icon: CheckCheck },
 			{ id: "browser", icon: SquareMousePointer },
 			{ id: "checkpoints", icon: GitBranch },
@@ -567,7 +571,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								data-compact={isCompactMode}>
 								<div className={cn("flex items-center gap-2", isCompactMode && "justify-center")}>
 									<Icon className="w-4 h-4" />
-									<span className="tab-label">{t(`settings:sections.${id}`)}</span>
+									<span className="tab-label">
+										{t(`settings:sections.${id === "credit" ? "credit.title" : id}`)}
+									</span>
 								</div>
 							</TabTrigger>
 						)
@@ -582,7 +588,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 											{React.cloneElement(triggerComponent)}
 										</TooltipTrigger>
 										<TooltipContent side="right" className="text-base">
-											<p className="m-0">{t(`settings:sections.${id}`)}</p>
+											<p className="m-0">
+												{t(`settings:sections.${id === "credit" ? "credit.title" : id}`)}
+											</p>
 										</TooltipContent>
 									</Tooltip>
 								</TooltipProvider>
@@ -597,6 +605,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 				{/* Content area */}
 				<TabContent className="p-0 flex-1 overflow-auto">
+					{/* Credit Section */}
+					{activeTab === "credit" && <Credit apiConfiguration={apiConfiguration} />}
 					{/* Providers Section */}
 					{activeTab === "providers" && (
 						<div>

@@ -70,13 +70,8 @@ zgsm/webview-ui/src/i18n/locales/vi
 zgsm/webview-ui/src/i18n/locales/ca 
 zgsm/webview-ui/src/i18n/locales/de
 
-!images/issue-dark.svg
-!images/issue.svg
-!images/zhuge_ai_help_doc_icon_darkmode.svg
-!images/zhuge_ai_help_doc_icon_lightmode.svg
-!images/zhuge_shenma_logo_icon.woff
-!images/zhuge_shenma_logo.svg
-!images/zhuge_shenma_rebot_logo_big.png
+assets/images/readme
+assets/images/install
 
 # Ignore all webview-ui files except the build directory.
 # https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/frameworks/hello-world-react-cra/.vscodeignore
@@ -118,9 +113,15 @@ package.nls.vi.json
 package.nls.ca.json
 package.nls.de.json
 
-# Include icons and images
-!assets/icons/**
-!assets/images/**
+# # Include icons and images
+!assets/images/shenma_robot_logo_big.png
+!assets/images/shenma_help_icon_lightmode.svg
+!assets/images/shenma_help_icon_darkmode.svg
+!assets/images/shenma_logout_icon_lightmode.svg
+!assets/images/shenma_logout_icon_darkmode.svg
+!assets/images/issue.svg
+!assets/images/issue-dark.svg
+!assets/images/shenma_logo_icon.woff
 
 # Include .env file for telemetry
 !.env

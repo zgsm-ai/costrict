@@ -24,7 +24,7 @@ const baseEnvSetting = {
 	redirectUri: "{baseUrl}/login/ok", // Authentication: Callback after successful login
 
 	chatUrl: "{baseUrl}", // Chat service address
-	completionUrl: "{baseUrl}/v2", // Completion service address
+	completionUrl: "{baseUrl}/code-completion/api/v1", // Completion service address
 	downloadUrl: "{baseUrl}/downloads", // Download address
 
 	updateExtensionsTimeInterval: 1000 * 60 * 60 * 12,

@@ -156,6 +156,7 @@ type GlobalSettings = {
 					  ]
 				)[]
 				source?: ("global" | "project") | undefined
+				tooltip?: string | undefined
 		  }[]
 		| undefined
 	customModePrompts?:
@@ -360,9 +361,12 @@ type ProviderSettings = {
 	zgsmRedirectUri?: string | undefined
 	zgsmClientId?: string | undefined
 	zgsmClientSecret?: string | undefined
+	zgsmStateId?: string | undefined
+	zgsmRefreshToken?: string | undefined
 	useZgsmCustomConfig?: boolean | undefined
 	isZgsmApiKeyValid?: boolean | undefined
-	zgsmApiKeyUpdatedAt?: number | undefined
+	zgsmApiKeyUpdatedAt?: string | undefined
+	zgsmApiKeyExpiredAt?: string | undefined
 }
 
 type ProviderSettingsEntry = {
@@ -790,9 +794,12 @@ type IpcMessage =
 								zgsmRedirectUri?: string | undefined
 								zgsmClientId?: string | undefined
 								zgsmClientSecret?: string | undefined
+								zgsmStateId?: string | undefined
+								zgsmRefreshToken?: string | undefined
 								useZgsmCustomConfig?: boolean | undefined
 								isZgsmApiKeyValid?: boolean | undefined
-								zgsmApiKeyUpdatedAt?: number | undefined
+								zgsmApiKeyUpdatedAt?: string | undefined
+								zgsmApiKeyExpiredAt?: string | undefined
 								currentApiConfigName?: string | undefined
 								listApiConfigMeta?:
 									| {
@@ -944,6 +951,7 @@ type IpcMessage =
 												  ]
 											)[]
 											source?: ("global" | "project") | undefined
+											tooltip?: string | undefined
 									  }[]
 									| undefined
 								customModePrompts?:
@@ -1292,9 +1300,12 @@ type TaskCommand =
 					zgsmRedirectUri?: string | undefined
 					zgsmClientId?: string | undefined
 					zgsmClientSecret?: string | undefined
+					zgsmStateId?: string | undefined
+					zgsmRefreshToken?: string | undefined
 					useZgsmCustomConfig?: boolean | undefined
 					isZgsmApiKeyValid?: boolean | undefined
-					zgsmApiKeyUpdatedAt?: number | undefined
+					zgsmApiKeyUpdatedAt?: string | undefined
+					zgsmApiKeyExpiredAt?: string | undefined
 					currentApiConfigName?: string | undefined
 					listApiConfigMeta?:
 						| {
@@ -1446,6 +1457,7 @@ type TaskCommand =
 									  ]
 								)[]
 								source?: ("global" | "project") | undefined
+								tooltip?: string | undefined
 						  }[]
 						| undefined
 					customModePrompts?:

@@ -1569,7 +1569,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		)
 
 		// Check if we've reached the maximum number of auto-approved requests
-		const { allowedMaxRequests } = (await this.providerRef.deref()?.getState()) ?? {}
+		const { allowedMaxRequests, language } = (await this.providerRef.deref()?.getState()) ?? {}
 		const maxRequests = allowedMaxRequests || Infinity
 
 		// Increment the counter for each new API request
@@ -1584,7 +1584,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		}
 
 		this.api?.setTaskId?.(this.taskId)
-		const stream = this.api.createMessage(systemPrompt, cleanConversationHistory)
+		const stream = this.api.createMessage(systemPrompt, cleanConversationHistory, { language })
 		const iterator = stream[Symbol.asyncIterator]()
 
 		try {
@@ -1595,10 +1595,9 @@ export class Task extends EventEmitter<ClineEvents> {
 			this.isWaitingForFirstChunk = false
 		} catch (error) {
 			this.isWaitingForFirstChunk = false
+			const errorMsg = this.getTaskRequestError(error, this.taskId, this.instanceId, this.apiConfiguration)
 			// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 			if (autoApprovalEnabled && alwaysApproveResubmit) {
-				const errorMsg = this.getTaskRequestError(error, this.taskId, this.instanceId)
-
 				const baseDelay = requestDelaySeconds || 5
 				let exponentialDelay = Math.ceil(baseDelay * Math.pow(2, retryAttempt))
 
@@ -1643,10 +1642,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 				return
 			} else {
-				const { response } = await this.ask(
-					"api_req_failed",
-					error.message ?? JSON.stringify(serializeError(error), null, 2),
-				)
+				const { response } = await this.ask("api_req_failed", errorMsg)
 
 				if (response !== "yesButtonClicked") {
 					// This will never happen since if noButtonClicked, we will
@@ -1688,36 +1684,63 @@ export class Task extends EventEmitter<ClineEvents> {
 		return checkpointDiff(this, options)
 	}
 
-	public getTaskRequestError(error: any, taskId: string, instanceId: string) {
-		const rawError = error.error?.metadata?.raw
-			? JSON.stringify(error.error.metadata.raw, null, 2)
-			: error?.cause?.message || error?.message
+	public getTaskRequestError(error: any, taskId: string, instanceId: string, apiConfiguration: ProviderSettings) {
+		const isHtml = error?.headers && error.headers["content-type"].includes("text/")
+		let rawError = error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message
 		const unknownError = { status: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
-		const defaultApiErrors = {
-			401: { status: t("apiErrors:status.401"), solution: t("apiErrors:solution.401") },
-			400: { status: t("apiErrors:status.400"), solution: t("apiErrors:solution.400") },
-			403: { status: t("apiErrors:status.403"), solution: t("apiErrors:solution.403") },
-			404: { status: t("apiErrors:status.404"), solution: t("apiErrors:solution.404") },
-			429: { status: t("apiErrors:status.429"), solution: t("apiErrors:solution.429") },
-			500: { status: t("apiErrors:status.500"), solution: t("apiErrors:solution.500") },
-			502: { status: t("apiErrors:status.502"), solution: t("apiErrors:solution.502") },
-			503: { status: t("apiErrors:status.503"), solution: t("apiErrors:solution.503") },
-			504: { status: t("apiErrors:status.504"), solution: t("apiErrors:solution.504") },
-			undefined: { status: t("apiErrors:status.undefined"), solution: t("apiErrors:solution.undefined") },
-		} as Record<number | string, { status: string; solution: string }>
-		const _err = defaultApiErrors[error.status] || unknownError
+		const flags = [rawError, "{" + rawError.split(", response body: {")[1]]
 
-		if (!error.status) {
-			_err.status = rawError
-
-			if (error?.type === "server_error") {
-				_err.solution = defaultApiErrors["500"].solution
+		for (const item of flags) {
+			const { /* code,*/ message } = this.zgsmParse(item, rawError)
+			// todo: use code
+			if (message) {
+				return `${t("apiErrors:request.error_details")}\n\n${message}`
 			}
 		}
+
+		const defaultApiErrors = {
+			401: {
+				status: t("apiErrors:status.401", {
+					exp: apiConfiguration.zgsmApiKeyExpiredAt,
+					iat: apiConfiguration.zgsmApiKeyUpdatedAt,
+				}),
+				solution: t("apiErrors:solution.401"),
+			},
+			400: { status: rawError || t("apiErrors:status.400"), solution: t("apiErrors:solution.400") },
+			403: { status: rawError || t("apiErrors:status.403"), solution: t("apiErrors:solution.403") },
+			404: { status: isHtml ? t("apiErrors:status.404") : rawError, solution: t("apiErrors:solution.404") },
+			429: { status: rawError || t("apiErrors:status.429"), solution: t("apiErrors:solution.429") },
+			500: { status: isHtml ? t("apiErrors:status.500") : rawError, solution: t("apiErrors:solution.500") },
+			502: { status: isHtml ? t("apiErrors:status.502") : rawError, solution: t("apiErrors:solution.502") },
+			503: { status: isHtml ? t("apiErrors:status.503") : rawError, solution: t("apiErrors:solution.503") },
+			504: { status: isHtml ? t("apiErrors:status.504") : rawError, solution: t("apiErrors:solution.504") },
+			undefined: {
+				status: rawError || t("apiErrors:status.undefined"),
+				solution: t("apiErrors:solution.undefined"),
+			},
+		} as Record<number | string, { status: string; solution: string }>
+		const _err = defaultApiErrors[error.status] || unknownError
 
 		this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
 
 		return `${t("apiErrors:request.error_details")}\n\n${_err.status}\n\n${t("apiErrors:request.solution")}\n\n${_err.solution}`
+	}
+
+	public zgsmParse(errStr: string, rawError: string) {
+		try {
+			const { message, code } = JSON.parse(errStr)
+			this.providerRef
+				.deref()
+				?.log(
+					`[Shenma#apiErrors] task ${this.taskId}.${this.instanceId} SerializeError Raw Failed: ${message || rawError}\n\n (todo code: ${code})`,
+				)
+
+			return { message, code }
+		} catch (error) {
+			console.warn("[zgsmParse]", error.message)
+
+			return { message: "", code: "" }
+		}
 	}
 
 	// Metrics
