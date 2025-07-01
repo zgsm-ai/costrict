@@ -14,6 +14,13 @@ import { ReviewTarget, ReviewTargetType } from "../services/codeReview/types"
 import { ReviewComment } from "../services/codeReview/reviewComment"
 import { IssueStatus } from "../shared/codeReview"
 import { toRelativePath } from "../utils/path"
+import { EditorContext, EditorUtils } from "../integrations/editor/EditorUtils"
+
+interface UriSource {
+	path: string
+	external: string
+	fsPath: string
+}
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -271,7 +278,99 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		const comments = thread.comments as ReviewComment[]
 		provider.updateIssueStatus(comments, IssueStatus.REJECT)
 	},
+	addFileToContext: async (...args: [UriSource] | [unknown, UriSource[]]) => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+		if (!visibleProvider) {
+			return
+		}
+
+		// --- Logic to determine target resources ---
+		let sources: (UriSource | EditorContext)[] = []
+
+		// Check if args[1] is a valid UriSource array
+		if (args.length > 1 && Array.isArray(args[1]) && args[1].length > 0) {
+			sources = args[1]
+		} else {
+			// Handle a single file (from the old context menu or command palette)
+			let singleSource: UriSource | EditorContext | undefined | null
+			if (args.length > 0) {
+				// Get a single file from the context menu
+				;[singleSource] = args as [UriSource]
+			} else {
+				// Called from the command palette, get the file from the active editor
+				singleSource = EditorUtils.getEditorContext()
+			}
+
+			if (singleSource) {
+				sources = [singleSource]
+			}
+		}
+
+		if (sources.length === 0) {
+			return
+		}
+		// --- End of resource determination logic ---
+
+		// Return early if no valid file sources were found.
+		const aliasedPathPromises = sources.map(async (source) => {
+			// The 'path' property should be common to both UriSource and EditorContext.
+			if (!(source as UriSource).path) {
+				return null
+			}
+			const resourceUri = vscode.Uri.parse((source as UriSource).path)
+			// Await the dedicated function to get the aliased path.
+			return createAliasedPath(resourceUri)
+		})
+
+		// Wait for all promises to resolve, then filter out any failed path generations (which return null).
+		const validAliasedPaths = (await Promise.all(aliasedPathPromises)).filter((p): p is string => !!p)
+
+		if (validAliasedPaths.length === 0) {
+			return
+		}
+
+		// Join all valid paths with a space and add a trailing space at the end.
+		const chatMessage = validAliasedPaths.join(" ") + " "
+
+		await Promise.all([
+			visibleProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" }),
+			visibleProvider.postMessageToWebview({
+				type: "invoke",
+				invoke: "setChatBoxMessageByContext",
+				text: chatMessage,
+			}),
+		])
+	},
 })
+
+async function createAliasedPath(resourceUri: vscode.Uri): Promise<string | null> {
+	const workspaceFolder = vscode.workspace.getWorkspaceFolder(resourceUri)
+	if (!workspaceFolder) {
+		console.warn(`Resource ${resourceUri.fsPath} is not in an open workspace folder.`)
+		return null
+	}
+
+	let stat: vscode.FileStat
+	try {
+		stat = await vscode.workspace.fs.stat(resourceUri)
+	} catch (error) {
+		// This can happen if the file is deleted after the command is invoked.
+		return null
+	}
+
+	const rootPath = workspaceFolder.uri.path
+	const fullPath = resourceUri.path
+
+	// Using substring is slightly more performant and direct than replace for prefixes.
+	let relativePath = fullPath.startsWith(rootPath) ? fullPath.substring(rootPath.length) : fullPath
+
+	// Ensure folder paths end with a slash.
+	if (stat.type === vscode.FileType.Directory && !relativePath.endsWith("/")) {
+		relativePath += "/"
+	}
+
+	return `@${relativePath}`
+}
 
 export const openClineInNewTab = async ({ context, outputChannel }: Omit<RegisterCommandOptions, "provider">) => {
 	// (This example uses webviewProvider activation event which is necessary to

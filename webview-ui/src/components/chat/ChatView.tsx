@@ -481,6 +481,20 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		[inputValue, selectedImages],
 	)
 
+	const handeSetChatBoxMessageByContext = useCallback(
+		(text: string, images: string[]) => {
+			let newValue = text
+
+			if (inputValue !== "") {
+				newValue = inputValue + text
+			}
+
+			setInputValue(newValue)
+			setSelectedImages([...selectedImages, ...images])
+		},
+		[inputValue, selectedImages],
+	)
+
 	const startNewTask = useCallback(() => vscode.postMessage({ type: "clearTask" }), [])
 
 	// This logic depends on the useEffect[messages] above to set clineAsk,
@@ -628,6 +642,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						case "secondaryButtonClick":
 							handleSecondaryButtonClick(message.text ?? "", message.images ?? [])
 							break
+						case "setChatBoxMessageByContext":
+							handeSetChatBoxMessageByContext(message.text ?? "", message.images ?? [])
 					}
 					break
 				case "condenseTaskContextResponse":
@@ -654,6 +670,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			handleSetChatBoxMessage,
 			handlePrimaryButtonClick,
 			handleSecondaryButtonClick,
+			handeSetChatBoxMessageByContext,
 		],
 	)
 

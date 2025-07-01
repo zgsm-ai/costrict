@@ -34,6 +34,7 @@
 	"command.focusInput.title": "聚焦输入框",
 	"command.acceptInput.title": "接受输入/建议",
 	"command.reviewRepo.title": "扫描仓库",
+	"command.addFileToContext.title": "添加上下文",
 	"commands.allowedCommands.description": "当启用'始终批准执行操作'时可以自动执行的命令",
 	"configuration.title": "Shenma",
 	"intelligentCodeCompletion.title": "智能代码补全",

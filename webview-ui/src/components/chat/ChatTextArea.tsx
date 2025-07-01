@@ -1050,9 +1050,20 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 											}
 
 											const iconUrl = getIconUrl()
+
+											const escapeRegExp = (string: string): string => {
+												return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+											}
+
 											const deleteHighlight = (index: number) => {
 												if (!item.title) return
-												const newInputValue = inputValue.replace(item.title, "").trimStart()
+
+												const escapedTitle = escapeRegExp(item.title)
+
+												const regex = new RegExp(`\\s*${escapedTitle}\\s*`)
+
+												const newInputValue = inputValue.replace(regex, " ").trimStart()
+
 												setInputValue(newInputValue)
 
 												const newInputMapArr = inputMapArr.filter(
