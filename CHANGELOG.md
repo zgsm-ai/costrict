@@ -1,5 +1,8 @@
 # Shenma Change Log
 
+## [1.5.0]
+- Code optimization
+
 ## [1.4.9]
 - Add CodeReview
 - Add Codebase
