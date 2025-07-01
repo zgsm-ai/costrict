@@ -4,7 +4,7 @@
 </div>
 <br>
 <div align="center">
-English | <a href="./README.zh-CN.md.md" target="_blank">简体中文</a>
+English | <a href="./README.zh-CN.md" target="_blank">简体中文</a>
 </div>
 <br>
 <br>
