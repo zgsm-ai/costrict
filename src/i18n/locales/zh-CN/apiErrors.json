@@ -1,6 +1,6 @@
 {
 	"status": {
-		"401": "登录已过期\n 认证时间：{{iat}}\n 过期时间：{{exp}}",
+		"401": "认证已过期\n 认证时间：{{iat}}\n 过期时间：{{exp}}",
 		"400": "请求无效",
 		"403": "无权限访问",
 		"404": "未找到资源",
@@ -12,18 +12,62 @@
 		"undefined": "网络连接异常",
 		"unknown": "未知错误"
 	},
+	"quota-manager": {
+		"bad_request": "错误的请求 - 无效的请求参数",
+		"unauthorized": "未授权 - 身份验证失败",
+		"token_invalid": "令牌无效 - JWT 令牌无效或缺失",
+		"not_found": "未找到 - 资源未找到",
+		"strategy_not_found": "未找到策略 - 未找到具有指定 ID 的策略",
+		"invalid_strategy_id": "无效的策略 ID - 策略 ID 格式无效",
+		"insufficient_quota": "配额不足 - 用户没有足够的配额",
+		"voucher_invalid": "无效的凭证 - 凭证代码无效或格式错误",
+		"voucher_expired": "凭证已过期 - 凭证代码已过期",
+		"voucher_already_redeemed": "凭证已被兑换 - 凭证已被使用",
+		"quota_transfer_failed": "配额转移失败 - 转移配额失败",
+		"strategy_create_failed": "策略创建失败 - 创建策略失败",
+		"strategy_update_failed": "策略更新失败 - 更新策略失败",
+		"strategy_delete_failed": "策略删除失败 - 删除策略失败",
+		"database_error": "数据库错误 - 数据库操作失败",
+		"aigateway_error": "AiGateway 错误 - AiGateway 服务出错",
+		"internal_error": "内部服务器错误 - 意外的服务器错误"
+	},
+	"ai-gateway": {
+		"no_token": "未提供 JWT 令牌",
+		"invalid_token": "无效的 JWT 令牌格式",
+		"token_parse_failed": "JWT 令牌解析失败",
+		"no_userid": "在 JWT 令牌中未找到用户 ID",
+		"unauthorized": "管理 API 身份验证失败",
+		"star_required": "需要先 star GitHub 项目",
+		"noquota": "配额不足",
+		"invalid_params": "无效的请求参数",
+		"error": "Redis 连接错误"
+	},
+	"oidc-auth": {
+		"badRequestParameter": "参数传递错误",
+		"loginEncryptFailed": "登陆数据加密失败",
+		"loginDecryptFailed": "登陆数据解密失败",
+		"userNotFound": "用户不存在",
+		"tokenInvalid": "无效的token",
+		"updateInfoFailed": "更新信息失败",
+		"bindAccountFailed": "绑定账号失败",
+		"tokenGenerateFailed": "生成token失败",
+		"authenticationFailed": "鉴权失败"
+	},
 	"solution": {
 		"401": "1.点击插件右上角⚙️ -> 选择提供商【诸葛神码】-> 点击【重新登录】按钮\n2.联系管理员",
 		"400": "1.结束当前任务，开始新任务\n2.换个模型重试\n3.请联系管理员",
 		"403": "1.请检查权限设置是否正确\n2.换个模型重试\n3.请联系管理员",
 		"404": "1.请检查请求路径或资源是否存在\n2.请联系管理员",
-		"429": "1.请稍后重试\n2.请联系管理员",
+		"429": "1.请稍后重试\n2.结束当前任务，开始新任务\n3.请联系管理员",
 		"500": "1.请稍后重试\n2.请尝试切换其他模型\n3.请联系管理员",
 		"502": "1.请稍后重试\n2.请尝试切换其他模型\n3.请联系管理员",
 		"503": "1.请稍后重试\n2.请尝试切换其他模型\n3.请联系管理员",
 		"504": "1.请稍后重试\n2.请尝试切换其他模型\n3.请联系管理员",
+		"ai-gateway": {
+			"star_required": "请前往 https://github.com/zgsm-ai/zgsm star 项目后继续使用"
+		},
 		"undefined": "1.请检查网络连接\n2.请检查代理和防火墙\n3.请联系管理员",
-		"unknown": "请联系管理员"
+		"unknown": "1.请稍后重试\n2.请尝试切换其他模型\n3.请联系管理员"
 	},
 	"request": {
 		"failed": "请求失败，请重试。",

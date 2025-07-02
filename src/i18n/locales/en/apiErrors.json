@@ -1,6 +1,6 @@
 {
 	"status": {
-		"401": "Login expired\n Authentication time: {{iat}}\n Expiration time: {{exp}}",
+		"401": "Authentication expired\nIssued at: {{iat}}\nExpired at: {{exp}}",
 		"400": "Invalid request",
 		"403": "Forbidden access",
 		"404": "Resource not found",
@@ -12,18 +12,62 @@
 		"undefined": "Network connection error",
 		"unknown": "Unknown error"
 	},
+	"quota-manager": {
+		"bad_request": "Bad Request - Invalid request parameters",
+		"unauthorized": "Unauthorized - Authentication failed",
+		"token_invalid": "Token Invalid - Invalid or missing JWT token",
+		"not_found": "Not Found - Resource not found",
+		"strategy_not_found": "Strategy Not Found - Strategy with specified ID not found",
+		"invalid_strategy_id": "Invalid Strategy ID - Strategy ID format is invalid",
+		"insufficient_quota": "Insufficient Quota - User does not have enough quota",
+		"voucher_invalid": "Voucher Invalid - Voucher code is invalid or malformed",
+		"voucher_expired": "Voucher Expired - Voucher code has expired",
+		"voucher_already_redeemed": "Voucher Already Redeemed - Voucher has been used",
+		"quota_transfer_failed": "Quota Transfer Failed - Failed to transfer quota",
+		"strategy_create_failed": "Strategy Create Failed - Failed to create strategy",
+		"strategy_update_failed": "Strategy Update Failed - Failed to update strategy",
+		"strategy_delete_failed": "Strategy Delete Failed - Failed to delete strategy",
+		"database_error": "Database Error - Database operation failed",
+		"aigateway_error": "AiGateway Error - AiGateway service error",
+		"internal_error": "Internal Server Error - Unexpected server error"
+	},
+	"ai-gateway": {
+		"no_token": "JWT token not provided",
+		"invalid_token": "Invalid JWT token format",
+		"token_parse_failed": "JWT token parsing failed",
+		"no_userid": "User ID not found in JWT token",
+		"unauthorized": "Management API authentication failed",
+		"star_required": "Need to star the GitHub project first",
+		"noquota": "Insufficient quota",
+		"invalid_params": "Invalid request parameters",
+		"error": "Redis connection error"
+	},
+	"oidc-auth": {
+		"badRequestParameter": "Parameter passing error",
+		"loginEncryptFailed": "Login data encryption failed",
+		"loginDecryptFailed": "Login data decryption failed",
+		"userNotFound": "User does not exist",
+		"tokenInvalid": "Invalid token",
+		"updateInfoFailed": "Update information failed",
+		"bindAccountFailed": "Account binding failed",
+		"tokenGenerateFailed": "Failed to generate token",
+		"authenticationFailed": "Authentication failed"
+	},
 	"solution": {
-		"401": "1. Click ⚙️ in the top-right corner of the plugin -> Select provider [Shenma] -> Click [Re-login] button\n2. Contact administrator",
-		"400": "1. End the current task and start a new one.\n2. Try again using a different model.\n3. Contact administrator",
-		"403": "1. Check permission settings\n2. Try again using a different model.\n3. Contact administrator",
-		"404": "1. Verify request path/resource existence\n2. Contact administrator",
-		"429": "1. Try again later\n2. Contact administrator",
-		"500": "1. Try again later\n2. Try switching models\n3. Contact administrator",
-		"502": "1. Try again later\n2. Try switching models\n3. Contact administrator",
-		"503": "1. Try again later\n2. Try switching models\n3. Contact administrator",
-		"504": "1. Try again later\n2. Try switching models\n3. Contact administrator",
-		"undefined": "1. Check your network connection\n2. Check proxy and firewall settings\n3. Contact administrator",
-		"unknown": "Contact administrator"
+		"401": "1. Click the plugin gear icon ⚙️ -> Select provider 'Shenma' -> Click [Re-login]\n2. Contact the administrator",
+		"400": "1. End the current task and start a new one\n2. Try a different model\n3. Contact the administrator",
+		"403": "1. Check permission settings\n2. Try a different model\n3. Contact the administrator",
+		"404": "1. Check if the request path or resource exists\n2. Contact the administrator",
+		"429": "1. Please try again later\n2. End the current task and start a new one\n3. Contact the administrator",
+		"500": "1. Please try again later\n2. Try switching models\n3. Contact the administrator",
+		"502": "1. Please try again later\n2. Try switching models\n3. Contact the administrator",
+		"503": "1. Please try again later\n2. Try switching models\n3. Contact the administrator",
+		"504": "1. Please try again later\n2. Try switching models\n3. Contact the administrator",
+		"ai-gateway": {
+			"star_required": "Please go to https://github.com/zgsm-ai/zgsm and star the project before continuing"
+		},
+		"undefined": "1. Check your network connection\n2. Check your proxy/firewall\n3. Contact the administrator",
+		"unknown": "1. Please try again later\n2. Try switching models\n3. Contact the administrator"
 	},
 	"request": {
 		"failed": "Request failed, please try again.",

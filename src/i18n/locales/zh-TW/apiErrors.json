@@ -1,6 +1,6 @@
 {
 	"status": {
-		"401": "登入已過期\n 認證時間：{{iat}}\n 過期時間：{{exp}}",
+		"401": "認證已過期\n 認證時間：{{iat}}\n 過期時間：{{exp}}",
 		"400": "請求無效",
 		"403": "無權限訪問",
 		"404": "未找到資源",
@@ -12,18 +12,62 @@
 		"undefined": "網路連線異常",
 		"unknown": "未知錯誤"
 	},
+	"quota-manager": {
+		"bad_request": "錯誤的請求 - 請求參數無效",
+		"unauthorized": "未授權 - 驗證失敗",
+		"token_invalid": "無效的令牌 - JWT 令牌無效或缺失",
+		"not_found": "未找到 - 找不到資源",
+		"strategy_not_found": "策略未找到 - 找不到指定 ID 的策略",
+		"invalid_strategy_id": "無效的策略 ID - ID 格式錯誤",
+		"insufficient_quota": "配額不足 - 無足夠配額",
+		"voucher_invalid": "無效的憑證 - 憑證代碼無效或格式錯誤",
+		"voucher_expired": "憑證已過期",
+		"voucher_already_redeemed": "憑證已被兌換",
+		"quota_transfer_failed": "配額轉移失敗",
+		"strategy_create_failed": "建立策略失敗",
+		"strategy_update_failed": "更新策略失敗",
+		"strategy_delete_failed": "刪除策略失敗",
+		"database_error": "資料庫錯誤",
+		"aigateway_error": "AiGateway 錯誤",
+		"internal_error": "內部伺服器錯誤"
+	},
+	"ai-gateway": {
+		"no_token": "未提供 JWT 令牌",
+		"invalid_token": "JWT 令牌格式無效",
+		"token_parse_failed": "解析 JWT 令牌失敗",
+		"no_userid": "JWT 令牌中未找到使用者 ID",
+		"unauthorized": "API 驗證失敗",
+		"star_required": "請先 star GitHub 專案",
+		"noquota": "配額不足",
+		"invalid_params": "請求參數無效",
+		"error": "Redis 連線錯誤"
+	},
+	"oidc-auth": {
+		"badRequestParameter": "參數傳遞錯誤",
+		"loginEncryptFailed": "登入資料加密失敗",
+		"loginDecryptFailed": "登入資料解密失敗",
+		"userNotFound": "找不到使用者",
+		"tokenInvalid": "無效的 token",
+		"updateInfoFailed": "更新資訊失敗",
+		"bindAccountFailed": "綁定帳號失敗",
+		"tokenGenerateFailed": "產生 token 失敗",
+		"authenticationFailed": "驗證失敗"
+	},
 	"solution": {
 		"401": "1.點擊插件右上角⚙️ -> 選擇提供商【諸葛神碼】-> 點擊【重新登入】按鈕\n2. 聯絡管理員",
 		"400": "1.結束當前任務，開始新任務\n2.換個模型重試\n3.請聯絡管理員",
 		"403": "1.請檢查權限設定是否正確\n2.請聯絡管理員",
 		"404": "1.請檢查請求路徑或資源是否存在\n2.請聯絡管理員",
-		"429": "1.請稍後重試\n2.請聯絡管理員",
+		"429": "1. 請稍後再試\n2. 結束任務並重新開始\n3. 聯絡管理員",
 		"500": "1.請稍後重試\n2.請嘗試切換其他模型\n3.請聯絡管理員",
 		"502": "1.請稍後重試\n2.請嘗試切換其他模型\n3.請聯絡管理員",
 		"503": "1.請稍後重試\n2.請嘗試切換其他模型\n3.請聯絡管理員",
 		"504": "1.請稍後重試\n2.請嘗試切換其他模型\n3.請聯絡管理員",
+		"ai-gateway": {
+			"star_required": "請先前往 https://github.com/zgsm-ai/zgsm star 該專案後再繼續使用"
+		},
 		"undefined": "1.請檢查網路連線\n2.請檢查代理與防火牆\n3.請聯絡管理員",
-		"unknown": "請聯絡管理員"
+		"unknown": "1. 請稍後再試\n2. 嘗試更換模型\n3. 聯絡管理員"
 	},
 	"request": {
 		"failed": "請求失敗，請重試。",

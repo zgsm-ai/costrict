@@ -1688,18 +1688,15 @@ export class Task extends EventEmitter<ClineEvents> {
 	public getTaskRequestError(error: any, taskId: string, instanceId: string, apiConfiguration: ProviderSettings) {
 		const isHtml = error?.headers && error.headers["content-type"].includes("text/")
 		let rawError = error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message
+		let status = error.status
 		const unknownError = { status: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
-		const flags = [rawError, "{" + rawError.split(", response body: {")[1]]
+		let jsonBody = rawError.split(", response body: {")[1] || ""
+		jsonBody = jsonBody ? `{${jsonBody}` : ""
 
-		for (const item of flags) {
-			const { /* code,*/ message } = this.zgsmParse(item, rawError)
-			// todo: use code
-			if (message) {
-				return `${t("apiErrors:request.error_details")}\n\n${message}`
-			}
-		}
-		let zgsmApiKeyExpiredAt = apiConfiguration.zgsmApiKeyExpiredAt
-		let zgsmApiKeyUpdatedAt = apiConfiguration.zgsmApiKeyUpdatedAt
+		let zgsmApiKeyExpiredAt =
+			apiConfiguration.zgsmApiKeyExpiredAt === "undefined" ? "" : apiConfiguration.zgsmApiKeyExpiredAt
+		let zgsmApiKeyUpdatedAt =
+			apiConfiguration.zgsmApiKeyUpdatedAt === "undefined" ? "" : apiConfiguration.zgsmApiKeyUpdatedAt
 
 		if ((!zgsmApiKeyUpdatedAt || !zgsmApiKeyExpiredAt) && apiConfiguration.zgsmApiKey) {
 			const { exp, iat } = parseJwt(apiConfiguration.zgsmApiKey)
@@ -1710,8 +1707,8 @@ export class Task extends EventEmitter<ClineEvents> {
 		const defaultApiErrors = {
 			401: {
 				status: t("apiErrors:status.401", {
-					exp: zgsmApiKeyExpiredAt,
-					iat: zgsmApiKeyUpdatedAt,
+					exp: zgsmApiKeyExpiredAt || "-",
+					iat: zgsmApiKeyUpdatedAt || "-",
 				}),
 				solution: t("apiErrors:solution.401"),
 			},
@@ -1728,7 +1725,32 @@ export class Task extends EventEmitter<ClineEvents> {
 				solution: t("apiErrors:solution.undefined"),
 			},
 		} as Record<number | string, { status: string; solution: string }>
-		const _err = defaultApiErrors[error.status] || unknownError
+		const unauthorizedCodes = [
+			"ai-gateway.unauthorized",
+			"quota-manager.unauthorized",
+			"quota-manager.token_invalid",
+			"quota-manager.voucher_expired",
+		]
+
+		if (jsonBody) {
+			const { code, message } = this.zgsmParse(jsonBody, rawError)
+			let errmsg = t(code, { defaultValue: message })
+			let solution = `\n\n${t("apiErrors:request.solution")}\n\n${unknownError.solution}`
+			if (errmsg) {
+				if (unauthorizedCodes.includes(code)) {
+					rawError = errmsg
+					status = 401
+				} else if (code === "ai-gateway.star_required") {
+					solution = `\n\n${t("apiErrors:request.solution")}\n\n${t(`apiErrors.solution.${code}`)}`
+				}
+
+				this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
+
+				return `${t("apiErrors:request.error_details")}\n\n${errmsg}${solution}`
+			}
+		}
+
+		const _err = defaultApiErrors[status] || unknownError
 
 		this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
 
