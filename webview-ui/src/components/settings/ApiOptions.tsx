@@ -518,7 +518,7 @@ const ApiOptions = ({
 					/>
 					<RateLimitSecondsControl
 						apiConfiguration={apiConfiguration}
-						value={apiConfiguration.rateLimitSeconds || 0}
+						value={apiConfiguration.rateLimitSeconds || 2}
 						onChange={(value) => setApiConfigurationField("rateLimitSeconds", value)}
 					/>
 				</>
