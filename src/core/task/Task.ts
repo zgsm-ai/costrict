@@ -81,6 +81,7 @@ import { ApiMessage } from "../task-persistence/apiMessages"
 import { getMessagesSinceLastSummary, summarizeConversation } from "../condense"
 import { maybeRemoveImageBlocks } from "../../api/transform/image-cleaning"
 import { t } from "../../i18n"
+import { parseJwt } from "../../utils/jwt"
 
 export type ClineEvents = {
 	message: [{ action: "created" | "updated"; message: ClineMessage }]
@@ -1697,12 +1698,20 @@ export class Task extends EventEmitter<ClineEvents> {
 				return `${t("apiErrors:request.error_details")}\n\n${message}`
 			}
 		}
+		let zgsmApiKeyExpiredAt = apiConfiguration.zgsmApiKeyExpiredAt
+		let zgsmApiKeyUpdatedAt = apiConfiguration.zgsmApiKeyUpdatedAt
+
+		if ((!zgsmApiKeyUpdatedAt || !zgsmApiKeyExpiredAt) && apiConfiguration.zgsmApiKey) {
+			const { exp, iat } = parseJwt(apiConfiguration.zgsmApiKey)
+			zgsmApiKeyExpiredAt = new Date(exp * 1000).toLocaleString()
+			zgsmApiKeyUpdatedAt = new Date(iat * 1000).toLocaleString()
+		}
 
 		const defaultApiErrors = {
 			401: {
 				status: t("apiErrors:status.401", {
-					exp: apiConfiguration.zgsmApiKeyExpiredAt,
-					iat: apiConfiguration.zgsmApiKeyUpdatedAt,
+					exp: zgsmApiKeyExpiredAt,
+					iat: zgsmApiKeyUpdatedAt,
 				}),
 				solution: t("apiErrors:solution.401"),
 			},
