@@ -156,6 +156,7 @@
 	"review": {
 		"tip": {
 			"codebase_sync": "代碼同步中，請稍後，Code Review 即將開始",
+			"codebase_sync_failed": "代碼同步失敗，請稍後重試。",
 			"login_expired": "登入已過期，請重新登入。"
 		},
 		"statusbar": {

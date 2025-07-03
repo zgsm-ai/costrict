@@ -1706,8 +1706,16 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 				progress: null,
 				message: t("common:review.tip.codebase_sync"),
 			})
-			await ZgsmCodeBaseSyncService.getInstance().syncCodebase()
-			await this.codeReviewService.startReviewTask(targets)
+			const { success } = await ZgsmCodeBaseSyncService.getInstance().syncCodebase()
+			if (success) {
+				await this.codeReviewService.startReviewTask(targets)
+			} else {
+				await this.codeReviewService.sendReviewTaskUpdateMessage(TaskStatus.ERROR, {
+					issues: [],
+					progress: null,
+					error: t("common:review.tip.codebase_sync_failed"),
+				})
+			}
 		}
 	}
 

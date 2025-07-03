@@ -318,7 +318,7 @@
 				{
 					"command": "zgsm.codeReview",
 					"group": "zhuge-shenma@6",
-					"when": "editorHasSelection"
+					"when": "editorHasSelection && workbenchState != 'empty'"
 				},
 				{
 					"command": "zgsm.addDebugCode",
