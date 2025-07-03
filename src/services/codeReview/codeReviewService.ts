@@ -17,7 +17,7 @@ import { CommentService } from "../../integrations/comment"
 import { ReviewTarget, ReviewTask, TaskData } from "./types"
 import { ReviewIssue, IssueStatus, TaskStatus } from "../../shared/codeReview"
 import type { CommentThreadInfo } from "../../integrations/comment/types"
-import { createReviewTaskAPI, getReviewResultsAPI, updateIssueStatusAPI } from "./api"
+import { createReviewTaskAPI, getReviewResultsAPI, updateIssueStatusAPI, cancelReviewTaskAPI } from "./api"
 import { ExtensionMessage } from "../../shared/ExtensionMessage"
 import { ReviewComment } from "./reviewComment"
 import { t } from "../../i18n"
@@ -220,6 +220,24 @@ export class CodeReviewService {
 		// Abort AbortController to stop polling
 		if (this.taskAbortController) {
 			this.taskAbortController.abort("cancel current task")
+			const clientId = await this.getClientId()
+			const workspace = this.clineProvider?.cwd || ""
+			const requestOptions = await this.getRequestOptions()
+			try {
+				await cancelReviewTaskAPI(
+					{
+						client_id: clientId,
+						workspace,
+					},
+					requestOptions,
+				)
+			} catch (error) {
+				this.logger.error("Failed to cancel current task:", error)
+				if (error.name === "AuthError") {
+					await this.handleAuthError()
+				}
+				throw error
+			}
 			this.taskAbortController = null
 		}
 

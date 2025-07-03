@@ -14,6 +14,8 @@ import {
 	ReviewTaskResult,
 	UpdateIssueStatusRequest,
 	UpdateIssueStatusResponse,
+	CancelReviewTaskRequest,
+	CancelReviewTaskResponse,
 } from "./types"
 import { IssueStatus } from "../../shared/codeReview"
 import type { AxiosRequestConfig } from "axios"
@@ -208,6 +210,28 @@ export async function updateIssueStatusAPI(
 			success: data.success,
 			message: data.message,
 		}
+	} catch (error) {
+		// Error handling is done by axios interceptors
+		throw error
+	}
+}
+
+export async function cancelReviewTaskAPI(params: CancelReviewTaskRequest, options: AxiosRequestConfig = {}) {
+	const { client_id: clientId, workspace } = params
+	if (!clientId || clientId.trim() === "") {
+		throw new Error("Client ID is required")
+	}
+
+	if (!workspace || workspace.trim() === "") {
+		throw new Error("Workspace path is required")
+	}
+	try {
+		const response = await axiosInstance.put<CancelReviewTaskResponse>(
+			`/review-manager/api/v1/review_tasks/actions/cancel_in_progress`,
+			params,
+			options,
+		)
+		return response.data
 	} catch (error) {
 		// Error handling is done by axios interceptors
 		throw error
