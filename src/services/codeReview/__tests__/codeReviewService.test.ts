@@ -15,7 +15,7 @@ import * as vscode from "vscode"
 import { CodeReviewService } from "../codeReviewService"
 import { ClineProvider } from "../../../core/webview/ClineProvider"
 import { CommentService } from "../../../integrations/comment"
-import { createReviewTaskAPI, getReviewResultsAPI, updateIssueStatusAPI } from "../api"
+import { createReviewTaskAPI, getReviewResultsAPI, updateIssueStatusAPI, cancelReviewTaskAPI } from "../api"
 import { ReviewTarget, ReviewTargetType } from "../types"
 import { ReviewIssue, IssueStatus, TaskStatus, SeverityLevel } from "../../../shared/codeReview"
 
@@ -68,6 +68,7 @@ jest.mock("../api", () => ({
 	createReviewTaskAPI: jest.fn(),
 	getReviewResultsAPI: jest.fn(),
 	updateIssueStatusAPI: jest.fn(),
+	cancelReviewTaskAPI: jest.fn(),
 }))
 
 // Mock ClineProvider
@@ -258,6 +259,7 @@ describe("CodeReviewService", () => {
 			service.setProvider(mockClineProvider)
 			;(createReviewTaskAPI as jest.Mock).mockReset()
 			;(getReviewResultsAPI as jest.Mock).mockReset()
+			;(cancelReviewTaskAPI as jest.Mock).mockReset()
 			jest.useFakeTimers()
 		})
 
@@ -381,6 +383,9 @@ describe("CodeReviewService", () => {
 			;(createReviewTaskAPI as jest.Mock).mockResolvedValue({
 				data: { review_task_id: "test-task" },
 			})
+			;(cancelReviewTaskAPI as jest.Mock).mockResolvedValue({
+				success: true,
+			})
 			await service.startReviewTask([mockReviewTarget])
 
 			// Verify task is running
@@ -389,6 +394,15 @@ describe("CodeReviewService", () => {
 
 			// Cancel task
 			await service.cancelCurrentTask()
+
+			// Verify cancelReviewTaskAPI was called
+			expect(cancelReviewTaskAPI).toHaveBeenCalledWith(
+				{
+					client_id: "test-client",
+					workspace: "/test/workspace",
+				},
+				expect.any(Object),
+			)
 
 			// Verify task is marked as completed
 			expect(service.getCurrentTask()?.isCompleted).toBe(true)
@@ -413,6 +427,9 @@ describe("CodeReviewService", () => {
 			// Setup task creation
 			;(createReviewTaskAPI as jest.Mock).mockResolvedValue({
 				data: { review_task_id: "test-task" },
+			})
+			;(cancelReviewTaskAPI as jest.Mock).mockResolvedValue({
+				success: true,
 			})
 
 			// Setup polling response
@@ -454,6 +471,9 @@ describe("CodeReviewService", () => {
 			;(createReviewTaskAPI as jest.Mock).mockResolvedValue({
 				data: { review_task_id: "test-task" },
 			})
+			;(cancelReviewTaskAPI as jest.Mock).mockResolvedValue({
+				success: true,
+			})
 			;(getReviewResultsAPI as jest.Mock).mockResolvedValue({
 				data: {
 					issues: [mockIssue],
@@ -488,6 +508,9 @@ describe("CodeReviewService", () => {
 			// Setup task creation
 			;(createReviewTaskAPI as jest.Mock).mockResolvedValue({
 				data: { review_task_id: "test-task" },
+			})
+			;(cancelReviewTaskAPI as jest.Mock).mockResolvedValue({
+				success: true,
 			})
 
 			// Setup polling response with progress
@@ -532,6 +555,30 @@ describe("CodeReviewService", () => {
 						}),
 					}),
 				}),
+			)
+		})
+
+		it("should handle API error when canceling task", async () => {
+			// Setup running task
+			;(createReviewTaskAPI as jest.Mock).mockResolvedValue({
+				data: { review_task_id: "test-task" },
+			})
+			;(cancelReviewTaskAPI as jest.Mock).mockRejectedValue(new Error("Cancel API Error"))
+			await service.startReviewTask([mockReviewTarget])
+
+			// Verify task is running
+			expect(service.isTaskRunning()).toBe(true)
+
+			// Cancel task should throw error
+			await expect(service.cancelCurrentTask()).rejects.toThrow("Cancel API Error")
+
+			// Verify cancelReviewTaskAPI was called
+			expect(cancelReviewTaskAPI).toHaveBeenCalledWith(
+				{
+					client_id: "test-client",
+					workspace: "/test/workspace",
+				},
+				expect.any(Object),
 			)
 		})
 	})
@@ -633,6 +680,7 @@ describe("Polling Mechanism", () => {
 		service.setProvider(mockClineProvider)
 		;(createReviewTaskAPI as jest.Mock).mockReset()
 		;(getReviewResultsAPI as jest.Mock).mockReset()
+		;(cancelReviewTaskAPI as jest.Mock).mockReset()
 		jest.useFakeTimers()
 	})
 
