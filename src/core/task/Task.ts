@@ -1692,13 +1692,13 @@ export class Task extends EventEmitter<ClineEvents> {
 		const unknownError = { status: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
 		let jsonBody = rawError.split(", response body: {")[1] || ""
 		jsonBody = jsonBody ? `{${jsonBody}` : ""
+		if (!jsonBody && typeof this.zgsmParse(error.message, error.message) === "object") {
+			jsonBody = error.message
+		}
+		let zgsmApiKeyExpiredAt = ""
+		let zgsmApiKeyUpdatedAt = ""
 
-		let zgsmApiKeyExpiredAt =
-			apiConfiguration.zgsmApiKeyExpiredAt === "undefined" ? "" : apiConfiguration.zgsmApiKeyExpiredAt
-		let zgsmApiKeyUpdatedAt =
-			apiConfiguration.zgsmApiKeyUpdatedAt === "undefined" ? "" : apiConfiguration.zgsmApiKeyUpdatedAt
-
-		if ((!zgsmApiKeyUpdatedAt || !zgsmApiKeyExpiredAt) && apiConfiguration.zgsmApiKey) {
+		if (apiConfiguration.zgsmApiKey) {
 			const { exp, iat } = parseJwt(apiConfiguration.zgsmApiKey)
 			zgsmApiKeyExpiredAt = new Date(exp * 1000).toLocaleString()
 			zgsmApiKeyUpdatedAt = new Date(iat * 1000).toLocaleString()
@@ -1739,9 +1739,20 @@ export class Task extends EventEmitter<ClineEvents> {
 			if (errmsg) {
 				if (unauthorizedCodes.includes(code)) {
 					rawError = errmsg
-					status = 401
-				} else if (code === "ai-gateway.star_required") {
+					error.status = status = 401
+				} else if (
+					[
+						"ai-gateway.star_required",
+						"chat-rag.context_length_exceeded",
+						"chat-rag.internal_error",
+					].includes(code)
+				) {
 					solution = `\n\n${t("apiErrors:request.solution")}\n\n${t(`apiErrors.solution.${code}`)}`
+					if (code === "chat-rag.internal_error") {
+						error.status = status = 500
+					} else if (code === "chat-rag.context_length_exceeded") {
+						error.status = status = 429
+					}
 				}
 
 				this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)

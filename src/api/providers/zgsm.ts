@@ -168,7 +168,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 				Object.assign(isAzureAiInference ? { path: AZURE_AI_INFERENCE_PATH } : {}, {
 					headers: {
 						...defaultHeaders,
-						"Accept-Language": opt.language || "en",
+						"Accept-Language": opt?.language || "en",
 						"x-quota-identity": this.chatType,
 						"zgsm-task-id": this.taskId,
 						"zgsm-client-id": vscode.env.machineId,
