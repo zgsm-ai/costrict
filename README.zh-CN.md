@@ -4,7 +4,7 @@
 </div>
 <br>
 <div align="center">
-<a href="./README.md" target="_blank">English</a> | 简体中文
+<a href="https://github.com/zgsm-ai/zgsm/blob/7cd474ade30bb64b57d5491bd046a2beb90bd420/README.md" target="_blank">English</a> | 简体中文
 </div>
 <br>
 <br>
