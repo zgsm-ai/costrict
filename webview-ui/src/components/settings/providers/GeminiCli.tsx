@@ -40,6 +40,17 @@ export const GeminiCli = ({ apiConfiguration, setApiConfigurationField }: Gemini
 				{t("settings:providers.geminiCli.oauthPathDescription")}
 			</div>
 
+			<VSCodeTextField
+				value={apiConfiguration?.geminiCliProjectId || ""}
+				onInput={handleInputChange("geminiCliProjectId")}
+				placeholder={t("settings:providers.geminiCli.projectIdPlaceholder")}
+				className="w-full">
+				<label className="block font-medium mb-1">{t("settings:providers.geminiCli.projectId")}</label>
+			</VSCodeTextField>
+			<div className="text-sm text-vscode-descriptionForeground -mt-2">
+				{t("settings:providers.geminiCli.projectIdDescription")}
+			</div>
+
 			<div className="text-sm text-vscode-descriptionForeground mt-3">
 				{t("settings:providers.geminiCli.description")}
 			</div>
