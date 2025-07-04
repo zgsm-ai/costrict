@@ -42,6 +42,10 @@
 		"invalid_params": "无效的请求参数",
 		"error": "Redis 连接错误"
 	},
+	"chat-rag": {
+		"context_length_exceeded": "请求超出了模型的最大上下文长度限制，请缩短输入内容",
+		"internal_error": "内部服务器错误"
+	},
 	"oidc-auth": {
 		"badRequestParameter": "参数传递错误",
 		"loginEncryptFailed": "登陆数据加密失败",

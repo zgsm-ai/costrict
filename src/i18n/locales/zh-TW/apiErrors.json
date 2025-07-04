@@ -42,6 +42,10 @@
 		"invalid_params": "請求參數無效",
 		"error": "Redis 連線錯誤"
 	},
+	"chat-rag": {
+		"context_length_exceeded": "請求超出了模型的最大上下文長度限制，請縮短輸入內容",
+		"internal_error": "內部伺服器錯誤"
+	},
 	"oidc-auth": {
 		"badRequestParameter": "參數傳遞錯誤",
 		"loginEncryptFailed": "登入資料加密失敗",

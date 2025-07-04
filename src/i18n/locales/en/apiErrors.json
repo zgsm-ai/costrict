@@ -42,6 +42,10 @@
 		"invalid_params": "Invalid request parameters",
 		"error": "Redis connection error"
 	},
+	"chat-rag": {
+		"context_length_exceeded": "The request exceeds the model's maximum context length. Please reduce the length of your input",
+		"internal_error": "Internal server error"
+	},
 	"oidc-auth": {
 		"badRequestParameter": "Parameter passing error",
 		"loginEncryptFailed": "Login data encryption failed",
