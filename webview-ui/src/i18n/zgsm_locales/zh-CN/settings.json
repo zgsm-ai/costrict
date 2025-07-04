@@ -37,7 +37,10 @@
 		"customModel": {
 			"capabilities": "配置您的自定义OpenAI兼容模型的功能和定价。在指定模型功能时要小心，因为它们会影响诸葛神码的表现。"
 		},
-		"useZgsmCustomConfig": "使用自定义配置"
+		"useZgsmCustomConfig": "使用自定义配置",
+		"geminiCli": {
+			"projectIdDescription": "为企业或非免费套餐访问指定您的 Google Cloud 项目 ID。如使用个人账号并希望自动发现项目，请留空。如果您遇到 API 错误，建议填写项目ID。"
+		}
 	},
 	"browser": {
 		"enable": {

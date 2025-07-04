@@ -37,7 +37,10 @@
 		"customModel": {
 			"capabilities": "Configure the capabilities and pricing for your custom OpenAI-compatible model. Be careful when specifying the model capabilities, as they can affect how Shenma performs."
 		},
-		"useZgsmCustomConfig": "Use custom configuration"
+		"useZgsmCustomConfig": "Use custom configuration",
+		"geminiCli": {
+			"projectIdDescription": "Specify your Google Cloud Project ID for enterprise or non-free tier access. Leave empty for automatic project discovery with personal accounts. If you encounter an API Error, it is recommended to fill in the Project ID."
+		}
 	},
 	"browser": {
 		"enable": {
