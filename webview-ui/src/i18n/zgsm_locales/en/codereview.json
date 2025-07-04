@@ -12,7 +12,8 @@
 			"low": "Low"
 		},
 		"severityLabel": "Severity",
-		"issueLable": "Label"
+		"issueLable": "Label",
+		"filterTooltip": "Filter issues"
 	},
 	"taskStatusBar": {
 		"running": "Code Review in progress, {{progress}}%",

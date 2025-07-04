@@ -12,7 +12,8 @@
 			"low": "低"
 		},
 		"severityLabel": "嚴重程度",
-		"issueLable": "標籤"
+		"issueLable": "標籤",
+		"filterTooltip": "過濾問題"
 	},
 	"taskStatusBar": {
 		"running": "正在進行 Code Review，{{progress}}%",

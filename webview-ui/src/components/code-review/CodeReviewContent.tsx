@@ -2,7 +2,15 @@ import React, { useMemo, useState, useCallback } from "react"
 import { ReviewIssue, TaskStatus, SeverityLevel } from "@roo/shared/codeReview"
 import TaskSummary from "./TaskSummary"
 import FileIssueList from "./FileIssueList"
-import { Popover, PopoverTrigger, PopoverContent } from "../ui"
+import {
+	Popover,
+	PopoverTrigger,
+	PopoverContent,
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui"
 import { severityColor } from "./contants"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 
@@ -121,7 +129,19 @@ const CodeReviewContent: React.FC<CodeReviewContentProps> = ({ issues, taskStatu
 						<Popover>
 							<PopoverTrigger>
 								<div className="relative">
-									<i className={`codicon codicon-filter cursor-pointer`}></i>
+									<TooltipProvider>
+										<Tooltip>
+											<TooltipTrigger>
+												<div
+													className={`w-6 h-6 flex items-center justify-center rounded-[1px] transition-all duration-200 hover:bg-white/10 active:bg-white/10 cursor-pointer ${showNotificationDot ? "bg-white/10" : ""}`}>
+													<i className="codicon codicon-filter"></i>
+												</div>
+											</TooltipTrigger>
+											<TooltipContent side="top" className="text-base">
+												{t("codereview:codeReviewContent.filterTooltip")}
+											</TooltipContent>
+										</Tooltip>
+									</TooltipProvider>
 									{showNotificationDot && (
 										<div
 											className="absolute top-[2px] right-0 w-[5px] h-[5px] bg-red-500 rounded-full"
