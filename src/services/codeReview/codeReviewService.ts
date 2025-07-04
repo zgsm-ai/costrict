@@ -172,6 +172,7 @@ export class CodeReviewService {
 				issues: [],
 				progress: 0,
 			})
+			this.logger.info(`Code Review task created,taskId: ${taskResponse.data.review_task_id}`)
 			// Start polling for results
 			this.startPolling(this.currentTask.taskId, clientId)
 		} catch (error) {

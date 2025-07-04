@@ -160,6 +160,7 @@
 	"review": {
 		"tip": {
 			"codebase_sync": "代码同步中，请稍候，Code Review 即将开始",
+			"codebase_sync_failed": "代码同步失败，请稍后重试。",
 			"login_expired": "登录已过期，请重新登录。"
 		},
 		"statusbar": {
