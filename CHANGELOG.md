@@ -1,5 +1,8 @@
 # Shenma Change Log
 
+## [1.5.3]
+- Fix known issues
+
 ## [1.5.2]
 - Optimized CodeReview
 - Update Error Code
