@@ -70,63 +70,68 @@ export async function summarizeConversation(
 	taskId: string,
 	isAutomaticTrigger?: boolean,
 ): Promise<SummarizeResponse> {
-	telemetryService.captureContextCondensed(taskId, isAutomaticTrigger ?? false)
-	const response: SummarizeResponse = { messages, cost: 0, summary: "" }
-	const messagesToSummarize = getMessagesSinceLastSummary(messages.slice(0, -N_MESSAGES_TO_KEEP))
-	if (messagesToSummarize.length <= 1) {
-		return response // Not enough messages to warrant a summary
-	}
-	const keepMessages = messages.slice(-N_MESSAGES_TO_KEEP)
-	// Check if there's a recent summary in the messages we're keeping
-	const recentSummaryExists = keepMessages.some((message) => message.isSummary)
-	if (recentSummaryExists) {
-		return response // We recently summarized these messages; it's too soon to summarize again.
-	}
-	const finalRequestMessage: Anthropic.MessageParam = {
-		role: "user",
-		content: "Summarize the conversation so far, as described in the prompt instructions.",
-	}
-	const requestMessages = maybeRemoveImageBlocks([...messagesToSummarize, finalRequestMessage], apiHandler).map(
-		({ role, content }) => ({ role, content }),
-	)
-	// Note: this doesn't need to be a stream, consider using something like apiHandler.completePrompt
-	const stream = apiHandler.createMessage(SUMMARY_PROMPT, requestMessages)
-	let summary = ""
-	let cost = 0
-	let outputTokens = 0
-	for await (const chunk of stream) {
-		if (chunk.type === "text") {
-			summary += chunk.text
-		} else if (chunk.type === "usage") {
-			// Record final usage chunk only
-			cost = chunk.totalCost ?? 0
-			outputTokens = chunk.outputTokens ?? 0
+	try {
+		telemetryService.captureContextCondensed(taskId, isAutomaticTrigger ?? false)
+		const response: SummarizeResponse = { messages, cost: 0, summary: "" }
+		const messagesToSummarize = getMessagesSinceLastSummary(messages.slice(0, -N_MESSAGES_TO_KEEP))
+		if (messagesToSummarize.length <= 1) {
+			return response // Not enough messages to warrant a summary
 		}
-	}
-	summary = summary.trim()
-	if (summary.length === 0) {
-		console.warn("Received empty summary from API")
-		return { ...response, cost }
-	}
-	const summaryMessage: ApiMessage = {
-		role: "assistant",
-		content: summary,
-		ts: keepMessages[0].ts,
-		isSummary: true,
-	}
-	const newMessages = [...messages.slice(0, -N_MESSAGES_TO_KEEP), summaryMessage, ...keepMessages]
+		const keepMessages = messages.slice(-N_MESSAGES_TO_KEEP)
+		// Check if there's a recent summary in the messages we're keeping
+		const recentSummaryExists = keepMessages.some((message) => message.isSummary)
+		if (recentSummaryExists) {
+			return response // We recently summarized these messages; it's too soon to summarize again.
+		}
+		const finalRequestMessage: Anthropic.MessageParam = {
+			role: "user",
+			content: "Summarize the conversation so far, as described in the prompt instructions.",
+		}
+		const requestMessages = maybeRemoveImageBlocks([...messagesToSummarize, finalRequestMessage], apiHandler).map(
+			({ role, content }) => ({ role, content }),
+		)
+		// Note: this doesn't need to be a stream, consider using something like apiHandler.completePrompt
+		const stream = apiHandler.createMessage(SUMMARY_PROMPT, requestMessages)
+		let summary = ""
+		let cost = 0
+		let outputTokens = 0
+		for await (const chunk of stream) {
+			if (chunk.type === "text") {
+				summary += chunk.text
+			} else if (chunk.type === "usage") {
+				// Record final usage chunk only
+				cost = chunk.totalCost ?? 0
+				outputTokens = chunk.outputTokens ?? 0
+			}
+		}
+		summary = summary.trim()
+		if (summary.length === 0) {
+			console.warn("Received empty summary from API")
+			return { ...response, cost }
+		}
+		const summaryMessage: ApiMessage = {
+			role: "assistant",
+			content: summary,
+			ts: keepMessages[0].ts,
+			isSummary: true,
+		}
+		const newMessages = [...messages.slice(0, -N_MESSAGES_TO_KEEP), summaryMessage, ...keepMessages]
 
-	// Count the tokens in the context for the next API request
-	// We only estimate the tokens in summaryMesage if outputTokens is 0, otherwise we use outputTokens
-	const systemPromptMessage: ApiMessage = { role: "user", content: systemPrompt }
-	const contextMessages = outputTokens
-		? [systemPromptMessage, ...keepMessages]
-		: [systemPromptMessage, summaryMessage, ...keepMessages]
-	const contextBlocks = contextMessages.flatMap((message) =>
-		typeof message.content === "string" ? [{ text: message.content, type: "text" as const }] : message.content,
-	)
-	const newContextTokens = outputTokens + (await apiHandler.countTokens(contextBlocks))
-	return { messages: newMessages, summary, cost, newContextTokens }
+		// Count the tokens in the context for the next API request
+		// We only estimate the tokens in summaryMesage if outputTokens is 0, otherwise we use outputTokens
+		const systemPromptMessage: ApiMessage = { role: "user", content: systemPrompt }
+		const contextMessages = outputTokens
+			? [systemPromptMessage, ...keepMessages]
+			: [systemPromptMessage, summaryMessage, ...keepMessages]
+		const contextBlocks = contextMessages.flatMap((message) =>
+			typeof message.content === "string" ? [{ text: message.content, type: "text" as const }] : message.content,
+		)
+		const newContextTokens = outputTokens + (await apiHandler.countTokens(contextBlocks))
+		return { messages: newMessages, summary, cost, newContextTokens }
+	} catch (error) {
+		console.error(error.message)
+		return { messages: [], summary: "", cost: 0 }
+	}
 }
 
 /* Returns the list of all messages since the last summary message, including the summary. Returns all messages if there is no summary. */
