@@ -1,6 +1,7 @@
 # Shenma Change Log
 
 ## [1.5.3]
+- Add Gemini CLI ProjectId Config
 - Fix known issues
 
 ## [1.5.2]
