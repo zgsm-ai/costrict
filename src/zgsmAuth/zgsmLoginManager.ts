@@ -53,10 +53,11 @@ export class ZgsmLoginManager {
 			throw new Error("Provider not initialized")
 		}
 
-		this.baseUrl =
+		this.baseUrl = (
 			ZgsmLoginManager.provider.getValue("zgsmBaseUrl") ||
 			ZgsmLoginManager.provider.getValue("zgsmDefaultBaseUrl") ||
 			"https://zgsm.sangfor.com"
+		).trim()
 
 		this.loginUrl = `${this.baseUrl}/oidc-auth/api/v1/plugin/login`
 		this.tokenUrl = `${this.baseUrl}/oidc-auth/api/v1/plugin/login/token`
