@@ -1,5 +1,9 @@
 # Shenma Change Log
 
+## [1.5.2]
+- Optimized CodeReview
+- Update Error Code
+
 ## [1.5.1]
 - Support "Add To Context" ExplorerSubmenu
 - Update Error Code
