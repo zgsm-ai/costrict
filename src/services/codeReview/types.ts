@@ -244,3 +244,13 @@ export interface TaskData {
 	error?: string
 	message?: string
 }
+
+export interface CancelReviewTaskRequest {
+	client_id: string
+	workspace: string
+}
+
+export interface CancelReviewTaskResponse {
+	success: boolean
+	message: string
+}

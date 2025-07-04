@@ -43,6 +43,7 @@ function createAxiosInstance(): AxiosInstance {
 					const error = new Error(message || "Business logic error")
 					;(error as any).code = code
 					;(error as any).data = response.data
+					;(error as any).message = message
 					throw error
 				}
 			}
