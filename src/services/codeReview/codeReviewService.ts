@@ -98,13 +98,14 @@ export class CodeReviewService {
 		if (!this.clineProvider) {
 			return {}
 		}
-		const { apiConfiguration } = await this.clineProvider.getState()
+		const { apiConfiguration, language } = await this.clineProvider.getState()
 		const apiKey = apiConfiguration.zgsmApiKey
 		const baseURL = apiConfiguration.zgsmBaseUrl || "https://zgsm.sangfor.com"
 		return {
 			baseURL,
 			headers: {
 				Authorization: `Bearer ${apiKey}`,
+				"Accept-Language": language,
 			},
 		}
 	}
