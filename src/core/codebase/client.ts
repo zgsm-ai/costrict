@@ -255,6 +255,31 @@ export class ZgsmCodeBaseSyncService {
 		})
 	}
 
+	async checkIgnoreFile(filePaths: string[]): Promise<SyncCodebaseResponse> {
+		return this.retryWrapper("checkIgnoreFile", () => {
+			return new Promise((resolve, reject) => {
+				if (!this.client) {
+					return reject(new Error("client not init!"))
+				}
+				if (!this.workspacePath) return reject(new Error("no workspacePath!"))
+				if (!this.workspaceName) return reject(new Error("no workspaceName!"))
+				if (!filePaths || filePaths.length === 0) return reject(new Error("no filePaths!"))
+				this.client.checkIgnoreFile(
+					{
+						clientId: this.clientId,
+						workspacePath: this.workspacePath,
+						workspaceName: this.workspaceName,
+						filePaths,
+					},
+					(err: grpc.ServiceError | null, response?: SyncCodebaseResponse) => {
+						if (err) return reject(err)
+						resolve(response!)
+					},
+				)
+			})
+		})
+	}
+
 	async download(version: string): Promise<void> {
 		// 1. Check public key
 		if (!process.env.ZGSM_PUBLIC_KEY) {

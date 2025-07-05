@@ -161,6 +161,8 @@
 		"tip": {
 			"codebase_sync": "CodeBase synchronization in progress, please wait. Code Review will start shortly.",
 			"codebase_sync_failed": "CodeBase synchronization failed, please try again later.",
+			"codebase_sync_ignore_file": "This type of file does not need to be reviewed, the current task will not be executed.",
+			"file_check": "File checking in progress",
 			"login_expired": "Login has expired, please log in again."
 		},
 		"statusbar": {

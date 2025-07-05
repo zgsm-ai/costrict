@@ -251,12 +251,15 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		if (!provider) {
 			return
 		}
-		provider.startReviewTask([
-			{
-				type: ReviewTargetType.FOLDER,
-				file_path: "",
-			},
-		])
+		provider.startReviewTask(
+			[
+				{
+					type: ReviewTargetType.FOLDER,
+					file_path: "",
+				},
+			],
+			true,
+		)
 	},
 	acceptIssue: async (thread: vscode.CommentThread) => {
 		const codeReviewService = CodeReviewService.getInstance()
