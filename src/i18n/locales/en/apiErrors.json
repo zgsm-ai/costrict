@@ -9,6 +9,7 @@
 		"502": "Gateway error, service temporarily unavailable",
 		"503": "Service temporarily unavailable",
 		"504": "Gateway timeout",
+		"old_mode_token": "The old token is incompatible. Please log in again after the upgrade.",
 		"undefined": "Network connection error",
 		"unknown": "Unknown error"
 	},
