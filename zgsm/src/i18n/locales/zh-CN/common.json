@@ -163,7 +163,8 @@
 			"codebase_sync_failed": "代码同步失败，请稍后重试。",
 			"codebase_sync_ignore_file": "该类型文件无需做 CodeReview，本次任务不执行。",
 			"file_check": "文件检查中",
-			"login_expired": "登录已过期，请重新登录。"
+			"login_expired": "登录已过期，请重新登录。",
+			"service_unavailable": "服务不可用，请稍后重试。"
 		},
 		"statusbar": {
 			"login_expired": "获取登录信息失败，请重新登录以使用 Code Review 功能"
