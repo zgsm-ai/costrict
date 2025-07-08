@@ -16,6 +16,7 @@ import {
 import { ClineProvider } from "../webview/ClineProvider"
 import { getWorkspacePath } from "../../utils/path"
 import { PackageInfo, PackagesResponse } from "./types"
+import { getClientId } from "../../utils/getClientId"
 
 export class ZgsmCodeBaseSyncService {
 	private static providerRef: ClineProvider | undefined
@@ -32,7 +33,7 @@ export class ZgsmCodeBaseSyncService {
 	public client?: SyncServiceClient
 
 	get clientId() {
-		return vscode.env.machineId
+		return getClientId()
 	}
 
 	get workspacePath() {

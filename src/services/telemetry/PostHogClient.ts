@@ -2,6 +2,7 @@ import { PostHog } from "posthog-node"
 import * as vscode from "vscode"
 
 import { logger } from "../../utils/logging"
+import { getClientId } from "../../utils/getClientId"
 
 // This forward declaration is needed to avoid circular dependencies
 export interface ClineProviderInterface {
@@ -41,7 +42,7 @@ export class PostHogClient {
 
 	private static instance: PostHogClient
 	private client: PostHog
-	private distinctId: string = vscode.env.machineId
+	private distinctId: string = getClientId()
 	private telemetryEnabled: boolean = false
 	private providerRef: WeakRef<ClineProviderInterface> | null = null
 

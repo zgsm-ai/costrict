@@ -26,6 +26,7 @@ import path from "node:path"
 import type { AxiosRequestConfig } from "axios"
 import { Package } from "../../schemas"
 import { createLogger, ILogger } from "../../utils/logger"
+import { getClientId } from "../../utils/getClientId"
 
 /**
  * Code Review Service - Singleton
@@ -91,7 +92,7 @@ export class CodeReviewService {
 		this.commentService = commentService
 	}
 	private async getClientId(): Promise<string> {
-		return vscode.env.machineId
+		return getClientId()
 	}
 
 	private async getRequestOptions(): Promise<AxiosRequestConfig> {

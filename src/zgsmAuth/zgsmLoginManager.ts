@@ -10,6 +10,7 @@ import { zgsmProviderKey } from "../shared/api"
 import { initZgsmCodeBase } from "../core/codebase"
 import { CompletionStatusBar } from "../../zgsm/src/codeCompletion/completionStatusBar"
 import { sendTokens } from "./ipc/client"
+import { getClientId } from "../utils/getClientId"
 
 const TOKEN_REFRESH_BUFFER = 1800
 const MAX_INTERVAL = 2147483647
@@ -447,7 +448,7 @@ export class ZgsmLoginManager {
 
 	public getParams(state: string, ignore: string[] = []) {
 		return [
-			["machine_code", vscode.env.machineId],
+			["machine_code", getClientId()],
 			["state", state],
 			["provider", "casdoor"],
 			["plugin_version", Package.version],
