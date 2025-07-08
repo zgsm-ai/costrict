@@ -40,10 +40,11 @@ message SyncCodebaseRequest {
     string workspace_name = 3;     // Workspace name
 }
 
-// Sync codebase response
+// Sync project response
 message SyncCodebaseResponse {
-    bool success = 1;           // Whether succeeded
+    bool success = 1;           // Success flag
     string message = 2;         // Message
+    string code = 3;            // Error code for specific error types
 }
 
 // Unregister workspace sync
@@ -71,6 +72,14 @@ message VersionResponse {
     Data data = 3;              // Data
 }
 
+// Check ignore file request
+message CheckIgnoreFileRequest {
+    string client_id = 1;        // Client ID
+    string workspace_path = 2;   // Workspace path
+    string workspace_name = 3;   // Workspace name
+    repeated string file_paths = 4; // File paths to check
+}
+
 // Sync service definition
 service SyncService {
     // Register project sync
@@ -87,4 +96,7 @@ service SyncService {
 
     // Get application name and version info
     rpc GetVersion(VersionRequest) returns (VersionResponse);
+
+     // Check ignore file
+    rpc CheckIgnoreFile(CheckIgnoreFileRequest) returns (SyncCodebaseResponse);
 }

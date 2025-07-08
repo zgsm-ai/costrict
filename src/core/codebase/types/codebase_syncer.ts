@@ -69,12 +69,14 @@ export interface SyncCodebaseRequest {
 	workspaceName: string
 }
 
-/** Sync codebase response */
+/** Sync project response */
 export interface SyncCodebaseResponse {
-	/** Whether succeeded */
+	/** Success flag */
 	success: boolean
 	/** Message */
 	message: string
+	/** Error code for specific error types */
+	code: string
 }
 
 /** Unregister workspace sync */
@@ -112,6 +114,18 @@ export interface VersionResponse_Data {
 	osName: string
 	/** Architecture name */
 	archName: string
+}
+
+/** Check ignore file request */
+export interface CheckIgnoreFileRequest {
+	/** Client ID */
+	clientId: string
+	/** Workspace path */
+	workspacePath: string
+	/** Workspace name */
+	workspaceName: string
+	/** File paths to check */
+	filePaths: string[]
 }
 
 function createBaseShareAccessTokenRequest(): ShareAccessTokenRequest {
@@ -543,7 +557,7 @@ export const SyncCodebaseRequest: MessageFns<SyncCodebaseRequest> = {
 }
 
 function createBaseSyncCodebaseResponse(): SyncCodebaseResponse {
-	return { success: false, message: "" }
+	return { success: false, message: "", code: "" }
 }
 
 export const SyncCodebaseResponse: MessageFns<SyncCodebaseResponse> = {
@@ -553,6 +567,9 @@ export const SyncCodebaseResponse: MessageFns<SyncCodebaseResponse> = {
 		}
 		if (message.message !== "") {
 			writer.uint32(18).string(message.message)
+		}
+		if (message.code !== "") {
+			writer.uint32(26).string(message.code)
 		}
 		return writer
 	},
@@ -580,6 +597,14 @@ export const SyncCodebaseResponse: MessageFns<SyncCodebaseResponse> = {
 					message.message = reader.string()
 					continue
 				}
+				case 3: {
+					if (tag !== 26) {
+						break
+					}
+
+					message.code = reader.string()
+					continue
+				}
 			}
 			if ((tag & 7) === 4 || tag === 0) {
 				break
@@ -593,6 +618,7 @@ export const SyncCodebaseResponse: MessageFns<SyncCodebaseResponse> = {
 		return {
 			success: isSet(object.success) ? globalThis.Boolean(object.success) : false,
 			message: isSet(object.message) ? globalThis.String(object.message) : "",
+			code: isSet(object.code) ? globalThis.String(object.code) : "",
 		}
 	},
 
@@ -604,6 +630,9 @@ export const SyncCodebaseResponse: MessageFns<SyncCodebaseResponse> = {
 		if (message.message !== "") {
 			obj.message = message.message
 		}
+		if (message.code !== "") {
+			obj.code = message.code
+		}
 		return obj
 	},
 
@@ -614,6 +643,7 @@ export const SyncCodebaseResponse: MessageFns<SyncCodebaseResponse> = {
 		const message = createBaseSyncCodebaseResponse()
 		message.success = object.success ?? false
 		message.message = object.message ?? ""
+		message.code = object.code ?? ""
 		return message
 	},
 }
@@ -971,6 +1001,116 @@ export const VersionResponse_Data: MessageFns<VersionResponse_Data> = {
 	},
 }
 
+function createBaseCheckIgnoreFileRequest(): CheckIgnoreFileRequest {
+	return { clientId: "", workspacePath: "", workspaceName: "", filePaths: [] }
+}
+
+export const CheckIgnoreFileRequest: MessageFns<CheckIgnoreFileRequest> = {
+	encode(message: CheckIgnoreFileRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+		if (message.clientId !== "") {
+			writer.uint32(10).string(message.clientId)
+		}
+		if (message.workspacePath !== "") {
+			writer.uint32(18).string(message.workspacePath)
+		}
+		if (message.workspaceName !== "") {
+			writer.uint32(26).string(message.workspaceName)
+		}
+		for (const v of message.filePaths) {
+			writer.uint32(34).string(v!)
+		}
+		return writer
+	},
+
+	decode(input: BinaryReader | Uint8Array, length?: number): CheckIgnoreFileRequest {
+		const reader = input instanceof BinaryReader ? input : new BinaryReader(input)
+		const end = length === undefined ? reader.len : reader.pos + length
+		const message = createBaseCheckIgnoreFileRequest()
+		while (reader.pos < end) {
+			const tag = reader.uint32()
+			switch (tag >>> 3) {
+				case 1: {
+					if (tag !== 10) {
+						break
+					}
+
+					message.clientId = reader.string()
+					continue
+				}
+				case 2: {
+					if (tag !== 18) {
+						break
+					}
+
+					message.workspacePath = reader.string()
+					continue
+				}
+				case 3: {
+					if (tag !== 26) {
+						break
+					}
+
+					message.workspaceName = reader.string()
+					continue
+				}
+				case 4: {
+					if (tag !== 34) {
+						break
+					}
+
+					message.filePaths.push(reader.string())
+					continue
+				}
+			}
+			if ((tag & 7) === 4 || tag === 0) {
+				break
+			}
+			reader.skip(tag & 7)
+		}
+		return message
+	},
+
+	fromJSON(object: any): CheckIgnoreFileRequest {
+		return {
+			clientId: isSet(object.clientId) ? globalThis.String(object.clientId) : "",
+			workspacePath: isSet(object.workspacePath) ? globalThis.String(object.workspacePath) : "",
+			workspaceName: isSet(object.workspaceName) ? globalThis.String(object.workspaceName) : "",
+			filePaths: globalThis.Array.isArray(object?.filePaths)
+				? object.filePaths.map((e: any) => globalThis.String(e))
+				: [],
+		}
+	},
+
+	toJSON(message: CheckIgnoreFileRequest): unknown {
+		const obj: any = {}
+		if (message.clientId !== "") {
+			obj.clientId = message.clientId
+		}
+		if (message.workspacePath !== "") {
+			obj.workspacePath = message.workspacePath
+		}
+		if (message.workspaceName !== "") {
+			obj.workspaceName = message.workspaceName
+		}
+		if (message.filePaths?.length) {
+			obj.filePaths = message.filePaths
+		}
+		return obj
+	},
+
+	create<I extends Exact<DeepPartial<CheckIgnoreFileRequest>, I>>(base?: I): CheckIgnoreFileRequest {
+		return CheckIgnoreFileRequest.fromPartial(base ?? ({} as any))
+	},
+	fromPartial<I extends Exact<DeepPartial<CheckIgnoreFileRequest>, I>>(object: I): CheckIgnoreFileRequest {
+		const message = createBaseCheckIgnoreFileRequest()
+		message.clientId = object.clientId ?? ""
+		message.workspacePath = object.workspacePath ?? ""
+		message.workspaceName = object.workspaceName ?? ""
+		message.filePaths = object.filePaths?.map((e) => e) || []
+		return message
+	},
+}
+
 /** Sync service definition */
 export type SyncServiceService = typeof SyncServiceService
 export const SyncServiceService = {
@@ -1031,6 +1171,18 @@ export const SyncServiceService = {
 		responseSerialize: (value: VersionResponse): Buffer => Buffer.from(VersionResponse.encode(value).finish()),
 		responseDeserialize: (value: Buffer): VersionResponse => VersionResponse.decode(value),
 	},
+	/** Check ignore file */
+	checkIgnoreFile: {
+		path: "/codebase_syncer.SyncService/CheckIgnoreFile",
+		requestStream: false,
+		responseStream: false,
+		requestSerialize: (value: CheckIgnoreFileRequest): Buffer =>
+			Buffer.from(CheckIgnoreFileRequest.encode(value).finish()),
+		requestDeserialize: (value: Buffer): CheckIgnoreFileRequest => CheckIgnoreFileRequest.decode(value),
+		responseSerialize: (value: SyncCodebaseResponse): Buffer =>
+			Buffer.from(SyncCodebaseResponse.encode(value).finish()),
+		responseDeserialize: (value: Buffer): SyncCodebaseResponse => SyncCodebaseResponse.decode(value),
+	},
 } as const
 
 export interface SyncServiceServer extends UntypedServiceImplementation {
@@ -1044,6 +1196,8 @@ export interface SyncServiceServer extends UntypedServiceImplementation {
 	shareAccessToken: handleUnaryCall<ShareAccessTokenRequest, ShareAccessTokenResponse>
 	/** Get application name and version info */
 	getVersion: handleUnaryCall<VersionRequest, VersionResponse>
+	/** Check ignore file */
+	checkIgnoreFile: handleUnaryCall<CheckIgnoreFileRequest, SyncCodebaseResponse>
 }
 
 export interface SyncServiceClient extends Client {
@@ -1126,6 +1280,22 @@ export interface SyncServiceClient extends Client {
 		metadata: Metadata,
 		options: Partial<CallOptions>,
 		callback: (error: ServiceError | null, response: VersionResponse) => void,
+	): ClientUnaryCall
+	/** Check ignore file */
+	checkIgnoreFile(
+		request: CheckIgnoreFileRequest,
+		callback: (error: ServiceError | null, response: SyncCodebaseResponse) => void,
+	): ClientUnaryCall
+	checkIgnoreFile(
+		request: CheckIgnoreFileRequest,
+		metadata: Metadata,
+		callback: (error: ServiceError | null, response: SyncCodebaseResponse) => void,
+	): ClientUnaryCall
+	checkIgnoreFile(
+		request: CheckIgnoreFileRequest,
+		metadata: Metadata,
+		options: Partial<CallOptions>,
+		callback: (error: ServiceError | null, response: SyncCodebaseResponse) => void,
 	): ClientUnaryCall
 }
 

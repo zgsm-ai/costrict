@@ -1693,28 +1693,59 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 	}
 
 	// code review
-	public async startReviewTask(targets: ReviewTarget[]) {
+	public async startReviewTask(targets: ReviewTarget[], isReviewRepo: boolean = false) {
 		const visibleProvider = await ClineProvider.getInstance()
+		const codebaseSyncService = ZgsmCodeBaseSyncService.getInstance()
 		if (visibleProvider) {
 			this.codeReviewService.setProvider(visibleProvider)
+			if (!isReviewRepo) {
+				try {
+					const filePaths = targets.map((target) => path.join(this.cwd, target.file_path))
+					const success = await vscode.window.withProgress(
+						{
+							location: vscode.ProgressLocation.Notification,
+							title: t("common:review.tip.file_check"),
+						},
+						async (progress) => {
+							const { success } = await codebaseSyncService.checkIgnoreFile(filePaths)
+							progress.report({ increment: 100 })
+							return success
+						},
+					)
+					if (!success) {
+						vscode.window.showInformationMessage(t("common:review.tip.codebase_sync_ignore_file"))
+						return
+					}
+				} catch (error) {
+					vscode.window.showInformationMessage(t("common:review.tip.service_unavailable"))
+					return
+				}
+			}
 			visibleProvider.postMessageToWebview({
 				type: "action",
 				action: "codeReviewButtonClicked",
 			})
+
 			this.codeReviewService.sendReviewTaskUpdateMessage(TaskStatus.RUNNING, {
 				issues: [],
 				progress: null,
 				message: t("common:review.tip.codebase_sync"),
 			})
-			const { success } = await ZgsmCodeBaseSyncService.getInstance().syncCodebase()
-			if (success) {
-				await this.codeReviewService.startReviewTask(targets)
-			} else {
-				await this.codeReviewService.sendReviewTaskUpdateMessage(TaskStatus.ERROR, {
-					issues: [],
-					progress: null,
-					error: t("common:review.tip.codebase_sync_failed"),
-				})
+			try {
+				const { success, code } = await codebaseSyncService.syncCodebase()
+				if (success) {
+					await this.codeReviewService.startReviewTask(targets)
+				} else {
+					if (code === "401") {
+						await this.codeReviewService.handleAuthError()
+						return
+					}
+					await this.codeReviewService.pushErrorToWebview(
+						new Error(t("common:review.tip.codebase_sync_failed")),
+					)
+				}
+			} catch (error) {
+				await this.codeReviewService.pushErrorToWebview(new Error(t("common:review.tip.service_unavailable")))
 			}
 		}
 	}

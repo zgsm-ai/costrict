@@ -110,7 +110,7 @@ export class CodeReviewService {
 		}
 	}
 
-	private async handleAuthError() {
+	public async handleAuthError() {
 		if (!this.clineProvider) return
 		this.sendReviewTaskUpdateMessage(TaskStatus.ERROR, {
 			issues: [],
@@ -632,6 +632,14 @@ export class CodeReviewService {
 				status,
 				data,
 			},
+		})
+	}
+
+	public pushErrorToWebview(error: any): void {
+		this.sendReviewTaskUpdateMessage(TaskStatus.ERROR, {
+			issues: [],
+			progress: 0,
+			error: error.message,
 		})
 	}
 
