@@ -1,5 +1,10 @@
 # Shenma Change Log
 
+## [1.5.4]
+- Optimized CodeReview
+- Fix PowerShell command formatting
+- Update Error Code
+
 ## [1.5.3]
 - Add Gemini CLI ProjectId Config
 - Fix known issues
