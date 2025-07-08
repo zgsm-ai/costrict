@@ -108,32 +108,29 @@ export function convertUnixToPowerShell(command: string): string {
 		const args = parts.slice(1).join(" ")
 
 		if (commandMappings[cmdName]) {
+			// Only perform argument replacement for whitelisted commands
+			let convertedArgs = args
+			convertedArgs = convertedArgs.replace(/\s-l\b/g, " -Force") // ls -l
+			convertedArgs = convertedArgs.replace(/\s-a\b/g, " -Force") // ls -a
+			convertedArgs = convertedArgs.replace(/\s-r\b/g, " -Recurse") // recursive
+			convertedArgs = convertedArgs.replace(/\s-f\b/g, " -Force") // force
+			convertedArgs = convertedArgs.replace(/\s-v\b/g, " -Verbose") // verbose
+			convertedArgs = convertedArgs.replace(/\s-i\b/g, " -Confirm") // interactive
+			convertedArgs = convertedArgs.replace(/\s-n\b/g, " -WhatIf") // preview
+			// redirection
+			convertedArgs = convertedArgs.replace(/\s*>\s*/g, " | Out-File ")
+			convertedArgs = convertedArgs.replace(/\s*>>\s*/g, " | Out-File -Append ")
+			convertedArgs = convertedArgs.replace(/\s*<\s*/g, " | Get-Content ")
+
 			const mapping = commandMappings[cmdName]
 			if (typeof mapping === "function") {
-				return mapping(args ? ` ${args}` : "")
+				return mapping(convertedArgs ? ` ${convertedArgs}` : "")
 			} else {
-				return args ? `${mapping} ${args}` : mapping
+				return convertedArgs ? `${mapping} ${convertedArgs}` : mapping
 			}
 		}
+		// For non-whitelisted commands, return original command
 		return cmd
-	}
-
-	// Internal function: convert common arguments
-	const convertCommonArguments = (cmd: string): string => {
-		let result = cmd
-		// Convert common argument formats
-		result = result.replace(/\s-l\b/g, " -Force") // ls -l equivalent functionality
-		result = result.replace(/\s-a\b/g, " -Force") // show hidden files
-		result = result.replace(/\s-r\b/g, " -Recurse") // recursive
-		result = result.replace(/\s-f\b/g, " -Force") // force execution
-		result = result.replace(/\s-v\b/g, " -Verbose") // verbose output
-		result = result.replace(/\s-i\b/g, " -Confirm") // interactive mode
-		result = result.replace(/\s-n\b/g, " -WhatIf") // preview mode
-		// Handle redirections
-		result = result.replace(/\s*>\s*/g, " | Out-File ")
-		result = result.replace(/\s*>>\s*/g, " | Out-File -Append ")
-		result = result.replace(/\s*<\s*/g, " | Get-Content ")
-		return result
 	}
 
 	// Handle compound commands (separated by &&, ||, |, ;)
@@ -151,13 +148,6 @@ export function convertUnixToPowerShell(command: string): string {
 	// Convert logical operators
 	tempCommand = tempCommand.replace(/\s*&&\s*/g, " ; ")
 	tempCommand = tempCommand.replace(/\s*\|\|\s*/g, " ; ")
-	// // todo: Temporarily comment out to avoid slash replacement errors
-	// // Convert path separators (Unix / to Windows \, but preserve URLs)
-	// tempCommand = tempCommand.replace(/([^:])\/([^\/\s]*)/g, "$1\\$2")
-
-	// Apply common argument conversions
-	tempCommand = convertCommonArguments(tempCommand)
-
 	// Restore quoted strings
 	tempCommand = tempCommand.replace(/__QUOTE_(\d+)__/g, (_, i) => quotedParts[parseInt(i)])
 
