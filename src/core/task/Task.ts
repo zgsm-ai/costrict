@@ -1697,19 +1697,22 @@ export class Task extends EventEmitter<ClineEvents> {
 		}
 		let zgsmApiKeyExpiredAt = ""
 		let zgsmApiKeyUpdatedAt = ""
-
+		let isOldModeLoginState = false
 		if (apiConfiguration.zgsmApiKey) {
-			const { exp, iat } = parseJwt(apiConfiguration.zgsmApiKey)
+			const { exp, iat, universal_id } = parseJwt(apiConfiguration.zgsmApiKey)
 			zgsmApiKeyExpiredAt = new Date(exp * 1000).toLocaleString()
 			zgsmApiKeyUpdatedAt = new Date(iat * 1000).toLocaleString()
+			isOldModeLoginState = !universal_id
 		}
 
 		const defaultApiErrors = {
 			401: {
-				status: t("apiErrors:status.401", {
-					exp: zgsmApiKeyExpiredAt || "-",
-					iat: zgsmApiKeyUpdatedAt || "-",
-				}),
+				status: isOldModeLoginState
+					? t("apiErrors:status.old_mode_token")
+					: t("apiErrors:status.401", {
+							exp: zgsmApiKeyExpiredAt || "-",
+							iat: zgsmApiKeyUpdatedAt || "-",
+						}),
 				solution: t("apiErrors:solution.401"),
 			},
 			400: { status: rawError || t("apiErrors:status.400"), solution: t("apiErrors:solution.400") },
