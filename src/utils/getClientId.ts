@@ -23,7 +23,7 @@ const getZgsmDirPath = (): string => {
 // Generates new client ID
 const generateNewClientId = (): string => {
 	// Use vscode machineId as base, append random UUID prefix if remote
-	return `${vscode.env.machineId}${vscode.env.remoteName ? `.${crypto.randomUUID().slice(0, 8)}` : ""}`
+	return `${vscode?.env?.machineId}${vscode?.env?.remoteName ? `.${crypto.randomUUID().slice(0, 8)}` : ""}`
 }
 
 // Exported function to get client ID
