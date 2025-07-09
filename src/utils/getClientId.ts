@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import * as os from "os"
 
-export const getClientId = () => {
+export const getClientId = (): string => {
 	return `${vscode.env.machineId}${vscode.env.remoteName ? `.${os.hostname()}` : ""}`
 }
