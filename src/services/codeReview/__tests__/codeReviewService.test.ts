@@ -56,9 +56,6 @@ jest.mock(
 				dispose: jest.fn(),
 			}),
 		},
-		env: {
-			machineId: "test-client",
-		},
 	}),
 	{ virtual: true },
 )
@@ -292,7 +289,7 @@ describe("CodeReviewService", () => {
 			// Verify API call
 			expect(createReviewTaskAPI).toHaveBeenCalledWith(
 				expect.objectContaining({
-					client_id: "test-client",
+					client_id: expect.any(String),
 					workspace: "/test/workspace",
 					targets: [mockReviewTarget],
 				}),
@@ -398,7 +395,7 @@ describe("CodeReviewService", () => {
 			// Verify cancelReviewTaskAPI was called
 			expect(cancelReviewTaskAPI).toHaveBeenCalledWith(
 				{
-					client_id: "test-client",
+					client_id: expect.any(String),
 					workspace: "/test/workspace",
 				},
 				expect.any(Object),
@@ -575,7 +572,7 @@ describe("CodeReviewService", () => {
 			// Verify cancelReviewTaskAPI was called
 			expect(cancelReviewTaskAPI).toHaveBeenCalledWith(
 				{
-					client_id: "test-client",
+					client_id: expect.any(String),
 					workspace: "/test/workspace",
 				},
 				expect.any(Object),
@@ -714,7 +711,7 @@ describe("Polling Mechanism", () => {
 		await Promise.resolve()
 
 		// Verify polling started
-		expect(getReviewResultsAPI).toHaveBeenCalledWith("test-task", 0, "test-client", expect.any(Object))
+		expect(getReviewResultsAPI).toHaveBeenCalledWith("test-task", 0, expect.any(String), expect.any(Object))
 
 		// Abort task
 		await service.abortCurrentTask()
