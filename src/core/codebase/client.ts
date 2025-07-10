@@ -300,7 +300,7 @@ export class ZgsmCodeBaseSyncService {
 		const { targetDir, targetPath } = this.getTargetPath(version)
 		await fs.promises.mkdir(targetDir, { recursive: true })
 		await Promise.all(
-			packagesData.versions.map(async ({ versionId }, index) => {
+			packagesData.versions.reverse().map(async ({ versionId }, index) => {
 				if (index < 3) {
 					return
 				}
