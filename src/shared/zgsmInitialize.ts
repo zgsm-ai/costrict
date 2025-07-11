@@ -6,6 +6,7 @@ export const initZgsmApiConfiguration = async (provider: ClineProvider) => {
 	const { apiConfiguration } = await provider.getState()
 	const [zgsmModels, zgsmDefaultModelId] = await getZgsmModels(
 		provider?.context?.globalState?.get?.("zgsmBaseUrl") || defaultZgsmAuthConfig.baseUrl,
+		apiConfiguration.zgsmApiKey,
 	)
 	const modelId = apiConfiguration.zgsmModelId || apiConfiguration.apiModelId || zgsmDefaultModelId
 
