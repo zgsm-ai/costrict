@@ -8,6 +8,8 @@ import { useExtensionState } from "@src/context/ExtensionStateContext"
 
 import CodeBlock from "./CodeBlock"
 import MermaidBlock from "./MermaidBlock"
+import rehypeRaw from "rehype-raw"
+import { MARK_TYPE_MAP } from "./const"
 
 interface MarkdownBlockProps {
 	markdown?: string
@@ -122,7 +124,7 @@ const StyledMarkdown = styled.div`
 `
 
 const MarkdownBlock = memo(({ markdown }: MarkdownBlockProps) => {
-	const { theme } = useExtensionState()
+	const { theme, apiConfiguration } = useExtensionState()
 	const [reactContent, setMarkdown] = useRemark({
 		remarkPlugins: [
 			remarkUrlToLink,
@@ -138,7 +140,15 @@ const MarkdownBlock = memo(({ markdown }: MarkdownBlockProps) => {
 				}
 			},
 		],
-		rehypePlugins: [],
+		remarkToRehypeOptions: {
+			handlers: {
+				html: (h: unknown, node: any) => {
+					return { type: "raw", value: node.value }
+				},
+			},
+			passThrough: ["span", "div", "a", "p", "strong", "em", "img"],
+		},
+		rehypePlugins: [rehypeRaw as any],
 		rehypeReactOptions: {
 			components: {
 				a: ({ href, children }: any) => {
@@ -218,6 +228,18 @@ const MarkdownBlock = memo(({ markdown }: MarkdownBlockProps) => {
 					}
 
 					return <code {...props} />
+				},
+				mark: ({ hash, type, children }: any) => {
+					if (!type) {
+						return null
+					}
+					const href = `${apiConfiguration?.zgsmBaseUrl || apiConfiguration?.zgsmDefaultBaseUrl}${MARK_TYPE_MAP[type]}${hash}`
+
+					return (
+						<a href={href} style={{ textDecoration: "none" }}>
+							{children}
+						</a>
+					)
 				},
 			},
 		},

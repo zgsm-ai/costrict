@@ -71,6 +71,13 @@
 		"ai-gateway": {
 			"star_required": "请前往 https://github.com/zgsm-ai/zgsm star 项目后继续使用"
 		},
+		"quota-check": {
+			"insufficientCredits": "剩余 Credit 配额不足",
+			"quotaAcquisition": "额度获取",
+			"checkRemainingQuota": "剩余额度不清楚？请前往",
+			"creditUsageStats": "Credit用量统计",
+			"viewDetails": "查看详情"
+		},
 		"undefined": "1.请检查网络连接\n2.请检查代理和防火墙\n3.请联系管理员",
 		"unknown": "1.请稍后重试\n2.请尝试切换其他模型\n3.请联系管理员"
 	},
