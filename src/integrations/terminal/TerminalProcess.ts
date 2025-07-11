@@ -13,7 +13,6 @@ import { inspect } from "util"
 import type { ExitCodeDetails } from "./types"
 import { BaseTerminalProcess } from "./BaseTerminalProcess"
 import { Terminal } from "./Terminal"
-import { convertUnixToPowerShell } from "./PowerShellCommandConverter"
 
 export class TerminalProcess extends BaseTerminalProcess {
 	private terminalRef: WeakRef<Terminal>
@@ -117,9 +116,6 @@ export class TerminalProcess extends BaseTerminalProcess {
 
 		if (isPowerShell) {
 			let commandToExecute = command
-
-			// Convert Unix shell syntax to PowerShell compatible syntax
-			commandToExecute = convertUnixToPowerShell(commandToExecute)
 
 			// Only add the PowerShell counter workaround if enabled
 			if (Terminal.getPowershellCounter()) {
