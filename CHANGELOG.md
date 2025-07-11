@@ -1,5 +1,10 @@
 # Shenma Change Log
 
+## [1.5.5]
+- Optimized Prompts
+- Add Model Permission Control
+- Fix known issues
+
 ## [1.5.4]
 - Optimized CodeReview
 - Fix PowerShell command formatting
