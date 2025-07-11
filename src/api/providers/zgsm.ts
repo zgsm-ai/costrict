@@ -1,4 +1,3 @@
-import * as vscode from "vscode"
 import { Anthropic } from "@anthropic-ai/sdk"
 import OpenAI, { AzureOpenAI } from "openai"
 import axios, { AxiosError, AxiosRequestConfig } from "axios"
@@ -21,6 +20,7 @@ import { createHeaders } from "../../zgsmAuth/zgsmAuthHandler"
 import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
 import { getWorkspacePath } from "../../utils/path"
 import { getZgsmSelectedModelInfo } from "../../shared/getZgsmSelectedModelInfo"
+import { getClientId } from "../../utils/getClientId"
 
 export const defaultHeaders = {
 	"HTTP-Referer": "https://github.com/zgsm-ai/zgsm",
@@ -171,7 +171,7 @@ export class ZgsmHandler extends BaseProvider implements SingleCompletionHandler
 						"Accept-Language": opt?.language || "en",
 						"x-quota-identity": this.chatType,
 						"zgsm-task-id": this.taskId,
-						"zgsm-client-id": vscode.env.machineId,
+						"zgsm-client-id": getClientId(),
 						"zgsm-project-path": encodeURI(getWorkspacePath()),
 					},
 				}),

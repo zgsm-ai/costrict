@@ -66,6 +66,7 @@ import { ReviewTarget, ReviewTargetType } from "../../services/codeReview/types"
 import { IssueStatus, TaskStatus } from "../../shared/codeReview"
 import { ReviewComment } from "../../services/codeReview/reviewComment"
 import { ZgsmCodeBaseSyncService } from "../codebase/client"
+import { getClientId } from "../../utils/getClientId"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -1328,7 +1329,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		} = await this.getState()
 
 		const telemetryKey = process.env.POSTHOG_API_KEY
-		const machineId = vscode.env.machineId
+		const machineId = getClientId()
 		const allowedCommands = vscode.workspace.getConfiguration(Package.name).get<string[]>("allowedCommands") || []
 		const cwd = this.cwd
 

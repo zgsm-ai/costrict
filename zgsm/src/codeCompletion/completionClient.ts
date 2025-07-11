@@ -30,6 +30,7 @@ import { Completion } from "openai/resources/completions"
 import { ClineProvider } from "../../../src/core/webview/ClineProvider"
 import { CompletionAcception } from "./completionDataInterface"
 import { getDependencyImports } from "./extractingImports"
+import { getClientId } from "../../../src/utils/getClientId"
 /**
  * Completion client, which handles the details of communicating with the large model API and shields the communication details from the caller.
  * The caller can handle network communication as conveniently as calling a local function.
@@ -278,7 +279,7 @@ export class CompletionClient {
 		this.openai.baseURL = `${config.baseUrl}${config.completionUrl}`
 		this.openai.apiKey = config.apiKey
 		// machineId
-		const client_id = vscode.env.machineId
+		const client_id = getClientId()
 		// project_dir
 		let workspaceFolder = ""
 		if (vscode.workspace.workspaceFolders) {
@@ -325,7 +326,7 @@ export class CompletionClient {
 					language_id: cp.doc.language,
 					beta_mode: this.betaMode,
 					calculate_hide_score: scores,
-					client_id: client_id,
+					client_id,
 					file_project_path: relativePath,
 					project_path: workspaceFolder,
 					code_path: "",
