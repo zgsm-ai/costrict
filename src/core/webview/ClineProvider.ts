@@ -1587,25 +1587,20 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			return
 		}
 
-		await this.clearHistory()
 		await this.contextProxy.resetAllState()
 		await this.providerSettingsManager.resetAllConfigs()
 		await this.customModesManager.resetCustomModes()
 		await this.removeClineFromStack()
 		await this.postStateToWebview()
 		await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+		await this.clearHistory()
 	}
 
 	async clearHistory() {
-		try {
-			const history = this.getGlobalState("taskHistory") ?? []
-
-			for (const historyItem of history) {
-				await this.deleteTaskWithId(historyItem.id)
-			}
-		} catch (error) {
-			this.log(error.message)
-		}
+		const { getStorageBasePath } = await import("../../utils/storage")
+		const basePath = await getStorageBasePath(this.contextProxy.globalStorageUri.fsPath)
+		const taskDir = path.join(basePath, "tasks")
+		await fs.rm(taskDir, { recursive: true, force: true })
 	}
 
 	// logging
