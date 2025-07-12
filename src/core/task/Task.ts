@@ -1596,7 +1596,7 @@ export class Task extends EventEmitter<ClineEvents> {
 			this.isWaitingForFirstChunk = false
 		} catch (error) {
 			this.isWaitingForFirstChunk = false
-			const errorMsg = this.getTaskRequestError(error, this.taskId, this.instanceId, this.apiConfiguration)
+			const errorMsg = await this.getTaskRequestError(error, this.taskId, this.instanceId, this.apiConfiguration)
 			// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
 			if (autoApprovalEnabled && alwaysApproveResubmit) {
 				const baseDelay = requestDelaySeconds || 5
@@ -1685,7 +1685,12 @@ export class Task extends EventEmitter<ClineEvents> {
 		return checkpointDiff(this, options)
 	}
 
-	public getTaskRequestError(error: any, taskId: string, instanceId: string, apiConfiguration: ProviderSettings) {
+	public async getTaskRequestError(
+		error: any,
+		taskId: string,
+		instanceId: string,
+		apiConfiguration: ProviderSettings,
+	) {
 		const isHtml = error?.headers && error.headers["content-type"].includes("text/")
 		let rawError = error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message
 		let status = error.status
@@ -1756,6 +1761,14 @@ export class Task extends EventEmitter<ClineEvents> {
 					} else if (code === "chat-rag.context_length_exceeded") {
 						error.status = status = 429
 					}
+				} else if (code === "quota-check.insufficient_quota") {
+					let hash = await this.hashToken(this.apiConfiguration.zgsmApiKey || "")
+
+					solution = `\n\n
+<span style="color:#E64545">${t("apiErrors:solution.quota-check.insufficientCredits")}</span>  <mark hash=${hash} type="GUIDE">${t("apiErrors:solution.quota-check.quotaAcquisition")}</mark>
+
+${t("apiErrors:solution.quota-check.checkRemainingQuota")} “ <mark hash=${hash} type="CREDIT">${t("apiErrors:solution.quota-check.creditUsageStats")}</mark> ” ${t("apiErrors:solution.quota-check.viewDetails")}
+`
 				}
 
 				this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
@@ -1822,5 +1835,14 @@ export class Task extends EventEmitter<ClineEvents> {
 
 	public get cwd() {
 		return this.workspacePath
+	}
+
+	private async hashToken(token: string) {
+		const encoder = new TextEncoder()
+		const data = encoder.encode(token)
+		const hashBuffer = await crypto.subtle.digest("SHA-256", data)
+		return Array.from(new Uint8Array(hashBuffer))
+			.map((b) => b.toString(16).padStart(2, "0"))
+			.join("")
 	}
 }

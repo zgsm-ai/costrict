@@ -96,6 +96,7 @@
 		"jest": "^29.7.0",
 		"jest-environment-jsdom": "^29.7.0",
 		"jest-simple-dot-reporter": "^1.0.5",
+		"rehype-raw": "^7.0.0",
 		"storybook": "^8.5.6",
 		"storybook-dark-mode": "^4.0.2",
 		"ts-jest": "^29.2.5",
