@@ -8,14 +8,14 @@ Github Forking 工作流详细步骤如下：
 
 1. Fork 远程仓库到自己的账号下
 
-访问 https://github.com/zgsm-ai/zgsm，点击右上角 **Fork** 按钮。fork 后的仓库地址为：https://github.com/{{your account}}/zgsm。
+访问 https://github.com/zgsm-ai/costrict，点击右上角 **Fork** 按钮。fork 后的仓库地址为：https://github.com/{{your account}}/zgsm。
 
 2. 克隆 fork 的仓库到本地
 
 ```bash
 $ git clone https://github.com/{{your account}}/zgsm
 $ cd zgsm
-$ git remote add upstream https://github.com/zgsm-ai/zgsm
+$ git remote add upstream https://github.com/zgsm-ai/costrict
 $ git remote set-url --push upstream no_push # Never push to upstream main
 $ git remote -v # Confirm that your remotes make sense
 origin	https://github.com/{{your account}}/zgsm(fetch)
@@ -49,7 +49,7 @@ $ git fetch upstream # commit 前需要再次同步feature跟upstream/main
 $ git rebase upstream/main
 ```
 
-5. 提交 commit（commit规范请参考：[commit 规范](https://github.com/zgsm-ai/zgsm/blob/main/docs/devel/zh-CN/commit-message.md)）
+5. 提交 commit（commit规范请参考：[commit 规范](https://github.com/zgsm-ai/costrict/blob/main/docs/devel/zh-CN/commit-message.md)）
 
 在 feature/add-function 分支上开发代码，开发完代码后，提交 commit：
 

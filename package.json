@@ -18,9 +18,9 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/zgsm-ai/zgsm"
+		"url": "https://github.com/zgsm-ai/costrict"
 	},
-	"homepage": "https://github.com/zgsm-ai/zgsm",
+	"homepage": "https://github.com/zgsm-ai/costrict",
 	"categories": [
 		"AI",
 		"Chat",

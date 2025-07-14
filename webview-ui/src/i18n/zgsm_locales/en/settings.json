@@ -91,7 +91,7 @@
 		"automaticFetch": "The extension automatically fetches the latest list of models available on <serviceLink>{{serviceName}}</serviceLink>. If you're unsure which model to choose, Shenma works best with <defaultModelLink>{{defaultModelId}}</defaultModelLink>. You can also try searching \"free\" for no-cost options currently available."
 	},
 	"footer": {
-		"feedback": "If you have any questions or feedback, feel free to open an issue at <zgsmGithubLink>github.com/zgsm-ai/zgsm</zgsmGithubLink>",
+		"feedback": "If you have any questions or feedback, feel free to open an issue at <zgsmGithubLink>github.com/zgsm-ai/costrict</zgsmGithubLink>",
 		"telemetry": {
 			"description": "Help improve Shenma by sending anonymous usage data and error reports. No code, prompts, or personal information is ever sent. See our privacy policy for more details."
 		}

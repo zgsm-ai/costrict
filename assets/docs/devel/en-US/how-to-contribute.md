@@ -8,9 +8,9 @@ This document serves as a guide for new community members to start contributing 
 
 ## Reporting Issues
 
-First, ensure the issue has not already been reported by searching through [Issues](https://github.com/zgsm-ai/zgsm/issues) on GitHub.
+First, ensure the issue has not already been reported by searching through [Issues](https://github.com/zgsm-ai/costrict/issues) on GitHub.
 
-If you cannot find an open issue addressing the problem, you may [create a new Issue](https://github.com/zgsm-ai/zgsm/issues/new/choose). Include a title and clear description, as much relevant information as possible, and a code sample or executable test case to help other maintainers reproduce the issue.
+If you cannot find an open issue addressing the problem, you may [create a new Issue](https://github.com/zgsm-ai/costrict/issues/new/choose). Include a title and clear description, as much relevant information as possible, and a code sample or executable test case to help other maintainers reproduce the issue.
 
 ## Contribution Workflow
 

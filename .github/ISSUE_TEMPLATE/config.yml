@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
     - name: Feature Request
-      url: https://github.com/zgsm-ai/zgsm/discussions/categories/feature-request
+      url: https://github.com/zgsm-ai/costrict/discussions/categories/feature-request
       about: Share and vote on feature requests for Shenma
     - name: Leave a Review
       url: https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm&ssr=false#review-details

@@ -91,7 +91,7 @@
 		"automaticFetch": "扩展会自动获取<serviceLink>{{serviceName}}</serviceLink>上可用的最新模型列表。如果您不确定选择哪个模型，诸葛神码最适合与<defaultModelLink>{{defaultModelId}}</defaultModelLink>配合使用。您也可以尝试搜索\"免费\"以查找当前可用的免费选项。"
 	},
 	"footer": {
-		"feedback": "如果您有任何问题或反馈，请随时在<zgsmGithubLink>github.com/zgsm-ai/zgsm</zgsmGithubLink>上提出问题",
+		"feedback": "如果您有任何问题或反馈，请随时在<zgsmGithubLink>github.com/zgsm-ai/costrict</zgsmGithubLink>上提出问题",
 		"telemetry": {
 			"description": "通过发送匿名使用数据和错误报告来帮助改进诸葛神码。不会发送代码、提示或个人信息。有关更多详情，请参阅我们的隐私政策。"
 		}

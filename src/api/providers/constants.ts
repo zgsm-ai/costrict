@@ -1,5 +1,5 @@
 export const DEFAULT_HEADERS = {
-	"HTTP-Referer": "https://github.com/zgsm-ai/zgsm",
+	"HTTP-Referer": "https://github.com/zgsm-ai/costrict",
 	"X-Title": "Shenma",
 }
 

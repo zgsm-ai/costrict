@@ -6,7 +6,7 @@ Detailed steps for GitHub Forking workflow:
 
 1. **Fork the remote repository to your account**
 
-    Visit https://github.com/zgsm-ai/zgsm, click the **Fork** button at top-right. The forked repository address will be:
+    Visit https://github.com/zgsm-ai/costrict, click the **Fork** button at top-right. The forked repository address will be:
     `https://github.com/{{your_account}}/zgsm`
 
 2. **Clone the forked repository locally**
@@ -14,7 +14,7 @@ Detailed steps for GitHub Forking workflow:
 ```bash
 $ git clone https://github.com/{{your account}}/zgsm
 $ cd zgsm
-$ git remote add upstream https://github.com/zgsm-ai/zgsm
+$ git remote add upstream https://github.com/zgsm-ai/costrict
 $ git remote set-url --push upstream no_push # Never push to upstream main
 $ git remote -v # Confirm that your remotes make sense
 origin	https://github.com/{{your account}}/zgsm(fetch)
@@ -48,7 +48,7 @@ $ git fetch upstream # commit 前需要再次同步feature跟upstream/main
 $ git rebase upstream/main
 ```
 
-5. **Commit changes** (For commit specifications, refer to: [Commit Specifications](https://github.com/zgsm-ai/zgsm/blob/main/docs/devel/en-US/commit-message.md))
+5. **Commit changes** (For commit specifications, refer to: [Commit Specifications](https://github.com/zgsm-ai/costrict/blob/main/docs/devel/en-US/commit-message.md))
 
 Develop code on the `feature/add-function` branch. After completing development, commit the changes:
 
