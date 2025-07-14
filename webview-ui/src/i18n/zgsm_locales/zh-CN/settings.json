@@ -1,41 +1,41 @@
 {
 	"sections": {
-		"about": "关于诸葛神码",
+		"about": "关于Costrict",
 		"credit": {
 			"title": "Credit 用量管理",
-			"description": "诸葛神码官方提供了多种高级模型，不同模型的每次请求消耗的Credit不同，当Credit消耗完后，该模型将不可用。",
+			"description": "Costrict官方提供了多种高级模型，不同模型的每次请求消耗的Credit不同，当Credit消耗完后，该模型将不可用。",
 			"homepage": "查看 Credit 用量"
 		}
 	},
 	"autoApprove": {
-		"description": "允许诸葛神码自动执行操作而无需批准。只有在您完全信任AI并了解相关安全风险的情况下才启用这些设置。",
+		"description": "允许Costrict自动执行操作而无需批准。只有在您完全信任AI并了解相关安全风险的情况下才启用这些设置。",
 		"readOnly": {
-			"description": "启用后，诸葛神码将自动查看目录内容和读取文件，无需您点击批准按钮。",
+			"description": "启用后，Costrict将自动查看目录内容和读取文件，无需您点击批准按钮。",
 			"outsideWorkspace": {
-				"description": "允许诸葛神码在无需批准的情况下读取当前工作区之外的文件。"
+				"description": "允许Costrict在无需批准的情况下读取当前工作区之外的文件。"
 			}
 		},
 		"write": {
 			"outsideWorkspace": {
-				"description": "允许诸葛神码在无需批准的情况下创建和编辑当前工作区之外的文件。"
+				"description": "允许Costrict在无需批准的情况下创建和编辑当前工作区之外的文件。"
 			}
 		}
 	},
 	"providers": {
-		"zgsm": "诸葛神码",
-		"zgsmBaseUrl": "诸葛神码 Base Url",
-		"zgsmApiKey": "诸葛神码 API 密钥",
-		"getZgsmApiKey": "登录诸葛神码",
+		"zgsm": "Costrict",
+		"zgsmBaseUrl": "Costrict Base Url",
+		"zgsmApiKey": "Costrict API 密钥",
+		"getZgsmApiKey": "登录Costrict",
 		"getZgsmApiKeyAgain": "重新登录",
 		"zgsmDefaultBaseUrl": "默认: {{zgsmBaseUrl}}",
 		"lmStudio": {
-			"description": "LM Studio允许您在本地计算机上运行模型。有关如何入门的说明，请参阅他们的<a>快速入门指南</a>。您还需要启动LM Studio的<b>本地服务器</b>功能才能在此扩展中使用它。<span>注意：</span>诸葛神码使用复杂的提示，最适合与Claude模型配合使用。功能较弱的模型可能无法按预期工作。"
+			"description": "LM Studio允许您在本地计算机上运行模型。有关如何入门的说明，请参阅他们的<a>快速入门指南</a>。您还需要启动LM Studio的<b>本地服务器</b>功能才能在此扩展中使用它。<span>注意：</span>Costrict使用复杂的提示，最适合与Claude模型配合使用。功能较弱的模型可能无法按预期工作。"
 		},
 		"ollama": {
-			"warning": "注意：诸葛神码使用复杂的提示，最适合与Claude模型配合使用。功能较弱的模型可能无法按预期工作。"
+			"warning": "注意：Costrict使用复杂的提示，最适合与Claude模型配合使用。功能较弱的模型可能无法按预期工作。"
 		},
 		"customModel": {
-			"capabilities": "配置您的自定义OpenAI兼容模型的功能和定价。在指定模型功能时要小心，因为它们会影响诸葛神码的表现。"
+			"capabilities": "配置您的自定义OpenAI兼容模型的功能和定价。在指定模型功能时要小心，因为它们会影响Costrict的表现。"
 		},
 		"useZgsmCustomConfig": "使用自定义配置",
 		"geminiCli": {
@@ -44,59 +44,59 @@
 	},
 	"browser": {
 		"enable": {
-			"description": "启用后，诸葛神码可以在使用支持计算机使用的模型时使用浏览器与网站交互。"
+			"description": "启用后，Costrict可以在使用支持计算机使用的模型时使用浏览器与网站交互。"
 		}
 	},
 	"checkpoints": {
 		"enable": {
-			"description": "启用后，诸葛神码将在任务执行期间自动创建检查点，便于查看更改或恢复到早期状态。"
+			"description": "启用后，Costrict将在任务执行期间自动创建检查点，便于查看更改或恢复到早期状态。"
 		}
 	},
 	"notifications": {
 		"sound": {
-			"description": "启用后，诸葛神码将为通知和事件播放音效。"
+			"description": "启用后，Costrict将为通知和事件播放音效。"
 		},
 		"tts": {
-			"description": "启用后，诸葛神码将使用文本转语音功能朗读其响应。"
+			"description": "启用后，Costrict将使用文本转语音功能朗读其响应。"
 		}
 	},
 	"contextManagement": {
 		"maxReadFile": {
-			"description": "当模型省略开始/结束值时，诸葛神码读取此行数。如果此数字小于文件总数，诸葛神码会生成代码定义的行号索引。特殊情况：-1指示诸葛神码读取整个文件（不建立索引），0指示它不读取任何行，仅为最小上下文提供行索引。较低的值可最小化初始上下文使用，从而实现精确的后续行范围读取。明确的开始/结束请求不受此设置限制。"
+			"description": "当模型省略开始/结束值时，Costrict读取此行数。如果此数字小于文件总数，Costrict会生成代码定义的行号索引。特殊情况：-1指示Costrict读取整个文件（不建立索引），0指示它不读取任何行，仅为最小上下文提供行索引。较低的值可最小化初始上下文使用，从而实现精确的后续行范围读取。明确的开始/结束请求不受此设置限制。"
 		}
 	},
 	"advanced": {
 		"diff": {
-			"description": "启用后，诸葛神码将能够更快地编辑文件，并自动拒绝截断的完整文件写入。最适合与最新的Claude 3.7 Sonnet模型配合使用。"
+			"description": "启用后，Costrict将能够更快地编辑文件，并自动拒绝截断的完整文件写入。最适合与最新的Claude 3.7 Sonnet模型配合使用。"
 		}
 	},
 	"experimental": {
 		"autoCondenseContextPercent": {
-			"description": "当上下文窗口达到此阈值时，诸葛神码将自动压缩它。"
+			"description": "当上下文窗口达到此阈值时，Costrict将自动压缩它。"
 		},
 		"SEARCH_AND_REPLACE": {
-			"description": "启用实验性的搜索和替换工具，允许诸葛神码在一个请求中替换搜索词的多实例。"
+			"description": "启用实验性的搜索和替换工具，允许Costrict在一个请求中替换搜索词的多实例。"
 		},
 		"INSERT_BLOCK": {
-			"description": "启用实验性的插入内容工具，允许诸葛神码在特定行号插入内容，无需创建差异。"
+			"description": "启用实验性的插入内容工具，允许Costrict在特定行号插入内容，无需创建差异。"
 		},
 		"POWER_STEERING": {
-			"description": "启用后，诸葛神码会更频繁地提醒模型其当前模式定义的细节。这将导致更严格地遵守角色定义和自定义指令，但每条消息会使用更多令牌。"
+			"description": "启用后，Costrict会更频繁地提醒模型其当前模式定义的细节。这将导致更严格地遵守角色定义和自定义指令，但每条消息会使用更多令牌。"
 		},
 		"MULTI_SEARCH_AND_REPLACE": {
-			"description": "启用后，诸葛神码将使用多块差异工具。这将尝试在一个请求中更新文件中的多个代码块。"
+			"description": "启用后，Costrict将使用多块差异工具。这将尝试在一个请求中更新文件中的多个代码块。"
 		}
 	},
 	"modelPicker": {
-		"automaticFetch": "扩展会自动获取<serviceLink>{{serviceName}}</serviceLink>上可用的最新模型列表。如果您不确定选择哪个模型，诸葛神码最适合与<defaultModelLink>{{defaultModelId}}</defaultModelLink>配合使用。您也可以尝试搜索\"免费\"以查找当前可用的免费选项。"
+		"automaticFetch": "扩展会自动获取<serviceLink>{{serviceName}}</serviceLink>上可用的最新模型列表。如果您不确定选择哪个模型，Costrict最适合与<defaultModelLink>{{defaultModelId}}</defaultModelLink>配合使用。您也可以尝试搜索\"免费\"以查找当前可用的免费选项。"
 	},
 	"footer": {
 		"feedback": "如果您有任何问题或反馈，请随时在<zgsmGithubLink>github.com/zgsm-ai/costrict</zgsmGithubLink>上提出问题",
 		"telemetry": {
-			"description": "通过发送匿名使用数据和错误报告来帮助改进诸葛神码。不会发送代码、提示或个人信息。有关更多详情，请参阅我们的隐私政策。"
+			"description": "通过发送匿名使用数据和错误报告来帮助改进Costrict。不会发送代码、提示或个人信息。有关更多详情，请参阅我们的隐私政策。"
 		}
 	},
 	"promptCaching": {
-		"description": "选中后，诸葛神码将不会为此模型使用提示词缓存。"
+		"description": "选中后，Costrict将不会为此模型使用提示词缓存。"
 	}
 }
