@@ -43,7 +43,7 @@ describe("RequestyHandler", () => {
 			baseURL: "https://router.requesty.ai/v1",
 			apiKey: mockOptions.requestyApiKey,
 			defaultHeaders: {
-				"HTTP-Referer": "https://github.com/zgsm-ai/zgsm",
+				"HTTP-Referer": "https://github.com/zgsm-ai/costrict",
 				"X-Title": "Shenma",
 			},
 		})

@@ -69,7 +69,7 @@
 		"503": "1.请稍后重试\n2.请尝试切换其他模型\n3.请联系管理员",
 		"504": "1.请稍后重试\n2.请尝试切换其他模型\n3.请联系管理员",
 		"ai-gateway": {
-			"star_required": "请前往 https://github.com/zgsm-ai/zgsm star 项目后继续使用"
+			"star_required": "请前往 https://github.com/zgsm-ai/costrict star 项目后继续使用"
 		},
 		"quota-check": {
 			"insufficientCredits": "剩余 Credit 配额不足",

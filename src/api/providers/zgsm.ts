@@ -23,7 +23,7 @@ import { getZgsmSelectedModelInfo } from "../../shared/getZgsmSelectedModelInfo"
 import { getClientId } from "../../utils/getClientId"
 
 export const defaultHeaders = {
-	"HTTP-Referer": "https://github.com/zgsm-ai/zgsm",
+	"HTTP-Referer": "https://github.com/zgsm-ai/costrict",
 	"X-Title": "Shenma",
 }
 

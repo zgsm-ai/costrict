@@ -69,7 +69,7 @@
 		"503": "1.請稍後重試\n2.請嘗試切換其他模型\n3.請聯絡管理員",
 		"504": "1.請稍後重試\n2.請嘗試切換其他模型\n3.請聯絡管理員",
 		"ai-gateway": {
-			"star_required": "請先前往 https://github.com/zgsm-ai/zgsm star 該專案後再繼續使用"
+			"star_required": "請先前往 https://github.com/zgsm-ai/costrict star 該專案後再繼續使用"
 		},
 		"undefined": "1.請檢查網路連線\n2.請檢查代理與防火牆\n3.請聯絡管理員",
 		"unknown": "1. 請稍後再試\n2. 嘗試更換模型\n3. 聯絡管理員"

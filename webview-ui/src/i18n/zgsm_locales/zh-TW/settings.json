@@ -91,7 +91,7 @@
 		"automaticFetch": "擴展會自動獲取<serviceLink>{{serviceName}}</serviceLink>上可用的最新模型列表。如果您不確定選擇哪個模型，諸葛神碼最適合與<defaultModelLink>{{defaultModelId}}</defaultModelLink>配合使用。您也可以嘗試搜索\"免費\"以查找當前可用的免費選項。"
 	},
 	"footer": {
-		"feedback": "如果您有任何問題或反饋，請隨時在<zgsmGithubLink>github.com/zgsm-ai/zgsm</zgsmGithubLink>上提出問題",
+		"feedback": "如果您有任何問題或反饋，請隨時在<zgsmGithubLink>github.com/zgsm-ai/costrict</zgsmGithubLink>上提出問題",
 		"telemetry": {
 			"description": "通過發送匿名使用數據和錯誤報告來幫助改進諸葛神碼。不會發送代碼、提示或個人信息。有關更多詳情，請參閱我們的隱私政策。"
 		}
