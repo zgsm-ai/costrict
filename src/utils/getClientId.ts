@@ -50,7 +50,7 @@ export const getClientId = (): string => {
 		const newClientId = generateNewClientId()
 		const zgsmDir = getZgsmDirPath()
 
-		// Create .zgsm directory if not exists
+		// Create .Costrict directory if not exists
 		if (!existsSync(zgsmDir)) {
 			mkdirSync(zgsmDir, { recursive: true })
 		}

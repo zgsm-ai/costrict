@@ -4,7 +4,7 @@ import type { ClineMessage } from "@roo-code/types"
 
 import { waitUntilCompleted } from "./utils"
 
-suite("zgsm Modes", () => {
+suite("Costrict Modes", () => {
 	test("Should handle switching modes correctly", async () => {
 		const api = globalThis.api
 

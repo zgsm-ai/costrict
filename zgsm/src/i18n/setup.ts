@@ -83,7 +83,7 @@ export const mergeLanguageResources = (
 ): LanguageResources => {
 	const mergedTranslations: LanguageResources = {}
 
-	// Merge zgsm translations
+	// Merge Costrict translations
 	for (const language in zgsmTranslations) {
 		if (!mergedTranslations[language]) {
 			mergedTranslations[language] = {}
@@ -97,7 +97,7 @@ export const mergeLanguageResources = (
 		}
 	}
 
-	// Add current translations that don't exist in zgsm
+	// Add current translations that don't exist in Costrict
 	for (const language in currentTranslations) {
 		if (!mergedTranslations[language]) {
 			mergedTranslations[language] = currentTranslations[language]

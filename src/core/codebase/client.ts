@@ -26,7 +26,7 @@ export class ZgsmCodeBaseSyncService {
 	private clientUpdatePollTimeout?: NodeJS.Timeout
 	private address = ""
 	private curVersion = ""
-	private processName = "shenma"
+	private processName = "costrict"
 	private accessToken = ""
 	private serverEndpoint = ""
 	private childPid?: number // Record processName process PID

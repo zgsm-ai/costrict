@@ -37,7 +37,7 @@ const WelcomeView = () => {
 		setErrorMessage(undefined)
 
 		if (apiConfiguration?.apiProvider === zgsmProviderKey) {
-			// Initiate ZGSM login process
+			// Initiate Costrict login process
 			initiateZgsmLogin(apiConfiguration, uriScheme)
 		} else {
 			vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })

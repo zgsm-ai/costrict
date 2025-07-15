@@ -61,7 +61,7 @@ export function createHeaders(dict: Record<string, any> = {}): Record<string, an
 }
 
 /**
- * Handle ZGSM OAuth message
+ * Handle Costrict OAuth message
  * @param authUrl Authentication URL
  * @param apiConfiguration API configuration
  * @param provider ClineProvider instance

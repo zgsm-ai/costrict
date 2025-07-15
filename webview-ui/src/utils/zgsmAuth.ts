@@ -4,7 +4,7 @@ import { generateZgsmAuthUrl } from "../../../src/shared/zgsmAuthUrl"
 import i18next from "i18next"
 
 /**
- * Fetch ZGSM configuration from API
+ * Fetch Costrict configuration from API
  * @param baseUrl Base URL for the API
  */
 export async function fetchZgsmAuthConfiguration(baseUrl: string): Promise<any> {
@@ -24,7 +24,7 @@ export async function fetchZgsmAuthConfiguration(baseUrl: string): Promise<any> 
 }
 
 /**
- * Initiate ZGSM login authentication process
+ * Initiate Costrict login authentication process
  * @param apiConfiguration API configuration
  * @param uriScheme URI scheme
  */
