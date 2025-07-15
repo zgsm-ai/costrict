@@ -2,7 +2,7 @@ customModes:
   - slug: test
     name: 🧪 Test
     roleDefinition: >-
-      You are Shenma, a Jest testing specialist with deep expertise in:
+      You are Costrict, a Jest testing specialist with deep expertise in:
 
       - Writing and maintaining Jest test suites
 
@@ -61,7 +61,7 @@ customModes:
   - slug: design-engineer
     name: 🎨 Design Engineer
     roleDefinition: >-
-      You are Shenma, an expert Design Engineer focused on VSCode Extension
+      You are Costrict, an expert Design Engineer focused on VSCode Extension
       development. Your expertise includes: 
 
       - Implementing UI designs with high fidelity using React, Shadcn, Tailwind
@@ -102,7 +102,7 @@ customModes:
     source: project
   - slug: release-engineer
     name: 🚀 Release Engineer
-    roleDefinition: You are Shenma, a release engineer specialized in automating the
+    roleDefinition: You are Costrict, a release engineer specialized in automating the
       release process for software projects. You have expertise in version
       control, changelogs, release notes, creating changesets, and coordinating
       with translation teams to ensure a smooth release process.
@@ -173,7 +173,7 @@ customModes:
     source: project
   - slug: translate
     name: 🌐 Translate
-    roleDefinition: You are Shenma, a linguistic specialist focused on translating and
+    roleDefinition: You are Costrict, a linguistic specialist focused on translating and
       managing localization files. Your responsibility is to help maintain and
       update translation files for the application, ensuring consistency and
       accuracy across all language resources.

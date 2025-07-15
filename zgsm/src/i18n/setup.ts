@@ -6,7 +6,7 @@ import { ZGSM_LANGUAGES } from "../../../src/shared/language"
 
 // Load translations from directory
 const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
-	console.log(`Loading shenma backend translations from ${dirPath}`)
+	console.log(`Loading Costrict backend translations from ${dirPath}`)
 	const result: LanguageResources = {}
 
 	try {
@@ -51,7 +51,7 @@ const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
 
 // Load zgsm backend translations
 export const zgsmTranslations = loadTranslationsFromDir(path.join(__dirname, "..", "zgsm", "src", "i18n", "locales"))
-console.log(`Loaded shenma backend translations for languages: ${Object.keys(zgsmTranslations).join(", ")}`)
+console.log(`Loaded Costrict backend translations for languages: ${Object.keys(zgsmTranslations).join(", ")}`)
 
 // Initialize i18next
 i18next.init({

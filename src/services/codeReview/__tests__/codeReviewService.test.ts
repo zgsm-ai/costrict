@@ -1281,7 +1281,7 @@ describe("CodeReviewService - setActiveIssue and updateIssueStatus", () => {
 						end: expect.objectContaining({ line: 11, character: Number.MAX_SAFE_INTEGER }),
 					}),
 					comment: expect.objectContaining({
-						author: expect.objectContaining({ name: "Shenma" }),
+						author: expect.objectContaining({ name: "Costrict" }),
 						body: expect.objectContaining({
 							value: expect.stringContaining("This is a test issue"),
 						}),

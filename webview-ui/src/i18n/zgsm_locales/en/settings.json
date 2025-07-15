@@ -1,41 +1,41 @@
 {
 	"sections": {
-		"about": "About Shenma",
+		"about": "About Costrict",
 		"credit": {
 			"title": "Credit Usage Management",
-			"description": "Zhuge Shenma officially provides multiple advanced models. Each model consumes a different amount of credits per request. Once your credits are used up, the model will no longer be available.",
+			"description": "Costrict officially provides multiple advanced models. Each model consumes a different amount of credits per request. Once your credits are used up, the model will no longer be available.",
 			"homepage": "View Credit Usage"
 		}
 	},
 	"autoApprove": {
-		"description": "Allow Shenma to automatically perform operations without requiring approval. Enable these settings only if you fully trust the AI and understand the associated security risks.",
+		"description": "Allow Costrict to automatically perform operations without requiring approval. Enable these settings only if you fully trust the AI and understand the associated security risks.",
 		"readOnly": {
-			"description": "When enabled, Shenma will automatically view directory contents and read files without requiring you to click the Approve button.",
+			"description": "When enabled, Costrict will automatically view directory contents and read files without requiring you to click the Approve button.",
 			"outsideWorkspace": {
-				"description": "Allow Shenma to read files outside the current workspace without requiring approval."
+				"description": "Allow Costrict to read files outside the current workspace without requiring approval."
 			}
 		},
 		"write": {
 			"outsideWorkspace": {
-				"description": "Allow Shenma to create and edit files outside the current workspace without requiring approval."
+				"description": "Allow Costrict to create and edit files outside the current workspace without requiring approval."
 			}
 		}
 	},
 	"providers": {
-		"getZgsmApiKey": "Login to Shenma",
+		"getZgsmApiKey": "Login to Costrict",
 		"getZgsmApiKeyAgain": "Re-login",
-		"zgsm": "Shenma",
-		"zgsmApiKey": "Shenma API Key",
-		"zgsmBaseUrl": "Shenma Base Url",
+		"zgsm": "Costrict",
+		"zgsmApiKey": "Costrict API Key",
+		"zgsmBaseUrl": "Costrict Base Url",
 		"zgsmDefaultBaseUrl": "Default: {{zgsmBaseUrl}}",
 		"lmStudio": {
-			"description": "LM Studio allows you to run models locally on your computer. For instructions on how to get started, see their <a>quickstart guide</a>. You will also need to start LM Studio's <b>local server</b> feature to use it with this extension. <span>Note:</span> Shenma uses complex prompts and works best with Claude models. Less capable models may not work as expected."
+			"description": "LM Studio allows you to run models locally on your computer. For instructions on how to get started, see their <a>quickstart guide</a>. You will also need to start LM Studio's <b>local server</b> feature to use it with this extension. <span>Note:</span> Costrict uses complex prompts and works best with Claude models. Less capable models may not work as expected."
 		},
 		"ollama": {
-			"warning": "Note: Shenma uses complex prompts and works best with Claude models. Less capable models may not work as expected."
+			"warning": "Note: Costrict uses complex prompts and works best with Claude models. Less capable models may not work as expected."
 		},
 		"customModel": {
-			"capabilities": "Configure the capabilities and pricing for your custom OpenAI-compatible model. Be careful when specifying the model capabilities, as they can affect how Shenma performs."
+			"capabilities": "Configure the capabilities and pricing for your custom OpenAI-compatible model. Be careful when specifying the model capabilities, as they can affect how Costrict performs."
 		},
 		"useZgsmCustomConfig": "Use custom configuration",
 		"geminiCli": {
@@ -44,59 +44,59 @@
 	},
 	"browser": {
 		"enable": {
-			"description": "When enabled, Shenma can use a browser to interact with websites when using models that support computer use."
+			"description": "When enabled, Costrict can use a browser to interact with websites when using models that support computer use."
 		}
 	},
 	"checkpoints": {
 		"enable": {
-			"description": "When enabled, Shenma will automatically create checkpoints during task execution, making it easy to review changes or revert to earlier states."
+			"description": "When enabled, Costrict will automatically create checkpoints during task execution, making it easy to review changes or revert to earlier states."
 		}
 	},
 	"notifications": {
 		"sound": {
-			"description": "When enabled, Shenma will play sound effects for notifications and events."
+			"description": "When enabled, Costrict will play sound effects for notifications and events."
 		},
 		"tts": {
-			"description": "When enabled, Shenma will read aloud its responses using text-to-speech."
+			"description": "When enabled, Costrict will read aloud its responses using text-to-speech."
 		}
 	},
 	"contextManagement": {
 		"maxReadFile": {
-			"description": "Shenma reads this number of lines when the model omits start/end values. If this number is less than the file's total, Shenma generates a line number index of code definitions. Special cases: -1 instructs Shenma to read the entire file (without indexing), and 0 instructs it to read no lines and provides line indexes only for minimal context. Lower values minimize initial context usage, enabling precise subsequent line-range reads. Explicit start/end requests are not limited by this setting."
+			"description": "Costrict reads this number of lines when the model omits start/end values. If this number is less than the file's total, Costrict generates a line number index of code definitions. Special cases: -1 instructs Costrict to read the entire file (without indexing), and 0 instructs it to read no lines and provides line indexes only for minimal context. Lower values minimize initial context usage, enabling precise subsequent line-range reads. Explicit start/end requests are not limited by this setting."
 		}
 	},
 	"advanced": {
 		"diff": {
-			"description": "When enabled, Shenma will be able to edit files more quickly and will automatically reject truncated full-file writes. Works best with the latest Claude 3.7 Sonnet model."
+			"description": "When enabled, Costrict will be able to edit files more quickly and will automatically reject truncated full-file writes. Works best with the latest Claude 3.7 Sonnet model."
 		}
 	},
 	"experimental": {
 		"autoCondenseContextPercent": {
-			"description": "When the context window reaches this threshold, Shenma will automatically condense it."
+			"description": "When the context window reaches this threshold, Costrict will automatically condense it."
 		},
 		"SEARCH_AND_REPLACE": {
-			"description": "Enable the experimental search and replace tool, allowing Shenma to replace multiple instances of a search term in one request."
+			"description": "Enable the experimental search and replace tool, allowing Costrict to replace multiple instances of a search term in one request."
 		},
 		"INSERT_BLOCK": {
-			"description": "Enable the experimental insert content tool, allowing Shenma to insert content at specific line numbers without needing to create a diff."
+			"description": "Enable the experimental insert content tool, allowing Costrict to insert content at specific line numbers without needing to create a diff."
 		},
 		"POWER_STEERING": {
-			"description": "When enabled, Shenma will remind the model about the details of its current mode definition more frequently. This will lead to stronger adherence to role definitions and custom instructions, but will use more tokens per message."
+			"description": "When enabled, Costrict will remind the model about the details of its current mode definition more frequently. This will lead to stronger adherence to role definitions and custom instructions, but will use more tokens per message."
 		},
 		"MULTI_SEARCH_AND_REPLACE": {
-			"description": "When enabled, Shenma will use multi block diff tool. This will try to update multiple code blocks in the file in one request."
+			"description": "When enabled, Costrict will use multi block diff tool. This will try to update multiple code blocks in the file in one request."
 		}
 	},
 	"modelPicker": {
-		"automaticFetch": "The extension automatically fetches the latest list of models available on <serviceLink>{{serviceName}}</serviceLink>. If you're unsure which model to choose, Shenma works best with <defaultModelLink>{{defaultModelId}}</defaultModelLink>. You can also try searching \"free\" for no-cost options currently available."
+		"automaticFetch": "The extension automatically fetches the latest list of models available on <serviceLink>{{serviceName}}</serviceLink>. If you're unsure which model to choose, Costrict works best with <defaultModelLink>{{defaultModelId}}</defaultModelLink>. You can also try searching \"free\" for no-cost options currently available."
 	},
 	"footer": {
 		"feedback": "If you have any questions or feedback, feel free to open an issue at <zgsmGithubLink>github.com/zgsm-ai/costrict</zgsmGithubLink>",
 		"telemetry": {
-			"description": "Help improve Shenma by sending anonymous usage data and error reports. No code, prompts, or personal information is ever sent. See our privacy policy for more details."
+			"description": "Help improve Costrict by sending anonymous usage data and error reports. No code, prompts, or personal information is ever sent. See our privacy policy for more details."
 		}
 	},
 	"promptCaching": {
-		"description": "When checked, Shenma will not use prompt caching for this model."
+		"description": "When checked, Costrict will not use prompt caching for this model."
 	}
 }

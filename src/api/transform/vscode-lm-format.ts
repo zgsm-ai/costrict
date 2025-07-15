@@ -23,7 +23,7 @@ function asObjectSafe(value: any): object {
 
 		return {}
 	} catch (error) {
-		console.warn("Shenma <Language Model API>: Failed to parse object:", error)
+		console.warn("Costrict <Language Model API>: Failed to parse object:", error)
 		return {}
 	}
 }

@@ -1,67 +1,67 @@
 {
-	"greeting": "諸葛神碼可以為您做些什麼？",
+	"greeting": "Costrict可以為您做些什麼？",
 	"aboutMe": "得益於最新的代理編碼能力突破，我可以逐步處理複雜的軟件開發任務。通過允許我創建和編輯文件、探索複雜項目、使用瀏覽器以及執行終端命令（在您授予權限後）的工具，我可以以超越代碼補全或技術支持的方式協助您。我甚至可以使用MCP創建新工具並擴展自己的能力。",
 	"instructions": {
-		"wantsToFetch": "諸葛神碼想要獲取詳細指令以協助當前任務"
+		"wantsToFetch": "Costrict想要獲取詳細指令以協助當前任務"
 	},
 	"fileOperations": {
-		"wantsToRead": "諸葛神碼想要讀取此文件：",
-		"wantsToReadOutsideWorkspace": "諸葛神碼想要讀取工作區外的此文件：",
-		"didRead": "諸葛神碼已讀取此文件：",
-		"wantsToEdit": "諸葛神碼想要編輯此文件：",
-		"wantsToEditOutsideWorkspace": "諸葛神碼想要編輯工作區外的此文件：",
-		"wantsToCreate": "諸葛神碼想要創建新文件：",
-		"wantsToSearchReplace": "諸葛神碼想要在此檔案中搜尋和取代：",
-		"didSearchReplace": "諸葛神碼已在此檔案執行搜尋和取代：",
-		"wantsToInsert": "諸葛神碼想要在此檔案中插入內容：",
-		"wantsToInsertWithLineNumber": "諸葛神碼想要在此檔案第 {{lineNumber}} 行插入內容：",
-		"wantsToInsertAtEnd": "諸葛神碼想要在此檔案末尾新增內容："
+		"wantsToRead": "Costrict想要讀取此文件：",
+		"wantsToReadOutsideWorkspace": "Costrict想要讀取工作區外的此文件：",
+		"didRead": "Costrict已讀取此文件：",
+		"wantsToEdit": "Costrict想要編輯此文件：",
+		"wantsToEditOutsideWorkspace": "Costrict想要編輯工作區外的此文件：",
+		"wantsToCreate": "Costrict想要創建新文件：",
+		"wantsToSearchReplace": "Costrict想要在此檔案中搜尋和取代：",
+		"didSearchReplace": "Costrict已在此檔案執行搜尋和取代：",
+		"wantsToInsert": "Costrict想要在此檔案中插入內容：",
+		"wantsToInsertWithLineNumber": "Costrict想要在此檔案第 {{lineNumber}} 行插入內容：",
+		"wantsToInsertAtEnd": "Costrict想要在此檔案末尾新增內容："
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "諸葛神碼想要查看此目錄中的頂層文件：",
-		"didViewTopLevel": "諸葛神碼已查看此目錄中的頂層文件：",
-		"wantsToViewRecursive": "諸葛神碼想要遞歸查看此目錄中的所有文件：",
-		"didViewRecursive": "諸葛神碼已遞歸查看此目錄中的所有文件：",
-		"wantsToViewDefinitions": "諸葛神碼想要查看此目錄中使用的源代碼定義名稱：",
-		"didViewDefinitions": "諸葛神碼已查看此目錄中使用的源代碼定義名稱：",
-		"wantsToSearch": "諸葛神碼想要在此目錄中搜索<code>{{regex}}</code>：",
-		"didSearch": "諸葛神碼已在此目錄中搜索<code>{{regex}}</code>："
+		"wantsToViewTopLevel": "Costrict想要查看此目錄中的頂層文件：",
+		"didViewTopLevel": "Costrict已查看此目錄中的頂層文件：",
+		"wantsToViewRecursive": "Costrict想要遞歸查看此目錄中的所有文件：",
+		"didViewRecursive": "Costrict已遞歸查看此目錄中的所有文件：",
+		"wantsToViewDefinitions": "Costrict想要查看此目錄中使用的源代碼定義名稱：",
+		"didViewDefinitions": "Costrict已查看此目錄中使用的源代碼定義名稱：",
+		"wantsToSearch": "Costrict想要在此目錄中搜索<code>{{regex}}</code>：",
+		"didSearch": "Costrict已在此目錄中搜索<code>{{regex}}</code>："
 	},
 	"mcp": {
-		"wantsToUseTool": "諸葛神碼想要在{{serverName}} MCP服務器上使用工具：",
-		"wantsToAccessResource": "諸葛神碼想要訪問{{serverName}} MCP服務器上的資源："
+		"wantsToUseTool": "Costrict想要在{{serverName}} MCP服務器上使用工具：",
+		"wantsToAccessResource": "Costrict想要訪問{{serverName}} MCP服務器上的資源："
 	},
 	"modes": {
-		"wantsToSwitch": "諸葛神碼想要切換到{{mode}}模式",
-		"wantsToSwitchWithReason": "諸葛神碼想要切換到{{mode}}模式，因為：{{reason}}",
-		"didSwitch": "諸葛神碼已切換到{{mode}}模式",
-		"didSwitchWithReason": "諸葛神碼已切換到{{mode}}模式，因為：{{reason}}"
+		"wantsToSwitch": "Costrict想要切換到{{mode}}模式",
+		"wantsToSwitchWithReason": "Costrict想要切換到{{mode}}模式，因為：{{reason}}",
+		"didSwitch": "Costrict已切換到{{mode}}模式",
+		"didSwitchWithReason": "Costrict已切換到{{mode}}模式，因為：{{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "諸葛神碼想要在{{mode}}模式下創建新子任務：",
-		"wantsToFinish": "諸葛神碼想要完成此子任務"
+		"wantsToCreate": "Costrict想要在{{mode}}模式下創建新子任務：",
+		"wantsToFinish": "Costrict想要完成此子任務"
 	},
 	"questions": {
-		"hasQuestion": "諸葛神碼有一個問題："
+		"hasQuestion": "Costrict有一個問題："
 	},
-	"troubleMessage": "諸葛神碼遇到了一些問題...",
+	"troubleMessage": "Costrict遇到了一些問題...",
 	"browser": {
-		"rooWantsToUse": "諸葛神碼想要使用瀏覽器："
+		"rooWantsToUse": "Costrict想要使用瀏覽器："
 	},
 	"autoApprove": {
-		"description": "自動核准讓諸葛神碼可以在無需徵求您同意的情況下執行動作。請僅對您完全信任的動作啟用此功能。您可以在<settingsLink>設定</settingsLink>中進行更詳細的調整。"
+		"description": "自動核准讓Costrict可以在無需徵求您同意的情況下執行動作。請僅對您完全信任的動作啟用此功能。您可以在<settingsLink>設定</settingsLink>中進行更詳細的調整。"
 	},
 	"announcement": {
-		"title": "🎉 諸葛神碼 {{version}} 已發布",
-		"description": "諸葛神碼 {{version}} 帶來基於您意見回饋的新功能與改進。"
+		"title": "🎉 Costrict {{version}} 已發布",
+		"description": "Costrict {{version}} 帶來基於您意見回饋的新功能與改進。"
 	},
 	"onboarding": "<strong>此工作區中的任務列表為空。</strong> 請在下方輸入任務開始。",
 	"ask": {
 		"autoApprovedRequestLimitReached": {
-			"description": "諸葛神碼已達到 {{count}} 次 API 請求的自動批准限制。您想重設計數並繼續任務嗎？"
+			"description": "Costrict已達到 {{count}} 次 API 請求的自動批准限制。您想重設計數並繼續任務嗎？"
 		}
 	},
 	"shellIntegration": {
-		"description": "您的命令正在沒有 VSCode 終端 Shell 整合的情況下執行。若要隱藏此警告，您可以在 <settingsLink>諸葛神碼 設定</settingsLink> 的 <strong>Terminal</strong> 區段中停用 Shell 整合，或使用下方連結排查 VSCode 終端整合問題。"
+		"description": "您的命令正在沒有 VSCode 終端 Shell 整合的情況下執行。若要隱藏此警告，您可以在 <settingsLink>Costrict 設定</settingsLink> 的 <strong>Terminal</strong> 區段中停用 Shell 整合，或使用下方連結排查 VSCode 終端整合問題。"
 	}
 }

@@ -24,7 +24,7 @@ import { publisher, name, version } from "../../package.json"
 const pkgPublisher = process.env.PKG_PUBLISHER || publisher
 const pkgName = process.env.PKG_NAME || name
 const pkgVersion = process.env.PKG_VERSION || version
-const pkgOutputChannel = process.env.PKG_OUTPUT_CHANNEL || "Shenma"
+const pkgOutputChannel = process.env.PKG_OUTPUT_CHANNEL || "Costrict"
 
 export const Package = {
 	publisher: process.env.PKG_PUBLISHER || publisher,

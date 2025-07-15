@@ -212,8 +212,8 @@ describe("CommentService - Step 5.2: CommentController and Basic Comment Feature
 			await commentService.initialize()
 
 			expect(vscode.comments.createCommentController).toHaveBeenCalledWith(
-				"shenma-code-review",
-				"Shenma Code Review",
+				"costrict-code-review",
+				"costrict Code Review",
 			)
 		})
 
@@ -281,7 +281,7 @@ describe("CommentService - Step 5.2: CommentController and Basic Comment Feature
 
 			await commentService.focusOrCreateCommentThread(commentThreadInfo)
 
-			expect(mockCommentThread.contextValue).toBe("ShenmaCodeReview")
+			expect(mockCommentThread.contextValue).toBe("CostrictCodeReview")
 			expect(mockCommentThread.collapsibleState).toBe(1) // Expanded
 			expect(mockCommentThread.canReply).toBe(false)
 		})

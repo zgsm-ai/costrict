@@ -437,12 +437,12 @@
 				{
 					"command": "zgsm.acceptIssue",
 					"group": "navigation@1",
-					"when": "commentThread == ShenmaCodeReview"
+					"when": "commentThread == CostrictCodeReview"
 				},
 				{
 					"command": "zgsm.rejectIssue",
 					"group": "navigation@2",
-					"when": "commentThread == ShenmaCodeReview"
+					"when": "commentThread == CostrictCodeReview"
 				}
 			]
 		},

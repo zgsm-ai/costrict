@@ -1,9 +1,9 @@
 {
-	"getZgsmApiKey": "Login to Shenma",
-	"introduction": "<strong>Shenma is the premiere autonomous coding agent.</strong> Get ready to architect, code, debug, and boost your productivity like you've never seen before. To continue, Shenma requires an API key.",
-	"greeting": "Hi, I'm Shenma!",
+	"getZgsmApiKey": "Login to Costrict",
+	"introduction": "<strong>Costrict is the premiere autonomous coding agent.</strong> Get ready to architect, code, debug, and boost your productivity like you've never seen before. To continue, Costrict requires an API key.",
+	"greeting": "Hi, I'm Costrict!",
 	"telemetry": {
-		"title": "Help Improve Shenma"
+		"title": "Help Improve Costrict"
 	},
 	"baseUrlInvalidMsg": "URL misspelling",
 	"baseUrlTip": "If it is a private deployment or intranet environment, it needs to be set to the private server address accessible to the intranet"

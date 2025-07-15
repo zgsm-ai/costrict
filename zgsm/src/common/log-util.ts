@@ -21,7 +21,7 @@
 export class Logger {
 	private static formatMessage(): string {
 		const timestamp = new Date().toLocaleString()
-		return `[SHENMA][${timestamp}] `
+		return `[Costrict][${timestamp}] `
 	}
 
 	static log(...optionalParams: any[]) {

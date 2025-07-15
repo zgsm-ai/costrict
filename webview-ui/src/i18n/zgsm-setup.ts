@@ -23,7 +23,7 @@ Object.entries(zgsmLocaleFiles).forEach(([path, module]) => {
 	}
 })
 
-console.log("Dynamically loaded shenma translations:", Object.keys(zgsmTranslations))
+console.log("Dynamically loaded Costrict translations:", Object.keys(zgsmTranslations))
 
 // Merge translations function
 const mergeTranslations = (base: Record<string, any>, override: Record<string, any>): Record<string, any> => {

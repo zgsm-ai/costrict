@@ -1,13 +1,13 @@
 {
 	"extension": {
-		"name": "Shenma"
+		"name": "Costrict"
 	},
 	"storage": {
 		"path_placeholder": "D:\\RooCodeStorage",
 		"enter_absolute_path": "Please enter an absolute path (e.g. D:\\RooCodeStorage or /home/user/storage)"
 	},
 	"input": {
-		"task_prompt": "What should Shenma do?"
+		"task_prompt": "What should Costrict do?"
 	},
 	"window": {
 		"error": {
@@ -16,7 +16,7 @@
 			"login_expired": "Login has expired, please log in again.",
 			"failed_to_open_source_file": "Failed to open the source file. Please check if the source file has been deleted.",
 			"failed_to_compare_or_adopt": "There is no open file currently, unable to compare or adopt.",
-			"failed_to_display_diff": "Failed to display the diff. Please check if the source file has been deleted. If the error persists, please contact the Shenma customer service.",
+			"failed_to_display_diff": "Failed to display the diff. Please check if the source file has been deleted. If the error persists, please contact the Costrict customer service.",
 			"failed_to_jump_by_path": "Jump failed. The file path is empty.",
 			"failed_to_jump": "Jump failed.",
 			"failed_to_jump_by_path_not_exist": "Jump failed, The file path does not exist. file path: ",
@@ -51,83 +51,83 @@
 		"explain": {
 			"name": "Explain Code",
 			"tip": "Explain code implementation",
-			"input_prompt": "What would you like Shenma to explain?",
+			"input_prompt": "What would you like Costrict to explain?",
 			"input_placeholder": "E.g. How does the error handling work?"
 		},
 		"add_comment": {
 			"name": "Add Comments",
 			"tip": "Add comments to this function",
-			"input_prompt": "What would you like Shenma to do?",
+			"input_prompt": "What would you like Costrict to do?",
 			"input_placeholder": "E.g. Add comments to the code"
 		},
 		"add_tests": {
 			"name": "Generate Unit Tests",
 			"tip": "Generate unit tests for this function",
-			"input_prompt": "What would you like Shenma to do?",
+			"input_prompt": "What would you like Costrict to do?",
 			"input_placeholder": "E.g. Generate unit tests for this function"
 		},
 		"code_review": {
 			"name": "Code Review",
 			"tip": "Check for code quality issues and provide suggestions",
-			"input_prompt": "What would you like Shenma to do?",
+			"input_prompt": "What would you like Costrict to do?",
 			"input_placeholder": "E.g. Check for code quality issues and provide suggestions to the code"
 		},
 		"add_debug_code": {
 			"name": "Add Debug Code",
 			"tip": "Enhance troubleshooting capabilities by adding logs and debug code to key logic steps",
-			"input_prompt": "What would you like Shenma to do?",
+			"input_prompt": "What would you like Costrict to do?",
 			"input_placeholder": "E.g. Enhance troubleshooting capabilities by adding logs and debug code to key logic steps to the code"
 		},
 		"add_stronger_code": {
 			"name": "Add Error Handling",
 			"tip": "Enhance robustness by adding exception handling and parameter validation",
-			"input_prompt": "What would you like Shenma to do?",
+			"input_prompt": "What would you like Costrict to do?",
 			"input_placeholder": "E.g. Enhance robustness by adding exception handling and parameter validation to the code"
 		},
 		"simplify_code": {
 			"name": "Simplify Code",
 			"tip": "Remove ineffective code",
-			"input_prompt": "What would you like Shenma to do?",
+			"input_prompt": "What would you like Costrict to do?",
 			"input_placeholder": "E.g. Remove ineffective code"
 		},
 		"performance_optimization": {
 			"name": "Performance Optimization",
 			"tip": "Improve code performance, provide modification suggestions, focus on efficiency issues",
-			"input_prompt": "What would you like Shenma to do?",
+			"input_prompt": "What would you like Costrict to do?",
 			"input_placeholder": "E.g. Improve code performance, provide modification suggestions, ffocus on efficiency issues to the following code"
 		},
 		"shenma_instruct_set": {
-			"tip": "Shenma Instruction Set",
-			"input_prompt": "What would you like Shenma to do?",
+			"tip": "Costrict Instruction Set",
+			"input_prompt": "What would you like Costrict to do?",
 			"input_placeholder": "E.g. Add comments to the code"
 		}
 	},
 	"completion": {
 		"status": {
 			"loading": {
-				"text": "$(loading~spin) SHENMA - In Progress",
-				"tooltip": "SHENMA - Code Completion - Waiting for request results"
+				"text": "$(loading~spin) Costrict - In Progress",
+				"tooltip": "Costrict - Code Completion - Waiting for request results"
 			},
 			"complete": {
-				"text": "$(check) SHENMA",
-				"tooltip": "SHENMA - Code Completion - Completed"
+				"text": "$(check) Costrict",
+				"tooltip": "Costrict - Code Completion - Completed"
 			},
 			"fail": {
-				"text": "$(alert) SHENMA - ",
-				"tooltip": "SHENMA - Code Completion - Failed: "
+				"text": "$(alert) Costrict - ",
+				"tooltip": "Costrict - Code Completion - Failed: "
 			},
 			"noSuggest": {
-				"text": "$(check) SHENMA - No Suggestions",
-				"tooltip": "SHENMA - Code Completion - No Suggestions Available"
+				"text": "$(check) Costrict - No Suggestions",
+				"tooltip": "Costrict - Code Completion - No Suggestions Available"
 			},
 			"enabled": {
-				"tooltip": "SHENMA - Code Completion - Enabled"
+				"tooltip": "Costrict - Code Completion - Enabled"
 			},
 			"disabled": {
-				"tooltip": "SHENMA - Code Completion - Disabled"
+				"tooltip": "Costrict - Code Completion - Disabled"
 			},
 			"login": {
-				"text": "$(loading~spin) SHENMA - login..."
+				"text": "$(loading~spin) Costrict - login..."
 			}
 		},
 		"code": {

@@ -21,7 +21,7 @@
 
 ### 插件安装
 
-在 vscode 插件商店搜索 “Shenma”，点击 “Install” 进行安装
+在 vscode 插件商店搜索 “Costrict”，点击 “Install” 进行安装
 
     ![alt text](/assets/images/install/extensions.png)
 

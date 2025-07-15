@@ -57,7 +57,7 @@ export async function activate(context: vscode.ExtensionContext, provider: Cline
 			codeLensCallBackCommand.command,
 			codeLensCallBackCommand.callback(context),
 		),
-		// Shenma instruction set
+		// Costrict instruction set
 		vscode.commands.registerTextEditorCommand(
 			codeLensCallBackMoreCommand.command,
 			codeLensCallBackMoreCommand.callback(context),

@@ -24,7 +24,7 @@ import { getClientId } from "../../utils/getClientId"
 
 export const defaultHeaders = {
 	"HTTP-Referer": "https://github.com/zgsm-ai/costrict",
-	"X-Title": "Shenma",
+	"X-Title": "Costrict",
 }
 
 export interface OpenAiHandlerOptions extends ApiHandlerOptions {}
