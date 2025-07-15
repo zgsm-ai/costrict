@@ -1,10 +1,10 @@
 <div align="center">
-    <h1>诸葛神码</h1>
+    <h1>Costrict</h1>
     <h2>企业严肃编程的最佳AI Coder</h2>
 </div>
 <br>
 <div align="center">
-<a href="https://github.com/zgsm-ai/costrict/blob/7cd474ade30bb64b57d5491bd046a2beb90bd420/README.en-US.md" target="_blank">English</a> | 简体中文
+<a href="https://github.com/zgsm-ai/costrict/blob/main/README.en-US.md" target="_blank">English</a> | 简体中文
 </div>
 <br>
 <br>
@@ -16,7 +16,7 @@
 
 </div>
 
-诸葛神码是一款免费开源的AI辅助编程工具，支持企业私有化部署，是企业严肃编程的最佳选择。核心场景能力突出：代码审查（Code Review）、智能体（ AI Agent）、代码补全（Code Completion）等，特性功能亮点十足：企业级代码仓库索引、MCP服务、多种高级免费模型、API/模型自定义、模式选择/自定义、图片上下文等。支持多种主流IDE工具，率先支持VS Code。支持Python、Go、 Java、JavaScript/TypeScript、C/C++等多种主流语言。
+Costrict是一款免费开源的AI辅助编程工具，支持企业私有化部署，是企业严肃编程的最佳选择。核心场景能力突出：代码审查（Code Review）、智能体（ AI Agent）、代码补全（Code Completion）等，特性功能亮点十足：企业级代码仓库索引、MCP服务、多种高级免费模型、API/模型自定义、模式选择/自定义、图片上下文等。支持多种主流IDE工具，率先支持VS Code。支持Python、Go、 Java、JavaScript/TypeScript、C/C++等多种主流语言。
 
 ## 产品特性 Features
 
@@ -48,7 +48,7 @@
     - **MCP 服务**：无缝对接MCP开放生态，实现标准化系统连接。您可以通过MCP服务集成外部 API、连接数据库或开发定制工具等
     - **第三方API和模型自定义**: 官方提供了各种免费的高级模型，像claude-sonnet-4；也支持使用第三方API提供商如Anthropic、OpenAl等；您还可以配置任何与OpenAl兼容的API；或者通过I M Studio/Ollama使用本地模型
     - **模式自定义**：我们提供了多种默认模式以适应不同场景，例如：代码能力突出的Code模式、擅长复杂任务拆解的Orchestrator模式。您也可以根据需求自定义模式
-    - **大仓库上下文**：诸葛神码会自动将大文件全仓库数据纳入上下文，对于代码补全场景也会根据光标位置动态感知上下文。 你也可以通过@键添加文件/文件夹、终端、问题等等给输入更精准的上下文信息
+    - **大仓库上下文**：Costrict会自动将大文件全仓库数据纳入上下文，对于代码补全场景也会根据光标位置动态感知上下文。 你也可以通过@键添加文件/文件夹、终端、问题等等给输入更精准的上下文信息
     - **支持图片**：多模态模型支持上传图片，您可以点击对话框下方的图片icon上传图片，也可以按住shift键将图片拖拽到输入框内
     - **快捷菜单**： 选中代码，点击右键出现功能菜单，支持：解释代码、修复代码、改进代码、添加注释、代码审查 、添加日志、增加容错、简化代码、优化性能等功能，能满足你所有的代码场景
 
@@ -56,7 +56,7 @@
 
 ## 更多帮助 For more assistance
 
-更多操作详情可访问诸葛神码官方文档： https://zgsm.ai/download
+更多操作详情可访问Costrict官方文档： https://zgsm.ai/download
 
 ## 快速开始
 
@@ -70,11 +70,11 @@
 
 ## 如何贡献
 
-诸葛神码是由友好的用户、贡献者、提交者和项目管理委员会成员共同开发和维护的开源项目。
+Costrict是由友好的用户、贡献者、提交者和项目管理委员会成员共同开发和维护的开源项目。
 
 欢迎所有人以多种方式加入并为项目做出贡献，不仅限于代码贡献。诸如上报问题、报告漏洞、提议新功能、改进文档、完善网站、组织活动或撰写博客文章等贡献均受到欢迎和认可。
 
-本文档是诸葛神码社区新成员入门贡献项目的指南。
+本文档是Costrict社区新成员入门贡献项目的指南。
 
 ### 上报问题
 
@@ -84,7 +84,7 @@
 
 ### 提交代码
 
-诸葛神码项目采用 Github Forking 工作流：[诸葛神码项目代码贡献流程](https://github.com/zgsm-ai/costrict/blob/main/assets/docs/devel/zh-CN/fork.md)
+Costrict项目采用 Github Forking 工作流：[Costrict项目代码贡献流程](https://github.com/zgsm-ai/costrict/blob/main/assets/docs/devel/zh-CN/fork.md)
 
 ## 版权声明
 

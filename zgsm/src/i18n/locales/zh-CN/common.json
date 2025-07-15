@@ -1,13 +1,13 @@
 {
 	"extension": {
-		"name": "诸葛神码"
+		"name": "Costrict"
 	},
 	"storage": {
 		"path_placeholder": "D:\\RooCodeStorage",
 		"enter_absolute_path": "请输入绝对路径（例如：D:\\RooCodeStorage 或 /home/user/storage）"
 	},
 	"input": {
-		"task_prompt": "诸葛神码应该做什么？"
+		"task_prompt": "Costrict应该做什么？"
 	},
 	"window": {
 		"error": {
@@ -16,7 +16,7 @@
 			"login_expired": "登录已过期，请重新登录。",
 			"failed_to_open_source_file": "无法打开源文件。请检查源文件是否已被删除。",
 			"failed_to_compare_or_adopt": "当前没有打开的文件，无法比较或采用。",
-			"failed_to_display_diff": "无法显示差异。请检查源文件是否已被删除。如果错误持续存在，请联系诸葛神码客服。",
+			"failed_to_display_diff": "无法显示差异。请检查源文件是否已被删除。如果错误持续存在，请联系Costrict客服。",
 			"failed_to_jump_by_path": "跳转失败。文件路径为空。",
 			"failed_to_jump": "跳转失败。",
 			"failed_to_jump_by_path_not_exist": "跳转失败，文件路径不存在。文件路径：",
@@ -50,29 +50,29 @@
 	"completion": {
 		"status": {
 			"loading": {
-				"text": "$(loading~spin) 诸葛神码 - 处理中",
-				"tooltip": "诸葛神码 - 代码补全 - 等待请求结果"
+				"text": "$(loading~spin) Costrict - 处理中",
+				"tooltip": "Costrict - 代码补全 - 等待请求结果"
 			},
 			"complete": {
-				"text": "$(check) 诸葛神码",
-				"tooltip": "诸葛神码 - 代码补全 - 已完成"
+				"text": "$(check) Costrict",
+				"tooltip": "Costrict - 代码补全 - 已完成"
 			},
 			"fail": {
-				"text": "$(alert) 诸葛神码 - ",
-				"tooltip": "诸葛神码 - 代码补全 - 失败："
+				"text": "$(alert) Costrict - ",
+				"tooltip": "Costrict - 代码补全 - 失败："
 			},
 			"noSuggest": {
-				"text": "$(check) 诸葛神码 - 无建议",
-				"tooltip": "诸葛神码 - 代码补全 - 无可用建议"
+				"text": "$(check) Costrict - 无建议",
+				"tooltip": "Costrict - 代码补全 - 无可用建议"
 			},
 			"enabled": {
-				"tooltip": "诸葛神码 - 代码补全 - 已启用"
+				"tooltip": "Costrict - 代码补全 - 已启用"
 			},
 			"disabled": {
-				"tooltip": "诸葛神码 - 代码补全 - 已禁用"
+				"tooltip": "Costrict - 代码补全 - 已禁用"
 			},
 			"login": {
-				"text": "$(loading~spin) 诸葛神码 - 登录中..."
+				"text": "$(loading~spin) Costrict - 登录中..."
 			}
 		},
 		"code": {
@@ -106,54 +106,54 @@
 		"explain": {
 			"name": "解释代码",
 			"tip": "解释代码实现",
-			"input_prompt": "你想让诸葛神码解释什么？",
+			"input_prompt": "你想让Costrict解释什么？",
 			"input_placeholder": "例如：如何处理错误？"
 		},
 		"add_comment": {
 			"name": "添加注释",
 			"tip": "添加注释到此函数",
-			"input_prompt": "你想让诸葛神码做什么？",
+			"input_prompt": "你想让Costrict做什么？",
 			"input_placeholder": "例如：添加注释到代码"
 		},
 		"add_tests": {
 			"name": "生成单元测试",
 			"tip": "为函数生成单元测试",
-			"input_prompt": "你想让诸葛神码做什么？",
+			"input_prompt": "你想让Costrict做什么？",
 			"input_placeholder": "例如：生成单元测试"
 		},
 		"code_review": {
 			"name": "代码审查",
 			"tip": "检查代码质量问题并提供建议",
-			"input_prompt": "你想让诸葛神码做什么？",
+			"input_prompt": "你想让Costrict做什么？",
 			"input_placeholder": "例如：检查代码质量问题并对代码提出建议"
 		},
 		"add_debug_code": {
 			"name": "添加日志",
 			"tip": "在关键逻辑步骤中添加日志和调试代码来增强故障排除能力",
-			"input_prompt": "你想让诸葛神码做什么？",
+			"input_prompt": "你想让Costrict做什么？",
 			"input_placeholder": "例如：在代码的关键逻辑步骤中添加日志和调试代码来增强故障排除能力"
 		},
 		"add_stronger_code": {
 			"name": "增加容错",
 			"tip": "增强鲁棒性，通过添加异常处理和参数验证",
-			"input_prompt": "你想让诸葛神码做什么？",
+			"input_prompt": "你想让Costrict做什么？",
 			"input_placeholder": "例如：增强代码鲁棒性，通过添加异常处理和参数验证"
 		},
 		"simplify_code": {
 			"name": "简化代码",
 			"tip": "删除无效代码",
-			"input_prompt": "你想让诸葛神码做什么？",
+			"input_prompt": "你想让Costrict做什么？",
 			"input_placeholder": "例如：删除无效代码"
 		},
 		"performance_optimization": {
 			"name": "性能优化",
 			"tip": "提高代码性能，提供修改建议，专注于效率问题",
-			"input_prompt": "你想让诸葛神码做什么？",
+			"input_prompt": "你想让Costrict做什么？",
 			"input_placeholder": "例如：提高代码性能，提供修改建议，专注于效率问题"
 		},
 		"shenma_instruct_set": {
-			"tip": "诸葛神码指令集",
-			"input_prompt": "你想让诸葛神码做什么？",
+			"tip": "Costrict指令集",
+			"input_prompt": "你想让Costrict做什么？",
 			"input_placeholder": "例如：添加注释到代码"
 		}
 	},

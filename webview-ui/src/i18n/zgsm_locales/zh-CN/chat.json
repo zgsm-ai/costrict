@@ -1,67 +1,67 @@
 {
-	"greeting": "诸葛神码能为您做什么？",
+	"greeting": "Costrict能为您做什么？",
 	"aboutMe": "得益于最新的代理编码能力突破，我可以逐步处理复杂的软件开发任务。通过允许我创建和编辑文件、探索复杂项目、使用浏览器以及执行终端命令（在您授予权限后）的工具，我可以以超越代码补全或技术支持的方式协助您。我甚至可以使用MCP创建新工具并扩展自己的能力。",
 	"instructions": {
-		"wantsToFetch": "诸葛神码想要获取详细指令以协助当前任务"
+		"wantsToFetch": "Costrict想要获取详细指令以协助当前任务"
 	},
 	"fileOperations": {
-		"wantsToRead": "诸葛神码想要读取此文件：",
-		"wantsToReadOutsideWorkspace": "诸葛神码想要读取工作区外的此文件：",
-		"didRead": "诸葛神码已读取此文件：",
-		"wantsToEdit": "诸葛神码想要编辑此文件：",
-		"wantsToEditOutsideWorkspace": "诸葛神码想要编辑工作区外的此文件：",
-		"wantsToCreate": "诸葛神码想要创建新文件：",
-		"wantsToSearchReplace": "诸葛神码需要在此文件中搜索和替换:",
-		"didSearchReplace": "诸葛神码已完成搜索和替换:",
-		"wantsToInsert": "诸葛神码需要在此文件中插入内容:",
-		"wantsToInsertWithLineNumber": "诸葛神码需要在第 {{lineNumber}} 行插入内容:",
-		"wantsToInsertAtEnd": "诸葛神码需要在文件末尾添加内容:"
+		"wantsToRead": "Costrict想要读取此文件：",
+		"wantsToReadOutsideWorkspace": "Costrict想要读取工作区外的此文件：",
+		"didRead": "Costrict已读取此文件：",
+		"wantsToEdit": "Costrict想要编辑此文件：",
+		"wantsToEditOutsideWorkspace": "Costrict想要编辑工作区外的此文件：",
+		"wantsToCreate": "Costrict想要创建新文件：",
+		"wantsToSearchReplace": "Costrict需要在此文件中搜索和替换:",
+		"didSearchReplace": "Costrict已完成搜索和替换:",
+		"wantsToInsert": "Costrict需要在此文件中插入内容:",
+		"wantsToInsertWithLineNumber": "Costrict需要在第 {{lineNumber}} 行插入内容:",
+		"wantsToInsertAtEnd": "Costrict需要在文件末尾添加内容:"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "诸葛神码想要查看此目录中的顶层文件：",
-		"didViewTopLevel": "诸葛神码已查看此目录中的顶层文件：",
-		"wantsToViewRecursive": "诸葛神码想要递归查看此目录中的所有文件：",
-		"didViewRecursive": "诸葛神码已递归查看此目录中的所有文件：",
-		"wantsToViewDefinitions": "诸葛神码想要查看此目录中使用的源代码定义名称：",
-		"didViewDefinitions": "诸葛神码已查看此目录中使用的源代码定义名称：",
-		"wantsToSearch": "诸葛神码想要在此目录中搜索<code>{{regex}}</code>：",
-		"didSearch": "诸葛神码已在此目录中搜索<code>{{regex}}</code>："
+		"wantsToViewTopLevel": "Costrict想要查看此目录中的顶层文件：",
+		"didViewTopLevel": "Costrict已查看此目录中的顶层文件：",
+		"wantsToViewRecursive": "Costrict想要递归查看此目录中的所有文件：",
+		"didViewRecursive": "Costrict已递归查看此目录中的所有文件：",
+		"wantsToViewDefinitions": "Costrict想要查看此目录中使用的源代码定义名称：",
+		"didViewDefinitions": "Costrict已查看此目录中使用的源代码定义名称：",
+		"wantsToSearch": "Costrict想要在此目录中搜索<code>{{regex}}</code>：",
+		"didSearch": "Costrict已在此目录中搜索<code>{{regex}}</code>："
 	},
 	"mcp": {
-		"wantsToUseTool": "诸葛神码想要在{{serverName}} MCP服务器上使用工具：",
-		"wantsToAccessResource": "诸葛神码想要访问{{serverName}} MCP服务器上的资源："
+		"wantsToUseTool": "Costrict想要在{{serverName}} MCP服务器上使用工具：",
+		"wantsToAccessResource": "Costrict想要访问{{serverName}} MCP服务器上的资源："
 	},
 	"modes": {
-		"wantsToSwitch": "诸葛神码想要切换到{{mode}}模式",
-		"wantsToSwitchWithReason": "诸葛神码想要切换到{{mode}}模式，因为：{{reason}}",
-		"didSwitch": "诸葛神码已切换到{{mode}}模式",
-		"didSwitchWithReason": "诸葛神码已切换到{{mode}}模式，因为：{{reason}}"
+		"wantsToSwitch": "Costrict想要切换到{{mode}}模式",
+		"wantsToSwitchWithReason": "Costrict想要切换到{{mode}}模式，因为：{{reason}}",
+		"didSwitch": "Costrict已切换到{{mode}}模式",
+		"didSwitchWithReason": "Costrict已切换到{{mode}}模式，因为：{{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "诸葛神码想要在{{mode}}模式下创建新子任务：",
-		"wantsToFinish": "诸葛神码想要完成此子任务"
+		"wantsToCreate": "Costrict想要在{{mode}}模式下创建新子任务：",
+		"wantsToFinish": "Costrict想要完成此子任务"
 	},
 	"questions": {
-		"hasQuestion": "诸葛神码有一个问题："
+		"hasQuestion": "Costrict有一个问题："
 	},
-	"troubleMessage": "诸葛神码遇到了一些问题...",
+	"troubleMessage": "Costrict遇到了一些问题...",
 	"browser": {
-		"rooWantsToUse": "诸葛神码想要使用浏览器："
+		"rooWantsToUse": "Costrict想要使用浏览器："
 	},
 	"autoApprove": {
-		"description": "允许诸葛神码直接执行操作无需确认，请谨慎启用。前往<settingsLink>设置</settingsLink>调整"
+		"description": "允许Costrict直接执行操作无需确认，请谨慎启用。前往<settingsLink>设置</settingsLink>调整"
 	},
 	"announcement": {
-		"title": "🎉 诸葛神码 {{version}} 已发布",
-		"description": "诸葛神码 {{version}} 带来基于您反馈的新功能和改进。"
+		"title": "🎉 Costrict {{version}} 已发布",
+		"description": "Costrict {{version}} 带来基于您反馈的新功能和改进。"
 	},
 	"onboarding": "<strong>此工作区中的任务列表为空。</strong> 请在下方输入任务开始。",
 	"ask": {
 		"autoApprovedRequestLimitReached": {
-			"description": "诸葛神码已达到 {{count}} 次 API 请求的自动批准限制。您想重置计数并继续任务吗？"
+			"description": "Costrict已达到 {{count}} 次 API 请求的自动批准限制。您想重置计数并继续任务吗？"
 		}
 	},
 	"shellIntegration": {
-		"description": "您的命令正在没有 VSCode 终端 shell 集成的情况下执行。要隐藏此警告，您可以在 <settingsLink>诸葛神码 设置</settingsLink>的 <strong>Terminal</strong> 部分禁用 shell 集成，或使用下方链接排查 VSCode 终端集成问题。"
+		"description": "您的命令正在没有 VSCode 终端 shell 集成的情况下执行。要隐藏此警告，您可以在 <settingsLink>Costrict 设置</settingsLink>的 <strong>Terminal</strong> 部分禁用 shell 集成，或使用下方链接排查 VSCode 终端集成问题。"
 	}
 }

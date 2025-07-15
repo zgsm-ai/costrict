@@ -1,8 +1,8 @@
-# 诸葛神码项目代码贡献流程
+# Costrict项目代码贡献流程
 
-诸葛神码项目遵循 Angular 规范：[诸葛神码项目 commit message 规范](./commit-message.md)
+Costrict项目遵循 Angular 规范：[Costrict项目 commit message 规范](./commit-message.md)
 
-诸葛神码项目采用 Github Forking 工作流。
+Costrict项目采用 Github Forking 工作流。
 
 Github Forking 工作流详细步骤如下：
 
@@ -174,4 +174,4 @@ $ git push -f origin feature/add-function
 
 7. 在个人远程仓库页面创建 pull request。
 
-提交到远程仓库以后，就可以发出 pull request 到 main 分支，后面由 诸葛神码项目的 Maintainer 进行代码 Review，并 Merge 到主干代码。
+提交到远程仓库以后，就可以发出 pull request 到 main 分支，后面由 Costrict项目的 Maintainer 进行代码 Review，并 Merge 到主干代码。

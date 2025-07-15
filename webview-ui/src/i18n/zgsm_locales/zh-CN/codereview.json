@@ -1,9 +1,9 @@
 {
 	"welcomePage": {
-		"title": "诸葛神码",
+		"title": "Costrict",
 		"subtitle": "企业级最佳AI Coder",
 		"tips1": "1. 选择函数、代码块、多文件",
-		"tips2": "2. 点击鼠标右键，找到诸葛神码 > Code Review 一键触发"
+		"tips2": "2. 点击鼠标右键，找到Costrict > Code Review 一键触发"
 	},
 	"codeReviewContent": {
 		"severity": {
