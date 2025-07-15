@@ -1,17 +1,17 @@
 {
 	"modes": {
-		"createModeHelpText": "Hit the + to create a new custom mode, or just ask Shenma in chat to create one for you!"
+		"createModeHelpText": "Hit the + to create a new custom mode, or just ask Costrict in chat to create one for you!"
 	},
 	"roleDefinition": {
-		"description": "Define Shenma's expertise and personality for this mode. This description shapes how Shenma presents itself and approaches tasks."
+		"description": "Define Costrict's expertise and personality for this mode. This description shapes how Costrict presents itself and approaches tasks."
 	},
 	"globalCustomInstructions": {
-		"description": "These instructions apply to all modes. They provide a base set of behaviors that can be enhanced by mode-specific instructions below.\nIf you would like Shenma to think and speak in a different language than your editor display language ({{language}}), you can specify it here."
+		"description": "These instructions apply to all modes. They provide a base set of behaviors that can be enhanced by mode-specific instructions below.\nIf you would like Costrict to think and speak in a different language than your editor display language ({{language}}), you can specify it here."
 	},
 	"supportPrompts": {
 		"types": {
 			"ENHANCE": {
-				"description": "Use prompt enhancement to get tailored suggestions or improvements for your inputs. This ensures Shenma understands your intent and provides the best possible responses. Available via the ✨ icon in chat."
+				"description": "Use prompt enhancement to get tailored suggestions or improvements for your inputs. This ensures Costrict understands your intent and provides the best possible responses. Available via the ✨ icon in chat."
 			},
 			"ZGSM_ADD_COMMENT": {
 				"label": "Add code comments",
@@ -45,7 +45,7 @@
 	},
 	"createModeDialog": {
 		"roleDefinition": {
-			"description": "Define Shenma's expertise and personality for this mode."
+			"description": "Define Costrict's expertise and personality for this mode."
 		}
 	}
 }

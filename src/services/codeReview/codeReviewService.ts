@@ -613,7 +613,7 @@ export class CodeReviewService {
 				issue.id,
 				new vscode.MarkdownString(`${issue.title ? `### ${issue.title}\n\n` : ""}${issue.message}`),
 				vscode.CommentMode.Preview,
-				{ name: "Shenma", iconPath },
+				{ name: "Costrict", iconPath },
 				undefined,
 				"Intial",
 			),

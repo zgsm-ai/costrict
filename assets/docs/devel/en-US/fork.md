@@ -1,6 +1,6 @@
-# Shenma Project Contribution Process
+# Costrict Project Contribution Process
 
-The Shenma project adopts GitHub Forking workflow.
+The Costrict project adopts GitHub Forking workflow.
 
 Detailed steps for GitHub Forking workflow:
 
@@ -174,4 +174,4 @@ $ git push -f origin feature/add-function
 
 7. Create a pull request on your personal remote repository page.
 
-After pushing to the remote repository, you can submit a pull request to the main branch. The Maintainer of the Shenma project will then review the code and merge it into the main branch.
+After pushing to the remote repository, you can submit a pull request to the main branch. The Maintainer of the Costrict project will then review the code and merge it into the main branch.

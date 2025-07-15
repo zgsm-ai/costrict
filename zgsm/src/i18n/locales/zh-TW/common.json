@@ -1,13 +1,13 @@
 {
 	"extension": {
-		"name": "諸葛神碼"
+		"name": "Costrict"
 	},
 	"storage": {
 		"path_placeholder": "D:\\RooCodeStorage",
 		"enter_absolute_path": "請輸入絕對路徑（例如：D:\\RooCodeStorage 或 /home/user/storage）"
 	},
 	"input": {
-		"task_prompt": "諸葛神碼應該做什麼？"
+		"task_prompt": "Costrict應該做什麼？"
 	},
 	"window": {
 		"error": {
@@ -16,7 +16,7 @@
 			"login_expired": "登入已過期，請重新登入。",
 			"failed_to_open_source_file": "無法開啟原始碼檔案。請檢查原始碼檔案是否已被刪除。",
 			"failed_to_compare_or_adopt": "目前沒有開啟的檔案，無法比較或採用。",
-			"failed_to_display_diff": "無法顯示差異。請檢查原始碼檔案是否已被刪除。如果錯誤持續存在，請聯繫諸葛神碼客服。",
+			"failed_to_display_diff": "無法顯示差異。請檢查原始碼檔案是否已被刪除。如果錯誤持續存在，請聯繫Costrict客服。",
 			"failed_to_jump_by_path": "跳轉失敗。檔案路徑為空。",
 			"failed_to_jump": "跳轉失敗",
 			"failed_to_jump_by_path_not_exist": "跳轉失敗，檔案路徑不存在。檔案路徑：",
@@ -46,29 +46,29 @@
 	"completion": {
 		"status": {
 			"loading": {
-				"text": "$(loading~spin) 諸葛神碼 - 處理中",
-				"tooltip": "諸葛神碼 - 程式碼補全 - 等待請求結果"
+				"text": "$(loading~spin) Costrict - 處理中",
+				"tooltip": "Costrict - 程式碼補全 - 等待請求結果"
 			},
 			"complete": {
-				"text": "$(check) 諸葛神碼",
-				"tooltip": "諸葛神碼 - 程式碼補全 - 已完成"
+				"text": "$(check) Costrict",
+				"tooltip": "Costrict - 程式碼補全 - 已完成"
 			},
 			"fail": {
-				"text": "$(alert) 諸葛神碼 - ",
-				"tooltip": "諸葛神碼 - 程式碼補全 - 失敗："
+				"text": "$(alert) Costrict - ",
+				"tooltip": "Costrict - 程式碼補全 - 失敗："
 			},
 			"noSuggest": {
-				"text": "$(check) 諸葛神碼 - 無建議",
-				"tooltip": "諸葛神碼 - 程式碼補全 - 無可用建議"
+				"text": "$(check) Costrict - 無建議",
+				"tooltip": "Costrict - 程式碼補全 - 無可用建議"
 			},
 			"enabled": {
-				"tooltip": "諸葛神碼 - 程式碼補全 - 已啟用"
+				"tooltip": "Costrict - 程式碼補全 - 已啟用"
 			},
 			"disabled": {
-				"tooltip": "諸葛神碼 - 程式碼補全 - 已禁用"
+				"tooltip": "Costrict - 程式碼補全 - 已禁用"
 			},
 			"login": {
-				"text": "$(loading~spin) 諸葛神碼 - 登錄中..."
+				"text": "$(loading~spin) Costrict - 登錄中..."
 			}
 		},
 		"code": {
@@ -102,54 +102,54 @@
 		"explain": {
 			"name": "解釋程式碼",
 			"tip": "解釋程式碼實現",
-			"input_prompt": "你想讓諸葛神碼解釋什麼？",
+			"input_prompt": "你想讓Costrict解釋什麼？",
 			"input_placeholder": "例如：如何處理錯誤？"
 		},
 		"add_comment": {
 			"name": "添加註釋",
 			"tip": "添加註釋到此函數",
-			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_prompt": "你想讓Costrict做什麼？",
 			"input_placeholder": "例如：添加註釋到程式碼"
 		},
 		"add_tests": {
 			"name": "生成單元測試",
 			"tip": "為函數生成單元測試",
-			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_prompt": "你想讓Costrict做什麼？",
 			"input_placeholder": "例如：生成單元測試"
 		},
 		"code_review": {
 			"name": "程式碼審查",
 			"tip": "檢查程式碼品質問題並提供建議",
-			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_prompt": "你想讓Costrict做什麼？",
 			"input_placeholder": "例如：檢查程式碼品質問題並對程式碼提出建議"
 		},
 		"add_debug_code": {
 			"name": "添加日誌",
 			"tip": "在關鍵邏輯步驟中添加日誌和調試代碼來增強故障排除能力",
-			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_prompt": "你想讓Costrict做什麼？",
 			"input_placeholder": "例如：在程式碼的關鍵邏輯步驟中添加日誌和調試代碼來增強故障排除能力"
 		},
 		"add_stronger_code": {
 			"name": "增加容錯",
 			"tip": "增強魯棒性，通過添加異常處理和參數驗證",
-			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_prompt": "你想讓Costrict做什麼？",
 			"input_placeholder": "例如：增強程式碼魯棒性，通過添加異常處理和參數驗證"
 		},
 		"simplify_code": {
 			"name": "簡化程式碼",
 			"tip": "刪除無效代碼",
-			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_prompt": "你想讓Costrict做什麼？",
 			"input_placeholder": "例如：刪除無效代碼"
 		},
 		"performance_optimization": {
 			"name": "性能優化",
 			"tip": "提高程式碼性能，提供修改建議，專注於效率問題",
-			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"input_prompt": "你想讓Costrict做什麼？",
 			"input_placeholder": "例如：提高程式碼性能，提供修改建議，專注於效率問題"
 		},
 		"shenma_instruct_set": {
-			"tip": "諸葛神碼指令集",
-			"input_prompt": "你想讓諸葛神碼做什麼？",
+			"tip": "Costrict指令集",
+			"input_prompt": "你想讓Costrict做什麼？",
 			"input_placeholder": "例如：添加註釋到程式碼"
 		}
 	},

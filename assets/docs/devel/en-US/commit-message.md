@@ -1,4 +1,4 @@
-# Shenma Commit Message Specification
+# Costrict Commit Message Specification
 
 We adhere to the Angular specification, which enforces precise rules for Git commit formatting to make the commit history more readable.
 

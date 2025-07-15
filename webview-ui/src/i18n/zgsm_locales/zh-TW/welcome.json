@@ -1,7 +1,7 @@
 {
-	"greeting": "你好，我是諸葛神碼！",
-	"introduction": "<strong>Shenma is the premiere autonomous coding agent.</strong> Get ready to architect, code, debug, and boost your productivity like you've never seen before. To continue, Shenma requires an API key.",
+	"greeting": "你好，我是Costrict！",
+	"introduction": "<strong>Costrict is the premiere autonomous coding agent.</strong> Get ready to architect, code, debug, and boost your productivity like you've never seen before. To continue, Costrict requires an API key.",
 	"telemetry": {
-		"title": "幫助改進諸葛神碼"
+		"title": "幫助改進Costrict"
 	}
 }

@@ -4,22 +4,22 @@ import { CodeActionName, CodeActionId } from "../schemas"
 import { getCodeActionCommand } from "../utils/commands"
 
 export const ACTION_NAMES = {
-	EXPLAIN: "Shenma: Explain Code",
-	FIX: "Shenma: Fix Code",
-	FIX_LOGIC: "Shenma: Fix Logic",
-	IMPROVE: "Shenma: Improve Code",
-	ADD_TO_CONTEXT: "Shenma: Add to Context",
-	NEW_TASK: "Shenma: New Task",
+	EXPLAIN: "Costrict: Explain Code",
+	FIX: "Costrict: Fix Code",
+	FIX_LOGIC: "Costrict: Fix Logic",
+	IMPROVE: "Costrict: Improve Code",
+	ADD_TO_CONTEXT: "Costrict: Add to Context",
+	NEW_TASK: "Costrict: New Task",
 
 	// right menu and quick menu
-	ZGSM_EXPLAIN: "Shenma: Explain Code",
-	ZGSM_ADD_COMMENT: "Shenma: Add Comment",
-	ZGSM_CODE_REVIEW: "Shenma: Code Review",
-	ZGSM_ADD_DEBUG_CODE: "Shenma: Add Debug Code",
-	ZGSM_ADD_STRONG_CODE: "Shenma: Add Strong Code",
-	ZGSM_SIMPLIFY_CODE: "Shenma: Simplify Code",
-	ZGSM_PERFORMANCE: "Shenma: Performance Optimization",
-	ZGSM_ADD_TEST: "Shenma: Add Unit test",
+	ZGSM_EXPLAIN: "Costrict: Explain Code",
+	ZGSM_ADD_COMMENT: "Costrict: Add Comment",
+	ZGSM_CODE_REVIEW: "Costrict: Code Review",
+	ZGSM_ADD_DEBUG_CODE: "Costrict: Add Debug Code",
+	ZGSM_ADD_STRONG_CODE: "Costrict: Add Strong Code",
+	ZGSM_SIMPLIFY_CODE: "Costrict: Simplify Code",
+	ZGSM_PERFORMANCE: "Costrict: Performance Optimization",
+	ZGSM_ADD_TEST: "Costrict: Add Unit test",
 } as const
 
 export const COMMAND_IDS = {
@@ -38,19 +38,19 @@ export const COMMAND_IDS = {
 } as const
 
 export const ACTION_TITLES: Record<CodeActionName, string> = {
-	EXPLAIN: "Explain with Shenma",
-	FIX: "Fix with Shenma",
-	IMPROVE: "Improve with Shenma",
-	ADD_TO_CONTEXT: "Add to Shenma",
-	NEW_TASK: "New Shenma Task",
+	EXPLAIN: "Explain with Costrict",
+	FIX: "Fix with Costrict",
+	IMPROVE: "Improve with Costrict",
+	ADD_TO_CONTEXT: "Add to Costrict",
+	NEW_TASK: "New Costrict Task",
 
-	ZGSM_EXPLAIN: "Shenma: ZGSM_EXPLAIN",
-	ZGSM_ADD_COMMENT: "Shenma: ZGSM_ADD_COMMENT",
-	ZGSM_CODE_REVIEW: "Shenma: ZGSM_CODE_REVIEW",
-	ZGSM_ADD_DEBUG_CODE: "Shenma: ZGSM_ADD_DEBUG_CODE",
-	ZGSM_ADD_STRONG_CODE: "Shenma: ZGSM_ADD_STRONG_CODE",
-	ZGSM_SIMPLIFY_CODE: "Shenma: ZGSM_SIMPLIFY_CODE",
-	ZGSM_PERFORMANCE: "Shenma: ZGSM_PERFORMANCE",
+	ZGSM_EXPLAIN: "Costrict: ZGSM_EXPLAIN",
+	ZGSM_ADD_COMMENT: "Costrict: ZGSM_ADD_COMMENT",
+	ZGSM_CODE_REVIEW: "Costrict: ZGSM_CODE_REVIEW",
+	ZGSM_ADD_DEBUG_CODE: "Costrict: ZGSM_ADD_DEBUG_CODE",
+	ZGSM_ADD_STRONG_CODE: "Costrict: ZGSM_ADD_STRONG_CODE",
+	ZGSM_SIMPLIFY_CODE: "Costrict: ZGSM_SIMPLIFY_CODE",
+	ZGSM_PERFORMANCE: "Costrict: ZGSM_PERFORMANCE",
 } as const
 
 export class CodeActionProvider implements vscode.CodeActionProvider {

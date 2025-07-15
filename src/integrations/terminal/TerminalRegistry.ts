@@ -61,7 +61,7 @@ export class TerminalRegistry {
 						terminal.setActiveStream(stream)
 					} else {
 						console.error(
-							"[onDidStartTerminalShellExecution] Shell execution started, but not from a Shenma-registered terminal:",
+							"[onDidStartTerminalShellExecution] Shell execution started, but not from a Costrict-registered terminal:",
 							e,
 						)
 					}
@@ -86,7 +86,7 @@ export class TerminalRegistry {
 
 					if (!terminal) {
 						console.error(
-							"[onDidEndTerminalShellExecution] Shell execution ended, but not from a Shenma-registered terminal:",
+							"[onDidEndTerminalShellExecution] Shell execution ended, but not from a Costrict-registered terminal:",
 							e,
 						)
 

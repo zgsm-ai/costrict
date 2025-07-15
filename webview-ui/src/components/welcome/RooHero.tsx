@@ -9,7 +9,7 @@ const RooHero = () => {
 	return (
 		<div className="flex flex-col items-center justify-center pb-4 forced-color-adjust-none">
 			<div className="mx-auto">
-				<img src={imagesBaseUri + "/shenma.svg"} alt="Shenma logo" />
+				<img src={imagesBaseUri + "/shenma.svg"} alt="Costrict logo" />
 			</div>
 		</div>
 	)

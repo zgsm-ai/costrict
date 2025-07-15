@@ -17,7 +17,7 @@ export class Terminal extends BaseTerminal {
 
 		const env = Terminal.getEnv()
 		const iconPath = new vscode.ThemeIcon("rocket")
-		this.terminal = terminal ?? vscode.window.createTerminal({ cwd, name: "Shenma", iconPath, env })
+		this.terminal = terminal ?? vscode.window.createTerminal({ cwd, name: "Costrict", iconPath, env })
 
 		if (Terminal.getTerminalZdotdir()) {
 			ShellIntegrationManager.terminalTmpDirs.set(id, env.ZDOTDIR)

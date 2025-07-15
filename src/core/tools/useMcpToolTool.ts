@@ -50,7 +50,7 @@ export async function useMcpToolTool(
 					cline.recordToolError("use_mcp_tool")
 					await cline.say(
 						"error",
-						`Shenma tried to use ${tool_name} with an invalid JSON argument. Retrying...`,
+						`Costrict tried to use ${tool_name} with an invalid JSON argument. Retrying...`,
 					)
 
 					pushToolResult(

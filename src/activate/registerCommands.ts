@@ -28,7 +28,7 @@ interface UriSource {
 export function getVisibleProviderOrLog(outputChannel: vscode.OutputChannel): ClineProvider | undefined {
 	const visibleProvider = ClineProvider.getVisibleInstance()
 	if (!visibleProvider) {
-		outputChannel.appendLine("Cannot find any visible Shenma instances.")
+		outputChannel.appendLine("Cannot find any visible Costrict instances.")
 		return undefined
 	}
 	return visibleProvider
@@ -410,7 +410,7 @@ export const openClineInNewTab = async ({ context, outputChannel }: Omit<Registe
 
 	const targetCol = hasVisibleEditors ? Math.max(lastCol + 1, 1) : vscode.ViewColumn.Two
 
-	const newPanel = vscode.window.createWebviewPanel(ClineProvider.tabPanelId, "SHENMA", targetCol, {
+	const newPanel = vscode.window.createWebviewPanel(ClineProvider.tabPanelId, "COSTRICT", targetCol, {
 		enableScripts: true,
 		retainContextWhenHidden: true,
 		localResourceRoots: [context.extensionUri],

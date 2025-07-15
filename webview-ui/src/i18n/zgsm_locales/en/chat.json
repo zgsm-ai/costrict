@@ -1,67 +1,67 @@
 {
-	"greeting": "What can Shenma do for you?",
+	"greeting": "What can Costrict do for you?",
 	"aboutMe": "Thanks to the latest breakthroughs in agentic coding capabilities, I can handle complex software development tasks step-by-step. With tools that let me create & edit files, explore complex projects, use the browser, and execute terminal commands (after you grant permission), I can assist you in ways that go beyond code completion or tech support. I can even use MCP to create new tools and extend my own capabilities.",
 	"instructions": {
-		"wantsToFetch": "Shenma wants to fetch detailed instructions to assist with the current task"
+		"wantsToFetch": "Costrict wants to fetch detailed instructions to assist with the current task"
 	},
 	"fileOperations": {
-		"wantsToRead": "Shenma wants to read this file:",
-		"wantsToReadOutsideWorkspace": "Shenma wants to read this file outside of the workspace:",
-		"didRead": "Shenma read this file:",
-		"wantsToEdit": "Shenma wants to edit this file:",
-		"wantsToEditOutsideWorkspace": "Shenma wants to edit this file outside of the workspace:",
-		"wantsToCreate": "Shenma wants to create a new file:",
-		"wantsToSearchReplace": "Shenma wants to search and replace in this file:",
-		"didSearchReplace": "Shenma performed search and replace on this file:",
-		"wantsToInsert": "Shenma wants to insert content into this file:",
-		"wantsToInsertWithLineNumber": "Shenma wants to insert content into this file at line {{lineNumber}}:",
-		"wantsToInsertAtEnd": "Shenma wants to append content to the end of this file:"
+		"wantsToRead": "Costrict wants to read this file:",
+		"wantsToReadOutsideWorkspace": "Costrict wants to read this file outside of the workspace:",
+		"didRead": "Costrict read this file:",
+		"wantsToEdit": "Costrict wants to edit this file:",
+		"wantsToEditOutsideWorkspace": "Costrict wants to edit this file outside of the workspace:",
+		"wantsToCreate": "Costrict wants to create a new file:",
+		"wantsToSearchReplace": "Costrict wants to search and replace in this file:",
+		"didSearchReplace": "Costrict performed search and replace on this file:",
+		"wantsToInsert": "Costrict wants to insert content into this file:",
+		"wantsToInsertWithLineNumber": "Costrict wants to insert content into this file at line {{lineNumber}}:",
+		"wantsToInsertAtEnd": "Costrict wants to append content to the end of this file:"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "Shenma wants to view the top level files in this directory:",
-		"didViewTopLevel": "Shenma viewed the top level files in this directory:",
-		"wantsToViewRecursive": "Shenma wants to recursively view all files in this directory:",
-		"didViewRecursive": "Shenma recursively viewed all files in this directory:",
-		"wantsToViewDefinitions": "Shenma wants to view source code definition names used in this directory:",
-		"didViewDefinitions": "Shenma viewed source code definition names used in this directory:",
-		"wantsToSearch": "Shenma wants to search this directory for <code>{{regex}}</code>:",
-		"didSearch": "Shenma searched this directory for <code>{{regex}}</code>:"
+		"wantsToViewTopLevel": "Costrict wants to view the top level files in this directory:",
+		"didViewTopLevel": "Costrict viewed the top level files in this directory:",
+		"wantsToViewRecursive": "Costrict wants to recursively view all files in this directory:",
+		"didViewRecursive": "Costrict recursively viewed all files in this directory:",
+		"wantsToViewDefinitions": "Costrict wants to view source code definition names used in this directory:",
+		"didViewDefinitions": "Costrict viewed source code definition names used in this directory:",
+		"wantsToSearch": "Costrict wants to search this directory for <code>{{regex}}</code>:",
+		"didSearch": "Costrict searched this directory for <code>{{regex}}</code>:"
 	},
 	"mcp": {
-		"wantsToUseTool": "Shenma wants to use a tool on the {{serverName}} MCP server:",
-		"wantsToAccessResource": "Shenma wants to access a resource on the {{serverName}} MCP server:"
+		"wantsToUseTool": "Costrict wants to use a tool on the {{serverName}} MCP server:",
+		"wantsToAccessResource": "Costrict wants to access a resource on the {{serverName}} MCP server:"
 	},
 	"modes": {
-		"wantsToSwitch": "Shenma wants to switch to {{mode}} mode",
-		"wantsToSwitchWithReason": "Shenma wants to switch to {{mode}} mode because: {{reason}}",
-		"didSwitch": "Shenma switched to {{mode}} mode",
-		"didSwitchWithReason": "Shenma switched to {{mode}} mode because: {{reason}}"
+		"wantsToSwitch": "Costrict wants to switch to {{mode}} mode",
+		"wantsToSwitchWithReason": "Costrict wants to switch to {{mode}} mode because: {{reason}}",
+		"didSwitch": "Costrict switched to {{mode}} mode",
+		"didSwitchWithReason": "Costrict switched to {{mode}} mode because: {{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "Shenma wants to create a new subtask in {{mode}} mode:",
-		"wantsToFinish": "Shenma wants to finish this subtask"
+		"wantsToCreate": "Costrict wants to create a new subtask in {{mode}} mode:",
+		"wantsToFinish": "Costrict wants to finish this subtask"
 	},
 	"questions": {
-		"hasQuestion": "Shenma has a question:"
+		"hasQuestion": "Costrict has a question:"
 	},
-	"troubleMessage": "Shenma is having trouble...",
+	"troubleMessage": "Costrict is having trouble...",
 	"browser": {
-		"rooWantsToUse": "Shenma wants to use the browser:"
+		"rooWantsToUse": "Costrict wants to use the browser:"
 	},
 	"autoApprove": {
-		"description": "Auto-approve allows Shenma to perform actions without asking for permission. Only enable for actions you fully trust. More detailed configuration available in <settingsLink>Settings</settingsLink>."
+		"description": "Auto-approve allows Costrict to perform actions without asking for permission. Only enable for actions you fully trust. More detailed configuration available in <settingsLink>Settings</settingsLink>."
 	},
 	"announcement": {
-		"title": "🎉 Shenma {{version}} Released",
-		"description": "Shenma {{version}} brings new features and improvements based on your feedback."
+		"title": "🎉 Costrict {{version}} Released",
+		"description": "Costrict {{version}} brings new features and improvements based on your feedback."
 	},
 	"onboarding": "<strong>The task list in this workspace is empty. </strong> Please enter a task below to get started.",
 	"ask": {
 		"autoApprovedRequestLimitReached": {
-			"description": "Shenma has reached the auto-approval limit of {{count}} API requests. Would you like to reset the count and continue the task?"
+			"description": "Costrict has reached the auto-approval limit of {{count}} API requests. Would you like to reset the count and continue the task?"
 		}
 	},
 	"shellIntegration": {
-		"description": "This command is running without shell integration. You can disable this warning in <settingsLink>Shenma Settings</settingsLink> <strong>Terminal</strong>, or troubleshoot terminal integration via the link below."
+		"description": "This command is running without shell integration. You can disable this warning in <settingsLink>Costrict Settings</settingsLink> <strong>Terminal</strong>, or troubleshoot terminal integration via the link below."
 	}
 }

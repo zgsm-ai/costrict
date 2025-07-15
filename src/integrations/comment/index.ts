@@ -33,7 +33,10 @@ export class CommentService {
 
 		try {
 			// Create CommentController
-			this.commentController = vscode.comments.createCommentController("shenma-code-review", "Shenma Code Review")
+			this.commentController = vscode.comments.createCommentController(
+				"costrict-code-review",
+				"costrict Code Review",
+			)
 
 			// Configure commentingRangeProvider
 			this.commentController.commentingRangeProvider = {
@@ -216,7 +219,7 @@ export class CommentService {
 	 * Configure comment thread properties
 	 */
 	private configureCommentThread(thread: vscode.CommentThread): void {
-		thread.contextValue = "ShenmaCodeReview"
+		thread.contextValue = "CostrictCodeReview"
 		thread.collapsibleState = vscode.CommentThreadCollapsibleState.Expanded
 		thread.canReply = false
 		thread.label = "Code Review 详情"

@@ -59,7 +59,7 @@
 		"authenticationFailed": "Authentication failed"
 	},
 	"solution": {
-		"401": "1. Click the plugin gear icon ⚙️ -> Select provider 'Shenma' -> Click [Re-login]\n2. Contact the administrator",
+		"401": "1. Click the plugin gear icon ⚙️ -> Select provider 'Costrict' -> Click [Re-login]\n2. Contact the administrator",
 		"400": "1. End the current task and start a new one\n2. Try a different model\n3. Contact the administrator",
 		"403": "1. Check permission settings\n2. Try a different model\n3. Contact the administrator",
 		"404": "1. Check if the request path or resource exists\n2. Contact the administrator",

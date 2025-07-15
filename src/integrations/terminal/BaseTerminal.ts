@@ -50,7 +50,7 @@ export abstract class BaseTerminal implements RooTerminal {
 				this.running = false
 
 				console.warn(
-					`[Terminal ${this.provider}/${this.id}] process is undefined, so cannot set terminal stream (probably user-initiated non-Shenma command)`,
+					`[Terminal ${this.provider}/${this.id}] process is undefined, so cannot set terminal stream (probably user-initiated non-Costrict command)`,
 				)
 
 				return

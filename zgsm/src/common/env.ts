@@ -12,8 +12,8 @@ import { getLocalIP } from "./util"
 import { Package } from "../../../src/schemas"
 
 const baseEnvSetting = {
-	baseUrl: "https://zgsm.sangfor.com", // Base URL of Shenma backend
-	zgsmSite: "https://zgsm.ai", // Portal site of Shenma
+	baseUrl: "https://zgsm.sangfor.com", // Base URL of Costrict backend
+	zgsmSite: "https://zgsm.ai", // Portal site of Costrict
 	realmName: "gw", // Authentication: Keycloak tenant name
 	clientId: "vscode", // Authentication: Client ID
 	clientSecret: "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l", // Authentication: Client secret
@@ -113,7 +113,7 @@ export function initEnv() {
  * Update baseUrl according to user configuration content, use default data if user has not configured
  */
 // export function updateEnv() {
-// 	// const config = vscode.workspace.getConfiguration(configShenmaName)
+// 	// const config = vscode.workspace.getConfiguration(configCostrictName)
 // 	// let baseUrl: string | undefined = config.get("baseUrl")
 // 	// if (!baseUrl) {
 // 	// 	baseUrl = config.get("chatServer")

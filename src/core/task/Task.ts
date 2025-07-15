@@ -361,7 +361,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 			await this.providerRef.deref()?.updateTaskHistory(historyItem)
 		} catch (error) {
-			console.error("Failed to save Shenma messages:", error)
+			console.error("Failed to save Costrict messages:", error)
 		}
 	}
 
@@ -383,7 +383,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		// simply removes the reference to this instance, but the instance is
 		// still alive until this promise resolves or rejects.)
 		if (this.abort) {
-			throw new Error(`[Shenma#ask] task ${this.taskId}.${this.instanceId} aborted`)
+			throw new Error(`[Costrict#ask] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 
 		let askTs: number
@@ -536,7 +536,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		contextCondense?: ContextCondense,
 	): Promise<undefined> {
 		if (this.abort) {
-			throw new Error(`[Shenma#say] task ${this.taskId}.${this.instanceId} aborted`)
+			throw new Error(`[Costrict#say] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 
 		if (partial !== undefined) {
@@ -629,7 +629,7 @@ export class Task extends EventEmitter<ClineEvents> {
 	async sayAndCreateMissingParamError(toolName: ToolName, paramName: string, relPath?: string) {
 		await this.say(
 			"error",
-			`Shenma tried to use ${toolName}${
+			`Costrict tried to use ${toolName}${
 				relPath ? ` for '${relPath.toPosix()}'` : ""
 			} without value for required parameter '${paramName}'. Retrying...`,
 		)
@@ -1017,7 +1017,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		includeFileDetails: boolean = false,
 	): Promise<boolean> {
 		if (this.abort) {
-			throw new Error(`[Shenma#recursivelyMakeRooRequests] task ${this.taskId}.${this.instanceId} aborted`)
+			throw new Error(`[Costrict#recursivelyMakeRooRequests] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 
 		if (this.consecutiveMistakeCount >= this.consecutiveMistakeLimit) {
@@ -1025,7 +1025,7 @@ export class Task extends EventEmitter<ClineEvents> {
 				"mistake_limit_reached",
 				this.api.getModel().id.includes("claude")
 					? `This may indicate a failure in his thought process or inability to use a tool properly, which can be mitigated with some user guidance (e.g. "Try breaking down the task into smaller steps").`
-					: "Shenma uses complex prompts and iterative task execution that may be challenging for less capable models. For best results, it's recommended to use Claude 3.7 Sonnet for its advanced agentic coding capabilities.",
+					: "Costrict uses complex prompts and iterative task execution that may be challenging for less capable models. For best results, it's recommended to use Claude 3.7 Sonnet for its advanced agentic coding capabilities.",
 			)
 
 			if (response === "messageResponse") {
@@ -1319,7 +1319,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 			// Need to call here in case the stream was aborted.
 			if (this.abort || this.abandoned) {
-				throw new Error(`[Shenma#recursivelyMakeRooRequests] task ${this.taskId}.${this.instanceId} aborted`)
+				throw new Error(`[Costrict#recursivelyMakeRooRequests] task ${this.taskId}.${this.instanceId} aborted`)
 			}
 
 			this.didCompleteReadingStream = true
@@ -1771,7 +1771,9 @@ ${t("apiErrors:solution.quota-check.checkRemainingQuota")} “ <mark hash=${hash
 `
 				}
 
-				this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
+				this.providerRef
+					.deref()
+					?.log(`[Costrict#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
 
 				return `${t("apiErrors:request.error_details")}\n\n${errmsg}${solution}`
 			}
@@ -1779,7 +1781,7 @@ ${t("apiErrors:solution.quota-check.checkRemainingQuota")} “ <mark hash=${hash
 
 		const _err = defaultApiErrors[status] || unknownError
 
-		this.providerRef.deref()?.log(`[Shenma#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
+		this.providerRef.deref()?.log(`[Costrict#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
 
 		return `${t("apiErrors:request.error_details")}\n\n${_err.status}\n\n${t("apiErrors:request.solution")}\n\n${_err.solution}`
 	}
@@ -1790,7 +1792,7 @@ ${t("apiErrors:solution.quota-check.checkRemainingQuota")} “ <mark hash=${hash
 			this.providerRef
 				.deref()
 				?.log(
-					`[Shenma#apiErrors] task ${this.taskId}.${this.instanceId} SerializeError Raw Failed: ${message || rawError}\n\n (todo code: ${code})`,
+					`[Costrict#apiErrors] task ${this.taskId}.${this.instanceId} SerializeError Raw Failed: ${message || rawError}\n\n (todo code: ${code})`,
 				)
 
 			return { message, code }

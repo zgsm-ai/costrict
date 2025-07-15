@@ -1,11 +1,11 @@
-# Shenma Deployment Guide
+# Costrict Deployment Guide
 
-To help you deploy Shenma more efficiently, this document provides a clear installation manual. You can choose between the following two deployment methods:
+To help you deploy Costrict more efficiently, this document provides a clear installation manual. You can choose between the following two deployment methods:
 
 1. [Install the Extension](#install-the-extension)
 2. [Install the Extension and Deploy Backend Services](#install-the-extension-and-deploy-backend-services)
 
-**Method 1** is suitable for new users to experience Shenma quickly. It works out-of-the-box but uses official server resources, which may limit performance due to resource constraints.
+**Method 1** is suitable for new users to experience Costrict quickly. It works out-of-the-box but uses official server resources, which may limit performance due to resource constraints.
 
 **Method 2** is recommended for long-term use with optimal performance. We provide a one-click installation script requiring minimal server resources.
 
@@ -18,11 +18,11 @@ To help you deploy Shenma more efficiently, this document provides a clear insta
 1. Client has internet access.
 2. Client: VS Code (version > v1.70.2).
 
-> Currently, the Shenma extension is only available for VS Code. Support for JetBrains IDEs will be added later.
+> Currently, the Costrict extension is only available for VS Code. Support for JetBrains IDEs will be added later.
 
 ### Installation Steps
 
-1. Search for "Shenma" in the VS Code Marketplace and click **Install**.
+1. Search for "Costrict" in the VS Code Marketplace and click **Install**.
 
     ![alt text](/assets/images/install/extensions.png)
 
@@ -35,7 +35,7 @@ To help you deploy Shenma more efficiently, this document provides a clear insta
 
     ![alt text](/assets/images/install/login_web.png)
 
-After logging in, you can start using Shenma.
+After logging in, you can start using Costrict.
 
 ---
 
@@ -88,4 +88,4 @@ Username: root
 
 Password: 123456
 
-You can now start experiencing Shenma.
+You can now start experiencing Costrict.

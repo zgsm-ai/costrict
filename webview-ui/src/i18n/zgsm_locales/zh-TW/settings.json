@@ -1,41 +1,41 @@
 {
 	"sections": {
-		"about": "關於諸葛神碼",
+		"about": "關於Costrict",
 		"credit": {
 			"title": "Credit 用量管理",
-			"description": "諸葛神碼官方提供多種高級模型，不同模型每次請求所消耗的 Credit 不同，當 Credit 消耗完畢後，該模型將無法使用。",
+			"description": "Costrict官方提供多種高級模型，不同模型每次請求所消耗的 Credit 不同，當 Credit 消耗完畢後，該模型將無法使用。",
 			"homepage": "查看 Credit 用量"
 		}
 	},
 	"autoApprove": {
-		"description": "允許諸葛神碼自動執行操作而無需核准。只有在您完全信任AI並了解相關安全風險的情況下才啟用這些設定。",
+		"description": "允許Costrict自動執行操作而無需核准。只有在您完全信任AI並了解相關安全風險的情況下才啟用這些設定。",
 		"readOnly": {
-			"description": "啟用後，諸葛神碼將自動檢視目錄內容和讀取檔案，無需您點選核准按鈕。",
+			"description": "啟用後，Costrict將自動檢視目錄內容和讀取檔案，無需您點選核准按鈕。",
 			"outsideWorkspace": {
-				"description": "允許諸葛神碼在無需核准的情況下讀取目前工作區之外的檔案。"
+				"description": "允許Costrict在無需核准的情況下讀取目前工作區之外的檔案。"
 			}
 		},
 		"write": {
 			"outsideWorkspace": {
-				"description": "允許諸葛神碼在無需核准的情況下建立和編輯目前工作區之外的檔案。"
+				"description": "允許Costrict在無需核准的情況下建立和編輯目前工作區之外的檔案。"
 			}
 		}
 	},
 	"providers": {
-		"zgsm": "諸葛神碼",
-		"zgsmBaseUrl": "諸葛神碼 Base Url",
-		"zgsmApiKey": "諸葛神碼 API 密鑰",
-		"getZgsmApiKey": "登入諸葛神碼",
+		"zgsm": "Costrict",
+		"zgsmBaseUrl": "Costrict Base Url",
+		"zgsmApiKey": "Costrict API 密鑰",
+		"getZgsmApiKey": "登入Costrict",
 		"getZgsmApiKeyAgain": "重新登入",
 		"zgsmDefaultBaseUrl": "預設: {{zgsmBaseUrl}}",
 		"lmStudio": {
-			"description": "LM Studio允許您在本地電腦上運行模型。有關如何入門的說明，請參閱他們的<a>快速入門指南</a>。您還需要啟動LM Studio的<b>本地伺服器</b>功能才能在此擴展中使用它。<span>注意：</span>諸葛神碼使用複雜的提示，最適合與Claude模型配合使用。功能較弱的模型可能無法按預期工作。"
+			"description": "LM Studio允許您在本地電腦上運行模型。有關如何入門的說明，請參閱他們的<a>快速入門指南</a>。您還需要啟動LM Studio的<b>本地伺服器</b>功能才能在此擴展中使用它。<span>注意：</span>Costrict使用複雜的提示，最適合與Claude模型配合使用。功能較弱的模型可能無法按預期工作。"
 		},
 		"ollama": {
-			"warning": "注意：諸葛神碼使用複雜的提示，最適合與Claude模型配合使用。功能較弱的模型可能無法按預期工作。"
+			"warning": "注意：Costrict使用複雜的提示，最適合與Claude模型配合使用。功能較弱的模型可能無法按預期工作。"
 		},
 		"customModel": {
-			"capabilities": "配置您的自定義OpenAI兼容模型的功能和定價。在指定模型功能時要小心，因為它們會影響諸葛神碼的表現。"
+			"capabilities": "配置您的自定義OpenAI兼容模型的功能和定價。在指定模型功能時要小心，因為它們會影響Costrict的表現。"
 		},
 		"useZgsmCustomConfig": "使用自定義配置",
 		"geminiCli": {
@@ -44,59 +44,59 @@
 	},
 	"browser": {
 		"enable": {
-			"description": "啟用後，諸葛神碼可以在使用支持電腦使用的模型時使用瀏覽器與網站交互。"
+			"description": "啟用後，Costrict可以在使用支持電腦使用的模型時使用瀏覽器與網站交互。"
 		}
 	},
 	"checkpoints": {
 		"enable": {
-			"description": "啟用後，諸葛神碼將在任務執行期間自動創建檢查點，便於查看更改或恢復到早期狀態。"
+			"description": "啟用後，Costrict將在任務執行期間自動創建檢查點，便於查看更改或恢復到早期狀態。"
 		}
 	},
 	"notifications": {
 		"sound": {
-			"description": "啟用後，諸葛神碼將為通知和事件播放音效。"
+			"description": "啟用後，Costrict將為通知和事件播放音效。"
 		},
 		"tts": {
-			"description": "啟用後，諸葛神碼將使用文本轉語音功能朗讀其響應。"
+			"description": "啟用後，Costrict將使用文本轉語音功能朗讀其響應。"
 		}
 	},
 	"contextManagement": {
 		"maxReadFile": {
-			"description": "當模型省略開始/結束值時，諸葛神碼讀取此行數。如果此數字小於檔案總數，諸葛神碼會生成代碼定義的行號索引。特殊情況：-1指示諸葛神碼讀取整個檔案（不建立索引），0指示它不讀取任何行，僅為最小上下文提供行索引。較低的值可最小化初始上下文使用，從而實現精確的後續行範圍讀取。明確的開始/結束請求不受此設定限制。"
+			"description": "當模型省略開始/結束值時，Costrict讀取此行數。如果此數字小於檔案總數，Costrict會生成代碼定義的行號索引。特殊情況：-1指示Costrict讀取整個檔案（不建立索引），0指示它不讀取任何行，僅為最小上下文提供行索引。較低的值可最小化初始上下文使用，從而實現精確的後續行範圍讀取。明確的開始/結束請求不受此設定限制。"
 		}
 	},
 	"advanced": {
 		"diff": {
-			"description": "啟用後，諸葛神碼將能夠更快地編輯檔案，並自動拒絕截斷的完整檔案寫入。最適合與最新的Claude 3.7 Sonnet模型配合使用。"
+			"description": "啟用後，Costrict將能夠更快地編輯檔案，並自動拒絕截斷的完整檔案寫入。最適合與最新的Claude 3.7 Sonnet模型配合使用。"
 		}
 	},
 	"experimental": {
 		"autoCondenseContextPercent": {
-			"description": "當上下文窗口達到此閾值時，諸葛神碼將自動壓縮它。"
+			"description": "當上下文窗口達到此閾值時，Costrict將自動壓縮它。"
 		},
 		"SEARCH_AND_REPLACE": {
-			"description": "啟用實驗性的搜索和替換工具，允許諸葛神碼在一個請求中替換搜索詞的多實例。"
+			"description": "啟用實驗性的搜索和替換工具，允許Costrict在一個請求中替換搜索詞的多實例。"
 		},
 		"INSERT_BLOCK": {
-			"description": "啟用實驗性的插入內容工具，允許諸葛神碼在特定行號插入內容，無需創建差異。"
+			"description": "啟用實驗性的插入內容工具，允許Costrict在特定行號插入內容，無需創建差異。"
 		},
 		"POWER_STEERING": {
-			"description": "啟用後，諸葛神碼會更頻繁地提醒模型其當前模式定義的細節。這將導致更嚴格地遵守角色定義和自定義指令，但每條消息會使用更多令牌。"
+			"description": "啟用後，Costrict會更頻繁地提醒模型其當前模式定義的細節。這將導致更嚴格地遵守角色定義和自定義指令，但每條消息會使用更多令牌。"
 		},
 		"MULTI_SEARCH_AND_REPLACE": {
-			"description": "啟用後，諸葛神碼將使用多塊差異工具。這將嘗試在一個請求中更新檔案中的多個代碼塊。"
+			"description": "啟用後，Costrict將使用多塊差異工具。這將嘗試在一個請求中更新檔案中的多個代碼塊。"
 		}
 	},
 	"modelPicker": {
-		"automaticFetch": "擴展會自動獲取<serviceLink>{{serviceName}}</serviceLink>上可用的最新模型列表。如果您不確定選擇哪個模型，諸葛神碼最適合與<defaultModelLink>{{defaultModelId}}</defaultModelLink>配合使用。您也可以嘗試搜索\"免費\"以查找當前可用的免費選項。"
+		"automaticFetch": "擴展會自動獲取<serviceLink>{{serviceName}}</serviceLink>上可用的最新模型列表。如果您不確定選擇哪個模型，Costrict最適合與<defaultModelLink>{{defaultModelId}}</defaultModelLink>配合使用。您也可以嘗試搜索\"免費\"以查找當前可用的免費選項。"
 	},
 	"footer": {
 		"feedback": "如果您有任何問題或反饋，請隨時在<zgsmGithubLink>github.com/zgsm-ai/costrict</zgsmGithubLink>上提出問題",
 		"telemetry": {
-			"description": "通過發送匿名使用數據和錯誤報告來幫助改進諸葛神碼。不會發送代碼、提示或個人信息。有關更多詳情，請參閱我們的隱私政策。"
+			"description": "通過發送匿名使用數據和錯誤報告來幫助改進Costrict。不會發送代碼、提示或個人信息。有關更多詳情，請參閱我們的隱私政策。"
 		}
 	},
 	"promptCaching": {
-		"description": "選中後，諸葛神碼將不會為此模型使用提示詞快取。"
+		"description": "選中後，Costrict將不會為此模型使用提示詞快取。"
 	}
 }

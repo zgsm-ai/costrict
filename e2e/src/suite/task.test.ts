@@ -26,9 +26,9 @@ suite("zgsm Task", () => {
 		assert.ok(
 			!!messages.find(
 				({ say, text }) =>
-					(say === "completion_result" || say === "text") && text?.includes("My name is shenma"),
+					(say === "completion_result" || say === "text") && text?.includes("My name is Costrict"),
 			),
-			`Completion should include "My name is shenma"`,
+			`Completion should include "My name is Costrict"`,
 		)
 	})
 })
