@@ -63,7 +63,7 @@
 - Fix known issues
 
 ## [1.4.2]
-- Update zgsm provider and error handling improvements
+- Update Costrict provider and error handling improvements
 - Update vscode engine requirement to ^1.86.2
 
 ## [1.4.1]

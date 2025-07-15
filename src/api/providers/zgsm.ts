@@ -410,7 +410,7 @@ export async function getZgsmModels(
 	const modelsUrl = `${baseUrl}/ai-gateway/api/v1/models`
 	try {
 		if (!canParseURL(baseUrl)) {
-			throw new Error(`Invalid ZGSM base URL: ${baseUrl}`)
+			throw new Error(`Invalid Costrict base URL: ${baseUrl}`)
 		}
 
 		const config: AxiosRequestConfig = {}
@@ -434,7 +434,7 @@ export async function getZgsmModels(
 		modelsCache = new WeakRef([...new Set<string>(modelsArray)])
 		defaultModelCache = modelsArray[0]
 	} catch (error) {
-		console.error(`[${new Date().toLocaleString()}] Error fetching ZGSM models`, modelsUrl, error)
+		console.error(`[${new Date().toLocaleString()}] Error fetching Costrict models`, modelsUrl, error)
 	} finally {
 		return [modelsCache.deref() || [], defaultModelCache]
 	}

@@ -19,7 +19,7 @@ export function getZgsmAuthUrl(stateId: string, apiConfiguration?: ApiConfigurat
 }
 
 /**
- * Generate ZGSM authentication URL
+ * Generate Costrict authentication URL
  * @param uriScheme URI scheme
  * @returns Authentication URL
  */

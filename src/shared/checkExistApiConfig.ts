@@ -5,7 +5,7 @@ export function checkExistKey(config: ProviderSettings | undefined) {
 		return false
 	}
 
-	// Special case for human-relay and fake-ai and zgsm providers which don't need any configuration.
+	// Special case for human-relay and fake-ai and Costrict providers which don't need any configuration.
 	if (config.apiProvider && ["human-relay", "fake-ai", "gemini-cli"].includes(config.apiProvider)) {
 		return true
 	}

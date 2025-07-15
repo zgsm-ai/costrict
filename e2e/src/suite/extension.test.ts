@@ -3,7 +3,7 @@ import * as vscode from "vscode"
 
 import { Package } from "@roo-code/types"
 
-suite("zgsm Extension", () => {
+suite("Costrict Extension", () => {
 	test("Commands should be registered", async () => {
 		const expectedCommands = [
 			"zgsm.plusButtonClicked",

@@ -4,7 +4,7 @@ import type { ClineMessage } from "@roo-code/types"
 
 import { waitUntilCompleted } from "./utils"
 
-suite("zgsm Task", () => {
+suite("Costrict Task", () => {
 	test("Should handle prompt and response correctly", async () => {
 		const api = globalThis.api
 
