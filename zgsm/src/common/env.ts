@@ -13,7 +13,7 @@ import { Package } from "../../../src/schemas"
 
 const baseEnvSetting = {
 	baseUrl: "https://zgsm.sangfor.com", // Base URL of Costrict backend
-	zgsmSite: "https://zgsm.ai", // Portal site of Costrict
+	zgsmSite: "https://costrict.ai", // Portal site of Costrict
 	realmName: "gw", // Authentication: Keycloak tenant name
 	clientId: "vscode", // Authentication: Client ID
 	clientSecret: "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l", // Authentication: Client secret

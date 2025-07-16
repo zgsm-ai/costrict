@@ -150,6 +150,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					if (message.text) {
 						setInputValue(message.text)
 					}
+
+					setIsEnhancingPrompt(false)
 				} else if (message.type === "commitSearchResults") {
 					const commits = message.commits.map((commit: any) => ({
 						type: ContextMenuOptionType.Git,
@@ -185,6 +187,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const [justDeletedSpaceAfterMention, setJustDeletedSpaceAfterMention] = useState(false)
 		const [intendedCursorPosition, setIntendedCursorPosition] = useState<number | null>(null)
 		const contextMenuContainerRef = useRef<HTMLDivElement>(null)
+		const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false)
 		const [isFocused, setIsFocused] = useState(false)
 		const [inputMapArr, setInputMapArr] = useState<InputMapArrayProps[]>([])
 
@@ -208,6 +211,21 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				vscode.postMessage(message)
 			}
 		}, [selectedType, searchQuery])
+
+		const handleEnhancePrompt = useCallback(() => {
+			if (sendingDisabled) {
+				return
+			}
+
+			const trimmedInput = inputValue.trim()
+
+			if (trimmedInput) {
+				setIsEnhancingPrompt(true)
+				vscode.postMessage({ type: "enhancePrompt" as const, text: trimmedInput })
+			} else {
+				setInputValue(t("chat:enhancePromptDescription"))
+			}
+		}, [inputValue, sendingDisabled, setInputValue, t])
 
 		const queryItems = useMemo(() => {
 			return [
@@ -1371,6 +1389,13 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									</div>
 
 									<div className={cn("flex", "items-center", "gap-0.5", "shrink-0")}>
+										<IconButton
+											iconClass={isEnhancingPrompt ? "codicon-loading" : "codicon-sparkle"}
+											title={t("chat:enhancePrompt")}
+											disabled={sendingDisabled}
+											isLoading={isEnhancingPrompt}
+											onClick={handleEnhancePrompt}
+										/>
 										<IconButton
 											iconClass="codicon-device-camera"
 											title={t("chat:addImages")}
