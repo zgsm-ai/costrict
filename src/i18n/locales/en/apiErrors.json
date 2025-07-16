@@ -69,7 +69,9 @@
 		"503": "1. Please try again later\n2. Try switching models\n3. Contact the administrator",
 		"504": "1. Please try again later\n2. Try switching models\n3. Contact the administrator",
 		"ai-gateway": {
-			"star_required": "Please go to https://github.com/zgsm-ai/costrict and star the project before continuing"
+			"star_required": "Please go to https://github.com/zgsm-ai/costrict and star the project before continuing",
+			"pleaseStarProject": "Please star the project first",
+			"howToStar": "How to star"
 		},
 		"quota-check": {
 			"insufficientCredits": "Insufficient remaining credit quota",
