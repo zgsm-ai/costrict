@@ -1,5 +1,10 @@
 # Costrict Change Log
 
+## [1.5.7]
+- Project renamed to `costrict`
+- Optimized CodeReview
+- Code optimization
+
 ## [1.5.6]
 - Update Error Code
 
