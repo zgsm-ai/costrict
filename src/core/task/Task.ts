@@ -1750,22 +1750,31 @@ export class Task extends EventEmitter<ClineEvents> {
 					error.status = status = 401
 				} else if (
 					[
-						"ai-gateway.star_required",
+						// "ai-gateway.star_required",
 						"chat-rag.context_length_exceeded",
 						"chat-rag.internal_error",
 					].includes(code)
 				) {
-					solution = `\n\n${t("apiErrors:request.solution")}\n\n${t(`apiErrors.solution.${code}`)}`
+					solution = `\n\n${t("apiErrors:request.solution")}\n\n${t(`apiErrors:solution.${code}`)}`
 					if (code === "chat-rag.internal_error") {
 						error.status = status = 500
 					} else if (code === "chat-rag.context_length_exceeded") {
 						error.status = status = 429
 					}
-				} else if (code === "quota-check.insufficient_quota") {
+				} else if (code === "quota-check.insufficient_quota" || code === "ai-gateway.star_required") {
 					let hash = await this.hashToken(this.apiConfiguration.zgsmApiKey || "")
 
+					const isQuota = code === "quota-check.insufficient_quota"
+
+					const solution1 = isQuota
+						? t("apiErrors:solution.quota-check.insufficientCredits")
+						: t("apiErrors:solution.ai-gateway.pleaseStarProject")
+					const solution2 = isQuota
+						? t("apiErrors:solution.quota-check.quotaAcquisition")
+						: t("apiErrors:solution.ai-gateway.howToStar")
+
 					solution = `\n\n
-<span style="color:#E64545">${t("apiErrors:solution.quota-check.insufficientCredits")}</span>  <mark hash=${hash} type="GUIDE">${t("apiErrors:solution.quota-check.quotaAcquisition")}</mark>
+<span style="color:#E64545">${solution1}</span>  <mark hash=${hash} type="GUIDE">${solution2}</mark>
 
 ${t("apiErrors:solution.quota-check.checkRemainingQuota")} “ <mark hash=${hash} type="CREDIT">${t("apiErrors:solution.quota-check.creditUsageStats")}</mark> ” ${t("apiErrors:solution.quota-check.viewDetails")}
 `
