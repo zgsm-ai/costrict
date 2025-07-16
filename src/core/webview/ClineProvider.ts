@@ -1692,11 +1692,11 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 	public async startReviewTask(targets: ReviewTarget[], isReviewRepo: boolean = false) {
 		const visibleProvider = await ClineProvider.getInstance()
 		const codebaseSyncService = ZgsmCodeBaseSyncService.getInstance()
+		const filePaths = targets.map((target) => path.join(this.cwd, target.file_path))
 		if (visibleProvider) {
 			this.codeReviewService.setProvider(visibleProvider)
 			if (!isReviewRepo) {
 				try {
-					const filePaths = targets.map((target) => path.join(this.cwd, target.file_path))
 					const success = await vscode.window.withProgress(
 						{
 							location: vscode.ProgressLocation.Notification,
@@ -1728,7 +1728,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 				message: t("common:review.tip.codebase_sync"),
 			})
 			try {
-				const { success, code } = await codebaseSyncService.syncCodebase()
+				const { success, code } = await codebaseSyncService.syncCodebase(isReviewRepo ? [] : filePaths)
 				if (success) {
 					await this.codeReviewService.startReviewTask(targets)
 				} else {

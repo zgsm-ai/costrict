@@ -59,7 +59,7 @@ export interface RegisterSyncResponse {
 	message: string
 }
 
-/** Sync codebase request */
+/** Sync project request */
 export interface SyncCodebaseRequest {
 	/** Client ID */
 	clientId: string
@@ -67,6 +67,8 @@ export interface SyncCodebaseRequest {
 	workspacePath: string
 	/** Workspace name */
 	workspaceName: string
+	/** File paths to check */
+	filePaths: string[]
 }
 
 /** Sync project response */
@@ -465,7 +467,7 @@ export const RegisterSyncResponse: MessageFns<RegisterSyncResponse> = {
 }
 
 function createBaseSyncCodebaseRequest(): SyncCodebaseRequest {
-	return { clientId: "", workspacePath: "", workspaceName: "" }
+	return { clientId: "", workspacePath: "", workspaceName: "", filePaths: [] }
 }
 
 export const SyncCodebaseRequest: MessageFns<SyncCodebaseRequest> = {
@@ -478,6 +480,9 @@ export const SyncCodebaseRequest: MessageFns<SyncCodebaseRequest> = {
 		}
 		if (message.workspaceName !== "") {
 			writer.uint32(26).string(message.workspaceName)
+		}
+		for (const v of message.filePaths) {
+			writer.uint32(34).string(v!)
 		}
 		return writer
 	},
@@ -513,6 +518,14 @@ export const SyncCodebaseRequest: MessageFns<SyncCodebaseRequest> = {
 					message.workspaceName = reader.string()
 					continue
 				}
+				case 4: {
+					if (tag !== 34) {
+						break
+					}
+
+					message.filePaths.push(reader.string())
+					continue
+				}
 			}
 			if ((tag & 7) === 4 || tag === 0) {
 				break
@@ -527,6 +540,9 @@ export const SyncCodebaseRequest: MessageFns<SyncCodebaseRequest> = {
 			clientId: isSet(object.clientId) ? globalThis.String(object.clientId) : "",
 			workspacePath: isSet(object.workspacePath) ? globalThis.String(object.workspacePath) : "",
 			workspaceName: isSet(object.workspaceName) ? globalThis.String(object.workspaceName) : "",
+			filePaths: globalThis.Array.isArray(object?.filePaths)
+				? object.filePaths.map((e: any) => globalThis.String(e))
+				: [],
 		}
 	},
 
@@ -541,6 +557,9 @@ export const SyncCodebaseRequest: MessageFns<SyncCodebaseRequest> = {
 		if (message.workspaceName !== "") {
 			obj.workspaceName = message.workspaceName
 		}
+		if (message.filePaths?.length) {
+			obj.filePaths = message.filePaths
+		}
 		return obj
 	},
 
@@ -552,6 +571,7 @@ export const SyncCodebaseRequest: MessageFns<SyncCodebaseRequest> = {
 		message.clientId = object.clientId ?? ""
 		message.workspacePath = object.workspacePath ?? ""
 		message.workspaceName = object.workspaceName ?? ""
+		message.filePaths = object.filePaths?.map((e) => e) || []
 		return message
 	},
 }
