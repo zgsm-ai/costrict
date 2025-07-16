@@ -145,7 +145,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		visibleProvider.postMessageToWebview({ type: "action", action: "historyButtonClicked" })
 	},
 	helpButtonClicked: () => {
-		vscode.env.openExternal(vscode.Uri.parse("https://zgsm.ai"))
+		vscode.env.openExternal(vscode.Uri.parse("https://costrict.ai"))
 	},
 	showHumanRelayDialog: (params: { requestId: string; promptText: string }) => {
 		const panel = getPanel()

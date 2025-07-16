@@ -1360,7 +1360,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 										// <a href={buildDocLink("", "welcome")} target="_blank" rel="noopener noreferrer">
 										// 	the docs
 										// </a>
-										<a href={"https://zgsm.ai/"} target="_blank" rel="noopener noreferrer">
+										<a href={"https://costrict.ai/"} target="_blank" rel="noopener noreferrer">
 											the docs
 										</a>
 									),

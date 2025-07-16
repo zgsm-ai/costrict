@@ -26,7 +26,7 @@ export async function run() {
 		zgsmModelId: "deepseek-v3",
 		zgsmDefaultBaseUrl: "https://zgsm.sangfor.com",
 		zgsmDefaultModelId: "deepseek-v3",
-		zgsmSite: "https://zgsm.ai",
+		zgsmSite: "https://costrict.ai",
 		zgsmLoginUrl: "/realms/gw/protocol/openid-connect/auth",
 		zgsmLogoutUrl: "/realms/gw/protocol/openid-connect/logout",
 		zgsmTokenUrl: "/realms/gw/protocol/openid-connect/token",

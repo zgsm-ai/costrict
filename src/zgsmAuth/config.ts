@@ -25,7 +25,7 @@ class DefaultZgsmAuthConfig {
 	constructor() {
 		this.baseUrl = process.env?.ZGSM_BASE_URL || "https://zgsm.sangfor.com"
 		this.prevBaseUrl = this.baseUrl
-		this.zgsmSite = "https://zgsm.ai"
+		this.zgsmSite = "https://costrict.ai"
 		this.clientId = "vscode"
 		this.clientSecret = "jFWyVy9wUKKSkX55TDBt2SuQWl7fDM1l"
 		this.completionUrl = "/code-completion/api/v1"

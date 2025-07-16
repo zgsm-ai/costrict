@@ -56,7 +56,7 @@ Costrict是一款免费开源的AI辅助编程工具，支持企业私有化部�
 
 ## 更多帮助 For more assistance
 
-更多操作详情可访问Costrict官方文档： https://zgsm.ai/download
+更多操作详情可访问Costrict官方文档： https://costrict.ai/download
 
 ## 快速开始
 
