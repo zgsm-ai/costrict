@@ -231,7 +231,7 @@ export class ZgsmCodeBaseSyncService {
 		})
 	}
 
-	async syncCodebase(): Promise<SyncCodebaseResponse> {
+	async syncCodebase(filePaths: string[]): Promise<SyncCodebaseResponse> {
 		return this.retryWrapper("syncCodebase", () => {
 			return new Promise((resolve, reject) => {
 				if (!this.client) {
@@ -246,6 +246,7 @@ export class ZgsmCodeBaseSyncService {
 						clientId: this.clientId,
 						workspacePath: this.workspacePath,
 						workspaceName: this.workspaceName,
+						filePaths,
 					},
 					(err: grpc.ServiceError | null, response?: SyncCodebaseResponse) => {
 						if (err) return reject(err)

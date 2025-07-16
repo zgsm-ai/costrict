@@ -33,11 +33,12 @@ message RegisterSyncResponse {
     string message = 2;         // Message
 }
 
-// Sync codebase request
+// Sync project request
 message SyncCodebaseRequest {
     string client_id = 1;        // Client ID
     string workspace_path = 2;     // Workspace path
     string workspace_name = 3;     // Workspace name
+    repeated string file_paths = 4; // File paths to check
 }
 
 // Sync project response
