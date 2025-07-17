@@ -282,7 +282,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		provider.updateIssueStatus(comments, IssueStatus.REJECT)
 	},
 	addFileToContext: async (...args: [UriSource] | [unknown, UriSource[]]) => {
-		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+		const visibleProvider = await ClineProvider.getInstance()
 		if (!visibleProvider) {
 			return
 		}

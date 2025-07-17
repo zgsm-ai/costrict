@@ -1,5 +1,5 @@
 <div align="center">
-    <h1>Costrict</h1>
+    <h1>Costrict  (prev. Shenma)</h1>
     <h2>The Best AI Coder for Enterprise-Grade Programming</h2>
 </div>
 <br>

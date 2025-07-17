@@ -1,6 +1,6 @@
 {
 	"extension.displayName": "Costrict",
-	"extension.displayName.long": "Costrict: AI Coding Assistant",
+	"extension.displayName.long": "Costrict (prev. Shenma): AI Coding Assistant",
 	"extension.description": "Costrict: An intelligent programming assistant that improves coding efficiency",
 	"command.view.issue.title": "Feedback",
 	"command.view.logout.title": "Costrict: Logout",
