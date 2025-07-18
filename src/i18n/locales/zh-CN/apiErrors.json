@@ -49,8 +49,8 @@
 	},
 	"oidc-auth": {
 		"badRequestParameter": "参数传递错误",
-		"loginEncryptFailed": "登陆数据加密失败",
-		"loginDecryptFailed": "登陆数据解密失败",
+		"loginEncryptFailed": "登录数据加密失败",
+		"loginDecryptFailed": "登录数据解密失败",
 		"userNotFound": "用户不存在",
 		"tokenInvalid": "无效的token",
 		"updateInfoFailed": "更新信息失败",
