@@ -43,8 +43,8 @@ export const COMPLETION_CONST = {
 	lineRejectedDelayIncrement: 1000, // Delay increment after rejection on the same line (increase wait time after rejection to reduce interference)
 	lineRejectedDelayMax: 3000, // Maximum delay after rejection on the same line
 	manualTriggerDelay: 50, // Delay for manual completion trigger
-	feedbackInterval: 3000, // Feedback timer interval
-	collectInterval: 3000, // Timer interval for collecting code snippets
+	feedbackInterval: 5 * 1000, // Feedback timer interval
+	collectInterval: 5 * 1000, // Timer interval for collecting code snippets
 }
 
 // VSCode related

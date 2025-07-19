@@ -43,6 +43,7 @@ import { CompletionTrace } from "./completionTrace"
 export class AICompletionProvider implements InlineCompletionItemProvider, Disposable {
 	private disposables: Disposable[] = []
 	private timer: NodeJS.Timeout | undefined
+	private feedbackTimer: NodeJS.Timeout | undefined
 	private mutex: Mutex
 	private provider: ClineProvider
 
@@ -55,7 +56,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 		this.timer = undefined
 		this.extensionContext = context
 		CompletionClient.setProvider(provider)
-		CompletionTrace.init(context)
+		CompletionTrace.init(context, provider)
 	}
 
 	/**
@@ -145,6 +146,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 	}
 
 	public dispose() {
+		clearInterval(this.feedbackTimer)
 		Disposable.from(...this.disposables).dispose()
 	}
 
@@ -393,7 +395,8 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 	 * 3. Improvement data: The actual content input by the user after rejecting the completion.
 	 */
 	private setFeedbackTimer() {
-		setInterval(() => {
+		clearInterval(this.feedbackTimer)
+		this.feedbackTimer = setInterval(() => {
 			CompletionTrace.uploadPoints()
 			CompletionTrace.uploadMemo()
 		}, COMPLETION_CONST.feedbackInterval)
