@@ -2,6 +2,7 @@ import { Anthropic } from "@anthropic-ai/sdk"
 import { parseMentions } from "./index"
 import { UrlContentFetcher } from "../../services/browser/UrlContentFetcher"
 import { FileContextTracker } from "../context-tracking/FileContextTracker"
+import { Task } from "../task/Task"
 
 /**
  * Process mentions in user content, specifically within task and feedback tags
@@ -11,11 +12,13 @@ export async function processUserContentMentions({
 	cwd,
 	urlContentFetcher,
 	fileContextTracker,
+	cline,
 }: {
 	userContent: Anthropic.Messages.ContentBlockParam[]
 	cwd: string
 	urlContentFetcher: UrlContentFetcher
 	fileContextTracker: FileContextTracker
+	cline?: Task
 }) {
 	// Process userContent array, which contains various block types:
 	// TextBlockParam, ImageBlockParam, ToolUseBlockParam, and ToolResultBlockParam.
@@ -35,7 +38,7 @@ export async function processUserContentMentions({
 				if (shouldProcessMentions(block.text)) {
 					return {
 						...block,
-						text: await parseMentions(block.text, cwd, urlContentFetcher, fileContextTracker),
+						text: await parseMentions(block.text, cwd, urlContentFetcher, fileContextTracker, cline),
 					}
 				}
 
@@ -45,7 +48,13 @@ export async function processUserContentMentions({
 					if (shouldProcessMentions(block.content)) {
 						return {
 							...block,
-							content: await parseMentions(block.content, cwd, urlContentFetcher, fileContextTracker),
+							content: await parseMentions(
+								block.content,
+								cwd,
+								urlContentFetcher,
+								fileContextTracker,
+								cline,
+							),
 						}
 					}
 
@@ -61,6 +70,7 @@ export async function processUserContentMentions({
 										cwd,
 										urlContentFetcher,
 										fileContextTracker,
+										cline,
 									),
 								}
 							}

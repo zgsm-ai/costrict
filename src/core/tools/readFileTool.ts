@@ -190,10 +190,7 @@ export async function readFileTool(
 				}
 			} else {
 				// Read entire file
-				content = await extractTextFromFile(absolutePath)
-
-				// Truncate content based on line count or character count
-				content = truncateContent(content, maxReadFileLine)
+				;[content] = truncateContent(await extractTextFromFile(absolutePath), maxReadFileLine)
 			}
 
 			// Create variables to store XML components

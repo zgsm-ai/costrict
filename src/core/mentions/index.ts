@@ -16,6 +16,8 @@ import { diagnosticsToProblemsString } from "../../integrations/diagnostics"
 import { UrlContentFetcher } from "../../services/browser/UrlContentFetcher"
 
 import { FileContextTracker } from "../context-tracking/FileContextTracker"
+import { truncateContent } from "../../../zgsm/src/core/tools/readFileTool"
+import { Task } from "../task/Task"
 
 export async function openMention(mention?: string): Promise<void> {
 	if (!mention) {
@@ -50,6 +52,7 @@ export async function parseMentions(
 	cwd: string,
 	urlContentFetcher: UrlContentFetcher,
 	fileContextTracker?: FileContextTracker,
+	cline?: Task,
 ): Promise<string> {
 	const mentions: Set<string> = new Set()
 	let parsedText = text.replace(mentionRegexGlobal, (match, mention) => {
@@ -102,7 +105,7 @@ export async function parseMentions(
 		} else if (mention.startsWith("/")) {
 			const mentionPath = mention.slice(1)
 			try {
-				const content = await getFileOrFolderContent(mentionPath, cwd)
+				const content = await getFileOrFolderContent(mentionPath, cwd, cline)
 				if (mention.endsWith("/")) {
 					parsedText += `\n\n<folder_content path="${mentionPath}">\n${content}\n</folder_content>`
 				} else {
@@ -161,18 +164,25 @@ export async function parseMentions(
 	return parsedText
 }
 
-async function getFileOrFolderContent(mentionPath: string, cwd: string): Promise<string> {
+async function getFileOrFolderContent(mentionPath: string, cwd: string, cline?: Task): Promise<string> {
 	// Unescape spaces in the path before resolving it
 	const unescapedPath = unescapeSpaces(mentionPath)
 	const absPath = path.resolve(cwd, unescapedPath)
+	let maxReadFileLine: number
+	if (cline) {
+		const state = await cline.providerRef.deref()?.getState()
+		maxReadFileLine = state?.maxReadFileLine as number
+	} else {
+		maxReadFileLine = -1
+	}
 
 	try {
 		const stats = await fs.stat(absPath)
 
 		if (stats.isFile()) {
 			try {
-				const content = await extractTextFromFile(absPath)
-				return content
+				const [content, lineTotal] = truncateContent(await extractTextFromFile(absPath), maxReadFileLine)
+				return content + `${lineTotal > maxReadFileLine ? getTruncatedFileNotice(mentionPath, lineTotal) : ""}`
 			} catch (error) {
 				return `(Failed to read contents of ${mentionPath}): ${error.message}`
 			}
@@ -194,8 +204,12 @@ async function getFileOrFolderContent(mentionPath: string, cwd: string): Promise
 								if (isBinary) {
 									return undefined
 								}
-								const content = await extractTextFromFile(absoluteFilePath)
-								return `<file_content path="${filePath.toPosix()}">\n${content}\n</file_content>`
+								const [content, lineTotal] = truncateContent(
+									await extractTextFromFile(absoluteFilePath),
+									maxReadFileLine,
+								)
+								const _path = filePath.toPosix()
+								return `<file_content path="${_path}">\n${content}${lineTotal > maxReadFileLine ? getTruncatedFileNotice(_path, lineTotal) : ""}</file_content>`
 							} catch (error) {
 								return undefined
 							}
@@ -279,3 +293,7 @@ export async function getLatestTerminalOutput(): Promise<string> {
 
 // Export processUserContentMentions from its own file
 export { processUserContentMentions } from "./processUserContentMentions"
+
+function getTruncatedFileNotice(file: string, lineTotal: number) {
+	return `\n(The content of \`${file}\` was truncated(total ${lineTotal} lines). To read more, Use the \`read_file\` tool with the same file path.)`
+}

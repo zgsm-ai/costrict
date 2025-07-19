@@ -1085,6 +1085,7 @@ export class Task extends EventEmitter<ClineEvents> {
 			cwd: this.cwd,
 			urlContentFetcher: this.urlContentFetcher,
 			fileContextTracker: this.fileContextTracker,
+			cline: this,
 		})
 
 		const environmentDetails = await getEnvironmentDetails(this, includeFileDetails)
