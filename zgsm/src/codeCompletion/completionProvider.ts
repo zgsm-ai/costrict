@@ -55,7 +55,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 		this.timer = undefined
 		this.extensionContext = context
 		CompletionClient.setProvider(provider)
-		CompletionTrace.init(context)
+		CompletionTrace.init(context, provider)
 	}
 
 	/**
