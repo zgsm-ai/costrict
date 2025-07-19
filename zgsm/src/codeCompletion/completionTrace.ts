@@ -105,7 +105,6 @@ export class CompletionTrace {
 		const client = this.getInstance()
 		const baseUrl = await client.getBaseUrl()
 		const url = `${baseUrl}/api/feedbacks/completions`
-		client.provider?.log(`[uploadPoints url] ${url}`)
 		const datas = this.constructDatas()
 		if (datas.count === 0) {
 			return 0
@@ -148,7 +147,6 @@ export class CompletionTrace {
 		}
 		const baseUrl = await client.getBaseUrl()
 		const url = `${baseUrl}/api/feedbacks/error`
-		client.provider?.log(`[uploadMemo url] ${url}`)
 		await client
 			.postDatas(url, data)
 			.then(() => {
