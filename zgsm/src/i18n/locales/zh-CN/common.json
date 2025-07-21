@@ -7,7 +7,7 @@
 		"enter_absolute_path": "请输入绝对路径（例如：D:\\RooCodeStorage 或 /home/user/storage）"
 	},
 	"input": {
-		"task_prompt": "Costrict应该做什么？"
+		"task_prompt": "Costrict 应该做什么？"
 	},
 	"window": {
 		"error": {
@@ -16,7 +16,7 @@
 			"login_expired": "登录已过期，请重新登录。",
 			"failed_to_open_source_file": "无法打开源文件。请检查源文件是否已被删除。",
 			"failed_to_compare_or_adopt": "当前没有打开的文件，无法比较或采用。",
-			"failed_to_display_diff": "无法显示差异。请检查源文件是否已被删除。如果错误持续存在，请联系Costrict客服。",
+			"failed_to_display_diff": "无法显示差异。请检查源文件是否已被删除。如果错误持续存在，请联系 Costrict 客服。",
 			"failed_to_jump_by_path": "跳转失败。文件路径为空。",
 			"failed_to_jump": "跳转失败。",
 			"failed_to_jump_by_path_not_exist": "跳转失败，文件路径不存在。文件路径：",
@@ -106,54 +106,54 @@
 		"explain": {
 			"name": "解释代码",
 			"tip": "解释代码实现",
-			"input_prompt": "你想让Costrict解释什么？",
+			"input_prompt": "你想让 Costrict 解释什么？",
 			"input_placeholder": "例如：如何处理错误？"
 		},
 		"add_comment": {
 			"name": "添加注释",
 			"tip": "添加注释到此函数",
-			"input_prompt": "你想让Costrict做什么？",
+			"input_prompt": "你想让 Costrict 做什么？",
 			"input_placeholder": "例如：添加注释到代码"
 		},
 		"add_tests": {
 			"name": "生成单元测试",
 			"tip": "为函数生成单元测试",
-			"input_prompt": "你想让Costrict做什么？",
+			"input_prompt": "你想让 Costrict 做什么？",
 			"input_placeholder": "例如：生成单元测试"
 		},
 		"code_review": {
 			"name": "代码审查",
 			"tip": "检查代码质量问题并提供建议",
-			"input_prompt": "你想让Costrict做什么？",
+			"input_prompt": "你想让 Costrict 做什么？",
 			"input_placeholder": "例如：检查代码质量问题并对代码提出建议"
 		},
 		"add_debug_code": {
 			"name": "添加日志",
 			"tip": "在关键逻辑步骤中添加日志和调试代码来增强故障排除能力",
-			"input_prompt": "你想让Costrict做什么？",
+			"input_prompt": "你想让 Costrict 做什么？",
 			"input_placeholder": "例如：在代码的关键逻辑步骤中添加日志和调试代码来增强故障排除能力"
 		},
 		"add_stronger_code": {
 			"name": "增加容错",
 			"tip": "增强鲁棒性，通过添加异常处理和参数验证",
-			"input_prompt": "你想让Costrict做什么？",
+			"input_prompt": "你想让 Costrict 做什么？",
 			"input_placeholder": "例如：增强代码鲁棒性，通过添加异常处理和参数验证"
 		},
 		"simplify_code": {
 			"name": "简化代码",
 			"tip": "删除无效代码",
-			"input_prompt": "你想让Costrict做什么？",
+			"input_prompt": "你想让 Costrict 做什么？",
 			"input_placeholder": "例如：删除无效代码"
 		},
 		"performance_optimization": {
 			"name": "性能优化",
 			"tip": "提高代码性能，提供修改建议，专注于效率问题",
-			"input_prompt": "你想让Costrict做什么？",
+			"input_prompt": "你想让 Costrict 做什么？",
 			"input_placeholder": "例如：提高代码性能，提供修改建议，专注于效率问题"
 		},
 		"shenma_instruct_set": {
-			"tip": "Costrict指令集",
-			"input_prompt": "你想让Costrict做什么？",
+			"tip": "Costrict 指令集",
+			"input_prompt": "你想让 Costrict 做什么？",
 			"input_placeholder": "例如：添加注释到代码"
 		}
 	},

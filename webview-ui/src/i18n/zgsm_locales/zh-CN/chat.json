@@ -1,55 +1,55 @@
 {
-	"greeting": "Costrict能为您做什么？",
+	"greeting": "Costrict 能为您做什么？",
 	"aboutMe": "得益于最新的代理编码能力突破，我可以逐步处理复杂的软件开发任务。通过允许我创建和编辑文件、探索复杂项目、使用浏览器以及执行终端命令（在您授予权限后）的工具，我可以以超越代码补全或技术支持的方式协助您。我甚至可以使用MCP创建新工具并扩展自己的能力。",
 	"instructions": {
-		"wantsToFetch": "Costrict想要获取详细指令以协助当前任务"
+		"wantsToFetch": "Costrict 想要获取详细指令以协助当前任务"
 	},
 	"fileOperations": {
-		"wantsToRead": "Costrict想要读取此文件：",
-		"wantsToReadOutsideWorkspace": "Costrict想要读取工作区外的此文件：",
-		"didRead": "Costrict已读取此文件：",
-		"wantsToEdit": "Costrict想要编辑此文件：",
-		"wantsToEditOutsideWorkspace": "Costrict想要编辑工作区外的此文件：",
-		"wantsToCreate": "Costrict想要创建新文件：",
-		"wantsToSearchReplace": "Costrict需要在此文件中搜索和替换:",
-		"didSearchReplace": "Costrict已完成搜索和替换:",
-		"wantsToInsert": "Costrict需要在此文件中插入内容:",
-		"wantsToInsertWithLineNumber": "Costrict需要在第 {{lineNumber}} 行插入内容:",
-		"wantsToInsertAtEnd": "Costrict需要在文件末尾添加内容:"
+		"wantsToRead": "Costrict 想要读取此文件：",
+		"wantsToReadOutsideWorkspace": "Costrict 想要读取工作区外的此文件：",
+		"didRead": "Costrict 已读取此文件：",
+		"wantsToEdit": "Costrict 想要编辑此文件：",
+		"wantsToEditOutsideWorkspace": "Costrict 想要编辑工作区外的此文件：",
+		"wantsToCreate": "Costrict 想要创建新文件：",
+		"wantsToSearchReplace": "Costrict 需要在此文件中搜索和替换:",
+		"didSearchReplace": "Costrict 已完成搜索和替换:",
+		"wantsToInsert": "Costrict 需要在此文件中插入内容:",
+		"wantsToInsertWithLineNumber": "Costrict 需要在第 {{lineNumber}} 行插入内容:",
+		"wantsToInsertAtEnd": "Costrict 需要在文件末尾添加内容:"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "Costrict想要查看此目录中的顶层文件：",
-		"didViewTopLevel": "Costrict已查看此目录中的顶层文件：",
-		"wantsToViewRecursive": "Costrict想要递归查看此目录中的所有文件：",
-		"didViewRecursive": "Costrict已递归查看此目录中的所有文件：",
-		"wantsToViewDefinitions": "Costrict想要查看此目录中使用的源代码定义名称：",
-		"didViewDefinitions": "Costrict已查看此目录中使用的源代码定义名称：",
-		"wantsToSearch": "Costrict想要在此目录中搜索<code>{{regex}}</code>：",
-		"didSearch": "Costrict已在此目录中搜索<code>{{regex}}</code>："
+		"wantsToViewTopLevel": "Costrict 想要查看此目录中的顶层文件：",
+		"didViewTopLevel": "Costrict 已查看此目录中的顶层文件：",
+		"wantsToViewRecursive": "Costrict 想要递归查看此目录中的所有文件：",
+		"didViewRecursive": "Costrict 已递归查看此目录中的所有文件：",
+		"wantsToViewDefinitions": "Costrict 想要查看此目录中使用的源代码定义名称：",
+		"didViewDefinitions": "Costrict 已查看此目录中使用的源代码定义名称：",
+		"wantsToSearch": "Costrict 想要在此目录中搜索<code>{{regex}}</code>：",
+		"didSearch": "Costrict 已在此目录中搜索<code>{{regex}}</code>："
 	},
 	"mcp": {
-		"wantsToUseTool": "Costrict想要在{{serverName}} MCP服务器上使用工具：",
-		"wantsToAccessResource": "Costrict想要访问{{serverName}} MCP服务器上的资源："
+		"wantsToUseTool": "Costrict 想要在{{serverName}} MCP服务器上使用工具：",
+		"wantsToAccessResource": "Costrict 想要访问{{serverName}} MCP服务器上的资源："
 	},
 	"modes": {
-		"wantsToSwitch": "Costrict想要切换到{{mode}}模式",
-		"wantsToSwitchWithReason": "Costrict想要切换到{{mode}}模式，因为：{{reason}}",
-		"didSwitch": "Costrict已切换到{{mode}}模式",
-		"didSwitchWithReason": "Costrict已切换到{{mode}}模式，因为：{{reason}}"
+		"wantsToSwitch": "Costrict 想要切换到{{mode}}模式",
+		"wantsToSwitchWithReason": "Costrict 想要切换到{{mode}}模式，因为：{{reason}}",
+		"didSwitch": "Costrict 已切换到{{mode}}模式",
+		"didSwitchWithReason": "Costrict 已切换到{{mode}}模式，因为：{{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "Costrict想要在{{mode}}模式下创建新子任务：",
-		"wantsToFinish": "Costrict想要完成此子任务"
+		"wantsToCreate": "Costrict 想要在{{mode}}模式下创建新子任务：",
+		"wantsToFinish": "Costrict 想要完成此子任务"
 	},
 	"questions": {
-		"hasQuestion": "Costrict有一个问题："
+		"hasQuestion": "Costrict 有一个问题："
 	},
-	"troubleMessage": "Costrict遇到了一些问题...",
+	"troubleMessage": "Costrict 遇到了一些问题...",
 	"browser": {
-		"rooWantsToUse": "Costrict想要使用浏览器："
+		"rooWantsToUse": "Costrict 想要使用浏览器："
 	},
 	"autoApprove": {
-		"description": "允许Costrict直接执行操作无需确认，请谨慎启用。前往<settingsLink>设置</settingsLink>调整"
+		"description": "允许 Costrict 直接执行操作无需确认，请谨慎启用。前往<settingsLink>设置</settingsLink>调整"
 	},
 	"announcement": {
 		"title": "🎉 Costrict {{version}} 已发布",
@@ -58,7 +58,7 @@
 	"onboarding": "<strong>此工作区中的任务列表为空。</strong> 请在下方输入任务开始。",
 	"ask": {
 		"autoApprovedRequestLimitReached": {
-			"description": "Costrict已达到 {{count}} 次 API 请求的自动批准限制。您想重置计数并继续任务吗？"
+			"description": "Costrict 已达到 {{count}} 次 API 请求的自动批准限制。您想重置计数并继续任务吗？"
 		}
 	},
 	"shellIntegration": {
