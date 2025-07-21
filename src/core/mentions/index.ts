@@ -181,8 +181,17 @@ async function getFileOrFolderContent(mentionPath: string, cwd: string, cline?: 
 
 		if (stats.isFile()) {
 			try {
-				const [content, lineTotal] = truncateContent(await extractTextFromFile(absPath), maxReadFileLine)
-				return content + `${lineTotal > maxReadFileLine ? getTruncatedFileNotice(mentionPath, lineTotal) : ""}`
+				const content = await extractTextFromFile(absPath)
+				const diagnostics = await diagnosticsToProblemsString(
+					[[vscode.Uri.file(absPath), vscode.languages.getDiagnostics(vscode.Uri.file(absPath))]],
+					[vscode.DiagnosticSeverity.Error, vscode.DiagnosticSeverity.Warning],
+					cwd,
+				)
+				const [truncatedContent] = truncateContent(content)
+				if (diagnostics) {
+					return `${truncatedContent}\n\n<file_diagnostics path="${mentionPath}">\n${diagnostics}\n</file_diagnostics>`
+				}
+				return truncatedContent
 			} catch (error) {
 				return `(Failed to read contents of ${mentionPath}): ${error.message}`
 			}
