@@ -34,17 +34,7 @@ export const EditModeControls: React.FC<EditModeControlsProps> = ({
 	const { t } = useAppTranslation()
 
 	return (
-		<div
-			className={cn(
-				"flex",
-				"items-center",
-				"justify-between",
-				"absolute",
-				"bottom-2",
-				"left-2",
-				"right-2",
-				"z-30",
-			)}>
+		<div className={cn("flex", "items-center", "justify-between", "z-30", "py-1.5 px-2")}>
 			<div className={cn("flex", "items-center", "gap-1", "flex-1", "min-w-0")}>
 				<div className="shrink-0">
 					<ModeSelector

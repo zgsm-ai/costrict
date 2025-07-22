@@ -944,7 +944,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 		// Helper function to render non-edit mode controls
 		const renderNonEditModeControls = () => (
-			<div className={cn("flex", "justify-between", "items-center", "mt-auto")}>
+			<div className={cn("flex", "justify-between", "items-center", "mt-auto", "py-1.5 px-2")}>
 				<div className={cn("flex", "items-center", "gap-1", "min-w-0")}>
 					<div className="shrink-0">{renderModeSelector()}</div>
 
@@ -1014,22 +1014,50 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							<Image className="w-4 h-4" />
 						</button>
 					</StandardTooltip>
+					{!isEditMode && (
+						<div>
+							<StandardTooltip content={t("chat:sendMessage")}>
+								<button
+									aria-label={t("chat:sendMessage")}
+									disabled={sendingDisabled}
+									onClick={!sendingDisabled ? onSend : undefined}
+									className={cn(
+										"relative inline-flex items-center justify-center",
+										"bg-transparent border-none p-1.5",
+										"rounded-md min-w-[28px] min-h-[28px]",
+										"opacity-60 hover:opacity-100 text-vscode-descriptionForeground hover:text-vscode-foreground",
+										"transition-all duration-150",
+										"hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
+										"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
+										"active:bg-[rgba(255,255,255,0.1)]",
+										!sendingDisabled && "cursor-pointer",
+										sendingDisabled &&
+											"opacity-40 cursor-not-allowed grayscale-[30%] hover:bg-transparent hover:border-[rgba(255,255,255,0.08)] active:bg-transparent",
+									)}>
+									<SendHorizontal className="w-4 h-4" />
+								</button>
+							</StandardTooltip>
+						</div>
+					)}
+					{!inputValue && !isEditMode && (
+						<div
+							className="absolute left-2 z-30 pr-9 flex items-center h-8"
+							style={{
+								bottom: "2rem",
+								color: "var(--vscode-tab-inactiveForeground)",
+								userSelect: "none",
+								pointerEvents: "none",
+							}}>
+							{placeholderBottomText}
+						</div>
+					)}
 				</div>
 			</div>
 		)
 
 		// Helper function to render the text area section
 		const renderTextAreaSection = () => (
-			<div
-				className={cn(
-					"relative",
-					"flex-1",
-					"flex",
-					"flex-col-reverse",
-					"min-h-0",
-					"overflow-hidden",
-					"rounded",
-				)}>
+			<div className="relative h-full w-full">
 				<div
 					ref={highlightLayerRef}
 					className={cn(
@@ -1091,18 +1119,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						"text-vscode-editor-font-size",
 						"leading-vscode-editor-line-height",
 						"cursor-text",
-						isEditMode ? "pt-1.5 pb-10 px-2" : "py-1.5 px-2",
-						isFocused
-							? "border border-vscode-focusBorder outline outline-vscode-focusBorder"
-							: isDraggingOver
-								? "border-2 border-dashed border-vscode-focusBorder"
-								: "border border-transparent",
-						isDraggingOver
-							? "bg-[color-mix(in_srgb,var(--vscode-input-background)_95%,var(--vscode-focusBorder))]"
-							: "bg-vscode-input-background",
+						"py-1.5 px-2",
+						"border border-transparent",
+						"bg-transparent",
 						"transition-background-color duration-150 ease-in-out",
 						"will-change-background-color",
-						"min-h-[90px]",
+						"min-h-[108px]",
 						"box-border",
 						"rounded",
 						"resize-none",
@@ -1114,6 +1136,9 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						"scrollbar-none",
 						"scrollbar-hide",
 					)}
+					style={{
+						outline: "none",
+					}}
 					onScroll={() => updateHighlights()}
 				/>
 
@@ -1140,45 +1165,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						</button>
 					</StandardTooltip>
 				</div>
-
-				{!isEditMode && (
-					<div className="absolute bottom-1 right-1 z-30">
-						<StandardTooltip content={t("chat:sendMessage")}>
-							<button
-								aria-label={t("chat:sendMessage")}
-								disabled={sendingDisabled}
-								onClick={!sendingDisabled ? onSend : undefined}
-								className={cn(
-									"relative inline-flex items-center justify-center",
-									"bg-transparent border-none p-1.5",
-									"rounded-md min-w-[28px] min-h-[28px]",
-									"opacity-60 hover:opacity-100 text-vscode-descriptionForeground hover:text-vscode-foreground",
-									"transition-all duration-150",
-									"hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
-									"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
-									"active:bg-[rgba(255,255,255,0.1)]",
-									!sendingDisabled && "cursor-pointer",
-									sendingDisabled &&
-										"opacity-40 cursor-not-allowed grayscale-[30%] hover:bg-transparent hover:border-[rgba(255,255,255,0.08)] active:bg-transparent",
-								)}>
-								<SendHorizontal className="w-4 h-4" />
-							</button>
-						</StandardTooltip>
-					</div>
-				)}
-
-				{!inputValue && !isEditMode && (
-					<div
-						className="absolute left-2 z-30 pr-9 flex items-center h-8"
-						style={{
-							bottom: "0.25rem",
-							color: "var(--vscode-tab-inactiveForeground)",
-							userSelect: "none",
-							pointerEvents: "none",
-						}}>
-						{placeholderBottomText}
-					</div>
-				)}
 			</div>
 		)
 
@@ -1190,92 +1176,109 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					"flex-col",
 					"gap-1",
 					"bg-editor-background",
-					isEditMode ? "px-0" : "px-1.5",
+					"px-1.5",
 					"pb-1",
 					"outline-none",
 					"border",
 					"border-none",
-					isEditMode ? "w-full" : "w-[calc(100%-16px)]",
+					"w-[calc(100%-16px)]",
 					"ml-auto",
 					"mr-auto",
 					"box-border",
 				)}>
-				<div className="relative">
-					<div
-						className={cn("chat-text-area", "relative", "flex", "flex-col", "outline-none")}
-						onDrop={handleDrop}
-						onDragOver={(e) => {
-							// Only allowed to drop images/files on shift key pressed.
-							if (!e.shiftKey) {
-								setIsDraggingOver(false)
-								return
-							}
-
-							e.preventDefault()
-							setIsDraggingOver(true)
-							e.dataTransfer.dropEffect = "copy"
-						}}
-						onDragLeave={(e) => {
-							e.preventDefault()
-							const rect = e.currentTarget.getBoundingClientRect()
-
-							if (
-								e.clientX <= rect.left ||
-								e.clientX >= rect.right ||
-								e.clientY <= rect.top ||
-								e.clientY >= rect.bottom
-							) {
-								setIsDraggingOver(false)
-							}
-						}}>
-						{showContextMenu && (
-							<div
-								ref={contextMenuContainerRef}
-								className={cn(
-									"absolute",
-									"bottom-full",
-									"left-0",
-									"right-0",
-									"z-[1000]",
-									"mb-2",
-									"filter",
-									"drop-shadow-md",
-								)}>
-								<ContextMenu
-									onSelect={handleMentionSelect}
-									searchQuery={searchQuery}
-									inputValue={inputValue}
-									onMouseDown={handleMenuMouseDown}
-									selectedIndex={selectedMenuIndex}
-									setSelectedIndex={setSelectedMenuIndex}
-									selectedType={selectedType}
-									queryItems={queryItems}
-									modes={allModes}
-									loading={searchLoading}
-									dynamicSearchResults={fileSearchResults}
-								/>
-							</div>
-						)}
-
-						{renderTextAreaSection()}
-					</div>
-
-					{isEditMode && (
-						<EditModeControls
-							mode={mode}
-							onModeChange={handleModeChange}
-							modeShortcutText={modeShortcutText}
-							customModes={customModes}
-							customModePrompts={customModePrompts}
-							onCancel={onCancel}
-							onSend={onSend}
-							onSelectImages={onSelectImages}
-							sendingDisabled={sendingDisabled}
-							shouldDisableImages={shouldDisableImages}
-						/>
+				<div
+					className={cn(
+						"chat-text-area",
+						"relative",
+						"flex",
+						"flex-col",
+						"outline-none",
+						"rounded",
+						"border",
+						isFocused
+							? "border-vscode-focusBorder"
+							: isDraggingOver
+								? "border-2 border-dashed border-vscode-focusBorder"
+								: "border-vscode-input-background",
+						isDraggingOver
+							? "bg-[color-mix(in_srgb,var(--vscode-input-background)_95%,var(--vscode-focusBorder))]"
+							: "bg-vscode-input-background",
 					)}
-				</div>
+					onDrop={handleDrop}
+					onDragOver={(e) => {
+						// Only allowed to drop images/files on shift key pressed.
+						if (!e.shiftKey) {
+							setIsDraggingOver(false)
+							return
+						}
 
+						e.preventDefault()
+						setIsDraggingOver(true)
+						e.dataTransfer.dropEffect = "copy"
+					}}
+					onDragLeave={(e) => {
+						e.preventDefault()
+						const rect = e.currentTarget.getBoundingClientRect()
+
+						if (
+							e.clientX <= rect.left ||
+							e.clientX >= rect.right ||
+							e.clientY <= rect.top ||
+							e.clientY >= rect.bottom
+						) {
+							setIsDraggingOver(false)
+						}
+					}}>
+					{showContextMenu && (
+						<div
+							ref={contextMenuContainerRef}
+							className={cn(
+								"absolute",
+								"bottom-full",
+								"left-0",
+								"right-0",
+								"z-[1000]",
+								"mb-2",
+								"filter",
+								"drop-shadow-md",
+							)}>
+							<ContextMenu
+								onSelect={handleMentionSelect}
+								searchQuery={searchQuery}
+								inputValue={inputValue}
+								onMouseDown={handleMenuMouseDown}
+								selectedIndex={selectedMenuIndex}
+								setSelectedIndex={setSelectedMenuIndex}
+								selectedType={selectedType}
+								queryItems={queryItems}
+								modes={allModes}
+								loading={searchLoading}
+								dynamicSearchResults={fileSearchResults}
+							/>
+						</div>
+					)}
+
+					<div className="relative flex-grow min-h-0">{renderTextAreaSection()}</div>
+
+					<div className="flex-shrink-0">
+						{isEditMode ? (
+							<EditModeControls
+								mode={mode}
+								onModeChange={handleModeChange}
+								modeShortcutText={modeShortcutText}
+								customModes={customModes}
+								customModePrompts={customModePrompts}
+								onCancel={onCancel}
+								onSend={onSend}
+								onSelectImages={onSelectImages}
+								sendingDisabled={sendingDisabled}
+								shouldDisableImages={shouldDisableImages}
+							/>
+						) : (
+							renderNonEditModeControls()
+						)}
+					</div>
+				</div>
 				{selectedImages.length > 0 && (
 					<Thumbnails
 						images={selectedImages}
@@ -1287,8 +1290,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						}}
 					/>
 				)}
-
-				{!isEditMode && renderNonEditModeControls()}
 			</div>
 		)
 	},
