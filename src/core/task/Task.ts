@@ -92,6 +92,7 @@ import { getMessagesSinceLastSummary, summarizeConversation } from "../condense"
 import { maybeRemoveImageBlocks } from "../../api/transform/image-cleaning"
 import { restoreTodoListForTask } from "../tools/updateTodoListTool"
 import { ZgsmAuthService } from "../costrict/auth"
+import { getShell } from "../../utils/shell"
 
 // Constants
 const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
@@ -1650,6 +1651,8 @@ export class Task extends EventEmitter<ClineEvents> {
 				throw new Error("Provider not available")
 			}
 
+			const shellSuggestion = `\nThe user's current shell is \`${getShell()}\`, and all command outputs must adhere to the syntax.\n`
+
 			return SYSTEM_PROMPT(
 				provider.context,
 				this.cwd,
@@ -1660,7 +1663,7 @@ export class Task extends EventEmitter<ClineEvents> {
 				mode,
 				customModePrompts,
 				customModes,
-				customInstructions,
+				shellSuggestion + customInstructions,
 				this.diffEnabled,
 				experiments,
 				enableMcpServerCreation,

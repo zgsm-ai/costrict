@@ -6,6 +6,7 @@ const SHELL_PATHS = {
 	POWERSHELL_7: "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
 	POWERSHELL_LEGACY: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
 	CMD: "C:\\Windows\\System32\\cmd.exe",
+	GITBASH: "C:\\Program Files\\Git\\bin\\bash.exe",
 	WSL_BASH: "/bin/bash",
 	// Unix paths
 	MAC_DEFAULT: "/bin/zsh",
@@ -112,6 +113,11 @@ function getWindowsShellFromVSCode(): string | null {
 	// If the profile indicates WSL
 	if (profile?.source === "WSL" || defaultProfileName.toLowerCase().includes("wsl")) {
 		return SHELL_PATHS.WSL_BASH
+	}
+
+	// If the profile indicates Git Bash
+	if (defaultProfileName.toLowerCase().includes("bash.exe")) {
+		return SHELL_PATHS.GITBASH
 	}
 
 	// If nothing special detected, we assume cmd

@@ -218,10 +218,13 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 	} = state ?? {}
 
 	const currentMode = mode ?? defaultModeSlug
-
+	const shellSuggestion =
+		process.env.NODE_ENV === "test"
+			? ""
+			: `\nThe user's current shell is \`${getShell()}\`, and all command outputs must adhere to the syntax.\n`
 	const modeDetails = await getFullModeDetails(currentMode, customModes, customModePrompts, {
 		cwd: cline.cwd,
-		globalCustomInstructions,
+		globalCustomInstructions: shellSuggestion + globalCustomInstructions,
 		language: language ?? formatLanguage(vscode.env.language),
 	})
 	details += `\n\n# Operating System\n${osName()}`
