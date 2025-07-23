@@ -2105,11 +2105,16 @@ export const webviewMessageHandler = async (
 		}
 
 		case "requestIndexingStatus": {
-			const status = provider.codeIndexManager!.getCurrentStatus()
-			provider.postMessageToWebview({
-				type: "indexingStatusUpdate",
-				values: status,
-			})
+			try {
+				const manager = provider.codeIndexManager!
+				const status = manager.getCurrentStatus()
+				provider.postMessageToWebview({ type: "indexingStatusUpdate", values: status })
+			} catch (error) {
+				provider.log(
+					`Error request indexing status: ${error instanceof Error ? error.message : String(error)}`,
+					"error",
+				)
+			}
 			break
 		}
 		case "requestCodeIndexSecretStatus": {

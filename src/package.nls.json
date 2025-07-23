@@ -26,11 +26,16 @@
 	"command.terminal.explainCommand.title": "Explain This Command",
 	"command.acceptInput.title": "Accept Input/Suggestion",
 	"command.shortKeyCut.title": "Costrict Code Completion Shortcut",
+
 	"intelligentCodeCompletion.enabled.description": "Enable intelligent code completion",
 	"intelligentCodeCompletion.betaMode.description": "Enable beta features for early access. See version notes for feature list.",
 	"intelligentCodeCompletion.inlineCompletion.description": "Enable line-by-line completion (displays single-line suggestions)",
 	"intelligentCodeCompletion.shortCutKeys.description": "Shortcut key for manual triggering. To modify, search 'Costrict Code Completion Shortcut' in command palette.",
 	"intelligentCodeCompletion.disableLanguages.description": "Disable code completion for specific languages (set value to true to disable)",
+	"functionQuickCommands.enabled.description": "Enable function quick commands",
+	"functionQuickCommands.disableLanguages.description": "Disable quick commands for specific languages (set value to true to disable)",
+	"functionQuickCommands.quickCommandButtons.description": "Configure quick command buttons above functions",
+	"functionQuickCommands.quickCommandButtons.shenmaInstructSet.description": "Show <Costrict> button with all commands above functions",
 
 	"configuration.title": "Roo Code",
 	"commands.allowedCommands.description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled",

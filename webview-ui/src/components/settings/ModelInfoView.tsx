@@ -89,7 +89,7 @@ export const ModelInfoView = ({
 		<>
 			{modelInfo?.description && (
 				<ModelDescriptionMarkdown
-					key="description"
+					keyId="description"
 					markdown={modelInfo.description}
 					isExpanded={isDescriptionExpanded}
 					setIsExpanded={setIsDescriptionExpanded}

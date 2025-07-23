@@ -6,7 +6,7 @@
  */
 
 import * as vscode from "vscode"
-import { ClineProvider } from "../../webview/ClineProvider"
+import { ClineProvider } from "../webview/ClineProvider"
 // import { initZgsmApiConfiguration } from "../../shared/zgsmInitialize"
 // import { registerCodeAction } from "../../activate/registerCodeActions"
 // import { defaultZgsmAuthConfig } from "../../zgsmAuth/config"
@@ -16,7 +16,7 @@ import { ClineProvider } from "../../webview/ClineProvider"
 // import { COMMAND_IDS } from "../../activate/CodeActionProvider"
 
 // Import from migrated modules
-import { AICompletionProvider, CompletionStatusBar, shortKeyCut } from "../completion"
+import { AICompletionProvider, CompletionStatusBar, shortKeyCut } from "./completion"
 
 // import {
 // 	MyCodeLensProvider,
@@ -33,8 +33,8 @@ import {
 	initLangSetting,
 	printLogo,
 	loadLocalLanguageExtensions,
-} from "./common"
-import { ZgsmAuthStorage } from "../auth"
+} from "./base/common"
+import { ZgsmAuthStorage } from "./auth"
 
 // import { registerCodeAction } from "../../activate/registerCodeActions"
 

@@ -10,13 +10,13 @@
  */
 
 // Re-export all modules
-export * from "../completion"
-export * from "../codelens"
-export * from "./common"
-export * from "./language"
+export * from "./completion"
+export * from "./codelens"
+export * from "./base/common"
+export * from "./base/language"
 
 // Export data as a namespace to avoid conflicts
-export * as ZgsmData from "./data"
+export * as ZgsmData from "./base/data"
 
 // Export activation functions
 export * from "./activate"

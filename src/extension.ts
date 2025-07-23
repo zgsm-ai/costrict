@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import * as dotenvx from "@dotenvx/dotenvx"
 import * as path from "path"
-import * as ZgsmCore from "./core/costrict/base"
+import * as ZgsmCore from "./core/costrict"
 
 // Load environment variables from .env file
 try {
@@ -41,10 +41,15 @@ import {
 	CodeActionProvider,
 } from "./activate"
 import { initializeI18n } from "./i18n"
-import { startIPCServer, stopIPCServer } from "./core/costrict/auth/ipc/server"
-import { connectIPC, disconnectIPC, onZgsmTokensUpdate, onZgsmLogout } from "./core/costrict/auth/ipc/client"
-import { initZgsmCodeBase } from "./core/costrict/codebase"
-import { ZgsmCodeBaseSyncService } from "./core/costrict/codebase/client"
+import {
+	startIPCServer,
+	stopIPCServer,
+	connectIPC,
+	disconnectIPC,
+	onZgsmTokensUpdate,
+	onZgsmLogout,
+} from "./core/costrict/auth/ipc"
+import { initZgsmCodeBase, ZgsmCodeBaseSyncService } from "./core/costrict/codebase"
 import { getClientId } from "./utils/getClientId"
 
 /**

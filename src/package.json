@@ -350,6 +350,81 @@
 					"default": {},
 					"markdownDescription": "%intelligentCodeCompletion.disableLanguages.description%"
 				},
+				"FunctionQuickCommands.enabled": {
+					"type": "boolean",
+					"default": false,
+					"order": 1,
+					"description": "%functionQuickCommands.enabled.description%"
+				},
+				"FunctionQuickCommands.disableLanguages": {
+					"type": "object",
+					"additionalProperties": "string",
+					"default": {},
+					"markdownDescription": "%functionQuickCommands.disableLanguages.description%"
+				},
+				"FunctionQuickCommands.quickCommandButtons": {
+					"type": "object",
+					"additionalProperties": false,
+					"description": "%functionQuickCommands.quickCommandButtons.description%",
+					"default": {
+						"explain": true,
+						"addComment": true,
+						"addTests": true,
+						"codeReview": true,
+						"addDebugCode": true,
+						"addStrongerCode": true,
+						"simplifyCode": true,
+						"performanceOptimization": true,
+						"shenmaInstructSet": false
+					},
+					"properties": {
+						"explain": {
+							"type": "boolean",
+							"default": true,
+							"description": "%command.explain.title%"
+						},
+						"addComment": {
+							"type": "boolean",
+							"default": true,
+							"description": "%command.addComment.title%"
+						},
+						"addTests": {
+							"type": "boolean",
+							"default": true,
+							"description": "%command.addTests.title%"
+						},
+						"codeReview": {
+							"type": "boolean",
+							"default": true,
+							"description": "%command.codeReview.title%"
+						},
+						"addDebugCode": {
+							"type": "boolean",
+							"default": true,
+							"description": "%command.addDebugCode.title%"
+						},
+						"addStrongerCode": {
+							"type": "boolean",
+							"default": true,
+							"description": "%command.addStrongerCode.title%"
+						},
+						"simplifyCode": {
+							"type": "boolean",
+							"default": true,
+							"description": "%command.simplifyCode.title%"
+						},
+						"performanceOptimization": {
+							"type": "boolean",
+							"default": true,
+							"description": "%command.performanceOptimization.title%"
+						},
+						"shenmaInstructSet": {
+							"type": "boolean",
+							"default": false,
+							"description": "%functionQuickCommands.quickCommandButtons.shenmaInstructSet.description%"
+						}
+					}
+				},
 				"roo-cline.allowedCommands": {
 					"type": "array",
 					"items": {

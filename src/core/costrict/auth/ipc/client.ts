@@ -8,7 +8,7 @@ const onLogoutCallbacks: ((sessionId: string) => void)[] = []
 let isConnecting = false
 let retryTimeout: NodeJS.Timeout | null = null
 
-function connect() {
+export function connectIPC() {
 	if (client && !client.destroyed) {
 		return
 	}
@@ -47,7 +47,7 @@ function connect() {
 		client?.destroy()
 		client = null
 		isConnecting = false
-		retryTimeout = setTimeout(connect, 5000) // Retry after 5 seconds
+		retryTimeout = setTimeout(connectIPC, 5000) // Retry after 5 seconds
 	})
 
 	client.on("error", (err: NodeJS.ErrnoException) => {
@@ -59,13 +59,9 @@ function connect() {
 		}
 		// Don't retry immediately on error to avoid tight loops
 		if (err.code !== "ECONNREFUSED") {
-			retryTimeout = setTimeout(connect, 5000)
+			retryTimeout = setTimeout(connectIPC, 5000)
 		}
 	})
-}
-
-export function connectIPC() {
-	connect()
 }
 
 export function sendZgsmTokens(tokens: { state: string; access_token: string; refresh_token: string }) {
