@@ -51,6 +51,7 @@ import {
 } from "./core/costrict/auth/ipc"
 import { initZgsmCodeBase, ZgsmCodeBaseSyncService } from "./core/costrict/codebase"
 import { getClientId } from "./utils/getClientId"
+import { getCommand } from "./utils/commands"
 
 /**
  * Built using https://github.com/microsoft/vscode-webview-ui-toolkit
@@ -181,6 +182,20 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.languages.registerCodeActionsProvider({ pattern: "**/*" }, new CodeActionProvider(), {
 			providedCodeActionKinds: CodeActionProvider.providedCodeActionKinds,
+		}),
+	)
+
+	// Register the 'User Manual' command
+	context.subscriptions.push(
+		vscode.commands.registerCommand(getCommand("view.userHelperDoc"), () => {
+			vscode.env.openExternal(vscode.Uri.parse(`${ZgsmAuthConfig.getInstance().getDefaultSite()}`))
+		}),
+	)
+
+	// Register the 'Report Issue' command
+	context.subscriptions.push(
+		vscode.commands.registerCommand(getCommand("view.issue"), () => {
+			vscode.env.openExternal(vscode.Uri.parse(`${ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}/issue/`))
 		}),
 	)
 

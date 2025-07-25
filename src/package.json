@@ -43,7 +43,29 @@
 		"ai",
 		"llama",
 		"roo code",
-		"roocode"
+		"roocode",
+		"costrict",
+		"zgsm",
+		"shenma",
+		"诸葛神码",
+		"诸葛",
+		"神码",
+		"sangfor",
+		"深信服",
+		"strict",
+		"严肃",
+		"编程",
+		"开发",
+		"企业",
+		"codereview",
+		"补全",
+		"智能体",
+		"chinese cline",
+		"chinese roocode",
+		"roocode中文",
+		"cline中文",
+		"kimi k2",
+		"gemini cli"
 	],
 	"activationEvents": [
 		"onLanguage",
@@ -121,26 +143,6 @@
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "roo-cline.explainCode",
-				"title": "%command.explainCode.title%",
-				"category": "%configuration.title%"
-			},
-			{
-				"command": "roo-cline.fixCode",
-				"title": "%command.fixCode.title%",
-				"category": "%configuration.title%"
-			},
-			{
-				"command": "roo-cline.improveCode",
-				"title": "%command.improveCode.title%",
-				"category": "%configuration.title%"
-			},
-			{
-				"command": "roo-cline.addToContext",
-				"title": "%command.addToContext.title%",
-				"category": "%configuration.title%"
-			},
-			{
 				"command": "roo-cline.newTask",
 				"title": "%command.newTask.title%",
 				"category": "%configuration.title%"
@@ -197,13 +199,45 @@
 				"command": "roo-cline.rejectIssue",
 				"title": "Reject",
 				"icon": "$(circle-slash)"
+			},
+			{
+				"command": "roo-cline.explainCode",
+				"title": "%command.explainCode.title%",
+				"category": "%configuration.title%"
+			},
+			{
+				"command": "roo-cline.fixCode",
+				"title": "%command.fixCode.title%",
+				"category": "%configuration.title%"
+			},
+			{
+				"command": "roo-cline.improveCode",
+				"title": "%command.improveCode.title%",
+				"category": "%configuration.title%"
+			},
+			{
+				"command": "roo-cline.addToContext",
+				"title": "%command.addToContext.title%",
+				"category": "%configuration.title%"
+			},
+			{
+				"command": "roo-cline.view.issue",
+				"title": "%command.view.issue.title%"
+			},
+			{
+				"command": "roo-cline.addFileToContext",
+				"title": "%command.addFileToContext.title%"
+			},
+			{
+				"command": "roo-cline.view.userHelperDoc",
+				"title": "%command.view.userHelperDoc.title%"
 			}
 		],
 		"menus": {
 			"editor/context": [
 				{
-					"submenu": "roo-cline.contextMenu",
-					"group": "1"
+					"submenu": "zhuge-shenma",
+					"group": "0_chatGpt@1"
 				}
 			],
 			"explorer/context": [
@@ -220,20 +254,32 @@
 				{
 					"command": "roo-cline.reviewRepo",
 					"group": "roo-cline.explorerSubmenu@2"
+				},
+				{
+					"command": "roo-cline.addFileToContext",
+					"group": "roo-cline.explorerSubmenu@3"
 				}
 			],
-			"roo-cline.contextMenu": [
+			"zhuge-shenma": [
 				{
 					"command": "roo-cline.addToContext",
-					"group": "1_actions@1"
+					"group": "zhuge-shenma@1"
 				},
 				{
 					"command": "roo-cline.explainCode",
-					"group": "1_actions@2"
+					"group": "zhuge-shenma@2"
+				},
+				{
+					"command": "roo-cline.fixCode",
+					"group": "zhuge-shenma@3"
 				},
 				{
 					"command": "roo-cline.improveCode",
-					"group": "1_actions@3"
+					"group": "zhuge-shenma@4"
+				},
+				{
+					"command": "roo-cline.view.issue",
+					"group": "zissue@1"
 				}
 			],
 			"terminal/context": [
@@ -283,8 +329,18 @@
 					"when": "view == roo-cline.SidebarProvider"
 				},
 				{
+					"command": "roo-cline.view.userHelperDoc",
+					"group": "overflow@4",
+					"when": "view == roo-cline.SidebarProvider"
+				},
+				{
+					"command": "roo-cline.view.issue",
+					"group": "overflow@5",
+					"when": "view == roo-cline.SidebarProvider"
+				},
+				{
 					"command": "roo-cline.popoutButtonClicked",
-					"group": "overflow@3",
+					"group": "overflow@6",
 					"when": "view == roo-cline.SidebarProvider"
 				}
 			],
@@ -325,8 +381,18 @@
 					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
 				},
 				{
-					"command": "roo-cline.popoutButtonClicked",
+					"command": "roo-cline.view.userHelperDoc",
 					"group": "overflow@4",
+					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+				},
+				{
+					"command": "roo-cline.view.issue",
+					"group": "overflow@5",
+					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
+				},
+				{
+					"command": "roo-cline.popoutButtonClicked",
+					"group": "overflow@6",
 					"when": "activeWebviewPanelId == roo-cline.TabPanelProvider"
 				}
 			],
@@ -347,6 +413,10 @@
 			{
 				"id": "roo-cline.contextMenu",
 				"label": "%views.contextMenu.label%"
+			},
+			{
+				"id": "zhuge-shenma",
+				"label": "%extension.displayName%"
 			},
 			{
 				"id": "roo-cline.terminalMenu",

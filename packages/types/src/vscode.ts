@@ -53,6 +53,7 @@ export const commandIds = [
 	"focusInput",
 	"acceptInput",
 	"focusPanel",
+	"addFileToContext",
 ] as const
 
 export const costrictCommandIds = [
@@ -63,6 +64,8 @@ export const costrictCommandIds = [
 	"reviewRepo",
 	"acceptIssue",
 	"rejectIssue",
+	"view.issue",
+	"view.userHelperDoc",
 ] as const
 export type CostrictCommandId = (typeof costrictCommandIds)[number]
 export type CommandId = (typeof commandIds)[number]

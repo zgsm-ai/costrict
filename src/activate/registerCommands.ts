@@ -16,6 +16,19 @@ import { CodeIndexManager } from "../services/code-index/manager"
 import { importSettingsWithFeedback } from "../core/config/importExport"
 import { MdmService } from "../services/mdm/MdmService"
 import { t } from "../i18n"
+import { EditorContext, EditorUtils } from "../integrations/editor/EditorUtils"
+import * as path from "path"
+
+interface UriSource {
+	path: string
+	external: string
+	fsPath: string
+}
+
+interface ProcessedResource {
+	type: "path" | "image"
+	content: string
+}
 
 /**
  * Helper to get the visible ClineProvider instance or log if not found.
@@ -218,7 +231,119 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 
 		visibleProvider.postMessageToWebview({ type: "acceptInput" })
 	},
+	addFileToContext: async (...args: [UriSource] | [unknown, UriSource[]]) => {
+		const visibleProvider = await ClineProvider.getInstance()
+		if (!visibleProvider) {
+			return
+		}
+
+		let sources: (UriSource | EditorContext)[] = []
+		if (args.length > 1 && Array.isArray(args[1]) && args[1].length > 0) {
+			sources = args[1]
+		} else {
+			let singleSource: UriSource | EditorContext | undefined | null
+			if (args.length > 0) {
+				;[singleSource] = args as [UriSource]
+			} else {
+				singleSource = EditorUtils.getEditorContext()
+			}
+			if (singleSource) {
+				sources = [singleSource]
+			}
+		}
+
+		if (sources.length === 0) {
+			return
+		}
+
+		const processedResourcePromises = sources.map(async (source): Promise<ProcessedResource | null> => {
+			if (!(source as UriSource).path) {
+				return null
+			}
+			const resourceUri = vscode.Uri.parse((source as UriSource).path)
+			return createAliasedPath(resourceUri)
+		})
+
+		const processedResources = (await Promise.all(processedResourcePromises)).filter(
+			(p): p is ProcessedResource => !!p,
+		)
+
+		if (processedResources.length === 0) {
+			return
+		}
+
+		const textPaths: string[] = []
+		const imageSources: string[] = []
+
+		for (const resource of processedResources) {
+			if (resource.type === "path") {
+				textPaths.push(resource.content)
+			} else if (resource.type === "image") {
+				imageSources.push(resource.content)
+			}
+		}
+
+		const chatMessage = textPaths.length > 0 ? textPaths.join(" ") + " " : ""
+
+		const payload: { text: string; images?: string[] } = {
+			text: chatMessage,
+		}
+		if (imageSources.length > 0) {
+			payload.images = imageSources
+		}
+
+		await Promise.all([
+			visibleProvider.postMessageToWebview({ type: "action", action: "chatButtonClicked" }),
+			visibleProvider.postMessageToWebview({
+				type: "invoke",
+				invoke: "setChatBoxMessageByContext",
+				...payload,
+			}),
+		])
+	},
 })
+
+async function createAliasedPath(resourceUri: vscode.Uri): Promise<ProcessedResource | null> {
+	const imageExtensions = new Set([".png", ".jpeg", ".webp"])
+	const fileExtension = path.extname(resourceUri.fsPath).toLowerCase()
+	if (imageExtensions.has(fileExtension)) {
+		try {
+			const fileData = await vscode.workspace.fs.readFile(resourceUri)
+			const base64Data = Buffer.from(fileData).toString("base64")
+			const mimeType = `image/${fileExtension.slice(1)}`
+			const dataUrl = `data:${mimeType};base64,${base64Data}`
+
+			return { type: "image", content: dataUrl }
+		} catch (error) {
+			console.error(`Error reading or converting image file ${resourceUri.fsPath}:`, error)
+			return null
+		}
+	}
+
+	const workspaceFolder = vscode.workspace.getWorkspaceFolder(resourceUri)
+	if (!workspaceFolder) {
+		console.warn(`Resource ${resourceUri.fsPath} is not in an open workspace folder.`)
+		return null
+	}
+
+	let stat: vscode.FileStat
+	try {
+		stat = await vscode.workspace.fs.stat(resourceUri)
+	} catch (error) {
+		return null
+	}
+
+	const rootPath = workspaceFolder.uri.path
+	const fullPath = resourceUri.path
+
+	let relativePath = fullPath.startsWith(rootPath) ? fullPath.substring(rootPath.length) : fullPath
+
+	if (stat.type === vscode.FileType.Directory && !relativePath.endsWith("/")) {
+		relativePath += "/"
+	}
+
+	return { type: "path", content: `@${relativePath}` }
+}
 
 export const openClineInNewTab = async ({ context, outputChannel }: Omit<RegisterCommandOptions, "provider">) => {
 	// (This example uses webviewProvider activation event which is necessary to
