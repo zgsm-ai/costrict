@@ -1,5 +1,5 @@
 {
-	"extension.displayName": "Roo Code (原名 Roo Cline)",
+	"extension.displayName": "Costrict",
 	"extension.description": "在你的編輯器中提供完整的 AI 代理開發團隊。",
 	"command.newTask.title": "新建任務",
 	"command.explainCode.title": "解釋程式碼",
@@ -35,6 +35,9 @@
 	"command.addStrongerCode.title": "增加容錯",
 	"command.simplifyCode.title": "簡化程式碼",
 	"command.performanceOptimization.title": "優化效能",
+	"command.view.issue.title": "回饋",
+	"command.view.userHelperDoc.title": "Costrict官網",
+	"command.addFileToContext.title": "添加上下文",
 
 	"intelligentCodeCompletion.enabled.description": "啟用智慧程式碼補全",
 	"intelligentCodeCompletion.betaMode.description": "啟用測試版功能以獲得早期存取權。請查看版本說明了解功能列表。",

@@ -1,5 +1,5 @@
 {
-	"extension.displayName": "Roo Code (prev. Roo Cline)",
+	"extension.displayName": "Costrict",
 	"extension.description": "A whole dev team of AI agents in your editor.",
 	"views.contextMenu.label": "Roo Code",
 	"views.terminalMenu.label": "Roo Code",
@@ -35,6 +35,9 @@
 	"command.addStrongerCode.title": "Enhance Robustness",
 	"command.simplifyCode.title": "Simplify Code",
 	"command.performanceOptimization.title": "Optimize Performance",
+	"command.view.issue.title": "Feedback",
+	"command.view.userHelperDoc.title": "Costrict Official Site",
+	"command.addFileToContext.title": "Add To Context",
 
 	"intelligentCodeCompletion.enabled.description": "Enable intelligent code completion",
 	"intelligentCodeCompletion.betaMode.description": "Enable beta features for early access. See version notes for feature list.",

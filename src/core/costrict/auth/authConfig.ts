@@ -64,4 +64,11 @@ export class ZgsmAuthConfig {
 	public getClientId(): string {
 		return getClientId()
 	}
+
+	/**
+	 * 获取Costrict site
+	 */
+	public getDefaultSite(): string {
+		return "https://costrict.ai"
+	}
 }
