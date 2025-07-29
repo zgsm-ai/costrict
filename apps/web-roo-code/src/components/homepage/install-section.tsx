@@ -37,10 +37,10 @@ export function InstallSection({ downloads }: InstallSectionProps) {
 			<div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-3xl text-center">
 					<h2 className="text-center text-xl font-semibold uppercase tracking-wider text-muted-foreground sm:text-2xl">
-						Install Roo Code — Open & Flexible
+						Install Costrict — Open & Flexible
 					</h2>
 					<p className="mt-4 text-center text-base text-muted-foreground sm:mt-6 sm:text-lg">
-						Roo Code is open-source, model-agnostic, and developer-focused. Install from the VS Code
+						Costrict is open-source, model-agnostic, and developer-focused. Install from the VS Code
 						Marketplace or the CLI in minutes, then bring your own AI model.
 					</p>
 					<div className="mt-10 flex flex-col items-center justify-center gap-6">

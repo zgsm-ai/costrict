@@ -18,49 +18,49 @@ export const features: Feature[] = [
 		icon: <FaRobot className="h-6 w-6" />,
 		title: "Your AI Dev Team in VS Code",
 		description:
-			"Roo Code puts a team of agentic AI assistants directly in your editor, with the power to plan, write, and fix code across multiple files.",
+			"Costrict puts a team of agentic AI assistants directly in your editor, with the power to plan, write, and fix code across multiple files.",
 		size: "large",
 	},
 	{
 		icon: <FaCode className="h-6 w-6" />,
 		title: "Multiple Specialized Modes",
 		description:
-			"From coding to debugging to architecture, Roo Code has a mode for every dev scenario—just switch on the fly.",
+			"From coding to debugging to architecture, Costrict has a mode for every dev scenario—just switch on the fly.",
 		size: "small",
 	},
 	{
 		icon: <FaBrain className="h-6 w-6" />,
 		title: "Deep Project-wide Context",
 		description:
-			"Roo Code reads your entire codebase, preserving valid code through diff-based edits for seamless multi-file refactors.",
+			"Costrict reads your entire codebase, preserving valid code through diff-based edits for seamless multi-file refactors.",
 		size: "small",
 	},
 	{
 		icon: <FaTools className="h-6 w-6" />,
 		title: "Open-Source and Model-Agnostic",
 		description:
-			"Bring your own model or use local AI—no vendor lock-in. Roo Code is free, open, and adaptable to your needs.",
+			"Bring your own model or use local AI—no vendor lock-in. Costrict is free, open, and adaptable to your needs.",
 		size: "large",
 	},
 	{
 		icon: <FaTerminal className="h-6 w-6" />,
 		title: "Guarded Command Execution",
 		description:
-			"Approve or deny commands as needed. Roo Code automates your dev workflow while keeping oversight firmly in your hands.",
+			"Approve or deny commands as needed. Costrict automates your dev workflow while keeping oversight firmly in your hands.",
 		size: "small",
 	},
 	{
 		icon: <FaPuzzlePiece className="h-6 w-6" />,
 		title: "Fully Customizable",
 		description:
-			"Create or tweak modes, define usage rules, and shape Roo Code’s behavior precisely—your code, your way.",
+			"Create or tweak modes, define usage rules, and shape Costrict’s behavior precisely—your code, your way.",
 		size: "small",
 	},
 	{
 		icon: <FaGlobe className="h-6 w-6" />,
 		title: "Automated Browser Actions",
 		description:
-			"Seamlessly test and verify your web app directly from VS Code—Roo Code can open a browser, run checks, and more.",
+			"Seamlessly test and verify your web app directly from VS Code—Costrict can open a browser, run checks, and more.",
 		size: "small",
 	},
 ]
