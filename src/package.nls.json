@@ -1,10 +1,10 @@
 {
 	"extension.displayName": "Costrict",
 	"extension.description": "A whole dev team of AI agents in your editor.",
-	"views.contextMenu.label": "Roo Code",
-	"views.terminalMenu.label": "Roo Code",
-	"views.activitybar.title": "Roo Code",
-	"views.sidebar.name": "Roo Code",
+	"views.contextMenu.label": "Costrict",
+	"views.terminalMenu.label": "Costrict",
+	"views.activitybar.title": "Costrict",
+	"views.sidebar.name": "Costrict",
 	"command.newTask.title": "New Task",
 	"command.mcpServers.title": "MCP Servers",
 	"command.prompts.title": "Modes",
@@ -49,7 +49,7 @@
 	"functionQuickCommands.quickCommandButtons.description": "Configure quick command buttons above functions",
 	"functionQuickCommands.quickCommandButtons.shenmaInstructSet.description": "Show <Costrict> button with all commands above functions",
 
-	"configuration.title": "Roo Code",
+	"configuration.title": "Costrict",
 	"commands.allowedCommands.description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled",
 	"commands.deniedCommands.description": "Command prefixes that will be automatically denied without asking for approval. In case of conflicts with allowed commands, the longest prefix match takes precedence. Add * to deny all commands.",
 	"commands.commandExecutionTimeout.description": "Maximum time in seconds to wait for command execution to complete before timing out (0 = no timeout, 1-600s, default: 0s)",
@@ -59,7 +59,7 @@
 	"settings.vsCodeLmModelSelector.vendor.description": "The vendor of the language model (e.g. copilot)",
 	"settings.vsCodeLmModelSelector.family.description": "The family of the language model (e.g. gpt-4)",
 	"settings.customStoragePath.description": "Custom storage path. Leave empty to use the default location. Supports absolute paths (e.g. 'D:\\RooCodeStorage')",
-	"settings.enableCodeActions.description": "Enable Roo Code quick fixes",
+	"settings.enableCodeActions.description": "Enable Costrict quick fixes",
 	"settings.autoImportSettingsPath.description": "Path to a RooCode configuration file to automatically import on extension startup. Supports absolute paths and paths relative to the home directory (e.g. '~/Documents/roo-code-settings.json'). Leave empty to disable auto-import.",
 	"settings.useAgentRules.description": "Enable loading of AGENTS.md files for agent-specific rules (see https://agent-rules.org/)"
 }

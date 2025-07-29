@@ -231,6 +231,10 @@
 			{
 				"command": "roo-cline.view.userHelperDoc",
 				"title": "%command.view.userHelperDoc.title%"
+			},
+			{
+				"command": "roo-cline.simplifyCode",
+				"title": "11111"
 			}
 		],
 		"menus": {
@@ -462,7 +466,7 @@
 				},
 				"FunctionQuickCommands.enabled": {
 					"type": "boolean",
-					"default": false,
+					"default": true,
 					"order": 1,
 					"description": "%functionQuickCommands.enabled.description%"
 				},

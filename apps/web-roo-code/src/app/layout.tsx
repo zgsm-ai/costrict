@@ -12,9 +12,9 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-	title: "Roo Code – Your AI-Powered Dev Team in VS Code",
+	title: "Costrict – Your AI-Powered Dev Team in VS Code",
 	description:
-		"Roo Code puts an entire AI dev team right in your editor, outpacing closed tools with deep project-wide context, multi-step agentic coding, and unmatched developer-centric flexibility.",
+		"Costrict puts an entire AI dev team right in your editor, outpacing closed tools with deep project-wide context, multi-step agentic coding, and unmatched developer-centric flexibility.",
 	alternates: {
 		canonical: "https://roocode.com",
 	},
@@ -65,7 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				</Script>
 				<div itemScope itemType="https://schema.org/WebSite">
 					<link itemProp="url" href="https://roocode.com" />
-					<meta itemProp="name" content="Roo Code" />
+					<meta itemProp="name" content="Costrict" />
 				</div>
 				<Providers>
 					<Shell>{children}</Shell>

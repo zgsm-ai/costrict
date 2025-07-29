@@ -66,6 +66,8 @@ export const costrictCommandIds = [
 	"rejectIssue",
 	"view.issue",
 	"view.userHelperDoc",
+	"codelens_button",
+	"codelens_more_button",
 ] as const
 export type CostrictCommandId = (typeof costrictCommandIds)[number]
 export type CommandId = (typeof commandIds)[number]

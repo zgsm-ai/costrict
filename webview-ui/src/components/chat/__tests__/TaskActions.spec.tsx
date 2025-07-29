@@ -39,10 +39,10 @@ vi.mock("react-i18next", () => ({
 				"chat:task.sharePublicly": "Share Publicly",
 				"chat:task.sharePubliclyDescription": "Anyone with the link can access",
 				"chat:task.connectToCloud": "Connect to Cloud",
-				"chat:task.connectToCloudDescription": "Sign in to Roo Code Cloud to share tasks",
+				"chat:task.connectToCloudDescription": "Sign in to Costrict Cloud to share tasks",
 				"chat:task.sharingDisabledByOrganization": "Sharing disabled by organization",
-				"account:cloudBenefitsTitle": "Connect to Roo Code Cloud",
-				"account:cloudBenefitsSubtitle": "Sign in to Roo Code Cloud to share tasks",
+				"account:cloudBenefitsTitle": "Connect to Costrict Cloud",
+				"account:cloudBenefitsSubtitle": "Sign in to Costrict Cloud to share tasks",
 				"account:cloudBenefitHistory": "Access your task history from anywhere",
 				"account:cloudBenefitSharing": "Share tasks with your team",
 				"account:cloudBenefitMetrics": "Track usage and costs",
@@ -208,8 +208,8 @@ describe("TaskActions", () => {
 			expect(shareButton).toBeDefined()
 			fireEvent.click(shareButton!)
 
-			expect(screen.getByText("Connect to Roo Code Cloud")).toBeInTheDocument()
-			expect(screen.getByText("Sign in to Roo Code Cloud to share tasks")).toBeInTheDocument()
+			expect(screen.getByText("Connect to Costrict Cloud")).toBeInTheDocument()
+			expect(screen.getByText("Sign in to Costrict Cloud to share tasks")).toBeInTheDocument()
 			expect(screen.getByText("Connect")).toBeInTheDocument()
 		})
 

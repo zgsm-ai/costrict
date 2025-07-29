@@ -12,7 +12,7 @@ import { CODELENS_CONST, CODELENS_FUNC } from "../base/common/constant"
 import { throttle } from "../base/common/util"
 import { getLanguageByFilePath } from "../base/common/lang-util"
 import { ClineProvider } from "../../webview/ClineProvider"
-// import { getCommand } from "../../../utils/commands"
+import { getCommand } from "../../../utils/commands"
 
 /**
  * Throttled function for commonCodeLensFunc
@@ -98,18 +98,18 @@ async function moreCodeLensFunc(editor: any, ...args: any) {
 	}
 }
 
-// /**
-//  * Callback function for common codelens
-//  */
-// export const codeLensCallBackCommand = {
-// 	command: getCommand("codelens_button"),
-// 	callback: (event: any) => throttleCommonCodeLensFunc,
-// }
+/**
+ * Callback function for common codelens
+ */
+export const codeLensCallBackCommand = {
+	command: getCommand("codelens_button"),
+	callback: (event: any) => throttleCommonCodeLensFunc,
+}
 
-// /**
-//  * Callback function for the 'More' button in codelens
-//  */
-// export const codeLensCallBackMoreCommand = {
-// 	command: getCommand("codelens_more_button"),
-// 	callback: (event: any) => moreCodeLensFunc,
-// }
+/**
+ * Callback function for the 'More' button in codelens
+ */
+export const codeLensCallBackMoreCommand = {
+	command: getCommand("codelens_more_button"),
+	callback: (event: any) => moreCodeLensFunc,
+}

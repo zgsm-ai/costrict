@@ -424,7 +424,7 @@ export class Task extends EventEmitter<ClineEvents> {
 
 			await this.providerRef.deref()?.updateTaskHistory(historyItem)
 		} catch (error) {
-			console.error("Failed to save Roo messages:", error)
+			console.error("Failed to save Costrict messages:", error)
 		}
 	}
 
@@ -738,7 +738,7 @@ export class Task extends EventEmitter<ClineEvents> {
 	async sayAndCreateMissingParamError(toolName: ToolName, paramName: string, relPath?: string) {
 		await this.say(
 			"error",
-			`Roo tried to use ${toolName}${
+			`Costrict tried to use ${toolName}${
 				relPath ? ` for '${relPath.toPosix()}'` : ""
 			} without value for required parameter '${paramName}'. Retrying...`,
 		)

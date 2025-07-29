@@ -9,8 +9,8 @@ vi.mock("@src/i18n/TranslationContext", () => ({
 			const translations: Record<string, string> = {
 				"account:title": "Account",
 				"settings:common.done": "Done",
-				"account:signIn": "Connect to Roo Code Cloud",
-				"account:cloudBenefitsTitle": "Connect to Roo Code Cloud",
+				"account:signIn": "Connect to Costrict Cloud",
+				"account:cloudBenefitsTitle": "Connect to Costrict Cloud",
 				"account:cloudBenefitsSubtitle": "Sync your prompts and telemetry to enable:",
 				"account:cloudBenefitHistory": "Online task history",
 				"account:cloudBenefitSharing": "Sharing and collaboration features",
@@ -54,7 +54,7 @@ describe("AccountView", () => {
 		)
 
 		// Check that the benefits section is displayed
-		expect(screen.getByRole("heading", { name: "Connect to Roo Code Cloud" })).toBeInTheDocument()
+		expect(screen.getByRole("heading", { name: "Connect to Costrict Cloud" })).toBeInTheDocument()
 		expect(screen.getByText("Sync your prompts and telemetry to enable:")).toBeInTheDocument()
 		expect(screen.getByText("Online task history")).toBeInTheDocument()
 		expect(screen.getByText("Sharing and collaboration features")).toBeInTheDocument()
