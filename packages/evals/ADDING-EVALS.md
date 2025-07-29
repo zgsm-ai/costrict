@@ -32,7 +32,7 @@ The key principle is that the tests define the contract - if all tests pass, the
 
 The evals system consists of several key components:
 
-- **Exercises Repository**: [`Roo-Code-Evals`](https://github.com/zgsm-ai/costrict-Evals) - Contains all exercise definitions
+- **Exercises Repository**: [`Roo-Code-Evals`](https://github.com/RooCodeInc/Roo-Code-Evals) - Contains all exercise definitions
 - **Web Interface**: [`apps/web-evals`](../apps/web-evals) - Management interface for creating and monitoring evaluation runs
 - **Evals Package**: [`packages/evals`](../packages/evals) - Contains both controller logic for orchestrating evaluation runs and runner container code for executing individual tasks
 - **Docker Configuration**: Container definitions for the `controller` and `runner` as well as a Docker Compose file that provisions Postgres and Redis instances required for eval runs.
@@ -49,7 +49,7 @@ The system currently supports these programming languages:
 
 ## Adding Exercises to Existing Languages
 
-TL;DR - Here's a pull request that adds a new JavaScript eval: https://github.com/zgsm-ai/costrict-Evals/pull/3
+TL;DR - Here's a pull request that adds a new JavaScript eval: https://github.com/RooCodeInc/Roo-Code-Evals/pull/3
 
 ### Step 1: Understand the Exercise Structure
 
@@ -70,7 +70,7 @@ Each exercise follows a standardized directory structure:
 1. **Clone the evals repository**:
 
     ```bash
-    git clone https://github.com/zgsm-ai/costrict-Evals.git evals
+    git clone https://github.com/RooCodeInc/Roo-Code-Evals.git evals
     cd evals
     ```
 

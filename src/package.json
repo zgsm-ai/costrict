@@ -615,6 +615,14 @@
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.useAgentRules.description%"
+				},
+				"AutoCommit": {
+					"type": "boolean",
+					"default": false,
+					"description": "%settings.autoCommit.description%",
+					"tags": [
+						"experimental"
+					]
 				}
 			}
 		}
@@ -637,9 +645,9 @@
 		"@anthropic-ai/bedrock-sdk": "^0.10.2",
 		"@anthropic-ai/sdk": "^0.37.0",
 		"@anthropic-ai/vertex-sdk": "^0.7.0",
-		"@bufbuild/protobuf": "^2.6.0",
 		"@aws-sdk/client-bedrock-runtime": "^3.848.0",
 		"@aws-sdk/credential-providers": "^3.848.0",
+		"@bufbuild/protobuf": "^2.6.0",
 		"@google/genai": "^1.0.0",
 		"@grpc/grpc-js": "^1.13.4",
 		"@grpc/proto-loader": "^0.7.15",
@@ -675,6 +683,7 @@
 		"i18next": "^25.0.0",
 		"ignore": "^7.0.3",
 		"isbinaryfile": "^5.0.2",
+		"jwt-decode": "^4.0.0",
 		"lodash.debounce": "^4.0.8",
 		"mammoth": "^1.8.0",
 		"monaco-vscode-textmate-theme-converter": "^0.1.7",

@@ -1,4 +1,4 @@
-import { parseJwt } from "../../../utils/zgsmUtils"
+import { jwtDecode } from "jwt-decode"
 import { getClientId } from "../../../utils/getClientId"
 
 export class ZgsmAuthConfig {
@@ -42,7 +42,7 @@ export class ZgsmAuthConfig {
 	public getTokenRefreshInterval(refreshToken?: string, min = 3): number {
 		if (!refreshToken) return 24 * 60 * 60 * 1000 // 24h
 
-		const { exp } = parseJwt(refreshToken)
+		const { exp } = jwtDecode(refreshToken) as any
 		const refreshInterval = Math.min((exp - 1800) * 1000 - Date.now(), 2147483647)
 		return refreshInterval > 0 ? refreshInterval : min * 1000
 	}

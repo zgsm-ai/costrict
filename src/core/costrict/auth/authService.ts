@@ -1,10 +1,11 @@
 import * as vscode from "vscode"
+import { jwtDecode } from "jwt-decode"
 import { ZgsmAuthStorage } from "./authStorage"
 import { ZgsmAuthApi } from "./authApi"
 import { ZgsmAuthConfig } from "./authConfig"
 import type { ProviderSettings } from "@roo-code/types"
 import type { ClineProvider } from "../../webview/ClineProvider"
-import { getParams, parseJwt, retryWrapper } from "../../../utils/zgsmUtils"
+import { getParams, retryWrapper } from "../../../utils/zgsmUtils"
 import { joinUrl } from "../../../utils/joinUrl"
 import { ZgsmAuthStatus, ZgsmAuthTokens, ZgsmLoginState, ZgsmUserInfo, LoginTokenResponse } from "./types"
 import { getClientId } from "../../../utils/getClientId"
@@ -310,7 +311,7 @@ export class ZgsmAuthService {
 				return false
 			}
 
-			const jwt = parseJwt(tokens?.refresh_token)
+			const jwt = jwtDecode(tokens?.refresh_token) as any
 
 			return jwt.exp * 1000 > Date.now()
 		} catch (error) {
@@ -408,7 +409,7 @@ export class ZgsmAuthService {
 	}
 
 	updateUserInfo(token: string) {
-		const jwt = parseJwt(token)
+		const jwt = jwtDecode(token) as any
 
 		this.userInfo = {
 			id: jwt.id,

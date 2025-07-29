@@ -60,6 +60,14 @@ vi.mock("vscode", () => ({
 	},
 }))
 
+vi.mock("@roo-code/telemetry", () => ({
+	TelemetryService: {
+		instance: {
+			captureError: vi.fn(),
+		},
+	},
+}))
+
 // Mock API functions
 vi.mock("../api", () => ({
 	createReviewTaskAPI: vi.fn(),
@@ -383,7 +391,7 @@ describe("CodeReviewService", () => {
 			mockCreateReviewTaskAPI.mockRejectedValue(error)
 
 			// Attempt to start task
-			await expect(service.startReviewTask([mockReviewTarget])).rejects.toThrow("API Error")
+			await expect(service.startReviewTask([mockReviewTarget])).resolves.not.toThrow()
 
 			// Verify cleanup after error
 			expect(service.getCurrentTask()).toBeNull()

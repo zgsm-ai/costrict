@@ -1,6 +1,6 @@
+import { jwtDecode } from "jwt-decode"
 import type { ZgsmAuthTokens, ZgsmLoginState } from "./types"
 import type { ClineProvider } from "../../webview/ClineProvider"
-import { parseJwt } from "../../../utils/zgsmUtils"
 import { sendZgsmTokens } from "./ipc/client"
 import { initZgsmCodeBase } from "../codebase"
 import { ZgsmAuthConfig } from "./authConfig"
@@ -51,7 +51,7 @@ export class ZgsmAuthStorage {
 			this.clineProvider?.log(`[ZgsmLoginManager:${state}] saveTokens: tokens are already saved`)
 			return
 		}
-		const { exp, iat } = parseJwt(tokens.access_token)
+		const { exp, iat } = jwtDecode(tokens.access_token) as any
 		const zgsmApiKeyUpdatedAt = new Date(iat * 1000).toLocaleString()
 		const zgsmApiKeyExpiredAt = new Date(exp * 1000).toLocaleString()
 		const config = {

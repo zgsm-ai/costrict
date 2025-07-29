@@ -1,6 +1,7 @@
-<!-- git remote add upstream git@github.com:zgsm-ai/costrict.git 设置上游仓库 -->
+<!-- git remote add upstream git remote add upstream git@github.com:RooCodeInc/Roo-Code.git
+ 设置上游仓库 -->
 
-git remote add upstream git@github.com:zgsm-ai/costrict.git
+git remote add upstream git remote add upstream git@github.com:RooCodeInc/Roo-Code.git
 
 <!-- git checkout merge-roo-vx 设置合并分支 -->
 

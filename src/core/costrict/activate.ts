@@ -33,6 +33,7 @@ import {
 } from "./base/common"
 import { ZgsmAuthStorage } from "./auth"
 import { initCodeReview } from "./code-review"
+import { initTelemetry } from "./telemetry"
 import { Package } from "../../shared/package"
 import { createLogger, deactivate as loggerDeactivate } from "../../utils/logger"
 
@@ -75,10 +76,11 @@ export async function activate(
 	provider: ClineProvider,
 	outputChannel: vscode.OutputChannel,
 ) {
-	await initialize(provider)
 	createLogger(Package.outputChannel, { channel: outputChannel })
+	await initialize(provider)
 	initCodeReview(context, provider, outputChannel)
 	CompletionStatusBar.create(context)
+	initTelemetry(provider)
 
 	context.subscriptions.push(
 		// Register codelens related commands

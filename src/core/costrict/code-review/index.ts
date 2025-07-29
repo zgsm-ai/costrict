@@ -15,6 +15,8 @@ import { CodeReviewService } from "./codeReviewService"
 import { CommentService } from "../../../integrations/comment"
 import type { ReviewComment } from "./reviewComment"
 import { ReviewTarget, ReviewTargetType } from "./types"
+import { TelemetryService } from "@roo-code/telemetry"
+import { CodeBaseError, CodeReviewErrorType, type TelemetryErrorType } from "../telemetry"
 
 export function initCodeReview(
 	context: vscode.ExtensionContext,
@@ -71,9 +73,11 @@ export function initCodeReview(
 				} else {
 					if (code === "401") {
 						await reviewInstance.handleAuthError()
+						codebaseSyncService.recordError(CodeBaseError.AuthError as TelemetryErrorType)
 						return
 					}
 					await reviewInstance.pushErrorToWebview(new Error(t("common:review.tip.codebase_sync_failed")))
+					codebaseSyncService.recordError(CodeBaseError.SyncFailed as TelemetryErrorType)
 				}
 			} catch (error) {
 				await reviewInstance.pushErrorToWebview(new Error(t("common:review.tip.service_unavailable")))

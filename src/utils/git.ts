@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import * as path from "path"
+import { createHash } from "crypto"
 import { promises as fs } from "fs"
 import { exec } from "child_process"
 import { promisify } from "util"
@@ -20,6 +21,10 @@ export interface GitCommit {
 	subject: string
 	author: string
 	date: string
+}
+
+interface AutoCommit {
+	(relPath: string, cwd: string, option: { model: string; editorName: string; date: string }): Promise<void>
 }
 
 /**
@@ -353,5 +358,60 @@ export async function getWorkingState(cwd: string): Promise<string> {
 	} catch (error) {
 		console.error("Error getting working state:", error)
 		return `Failed to get working state: ${error instanceof Error ? error.message : String(error)}`
+	}
+}
+
+export const autoCommit: AutoCommit = async (relPath, cwd, option) => {
+	try {
+		const isInstalled = await checkGitInstalled()
+		if (!isInstalled) {
+			throw new Error("Git is not installed")
+		}
+
+		const isRepo = await checkGitRepo(cwd)
+		if (!isRepo) {
+			throw new Error("Not a git repository")
+		}
+
+		// Get git username
+		let username = "Unknown"
+		try {
+			const { stdout } = await execAsync("git config user.name", { cwd })
+			username = stdout.trim()
+		} catch (error) {
+			console.warn("Could not get git username, using default")
+		}
+
+		// Add the specified file
+		await execAsync(`git add "${relPath}"`, { cwd })
+
+		// Generate fingerprint based on path
+		const fingerprint = createHash("sha256")
+			.update(relPath + Date.now().toString())
+			.digest("hex")
+			.substring(0, 8)
+
+		// Generate commit message with AI declaration and detailed body
+		const subject = "feat: AI generated content"
+		const body = [
+			`Model: ${option.model}`,
+			`Editor: ${option.editorName}`,
+			`Date: ${option.date}`,
+			`File: ${relPath}`,
+			`Fingerprint: ${fingerprint}`,
+		].join("\n")
+
+		const commitMessage = `${subject}\n\n${body}`
+
+		// Generate author name with AI_ prefix
+		const authorName = `AI_${username}`
+
+		// Commit with the generated message and custom author
+		await execAsync(`git -c user.name="${authorName}" commit -m "${commitMessage}"`, {
+			cwd,
+		})
+	} catch (error) {
+		console.error("Error during auto commit:", error)
+		throw error
 	}
 }

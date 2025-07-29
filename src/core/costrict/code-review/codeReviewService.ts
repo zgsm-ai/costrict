@@ -29,7 +29,8 @@ import { getClientId } from "../../../utils/getClientId"
 import { t } from "../../../i18n"
 import { CommentService, type CommentThreadInfo } from "../../../integrations/comment"
 import { ClineProvider } from "../../webview/ClineProvider"
-
+import { TelemetryService } from "@roo-code/telemetry"
+import { CodeReviewErrorType, type TelemetryErrorType } from "../telemetry"
 /**
  * Code Review Service - Singleton
  *
@@ -123,6 +124,7 @@ export class CodeReviewService {
 		await ZgsmAuthService.openStatusBarLoginTip({
 			errorTitle: t("common:review.statusbar.login_expired"),
 		})
+		this.recordReviewError(CodeReviewErrorType.AuthError as TelemetryErrorType)
 	}
 
 	// ===== Task Management Methods =====
@@ -186,8 +188,10 @@ export class CodeReviewService {
 			this.logger.error(error)
 			if (error.name === "AuthError") {
 				await this.handleAuthError()
+				return
 			}
-			throw error
+			this.pushErrorToWebview(new Error(t("common:review.tip.service_unavailable")))
+			this.recordReviewError(CodeReviewErrorType.StartReviewError as TelemetryErrorType)
 		}
 	}
 
@@ -241,13 +245,16 @@ export class CodeReviewService {
 				if (error.name === "AuthError") {
 					await this.handleAuthError()
 				}
+				this.recordReviewError(CodeReviewErrorType.CancelReviewError as TelemetryErrorType)
 				throw error
+			} finally {
+				this.taskAbortController = null
+				this.completeTask()
 			}
-			this.taskAbortController = null
+		} else {
+			// Mark task as completed and send completion message
+			this.completeTask()
 		}
-
-		// Mark task as completed and send completion message
-		this.completeTask()
 	}
 
 	// ===== Issue Management Methods =====
@@ -351,7 +358,9 @@ export class CodeReviewService {
 			this.logger.error(`Failed to update issue status: issueId=${issueId}, error=${error}`)
 			if (error.name === "AuthError") {
 				await this.handleAuthError()
+				return
 			}
+			this.recordReviewError(CodeReviewErrorType.UpdateIssueError as TelemetryErrorType)
 			throw error
 		}
 	}
@@ -512,6 +521,7 @@ export class CodeReviewService {
 					await this.handleAuthError()
 					break
 				}
+				this.recordReviewError(CodeReviewErrorType.FetchResultError as TelemetryErrorType)
 				// Send error message to webview with unified event
 				this.sendReviewTaskUpdateMessage(TaskStatus.ERROR, {
 					issues: this.getAllCachedIssues(),
@@ -644,6 +654,10 @@ export class CodeReviewService {
 			progress: 0,
 			error: error.message,
 		})
+	}
+
+	private recordReviewError(type: TelemetryErrorType) {
+		TelemetryService.instance.captureError(`CodeReviewError_${type}`)
 	}
 
 	public dispose(): void {

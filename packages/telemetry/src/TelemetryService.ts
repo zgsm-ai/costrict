@@ -226,6 +226,22 @@ export class TelemetryService {
 		this.captureEvent(TelemetryEventName.TITLE_BUTTON_CLICKED, { button })
 	}
 
+	public captureCodeAccept(language: string, lines: number) {
+		this.captureEvent(TelemetryEventName.CODE_ACCEPT, { language, lines })
+	}
+
+	public captureCodeReject(language: string, lines: number) {
+		this.captureEvent(TelemetryEventName.CODE_REJECT, { language, lines })
+	}
+
+	public captureCodeTabCompletion(language: string, lines: number, action: string, responceTime: number) {
+		this.captureEvent(TelemetryEventName.CODE_TAB_COMPLETION, { language, lines, action, responceTime })
+	}
+
+	public captureError(errorType: string) {
+		this.captureEvent(TelemetryEventName.ERROR, { error_type: errorType })
+	}
+
 	/**
 	 * Checks if telemetry is currently enabled
 	 * @returns Whether telemetry is enabled

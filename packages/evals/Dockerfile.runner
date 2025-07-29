@@ -67,7 +67,7 @@ RUN mkdir -p /roo/.vscode-template \
 
 # Copy evals
 ARG EVALS_COMMIT=main
-ARG EVALS_REPO_URL=https://github.com/zgsm-ai/costrict-Evals.git
+ARG EVALS_REPO_URL=https://github.com/RooCodeInc/Roo-Code-Evals.git
 RUN git clone ${EVALS_REPO_URL} evals \
   && cd evals \
   && git checkout ${EVALS_COMMIT}

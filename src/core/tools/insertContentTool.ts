@@ -1,6 +1,7 @@
 import delay from "delay"
 import fs from "fs/promises"
 import path from "path"
+import * as vscode from "vscode"
 
 import { getReadablePath } from "../../utils/path"
 import { Task } from "../task/Task"
@@ -9,9 +10,13 @@ import { formatResponse } from "../prompts/responses"
 import { ClineSayTool } from "../../shared/ExtensionMessage"
 import { RecordSource } from "../context-tracking/FileContextTrackerTypes"
 import { fileExistsAtPath } from "../../utils/fs"
+import { getLanguage } from "../../utils/file"
+import { getDiffLines } from "../../utils/diffLines"
+import { autoCommit } from "../../utils/git"
 import { insertGroups } from "../diff/insert-groups"
 import { DEFAULT_WRITE_DELAY_MS } from "@roo-code/types"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
+import { TelemetryService } from "@roo-code/telemetry"
 
 export async function insertContentTool(
 	cline: Task,
@@ -147,12 +152,14 @@ export async function insertContentTool(
 		const didApprove = await cline
 			.ask("tool", completeMessage, isWriteProtected)
 			.then((response) => response.response === "yesButtonClicked")
-
+		const language = await getLanguage(relPath)
+		const diffLines = getDiffLines(fileContent, updatedContent)
 		if (!didApprove) {
 			if (!isPreventFocusDisruptionEnabled) {
 				await cline.diffViewProvider.revertChanges()
 			}
 			pushToolResult("Changes were rejected by the user.")
+			TelemetryService.instance.captureCodeReject(language, diffLines)
 			return
 		}
 
@@ -180,6 +187,20 @@ export async function insertContentTool(
 		// Track file edit operation
 		if (relPath) {
 			await cline.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+		}
+		try {
+			TelemetryService.instance.captureCodeAccept(language, diffLines)
+			// Check if AutoCommit is enabled before committing
+			const autoCommitEnabled = vscode.workspace.getConfiguration().get<boolean>("AutoCommit", false)
+			if (autoCommitEnabled) {
+				autoCommit(relPath, cline.cwd, {
+					model: cline.api.getModel().id,
+					editorName: vscode.env.appName,
+					date: new Date().toLocaleString(),
+				})
+			}
+		} catch (err) {
+			console.log(err)
 		}
 
 		cline.didEditFile = true

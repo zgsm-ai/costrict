@@ -19,7 +19,7 @@ RUN apt update && apt install -y docker-ce-cli
 WORKDIR /roo
 
 # Copy evals
-RUN git clone https://github.com/zgsm-ai/costrict-Evals.git evals
+RUN git clone https://github.com/RooCodeInc/Roo-Code-Evals.git evals
 
 WORKDIR /roo/repo
 

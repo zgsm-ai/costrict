@@ -37,16 +37,6 @@ export async function retryWrapper<T>(
 	throw lastError || new Error(`Operation failed after ${attempt} attempts`)
 }
 
-export function parseJwt(token: string) {
-	const parts = token.split(".")
-	if (parts.length !== 3) {
-		throw new Error("Invalid JWT")
-	}
-	const payload = parts[1]
-	const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/")) // base64url → base64 → decode
-	return JSON.parse(decoded)
-}
-
 export function getLocalIP(): string {
 	try {
 		const interfaces = os.networkInterfaces()

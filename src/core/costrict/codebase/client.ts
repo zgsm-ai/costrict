@@ -17,6 +17,8 @@ import { ClineProvider } from "../../webview/ClineProvider"
 import { getWorkspacePath } from "../../../utils/path"
 import { PackageInfo, PackagesResponse } from "./types"
 import { getClientId } from "../../../utils/getClientId"
+import { TelemetryService } from "@roo-code/telemetry"
+import { CodeBaseError, type TelemetryErrorType } from "../telemetry"
 
 export class ZgsmCodeBaseSyncService {
 	private static providerRef: ClineProvider | undefined
@@ -249,7 +251,10 @@ export class ZgsmCodeBaseSyncService {
 						filePaths,
 					},
 					(err: grpc.ServiceError | null, response?: SyncCodebaseResponse) => {
-						if (err) return reject(err)
+						if (err) {
+							this.recordError(CodeBaseError.SyncFailed as TelemetryErrorType)
+							return reject(err)
+						}
 						resolve(response!)
 					},
 				)
@@ -274,7 +279,10 @@ export class ZgsmCodeBaseSyncService {
 						filePaths,
 					},
 					(err: grpc.ServiceError | null, response?: SyncCodebaseResponse) => {
-						if (err) return reject(err)
+						if (err) {
+							this.recordError(CodeBaseError.CheckFileError as TelemetryErrorType)
+							return reject(err)
+						}
 						resolve(response!)
 					},
 				)
@@ -579,6 +587,10 @@ export class ZgsmCodeBaseSyncService {
 			clearTimeout(this.clientDaemonPollTimeout)
 			this.clientDaemonPollTimeout = undefined
 		}
+	}
+
+	recordError(type: TelemetryErrorType) {
+		TelemetryService.instance.captureError(`CodeBaseError_${type}`)
 	}
 
 	/**

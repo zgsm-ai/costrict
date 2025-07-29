@@ -38,6 +38,8 @@ import { getHideScoreArgs } from "./completionScore"
 import { CompletionStatusBar } from "./completionStatusBar"
 import { CompletionPoint } from "./completionPoint"
 import { CompletionTrace } from "./completionTrace"
+import { TelemetryService } from "@roo-code/telemetry"
+import { CodeCompletionError, type TelemetryErrorType } from "../telemetry"
 
 export class AICompletionProvider implements InlineCompletionItemProvider, Disposable {
 	private disposables: Disposable[] = []
@@ -379,6 +381,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 					Logger.info(`Completion [${cp.id}]: The request has been cancelled.`)
 				} else {
 					Logger.error(`Completion [${cp.id}]: Failed to get completion content`, error)
+					this.recordError(CodeCompletionError.ApiError as TelemetryErrorType)
 					CompletionStatusBar.fail(error)
 				}
 				return Promise.reject(error)
@@ -392,10 +395,10 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 	 * 3. Improvement data: The actual content input by the user after rejecting the completion.
 	 */
 	private setFeedbackTimer() {
-		this.feedbackTimer = setInterval(() => {
-			CompletionTrace.uploadPoints()
-			CompletionTrace.uploadMemo()
-		}, COMPLETION_CONST.feedbackInterval)
+		// this.feedbackTimer = setInterval(() => {
+		// 	CompletionTrace.uploadPoints()
+		// 	CompletionTrace.uploadMemo()
+		// }, COMPLETION_CONST.feedbackInterval)
 	}
 
 	/**
@@ -432,6 +435,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 				if (completionText.replace(/\r\n/g, "\n") === changeText.replace(/\r\n/g, "\n")) {
 					Logger.info(`Completion [${cur.id}]: The completion content has been accepted: ${changeText}`)
 					cur.accept()
+					cur.recordCompletion(CompletionAcception.Accepted, changeText.split("\n").length)
 					CompletionCache.cache(cur)
 					if (this.timer) {
 						clearTimeout(this.timer)
@@ -486,6 +490,7 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 			if (originText.replace(/\r\n/g, "\n") === actualText.replace(/\r\n/g, "\n")) {
 				Logger.info("Completion: The actual code is the same as the code in the original file.", actualText)
 				cp.reject()
+				cp.recordCompletion(CompletionAcception.Rejected, actualText.split("\n").length)
 				cp.unchanged()
 				return
 			}
@@ -543,5 +548,9 @@ export class AICompletionProvider implements InlineCompletionItemProvider, Dispo
 			cursor_line_prefix: linePrefix,
 			cursor_line_suffix: lineSuffix,
 		}
+	}
+
+	private recordError(type: TelemetryErrorType) {
+		TelemetryService.instance.captureError(`TabCompletion_${type}`)
 	}
 }

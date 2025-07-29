@@ -11,8 +11,12 @@ import {
 	CompletionCorrection,
 	CompletionDocumentInformation,
 	CompletionPrompt,
+	getAcceptionString,
 } from "./completionDataInterface"
 import { Position, TextDocument } from "vscode"
+
+import { TelemetryService } from "@roo-code/telemetry"
+import { getLanguage } from "../../../utils/file"
 
 /**
  * Calculate the primary key based on the editing position (this primary key serves as the unique identifier for the completion point).
@@ -213,5 +217,12 @@ export class CompletionPoint {
 	 */
 	public unchanged() {
 		this.correction = CompletionCorrection.Unchanged
+	}
+
+	public async recordCompletion(acception: CompletionAcception, lines: number) {
+		const responceTime = this.endTime - this.startTime
+		const lang = await getLanguage(this.doc.fpath)
+		const action = getAcceptionString(acception)
+		TelemetryService.instance.captureCodeTabCompletion(lang, lines, action, responceTime)
 	}
 }

@@ -121,7 +121,7 @@ class ChannelLogger implements ILogger {
 			this.flush() // 强制刷新
 		}
 
-		const line = `${this.timeFn()} [${tag}] ` + [msg, ...args].map(this.safeToString).join(" ")
+		const line = `[${this.timeFn()}] [${tag}] ` + [msg, ...args].map(this.safeToString).join(" ")
 
 		this.buffer.push(line)
 		this.scheduleFlush()

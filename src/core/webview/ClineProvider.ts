@@ -8,6 +8,7 @@ import delay from "delay"
 import axios from "axios"
 import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
+import { jwtDecode } from "jwt-decode"
 
 import {
 	type GlobalState,
@@ -1970,6 +1971,15 @@ export class ClineProvider
 			}
 		}
 
+		let userInfo: { userName: string } | undefined
+		const { zgsmAccessToken } = apiConfiguration
+		if (zgsmAccessToken) {
+			const decoded = jwtDecode(zgsmAccessToken)
+			userInfo = {
+				userName: (decoded as any).username ?? "",
+			}
+		}
+
 		// Return all properties including git info - clients will filter as needed
 		return {
 			appName: packageJSON?.name ?? Package.name,
@@ -1986,6 +1996,7 @@ export class ClineProvider
 			cloudIsAuthenticated,
 			...(todos && { todos }),
 			...gitInfo,
+			...(userInfo && { ...userInfo }),
 		}
 	}
 

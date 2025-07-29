@@ -2148,6 +2148,7 @@ export class Task extends EventEmitter<ClineEvents> {
 		}
 
 		this.toolUsage[toolName].failures++
+		TelemetryService.instance.captureError(`ToolUsageError_${toolName}`)
 
 		if (error) {
 			this.emit("taskToolFailed", this.taskId, toolName, error)

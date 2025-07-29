@@ -66,6 +66,12 @@ export enum TelemetryEventName {
 	SHELL_INTEGRATION_ERROR = "Shell Integration Error",
 	CONSECUTIVE_MISTAKE_ERROR = "Consecutive Mistake Error",
 	CODE_INDEX_ERROR = "Code Index Error",
+
+	CODE_ACCEPT = "Code Accept",
+	CODE_REJECT = "Code Reject",
+	CODE_TAB_COMPLETION = "Code Tab Completion",
+
+	ERROR = "Error",
 }
 
 /**
