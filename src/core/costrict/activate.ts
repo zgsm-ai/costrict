@@ -18,11 +18,7 @@ import { ClineProvider } from "../webview/ClineProvider"
 // Import from migrated modules
 import { AICompletionProvider, CompletionStatusBar, shortKeyCut } from "./completion"
 
-// import {
-// 	MyCodeLensProvider,
-// 	// codeLensCallBackCommand,
-// 	// codeLensCallBackMoreCommand
-// } from "../zgsm-codelens"
+import { MyCodeLensProvider, codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codelens"
 
 import {
 	configCompletion,
@@ -33,6 +29,7 @@ import {
 	initLangSetting,
 	printLogo,
 	loadLocalLanguageExtensions,
+	LangSetting,
 } from "./base/common"
 import { ZgsmAuthStorage } from "./auth"
 import { initCodeReview } from "./code-review"
@@ -83,20 +80,20 @@ export async function activate(
 	initCodeReview(context, provider, outputChannel)
 	CompletionStatusBar.create(context)
 
-	// context.subscriptions.push(
-	// 	// Register codelens related commands
-	// 	vscode.commands.registerTextEditorCommand(
-	// 		codeLensCallBackCommand.command,
-	// 		codeLensCallBackCommand.callback(context),
-	// 	),
-	// 	// Construct instruction set
-	// 	vscode.commands.registerTextEditorCommand(
-	// 		codeLensCallBackMoreCommand.command,
-	// 		codeLensCallBackMoreCommand.callback(context),
-	// 	),
-	// 	// Register function header menu
-	// 	vscode.languages.registerCodeLensProvider("*", new MyCodeLensProvider()),
-	// )
+	context.subscriptions.push(
+		// Register codelens related commands
+		vscode.commands.registerTextEditorCommand(
+			codeLensCallBackCommand.command,
+			codeLensCallBackCommand.callback(context),
+		),
+		// Construct instruction set
+		vscode.commands.registerTextEditorCommand(
+			codeLensCallBackMoreCommand.command,
+			codeLensCallBackMoreCommand.callback(context),
+		),
+		// Register function header menu
+		vscode.languages.registerCodeLensProvider("*", new MyCodeLensProvider()),
+	)
 
 	// Listen for configuration changes
 	const configChanged = vscode.workspace.onDidChangeConfiguration((e) => {

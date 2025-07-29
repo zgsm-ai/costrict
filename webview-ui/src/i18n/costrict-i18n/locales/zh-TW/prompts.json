@@ -1,12 +1,12 @@
 {
 	"modes": {
-		"createModeHelpText": "點選 + 建立新的自訂模式，或者在聊天中直接請Costrict為您建立！"
+		"createModeHelpText": "點選 + 建立新的自訂模式，或者在聊天中直接請 Costrict 為您建立！"
 	},
 	"roleDefinition": {
-		"description": "定義此模式下Costrict的專業知識和個性。此描述會形塑Costrict如何展現自己並處理工作。"
+		"description": "定義此模式下 Costrict 的專業知識和個性。此描述會形塑 Costrict 如何展現自己並處理工作。"
 	},
 	"globalCustomInstructions": {
-		"description": "這些指令適用於所有模式。它們提供了一組基本行為，可以透過下方的模式專屬自訂指令來強化。\n如果您希望Costrict使用與編輯器顯示語言 ({{language}}) 不同的語言來思考和對話，您可以在這裡指定。"
+		"description": "這些指令適用於所有模式。它們提供了一組基本行為，可以透過下方的模式專屬自訂指令來強化。\n如果您希望 Costrict 使用與編輯器顯示語言 ({{language}}) 不同的語言來思考和對話，您可以在這裡指定。"
 	},
 	"supportPrompts": {
 		"types": {
@@ -45,7 +45,7 @@
 	},
 	"createModeDialog": {
 		"roleDefinition": {
-			"description": "定義Costrict的專業領域和個性。"
+			"description": "定義 Costrict 的專業領域和個性。"
 		}
 	}
 }
