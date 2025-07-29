@@ -38,7 +38,7 @@
 	},
 	"codeIndex": {
 		"title": "Codebase Indexing",
-		"description": "Configure codebase indexing settings to enable semantic search of your project. <0>Learn more</0>",
+		"description": "Configure codebase indexing settings to enable semantic search of your project.",
 		"statusTitle": "Status",
 		"enableLabel": "Enable Codebase Indexing",
 		"enableDescription": "Enable code indexing for improved search and context understanding",
@@ -443,7 +443,7 @@
 	"browser": {
 		"enable": {
 			"label": "Enable browser tool",
-			"description": "When enabled, Roo can use a browser to interact with websites when using models that support computer use. <0>Learn more</0>"
+			"description": "When enabled, Roo can use a browser to interact with websites when using models that support computer use."
 		},
 		"viewport": {
 			"label": "Viewport size",
@@ -471,7 +471,7 @@
 	"checkpoints": {
 		"enable": {
 			"label": "Enable automatic checkpoints",
-			"description": "When enabled, Roo will automatically create checkpoints during task execution, making it easy to review changes or revert to earlier states. <0>Learn more</0>"
+			"description": "When enabled, Roo will automatically create checkpoints during task execution, making it easy to review changes or revert to earlier states."
 		}
 	},
 	"notifications": {
@@ -577,51 +577,51 @@
 		},
 		"outputLineLimit": {
 			"label": "Terminal output limit",
-			"description": "Maximum number of lines to include in terminal output when executing commands. When exceeded lines will be removed from the middle, saving tokens. <0>Learn more</0>"
+			"description": "Maximum number of lines to include in terminal output when executing commands. When exceeded lines will be removed from the middle, saving tokens."
 		},
 		"outputCharacterLimit": {
 			"label": "Terminal character limit",
-			"description": "Maximum number of characters to include in terminal output when executing commands. This limit takes precedence over the line limit to prevent memory issues from extremely long lines. When exceeded, output will be truncated. <0>Learn more</0>"
+			"description": "Maximum number of characters to include in terminal output when executing commands. This limit takes precedence over the line limit to prevent memory issues from extremely long lines. When exceeded, output will be truncated."
 		},
 		"shellIntegrationTimeout": {
 			"label": "Terminal shell integration timeout",
-			"description": "Maximum time to wait for shell integration to initialize before executing commands. For users with long shell startup times, this value may need to be increased if you see \"Shell Integration Unavailable\" errors in the terminal. <0>Learn more</0>"
+			"description": "Maximum time to wait for shell integration to initialize before executing commands. For users with long shell startup times, this value may need to be increased if you see \"Shell Integration Unavailable\" errors in the terminal."
 		},
 		"shellIntegrationDisabled": {
 			"label": "Disable terminal shell integration",
-			"description": "Enable this if terminal commands aren't working correctly or you see 'Shell Integration Unavailable' errors. This uses a simpler method to run commands, bypassing some advanced terminal features. <0>Learn more</0>"
+			"description": "Enable this if terminal commands aren't working correctly or you see 'Shell Integration Unavailable' errors. This uses a simpler method to run commands, bypassing some advanced terminal features."
 		},
 		"commandDelay": {
 			"label": "Terminal command delay",
-			"description": "Delay in milliseconds to add after command execution. The default setting of 0 disables the delay completely. This can help ensure command output is fully captured in terminals with timing issues. In most terminals it is implemented by setting `PROMPT_COMMAND='sleep N'` and Powershell appends `start-sleep` to the end of each command. Originally was workaround for VSCode bug#237208 and may not be needed. <0>Learn more</0>"
+			"description": "Delay in milliseconds to add after command execution. The default setting of 0 disables the delay completely. This can help ensure command output is fully captured in terminals with timing issues. In most terminals it is implemented by setting `PROMPT_COMMAND='sleep N'` and Powershell appends `start-sleep` to the end of each command. Originally was workaround for VSCode bug#237208 and may not be needed."
 		},
 		"compressProgressBar": {
 			"label": "Compress progress bar output",
-			"description": "When enabled, processes terminal output with carriage returns (\\r) to simulate how a real terminal would display content. This removes intermediate progress bar states, retaining only the final state, which conserves context space for more relevant information. <0>Learn more</0>"
+			"description": "When enabled, processes terminal output with carriage returns (\\r) to simulate how a real terminal would display content. This removes intermediate progress bar states, retaining only the final state, which conserves context space for more relevant information."
 		},
 		"powershellCounter": {
 			"label": "Enable PowerShell counter workaround",
-			"description": "When enabled, adds a counter to PowerShell commands to ensure proper command execution. This helps with PowerShell terminals that might have issues with command output capture. <0>Learn more</0>"
+			"description": "When enabled, adds a counter to PowerShell commands to ensure proper command execution. This helps with PowerShell terminals that might have issues with command output capture."
 		},
 		"zshClearEolMark": {
 			"label": "Clear ZSH EOL mark",
-			"description": "When enabled, clears the ZSH end-of-line mark by setting PROMPT_EOL_MARK=''. This prevents issues with command output interpretation when output ends with special characters like '%'. <0>Learn more</0>"
+			"description": "When enabled, clears the ZSH end-of-line mark by setting PROMPT_EOL_MARK=''. This prevents issues with command output interpretation when output ends with special characters like '%'."
 		},
 		"zshOhMy": {
 			"label": "Enable Oh My Zsh integration",
-			"description": "When enabled, sets ITERM_SHELL_INTEGRATION_INSTALLED=Yes to enable Oh My Zsh shell integration features. Applying this setting might require restarting the IDE. <0>Learn more</0>"
+			"description": "When enabled, sets ITERM_SHELL_INTEGRATION_INSTALLED=Yes to enable Oh My Zsh shell integration features. Applying this setting might require restarting the IDE."
 		},
 		"zshP10k": {
 			"label": "Enable Powerlevel10k integration",
-			"description": "When enabled, sets POWERLEVEL9K_TERM_SHELL_INTEGRATION=true to enable Powerlevel10k shell integration features. <0>Learn more</0>"
+			"description": "When enabled, sets POWERLEVEL9K_TERM_SHELL_INTEGRATION=true to enable Powerlevel10k shell integration features."
 		},
 		"zdotdir": {
 			"label": "Enable ZDOTDIR handling",
-			"description": "When enabled, creates a temporary directory for ZDOTDIR to handle zsh shell integration properly. This ensures VSCode shell integration works correctly with zsh while preserving your zsh configuration. <0>Learn more</0>"
+			"description": "When enabled, creates a temporary directory for ZDOTDIR to handle zsh shell integration properly. This ensures VSCode shell integration works correctly with zsh while preserving your zsh configuration."
 		},
 		"inheritEnv": {
 			"label": "Inherit environment variables",
-			"description": "When enabled, the terminal will inherit environment variables from VSCode's parent process, such as user-profile-defined shell integration settings. This directly toggles VSCode global setting `terminal.integrated.inheritEnv`. <0>Learn more</0>"
+			"description": "When enabled, the terminal will inherit environment variables from VSCode's parent process, such as user-profile-defined shell integration settings. This directly toggles VSCode global setting `terminal.integrated.inheritEnv`."
 		}
 	},
 	"advancedSettings": {

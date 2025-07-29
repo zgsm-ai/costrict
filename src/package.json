@@ -4,7 +4,7 @@
 	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
 	"version": "3.24.0",
-	"icon": "assets/icons/icon.png",
+	"icon": "assets/images/shenma_robot_logo_big.png",
 	"galleryBanner": {
 		"color": "#617A91",
 		"theme": "dark"
@@ -78,7 +78,7 @@
 				{
 					"id": "zgsm-ActivityBar",
 					"title": "%views.activitybar.title%",
-					"icon": "assets/icons/icon.svg"
+					"icon": "assets/images/shenma_robot_logo_big.png"
 				}
 			]
 		},

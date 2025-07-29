@@ -44,6 +44,9 @@
 		"useZgsmCustomConfig": "Use custom configuration",
 		"geminiCli": {
 			"projectIdDescription": "Specify your Google Cloud Project ID for enterprise or non-free tier access. Leave empty for automatic project discovery with personal accounts. If you encounter an API Error, it is recommended to fill in the Project ID."
+		},
+		"consecutiveMistakeLimit": {
+			"description": "Number of consecutive errors or repeated actions allowed before showing the \"Costrict is having trouble\" dialog"
 		}
 	},
 	"browser": {
@@ -116,8 +119,5 @@
 	},
 	"prompts": {
 		"description": "Configure support prompts for quick actions like enhancing prompts, explaining code, and fixing issues. These prompts help Costrict provide better support for common development tasks."
-	},
-	"consecutiveMistakeLimit": {
-		"description": "Number of consecutive errors or repeated actions allowed before showing the \"Costrict is having trouble\" dialog"
 	}
 }

@@ -2,7 +2,7 @@ import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useTranslation } from "react-i18next"
 import { Trans } from "react-i18next"
 
-import { buildDocLink } from "@src/utils/docLinks"
+// import { buildDocLink } from "@src/utils/docLinks"
 import { vscode } from "@/utils/vscode"
 
 const tips = [
@@ -60,7 +60,7 @@ const RooTips = () => {
 					i18nKey="chat:about"
 					components={{
 						DocsLink: (
-							<a href={buildDocLink("", "welcome")} target="_blank" rel="noopener noreferrer">
+							<a href="https://costrict.ai/" target="_blank" rel="noopener noreferrer">
 								the docs
 							</a>
 						),

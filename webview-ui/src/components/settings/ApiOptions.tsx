@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { convertHeadersToObject } from "./utils/headers"
 import { useDebounce } from "react-use"
-import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
+// import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { ExternalLinkIcon } from "@radix-ui/react-icons"
 
 import {
@@ -89,7 +89,7 @@ import { TemperatureControl } from "./TemperatureControl"
 import { RateLimitSecondsControl } from "./RateLimitSecondsControl"
 import { ConsecutiveMistakeLimitControl } from "./ConsecutiveMistakeLimitControl"
 import { BedrockCustomArn } from "./providers/BedrockCustomArn"
-import { buildDocLink } from "@src/utils/docLinks"
+// import { buildDocLink } from "@src/utils/docLinks"
 import { GeminiCli } from "./providers/GeminiCli"
 
 export interface ApiOptionsProps {
@@ -337,26 +337,26 @@ const ApiOptions = ({
 		return getModelValidationError(apiConfiguration, routerModels, organizationAllowList)
 	}, [apiConfiguration, routerModels, organizationAllowList])
 
-	const docs = useMemo(() => {
-		const provider = PROVIDERS.find(({ value }) => value === selectedProvider)
-		const name = provider?.label
+	// const docs = useMemo(() => {
+	// 	const provider = PROVIDERS.find(({ value }) => value === selectedProvider)
+	// 	const name = provider?.label
 
-		if (!name) {
-			return undefined
-		}
+	// 	if (!name) {
+	// 		return undefined
+	// 	}
 
-		// Get the URL slug - use custom mapping if available, otherwise use the provider key.
-		const slugs: Record<string, string> = {
-			"openai-native": "openai",
-			openai: "openai-compatible",
-		}
+	// 	// Get the URL slug - use custom mapping if available, otherwise use the provider key.
+	// 	const slugs: Record<string, string> = {
+	// 		"openai-native": "openai",
+	// 		openai: "openai-compatible",
+	// 	}
 
-		const slug = slugs[selectedProvider] || selectedProvider
-		return {
-			url: buildDocLink(`providers/${slug}`, "provider_docs"),
-			name,
-		}
-	}, [selectedProvider])
+	// 	const slug = slugs[selectedProvider] || selectedProvider
+	// 	return {
+	// 		url: buildDocLink(`providers/${slug}`, "provider_docs"),
+	// 		name,
+	// 	}
+	// }, [selectedProvider])
 
 	// Convert providers to SearchableSelect options
 	const providerOptions = useMemo(() => {
@@ -371,13 +371,13 @@ const ApiOptions = ({
 			<div className="flex flex-col gap-1 relative">
 				<div className="flex justify-between items-center">
 					<label className="block font-medium mb-1">{t("settings:providers.apiProvider")}</label>
-					{docs && (
+					{/* {docs && (
 						<div className="text-xs text-vscode-descriptionForeground">
 							<VSCodeLink href={docs.url} className="hover:text-vscode-foreground" target="_blank">
 								{t("settings:providers.providerDocumentation", { provider: docs.name })}
 							</VSCodeLink>
 						</div>
-					)}
+					)} */}
 				</div>
 				<SearchableSelect
 					value={selectedProvider}

@@ -145,7 +145,7 @@
 	},
 	"advancedSystemPrompt": {
 		"title": "Advanced: Override System Prompt",
-		"description": "<2>⚠️ Warning:</2> This advanced feature bypasses safeguards. <1>READ THIS BEFORE USING!</1>Override the default system prompt by creating a file at <span>.roo/system-prompt-{{slug}}</span>."
+		"description": "<2>⚠️ Warning:</2> This advanced feature bypasses safeguards. Override the default system prompt by creating a file at <span>.roo/system-prompt-{{slug}}</span>."
 	},
 	"createModeDialog": {
 		"title": "Create New Mode",

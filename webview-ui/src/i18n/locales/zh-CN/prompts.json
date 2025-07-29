@@ -143,7 +143,7 @@
 	},
 	"advancedSystemPrompt": {
 		"title": "高级：覆盖系统提示词",
-		"description": "<2>⚠️ 警告：</2> 此高级功能会绕过安全措施。<1>使用前请阅读！</1>通过在您的工作区中创建文件 <span>.roo/system-prompt-{{slug}}</span> 来覆盖默认系统提示。"
+		"description": "<2>⚠️ 警告：</2> 此高级功能会绕过安全措施。通过在您的工作区中创建文件 <span>.roo/system-prompt-{{slug}}</span> 来覆盖默认系统提示。"
 	},
 	"createModeDialog": {
 		"title": "创建新模式",

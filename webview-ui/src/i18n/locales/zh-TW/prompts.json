@@ -143,7 +143,7 @@
 	},
 	"advancedSystemPrompt": {
 		"title": "進階：覆寫系統提示詞",
-		"description": "<2>⚠️ 警告：</2> 此進階功能會略過安全防護。<1>使用前請閱讀！</1>透過在您的工作區中建立檔案 <span>.roo/system-prompt-{{slug}}</span> 來覆寫預設的系統提示詞。"
+		"description": "<2>⚠️ 警告：</2> 此進階功能會略過安全防護。透過在您的工作區中建立檔案 <span>.roo/system-prompt-{{slug}}</span> 來覆寫預設的系統提示詞。"
 	},
 	"createModeDialog": {
 		"title": "建立新模式",
