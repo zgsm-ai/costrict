@@ -1786,10 +1786,14 @@ export class Task extends EventEmitter<ClineEvents> {
 						? t("apiErrors:solution.quota-check.quotaAcquisition")
 						: t("apiErrors:solution.ai-gateway.howToStar")
 
+					const checkRemainingQuotaStr = isQuota
+						? `${t("apiErrors:solution.quota-check.checkRemainingQuota")} “ <mark hash=${hash} type="CREDIT">${t("apiErrors:solution.quota-check.creditUsageStats")}</mark> ” ${t("apiErrors:solution.quota-check.viewDetails")}`
+						: ""
+
 					solution = `\n\n
 <span style="color:#E64545">${solution1}</span>  <mark hash=${hash} type="GUIDE">${solution2}</mark>
 
-${t("apiErrors:solution.quota-check.checkRemainingQuota")} “ <mark hash=${hash} type="CREDIT">${t("apiErrors:solution.quota-check.creditUsageStats")}</mark> ” ${t("apiErrors:solution.quota-check.viewDetails")}
+${checkRemainingQuotaStr}
 `
 				}
 				TelemetryService.instance.captureError(`ApiError_${code}`)

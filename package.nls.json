@@ -1,7 +1,7 @@
 {
 	"extension.displayName": "Costrict",
-	"extension.displayName.long": "Costrict (prev. Shenma): AI Coding Assistant",
-	"extension.description": "Costrict: An intelligent programming assistant that improves coding efficiency",
+	"extension.displayName.long": "Costrict (prev. Cline / RooCode with Code Review AI Coding Agent)",
+	"extension.description": "Costrict: strict AI coder for enterprises, quality first, including AI Agent, AI CodeReview, AI Completion.",
 	"command.view.issue.title": "Feedback",
 	"command.view.logout.title": "Costrict: Logout",
 	"command.view.userHelperDoc.title": "Costrict Official Site",
