@@ -42,3 +42,16 @@ export const getZgsmSelectedModelInfo = (modelId: string): ModelInfo => {
 
 	return (zgsmModels as Record<string, ModelInfo>)[`${mastchKey}`] || zgsmModels.default
 }
+
+// Module-level variable to store full response data
+let zgsmFullResponseData: ModelInfo[] = []
+
+// Function to set full response data
+export const setZgsmFullResponseData = (data: ModelInfo[]): void => {
+	zgsmFullResponseData = data
+}
+
+// Function to get full response data
+export const getZgsmFullResponseData = (): ModelInfo[] => {
+	return zgsmFullResponseData
+}

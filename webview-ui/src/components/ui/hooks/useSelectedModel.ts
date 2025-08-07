@@ -55,8 +55,24 @@ import type { ModelRecord, RouterModels } from "@roo/api"
 
 import { useRouterModels } from "./useRouterModels"
 import { useOpenRouterModelProviders } from "./useOpenRouterModelProviders"
-import { getZgsmSelectedModelInfo } from "@roo/getZgsmSelectedModelInfo"
 import { useLmStudioModels } from "./useLmStudioModels"
+import { ExtensionMessage } from "@roo/ExtensionMessage"
+
+let webViewZgsmFullResponseData: any[] = []
+
+const handler = (event: MessageEvent) => {
+	const message: ExtensionMessage = event.data
+
+	if (message.type === "zgsmModels" && message.fullResponseData) {
+		webViewZgsmFullResponseData = message.fullResponseData
+	}
+}
+
+window.addEventListener("message", handler)
+
+const getWebViewZgsmFullResponseData = (): any[] => {
+	return webViewZgsmFullResponseData
+}
 
 export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 	const provider = apiConfiguration?.apiProvider || "zgsm"
@@ -115,7 +131,8 @@ function getSelectedModel({
 	switch (provider) {
 		case "zgsm": {
 			const id = apiConfiguration.zgsmModelId ?? zgsmDefaultModelId
-			const info = getZgsmSelectedModelInfo(id)
+			const fullResponseData = getWebViewZgsmFullResponseData()
+			const info = fullResponseData.find((item) => item.id === id)
 			return { id, info }
 		}
 		case "openrouter": {

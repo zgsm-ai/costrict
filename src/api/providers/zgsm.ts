@@ -25,7 +25,7 @@ import { DEFAULT_HEADERS } from "./constants"
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 import { ZgsmAuthConfig, ZgsmAuthService } from "../../core/costrict/auth"
-import { getZgsmSelectedModelInfo } from "../../shared/getZgsmSelectedModelInfo"
+import { getZgsmSelectedModelInfo, setZgsmFullResponseData } from "../../shared/getZgsmSelectedModelInfo"
 import { getClientId } from "../../utils/getClientId"
 import { getWorkspacePath } from "../../utils/path"
 let modelsCache = [] as string[]
@@ -478,10 +478,11 @@ export async function getZgsmModels(baseUrl?: string, apiKey?: string, openAiHea
 		}
 
 		const response = await axios.get(`${baseUrl}/ai-gateway/api/v1/models`, config)
-		const modelsArray = response.data?.data?.map((model: any) => model.id) || []
+		const fullResponseData = response.data?.data || []
+		const modelsArray = fullResponseData?.map((model: any) => model.id) || []
 		const result = [...new Set<string>(modelsArray)]
-
 		modelsCache = result
+		setZgsmFullResponseData(fullResponseData)
 
 		return result
 	} catch (error) {

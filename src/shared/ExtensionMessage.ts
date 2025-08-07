@@ -10,6 +10,7 @@ import type {
 	OrganizationAllowList,
 	CloudUserInfo,
 	ShareVisibility,
+	ModelInfo,
 } from "@roo-code/types"
 
 import { GitCommit } from "../utils/git"
@@ -164,6 +165,7 @@ export interface ExtensionMessage {
 	openAiModels?: string[]
 	ollamaModels?: string[]
 	lmStudioModels?: ModelRecord
+	fullResponseData?: ModelInfo[]
 	vsCodeLmModels?: { vendor?: string; family?: string; version?: string; id?: string }[]
 	huggingFaceModels?: Array<{
 		id: string

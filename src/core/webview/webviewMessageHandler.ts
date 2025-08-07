@@ -28,6 +28,7 @@ import { checkoutDiffPayloadSchema, checkoutRestorePayloadSchema, WebviewMessage
 import { checkExistKey } from "../../shared/checkExistApiConfig"
 import { experimentDefault } from "../../shared/experiments"
 import { Terminal } from "../../integrations/terminal/Terminal"
+import { getZgsmFullResponseData } from "../../shared/getZgsmSelectedModelInfo"
 import { openFile } from "../../integrations/misc/open-file"
 import { CodeIndexManager } from "../../services/code-index/manager"
 import { openImage, saveImage } from "../../integrations/misc/image-handler"
@@ -729,7 +730,14 @@ export const webviewMessageHandler = async (
 					message?.values?.openAiHeaders,
 				)
 
-				provider.postMessageToWebview({ type: "zgsmModels", openAiModels })
+				// 获取完整响应数据并发送到 WebView
+				const fullResponseData = getZgsmFullResponseData()
+
+				provider.postMessageToWebview({
+					type: "zgsmModels",
+					openAiModels,
+					fullResponseData,
+				})
 			}
 
 			break
