@@ -6,6 +6,7 @@ import { mentionRegex, mentionRegexGlobal, commandRegexGlobal, unescapeSpaces } 
 import { WebviewMessage } from "@roo/WebviewMessage"
 import { Mode, getAllModes } from "@roo/modes"
 import { ExtensionMessage } from "@roo/ExtensionMessage"
+import { type ProviderSettings } from "@roo-code/types"
 
 import { vscode } from "@/utils/vscode"
 import { useExtensionState } from "@/context/ExtensionStateContext"
@@ -23,7 +24,8 @@ import { StandardTooltip } from "@/components/ui"
 
 import Thumbnails from "../common/Thumbnails"
 import ModeSelector from "./ModeSelector"
-import { ApiConfigSelector } from "./ApiConfigSelector"
+// import { ApiConfigSelector } from "./ApiConfigSelector"
+import ProviderRenderer from "../settings/ProviderRenderer"
 import { MAX_IMAGES_PER_MESSAGE } from "./ChatView"
 import ContextMenu from "./ContextMenu"
 import { VolumeX, Image, WandSparkles, SendHorizontal } from "lucide-react"
@@ -33,6 +35,10 @@ import { SlashCommandsPopover } from "./SlashCommandsPopover"
 import { cn } from "@/lib/utils"
 import { usePromptHistory } from "./hooks/usePromptHistory"
 import { EditModeControls } from "./EditModeControls"
+import { useRouterModels } from "@/components/ui/hooks/useRouterModels"
+import { RouterModels } from "@roo/api"
+import { MODELS_BY_PROVIDER } from "../settings/constants"
+import { filterModels } from "../settings/utils/organizationFilters"
 
 interface ChatTextAreaProps {
 	inputValue: string
@@ -59,7 +65,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			inputValue,
 			setInputValue,
 			sendingDisabled,
-			selectApiConfigDisabled,
+			// selectApiConfigDisabled,
 			placeholderText,
 			selectedImages,
 			setSelectedImages,
@@ -80,25 +86,61 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			filePaths,
 			openedTabs,
 			currentApiConfigName,
-			listApiConfigMeta,
+			// listApiConfigMeta,
 			customModes,
 			customModePrompts,
 			cwd,
-			pinnedApiConfigs,
-			togglePinnedApiConfig,
+			// pinnedApiConfigs,
+			// togglePinnedApiConfig,
 			taskHistory,
 			clineMessages,
 			commands,
+			apiConfiguration,
+			organizationAllowList,
 		} = useExtensionState()
 
+		const selectedProviderModels = useMemo(() => {
+			if (!apiConfiguration?.apiProvider) return []
+
+			const models = MODELS_BY_PROVIDER[apiConfiguration.apiProvider]
+			if (!models) return []
+
+			const filteredModels = filterModels(models, apiConfiguration.apiProvider, organizationAllowList)
+
+			const modelOptions = filteredModels
+				? Object.keys(filteredModels).map((modelId) => ({
+						value: modelId,
+						label: modelId,
+					}))
+				: []
+
+			return modelOptions
+		}, [apiConfiguration?.apiProvider, organizationAllowList])
+
+		const { data: routerModels } = useRouterModels()
+
+		const setApiConfigurationField = useCallback(
+			<K extends keyof ProviderSettings>(field: K, value: ProviderSettings[K]) => {
+				vscode.postMessage({
+					type: "upsertApiConfiguration",
+					text: currentApiConfigName,
+					apiConfiguration: {
+						...apiConfiguration,
+						[field]: value,
+					},
+				} as WebviewMessage)
+			},
+			[apiConfiguration, currentApiConfigName],
+		)
+
 		// Find the ID and display text for the currently selected API configuration
-		const { currentConfigId, displayName } = useMemo(() => {
-			const currentConfig = listApiConfigMeta?.find((config) => config.name === currentApiConfigName)
-			return {
-				currentConfigId: currentConfig?.id || "",
-				displayName: currentApiConfigName || "", // Use the name directly for display
-			}
-		}, [listApiConfigMeta, currentApiConfigName])
+		// const { currentConfigId, displayName } = useMemo(() => {
+		// 	const currentConfig = listApiConfigMeta?.find((config) => config.name === currentApiConfigName)
+		// 	return {
+		// 		currentConfigId: currentConfig?.id || "",
+		// 		displayName: currentApiConfigName || "", // Use the name directly for display
+		// 	}
+		// }, [listApiConfigMeta, currentApiConfigName])
 
 		const [gitCommits, setGitCommits] = useState<any[]>([])
 		const [showDropdown, setShowDropdown] = useState(false)
@@ -911,9 +953,9 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		)
 
 		// Helper function to handle API config change
-		const handleApiConfigChange = useCallback((value: string) => {
-			vscode.postMessage({ type: "loadApiConfigurationById", text: value })
-		}, [])
+		// const handleApiConfigChange = useCallback((value: string) => {
+		// 	vscode.postMessage({ type: "loadApiConfigurationById", text: value })
+		// }, [])
 
 		// Helper function to render non-edit mode controls
 		const renderNonEditModeControls = () => (
@@ -923,7 +965,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 					<div
 						className={cn("flex-1", "min-w-0", "overflow-hidden", "bg-vscode-input-background opacity-85")}>
-						<ApiConfigSelector
+						{/* <ApiConfigSelector
 							value={currentConfigId}
 							displayName={displayName}
 							disabled={selectApiConfigDisabled}
@@ -933,7 +975,17 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							listApiConfigMeta={listApiConfigMeta || []}
 							pinnedApiConfigs={pinnedApiConfigs}
 							togglePinnedApiConfig={togglePinnedApiConfig}
-						/>
+						/> */}
+						{apiConfiguration && (
+							<ProviderRenderer
+								selectedProvider={apiConfiguration.apiProvider || ""}
+								apiConfiguration={apiConfiguration}
+								organizationAllowList={organizationAllowList}
+								setApiConfigurationField={setApiConfigurationField}
+								routerModels={(routerModels as RouterModels) || {}}
+								selectedProviderModels={selectedProviderModels}
+							/>
+						)}
 					</div>
 				</div>
 
@@ -1145,7 +1197,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					<div
 						className="absolute left-2 z-30 pr-9 flex items-center h-8 font-vscode-font-family text-vscode-editor-font-size leading-vscode-editor-line-height"
 						style={{
-							bottom: "1.5rem",
+							bottom: "2rem",
 							color: "color-mix(in oklab, var(--vscode-input-foreground) 50%, transparent)",
 							userSelect: "none",
 							pointerEvents: "none",

@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react"
 import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { Trans } from "react-i18next"
-import { ChevronsUpDown, Check, X } from "lucide-react"
+import { ChevronsUpDown, Check, X, ChevronUp } from "lucide-react"
 
 import type { ProviderSettings, ModelInfo, OrganizationAllowList } from "@roo-code/types"
 
@@ -35,6 +35,10 @@ type ModelIdKey = keyof Pick<
 	| "openAiModelId"
 	| "litellmModelId"
 	| "zgsmModelId"
+	| "apiModelId"
+	| "ollamaModelId"
+	| "lmStudioModelId"
+	| "vsCodeLmModelSelector"
 >
 
 interface ModelPickerProps {
@@ -47,6 +51,12 @@ interface ModelPickerProps {
 	setApiConfigurationField: <K extends keyof ProviderSettings>(field: K, value: ProviderSettings[K]) => void
 	organizationAllowList: OrganizationAllowList
 	errorMessage?: string
+	showInfoView?: boolean
+	showLabel?: boolean
+	triggerClassName?: string
+	popoverContentClassName?: string
+	PopoverTriggerContentClassName?: string
+	buttonIconType?: "upDown" | "up"
 }
 
 export const ModelPicker = ({
@@ -59,6 +69,12 @@ export const ModelPicker = ({
 	setApiConfigurationField,
 	organizationAllowList,
 	errorMessage,
+	showInfoView = true,
+	showLabel = true,
+	triggerClassName = "",
+	popoverContentClassName = "",
+	PopoverTriggerContentClassName = "",
+	buttonIconType = "upDown",
 }: ModelPickerProps) => {
 	const { t } = useAppTranslation()
 
@@ -157,20 +173,28 @@ export const ModelPicker = ({
 	return (
 		<>
 			<div>
-				<label className="block font-medium mb-1">{t("settings:modelPicker.label")}</label>
+				{showLabel && <label className="block font-medium mb-1">{t("settings:modelPicker.label")}</label>}
 				<Popover open={open} onOpenChange={onOpenChange}>
 					<PopoverTrigger asChild>
 						<Button
 							variant="combobox"
 							role="combobox"
 							aria-expanded={open}
-							className="w-full justify-between"
+							className={cn("w-full", "justify-between", triggerClassName)}
 							data-testid="model-picker-button">
-							<div>{selectedModelId ?? t("settings:common.select")}</div>
-							<ChevronsUpDown className="opacity-50" />
+							<div className={PopoverTriggerContentClassName}>
+								{selectedModelId ?? t("settings:common.select")}
+							</div>
+							{buttonIconType === "upDown" ? (
+								<ChevronsUpDown className="opacity-50" />
+							) : (
+								<ChevronUp className="opacity-50" />
+							)}
 						</Button>
 					</PopoverTrigger>
-					<PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
+					<PopoverContent
+						className={cn("p-0", "w-[var(--radix-popover-trigger-width)", popoverContentClassName)}
+						data-testid="model-picker-content">
 						<Command>
 							<div className="relative">
 								<CommandInput
@@ -228,7 +252,7 @@ export const ModelPicker = ({
 				</Popover>
 			</div>
 			{errorMessage && <ApiErrorMessage errorMessage={errorMessage} />}
-			{selectedModelId && selectedModelInfo && (
+			{selectedModelId && selectedModelInfo && showInfoView && (
 				<ModelInfoView
 					apiProvider={apiConfiguration.apiProvider}
 					selectedModelId={selectedModelId}
@@ -237,7 +261,7 @@ export const ModelPicker = ({
 					setIsDescriptionExpanded={setIsDescriptionExpanded}
 				/>
 			)}
-			{apiConfiguration.apiProvider !== "zgsm" && (
+			{apiConfiguration.apiProvider !== "zgsm" && showInfoView && (
 				<div className="text-sm text-vscode-descriptionForeground">
 					<Trans
 						i18nKey="settings:modelPicker.automaticFetch"

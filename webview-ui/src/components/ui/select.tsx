@@ -17,7 +17,12 @@ function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.V
 	return <SelectPrimitive.Value data-slot="select-value" {...props} />
 }
 
-function SelectTrigger({ className, children, ...props }: React.ComponentProps<typeof SelectPrimitive.Trigger>) {
+function SelectTrigger({
+	className,
+	children,
+	icon,
+	...props
+}: React.ComponentProps<typeof SelectPrimitive.Trigger> & { icon?: React.ReactNode }) {
 	return (
 		<SelectPrimitive.Trigger
 			data-slot="select-trigger"
@@ -30,9 +35,7 @@ function SelectTrigger({ className, children, ...props }: React.ComponentProps<t
 			)}
 			{...props}>
 			{children}
-			<SelectPrimitive.Icon asChild>
-				<ChevronDown className="size-4 opacity-50" />
-			</SelectPrimitive.Icon>
+			<SelectPrimitive.Icon asChild>{icon || <ChevronDown className="size-4 opacity-50" />}</SelectPrimitive.Icon>
 		</SelectPrimitive.Trigger>
 	)
 }
