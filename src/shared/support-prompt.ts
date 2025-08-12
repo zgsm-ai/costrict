@@ -31,6 +31,8 @@ export const createPrompt = (template: string, params: PromptParams): string => 
 
 interface SupportPromptConfig {
 	template: string
+	pathOnly?: string
+	selectedText?: string
 }
 
 type SupportPromptType =
@@ -146,6 +148,10 @@ Provide the improved code along with explanations for each enhancement.`,
 \`\`\`
 \${selectedText}
 \`\`\``,
+		pathOnly: `\${filePath}:\${startLine}-\${endLine}`,
+		selectedText: `\`\`\`
+\${selectedText}
+\`\`\``,
 	},
 	TERMINAL_ADD_TO_CONTEXT: {
 		template: `\${userInput}
@@ -255,9 +261,31 @@ export const supportPrompt = {
 	get: (customSupportPrompts: Record<string, any> | undefined, type: SupportPromptType): string => {
 		return customSupportPrompts?.[type] ?? supportPromptConfigs[type].template
 	},
+	getPathWithSelectedText: (
+		customSupportPrompts: Record<string, any> | undefined,
+		type: SupportPromptType,
+		params: PromptParams,
+	): { selectedText?: string; pathOnly?: string } => {
+		return {
+			selectedText: (params.selectedText as string) ?? "",
+			pathOnly: customSupportPrompts?.[type] ?? supportPromptConfigs[type].pathOnly,
+		}
+	},
 	create: (type: SupportPromptType, params: PromptParams, customSupportPrompts?: Record<string, any>): string => {
 		const template = supportPrompt.get(customSupportPrompts, type)
 		return createPrompt(template, params)
+	},
+	createPathWithSelectedText: (
+		type: SupportPromptType,
+		params: PromptParams,
+		customSupportPrompts?: Record<string, any>,
+	): { selectedText?: string; pathOnly: string } => {
+		const pathOnlyTemplate = supportPromptConfigs[type].pathOnly
+		const pathOnly = pathOnlyTemplate ? createPrompt(pathOnlyTemplate, params) : ""
+		return {
+			selectedText: params.selectedText as string,
+			pathOnly: pathOnly,
+		}
 	},
 } as const
 

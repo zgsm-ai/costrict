@@ -181,6 +181,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const [showCheckpointWarning, setShowCheckpointWarning] = useState<boolean>(false)
 	const [isCondensing, setIsCondensing] = useState<boolean>(false)
 	const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
+	const [hoverPreviewMap, setHoverPreviewMap] = useState<Map<string, string>>(new Map())
 	const everVisibleMessagesTsRef = useRef<LRUCache<number, boolean>>(
 		new LRUCache({
 			max: 100,
@@ -688,7 +689,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	}, [sendingDisabled, messageQueue, handleSendMessage, clineAsk])
 
 	const handleSetChatBoxMessage = useCallback(
-		(text: string, images: string[]) => {
+		(text: string, images: string[], selectText: string = "") => {
 			// Avoid nested template literals by breaking down the logic
 			let newValue = text
 
@@ -698,6 +699,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 			setInputValue(newValue)
 			setSelectedImages([...selectedImages, ...images])
+
+			const filePathMatch = text.match(/\b[\w/\\.-]+:\d+-\d+\b/)
+			if (filePathMatch) {
+				setHoverPreviewMap((prev) => new Map(prev.set(filePathMatch[0], selectText)))
+			}
 		},
 		[inputValue, selectedImages],
 	)
@@ -871,7 +877,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							handleSendMessage(message.text ?? "", message.images ?? [], undefined, "user")
 							break
 						case "setChatBoxMessage":
-							handleSetChatBoxMessage(message.text ?? "", message.images ?? [])
+							handleSetChatBoxMessage(message.text ?? "", message.images ?? [], message.selectText ?? "")
 							break
 						case "primaryButtonClick":
 							handlePrimaryButtonClick(message.text ?? "", message.images ?? [])
@@ -2019,6 +2025,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				mode={mode}
 				setMode={setMode}
 				modeShortcutText={modeShortcutText}
+				hoverPreviewMap={hoverPreviewMap}
 			/>
 
 			{isProfileDisabled && (

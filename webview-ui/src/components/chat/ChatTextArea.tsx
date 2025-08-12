@@ -39,6 +39,7 @@ import { useRouterModels } from "@/components/ui/hooks/useRouterModels"
 import { RouterModels } from "@roo/api"
 import { MODELS_BY_PROVIDER } from "../settings/constants"
 import { filterModels } from "../settings/utils/organizationFilters"
+import { useHoverEvent } from "./hooks/useHoverEvent"
 
 interface ChatTextAreaProps {
 	inputValue: string
@@ -55,6 +56,7 @@ interface ChatTextAreaProps {
 	mode: Mode
 	setMode: (value: Mode) => void
 	modeShortcutText: string
+	hoverPreviewMap?: Map<string, string>
 	// Edit mode props
 	isEditMode?: boolean
 	onCancel?: () => void
@@ -78,6 +80,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			modeShortcutText,
 			isEditMode = false,
 			onCancel,
+			hoverPreviewMap,
 		},
 		ref,
 	) => {
@@ -256,6 +259,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const contextMenuContainerRef = useRef<HTMLDivElement>(null)
 		const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false)
 		const [isFocused, setIsFocused] = useState(false)
+		const { hoverPreview, setHoverPreview } = useHoverEvent(highlightLayerRef, hoverPreviewMap)
 
 		// Use custom hook for prompt history navigation
 		const { handleHistoryNavigation, resetHistoryNavigation, resetOnInputChange } = usePromptHistory({
@@ -769,6 +773,13 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c] || c)
 					.replace(mentionRegexGlobal, '<mark class="mention-context-textarea-highlight">$&</mark>')
 
+				// Highlight file path with line numbers format: filePath:startLine-endLine
+				processedText = processedText.replace(/\b[\w/\\.-]+:\d+-\d+\b/g, (match) => {
+					return `<mark class="mention-context-textarea-highlight file-path-highlight" style="pointer-events: auto;">${match}</mark>`
+				})
+
+				highlightLayerRef.current.innerHTML = processedText
+
 				// Custom replacement for commands - only highlight valid ones
 				processedText = processedText.replace(commandRegexGlobal, (match, commandName) => {
 					// Only highlight if the command exists in the valid commands list
@@ -1087,6 +1098,50 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						color: "transparent",
 					}}
 				/>
+
+				{/* Hover Preview */}
+				{hoverPreview.show && (
+					<div
+						className="fixed border border-vscode-widget-border rounded-md px-3 py-2 text-sm shadow-lg z-50 hover-preview-container bg-black whitespace-pre-wrap break-words max-h-[150px] overflow-auto"
+						style={{
+							left: hoverPreview.x,
+							top: hoverPreview.y,
+							minWidth: (() => {
+								// Get webview actual width
+								const webviewWidth =
+									document.body?.clientWidth ||
+									document.documentElement?.clientWidth ||
+									window.innerWidth
+								return `${Math.min(webviewWidth * 0.25, 150)}px`
+							})(),
+							maxWidth: (() => {
+								// Get webview actual width
+								const webviewWidth =
+									document.body?.clientWidth ||
+									document.documentElement?.clientWidth ||
+									window.innerWidth
+								return `${Math.min(webviewWidth * 0.7, 300)}px`
+							})(),
+							scrollbarWidth: "thin",
+							scrollbarColor: "var(--vscode-scrollbarSlider-background) transparent",
+						}}
+						onMouseEnter={() => {
+							// Keep preview visible when mouse enters the preview area
+							// Override any potential hide operations by setting show to true
+							setHoverPreview((prev) => ({ ...prev, show: true }))
+						}}
+						onMouseLeave={(e) => {
+							// Check if mouse moved to the original highlighted element
+							const relatedTarget = e.relatedTarget as HTMLElement
+							if (!relatedTarget?.closest(".file-path-highlight")) {
+								// Hide preview if not moving to the original highlighted element
+								setHoverPreview((prev) => ({ ...prev, show: false }))
+							}
+							// Keep preview visible if mouse moved to the original highlighted element
+						}}>
+						<pre className="m-0 font-mono text-xs select-none bg-transparent">{hoverPreview.content}</pre>
+					</div>
+				)}
 				<DynamicTextArea
 					ref={(el) => {
 						if (typeof ref === "function") {

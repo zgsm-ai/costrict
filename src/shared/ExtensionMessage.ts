@@ -213,6 +213,7 @@ export interface ExtensionMessage {
 	messageTs?: number
 	context?: string
 	commands?: Command[]
+	selectText?: string
 }
 
 export type ExtensionState = Pick<
