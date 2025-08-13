@@ -201,10 +201,11 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			organizationAllowList={organizationAllowList}
 			showInfoView={false}
 			showLabel={false}
-			triggerClassName="rounded-md w-30 h-6"
+			triggerClassName="rounded-md w-30 h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
 			popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden"
 			PopoverTriggerContentClassName="w-[80%] overflow-hidden truncate whitespace-nowrap"
 			buttonIconType="up"
+			tooltip={t("chat:selectModel")}
 		/>
 	) : (
 		selectedProviderModels.length > 0 && (
@@ -229,7 +230,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 							}
 						}}>
 						<SelectTrigger
-							className="rounded-md w-30 h-6"
+							className="rounded-md w-30 h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
 							icon={<ChevronUp />}
 							onMouseDown={() => {
 								document.body.style.padding = "0 20px"

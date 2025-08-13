@@ -1102,7 +1102,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				{/* Hover Preview */}
 				{hoverPreview.show && (
 					<div
-						className="fixed border border-vscode-widget-border rounded-md px-3 py-2 text-sm shadow-lg z-50 hover-preview-container bg-black whitespace-pre-wrap break-words max-h-[150px] overflow-auto"
+						className="fixed border border-vscode-widget-border rounded-md px-3 py-2 text-sm shadow-lg z-50 hover-preview-container bg-vscode-editor-background text-vscode-editor-foreground whitespace-pre-wrap break-words max-h-[150px] overflow-auto"
 						style={{
 							left: hoverPreview.x,
 							top: hoverPreview.y,

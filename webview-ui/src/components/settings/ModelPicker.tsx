@@ -22,6 +22,7 @@ import {
 	Button,
 } from "@src/components/ui"
 import { useEscapeKey } from "@src/hooks/useEscapeKey"
+import { StandardTooltip } from "@/components/ui"
 
 import { ModelInfoView } from "./ModelInfoView"
 import { ApiErrorMessage } from "./ApiErrorMessage"
@@ -58,6 +59,7 @@ interface ModelPickerProps {
 	popoverContentClassName?: string
 	PopoverTriggerContentClassName?: string
 	buttonIconType?: "upDown" | "up"
+	tooltip?: string
 }
 
 export const ModelPicker = ({
@@ -76,6 +78,7 @@ export const ModelPicker = ({
 	popoverContentClassName = "",
 	PopoverTriggerContentClassName = "",
 	buttonIconType = "upDown",
+	tooltip,
 }: ModelPickerProps) => {
 	const { t } = useAppTranslation()
 
@@ -176,23 +179,45 @@ export const ModelPicker = ({
 			<div>
 				{showLabel && <label className="block font-medium mb-1">{t("settings:modelPicker.label")}</label>}
 				<Popover open={open} onOpenChange={onOpenChange}>
-					<PopoverTrigger asChild>
-						<Button
-							variant="combobox"
-							role="combobox"
-							aria-expanded={open}
-							className={cn("w-full", "justify-between", triggerClassName)}
-							data-testid="model-picker-button">
-							<div className={`truncate ${PopoverTriggerContentClassName}`}>
-								{selectedModelId ?? t("settings:common.select")}
-							</div>
-							{buttonIconType === "upDown" ? (
-								<ChevronsUpDown className="opacity-50" />
-							) : (
-								<ChevronUp className="opacity-50" />
-							)}
-						</Button>
-					</PopoverTrigger>
+					{tooltip ? (
+						<StandardTooltip content={tooltip}>
+							<PopoverTrigger asChild>
+								<Button
+									variant="combobox"
+									role="combobox"
+									aria-expanded={open}
+									className={cn("w-full", "justify-between", triggerClassName)}
+									data-testid="model-picker-button">
+									<div className={`truncate ${PopoverTriggerContentClassName}`}>
+										{selectedModelId ?? t("settings:common.select")}
+									</div>
+									{buttonIconType === "upDown" ? (
+										<ChevronsUpDown className="opacity-50" />
+									) : (
+										<ChevronUp className="opacity-50" />
+									)}
+								</Button>
+							</PopoverTrigger>
+						</StandardTooltip>
+					) : (
+						<PopoverTrigger asChild>
+							<Button
+								variant="combobox"
+								role="combobox"
+								aria-expanded={open}
+								className={cn("w-full", "justify-between", triggerClassName)}
+								data-testid="model-picker-button">
+								<div className={PopoverTriggerContentClassName}>
+									{selectedModelId ?? t("settings:common.select")}
+								</div>
+								{buttonIconType === "upDown" ? (
+									<ChevronsUpDown className="opacity-50" />
+								) : (
+									<ChevronUp className="opacity-50" />
+								)}
+							</Button>
+						</PopoverTrigger>
+					)}
 					<PopoverContent
 						className={cn("p-0", "w-[var(--radix-popover-trigger-width)", popoverContentClassName)}
 						data-testid="model-picker-content">

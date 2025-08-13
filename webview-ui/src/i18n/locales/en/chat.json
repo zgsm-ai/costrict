@@ -115,6 +115,7 @@
 		}
 	},
 	"selectMode": "Select mode for interaction",
+	"selectModel": "Select model for interaction",
 	"selectApiConfig": "Select API configuration",
 	"enhancePrompt": "Enhance prompt with additional context",
 	"modeSelector": {
