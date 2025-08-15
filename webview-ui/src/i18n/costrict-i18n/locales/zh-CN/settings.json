@@ -72,6 +72,12 @@
 			"maxChars": "文件字符读取自动截断阈值",
 			"count": "字符",
 			"description": "当模型省略开始/结束值时，Costrict 读取此行数。如果此数字小于文件总数，Costrict 会生成代码定义的行号索引。特殊情况：-1指示 Costrict 读取整个文件（不建立索引），0指示它不读取任何行，仅为最小上下文提供行索引。较低的值可最小化初始上下文使用，从而实现精确的后续行范围读取。明确的开始/结束请求不受此设置限制。"
+		},
+		"autoCondenseContextPercent": {
+			"description": "启用后，Costrict 将自动压缩它。"
+		},
+		"autoCondenseContext": {
+			"description": "启用后，Costrict 将在达到阈值时自动压缩上下文。禁用时，您仍可以手动触发上下文压缩。"
 		}
 	},
 	"advanced": {
@@ -103,6 +109,9 @@
 		},
 		"MULTI_FILE_APPLY_DIFF": {
 			"description": "启用后 Costrict 可在单个请求中编辑多个文件。禁用后 Costrict 必须逐个编辑文件。禁用此功能有助于使用能力较弱的模型或需要更精确控制文件修改时。"
+		},
+		"PREVENT_FOCUS_DISRUPTION": {
+			"description": "启用后防止编辑器焦点干扰。文件编辑在后台进行，不会打开差异视图或抢夺焦点。你可以在 Costrict 进行更改时继续不受干扰地工作。文件可以在不获取焦点的情况下打开以捕获诊断信息，或保持完全关闭状态。"
 		}
 	},
 	"modelPicker": {

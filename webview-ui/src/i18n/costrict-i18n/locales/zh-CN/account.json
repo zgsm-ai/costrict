@@ -1,5 +1,8 @@
 {
 	"signIn": "连接到 Costrict",
 	"cloudBenefitsTitle": "连接到 Costrict",
-	"visitCloudWebsite": "查看账户详情"
+	"visitCloudWebsite": "查看账户详情",
+	"remoteControlDescription": "允许通过 Costrict 跟踪和操作此工作区中的任务",
+	"cloudBenefitWalkaway": "使用 Costrict 随时随地跟踪和控制任务",
+	"remoteControl": "Costrict Control"
 }

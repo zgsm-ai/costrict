@@ -175,6 +175,21 @@
 		}
 	},
 	"errors": {
-		"no_assistant_responses": "Unexpected API Response: The language model did not provide any assistant messages. This may indicate an issue with the API or the model's output."
+		"no_assistant_responses": "Unexpected API Response: The language model did not provide any assistant messages. This may indicate an issue with the API or the model's output.",
+		"claudeCode": {
+			"notFound": "Claude Code executable '{{claudePath}}' not found.\n\nPlease install Claude Code CLI:\n1. Visit {{installationUrl}} to download Claude Code\n2. Follow the installation instructions for your operating system\n3. Ensure the 'claude' command is available in your PATH\n4. Alternatively, configure a custom path in Costrict settings under 'Claude Code Path'\n\nOriginal error: {{originalError}}"
+		}
+	},
+	"warnings": {
+		"auto_import_failed": "Failed to auto-import Costrict settings: {{error}}"
+	},
+	"info": {
+		"auto_import_success": "Costrict settings automatically imported from {{filename}}"
+	},
+	"mdm": {
+		"errors": {
+			"cloud_auth_required": "Your organization requires Costrict Cloud authentication. Please sign in to continue.",
+			"organization_mismatch": "You must be authenticated with your organization's Costrict Cloud account."
+		}
 	}
 }

@@ -189,7 +189,7 @@ export class ErrorCodeManager {
 					? t("apiErrors:solution.ai-gateway.quotaAcquisition")
 					: t("apiErrors:solution.ai-gateway.howToStar")
 
-				const checkRemainingQuotaStr = isQuota
+				const checkRemainingQuotaStr = !isQuota
 					? `${t("apiErrors:solution.quota-check.checkRemainingQuota")} “ <a href='${baseurl}/credit/manager/credits?state=${hash}' style="text-decoration: none">${t("apiErrors:solution.quota-check.creditUsageStats")}</a> ” ${t("apiErrors:solution.quota-check.viewDetails")}`
 					: ""
 

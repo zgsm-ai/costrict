@@ -46,6 +46,12 @@
 	"createModeDialog": {
 		"roleDefinition": {
 			"description": "定义 Costrict 在此模式下的专业知识和个性。"
+		},
+		"whenToUse": {
+			"description": "清晰描述此模式最适合的场景和任务类型"
 		}
+	},
+	"whenToUse": {
+		"description": "描述何时应该使用此模式。这有助于 Orchestrator 为任务选择合适的模式。"
 	}
 }

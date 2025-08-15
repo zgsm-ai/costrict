@@ -18,7 +18,8 @@
 		"wantsToInsertAtEnd": "Costrict 需要在文件末尾添加内容:",
 		"wantsToReadAndXMore": "Costrict 想读取此文件以及另外 {{count}} 个文件：",
 		"wantsToReadMultiple": "Costrict 想要读取多个文件：",
-		"wantsToApplyBatchChanges": "Costrict 想要对多个文件应用更改："
+		"wantsToApplyBatchChanges": "Costrict 想要对多个文件应用更改：",
+		"wantsToEditProtected": "Costrict 需要编辑受保护的配置文件"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Costrict 想要查看此目录中的顶层文件：",
@@ -30,7 +31,13 @@
 		"wantsToSearch": "Costrict 想要在此目录中搜索<code>{{regex}}</code>：",
 		"didSearch": "Costrict 已在此目录中搜索<code>{{regex}}</code>：",
 		"wantsToViewDefinitionsOutsideWorkspace": "Costrict 想查看此目录中使用的源代码定义名称（工作区外）:",
-		"didViewDefinitionsOutsideWorkspace": "Costrict 已查看此目录中使用的源代码定义名称（工作区外）:"
+		"didViewDefinitionsOutsideWorkspace": "Costrict 已查看此目录中使用的源代码定义名称（工作区外）:",
+		"didViewTopLevelOutsideWorkspace": "Costrict 已查看目录文件列表（工作区外）:",
+		"wantsToViewRecursiveOutsideWorkspace": "Costrict 需要查看目录所有文件（工作区外）",
+		"didViewRecursiveOutsideWorkspace": "Costrict 已查看目录所有文件（工作区外）:",
+		"wantsToSearchOutsideWorkspace": "Costrict 需要搜索内容（工作区外）: {{regex}}",
+		"didSearchOutsideWorkspace": "Costrict 已完成内容搜索（工作区外）: {{regex}}",
+		"wantsToViewTopLevelOutsideWorkspace": "Costrict 需要查看目录文件列表（工作区外）:"
 	},
 	"mcp": {
 		"wantsToUseTool": "Costrict 想要在{{serverName}} MCP服务器上使用工具：",
@@ -58,12 +65,16 @@
 	},
 	"announcement": {
 		"title": "🎉 Costrict {{version}} 已发布",
-		"description": "Costrict {{version}} 带来基于您反馈的新功能和改进。"
+		"description": "Costrict {{version}} 带来基于您反馈的新功能和改进。",
+		"feature1": "<bold>消息队列</bold>: 在 Costrict 工作时将多个消息排队，让你可以不间断地继续规划工作流程。"
 	},
 	"onboarding": "<strong>此工作区中的任务列表为空。</strong> 请在下方输入任务开始。",
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"description": "Costrict 已达到 {{count}} 次 API 请求的自动批准限制。您想重置计数并继续任务吗？"
+		},
+		"autoApprovedCostLimitReached": {
+			"description": "Costrict 已经达到了${{count}}的自动批准成本限制。您想重置成本并继续任务吗？"
 		}
 	},
 	"shellIntegration": {
@@ -80,6 +91,7 @@
 		"wantsToSearchWithPath": "Costrict 需要在 <code>{{path}}</code> 中搜索: <code>{{query}}</code>"
 	},
 	"rooCloudCTA": {
-		"title": "Costrict Cloud 即将推出！"
+		"title": "Costrict Cloud 即将推出！",
+		"description": "在云端运行远程代理，随时随地访问任务，与他人协作等更多功能。"
 	}
 }

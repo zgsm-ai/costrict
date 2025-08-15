@@ -175,6 +175,21 @@
 		}
 	},
 	"errors": {
-		"no_assistant_responses": "API返回异常：模型没有回复任何消息。这可能是API或模型出了问题。"
+		"no_assistant_responses": "API返回异常：模型没有回复任何消息。这可能是API或模型出了问题。",
+		"claudeCode": {
+			"notFound": "找不到 Claude Code 可执行文件 '{{claudePath}}'。\n\n请安装 Claude Code CLI：\n1. 访问 {{installationUrl}} 下载 Claude Code\n2. 按照操作系统的安装说明进行操作\n3. 确保 'claude' 命令在 PATH 中可用\n4. 或者在 Costrict 设置中的 'Claude Code 路径' 下设置自定义路径\n\n原始错误：{{originalError}}"
+		}
+	},
+	"warnings": {
+		"auto_import_failed": "自动导入 Costrict 设置失败：{{error}}"
+	},
+	"info": {
+		"auto_import_success": "已自动导入 Costrict 设置：{{filename}}"
+	},
+	"mdm": {
+		"errors": {
+			"cloud_auth_required": "您的组织需要 Costrict Cloud 身份验证。请登录以继续。",
+			"organization_mismatch": "您必须使用组织的 Costrict Cloud 账户进行身份验证。"
+		}
 	}
 }

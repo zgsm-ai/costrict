@@ -72,6 +72,12 @@
 			"maxChars": "File Character read auto-truncate threshold",
 			"count": "",
 			"description": "Costrict reads this number of lines when the model omits start/end values. If this number is less than the file's total, Costrict generates a line number index of code definitions. Special cases: -1 instructs Costrict to read the entire file (without indexing), and 0 instructs it to read no lines and provides line indexes only for minimal context. Lower values minimize initial context usage, enabling precise subsequent line-range reads. Explicit start/end requests are not limited by this setting."
+		},
+		"autoCondenseContextPercent": {
+			"description": "When the context window reaches this threshold, Costrict will automatically condense it."
+		},
+		"autoCondenseContext": {
+			"description": "When enabled, Costrict will automatically condense the context when the threshold is reached. When disabled, you can still manually trigger context condensing."
 		}
 	},
 	"advanced": {
@@ -103,6 +109,9 @@
 		},
 		"MULTI_FILE_APPLY_DIFF": {
 			"description": "When enabled, Costrict can edit multiple files in a single request. When disabled Costrict must edit files one by one. Disabling helps when using less capable models or when more precise control over file modifications is needed."
+		},
+		"PREVENT_FOCUS_DISRUPTION": {
+			"description": "Prevent editor focus disruption when enabled. File edits happen in the background without opening diff views or stealing focus. You can continue working uninterrupted while Costrict makes changes. Files can be opened without focus to capture diagnostics or kept closed entirely."
 		}
 	},
 	"modelPicker": {

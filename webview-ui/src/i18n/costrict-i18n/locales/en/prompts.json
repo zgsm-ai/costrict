@@ -46,6 +46,12 @@
 	"createModeDialog": {
 		"roleDefinition": {
 			"description": "Define Costrict's expertise and personality for this mode."
+		},
+		"whenToUse": {
+			"description": "Guidance for Costrict for when this mode should be used. This helps the Orchestrator choose the right mode for a task."
 		}
+	},
+	"whenToUse": {
+		"description": "Guidance for Costrict for when this mode should be used. This helps the Orchestrator choose the right mode for a task."
 	}
 }

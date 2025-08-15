@@ -46,6 +46,12 @@
 	"createModeDialog": {
 		"roleDefinition": {
 			"description": "定義 Costrict 的專業領域和個性。"
+		},
+		"whenToUse": {
+			"description": "為 Costrict 提供何時應使用此模式的指引。這有助於「Orchestrator」為任務選擇正確的模式。"
 		}
+	},
+	"whenToUse": {
+		"description": "為 Costrict 提供何時應使用此模式的指引。這有助於「Orchestrator」為任務選擇正確的模式。"
 	}
 }

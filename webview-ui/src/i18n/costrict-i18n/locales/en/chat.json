@@ -18,7 +18,8 @@
 		"wantsToInsertAtEnd": "Costrict wants to append content to the end of this file:",
 		"wantsToReadAndXMore": "Costrict wants to read this file and {{count}} more:",
 		"wantsToReadMultiple": "Costrict wants to read multiple files:",
-		"wantsToApplyBatchChanges": "Costrict wants to apply changes to multiple files:"
+		"wantsToApplyBatchChanges": "Costrict wants to apply changes to multiple files:",
+		"wantsToEditProtected": "Costrict wants to edit a protected configuration file:"
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Costrict wants to view the top level files in this directory:",
@@ -30,7 +31,13 @@
 		"wantsToSearch": "Costrict wants to search this directory for <code>{{regex}}</code>:",
 		"didSearch": "Costrict searched this directory for <code>{{regex}}</code>:",
 		"wantsToViewDefinitionsOutsideWorkspace": "Costrict wants to view source code definition names used in this directory (outside workspace):",
-		"didViewDefinitionsOutsideWorkspace": "Costrict viewed source code definition names used in this directory (outside workspace):"
+		"didViewDefinitionsOutsideWorkspace": "Costrict viewed source code definition names used in this directory (outside workspace):",
+		"didViewTopLevelOutsideWorkspace": "Costrict viewed the top level files in this directory (outside workspace):",
+		"wantsToViewRecursiveOutsideWorkspace": "Costrict wants to recursively view all files in this directory (outside workspace):",
+		"didViewRecursiveOutsideWorkspace": "Costrict recursively viewed all files in this directory (outside workspace):",
+		"wantsToSearchOutsideWorkspace": "Costrict wants to search this directory (outside workspace) for <code>{{regex}}</code>:",
+		"didSearchOutsideWorkspace": "Costrict searched this directory (outside workspace) for <code>{{regex}}</code>:",
+		"wantsToViewTopLevelOutsideWorkspace": "Costrict wants to view the top level files in this directory (outside workspace):"
 	},
 	"mcp": {
 		"wantsToUseTool": "Costrict wants to use a tool on the {{serverName}} MCP server:",
@@ -58,12 +65,16 @@
 	},
 	"announcement": {
 		"title": "🎉 Costrict {{version}} Released",
-		"description": "Costrict {{version}} brings new features and improvements based on your feedback."
+		"description": "Costrict {{version}} brings new features and improvements based on your feedback.",
+		"feature1": "<bold>Message Queueing</bold>: Queue multiple messages while Costrict is working, allowing you to continue planning your workflow without interruption."
 	},
 	"onboarding": "<strong>The task list in this workspace is empty. </strong> Please enter a task below to get started.",
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"description": "Costrict has reached the auto-approval limit of {{count}} API requests. Would you like to reset the count and continue the task?"
+		},
+		"autoApprovedCostLimitReached": {
+			"description": "Costrict has reached the auto-approved cost limit of ${{count}}. Would you like to reset the cost and proceed with the task?"
 		}
 	},
 	"shellIntegration": {
@@ -80,6 +91,7 @@
 		"wantsToSearchWithPath": "Costrict wants to search the codebase for <code>{{query}}</code> in <code>{{path}}</code>:"
 	},
 	"rooCloudCTA": {
-		"title": "Costrict Cloud Coming Soon!"
+		"title": "Costrict Cloud Coming Soon!",
+		"description": "Run Costrict agents in the cloud, access your tasks from anywhere, collaborate with others, and more."
 	}
 }

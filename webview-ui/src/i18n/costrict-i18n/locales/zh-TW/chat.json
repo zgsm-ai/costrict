@@ -18,7 +18,8 @@
 		"wantsToInsertAtEnd": "Costrict 想要在此檔案末尾新增內容：",
 		"wantsToReadAndXMore": "Costrict 想要讀取此檔案以及另外 {{count}} 個檔案：",
 		"wantsToReadMultiple": "Costrict 想要讀取多個檔案：",
-		"wantsToApplyBatchChanges": "Costrict 想要對多個檔案套用變更："
+		"wantsToApplyBatchChanges": "Costrict 想要對多個檔案套用變更：",
+		"wantsToEditProtected": "Costrict 想要編輯受保護的設定檔案："
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Costrict 想要查看此目錄中的頂層文件：",
@@ -30,7 +31,13 @@
 		"wantsToSearch": "Costrict 想要在此目錄中搜索<code>{{regex}}</code>：",
 		"didSearch": "Costrict 已在此目錄中搜索<code>{{regex}}</code>：",
 		"wantsToViewDefinitionsOutsideWorkspace": "Costrict 想要檢視此目錄（工作區外）中使用的原始碼定義名稱：",
-		"didViewDefinitionsOutsideWorkspace": "Costrict 已檢視此目錄（工作區外）中使用的原始碼定義名稱："
+		"didViewDefinitionsOutsideWorkspace": "Costrict 已檢視此目錄（工作區外）中使用的原始碼定義名稱：",
+		"didViewTopLevelOutsideWorkspace": "Costrict 已檢視此目錄（工作區外）中最上層的檔案：",
+		"wantsToViewRecursiveOutsideWorkspace": "Costrict 想要遞迴檢視此目錄（工作區外）中的所有檔案：",
+		"didViewRecursiveOutsideWorkspace": "Costrict 已遞迴檢視此目錄（工作區外）中的所有檔案：",
+		"wantsToSearchOutsideWorkspace": "Costrict 想要在此目錄（工作區外）中搜尋 <code>{{regex}}</code>：",
+		"didSearchOutsideWorkspace": "Costrict 已在此目錄（工作區外）中搜尋 <code>{{regex}}</code>：",
+		"wantsToViewTopLevelOutsideWorkspace": "Costrict 想要檢視此目錄（工作區外）中最上層的檔案："
 	},
 	"mcp": {
 		"wantsToUseTool": "Costrict 想要在{{serverName}} MCP服務器上使用工具：",
@@ -58,12 +65,16 @@
 	},
 	"announcement": {
 		"title": "🎉 Costrict {{version}} 已發布",
-		"description": "Costrict {{version}} 帶來基於您意見回饋的新功能與改進。"
+		"description": "Costrict {{version}} 帶來基於您意見回饋的新功能與改進。",
+		"feature1": "<bold>訊息佇列</bold>：在 Costrict 工作時將多個訊息排入佇列，讓您可以不間斷地繼續規劃工作流程。"
 	},
 	"onboarding": "<strong>此工作區中的任務列表為空。</strong> 請在下方輸入任務開始。",
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"description": "Costrict 已達到 {{count}} 次 API 請求的自動批准限制。您想重設計數並繼續任務嗎？"
+		},
+		"autoApprovedCostLimitReached": {
+			"description": "Costrict 已達到 ${{count}} 的自動核准費用上限。您想重設費用並繼續工作嗎？"
 		}
 	},
 	"shellIntegration": {
@@ -80,6 +91,7 @@
 		"wantsToSearchWithPath": "Costrict 想要在 <code>{{path}}</code> 中搜尋：<code>{{query}}</code>"
 	},
 	"rooCloudCTA": {
-		"title": "Costrict Cloud 即將推出！"
+		"title": "Costrict Cloud 即將推出！",
+		"description": "在雲端執行 Costrict 遠端代理、隨時隨地存取您的工作、與他人協作等等。"
 	}
 }

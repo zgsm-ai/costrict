@@ -3,7 +3,8 @@
 	"introduction": "<strong>Costrict 严肃开发的AI智能伙伴</strong>，开源免费，可私有化部署，重视效果可控、质量为先，提供AI Agent、AI CodeReview、AI Completion三大核心能力，登录即可体验。",
 	"greeting": "你好，我是 Costrict！",
 	"telemetry": {
-		"title": "帮助改进 Costrict"
+		"title": "帮助改进 Costrict",
+		"anonymousTelemetry": "发送匿名的错误和使用数据，以帮助我们修复错误并改进扩展程序。不会涉及代码、提示词或个人隐私信息。"
 	},
 	"chooseProvider": "Costrict 需要一个 API 密钥才能发挥魔力。"
 }
