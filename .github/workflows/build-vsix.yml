@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     if: contains(github.event.pull_request.labels.*.name, 'build')
+    contents: read
+    pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
