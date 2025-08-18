@@ -51,7 +51,7 @@ async function initialize(provider: ClineProvider, logger: ILogger) {
 	zgsmCodebaseIndexManager.setLogger(logger)
 	workspaceEventMonitor.setProvider(provider)
 	workspaceEventMonitor.setLogger(logger)
-
+	console.log("ZGSM Core initialized")
 	//
 	printLogo()
 	initLangSetting()
