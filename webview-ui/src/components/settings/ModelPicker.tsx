@@ -260,7 +260,10 @@ export const ModelPicker = ({
 											key={model}
 											value={model}
 											onSelect={onSelect}
-											data-testid={`model-option-${model}`}>
+											data-testid={`model-option-${model}`}
+											className={
+												model === "auto" ? "border-b border-vscode-dropdown-border" : ""
+											}>
 											<span className="truncate" title={model}>
 												{model}
 											</span>
