@@ -151,12 +151,20 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				modelInfo,
 			)
 
-			const stream = await this.client.chat.completions.create(
-				requestOptions,
-				Object.assign(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
-					headers: _headers,
-				}),
-			)
+			const { data: stream, response } = await this.client.chat.completions
+				.create(
+					requestOptions,
+					Object.assign(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
+						headers: _headers,
+					}),
+				)
+				.withResponse()
+
+			const userInputHeader = response.headers.get("x-user-input")
+			if (userInputHeader) {
+				const decodedUserInput = decodeURIComponent(userInputHeader)
+				this.logger.info(`[x-user-input]: ${decodedUserInput}`)
+			}
 
 			// 6. Optimize stream processing - use batch processing and buffer
 			yield* this.handleOptimizedStream(stream, modelInfo)
