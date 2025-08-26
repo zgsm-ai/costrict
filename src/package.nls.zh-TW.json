@@ -63,5 +63,6 @@
 	"settings.autoImportSettingsPath.description": "Costrict 設定檔案的路徑，用於在擴充功能啟動時自動匯入。支援絕對路徑和相對於主目錄的路徑（例如 '~/Documents/costrict-settings.json'）。留空以停用自動匯入。",
 	"settings.useAgentRules.description": "為特定於代理的規則啟用 AGENTS.md 檔案的載入（請參閱 https://agent-rules.org/）",
 	"settings.autoCommit.description": "在接受大模型的變更後，自動提交當前變更檔案",
+	"settings.apiResponseRenderMode.description": "API 回應渲染速度模式（fast = 最小延遲，medium = 平衡模式，slow = 最大相容性）。更高的值提供更好的相容性但可能感覺回應較慢。",
 	"settings.apiRequestTimeout.description": "等待 API 回應的最長時間（秒）（0 = 無超時，1-3600秒，預設值：600秒）。對於像 LM Studio 和 Ollama 這樣可能需要更多處理時間的本地提供商，建議使用更高的值。"
 }

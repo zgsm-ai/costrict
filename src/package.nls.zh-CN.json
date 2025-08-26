@@ -63,5 +63,6 @@
 	"settings.autoImportSettingsPath.description": "Costrict 配置文件的路径，用于在扩展启动时自动导入。支持绝对路径和相对于主目录的路径（例如 '~/Documents/costrict-settings.json'）。留空以禁用自动导入。",
 	"settings.useAgentRules.description": "为特定于代理的规则启用 AGENTS.md 文件的加载（请参阅 https://agent-rules.org/）",
 	"settings.autoCommit.description": "在接受大模型的变更后，自动提交当前变更文件",
+	"settings.apiResponseRenderMode.description": "API 响应渲染速度模式（fast = 最小延迟，medium = 平衡模式，slow = 最大兼容性）。更高的值提供更好的兼容性但可能感觉响应较慢。",
 	"settings.apiRequestTimeout.description": "等待 API 响应的最长时间（秒）（0 = 无超时，1-3600秒，默认值：600秒）。对于像 LM Studio 和 Ollama 这样可能需要更多处理时间的本地提供商，建议使用更高的值。"
 }

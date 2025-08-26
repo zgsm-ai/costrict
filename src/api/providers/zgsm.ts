@@ -28,6 +28,7 @@ import { getZgsmSelectedModelInfo, setZgsmFullResponseData } from "../../shared/
 import { getClientId } from "../../utils/getClientId"
 import { getWorkspacePath } from "../../utils/path"
 import { getApiRequestTimeout } from "./utils/timeout-config"
+import { getApiResponseRenderMode, renderModes } from "./utils/response-render-config"
 import { createLogger, ILogger } from "../../utils/logger"
 import { Package } from "../../shared/package"
 import { COSTRICT_DEFAULT_HEADERS } from "../../shared/headers"
@@ -40,6 +41,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 	private baseURL: string
 	private chatType?: "user" | "system"
 	private headers = {}
+	private apiResponseRenderModeInfo = renderModes.medium
 	private logger: ILogger
 	constructor(options: ApiHandlerOptions) {
 		super()
@@ -56,6 +58,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			...(this.options.openAiHeaders || {}),
 		}
 		const timeout = getApiRequestTimeout()
+		this.apiResponseRenderModeInfo = getApiResponseRenderMode()
 		if (isAzureAiInference) {
 			// Azure AI Inference Service (e.g., for DeepSeek) uses a different path structure
 			this.client = new OpenAI({
@@ -386,7 +389,10 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				}
 				const now = Date.now()
 				// Process in batch when threshold is reached
-				if (contentBuffer.length >= 5 && time + 100 <= now) {
+				if (
+					contentBuffer.length >= this.apiResponseRenderModeInfo.limit &&
+					time + this.apiResponseRenderModeInfo.interval <= now
+				) {
 					const batchedContent = contentBuffer.join("")
 					for (const processedChunk of matcher.update(batchedContent)) {
 						yield processedChunk

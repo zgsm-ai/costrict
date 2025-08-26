@@ -633,6 +633,16 @@
 					"maximum": 3600,
 					"description": "%settings.apiRequestTimeout.description%"
 				},
+				"zgsm.apiResponseRenderMode": {
+					"type": "string",
+					"enum": [
+						"fast",
+						"medium",
+						"slow"
+					],
+					"default": "medium",
+					"description": "%settings.apiResponseRenderMode.description%"
+				},
 				"zgsm.newTaskRequireTodos": {
 					"type": "boolean",
 					"default": false,
