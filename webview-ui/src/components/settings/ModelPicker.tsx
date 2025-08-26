@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect, useRef } from "react"
+import { useMemo, useState, useCallback, useEffect, useRef, useLayoutEffect } from "react"
 import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { Trans } from "react-i18next"
 import { ChevronsUpDown, Check, X, ChevronUp } from "lucide-react"
@@ -177,6 +177,37 @@ export const ModelPicker = ({
 		}
 	}, [])
 
+	// Close dropdown when clicking anywhere outside or on page change
+	useLayoutEffect(() => {
+		const handleClickAnywhere = (event: MouseEvent) => {
+			if (!open) {
+				return
+			}
+
+			const popoverElement = document.querySelector('[data-testid="model-picker-content"]')
+			if (popoverElement && !popoverElement.contains(event.target as Node)) {
+				const triggerButton = document.querySelector('[data-testid="model-picker-button"]')
+				if (triggerButton && !triggerButton.contains(event.target as Node)) {
+					setOpen(false)
+				}
+			}
+		}
+
+		const handlePageChange = () => {
+			if (open) {
+				setOpen(false)
+			}
+		}
+
+		document.addEventListener("click", handleClickAnywhere)
+		window.addEventListener("message", handlePageChange)
+
+		return () => {
+			document.removeEventListener("click", handleClickAnywhere)
+			window.removeEventListener("message", handlePageChange)
+		}
+	}, [open])
+
 	// Use the shared ESC key handler hook
 	useEscapeKey(open, () => setOpen(false))
 
@@ -225,7 +256,12 @@ export const ModelPicker = ({
 						</PopoverTrigger>
 					)}
 					<PopoverContent
-						className={cn("p-0", "w-[var(--radix-popover-trigger-width)", popoverContentClassName)}
+						className={cn(
+							"p-0",
+							"w-[var(--radix-popover-trigger-width)]",
+							!open && "invisible",
+							popoverContentClassName,
+						)}
 						data-testid="model-picker-content">
 						<Command>
 							<div className="relative">
