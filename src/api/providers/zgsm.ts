@@ -163,7 +163,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			if (this.options.zgsmModelId === autoModeModelId) {
 				const userInputHeader = response.headers.get("x-user-input")
 				if (userInputHeader) {
-					const decodedUserInput = decodeURIComponent(userInputHeader)
+					const decodedUserInput = Buffer.from(userInputHeader, "base64").toString("utf-8")
 					this.logger.info(`[x-user-input]: ${decodedUserInput}`)
 				}
 			}
