@@ -1,5 +1,12 @@
 # Costrict Change Log
 
+## [1.6.1]
+
+- Add message rendering speed mode
+- Fix: Implements dropdown close behavior on outside click
+- Sync roocode
+- Fix known issues
+
 ## [1.6.0]
 
 - Auto mode for Agent
