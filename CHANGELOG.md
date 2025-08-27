@@ -1,5 +1,13 @@
 # Costrict Change Log
 
+## [1.6.2]
+
+- Optimize login tips
+- Update mode icons
+- Update error message
+- Update model picker
+- Fix known issues
+
 ## [1.6.1]
 
 - Add message rendering speed mode
