@@ -185,5 +185,8 @@
 			"failedToDisableCodebaseIndex": "Failed to disable codebase index:",
 			"failedToCopyToClipboard": "Failed to copy to clipboard:"
 		}
+	},
+	"common": {
+		"loading": "加载中~"
 	}
 }

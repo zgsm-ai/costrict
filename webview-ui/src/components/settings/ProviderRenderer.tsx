@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState, useLayoutEffect } from "react"
 import { ModelPicker } from "./ModelPicker"
 
 import {
@@ -41,6 +41,8 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	selectedProviderModels,
 }) => {
 	const [openAiModels, setOpenAiModels] = useState<Record<string, ModelInfo> | null>(null)
+	const [isLoadingModels, setIsLoadingModels] = useState(false)
+	const [isSelectOpen, setIsSelectOpen] = useState(false)
 
 	const onMessage = useCallback((event: MessageEvent) => {
 		const message: ExtensionMessage = event.data
@@ -49,11 +51,13 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			case "zgsmModels": {
 				const updatedModels = message.openAiModels ?? []
 				setOpenAiModels(Object.fromEntries(updatedModels.map((item) => [item, zgsmModels.default])))
+				setIsLoadingModels(false)
 				break
 			}
 			case "openAiModels": {
 				const updatedModels = message.openAiModels ?? []
 				setOpenAiModels(Object.fromEntries(updatedModels.map((item) => [item, openAiModelInfoSaneDefaults])))
+				setIsLoadingModels(false)
 				break
 			}
 		}
@@ -74,57 +78,94 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 		}
 	}, [apiConfiguration?.openAiHeaders, customHeaders])
 
-	useDebounce(
-		() => {
-			if (selectedProvider === "zgsm") {
-				// Use our custom headers state to build the headers object.
-				const headerObject = convertHeadersToObject(customHeaders)
+	const fetchModels = useCallback(() => {
+		if (selectedProvider === "zgsm") {
+			// Use our custom headers state to build the headers object.
+			const headerObject = convertHeadersToObject(customHeaders)
 
-				vscode.postMessage({
-					type: "requestZgsmModels",
-					values: {
-						baseUrl: apiConfiguration?.zgsmBaseUrl?.trim(),
-						apiKey: apiConfiguration?.zgsmAccessToken,
-						customHeaders: {}, // Reserved for any additional headers
-						openAiHeaders: headerObject,
-					},
-				})
-			} else if (selectedProvider === "openai") {
-				// Use our custom headers state to build the headers object.
-				const headerObject = convertHeadersToObject(customHeaders)
+			vscode.postMessage({
+				type: "requestZgsmModels",
+				values: {
+					baseUrl: apiConfiguration?.zgsmBaseUrl?.trim(),
+					apiKey: apiConfiguration?.zgsmAccessToken,
+					customHeaders: {}, // Reserved for any additional headers
+					openAiHeaders: headerObject,
+				},
+			})
+		} else if (selectedProvider === "openai") {
+			// Use our custom headers state to build the headers object.
+			const headerObject = convertHeadersToObject(customHeaders)
 
-				vscode.postMessage({
-					type: "requestOpenAiModels",
-					values: {
-						baseUrl: apiConfiguration?.openAiBaseUrl,
-						apiKey: apiConfiguration?.openAiApiKey,
-						customHeaders: {}, // Reserved for any additional headers
-						openAiHeaders: headerObject,
-					},
-				})
-			} else if (selectedProvider === "ollama") {
-				vscode.postMessage({ type: "requestOllamaModels" })
-			} else if (selectedProvider === "lmstudio") {
-				vscode.postMessage({ type: "requestLmStudioModels" })
-			} else if (selectedProvider === "vscode-lm") {
-				vscode.postMessage({ type: "requestVsCodeLmModels" })
-			} else if (selectedProvider === "litellm") {
-				vscode.postMessage({ type: "requestRouterModels" })
+			vscode.postMessage({
+				type: "requestOpenAiModels",
+				values: {
+					baseUrl: apiConfiguration?.openAiBaseUrl,
+					apiKey: apiConfiguration?.openAiApiKey,
+					customHeaders: {}, // Reserved for any additional headers
+					openAiHeaders: headerObject,
+				},
+			})
+		} else if (selectedProvider === "ollama") {
+			vscode.postMessage({ type: "requestOllamaModels" })
+		} else if (selectedProvider === "lmstudio") {
+			vscode.postMessage({ type: "requestLmStudioModels" })
+		} else if (selectedProvider === "vscode-lm") {
+			vscode.postMessage({ type: "requestVsCodeLmModels" })
+		} else if (selectedProvider === "litellm") {
+			vscode.postMessage({ type: "requestRouterModels" })
+		}
+	}, [
+		selectedProvider,
+		apiConfiguration?.zgsmBaseUrl,
+		apiConfiguration?.zgsmAccessToken,
+		apiConfiguration?.openAiBaseUrl,
+		apiConfiguration?.openAiApiKey,
+		customHeaders,
+	])
+
+	// Get the latest model data before expanding ModelPicker
+	const handleModelPickerOpenChange = useCallback(
+		async (open: boolean) => {
+			if (open) {
+				// For providers that need to dynamically obtain models, first obtain the data
+				if (["zgsm", "openai"].includes(selectedProvider)) {
+					setIsLoadingModels(true)
+					fetchModels()
+					// Return false to prevent immediate expansion, and it will automatically expand after the data is loaded.
+					return false
+				}
 			}
+			return open
 		},
-		250,
-		[
-			selectedProvider,
-			apiConfiguration?.requestyApiKey,
-			apiConfiguration?.openAiBaseUrl,
-			apiConfiguration?.openAiApiKey,
-			apiConfiguration?.ollamaBaseUrl,
-			apiConfiguration?.lmStudioBaseUrl,
-			apiConfiguration?.litellmBaseUrl,
-			apiConfiguration?.litellmApiKey,
-			customHeaders,
-		],
+		[selectedProvider, fetchModels],
 	)
+
+	useDebounce(fetchModels, 250, [
+		selectedProvider,
+		apiConfiguration?.requestyApiKey,
+		apiConfiguration?.openAiBaseUrl,
+		apiConfiguration?.openAiApiKey,
+		apiConfiguration?.ollamaBaseUrl,
+		apiConfiguration?.lmStudioBaseUrl,
+		apiConfiguration?.litellmBaseUrl,
+		apiConfiguration?.litellmApiKey,
+		customHeaders,
+	])
+
+	// Close dropdown when page changes
+	useLayoutEffect(() => {
+		const handlePageChange = () => {
+			if (isSelectOpen) {
+				setIsSelectOpen(false)
+			}
+		}
+
+		window.addEventListener("message", handlePageChange)
+
+		return () => {
+			window.removeEventListener("message", handlePageChange)
+		}
+	}, [isSelectOpen])
 
 	// Define provider configuration mapping
 	const providerConfig = {
@@ -206,6 +247,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			PopoverTriggerContentClassName="w-[80%] overflow-hidden truncate whitespace-nowrap"
 			buttonIconType="up"
 			tooltip={t("chat:selectModel")}
+			onOpenChange={handleModelPickerOpenChange}
+			isLoadingModels={isLoadingModels}
+			shouldAutoOpenAfterLoad={true}
 		/>
 	) : (
 		selectedProviderModels.length > 0 && (
@@ -213,6 +257,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				<div>
 					<Select
 						value={selectedModelId === "custom-arn" ? "custom-arn" : selectedModelId}
+						open={isSelectOpen}
 						onValueChange={(value) => {
 							setApiConfigurationField(
 								apiConfiguration.apiProvider === "zgsm" ? "zgsmModelId" : "apiModelId",
@@ -225,6 +270,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 							}
 						}}
 						onOpenChange={(open) => {
+							setIsSelectOpen(open)
 							if (open) {
 								document.body.style.padding = "0 20px"
 							}

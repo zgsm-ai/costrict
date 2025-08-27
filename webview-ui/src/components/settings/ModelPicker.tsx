@@ -66,6 +66,9 @@ interface ModelPickerProps {
 	PopoverTriggerContentClassName?: string
 	buttonIconType?: "upDown" | "up"
 	tooltip?: string
+	onOpenChange?: (open: boolean) => Promise<boolean> | boolean
+	isLoadingModels?: boolean
+	shouldAutoOpenAfterLoad?: boolean
 }
 
 export const ModelPicker = ({
@@ -85,6 +88,9 @@ export const ModelPicker = ({
 	PopoverTriggerContentClassName = "",
 	buttonIconType = "upDown",
 	tooltip,
+	onOpenChange: externalOnOpenChange,
+	isLoadingModels = false,
+	shouldAutoOpenAfterLoad = false,
 }: ModelPickerProps) => {
 	const { t } = useAppTranslation()
 
@@ -94,6 +100,7 @@ export const ModelPicker = ({
 	const searchInputRef = useRef<HTMLInputElement>(null)
 	const selectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+	const [pendingOpen, setPendingOpen] = useState(false)
 
 	const modelIds = useMemo(() => {
 		const filteredModels = filterModels(models, apiConfiguration.apiProvider, organizationAllowList)
@@ -131,8 +138,17 @@ export const ModelPicker = ({
 	)
 
 	const onOpenChange = useCallback(
-		(open: boolean) => {
+		async (open: boolean) => {
+			if (open && externalOnOpenChange) {
+				const result = await externalOnOpenChange(open)
+				if (result === false) {
+					setPendingOpen(true)
+					return
+				}
+			}
+
 			setOpen(open)
+			setPendingOpen(false)
 
 			// Abandon the current search if the popover is closed.
 			if (!open) {
@@ -148,8 +164,16 @@ export const ModelPicker = ({
 				)
 			}
 		},
-		[apiConfiguration.apiProvider, selectedModelId],
+		[apiConfiguration.apiProvider, selectedModelId, externalOnOpenChange],
 	)
+
+	// automatically expand when data loading is complete and an expansion request is pending
+	useEffect(() => {
+		if (pendingOpen && !isLoadingModels && shouldAutoOpenAfterLoad) {
+			setPendingOpen(false)
+			setOpen(true)
+		}
+	}, [pendingOpen, isLoadingModels, shouldAutoOpenAfterLoad])
 
 	const onClearSearch = useCallback(() => {
 		setSearchValue("")
@@ -224,9 +248,12 @@ export const ModelPicker = ({
 									role="combobox"
 									aria-expanded={open}
 									className={cn("w-full", "justify-between", triggerClassName)}
-									data-testid="model-picker-button">
+									data-testid="model-picker-button"
+									disabled={isLoadingModels}>
 									<div className={`truncate ${PopoverTriggerContentClassName}`}>
-										{selectedModelId ?? t("settings:common.select")}
+										{isLoadingModels
+											? t("settings:common.loading")
+											: (selectedModelId ?? t("settings:common.select"))}
 									</div>
 									{buttonIconType === "upDown" ? (
 										<ChevronsUpDown className="opacity-50" />
@@ -243,9 +270,12 @@ export const ModelPicker = ({
 								role="combobox"
 								aria-expanded={open}
 								className={cn("w-full", "justify-between", triggerClassName)}
-								data-testid="model-picker-button">
+								data-testid="model-picker-button"
+								disabled={isLoadingModels}>
 								<div className={PopoverTriggerContentClassName}>
-									{selectedModelId ?? t("settings:common.select")}
+									{isLoadingModels
+										? t("settings:common.loading")
+										: (selectedModelId ?? t("settings:common.select"))}
 								</div>
 								{buttonIconType === "upDown" ? (
 									<ChevronsUpDown className="opacity-50" />
