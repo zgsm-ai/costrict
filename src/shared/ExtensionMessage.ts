@@ -77,6 +77,7 @@ export interface ExtensionMessage {
 		// zgsm
 		| "zgsmModels"
 		| "zgsmLogined"
+		| "showReauthConfirmationDialog"
 		// zgsm
 		| "ollamaModels"
 		| "lmStudioModels"

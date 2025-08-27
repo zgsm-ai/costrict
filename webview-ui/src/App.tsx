@@ -30,6 +30,7 @@ import { STANDARD_TOOLTIP_DELAY } from "./components/ui/standard-tooltip"
 import { ZgsmAccountView } from "./components/account/ZgsmAccountView"
 import { TabContent, TabList, TabTrigger } from "./components/common/Tab"
 import { cn } from "./lib/utils"
+import { ReauthConfirmationDialog } from "./components/chat/ReauthConfirmationDialog"
 
 type Tab = "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account" | "zgsm-account" | "codeReview"
 
@@ -37,6 +38,11 @@ interface HumanRelayDialogState {
 	isOpen: boolean
 	requestId: string
 	promptText: string
+}
+
+interface ReauthConfirmationDialogState {
+	isOpen: boolean
+	messageTs: number
 }
 
 interface DeleteMessageDialogState {
@@ -54,6 +60,7 @@ interface EditMessageDialogState {
 // Memoize dialog components to prevent unnecessary re-renders
 const MemoizedDeleteMessageDialog = React.memo(DeleteMessageDialog)
 const MemoizedEditMessageDialog = React.memo(EditMessageDialog)
+const MemoizedReauthConfirmationDialog = React.memo(ReauthConfirmationDialog)
 const MemoizedHumanRelayDialog = React.memo(HumanRelayDialog)
 
 const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]>, Tab>> = {
@@ -99,6 +106,11 @@ const App = () => {
 	})
 
 	const [deleteMessageDialogState, setDeleteMessageDialogState] = useState<DeleteMessageDialogState>({
+		isOpen: false,
+		messageTs: 0,
+	})
+
+	const [reauthConfirmationDialogState, setReauthConfirmationDialogState] = useState<ReauthConfirmationDialogState>({
 		isOpen: false,
 		messageTs: 0,
 	})
@@ -173,6 +185,10 @@ const App = () => {
 			if (message.type === "showHumanRelayDialog" && message.requestId && message.promptText) {
 				const { requestId, promptText } = message
 				setHumanRelayDialogState({ isOpen: true, requestId, promptText })
+			}
+
+			if (message.type === "showReauthConfirmationDialog" && message.messageTs) {
+				setReauthConfirmationDialogState({ isOpen: true, messageTs: message.messageTs })
 			}
 
 			if (message.type === "showDeleteMessageDialog" && message.messageTs) {
@@ -387,6 +403,14 @@ const App = () => {
 						images: editMessageDialogState.images,
 					})
 					setEditMessageDialogState((prev) => ({ ...prev, isOpen: false }))
+				}}
+			/>
+			<MemoizedReauthConfirmationDialog
+				open={reauthConfirmationDialogState.isOpen}
+				onOpenChange={(open) => setReauthConfirmationDialogState((prev) => ({ ...prev, isOpen: open }))}
+				onConfirm={() => {
+					vscode.postMessage({ type: "zgsmLogin", apiConfiguration })
+					setReauthConfirmationDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>
 		</>

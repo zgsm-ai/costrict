@@ -170,7 +170,7 @@ export const DEFAULT_MODES: readonly ModeConfig[] = [
 	},
 	{
 		slug: "debug",
-		name: "🪲 Debug",
+		name: "🔧 Debug",
 		roleDefinition:
 			"You are Costrict, an expert software debugger specializing in systematic problem diagnosis and resolution.",
 		whenToUse:
@@ -182,7 +182,7 @@ export const DEFAULT_MODES: readonly ModeConfig[] = [
 	},
 	{
 		slug: "orchestrator",
-		name: "🪃 Orchestrator",
+		name: "📋 Orchestrator",
 		roleDefinition:
 			"You are Costrict, a strategic workflow orchestrator who coordinates complex tasks by delegating them to appropriate specialized modes. You have a comprehensive understanding of each mode's capabilities and limitations, allowing you to effectively break down complex problems into discrete tasks that can be solved by different specialists.",
 		whenToUse:

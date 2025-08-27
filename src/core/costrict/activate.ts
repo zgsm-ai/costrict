@@ -35,6 +35,7 @@ import ZgsmCodebaseIndexManager, { zgsmCodebaseIndexManager } from "./codebase-i
 import { workspaceEventMonitor } from "./codebase-index/workspace-event-monitor"
 import { initGitCheckoutDetector } from "./codebase-index/git-checkout-detector"
 import { writeCostrictAccessToken } from "./codebase-index/utils"
+import { getPanel } from "../../activate/registerCommands"
 
 /**
  * Initialization entry
@@ -92,7 +93,7 @@ export async function activate(
 	zgsmAuthCommands.registerCommands(context)
 
 	provider.setZgsmAuthCommands(zgsmAuthCommands)
-
+	let loginTip = () => {}
 	/**
 	 * Check login status when plugin starts
 	 */
@@ -115,7 +116,12 @@ export async function activate(
 			})
 			// Start token refresh timer
 		} else {
-			ZgsmAuthService.openStatusBarLoginTip()
+			// ZgsmAuthService.openStatusBarLoginTip()
+			loginTip = () =>
+				getPanel()?.webview.postMessage({
+					type: "showReauthConfirmationDialog",
+					messageTs: new Date().getTime(),
+				})
 			provider.log("Login status detected at plugin startup: invalid")
 		}
 	} catch (error) {
@@ -183,6 +189,9 @@ export async function activate(
 			)
 		}
 	})
+	setTimeout(() => {
+		loginTip()
+	}, 2000)
 }
 
 /**
