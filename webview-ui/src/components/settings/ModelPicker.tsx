@@ -217,9 +217,12 @@ export const ModelPicker = ({
 			}
 		}
 
-		const handlePageChange = () => {
-			if (open) {
-				setOpen(false)
+		const handlePageChange = (event: MessageEvent) => {
+			// check messsage type only close with action
+			if (event.data && event.data.type === "action") {
+				if (open) {
+					setOpen(false)
+				}
 			}
 		}
 
