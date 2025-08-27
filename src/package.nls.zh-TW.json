@@ -1,6 +1,7 @@
 {
 	"extension.displayName": "Costrict",
-	"extension.description": "在你的編輯器中提供完整的 AI 代理開發團隊。",
+	"extension.displayName.long": "Costrict (prev. Cline / RooCode)：智慧編程助手",
+	"extension.description": "Costrict：企業嚴謹開發的 AI 智慧夥伴，品質至上。功能包括：AI 智慧體、AI 程式碼審查與 AI 程式碼補全。",
 	"command.newTask.title": "新建任務",
 	"command.explainCode.title": "解釋程式碼",
 	"command.fixCode.title": "修復程式碼",

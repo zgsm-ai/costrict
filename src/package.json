@@ -1,6 +1,6 @@
 {
 	"name": "zgsm",
-	"displayName": "%extension.displayName%",
+	"displayName": "%extension.displayName.long%",
 	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
 	"version": "1.6.0",
