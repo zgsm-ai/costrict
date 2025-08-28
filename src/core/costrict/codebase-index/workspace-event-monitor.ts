@@ -39,6 +39,7 @@ const DEFAULT_CONFIG: WorkspaceEventMonitorConfig = {
 export class WorkspaceEventMonitor {
 	private static instance: WorkspaceEventMonitor
 	private isInitialized = false
+	private workspaceCache = ""
 	private config: WorkspaceEventMonitorConfig = { ...DEFAULT_CONFIG }
 	private disposables: vscode.Disposable[] = []
 	private eventBuffer: Map<string, WorkspaceEventData> = new Map()
@@ -115,45 +116,24 @@ export class WorkspaceEventMonitor {
 	/**
 	 * Handle VSCode close event
 	 */
-	public async handleVSCodeClose(): Promise<void> {
+	public handleVSCodeClose() {
 		this.log.info("[WorkspaceEventMonitor] VSCode close event detected")
 
 		// Send workspace close events
-		await this.sendWorkspaceCloseEvents()
+		ZgsmCodebaseIndexManager.getInstance().client?.publishSyncWorkspaceEvents({
+			workspace: this.workspaceCache,
+			data: [
+				{
+					eventType: "close_workspace",
+					eventTime: `${Date.now()}`,
+					sourcePath: "",
+					targetPath: "",
+				},
+			],
+		})
 
 		// Continue to destroy event monitor
-		await this.dispose()
-	}
-
-	/**
-	 * Send workspace close events
-	 */
-	private async sendWorkspaceCloseEvents(): Promise<void> {
-		if (!(await this.ensureServiceEnabled())) return
-
-		const workspaceFolders = vscode.workspace.workspaceFolders
-		if (!workspaceFolders || workspaceFolders.length === 0) {
-			return
-		}
-
-		const workspace = this.getCurrentWorkspace()
-		if (!workspace) {
-			this.log.warn("[WorkspaceEventMonitor] Unable to determine current workspace")
-			return
-		}
-
-		// Create close events
-		const closeEvents: WorkspaceEventData[] = workspaceFolders.map((folder) => ({
-			eventType: "close_workspace",
-			eventTime: `${Date.now()}`,
-			sourcePath: "",
-			targetPath: "",
-		}))
-		
-		await ZgsmCodebaseIndexManager.getInstance().client?.publishSyncWorkspaceEvents({
-			workspace,
-			data: closeEvents,
-		}, await ZgsmCodebaseIndexManager.getInstance().readAccessToken(),)
+		this.dispose()
 	}
 
 	/**
@@ -643,9 +623,9 @@ export class WorkspaceEventMonitor {
 		if (!workspaceFolders || workspaceFolders.length === 0) {
 			return null
 		}
-
+		this.workspaceCache = workspaceFolders[0].uri.fsPath
 		// If there are multiple workspaces, use the first one
-		return workspaceFolders[0].uri.fsPath
+		return this.workspaceCache
 	}
 
 	/**

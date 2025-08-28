@@ -206,7 +206,7 @@ export async function deactivate() {
 	disconnectIPC()
 	stopIPCServer()
 	// Clean up workspace event monitoring
-	await workspaceEventMonitor.handleVSCodeClose()
+	workspaceEventMonitor.handleVSCodeClose()
 
 	// Currently no specific cleanup needed
 	loggerDeactivate()

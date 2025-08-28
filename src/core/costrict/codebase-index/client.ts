@@ -50,7 +50,7 @@ export class CodebaseIndexClient {
 		port: number
 		[key: string]: any
 	} = {} as any
-
+	lastHeaders = {} as any
 	private clientId: string = getClientId()
 
 	get processName() {
@@ -139,25 +139,18 @@ export class CodebaseIndexClient {
 	private async makeRequest<T>(url: string, options: RequestInit = {}, token?: string): Promise<ApiResponse<T>> {
 		const headers = await this.getHeaders(token)
 
-		const defaultOptions: RequestInit = {
-			headers: {
-				...headers,
-				"Content-Type": "application/json",
-			},
-		}
-
 		const finalOptions: RequestInit = {
-			...defaultOptions,
 			...options,
 			headers: {
-				...defaultOptions.headers,
+				"Content-Type": "application/json",
+				...headers,
 				...options.headers,
 			},
 		}
 
 		const maxRetries = 2
 		let lastError: Error = new Error("Unknown error")
-
+		this.lastHeaders = finalOptions.headers
 		for (let attempt = 0; attempt <= maxRetries; attempt++) {
 			try {
 				const response = await fetch(url, finalOptions)
@@ -442,23 +435,39 @@ export class CodebaseIndexClient {
 		return this.makeRequest<number>(url, options, token)
 	}
 
-	async publishSyncWorkspaceEvents<T>(request: WorkspaceEventRequest, token: string) {
+	publishSyncWorkspaceEvents<T>(request: WorkspaceEventRequest) {
 		const url = `${this.getCodebaseIndexerServerHost(this.serverHost)}/codebase-indexer/api/v1/events`
-		const headers = await this.getHeaders(token)
-		
-		const h = {
+
+		const headers = {
+			...this.lastHeaders,
+			"X-Request-ID": uuidv7(),
 			"Content-Type": "application/json",
-			...headers,
-			"X-Request-ID": uuidv7()
 		} as {
 			[key: string]: string
 		}
-		spawnDetached("curl", [
-			"-X", "POST",
-			url,
-			...Object.keys(h).map((key) => `-H ${key}: ${h[key]}`),
-			"-d", JSON.stringify(request)
-		])
+
+		const httpModule = url.startsWith("https://") ? require("https") : require("http")
+		const urlObj = new URL(url)
+
+		const options = {
+			hostname: urlObj.hostname,
+			port: urlObj.port,
+			path: urlObj.pathname + urlObj.search,
+			method: "POST",
+			headers: headers,
+			timeout: 3000,
+		}
+
+		try {
+			const req = httpModule.request(options)
+			req.on("error", (error: Error) => {
+				console.error("Failed to send workspace close event:", error.message)
+			})
+			req.write(JSON.stringify(request))
+			req.end()
+		} catch (error: any) {
+			console.error("Failed to create HTTP request for workspace close event:", error.message)
+		}
 	}
 
 	/**
