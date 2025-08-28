@@ -238,7 +238,7 @@ export const EVALS_SETTINGS: RooCodeSettings = {
 	pinnedApiConfigs: {},
 
 	autoApprovalEnabled: true,
-	showAutoApproveSettingsAtChat: false,
+	showAutoApproveSettingsAtChat: true,
 	alwaysAllowReadOnly: true,
 	alwaysAllowReadOnlyOutsideWorkspace: false,
 	alwaysAllowWrite: true,

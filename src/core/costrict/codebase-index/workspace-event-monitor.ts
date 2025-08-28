@@ -149,14 +149,11 @@ export class WorkspaceEventMonitor {
 			sourcePath: "",
 			targetPath: "",
 		}))
-		ZgsmCodebaseIndexManager.getInstance().client?.publishWorkspaceEvents(
-			{
-				workspace,
-				data: closeEvents,
-			},
-			await ZgsmCodebaseIndexManager.getInstance().readAccessToken(),
-			true,
-		)
+		
+		await ZgsmCodebaseIndexManager.getInstance().client?.publishSyncWorkspaceEvents({
+			workspace,
+			data: closeEvents,
+		}, await ZgsmCodebaseIndexManager.getInstance().readAccessToken(),)
 	}
 
 	/**

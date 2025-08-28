@@ -442,6 +442,25 @@ export class CodebaseIndexClient {
 		return this.makeRequest<number>(url, options, token)
 	}
 
+	async publishSyncWorkspaceEvents<T>(request: WorkspaceEventRequest, token: string) {
+		const url = `${this.getCodebaseIndexerServerHost(this.serverHost)}/codebase-indexer/api/v1/events`
+		const headers = await this.getHeaders(token)
+		
+		const h = {
+			"Content-Type": "application/json",
+			...headers,
+			"X-Request-ID": uuidv7()
+		} as {
+			[key: string]: string
+		}
+		spawnDetached("curl", [
+			"-X", "POST",
+			url,
+			...Object.keys(h).map((key) => `-H ${key}: ${h[key]}`),
+			"-d", JSON.stringify(request)
+		])
+	}
+
 	/**
 	 * Manually trigger index build
 	 * @param request Index build request
