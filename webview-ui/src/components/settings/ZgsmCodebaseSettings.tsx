@@ -19,17 +19,14 @@ import {
 
 import { SectionHeader } from "./SectionHeader"
 import { Section } from "./Section"
-import { ExtensionStateContextType } from "@/context/ExtensionStateContext"
+// import { ExtensionStateContextType } from "@/context/ExtensionStateContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { SetCachedStateField } from "./types"
+import { useEvent } from "react-use"
 
 interface ZgsmCodebaseSettingsProps {
-	isHidden: boolean
-	apiConfiguration: ExtensionStateContextType["apiConfiguration"]
-	setCachedStateField: SetCachedStateField<
-		| "zgsmCodebaseIndexEnabled"
-	>
+	setCachedStateField?: SetCachedStateField<"zgsmCodebaseIndexEnabled">
 }
 
 interface IndexStatus {
@@ -89,10 +86,9 @@ const mapIndexStatusInfoToIndexStatus = (statusInfo: IndexStatusInfo, t: (key: s
 	}
 }
 
-export const ZgsmCodebaseSettings = ({ isHidden, apiConfiguration, setCachedStateField }: ZgsmCodebaseSettingsProps) => {
-	const { zgsmCodebaseIndexEnabled } = useExtensionState()
+export const ZgsmCodebaseSettings = ({ setCachedStateField }: ZgsmCodebaseSettingsProps) => {
 	const { t } = useAppTranslation()
-
+	const { zgsmCodebaseIndexEnabled, apiConfiguration } = useExtensionState()
 	// Polling related states
 	const pollingIntervalId = useRef<NodeJS.Timeout | null>(null)
 	const isPollingActive = useRef<boolean>(false)
@@ -165,34 +161,8 @@ export const ZgsmCodebaseSettings = ({ isHidden, apiConfiguration, setCachedStat
 
 	// Handle messages from extension
 	useEffect(() => {
-		debugger
-		const handleMessage = (event: MessageEvent) => {
-			const message = event.data
-
-			if (message.type === "codebaseIndexStatusResponse" && message.payload?.status) {
-				const { embedding, codegraph } = message.payload.status
-				startPolling()
-				if (embedding) {
-					setSemanticIndex(mapIndexStatusInfoToIndexStatus(embedding, t))
-				}
-				if (codegraph) {
-					setCodeIndex(mapIndexStatusInfoToIndexStatus(codegraph, t))
-				}
-
-				// If build status is success/failed, stop polling
-				if (shouldStopPolling(embedding, codegraph)) {
-					stopPolling()
-				}
-			} else if (message.type === "zgsmCodebaseIndexEnabled") {
-			   setCachedStateField("zgsmCodebaseIndexEnabled", message.payload)
-			}
-		}
-
-		window.addEventListener("message", handleMessage)
-
 		// 1. Get build status once when page is opened
-		if (apiConfiguration?.zgsmCodebaseIndexEnabled && !isPendingEnable) {
-			// startPolling()
+		if (zgsmCodebaseIndexEnabled && !isPendingEnable) {
 			// Get status immediately
 			vscode.postMessage({
 				type: "zgsmPollCodebaseIndexStatus",
@@ -200,37 +170,38 @@ export const ZgsmCodebaseSettings = ({ isHidden, apiConfiguration, setCachedStat
 		}
 
 		return () => {
-			window.removeEventListener("message", handleMessage)
+			// window.removeEventListener("message", handleMessage)
 			// 4. Stop polling when page is closed
 			stopPolling()
 		}
-	}, [apiConfiguration?.zgsmCodebaseIndexEnabled, isPendingEnable, startPolling, stopPolling, shouldStopPolling, t])
+	}, [
+		zgsmCodebaseIndexEnabled,
+		isPendingEnable,
+		startPolling,
+		stopPolling,
+		shouldStopPolling,
+		t,
+		setCachedStateField,
+	])
 
-	const handleCodebaseIndexToggle = useCallback(
-		(e: any) => {
+	const handleCodebaseIndexToggle = useCallback((e: any) => {
+		// e.preventDefault may not exist in tests
+		if (e && e.preventDefault) {
+			e.preventDefault()
+		}
+		if (e && e.stopPropagation) {
+			e.stopPropagation()
+		}
 
-			// e.preventDefault may not exist in tests
-			if (e && e.preventDefault) {
-				e.preventDefault()
-			}
-			if (e && e.stopPropagation) {
-				e.stopPropagation()
-			}
+		// If switching from on to off state, confirmation is needed
+		if (!e.target._checked) {
+			vscode.postMessage({ type: "showZgsmCodebaseDisableConfirmDialog" })
+			return
+		}
 
-			console.log('e.target._checked && apiConfiguration?.zgsmCodebaseIndexEnabled', e.target._checked);
-			
-			// If switching from on to off state, confirmation is needed
-			if (!e.target._checked) {
-				vscode.postMessage({ type: "showZgsmCodebaseDisableConfirmDialog" })
-				return
-			}
-
-			// Send message to extension
-			vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: e.target._checked })
-		},
-		[],
-	)
-
+		// Send message to extension
+		vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: e.target._checked })
+	}, [])
 
 	const handleRebuildSemanticIndex = useCallback(() => {
 		setSemanticIndex((prev) => ({ ...prev, status: "running", progress: 0 }))
@@ -503,8 +474,35 @@ export const ZgsmCodebaseSettings = ({ isHidden, apiConfiguration, setCachedStat
 		[handleOpenFailedFile, isPendingEnable, t],
 	)
 
+	const handleMessage = useCallback(
+		(event: MessageEvent) => {
+			const message = event.data
+
+			if (message.type === "codebaseIndexStatusResponse" && message.payload?.status) {
+				const { embedding, codegraph } = message.payload.status
+				startPolling()
+				if (embedding) {
+					setSemanticIndex(mapIndexStatusInfoToIndexStatus(embedding, t))
+				}
+				if (codegraph) {
+					setCodeIndex(mapIndexStatusInfoToIndexStatus(codegraph, t))
+				}
+
+				// If build status is success/failed, stop polling
+				if (shouldStopPolling(embedding, codegraph)) {
+					stopPolling()
+				}
+			} else if (message.type === "zgsmCodebaseIndexEnabled" && setCachedStateField) {
+				setCachedStateField("zgsmCodebaseIndexEnabled", message.payload)
+			}
+		},
+		[setCachedStateField, shouldStopPolling, startPolling, stopPolling, t],
+	)
+
+	useEvent("message", handleMessage)
+
 	return (
-		<div className={isHidden ? "hidden" : ""}>
+		<div>
 			<SectionHeader>
 				<div className="flex items-center gap-2">
 					<TooltipProvider>

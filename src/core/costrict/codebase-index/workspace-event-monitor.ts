@@ -663,7 +663,7 @@ export class WorkspaceEventMonitor {
 
 		const { apiConfiguration } = await this.clineProvider.getState()
 
-		if (apiConfiguration.apiProvider !== "zgsm") {
+		if (apiConfiguration.apiProvider !== "zgsm" || !apiConfiguration.zgsmCodebaseIndexEnabled) {
 			return false
 		}
 

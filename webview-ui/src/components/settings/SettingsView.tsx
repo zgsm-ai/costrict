@@ -702,9 +702,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						/>
 					)}
 					{/* ZgsmCodebase Section */}
-					{<ZgsmCodebaseSettings apiConfiguration={apiConfiguration} isHidden={activeTab !== "contextManagement"}
-							setCachedStateField={setCachedStateField}
-					/>}
+					{activeTab === "contextManagement" && (
+						<ZgsmCodebaseSettings setCachedStateField={setCachedStateField} />
+					)}
 
 					{/* Terminal Section */}
 					{activeTab === "terminal" && (

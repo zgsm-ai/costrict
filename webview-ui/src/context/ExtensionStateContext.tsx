@@ -499,10 +499,8 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setDiffEnabled: (value) => setState((prevState) => ({ ...prevState, diffEnabled: value })),
 		setEnableCheckpoints: (value) => setState((prevState) => ({ ...prevState, enableCheckpoints: value })),
 		setUseZgsmCustomConfig: (value) => setState((prevState) => ({ ...prevState, useZgsmCustomConfig: value })),
-		setZgsmCodebaseIndexEnabled: (value) => {
-			debugger
-			return setState((prevState) => ({ ...prevState, zgsmCodebaseIndexEnabled: value }))
-		},
+		setZgsmCodebaseIndexEnabled: (value) =>
+			setState((prevState) => ({ ...prevState, zgsmCodebaseIndexEnabled: value })),
 		setBrowserViewportSize: (value: string) =>
 			setState((prevState) => ({ ...prevState, browserViewportSize: value })),
 		setFuzzyMatchThreshold: (value) => setState((prevState) => ({ ...prevState, fuzzyMatchThreshold: value })),

@@ -33,17 +33,14 @@ export const ZgsmCodebaseDisableConfirmDialog: React.FC<ZgsmCodebaseDisableConfi
 			<AlertDialogContent>
 				<AlertDialogHeader>
 					<AlertDialogTitle>{t("settings:codebase.confirmDialog.title")}</AlertDialogTitle>
-					<AlertDialogDescription>
-						{t("settings:codebase.confirmDialog.description")}
-						<ul className="list-disc list-inside mt-2 space-y-1">
-							<li>{t("settings:codebase.confirmDialog.impact1")}</li>
-							<li>{t("settings:codebase.confirmDialog.impact2")}</li>
-							<li>{t("settings:codebase.confirmDialog.impact3")}</li>
-							<li>{t("settings:codebase.confirmDialog.impact4")}</li>
-						</ul>
-						<br />
-					</AlertDialogDescription>
+					<AlertDialogDescription>{t("settings:codebase.confirmDialog.description")}</AlertDialogDescription>
 				</AlertDialogHeader>
+				<div className="text-sm">
+					<div>{t("settings:codebase.confirmDialog.impact1")}</div>
+					<div>{t("settings:codebase.confirmDialog.impact2")}</div>
+					<div>{t("settings:codebase.confirmDialog.impact3")}</div>
+					<div>{t("settings:codebase.confirmDialog.impact4")}</div>
+				</div>
 				<AlertDialogFooter>
 					<AlertDialogCancel onClick={handleCancel}>
 						{t("settings:codebase.confirmDialog.cancel")}
