@@ -319,8 +319,6 @@ export class CodebaseIndexClient {
 
 	async isRunning(processName = this.processName) {
 		const pids = await processIsRunning(processName, this.logger)
-		if (pids.length > 0) {
-		}
 		return [pids.length > 0, pids] as [boolean, number[]]
 	}
 
@@ -369,8 +367,8 @@ export class CodebaseIndexClient {
 			if (!codebaseIndexerServiceConfig) {
 				throw new Error("Failed to find codebase-indexer service in well-known.json")
 			}
-
-			if (codebaseIndexerServiceConfig.status !== "running") {
+			const [isRun] = await this.isRunning(this.serverName)
+			if (codebaseIndexerServiceConfig.status !== "running" && !isRun) {
 				throw new Error("codebase-indexer service not running!")
 			}
 

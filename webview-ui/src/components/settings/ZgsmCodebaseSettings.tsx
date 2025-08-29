@@ -15,14 +15,6 @@ import {
 	PopoverTrigger,
 	PopoverContent,
 	Badge,
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
 } from "@/components/ui"
 
 import { SectionHeader } from "./SectionHeader"
@@ -30,9 +22,14 @@ import { Section } from "./Section"
 import { ExtensionStateContextType } from "@/context/ExtensionStateContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useAppTranslation } from "@/i18n/TranslationContext"
+import { SetCachedStateField } from "./types"
 
 interface ZgsmCodebaseSettingsProps {
+	isHidden: boolean
 	apiConfiguration: ExtensionStateContextType["apiConfiguration"]
+	setCachedStateField: SetCachedStateField<
+		| "zgsmCodebaseIndexEnabled"
+	>
 }
 
 interface IndexStatus {
@@ -92,11 +89,9 @@ const mapIndexStatusInfoToIndexStatus = (statusInfo: IndexStatusInfo, t: (key: s
 	}
 }
 
-export const ZgsmCodebaseSettings = ({ apiConfiguration }: ZgsmCodebaseSettingsProps) => {
+export const ZgsmCodebaseSettings = ({ isHidden, apiConfiguration, setCachedStateField }: ZgsmCodebaseSettingsProps) => {
 	const { zgsmCodebaseIndexEnabled } = useExtensionState()
 	const { t } = useAppTranslation()
-	const [showDisableConfirmDialog, setShowDisableConfirmDialog] = useState(false)
-	const [isProcessing, setIsProcessing] = useState(false)
 
 	// Polling related states
 	const pollingIntervalId = useRef<NodeJS.Timeout | null>(null)
@@ -170,6 +165,7 @@ export const ZgsmCodebaseSettings = ({ apiConfiguration }: ZgsmCodebaseSettingsP
 
 	// Handle messages from extension
 	useEffect(() => {
+		debugger
 		const handleMessage = (event: MessageEvent) => {
 			const message = event.data
 
@@ -187,13 +183,15 @@ export const ZgsmCodebaseSettings = ({ apiConfiguration }: ZgsmCodebaseSettingsP
 				if (shouldStopPolling(embedding, codegraph)) {
 					stopPolling()
 				}
+			} else if (message.type === "zgsmCodebaseIndexEnabled") {
+			   setCachedStateField("zgsmCodebaseIndexEnabled", message.payload)
 			}
 		}
 
 		window.addEventListener("message", handleMessage)
 
 		// 1. Get build status once when page is opened
-		if (zgsmCodebaseIndexEnabled && !isPendingEnable) {
+		if (apiConfiguration?.zgsmCodebaseIndexEnabled && !isPendingEnable) {
 			// startPolling()
 			// Get status immediately
 			vscode.postMessage({
@@ -206,19 +204,10 @@ export const ZgsmCodebaseSettings = ({ apiConfiguration }: ZgsmCodebaseSettingsP
 			// 4. Stop polling when page is closed
 			stopPolling()
 		}
-	}, [zgsmCodebaseIndexEnabled, isPendingEnable, startPolling, stopPolling, shouldStopPolling, t])
-
-	// Ref to prevent duplicate calls
-	const lastToggleTime = useRef<number>(0)
+	}, [apiConfiguration?.zgsmCodebaseIndexEnabled, isPendingEnable, startPolling, stopPolling, shouldStopPolling, t])
 
 	const handleCodebaseIndexToggle = useCallback(
 		(e: any) => {
-			// Prevent duplicate calls - ignore if less than 200ms since last call
-			const now = Date.now()
-			if (now - lastToggleTime.current < 200) {
-				return
-			}
-			lastToggleTime.current = now
 
 			// e.preventDefault may not exist in tests
 			if (e && e.preventDefault) {
@@ -228,62 +217,20 @@ export const ZgsmCodebaseSettings = ({ apiConfiguration }: ZgsmCodebaseSettingsP
 				e.stopPropagation()
 			}
 
-			const checked = !zgsmCodebaseIndexEnabled
-
-			// Prevent duplicate trigger if processing
-			if (isProcessing) {
-				return
-			}
-
+			console.log('e.target._checked && apiConfiguration?.zgsmCodebaseIndexEnabled', e.target._checked);
+			
 			// If switching from on to off state, confirmation is needed
-			if (!checked) {
-				setShowDisableConfirmDialog(true)
+			if (!e.target._checked) {
+				vscode.postMessage({ type: "showZgsmCodebaseDisableConfirmDialog" })
 				return
 			}
 
 			// Send message to extension
-			vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: checked })
-
-			// 6. When turning on switch, get build status once, then get build status every 5 seconds
-			setTimeout(() => {
-				startPolling()
-			}, 100)
+			vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: e.target._checked })
 		},
-		[zgsmCodebaseIndexEnabled, isProcessing, startPolling],
+		[],
 	)
 
-	const handleConfirmDisable = useCallback(() => {
-		// Prevent duplicate clicks
-		if (isProcessing) {
-			return
-		}
-
-		// Set processing state lock to prevent duplicate processing
-		setIsProcessing(true)
-
-		try {
-			// Send message to extension
-			vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: false })
-
-			// Close dialog immediately
-			setShowDisableConfirmDialog(false)
-
-			// 5. Stop polling when turning off switch
-			stopPolling()
-
-			// Use setTimeout to ensure processing state is reset after extension state update is complete
-			setTimeout(() => {
-				setIsProcessing(false)
-			}, 150)
-		} catch (error) {
-			console.error("Failed to disable codebase index:", error)
-			setIsProcessing(false)
-		}
-	}, [isProcessing, stopPolling])
-
-	const handleCancelDisable = useCallback(() => {
-		setShowDisableConfirmDialog(false)
-	}, [])
 
 	const handleRebuildSemanticIndex = useCallback(() => {
 		setSemanticIndex((prev) => ({ ...prev, status: "running", progress: 0 }))
@@ -557,37 +504,7 @@ export const ZgsmCodebaseSettings = ({ apiConfiguration }: ZgsmCodebaseSettingsP
 	)
 
 	return (
-		<div>
-			<AlertDialog
-				open={showDisableConfirmDialog}
-				onOpenChange={(open) => {
-					setShowDisableConfirmDialog(open)
-				}}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>{t("settings:codebase.confirmDialog.title")}</AlertDialogTitle>
-						<AlertDialogDescription>
-							{t("settings:codebase.confirmDialog.description")}
-							<ul className="list-disc list-inside mt-2 space-y-1">
-								<li>{t("settings:codebase.confirmDialog.impact1")}</li>
-								<li>{t("settings:codebase.confirmDialog.impact2")}</li>
-								<li>{t("settings:codebase.confirmDialog.impact3")}</li>
-								<li>{t("settings:codebase.confirmDialog.impact4")}</li>
-							</ul>
-							<br />
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel onClick={handleCancelDisable}>
-							{t("settings:codebase.confirmDialog.cancel")}
-						</AlertDialogCancel>
-						<AlertDialogAction onClick={handleConfirmDisable}>
-							{t("settings:codebase.confirmDialog.confirm")}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
-
+		<div className={isHidden ? "hidden" : ""}>
 			<SectionHeader>
 				<div className="flex items-center gap-2">
 					<TooltipProvider>
@@ -595,8 +512,8 @@ export const ZgsmCodebaseSettings = ({ apiConfiguration }: ZgsmCodebaseSettingsP
 							<TooltipTrigger asChild>
 								<div className="flex items-center gap-2">
 									<VSCodeCheckbox
-										checked={zgsmCodebaseIndexEnabled}
-										onChange={handleCodebaseIndexToggle}
+										defaultChecked={zgsmCodebaseIndexEnabled}
+										onClick={handleCodebaseIndexToggle}
 										disabled={isPendingEnable}
 									/>
 									<div>{t("settings:codebase.general.codebaseIndexBuild")}</div>

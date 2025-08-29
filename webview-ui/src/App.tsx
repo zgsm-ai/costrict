@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 import { ExtensionMessage } from "@roo/ExtensionMessage"
 import TranslationProvider from "./i18n/TranslationContext"
-import { MarketplaceViewStateManager } from "./components/marketplace/MarketplaceViewStateManager"
+// import { MarketplaceViewStateManager } from "./components/marketplace/MarketplaceViewStateManager"
 
 import { vscode } from "./utils/vscode"
 import { telemetryClient } from "./utils/TelemetryClient"
@@ -17,7 +17,7 @@ import SettingsView, { SettingsViewRef } from "./components/settings/SettingsVie
 import WelcomeView from "./components/welcome/WelcomeView"
 import McpView from "./components/mcp/McpView"
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { MarketplaceView } from "./components/marketplace/MarketplaceView"
+// import { MarketplaceView } from "./components/marketplace/MarketplaceView"
 import ModesView from "./components/modes/ModesView"
 import CodeReviewPage from "./components/code-review"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
@@ -31,6 +31,7 @@ import { ZgsmAccountView } from "./components/account/ZgsmAccountView"
 import { TabContent, TabList, TabTrigger } from "./components/common/Tab"
 import { cn } from "./lib/utils"
 import { ReauthConfirmationDialog } from "./components/chat/ReauthConfirmationDialog"
+import { ZgsmCodebaseDisableConfirmDialog } from "./components/settings/ZgsmCodebaseDisableConfirmDialog"
 
 type Tab = "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "account" | "zgsm-account" | "codeReview"
 
@@ -57,11 +58,16 @@ interface EditMessageDialogState {
 	images?: string[]
 }
 
+interface ZgsmCodebaseDisableConfirmDialogState {
+	isOpen: boolean
+}
+
 // Memoize dialog components to prevent unnecessary re-renders
 const MemoizedDeleteMessageDialog = React.memo(DeleteMessageDialog)
 const MemoizedEditMessageDialog = React.memo(EditMessageDialog)
 const MemoizedReauthConfirmationDialog = React.memo(ReauthConfirmationDialog)
 const MemoizedHumanRelayDialog = React.memo(HumanRelayDialog)
+const MemoizedZgsmCodebaseDisableConfirmDialog = React.memo(ZgsmCodebaseDisableConfirmDialog)
 
 const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]>, Tab>> = {
 	chatButtonClicked: "chat",
@@ -93,7 +99,7 @@ const App = () => {
 
 	// Create a persistent state manager
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const marketplaceStateManager = useMemo(() => new MarketplaceViewStateManager(), [])
+	// const marketplaceStateManager = useMemo(() => new MarketplaceViewStateManager(), [])
 
 	const [showAnnouncement, setShowAnnouncement] = useState(false)
 	const [tab, setTab] = useState<Tab>("chat")
@@ -120,6 +126,10 @@ const App = () => {
 		messageTs: 0,
 		text: "",
 		images: [],
+	})
+
+	const [zgsmCodebaseDisableConfirmDialogState, setZgsmCodebaseDisableConfirmDialogState] = useState<ZgsmCodebaseDisableConfirmDialogState>({
+		isOpen: false,
 	})
 
 	const settingsRef = useRef<SettingsViewRef>(null)
@@ -202,6 +212,10 @@ const App = () => {
 					text: message.text,
 					images: message.images || [],
 				})
+			}
+
+			if (message.type === "showZgsmCodebaseDisableConfirmDialog") {
+				setZgsmCodebaseDisableConfirmDialogState({ isOpen: true })
 			}
 
 			if (message.type === "acceptInput") {
@@ -411,6 +425,14 @@ const App = () => {
 				onConfirm={() => {
 					vscode.postMessage({ type: "zgsmLogin", apiConfiguration })
 					setReauthConfirmationDialogState((prev) => ({ ...prev, isOpen: false }))
+				}}
+			/>
+			<MemoizedZgsmCodebaseDisableConfirmDialog
+				open={zgsmCodebaseDisableConfirmDialogState.isOpen}
+				onOpenChange={(open) => setZgsmCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: open }))}
+				onConfirm={() => {
+					vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: false })
+					setZgsmCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>
 		</>

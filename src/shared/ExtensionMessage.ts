@@ -78,6 +78,7 @@ export interface ExtensionMessage {
 		| "zgsmModels"
 		| "zgsmLogined"
 		| "showReauthConfirmationDialog"
+		| "zgsmCodebaseIndexEnabled"
 		// zgsm
 		| "ollamaModels"
 		| "lmStudioModels"
@@ -125,6 +126,7 @@ export interface ExtensionMessage {
 		| "codebaseIndexStatusResponse"
 		| "showDeleteMessageDialog"
 		| "showEditMessageDialog"
+		| "showZgsmCodebaseDisableConfirmDialog"
 		| "reviewTaskUpdate"
 		| "issueStatusUpdated"
 		| "commands"

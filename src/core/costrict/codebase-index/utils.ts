@@ -104,7 +104,7 @@ export function processIsRunning(processName: string, logger: ILogger): Promise<
 
 		if (platform === "linux" || platform === "darwin") {
 			cmd = "pgrep"
-			args = ["-x", processName]
+			args = ["-f", `/${processName}\b`]
 		} else if (platform === "win32") {
 			cmd = "tasklist"
 			args = ["/FI", `IMAGENAME eq ${processName}`, "/FO", "CSV", "/NH"]
