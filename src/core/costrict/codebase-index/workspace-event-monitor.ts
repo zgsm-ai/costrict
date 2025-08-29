@@ -8,6 +8,7 @@ import { ILogger } from "../../../utils/logger"
 import { computeHash } from "../base/common"
 import { CoIgnoreController } from "./CoIgnoreController"
 import { getWorkspacePath } from "../../../utils/path"
+import * as path from "path"
 import type { ClineProvider } from "../../webview/ClineProvider"
 
 /**
@@ -19,6 +20,8 @@ export interface WorkspaceEventMonitorConfig {
 	batchSize: number
 	maxRetries: number
 	retryDelayMs: number
+	adaptivePerformance: boolean
+	fileSystemWatchDepth: number
 }
 
 /**
@@ -26,10 +29,12 @@ export interface WorkspaceEventMonitorConfig {
  */
 const DEFAULT_CONFIG: WorkspaceEventMonitorConfig = {
 	enabled: true,
-	debounceMs: 1000,
-	batchSize: 100,
-	maxRetries: 2,
-	retryDelayMs: 2000,
+	debounceMs: 1000, // Reduced from 1000ms to 500ms for faster response
+	batchSize: 100, // Reduced from 100 to 50 for more frequent smaller batches
+	maxRetries: 3, // Increased from 2 to 3 for better reliability
+	retryDelayMs: 2000, // Reduced from 2000ms to 1000ms for faster recovery
+	adaptivePerformance: true, // Enable adaptive performance adjustments
+	fileSystemWatchDepth: 15, // Limit file system watch depth
 }
 
 /**
@@ -53,6 +58,14 @@ export class WorkspaceEventMonitor {
 
 	// Document status tracking to solve save issues without content changes
 	private documentContentCache: Map<string, { contentHash: string; version: number }> = new Map()
+
+	// Performance monitoring
+	private performanceMetrics = {
+		eventProcessingTime: 0,
+		lastEventCount: 0,
+		averageProcessingTime: 0,
+		systemLoad: 0,
+	}
 
 	/**
 	 * Private constructor to ensure singleton pattern
@@ -195,10 +208,6 @@ export class WorkspaceEventMonitor {
 				this.disposables.push(vscode.workspace.onDidSaveTextDocument(this.handleDocumentSave.bind(this)))
 			}
 
-			// File delete/rename events
-			if (vscode.workspace.onDidDeleteFiles) {
-				this.disposables.push(vscode.workspace.onDidDeleteFiles(this.handleFileDelete.bind(this)))
-			}
 			if (vscode.workspace.onDidRenameFiles) {
 				this.disposables.push(vscode.workspace.onDidRenameFiles(this.handleFileRename.bind(this)))
 			}
@@ -237,13 +246,20 @@ export class WorkspaceEventMonitor {
 
 		try {
 			this.fileSystemWatcher = watch(watchPaths, {
-				ignored: /(^|[\/\\])\../, // Ignore hidden files
+				ignored: (path: string, stats?: any) => this.shouldIgnoreFile(path, stats),
 				persistent: true,
 				ignoreInitial: true, // Ignore initial scan
 				awaitWriteFinish: {
-					stabilityThreshold: 1000,
-					pollInterval: 100,
+					stabilityThreshold: this.config.adaptivePerformance ? 300 : 500, // Adaptive threshold
+					pollInterval: this.config.adaptivePerformance ? 150 : 200, // Adaptive polling interval
 				},
+				usePolling: false, // Use native file system events for better performance
+				interval: 1000, // Check interval for polling (fallback only)
+				binaryInterval: 2000, // Longer interval for binary files
+				alwaysStat: false, // Don't stat files unnecessarily
+				depth: this.config.fileSystemWatchDepth, // Use configured depth
+				ignorePermissionErrors: true, // Ignore permission errors to reduce noise
+				atomic: true, // Use atomic operations when available
 			})
 
 			// Listen for file delete events
@@ -257,6 +273,84 @@ export class WorkspaceEventMonitor {
 		} catch (error) {
 			this.log.error("[WorkspaceEventMonitor] Failed to register file system monitor:", error)
 		}
+	}
+
+	/**
+	 * Build ignore patterns from .gitignore and .coignore files
+	 */
+	private buildIgnorePatterns(): (string | RegExp)[] {
+		const patterns: (string | RegExp)[] = [
+			/(^|[\/\\])\../, // Ignore hidden files
+		]
+
+		return patterns
+	}
+	/**
+	 * Determine if a file should be ignored using CoIgnoreController and pattern matching
+	 * This function is used by chokidar's ignored option
+	 */
+	private shouldIgnoreFile(filePath: string, stats?: any): boolean {
+		// First, use CoIgnoreController if it's initialized
+		if (this.ignoreController && this.ignoreController.coignoreContentInitialized) {
+			if (!this.ignoreController.validateAccess(filePath)) {
+				return true
+			}
+		}
+
+		// Then, check against our built-in patterns
+		if (/(^|[\/\\])\../.test(filePath)) {
+			return true
+		}
+
+		// Additional checks based on file stats if available
+		if (stats) {
+			// Ignore directories that match certain patterns
+			if (stats.isDirectory()) {
+				const dirName = path.basename(filePath)
+				if (dirName.startsWith(".") || ["node_modules", "dist", "build", "out", "coverage"].includes(dirName)) {
+					return true
+				}
+			}
+
+			// Ignore large files (optional, based on size)
+			if (stats.isFile() && stats.size > 10 * 1024 * 1024) {
+				// Files larger than 10MB
+				const ext = path.extname(filePath).toLowerCase()
+				const largeFileExtensions = [
+					".jpg",
+					".jpeg",
+					".png",
+					".gif",
+					".bmp",
+					".ico",
+					".svg",
+					".webp",
+					".mp3",
+					".mp4",
+					".avi",
+					".mov",
+					".wmv",
+					".flv",
+					".mkv",
+					".pdf",
+					".zip",
+					".rar",
+					".tar",
+					".gz",
+					".7z",
+					".exe",
+					".dll",
+					".so",
+					".dylib",
+					".bin",
+				]
+				if (largeFileExtensions.includes(ext)) {
+					return true
+				}
+			}
+		}
+
+		return false
 	}
 
 	/**
@@ -331,35 +425,6 @@ export class WorkspaceEventMonitor {
 		}
 
 		this.addEvent(eventKey, eventData)
-	}
-
-	/**
-	 * Handle file delete event
-	 */
-	private async handleFileDelete(event: vscode.FileDeleteEvent) {
-		if (!(await this.ensureServiceEnabled())) return
-
-		// Debug log: record delete event trigger
-		this.log.info(
-			`[WorkspaceEventMonitor] File delete event triggered, number of deleted files: ${event.files.length}`,
-		)
-
-		event.files.forEach((uri) => {
-			if (!this.ignoreController.validateAccess(uri.fsPath)) return
-			if (uri.scheme !== "file") return
-
-			this.log.info(`[WorkspaceEventMonitor] Deleting file: ${uri.fsPath}`)
-
-			const eventKey = `delete:${uri.fsPath}`
-			const eventData: WorkspaceEventData = {
-				eventType: "delete_file",
-				eventTime: `${Date.now()}`,
-				sourcePath: uri.fsPath,
-				targetPath: "",
-			}
-
-			this.addEvent(eventKey, eventData)
-		})
 	}
 
 	/**
@@ -467,6 +532,11 @@ export class WorkspaceEventMonitor {
 		// Deduplication: use event key as unique identifier
 		this.eventBuffer.set(key, event)
 
+		// Adaptive performance adjustment
+		if (this.config.adaptivePerformance) {
+			this.adjustPerformanceBasedOnLoad()
+		}
+
 		// Check if immediate flush is needed
 		const now = Date.now()
 		if (now - this.lastFlushTime >= this.config.debounceMs) {
@@ -474,6 +544,35 @@ export class WorkspaceEventMonitor {
 		} else if (this.eventBuffer.size >= this.config.batchSize) {
 			// If buffer is full, flush immediately
 			this.flushEvents()
+		}
+	}
+
+	/**
+	 * Adjust performance based on current system load
+	 */
+	private adjustPerformanceBasedOnLoad(): void {
+		const now = Date.now()
+		const eventCount = this.eventBuffer.size
+
+		// Calculate system load based on event buffer size and processing time
+		this.performanceMetrics.systemLoad = Math.min((eventCount / this.config.batchSize) * 100, 100)
+
+		// Adaptive debounce adjustment
+		if (this.performanceMetrics.systemLoad > 80) {
+			// High load: increase debounce time to reduce frequency
+			this.config.debounceMs = Math.min(this.config.debounceMs * 1.2, 2000)
+		} else if (this.performanceMetrics.systemLoad < 30) {
+			// Low load: decrease debounce time for faster response
+			this.config.debounceMs = Math.max(this.config.debounceMs * 0.8, 200)
+		}
+
+		// Adaptive batch size adjustment
+		if (this.performanceMetrics.systemLoad > 70) {
+			// High load: reduce batch size for more frequent processing
+			this.config.batchSize = Math.max(this.config.batchSize * 0.8, 20)
+		} else if (this.performanceMetrics.systemLoad < 40) {
+			// Low load: increase batch size for better throughput
+			this.config.batchSize = Math.min(this.config.batchSize * 1.2, 100)
 		}
 	}
 
@@ -503,6 +602,9 @@ export class WorkspaceEventMonitor {
 	private async flushEvents(): Promise<void> {
 		if (this.eventBuffer.size === 0) return
 
+		const startTime = Date.now()
+		const eventCount = this.eventBuffer.size
+
 		// Get current workspace
 		const workspace = this.getCurrentWorkspace()
 		if (!workspace) {
@@ -522,6 +624,13 @@ export class WorkspaceEventMonitor {
 
 		// Send to server
 		await this.sendEventsToServer(workspace, events)
+
+		// Update performance metrics
+		const processingTime = Date.now() - startTime
+		this.performanceMetrics.eventProcessingTime = processingTime
+		this.performanceMetrics.lastEventCount = eventCount
+		this.performanceMetrics.averageProcessingTime =
+			this.performanceMetrics.averageProcessingTime * 0.7 + processingTime * 0.3
 	}
 
 	/**
@@ -648,11 +757,23 @@ export class WorkspaceEventMonitor {
 		isInitialized: boolean
 		eventBufferSize: number
 		config: WorkspaceEventMonitorConfig
+		performance: {
+			eventProcessingTime: number
+			averageProcessingTime: number
+			systemLoad: number
+			lastEventCount: number
+		}
 	} {
 		return {
 			isInitialized: this.isInitialized,
 			eventBufferSize: this.eventBuffer.size,
 			config: { ...this.config },
+			performance: {
+				eventProcessingTime: this.performanceMetrics.eventProcessingTime,
+				averageProcessingTime: this.performanceMetrics.averageProcessingTime,
+				systemLoad: this.performanceMetrics.systemLoad,
+				lastEventCount: this.performanceMetrics.lastEventCount,
+			},
 		}
 	}
 

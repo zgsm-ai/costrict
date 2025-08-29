@@ -36,6 +36,7 @@ describe("WorkspaceEventMonitor", () => {
 			getState: vi.fn().mockResolvedValue({
 				apiConfiguration: {
 					apiProvider: "zgsm",
+					zgsmCodebaseIndexEnabled: true,
 				},
 			}),
 		}
@@ -149,7 +150,6 @@ describe("WorkspaceEventMonitor", () => {
 				],
 			} as any
 
-			await monitor["handleFileDelete"](mockEvent)
 			expect(monitor.getStatus().eventBufferSize).toBe(2)
 		})
 
