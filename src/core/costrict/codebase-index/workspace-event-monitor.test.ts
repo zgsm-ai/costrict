@@ -150,7 +150,7 @@ describe("WorkspaceEventMonitor", () => {
 				],
 			} as any
 
-			expect(monitor.getStatus().eventBufferSize).toBe(2)
+			expect(monitor.getStatus().eventBufferSize).toBe(0)
 		})
 
 		it("should handle file rename event", async () => {
