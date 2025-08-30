@@ -1959,15 +1959,16 @@ export class ClineProvider
 			includeTaskHistoryInEnhance: stateValues.includeTaskHistoryInEnhance ?? true,
 			// Add remoteControlEnabled setting - get from cloud settings
 			remoteControlEnabled: (() => {
-				try {
-					const cloudSettings = CloudService.instance.getUserSettings()
-					return cloudSettings?.settings?.extensionBridgeEnabled ?? false
-				} catch (error) {
-					console.error(
-						`[getState] failed to get remote control setting from cloud: ${error instanceof Error ? error.message : String(error)}`,
-					)
-					return false
-				}
+				return false
+				// try {
+				// 	const cloudSettings = CloudService.instance.getUserSettings()
+				// 	return cloudSettings?.settings?.extensionBridgeEnabled ?? false
+				// } catch (error) {
+				// 	console.error(
+				// 		`[getState] failed to get remote control setting from cloud: ${error instanceof Error ? error.message : String(error)}`,
+				// 	)
+				// 	return false
+				// }
 			})(),
 			// Add image generation settings
 			openRouterImageApiKey: stateValues.openRouterImageApiKey,

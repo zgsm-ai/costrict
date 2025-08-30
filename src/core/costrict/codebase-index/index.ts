@@ -519,20 +519,18 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 		status: string | boolean
 		[key: string]: any
 	}> {
+		const url = `http://localhost:${this.client!.getCostrictServerPort(9527)}/healthz`
 		try {
 			await this.ensureClientInited()
 			// this.log("Performing health check", "info", "CostrictHealthCheck")
 
 			// Read access token
 			const token = await this.readAccessToken()
-			return await this.client!.healthCheck(
-				`http://localhost:${this.client!.getCostrictServerPort(9527)}/healthz`,
-				token,
-			)
+			return await this.client!.healthCheck(url, token)
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : "Unknown error occurred during health check"
-			this.log(errorMessage, "error", "CostrictHealthCheck")
-			throw new Error(errorMessage)
+			// this.log(errorMessage, "error", "CostrictHealthCheck")
+			throw new Error(`[${url}] ` + errorMessage)
 		}
 	}
 
@@ -719,10 +717,9 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 	 */
 	private async performHealthCheck(): Promise<void> {
 		try {
-			const data = await this.healthCheck()
-
 			const [active, pids] = await this.client!.isRunning()
-			if (active && (data.status === "success" || data.status === true)) {
+			const data = await this.healthCheck()
+			if (active && ["success", "UP", true].includes(data.status)) {
 				this.healthCheckFailureCount = 0 // Reset failure counter
 				// this.log(
 				// 	`[pids: ${pids.join("|")} ] ${this.client?.processName} running`,
@@ -730,8 +727,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 				// 	"CostrictHealthCheck",
 				// )
 			} else {
-				this.log(`Health check abnormal`, "error", "CostrictHealthCheck")
-
+				this.log(`Health check abnormal${active ? ` pids: ${pids}` : ""}`, "error", "CostrictHealthCheck")
 				await this.handleHealthCheckFailure()
 			}
 		} catch (error) {

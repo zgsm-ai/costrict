@@ -509,7 +509,7 @@ export class CodebaseIndexClient {
 	 * @returns Promise<ApiResponse<number>> Returns response data
 	 */
 	async healthCheck(
-		path: string,
+		url: string,
 		token?: string,
 	): Promise<{
 		message: string
@@ -522,7 +522,7 @@ export class CodebaseIndexClient {
 			method: "GET",
 		}
 
-		return this.makeRequest(path, options, token) as unknown as {
+		return this.makeRequest(url, options, token) as unknown as {
 			message: string
 			status: string
 			[key: string]: any

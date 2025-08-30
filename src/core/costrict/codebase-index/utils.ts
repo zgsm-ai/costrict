@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode"
 import { ZgsmAuthApi, ZgsmAuthConfig } from "../auth"
 import { getClientId } from "../../../utils/getClientId"
 import { ILogger } from "../../../utils/logger"
+import find, { ProcessInfo, FindConfig } from "find-process"
 
 export function execPromise(command: string, opt: any = {}): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -95,94 +96,10 @@ export const getServiceConfig = (serverName: string) => {
 	return service
 }
 
-export function processIsRunning(processName: string, logger: ILogger): Promise<number[]> {
-	return new Promise((resolve, reject) => {
-		const platform = os.platform()
+export async function processIsRunning(processName: string, logger: ILogger): Promise<number[]> {
+	const plist = await find("name", processName, { strict: true })
 
-		let cmd: string
-		let args: string[]
-
-		if (platform === "linux" || platform === "darwin") {
-			cmd = "pgrep"
-			args = ["-f", `/${processName}\b`]
-		} else if (platform === "win32") {
-			cmd = "tasklist"
-			args = ["/FI", `IMAGENAME eq ${processName}`, "/FO", "CSV", "/NH"]
-		} else {
-			return reject(new Error(`Unsupported platform: ${platform}`))
-		}
-
-		const ps = spawn(cmd, args)
-
-		const chunks: Buffer[] = []
-		ps.stdout.on("data", (data) => chunks.push(data))
-		ps.stderr.on("data", (data) => {
-			const errorMsg = data.toString().trim()
-			if (errorMsg) {
-				logger.error(`stderr[${cmd}]:` + errorMsg)
-			}
-		})
-
-		ps.on("close", (code) => {
-			try {
-				const output = Buffer.concat(chunks)
-				const stdout = output.toString("utf8").trim()
-
-				if (platform === "win32") {
-					// Windows platform handling
-					if (!stdout || stdout.includes("No tasks are running") || stdout.includes("Info:")) {
-						return resolve([])
-					}
-
-					const lines = stdout.split("\n")
-					const pids: number[] = []
-
-					for (const line of lines) {
-						if (!line.trim()) continue
-
-						try {
-							// More robust CSV parsing
-							const parts = line.split('","').map((p) => p.replace(/^"|"$/g, ""))
-							if (parts.length >= 2) {
-								const pid = parseInt(parts[1], 10)
-								if (!isNaN(pid) && pid > 0) {
-									pids.push(pid)
-								}
-							}
-						} catch (parseError) {
-							logger.warn(`Failed to parse line: "${line}"` + parseError)
-							continue
-						}
-					}
-
-					return resolve(pids)
-				} else {
-					// Linux/macOS platform handling
-					if (code === 0) {
-						const pids = stdout
-							.split("\n")
-							.map((line) => line.trim())
-							.filter((line) => line.length > 0)
-							.map(Number)
-							.filter((pid) => !isNaN(pid) && pid > 0)
-
-						return resolve(pids)
-					} else {
-						// pgrep returning non-zero code usually means process not found
-						return resolve([])
-					}
-				}
-			} catch (error) {
-				logger.error("Error processing process list: " + error.message)
-				return resolve([]) // Return empty array on error instead of throwing exception
-			}
-		})
-
-		ps.on("error", (err) => {
-			logger.error(`Command execution failed [${cmd} ${args.join(" ")}]: ` + err.message)
-			reject(err)
-		})
-	})
+	return plist.map((item) => item.pid)
 }
 
 export function spawnDetached(

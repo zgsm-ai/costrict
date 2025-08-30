@@ -2864,9 +2864,10 @@ export const webviewMessageHandler = async (
 						"info",
 						"ZgsmCodebaseIndexManager",
 					)
+					zgsmCodebaseIndexManager.restartClient()
 					await provider.postMessageToWebview({
 						type: "zgsmCodebaseIndexEnabled",
-						payload: isEnabled
+						payload: isEnabled,
 					})
 				} else {
 					await updateGlobalState("zgsmCodebaseIndexEnabled", oldEnabled)
