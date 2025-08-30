@@ -17,7 +17,7 @@ or
 
 <!-- git merge upstream/main --no-edit -->
 
-`git merge upstream/main --no-edit`
+`git merge upstream/main --no-ff --no-edit`
 
 <!-- 检测测试用例错误 -->
 

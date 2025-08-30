@@ -10,6 +10,7 @@ import {
 	azureOpenAiDefaultApiVersion,
 	zgsmModels,
 	zgsmDefaultModelId,
+	OrganizationAllowList,
 } from "@roo-code/types"
 
 import { ExtensionMessage } from "@roo/ExtensionMessage"
@@ -23,7 +24,6 @@ import { ModelPicker } from "../ModelPicker"
 import { R1FormatSetting } from "../R1FormatSetting"
 import { ThinkingBudget } from "../ThinkingBudget"
 import { SetCachedStateField } from "../types"
-import type { OrganizationAllowList } from "@roo/cloud"
 import { isValidUrl } from "@/utils/validate"
 
 type OpenAICompatibleProps = {

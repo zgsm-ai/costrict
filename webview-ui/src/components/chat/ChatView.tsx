@@ -6,6 +6,7 @@ import removeMd from "remove-markdown"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import useSound from "use-sound"
 import { LRUCache } from "lru-cache"
+import { useTranslation } from "react-i18next"
 
 import { useDebounceEffect } from "@src/utils/useDebounceEffect"
 import { appendImages } from "@src/utils/imageUtils"
@@ -30,7 +31,6 @@ import {
 	findLongestPrefixMatch,
 	parseCommand,
 } from "@src/utils/command-validation"
-import { useTranslation } from "react-i18next"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { useSelectedModel } from "@src/components/ui/hooks/useSelectedModel"
@@ -49,7 +49,7 @@ import HistoryPreview from "../history/HistoryPreview"
 // import Announcement from "./Announcement"
 import BrowserSessionRow from "./BrowserSessionRow"
 import ChatRow from "./ChatRow"
-import ChatTextArea from "./ChatTextArea"
+import { ChatTextArea } from "./ChatTextArea"
 import TaskHeader from "./TaskHeader"
 import AutoApproveMenu from "./AutoApproveMenu"
 import SystemPromptWarning from "./SystemPromptWarning"
@@ -69,7 +69,7 @@ export interface ChatViewRef {
 	acceptInput: () => void
 }
 
-export const MAX_IMAGES_PER_MESSAGE = 20 // Anthropic limits to 20 images
+export const MAX_IMAGES_PER_MESSAGE = 20 // This is the Anthropic limit.
 
 const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0
 
@@ -79,13 +79,16 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	ref,
 ) => {
 	const isMountedRef = useRef(true)
+
 	const [audioBaseUri] = useState(() => {
 		const w = window as any
 		return w.AUDIO_BASE_URI || ""
 	})
+
 	const { t } = useAppTranslation()
 	const { t: tSettings } = useTranslation("settings")
 	const modeShortcutText = `${isMac ? "⌘" : "Ctrl"} + . ${t("chat:forNextMode")}, ${isMac ? "⌘" : "Ctrl"} + Shift + . ${t("chat:forPreviousMode")}`
+
 	const {
 		clineMessages: messages,
 		showAutoApproveSettingsAtChat,
@@ -125,6 +128,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	} = useExtensionState()
 
 	const messagesRef = useRef(messages)
+
 	useEffect(() => {
 		messagesRef.current = messages
 	}, [messages])
@@ -244,9 +248,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		soundEnabled,
 	}
 
-	const getAudioUrl = (path: string) => {
-		return `${audioBaseUri}/${path}`
-	}
+	const getAudioUrl = (path: string) => `${audioBaseUri}/${path}`
 
 	// Use the getAudioUrl helper function
 	const [playNotification] = useSound(getAudioUrl("notification.wav"), soundConfig)
@@ -329,6 +331,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 								case "appliedDiff":
 								case "newFileCreated":
 								case "insertContent":
+								case "generateImage":
 									setPrimaryButtonText(t("chat:save.title"))
 									setSecondaryButtonText(t("chat:reject.title"))
 									break
@@ -1074,6 +1077,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				"newFileCreated",
 				"searchAndReplace",
 				"insertContent",
+				"generateImage",
 			].includes(tool.tool)
 		}
 
@@ -1485,17 +1489,13 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const placeholderText = task ? t("chat:typeMessage") : t("chat:typeTask")
 
-	// Function to switch to a specific mode
 	const switchToMode = useCallback(
 		(modeSlug: string): void => {
-			// Update local state and notify extension to sync mode change
+			// Update local state and notify extension to sync mode change.
 			setMode(modeSlug)
 
-			// Send the mode switch message
-			vscode.postMessage({
-				type: "mode",
-				text: modeSlug,
-			})
+			// Send the mode switch message.
+			vscode.postMessage({ type: "mode", text: modeSlug })
 		},
 		[setMode],
 	)
@@ -1789,9 +1789,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		[switchToNextMode, switchToPreviousMode],
 	)
 
-	// Add event listener
 	useEffect(() => {
 		window.addEventListener("keydown", handleKeyDown)
+
 		return () => {
 			window.removeEventListener("keydown", handleKeyDown)
 		}

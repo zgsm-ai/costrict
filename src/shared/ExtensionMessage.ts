@@ -10,8 +10,10 @@ import type {
 	ModelInfo,
 	MarketplaceItem,
 	TodoItem,
+	CloudUserInfo,
+	OrganizationAllowList,
+	ShareVisibility,
 } from "@roo-code/types"
-import type { CloudUserInfo, OrganizationAllowList, ShareVisibility } from "@roo-code/cloud"
 
 import { GitCommit } from "../utils/git"
 
@@ -297,6 +299,7 @@ export type ExtensionState = Pick<
 	| "includeDiagnosticMessages"
 	| "maxDiagnosticMessages"
 	| "remoteControlEnabled"
+	| "openRouterImageGenerationSelectedModel"
 > & {
 	version: string
 	clineMessages: ClineMessage[]
@@ -350,6 +353,7 @@ export type ExtensionState = Pick<
 	marketplaceInstalledMetadata?: { project: Record<string, any>; global: Record<string, any> }
 	profileThresholds: Record<string, number>
 	hasOpenedModeSelector: boolean
+	openRouterImageApiKey?: string
 }
 
 export interface ClineSayTool {
@@ -369,6 +373,8 @@ export interface ClineSayTool {
 		| "finishTask"
 		| "searchAndReplace"
 		| "insertContent"
+		| "generateImage"
+		| "imageGenerated"
 	path?: string
 	diff?: string
 	content?: string
@@ -405,6 +411,7 @@ export interface ClineSayTool {
 		}>
 	}>
 	question?: string
+	imageData?: string // Base64 encoded image data for generated images
 }
 
 // Must keep in sync with system prompt.

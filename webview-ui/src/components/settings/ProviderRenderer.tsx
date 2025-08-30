@@ -12,6 +12,7 @@ import {
 	unboundDefaultModelId,
 	litellmDefaultModelId,
 	openAiModelInfoSaneDefaults,
+	OrganizationAllowList,
 } from "@roo-code/types"
 import { ExtensionMessage } from "@roo/ExtensionMessage"
 import { useDebounce, useEvent } from "react-use"
@@ -22,7 +23,6 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { useSelectedModel } from "../ui/hooks/useSelectedModel"
 import { ChevronUp } from "lucide-react"
-import type { OrganizationAllowList } from "@roo/cloud"
 export interface ProviderRendererProps {
 	selectedProvider: string
 	apiConfiguration: ProviderSettings
@@ -227,6 +227,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	const { id: selectedModelId } = useSelectedModel(apiConfiguration)
 
 	return config?.modelIdKey ? (
+		// <div></div>
 		<ModelPicker
 			apiConfiguration={apiConfiguration}
 			setApiConfigurationField={setApiConfigurationField}
@@ -242,8 +243,8 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			organizationAllowList={organizationAllowList}
 			showInfoView={false}
 			showLabel={false}
-			triggerClassName="rounded-md w-30 h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
-			popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden"
+			triggerClassName="rounded-md max-w-80 px-[6px] text-xs h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
+			popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden text-xs"
 			PopoverTriggerContentClassName="w-[80%] overflow-hidden truncate whitespace-nowrap"
 			buttonIconType="up"
 			tooltip={t("chat:selectModel")}

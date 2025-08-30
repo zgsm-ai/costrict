@@ -1,16 +1,16 @@
 import React, { forwardRef, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useEvent } from "react-use"
 import DynamicTextArea from "react-textarea-autosize"
+import { VolumeX, Image, WandSparkles, SendHorizontal } from "lucide-react"
 
 import { mentionRegex, mentionRegexGlobal, commandRegexGlobal, unescapeSpaces } from "@roo/context-mentions"
 import { WebviewMessage } from "@roo/WebviewMessage"
 import { Mode, getAllModes } from "@roo/modes"
 import { ExtensionMessage } from "@roo/ExtensionMessage"
-import { type ProviderSettings } from "@roo-code/types"
 
-import { vscode } from "@/utils/vscode"
-import { useExtensionState } from "@/context/ExtensionStateContext"
-import { useAppTranslation } from "@/i18n/TranslationContext"
+import { vscode } from "@src/utils/vscode"
+import { useExtensionState } from "@src/context/ExtensionStateContext"
+import { useAppTranslation } from "@src/i18n/TranslationContext"
 import {
 	ContextMenuOptionType,
 	getContextMenuOptions,
@@ -19,27 +19,25 @@ import {
 	shouldShowContextMenu,
 	SearchResult,
 } from "@src/utils/context-mentions"
-import { convertToMentionPath } from "@/utils/path-mentions"
-import { StandardTooltip } from "@/components/ui"
+import { cn } from "@src/lib/utils"
+import { convertToMentionPath } from "@src/utils/path-mentions"
+import { StandardTooltip } from "@src/components/ui"
 
 import Thumbnails from "../common/Thumbnails"
-import ModeSelector from "./ModeSelector"
+import { ModeSelector } from "./ModeSelector"
 // import { ApiConfigSelector } from "./ApiConfigSelector"
-import ProviderRenderer from "../settings/ProviderRenderer"
 import { MAX_IMAGES_PER_MESSAGE } from "./ChatView"
 import ContextMenu from "./ContextMenu"
-import { VolumeX, Image, WandSparkles, SendHorizontal } from "lucide-react"
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { IndexingStatusBadge } from "./IndexingStatusBadge"
+// import { IndexingStatusBadge } from "./IndexingStatusBadge"
 import { SlashCommandsPopover } from "./SlashCommandsPopover"
-import { cn } from "@/lib/utils"
 import { usePromptHistory } from "./hooks/usePromptHistory"
-import { EditModeControls } from "./EditModeControls"
-import { useRouterModels } from "@/components/ui/hooks/useRouterModels"
-import { RouterModels } from "@roo/api"
+import { useHoverEvent } from "./hooks/useHoverEvent"
 import { MODELS_BY_PROVIDER } from "../settings/constants"
 import { filterModels } from "../settings/utils/organizationFilters"
-import { useHoverEvent } from "./hooks/useHoverEvent"
+import { useRouterModels } from "../ui/hooks/useRouterModels"
+import { ProviderSettings } from "@roo-code/types"
+import ProviderRenderer from "../settings/ProviderRenderer"
+import { RouterModels } from "@roo/api"
 
 interface ChatTextAreaProps {
 	inputValue: string
@@ -57,16 +55,13 @@ interface ChatTextAreaProps {
 	setMode: (value: Mode) => void
 	modeShortcutText: string
 	hoverPreviewMap?: Map<string, string>
-	// Edit mode props
-	isEditMode?: boolean
-	onCancel?: () => void
 }
-const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
+
+export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 	(
 		{
 			inputValue,
 			setInputValue,
-			sendingDisabled,
 			// selectApiConfigDisabled,
 			placeholderText,
 			selectedImages,
@@ -78,8 +73,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			mode,
 			setMode,
 			modeShortcutText,
-			isEditMode = false,
-			onCancel,
 			hoverPreviewMap,
 		},
 		ref,
@@ -136,12 +129,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			[apiConfiguration, currentApiConfigName],
 		)
 
-		// Find the ID and display text for the currently selected API configuration
+		// Find the ID and display text for the currently selected API configuration.
 		// const { currentConfigId, displayName } = useMemo(() => {
 		// 	const currentConfig = listApiConfigMeta?.find((config) => config.name === currentApiConfigName)
 		// 	return {
 		// 		currentConfigId: currentConfig?.id || "",
-		// 		displayName: currentApiConfigName || "", // Use the name directly for display
+		// 		displayName: currentApiConfigName || "", // Use the name directly for display.
 		// 	}
 		// }, [listApiConfigMeta, currentApiConfigName])
 
@@ -774,11 +767,14 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					.replace(mentionRegexGlobal, '<mark class="mention-context-textarea-highlight">$&</mark>')
 
 				// Highlight file path with line numbers format: filePath:startLine-endLine
-				processedText = processedText.replace(/\b[\w/\\.-]+:\d+-\d+\b/g, (match) => {
-					return `<mark class="mention-context-textarea-highlight file-path-highlight" style="pointer-events: auto;">${match}</mark>`
-				})
+				processedText = processedText.replace(
+					/\b[\w/\\.-]+:\d+-\d+\b/g,
+					(match) =>
+						`<mark class="mention-context-textarea-highlight file-path-highlight" style="pointer-events: auto;">${match}</mark>`,
+				)
 
 				highlightLayerRef.current.innerHTML = processedText
+				console.log("processedText")
 
 				// Custom replacement for commands - only highlight valid ones
 				processedText = processedText.replace(commandRegexGlobal, (match, commandName) => {
@@ -841,7 +837,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 					if (lines.length > 0) {
 						// Process each line as a separate file path
-						const newValue = [inputValue.slice(0, cursorPosition)]
+						let newValue = inputValue.slice(0, cursorPosition)
 						let totalLength = 0
 
 						// Using a standard for loop instead of forEach for potential performance gains.
@@ -849,21 +845,21 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							const line = lines[i]
 							// Convert each path to a mention-friendly format
 							const mentionText = convertToMentionPath(line, cwd)
-							newValue.push(mentionText)
+							newValue += mentionText
 							totalLength += mentionText.length
 
 							// Add space after each mention except the last one
 							if (i < lines.length - 1) {
-								newValue.push(" ")
+								newValue += " "
 								totalLength += 1
 							}
 						}
 
 						// Add space after the last mention and append the rest of the input
-						newValue.push(" ", inputValue.slice(cursorPosition))
+						newValue += " " + inputValue.slice(cursorPosition)
 						totalLength += 1
 
-						setInputValue(newValue.join(""))
+						setInputValue(newValue)
 						const newCursorPosition = cursorPosition + totalLength
 						setCursorPosition(newCursorPosition)
 						setIntendedCursorPosition(newCursorPosition)
@@ -945,7 +941,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 		const placeholderBottomText = `\n(${t("chat:addContext")}${shouldDisableImages ? `, ${t("chat:dragFiles")}` : `, ${t("chat:dragFilesImages")}`})`
 
-		// Common mode selector handler
 		const handleModeChange = useCallback(
 			(value: Mode) => {
 				setMode(value)
@@ -954,321 +949,9 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			[setMode],
 		)
 
-		// Helper function to render mode selector
-		const renderModeSelector = () => (
-			<ModeSelector
-				value={mode}
-				title={t("chat:selectMode")}
-				onChange={handleModeChange}
-				triggerClassName="w-full"
-				modeShortcutText={modeShortcutText}
-				customModes={customModes}
-				customModePrompts={customModePrompts}
-			/>
-		)
-
-		// Helper function to handle API config change
 		// const handleApiConfigChange = useCallback((value: string) => {
 		// 	vscode.postMessage({ type: "loadApiConfigurationById", text: value })
 		// }, [])
-
-		// Helper function to render non-edit mode controls
-		const renderNonEditModeControls = () => (
-			<div className={cn("flex", "justify-between", "items-center", "mt-auto")}>
-				<div className={cn("flex", "items-center", "gap-1", "min-w-0")}>
-					<div className="shrink-0 bg-vscode-input-background opacity-90">{renderModeSelector()}</div>
-
-					<div
-						className={cn("flex-1", "min-w-0", "overflow-hidden", "bg-vscode-input-background opacity-90")}>
-						{/* <ApiConfigSelector
-							value={currentConfigId}
-							displayName={displayName}
-							disabled={selectApiConfigDisabled}
-							title={t("chat:selectApiConfig")}
-							onChange={handleApiConfigChange}
-							triggerClassName="w-full text-ellipsis overflow-hidden"
-							listApiConfigMeta={listApiConfigMeta || []}
-							pinnedApiConfigs={pinnedApiConfigs}
-							togglePinnedApiConfig={togglePinnedApiConfig}
-						/> */}
-						{apiConfiguration && (
-							<ProviderRenderer
-								selectedProvider={apiConfiguration.apiProvider || "zgsm"}
-								apiConfiguration={apiConfiguration}
-								organizationAllowList={organizationAllowList}
-								setApiConfigurationField={setApiConfigurationField}
-								routerModels={(routerModels as RouterModels) || {}}
-								selectedProviderModels={selectedProviderModels}
-							/>
-						)}
-					</div>
-				</div>
-
-				<div className={cn("flex", "items-center", "gap-0.5", "shrink-0")}>
-					{isTtsPlaying && (
-						<StandardTooltip content={t("chat:stopTts")}>
-							<button
-								aria-label={t("chat:stopTts")}
-								onClick={() => vscode.postMessage({ type: "stopTts" })}
-								className={cn(
-									"relative inline-flex items-center justify-center",
-									"bg-transparent border-none p-1.5",
-									"rounded-md min-w-[28px] min-h-[28px]",
-									"text-vscode-foreground opacity-90",
-									"transition-all duration-150",
-									"hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
-									"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
-									"active:bg-[rgba(255,255,255,0.1)]",
-									"cursor-pointer",
-								)}>
-								<VolumeX className="w-4 h-4" />
-							</button>
-						</StandardTooltip>
-					)}
-					<SlashCommandsPopover />
-					{/* todo: IndexingStatusBadge */}
-					{/* <IndexingStatusBadge className={cn("bg-vscode-input-background  opacity-90")} /> */}
-
-					<StandardTooltip content={t("chat:addImages")}>
-						<button
-							aria-label={t("chat:addImages")}
-							disabled={shouldDisableImages}
-							onClick={!shouldDisableImages ? onSelectImages : undefined}
-							className={cn(
-								"relative inline-flex items-center justify-center",
-								"bg-transparent border-none p-1.5",
-								"rounded-md min-w-[28px] min-h-[28px]",
-								"text-vscode-foreground opacity-90",
-								"transition-all duration-150",
-								"hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
-								"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
-								"active:bg-[rgba(255,255,255,0.1)]",
-								!shouldDisableImages && "cursor-pointer",
-								shouldDisableImages &&
-									"opacity-40 cursor-not-allowed grayscale-[30%] hover:bg-transparent hover:border-[rgba(255,255,255,0.08)] active:bg-transparent",
-								"mr-1",
-								"bg-vscode-input-background opacity-90",
-							)}>
-							<Image className="w-4 h-4" />
-						</button>
-					</StandardTooltip>
-				</div>
-			</div>
-		)
-
-		// Helper function to render the text area section
-		const renderTextAreaSection = () => (
-			<div
-				className={cn(
-					"relative",
-					"flex-1",
-					"flex",
-					"flex-col-reverse",
-					"min-h-0",
-					"overflow-hidden",
-					"rounded",
-				)}>
-				<div
-					ref={highlightLayerRef}
-					data-testid="highlight-layer"
-					className={cn(
-						"absolute",
-						"inset-0",
-						"pointer-events-none",
-						"whitespace-pre-wrap",
-						"break-words",
-						"text-transparent",
-						"overflow-hidden",
-						"font-vscode-font-family",
-						"text-vscode-editor-font-size",
-						"leading-vscode-editor-line-height",
-						isFocused
-							? "border border-vscode-focusBorder outline outline-vscode-focusBorder"
-							: isDraggingOver
-								? "border-2 border-dashed border-vscode-focusBorder"
-								: "border border-transparent",
-						isEditMode ? "pt-1.5 pb-10 px-2" : "py-1.5 px-2",
-						"px-[8px]",
-						"pr-9",
-						"z-10",
-						"pb-[32px]",
-						"forced-color-adjust-none",
-					)}
-					style={{
-						color: "transparent",
-					}}
-				/>
-
-				{/* Hover Preview */}
-				{hoverPreview.show && (
-					<div
-						className="fixed border border-vscode-widget-border rounded-md px-3 py-2 text-sm shadow-lg z-50 hover-preview-container bg-vscode-editor-background text-vscode-editor-foreground whitespace-pre-wrap break-words max-h-[150px] overflow-auto"
-						style={{
-							left: hoverPreview.x,
-							top: hoverPreview.y,
-							minWidth: (() => {
-								// Get webview actual width
-								const webviewWidth =
-									document.body?.clientWidth ||
-									document.documentElement?.clientWidth ||
-									window.innerWidth
-								return `${Math.min(webviewWidth * 0.25, 150)}px`
-							})(),
-							maxWidth: (() => {
-								// Get webview actual width
-								const webviewWidth =
-									document.body?.clientWidth ||
-									document.documentElement?.clientWidth ||
-									window.innerWidth
-								return `${Math.min(webviewWidth * 0.7, 300)}px`
-							})(),
-							scrollbarWidth: "thin",
-							scrollbarColor: "var(--vscode-scrollbarSlider-background) transparent",
-						}}
-						onMouseEnter={() => {
-							// Keep preview visible when mouse enters the preview area
-							// Override any potential hide operations by setting show to true
-							setHoverPreview((prev) => ({ ...prev, show: true }))
-						}}
-						onMouseLeave={(e) => {
-							// Check if mouse moved to the original highlighted element
-							const relatedTarget = e.relatedTarget as HTMLElement
-							if (!relatedTarget?.closest(".file-path-highlight")) {
-								// Hide preview if not moving to the original highlighted element
-								setHoverPreview((prev) => ({ ...prev, show: false }))
-							}
-							// Keep preview visible if mouse moved to the original highlighted element
-						}}>
-						<pre className="m-0 font-mono text-xs select-none bg-transparent">{hoverPreview.content}</pre>
-					</div>
-				)}
-				<DynamicTextArea
-					ref={(el) => {
-						if (typeof ref === "function") {
-							ref(el)
-						} else if (ref) {
-							ref.current = el
-						}
-						textAreaRef.current = el
-					}}
-					value={inputValue}
-					onChange={(e) => {
-						handleInputChange(e)
-						updateHighlights(true)
-					}}
-					onFocus={() => setIsFocused(true)}
-					onKeyDown={handleKeyDown}
-					onKeyUp={handleKeyUp}
-					onBlur={handleBlur}
-					onPaste={handlePaste}
-					onSelect={updateCursorPosition}
-					onMouseUp={updateCursorPosition}
-					onHeightChange={(height) => {
-						if (textAreaBaseHeight === undefined || height < textAreaBaseHeight) {
-							setTextAreaBaseHeight(height)
-						}
-
-						setChatWrapBaseHeight(height + 32)
-						onHeightChange?.(height)
-					}}
-					placeholder={placeholderText}
-					minRows={5}
-					maxRows={15}
-					autoFocus={true}
-					className={cn(
-						"w-full",
-						"text-vscode-input-foreground",
-						"font-vscode-font-family",
-						"text-vscode-editor-font-size",
-						"leading-vscode-editor-line-height",
-						"cursor-text",
-						isEditMode ? "pt-1.5 pb-10 px-2" : "py-1.5 px-2",
-						isFocused
-							? "border border-vscode-focusBorder outline outline-vscode-focusBorder"
-							: isDraggingOver
-								? "border-2 border-dashed border-vscode-focusBorder"
-								: "border border-transparent",
-						isDraggingOver
-							? "bg-[color-mix(in_srgb,var(--vscode-input-background)_95%,var(--vscode-focusBorder))]"
-							: "bg-vscode-input-background",
-						"transition-background-color duration-150 ease-in-out",
-						"will-change-background-color",
-						"min-h-[90px]",
-						"pb-[32px]",
-						"box-border",
-						"rounded",
-						"resize-none",
-						"overflow-x-hidden",
-						"overflow-y-auto",
-						"pr-9",
-						"flex-none flex-grow",
-						"z-[2]",
-						"scrollbar-none",
-						"scrollbar-hide",
-					)}
-					onScroll={() => updateHighlights()}
-				/>
-
-				<div className="absolute top-1 right-1 z-30">
-					<StandardTooltip content={t("chat:enhancePrompt")}>
-						<button
-							aria-label={t("chat:enhancePrompt")}
-							disabled={false}
-							onClick={handleEnhancePrompt}
-							className={cn(
-								"relative inline-flex items-center justify-center",
-								"bg-transparent border-none p-1.5",
-								"rounded-md min-w-[28px] min-h-[28px]",
-								"opacity-60 hover:opacity-100 text-vscode-descriptionForeground hover:text-vscode-foreground",
-								"transition-all duration-150",
-								"hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
-								"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
-								"active:bg-[rgba(255,255,255,0.1)]",
-								"cursor-pointer",
-							)}>
-							<WandSparkles className={cn("w-4 h-4", isEnhancingPrompt && "animate-spin")} />
-						</button>
-					</StandardTooltip>
-				</div>
-
-				{!isEditMode && (
-					<div className="absolute bottom-1 right-1 z-30">
-						<StandardTooltip content={t("chat:sendMessage")}>
-							<button
-								aria-label={t("chat:sendMessage")}
-								disabled={false}
-								onClick={onSend}
-								className={cn(
-									"relative inline-flex items-center justify-center",
-									"bg-transparent border-none p-1.5",
-									"rounded-md min-w-[28px] min-h-[28px]",
-									"opacity-60 hover:opacity-100 text-vscode-descriptionForeground hover:text-vscode-foreground",
-									"transition-all duration-150",
-									"hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
-									"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
-									"active:bg-[rgba(255,255,255,0.1)]",
-									"cursor-pointer",
-								)}>
-								<SendHorizontal className="w-4 h-4" />
-							</button>
-						</StandardTooltip>
-					</div>
-				)}
-				{renderNonEditModeControlsWrap()}
-				{!inputValue && !isEditMode && (
-					<div
-						className="absolute left-2 z-30 pr-9 flex items-center h-8 font-vscode-font-family text-vscode-editor-font-size leading-vscode-editor-line-height"
-						style={{
-							bottom: "2rem",
-							color: "color-mix(in oklab, var(--vscode-input-foreground) 50%, transparent)",
-							userSelect: "none",
-							pointerEvents: "none",
-						}}>
-						{placeholderBottomText}
-					</div>
-				)}
-			</div>
-		)
 
 		return (
 			<div
@@ -1278,16 +961,27 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					"flex-col",
 					"gap-1",
 					"bg-editor-background",
-					isEditMode ? "px-0" : "px-1.5",
+					"px-1.5",
 					"pb-1",
 					"outline-none",
 					"border",
 					"border-none",
-					isEditMode ? "w-full" : "w-[calc(100%-16px)]",
+					"w-[calc(100%-16px)]",
 					"ml-auto",
 					"mr-auto",
 					"box-border",
 				)}>
+				{selectedImages.length > 0 && (
+					<Thumbnails
+						images={selectedImages}
+						setImages={setSelectedImages}
+						style={{
+							left: "16px",
+							zIndex: 2,
+							marginBottom: 0,
+						}}
+					/>
+				)}
 				<div className="relative">
 					<div
 						className={cn("chat-text-area", "relative", "flex", "flex-col", "outline-none")}
@@ -1349,50 +1043,332 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							</div>
 						)}
 
-						{renderTextAreaSection()}
-					</div>
+						<div
+							className={cn(
+								"relative",
+								"flex-1",
+								"flex",
+								"flex-col-reverse",
+								"min-h-0",
+								"overflow-hidden",
+								"rounded",
+							)}>
+							<div
+								ref={highlightLayerRef}
+								data-testid="highlight-layer"
+								className={cn(
+									"absolute",
+									"inset-0",
+									"pointer-events-none",
+									"whitespace-pre-wrap",
+									"break-words",
+									"text-transparent",
+									"overflow-hidden",
+									"font-vscode-font-family",
+									"text-vscode-editor-font-size",
+									"leading-vscode-editor-line-height",
+									isFocused
+										? "border border-vscode-focusBorder outline outline-vscode-focusBorder"
+										: isDraggingOver
+											? "border-2 border-dashed border-vscode-focusBorder"
+											: "border border-transparent",
+									"px-[8px]",
+									"py-1.5",
+									"pr-9",
+									"z-10",
+									"pb-[32px]",
+									"forced-color-adjust-none",
+								)}
+								style={{
+									color: "transparent",
+								}}
+							/>
 
-					{isEditMode && (
-						<EditModeControls
-							mode={mode}
-							onModeChange={handleModeChange}
-							modeShortcutText={modeShortcutText}
-							customModes={customModes}
-							customModePrompts={customModePrompts}
-							onCancel={onCancel}
-							onSend={onSend}
-							onSelectImages={onSelectImages}
-							sendingDisabled={sendingDisabled}
-							shouldDisableImages={shouldDisableImages}
-						/>
-					)}
+							{/* Hover Preview */}
+							{hoverPreview.show && (
+								<div
+									className="fixed border border-vscode-widget-border rounded-md px-3 py-2 text-sm shadow-lg z-50 hover-preview-container bg-vscode-editor-background text-vscode-editor-foreground whitespace-pre-wrap break-words max-h-[150px] overflow-auto"
+									style={{
+										left: hoverPreview.x,
+										top: hoverPreview.y,
+										minWidth: (() => {
+											// Get webview actual width
+											const webviewWidth =
+												document.body?.clientWidth ||
+												document.documentElement?.clientWidth ||
+												window.innerWidth
+											return `${Math.min(webviewWidth * 0.25, 150)}px`
+										})(),
+										maxWidth: (() => {
+											// Get webview actual width
+											const webviewWidth =
+												document.body?.clientWidth ||
+												document.documentElement?.clientWidth ||
+												window.innerWidth
+											return `${Math.min(webviewWidth * 0.7, 300)}px`
+										})(),
+										scrollbarWidth: "thin",
+										scrollbarColor: "var(--vscode-scrollbarSlider-background) transparent",
+									}}
+									onMouseEnter={() => {
+										// Keep preview visible when mouse enters the preview area
+										// Override any potential hide operations by setting show to true
+										setHoverPreview((prev) => ({ ...prev, show: true }))
+									}}
+									onMouseLeave={(e) => {
+										// Check if mouse moved to the original highlighted element
+										const relatedTarget = e.relatedTarget as HTMLElement
+										if (!relatedTarget?.closest(".file-path-highlight")) {
+											// Hide preview if not moving to the original highlighted element
+											setHoverPreview((prev) => ({ ...prev, show: false }))
+										}
+										// Keep preview visible if mouse moved to the original highlighted element
+									}}>
+									<pre className="m-0 font-mono text-xs select-none bg-transparent">
+										{hoverPreview.content}
+									</pre>
+								</div>
+							)}
+							<DynamicTextArea
+								ref={(el) => {
+									if (typeof ref === "function") {
+										ref(el)
+									} else if (ref) {
+										ref.current = el
+									}
+									textAreaRef.current = el
+								}}
+								value={inputValue}
+								onChange={(e) => {
+									handleInputChange(e)
+									updateHighlights(true)
+								}}
+								onFocus={() => setIsFocused(true)}
+								onKeyDown={handleKeyDown}
+								onKeyUp={handleKeyUp}
+								onBlur={handleBlur}
+								onPaste={handlePaste}
+								onSelect={updateCursorPosition}
+								onMouseUp={updateCursorPosition}
+								onHeightChange={(height) => {
+									if (textAreaBaseHeight === undefined || height < textAreaBaseHeight) {
+										setTextAreaBaseHeight(height)
+									}
+
+									setChatWrapBaseHeight(height + 32)
+									onHeightChange?.(height)
+								}}
+								placeholder={placeholderText}
+								minRows={5}
+								maxRows={15}
+								autoFocus={true}
+								className={cn(
+									"w-full",
+									"text-vscode-input-foreground",
+									"font-vscode-font-family",
+									"text-vscode-editor-font-size",
+									"leading-vscode-editor-line-height",
+									"cursor-text",
+									"py-1.5 px-2",
+									isFocused
+										? "border border-vscode-focusBorder outline outline-vscode-focusBorder"
+										: isDraggingOver
+											? "border-2 border-dashed border-vscode-focusBorder"
+											: "border border-transparent",
+									isDraggingOver
+										? "bg-[color-mix(in_srgb,var(--vscode-input-background)_95%,var(--vscode-focusBorder))]"
+										: "bg-vscode-input-background",
+									"transition-background-color duration-150 ease-in-out",
+									"will-change-background-color",
+									"min-h-[90px]",
+									"pb-[32px]",
+									"box-border",
+									"rounded",
+									"resize-none",
+									"overflow-x-hidden",
+									"overflow-y-auto",
+									"pr-9",
+									"flex-none flex-grow",
+									"z-[2]",
+									"scrollbar-none",
+									"scrollbar-hide",
+								)}
+								onScroll={() => updateHighlights()}
+							/>
+
+							<div className="absolute top-1 right-1 z-30">
+								<StandardTooltip content={t("chat:enhancePrompt")}>
+									<button
+										aria-label={t("chat:enhancePrompt")}
+										disabled={false}
+										onClick={handleEnhancePrompt}
+										className={cn(
+											"relative inline-flex items-center justify-center",
+											"bg-transparent border-none p-1.5",
+											"rounded-md min-w-[28px] min-h-[28px]",
+											"opacity-60 hover:opacity-100 text-vscode-descriptionForeground hover:text-vscode-foreground",
+											"transition-all duration-150",
+											"hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
+											"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
+											"active:bg-[rgba(255,255,255,0.1)]",
+											"cursor-pointer",
+										)}>
+										<WandSparkles className={cn("w-4 h-4", isEnhancingPrompt && "animate-spin")} />
+									</button>
+								</StandardTooltip>
+							</div>
+
+							{/* <div className="absolute bottom-1 right-1 z-30">
+								<StandardTooltip content={t("chat:sendMessage")}>
+									<button
+										aria-label={t("chat:sendMessage")}
+										disabled={false}
+										onClick={onSend}
+										className={cn(
+											"relative inline-flex items-center justify-center",
+											"bg-transparent border-none p-1.5",
+											"rounded-md min-w-[28px] min-h-[28px]",
+											"opacity-60 hover:opacity-100 text-vscode-descriptionForeground hover:text-vscode-foreground",
+											"transition-all duration-150",
+											"hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
+											"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
+											"active:bg-[rgba(255,255,255,0.1)]",
+											"cursor-pointer",
+										)}>
+										<SendHorizontal className="w-4 h-4" />
+									</button>
+								</StandardTooltip>
+							</div> */}
+
+							{!inputValue && (
+								<div
+									className="absolute left-2 z-30 pr-9 flex items-center h-8 font-vscode-font-family text-vscode-editor-font-size leading-vscode-editor-line-height"
+									style={{
+										bottom: "2rem",
+										color: "color-mix(in oklab, var(--vscode-input-foreground) 50%, transparent)",
+										userSelect: "none",
+										pointerEvents: "none",
+									}}>
+									{placeholderBottomText}
+								</div>
+							)}
+						</div>
+					</div>
 				</div>
 
-				{selectedImages.length > 0 && (
-					<Thumbnails
-						images={selectedImages}
-						setImages={setSelectedImages}
-						style={{
-							left: "16px",
-							zIndex: 2,
-							marginBottom: 0,
-						}}
-					/>
-				)}
-
-				{/* {!isEditMode && renderNonEditModeControls()} */}
+				<div
+					className="flex justify-between items-center"
+					style={{
+						position: "absolute",
+						left: 0,
+						bottom: 10,
+						zIndex: 30,
+						width: "100%",
+						padding: "0 14px",
+					}}>
+					<div className="flex items-center gap-1">
+						<div className="max-w-32">
+							<ModeSelector
+								value={mode}
+								title={t("chat:selectMode")}
+								onChange={handleModeChange}
+								triggerClassName="w-full"
+								modeShortcutText={modeShortcutText}
+								customModes={customModes}
+								customModePrompts={customModePrompts}
+							/>
+						</div>
+						<div className="max-w-32">
+							{/* <ApiConfigSelector
+								value={currentConfigId}
+								displayName={displayName}
+								disabled={selectApiConfigDisabled}
+								title={t("chat:selectApiConfig")}
+								onChange={handleApiConfigChange}
+								triggerClassName="w-full text-ellipsis overflow-hidden"
+								listApiConfigMeta={listApiConfigMeta || []}
+								pinnedApiConfigs={pinnedApiConfigs}
+								togglePinnedApiConfig={togglePinnedApiConfig}
+							/> */}
+							{apiConfiguration && (
+								<ProviderRenderer
+									selectedProvider={apiConfiguration.apiProvider || "zgsm"}
+									apiConfiguration={apiConfiguration}
+									organizationAllowList={organizationAllowList}
+									setApiConfigurationField={setApiConfigurationField}
+									routerModels={(routerModels as RouterModels) || {}}
+									selectedProviderModels={selectedProviderModels}
+								/>
+							)}
+						</div>
+					</div>
+					<div className="flex items-center gap-0.5">
+						{isTtsPlaying && (
+							<StandardTooltip content={t("chat:stopTts")}>
+								<button
+									aria-label={t("chat:stopTts")}
+									onClick={() => vscode.postMessage({ type: "stopTts" })}
+									className={cn(
+										"relative inline-flex items-center justify-center",
+										"bg-transparent border-none p-1.5",
+										"rounded-md min-w-[28px] min-h-[28px]",
+										"text-vscode-foreground opacity-85",
+										"transition-all duration-150",
+										"hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
+										"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
+										"active:bg-[rgba(255,255,255,0.1)]",
+										"cursor-pointer",
+									)}>
+									<VolumeX className="w-4 h-4" />
+								</button>
+							</StandardTooltip>
+						)}
+						<SlashCommandsPopover />
+						{/* <IndexingStatusBadge /> */}
+						<StandardTooltip content={t("chat:addImages")}>
+							<button
+								aria-label={t("chat:addImages")}
+								disabled={shouldDisableImages}
+								onClick={!shouldDisableImages ? onSelectImages : undefined}
+								className={cn(
+									"relative inline-flex items-center justify-center",
+									"bg-transparent border-none p-1.5",
+									"rounded-md min-w-[28px] min-h-[28px]",
+									"text-vscode-foreground opacity-85",
+									"transition-all duration-150",
+									"hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
+									"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
+									"active:bg-[rgba(255,255,255,0.1)]",
+									!shouldDisableImages && "cursor-pointer",
+									shouldDisableImages &&
+										"opacity-40 cursor-not-allowed grayscale-[30%] hover:bg-transparent hover:border-[rgba(255,255,255,0.08)] active:bg-transparent",
+									"mr-1",
+								)}>
+								<Image className="w-4 h-4" />
+							</button>
+						</StandardTooltip>
+						<StandardTooltip content={t("chat:sendMessage")}>
+							<button
+								aria-label={t("chat:sendMessage")}
+								disabled={false}
+								onClick={onSend}
+								className={cn(
+									"relative inline-flex items-center justify-center",
+									"bg-transparent border-none p-1.5",
+									"rounded-md min-w-[28px] min-h-[28px]",
+									"opacity-60 hover:opacity-100 text-vscode-descriptionForeground hover:text-vscode-foreground",
+									"transition-all duration-150",
+									"hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
+									"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
+									"active:bg-[rgba(255,255,255,0.1)]",
+									"cursor-pointer",
+								)}>
+								<SendHorizontal className="w-4 h-4" />
+							</button>
+						</StandardTooltip>
+					</div>
+				</div>
 			</div>
 		)
-		function renderNonEditModeControlsWrap() {
-			return (
-				!isEditMode && (
-					<div className="absolute bottom-1 left-2 z-30 w-[calc(100%-36px)]">
-						{renderNonEditModeControls()}
-					</div>
-				)
-			)
-		}
 	},
 )
-
-export default ChatTextArea

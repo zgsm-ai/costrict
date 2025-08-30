@@ -3,9 +3,7 @@ import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { Trans } from "react-i18next"
 import { ChevronsUpDown, Check, X, ChevronUp } from "lucide-react"
 
-import type { ProviderSettings, ModelInfo } from "@roo-code/types"
-
-import type { OrganizationAllowList } from "@roo/cloud"
+import type { ProviderSettings, ModelInfo, OrganizationAllowList } from "@roo-code/types"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useSelectedModel } from "@/components/ui/hooks/useSelectedModel"
@@ -43,6 +41,7 @@ type ModelIdKey = keyof Pick<
 	| "lmStudioModelId"
 	| "vsCodeLmModelSelector"
 	| "ioIntelligenceModelId"
+	| "vercelAiGatewayModelId"
 >
 
 interface ModelPickerProps {
@@ -259,9 +258,14 @@ export const ModelPicker = ({
 											: (selectedModelId ?? t("settings:common.select"))}
 									</div>
 									{buttonIconType === "upDown" ? (
-										<ChevronsUpDown className="opacity-50" />
+										<ChevronsUpDown className="opacity-50 !w-[12px]" />
 									) : (
-										<ChevronUp className="opacity-50" />
+										<ChevronUp
+											className={cn(
+												"pointer-events-none opacity-80 !w-[12px] flex-shrink-0 size-3 transition-transform duration-200",
+												open && "rotate-180",
+											)}
+										/>
 									)}
 								</Button>
 							</PopoverTrigger>
@@ -281,9 +285,14 @@ export const ModelPicker = ({
 										: (selectedModelId ?? t("settings:common.select"))}
 								</div>
 								{buttonIconType === "upDown" ? (
-									<ChevronsUpDown className="opacity-50" />
+									<ChevronsUpDown className="opacity-50 !w-[12px]" />
 								) : (
-									<ChevronUp className="opacity-50" />
+									<ChevronUp
+										className={cn(
+											"pointer-events-none opacity-80 !w-[12px] flex-shrink-0 size-3 transition-transform duration-200",
+											open && "rotate-180",
+										)}
+									/>
 								)}
 							</Button>
 						</PopoverTrigger>

@@ -8,20 +8,20 @@ import dedent from "dedent"
 
 import {
 	type Language,
-	type ProviderSettings,
 	type GlobalState,
 	type ClineMessage,
+	type TelemetrySetting,
 	TelemetryEventName,
 } from "@roo-code/types"
 import { CloudService } from "@roo-code/cloud"
 import { TelemetryService } from "@roo-code/telemetry"
+
 import { type ApiMessage } from "../task-persistence/apiMessages"
 
 import { ClineProvider } from "./ClineProvider"
 import { changeLanguage, t } from "../../i18n"
 import { Package } from "../../shared/package"
 import { RouterName, toRouterName, ModelRecord } from "../../shared/api"
-import { supportPrompt } from "../../shared/support-prompt"
 import { MessageEnhancer } from "./messageEnhancer"
 
 import { checkoutDiffPayloadSchema, checkoutRestorePayloadSchema, WebviewMessage } from "../../shared/WebviewMessage"
@@ -30,7 +30,6 @@ import { experimentDefault } from "../../shared/experiments"
 import { Terminal } from "../../integrations/terminal/Terminal"
 import { getZgsmFullResponseData } from "../../shared/getZgsmSelectedModelInfo"
 import { openFile } from "../../integrations/misc/open-file"
-// import { CodeIndexManager } from "../../services/code-index/manager"
 import { openImage, saveImage } from "../../integrations/misc/image-handler"
 import { selectImages } from "../../integrations/misc/process-images"
 import { getTheme } from "../../integrations/theme/getTheme"
@@ -44,9 +43,7 @@ import { getOpenAiModels } from "../../api/providers/openai"
 import { getZgsmModels } from "../../api/providers/zgsm"
 import { getVsCodeLmModels } from "../../api/providers/vscode-lm"
 import { openMention } from "../mentions"
-import { TelemetrySetting } from "../../shared/TelemetrySetting"
 import { getWorkspacePath } from "../../utils/path"
-// import { ensureSettingsDirectoryExists } from "../../utils/globalContext"
 import { Mode, defaultModeSlug } from "../../shared/modes"
 import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
 import { GetModelsOptions } from "../../shared/api"
@@ -632,6 +629,7 @@ export const webviewMessageHandler = async (
 				},
 				{ key: "glama", options: { provider: "glama" } },
 				{ key: "unbound", options: { provider: "unbound", apiKey: apiConfiguration.unboundApiKey } },
+				{ key: "vercel-ai-gateway", options: { provider: "vercel-ai-gateway" } },
 			]
 
 			// Add IO Intelligence if API key is provided
@@ -1016,8 +1014,8 @@ export const webviewMessageHandler = async (
 			const mcpEnabled = message.bool ?? true
 			await updateGlobalState("mcpEnabled", mcpEnabled)
 
-			// Delegate MCP enable/disable logic to McpHub
 			const mcpHubInstance = provider.getMcpHub()
+
 			if (mcpHubInstance) {
 				await mcpHubInstance.handleMcpEnabledChange(mcpEnabled)
 			}
@@ -1029,18 +1027,25 @@ export const webviewMessageHandler = async (
 			await provider.postStateToWebview()
 			break
 		// case "remoteControlEnabled":
-		// 	await updateGlobalState("remoteControlEnabled", message.bool ?? false)
-		// 	await provider.handleRemoteControlToggle(message.bool ?? false)
+		// 	try {
+		// 		await CloudService.instance.updateUserSettings({
+		// 			extensionBridgeEnabled: message.bool ?? false,
+		// 		})
+		// 	} catch (error) {
+		// 		provider.log(`Failed to update cloud settings for remote control: ${error}`)
+		// 	}
+		// 	await provider.remoteControlEnabled(message.bool ?? false)
 		// 	await provider.postStateToWebview()
 		// 	break
 		case "refreshAllMcpServers": {
 			const mcpHub = provider.getMcpHub()
+
 			if (mcpHub) {
 				await mcpHub.refreshAllConnections()
 			}
+
 			break
 		}
-		// playSound handler removed - now handled directly in the webview
 		case "soundEnabled":
 			const soundEnabled = message.bool ?? true
 			await updateGlobalState("soundEnabled", soundEnabled)
@@ -1054,7 +1059,7 @@ export const webviewMessageHandler = async (
 		case "ttsEnabled":
 			const ttsEnabled = message.bool ?? true
 			await updateGlobalState("ttsEnabled", ttsEnabled)
-			setTtsEnabled(ttsEnabled) // Add this line to update the tts utility
+			setTtsEnabled(ttsEnabled)
 			await provider.postStateToWebview()
 			break
 		case "ttsSpeed":
@@ -1070,6 +1075,7 @@ export const webviewMessageHandler = async (
 					onStop: () => provider.postMessageToWebview({ type: "ttsStop", text: message.text }),
 				})
 			}
+
 			break
 		case "stopTts":
 			stopTts()
@@ -1390,8 +1396,16 @@ export const webviewMessageHandler = async (
 			ErrorCodeManager.getInstance().refreshErrorCodes()
 			await provider.postStateToWebview()
 			break
+		case "openRouterImageApiKey":
+			await provider.contextProxy.setValue("openRouterImageApiKey", message.text)
+			await provider.postStateToWebview()
+			break
+		case "openRouterImageGenerationSelectedModel":
+			await provider.contextProxy.setValue("openRouterImageGenerationSelectedModel", message.text)
+			await provider.postStateToWebview()
+			break
 		case "showRooIgnoredFiles":
-			await updateGlobalState("showRooIgnoredFiles", message.bool ?? true)
+			await updateGlobalState("showRooIgnoredFiles", message.bool ?? false)
 			await provider.postStateToWebview()
 			break
 		case "hasOpenedModeSelector":
@@ -2198,6 +2212,12 @@ export const webviewMessageHandler = async (
 						settings.codebaseIndexMistralApiKey,
 					)
 				}
+				if (settings.codebaseIndexVercelAiGatewayApiKey !== undefined) {
+					await provider.contextProxy.storeSecret(
+						"codebaseIndexVercelAiGatewayApiKey",
+						settings.codebaseIndexVercelAiGatewayApiKey,
+					)
+				}
 
 				// Send success response first - settings are saved regardless of validation
 				await provider.postMessageToWebview({
@@ -2332,6 +2352,9 @@ export const webviewMessageHandler = async (
 			))
 			const hasGeminiApiKey = !!(await provider.context.secrets.get("codebaseIndexGeminiApiKey"))
 			const hasMistralApiKey = !!(await provider.context.secrets.get("codebaseIndexMistralApiKey"))
+			const hasVercelAiGatewayApiKey = !!(await provider.context.secrets.get(
+				"codebaseIndexVercelAiGatewayApiKey",
+			))
 
 			provider.postMessageToWebview({
 				type: "codeIndexSecretStatus",
@@ -2341,6 +2364,7 @@ export const webviewMessageHandler = async (
 					hasOpenAiCompatibleApiKey,
 					hasGeminiApiKey,
 					hasMistralApiKey,
+					hasVercelAiGatewayApiKey,
 				},
 			})
 			break

@@ -1,6 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
-import { Package } from "../../../shared/package"
-
 // Mock i18n
 vi.mock("../../i18n", () => ({
 	t: vi.fn((key: string, params?: Record<string, any>) => {

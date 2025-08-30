@@ -5,21 +5,9 @@
 		"wantsToFetch": "Costrict 想要獲取詳細指令以協助當前任務"
 	},
 	"fileOperations": {
-		"wantsToRead": "Costrict 想要讀取此文件：",
-		"wantsToReadOutsideWorkspace": "Costrict 想要讀取工作區外的此文件：",
-		"didRead": "Costrict 已讀取此文件：",
-		"wantsToEdit": "Costrict 想要編輯此文件：",
-		"wantsToEditOutsideWorkspace": "Costrict 想要編輯工作區外的此文件：",
-		"wantsToCreate": "Costrict 想要創建新文件：",
-		"wantsToSearchReplace": "Costrict 想要在此檔案中搜尋和取代：",
-		"didSearchReplace": "Costrict 已在此檔案執行搜尋和取代：",
-		"wantsToInsert": "Costrict 想要在此檔案中插入內容：",
-		"wantsToInsertWithLineNumber": "Costrict 想要在此檔案第 {{lineNumber}} 行插入內容：",
-		"wantsToInsertAtEnd": "Costrict 想要在此檔案末尾新增內容：",
 		"wantsToReadAndXMore": "Costrict 想要讀取此檔案以及另外 {{count}} 個檔案：",
 		"wantsToReadMultiple": "Costrict 想要讀取多個檔案：",
-		"wantsToApplyBatchChanges": "Costrict 想要對多個檔案套用變更：",
-		"wantsToEditProtected": "Costrict 想要編輯受保護的設定檔案："
+		"wantsToApplyBatchChanges": "Costrict 想要對多個檔案套用變更："
 	},
 	"directoryOperations": {
 		"wantsToViewTopLevel": "Costrict 想要查看此目錄中的頂層文件：",

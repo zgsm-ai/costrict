@@ -3,8 +3,8 @@
 		"name": "Costrict"
 	},
 	"storage": {
-		"path_placeholder": "D:\\RooCodeStorage",
-		"enter_absolute_path": "Please enter an absolute path (e.g. D:\\RooCodeStorage or /home/user/storage)"
+		"path_placeholder": "D:\\CostrictCodeStorage",
+		"enter_absolute_path": "Please enter an absolute path (e.g. D:\\CostrictCodeStorage or /home/user/storage)"
 	},
 	"input": {
 		"task_prompt": "What should Costrict do?"

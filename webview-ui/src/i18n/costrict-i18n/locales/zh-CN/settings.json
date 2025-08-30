@@ -111,6 +111,9 @@
 		},
 		"PREVENT_FOCUS_DISRUPTION": {
 			"description": "启用后防止编辑器焦点干扰。文件编辑在后台进行，不会打开差异视图或抢夺焦点。你可以在 Costrict 进行更改时继续不受干扰地工作。文件可以在不获取焦点的情况下打开以捕获诊断信息，或保持完全关闭状态。"
+		},
+		"IMAGE_GENERATION": {
+			"description": "启用后，Costrict 可以使用 OpenRouter 的图像生成模型从文本提示生成图像。需要配置 OpenRouter API 密钥。"
 		}
 	},
 	"modelPicker": {

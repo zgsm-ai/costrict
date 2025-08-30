@@ -84,7 +84,7 @@ export async function parseMentions(
 	urlContentFetcher: UrlContentFetcher,
 	fileContextTracker?: FileContextTracker,
 	rooIgnoreController?: RooIgnoreController,
-	showRooIgnoredFiles: boolean = true,
+	showRooIgnoredFiles: boolean = false,
 	includeDiagnosticMessages: boolean = true,
 	maxDiagnosticMessages: number = 50,
 	maxReadFileLine?: number,
@@ -271,7 +271,7 @@ async function getFileOrFolderContent(
 	mentionPath: string,
 	cwd: string,
 	rooIgnoreController?: any,
-	showRooIgnoredFiles: boolean = true,
+	showRooIgnoredFiles: boolean = false,
 	maxReadFileLine?: number,
 ): Promise<string> {
 	const unescapedPath = unescapeSpaces(mentionPath)

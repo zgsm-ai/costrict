@@ -108,6 +108,9 @@
 		},
 		"MULTI_FILE_APPLY_DIFF": {
 			"description": "啟用後 Costrict 可在單個請求中編輯多個檔案。停用後 Costrict 必須逐個編輯檔案。停用此功能有助於使用能力較弱的模型或需要更精確控制檔案修改時。"
+		},
+		"IMAGE_GENERATION": {
+			"description": "啟用後，Costrict 可以使用 OpenRouter 的圖像生成模型從文字提示生成圖像。需要設定 OpenRouter API 金鑰。"
 		}
 	},
 	"modelPicker": {

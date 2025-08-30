@@ -59,7 +59,7 @@
 	"settings.vsCodeLmModelSelector.description": "VSCode 语言模型 API 的设置",
 	"settings.vsCodeLmModelSelector.vendor.description": "语言模型的供应商（例如：copilot）",
 	"settings.vsCodeLmModelSelector.family.description": "语言模型的系列（例如：gpt-4）",
-	"settings.customStoragePath.description": "自定义存储路径。留空以使用默认位置。支持绝对路径（例如：'D:\\RooCodeStorage'）",
+	"settings.customStoragePath.description": "自定义存储路径。留空以使用默认位置。支持绝对路径（例如：'D:\\CostrictCodeStorage'）",
 	"settings.enableCodeActions.description": "启用 Costrict 快速修复",
 	"settings.autoImportSettingsPath.description": "Costrict 配置文件的路径，用于在扩展启动时自动导入。支持绝对路径和相对于主目录的路径（例如 '~/Documents/costrict-settings.json'）。留空以禁用自动导入。",
 	"settings.useAgentRules.description": "为特定于代理的规则启用 AGENTS.md 文件的加载（请参阅 https://agent-rules.org/）",

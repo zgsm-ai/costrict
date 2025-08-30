@@ -40,6 +40,10 @@
 			"ZGSM_ADD_TEST": {
 				"label": "Add tests",
 				"description": "Generate unit tests for code, available in code actions (lightbulb icon in editor) and editor context menu (right click on selected code)."
+			},
+			"ZGSM_EXPLAIN": {
+				"label": "Explain Code",
+				"description": "Get detailed explanations of code snippets, functions, or entire files. Useful for understanding complex code or learning new patterns. Available in code actions (lightbulb icon in the editor) and the editor context menu (right-click on selected code)."
 			}
 		}
 	},

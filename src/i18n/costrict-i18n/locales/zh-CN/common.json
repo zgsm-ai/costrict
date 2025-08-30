@@ -3,8 +3,8 @@
 		"name": "Costrict"
 	},
 	"storage": {
-		"path_placeholder": "D:\\RooCodeStorage",
-		"enter_absolute_path": "请输入绝对路径（例如：D:\\RooCodeStorage 或 /home/user/storage）"
+		"path_placeholder": "D:\\CostrictCodeStorage",
+		"enter_absolute_path": "请输入绝对路径（例如：D:\\CostrictCodeStorage 或 /home/user/storage）"
 	},
 	"input": {
 		"task_prompt": "Costrict 应该做什么？"
