@@ -314,6 +314,37 @@ describe("WorkspaceEventMonitor", () => {
 			expect((monitor as any).eventBuffer?.size || 0).toBe(1)
 		})
 
+		it("should handle initial workspace open event", async () => {
+			// Mock workspace folders
+			const mockWorkspaceFolders = [
+				{
+					uri: vscode.Uri.file("/test/workspace1"),
+					name: "workspace1",
+					index: 0,
+				},
+				{
+					uri: vscode.Uri.file("/test/workspace2"),
+					name: "workspace2",
+					index: 1,
+				},
+			]
+			;(vscode.workspace as any).workspaceFolders = mockWorkspaceFolders
+
+			// Mock shouldIgnoreFile to only ignore one workspace
+			const originalShouldIgnoreFile = monitor["shouldIgnoreFile"]
+			monitor["shouldIgnoreFile"] = vi.fn().mockImplementation((filePath: string, stats: any) => {
+				return filePath === "/test/workspace2" // Ignore workspace2
+			})
+
+			await monitor["handleInitialWorkspaceOpen"]()
+
+			// Should only add event for workspace1 (workspace2 is ignored)
+			expect((monitor as any).eventBuffer?.size || 0).toBe(1)
+
+			// Restore original method
+			monitor["shouldIgnoreFile"] = originalShouldIgnoreFile
+		})
+
 		it("should respect enabled configuration", async () => {
 			monitor.updateConfig({ enabled: false })
 
@@ -391,7 +422,8 @@ describe("WorkspaceEventMonitor", () => {
 			const testFilePath = "/test/file.txt"
 			mockCoIgnoreController.validateAccess.mockReturnValue(false)
 
-			const result = await monitor["shouldIgnoreFile"](testFilePath)
+			const mockStats = { isDirectory: () => false, isFile: () => true, size: 1024 } as any
+			const result = await monitor["shouldIgnoreFile"](testFilePath, mockStats)
 
 			expect(result).toBe(true)
 			expect(mockCoIgnoreController.validateAccess).toHaveBeenCalledWith(testFilePath)
@@ -626,11 +658,13 @@ describe("WorkspaceEventMonitor", () => {
 
 	describe("shouldIgnoreFile Method", () => {
 		it("should ignore dot files and directories", () => {
-			expect(monitor["shouldIgnoreFile"]("/test/.hidden")).toBe(true)
-			expect(monitor["shouldIgnoreFile"]("/test/.git/config")).toBe(true)
+			const mockStats = { isDirectory: () => false, isFile: () => true, size: 1024 } as any
+			expect(monitor["shouldIgnoreFile"]("/test/.hidden", mockStats)).toBe(true)
+			expect(monitor["shouldIgnoreFile"]("/test/.git/config", mockStats)).toBe(true)
 		})
 
 		it("should ignore common build directories", () => {
+			const mockStats = { isDirectory: () => true, isFile: () => false, size: 1024 } as any
 			vi.spyOn(fs, "statSync").mockImplementation(
 				(filePath: any) =>
 					({
@@ -640,13 +674,14 @@ describe("WorkspaceEventMonitor", () => {
 					}) as any,
 			)
 
-			expect(monitor["shouldIgnoreFile"]("/test/node_modules")).toBe(true)
-			expect(monitor["shouldIgnoreFile"]("/test/dist")).toBe(true)
-			expect(monitor["shouldIgnoreFile"]("/test/build")).toBe(true)
-			expect(monitor["shouldIgnoreFile"]("/test/coverage")).toBe(true)
+			expect(monitor["shouldIgnoreFile"]("/test/node_modules", mockStats)).toBe(true)
+			expect(monitor["shouldIgnoreFile"]("/test/dist", mockStats)).toBe(true)
+			expect(monitor["shouldIgnoreFile"]("/test/build", mockStats)).toBe(true)
+			expect(monitor["shouldIgnoreFile"]("/test/coverage", mockStats)).toBe(true)
 		})
 
 		it("should ignore large binary files", () => {
+			const mockStats = { isDirectory: () => false, isFile: () => true, size: 3 * 1024 * 1024 } as any
 			vi.spyOn(fs, "statSync").mockImplementation(
 				(filePath: any) =>
 					({
@@ -656,12 +691,13 @@ describe("WorkspaceEventMonitor", () => {
 					}) as any,
 			)
 
-			expect(monitor["shouldIgnoreFile"]("/test/large.jpg")).toBe(true)
-			expect(monitor["shouldIgnoreFile"]("/test/large.mp4")).toBe(true)
-			expect(monitor["shouldIgnoreFile"]("/test/large.zip")).toBe(true)
+			expect(monitor["shouldIgnoreFile"]("/test/large.jpg", mockStats)).toBe(true)
+			expect(monitor["shouldIgnoreFile"]("/test/large.mp4", mockStats)).toBe(true)
+			expect(monitor["shouldIgnoreFile"]("/test/large.zip", mockStats)).toBe(true)
 		})
 
 		it("should not ignore regular files", () => {
+			const mockStats = { isDirectory: () => false, isFile: () => true, size: 1024 } as any
 			vi.spyOn(fs, "statSync").mockImplementation(
 				(filePath: any) =>
 					({
@@ -671,9 +707,9 @@ describe("WorkspaceEventMonitor", () => {
 					}) as any,
 			)
 
-			expect(monitor["shouldIgnoreFile"]("/test/regular.txt")).toBe(false)
-			expect(monitor["shouldIgnoreFile"]("/test/script.js")).toBe(false)
-			expect(monitor["shouldIgnoreFile"]("/test/style.css")).toBe(false)
+			expect(monitor["shouldIgnoreFile"]("/test/regular.txt", mockStats)).toBe(false)
+			expect(monitor["shouldIgnoreFile"]("/test/script.js", mockStats)).toBe(false)
+			expect(monitor["shouldIgnoreFile"]("/test/style.css", mockStats)).toBe(false)
 		})
 
 		it("should use CoIgnoreController when available", () => {
@@ -681,7 +717,8 @@ describe("WorkspaceEventMonitor", () => {
 			mockCoIgnoreController.validateAccess.mockReturnValue(false)
 			mockCoIgnoreController.coignoreContentInitialized = true
 
-			const result = monitor["shouldIgnoreFile"](testFilePath)
+			const mockStats = { isDirectory: () => false, isFile: () => true, size: 1024 } as any
+			const result = monitor["shouldIgnoreFile"](testFilePath, mockStats)
 
 			expect(result).toBe(true)
 			expect(mockCoIgnoreController.validateAccess).toHaveBeenCalledWith(testFilePath)
@@ -700,7 +737,8 @@ describe("WorkspaceEventMonitor", () => {
 					}) as any,
 			)
 
-			const result = monitor["shouldIgnoreFile"](testFilePath)
+			const mockStats = { isDirectory: () => false, isFile: () => true, size: 1024 } as any
+			const result = monitor["shouldIgnoreFile"](testFilePath, mockStats)
 
 			expect(result).toBe(false)
 			expect(mockCoIgnoreController.validateAccess).not.toHaveBeenCalled()

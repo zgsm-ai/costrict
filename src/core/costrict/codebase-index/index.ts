@@ -389,6 +389,12 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 			}
 
 			const versionDir = path.join(homeDir, ".costrict", "share")
+			const packageDir = path.join(homeDir, ".costrict", "package")
+			const packageInfoDir = path.join(packageDir, "costrict.json")
+			const packageInfoVersionDir = path.join(
+				packageDir,
+				`costrict-${versionInfo.versionId.major}.${versionInfo.versionId.minor}.${versionInfo.versionId.micro}.json`,
+			)
 			const versionFilePath = path.join(versionDir, "version.json")
 
 			// Ensure directory exists
@@ -403,6 +409,12 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 			}
 
 			fs.writeFileSync(versionFilePath, JSON.stringify(versionData, null, 2), "utf8")
+			fs.writeFile(packageInfoDir, JSON.stringify(versionData.packageInfo, null, 2), (err) => {
+				if (err) console.error(err.message)
+			})
+			fs.writeFile(packageInfoVersionDir, JSON.stringify(versionData.packageInfo, null, 2), (err) => {
+				if (err) console.error(err.message)
+			})
 		} catch (error) {
 			this.log(
 				`Failed to save local version information: ${error instanceof Error ? error.message : "Unknown error"}`,

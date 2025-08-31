@@ -299,7 +299,7 @@ export class WorkspaceEventMonitor {
 	 * Determine if a file should be ignored using CoIgnoreController and pattern matching
 	 * This function is used by chokidar's ignored option
 	 */
-	private shouldIgnoreFile(filePath: string): boolean {
+	private shouldIgnoreFile(filePath: string, stats: fs.Stats): boolean {
 		// First, use CoIgnoreController if it's initialized
 		if (this.ignoreController && this.ignoreController.coignoreContentInitialized) {
 			if (!this.ignoreController.validateAccess(filePath)) {
@@ -311,7 +311,6 @@ export class WorkspaceEventMonitor {
 		if (/(^|[\/\\])\../.test(filePath)) {
 			return true
 		}
-		const stats = fs.statSync(filePath)
 
 		// Additional checks based on file stats if available
 		// Ignore directories that match certain patterns
@@ -373,7 +372,7 @@ export class WorkspaceEventMonitor {
 		const filePath = url.fsPath
 		if (url.scheme !== "file") return
 		if (!(await this.ensureServiceEnabled())) return
-		if (this.shouldIgnoreFile(filePath)) return
+		if (this.shouldIgnoreFile(filePath, fs.statSync(filePath))) return
 
 		const eventKey = `delete:${filePath}`
 		const eventData: WorkspaceEventData = {
@@ -390,11 +389,10 @@ export class WorkspaceEventMonitor {
 	 * Handle document save event
 	 */
 	private async handleDocumentSave(url: vscode.Uri) {
-		const filePath = url.fsPath
-
 		if (url.scheme !== "file") return
 		if (!(await this.ensureServiceEnabled())) return
-		if (this.shouldIgnoreFile(filePath)) return
+		const filePath = url.fsPath
+		if (this.shouldIgnoreFile(filePath, fs.statSync(filePath))) return
 
 		// 1. 重新读取磁盘内容
 		let buf: Buffer
@@ -417,7 +415,7 @@ export class WorkspaceEventMonitor {
 		} else if (oldHash !== nowHash) {
 			this.documentContentCache.set(filePath, { contentHash: nowHash })
 		} else {
-			this.log.info(`[WorkspaceEventMonitor] Document content unchanged, skipping event trigger: ${filePath}`)
+			this.log.info(`[WorkspaceEventMonitor] Document content unchanged, skipping event trigger`)
 			return
 		}
 
@@ -439,9 +437,10 @@ export class WorkspaceEventMonitor {
 	private async handleFileRename(oldUri: vscode.Uri, newUri: vscode.Uri) {
 		if (oldUri.scheme !== "file" || newUri.scheme !== "file") return
 		if (!(await this.ensureServiceEnabled())) return
-		if (this.shouldIgnoreFile(newUri.fsPath)) return
+		const filePath = newUri.fsPath
+		if (this.shouldIgnoreFile(filePath, fs.statSync(filePath))) return
 
-		const eventKey = `rename:${oldUri.fsPath}:${newUri.fsPath}`
+		const eventKey = `rename:${oldUri.fsPath}:${filePath}`
 		const eventData: WorkspaceEventData = {
 			eventType: "rename_file",
 			eventTime: `${Date.now()}`,
@@ -460,8 +459,9 @@ export class WorkspaceEventMonitor {
 
 		// Handle added workspaces
 		event.added.forEach((folder) => {
-			if (this.shouldIgnoreFile(folder.uri.fsPath)) return
-			const eventKey = `workspace:open:${folder.uri.fsPath}`
+			const filePath = folder.uri.fsPath
+			if (this.shouldIgnoreFile(filePath, fs.statSync(filePath))) return
+			const eventKey = `workspace:open:${filePath}`
 			const eventData: WorkspaceEventData = {
 				eventType: "open_workspace",
 				eventTime: `${Date.now()}`,
@@ -472,8 +472,9 @@ export class WorkspaceEventMonitor {
 
 		// Handle removed workspaces
 		event.removed.forEach((folder) => {
-			if (this.shouldIgnoreFile(folder.uri.fsPath)) return
-			const eventKey = `workspace:close:${folder.uri.fsPath}`
+			const filePath = folder.uri.fsPath
+			if (this.shouldIgnoreFile(filePath, fs.statSync(filePath))) return
+			const eventKey = `workspace:close:${filePath}`
 			const eventData: WorkspaceEventData = {
 				eventType: "close_workspace",
 				eventTime: `${Date.now()}`,
@@ -489,9 +490,10 @@ export class WorkspaceEventMonitor {
 	private async handleDidCreateFiles(url: vscode.Uri) {
 		if (url.scheme !== "file") return
 		if (!(await this.ensureServiceEnabled())) return
-		if (this.shouldIgnoreFile(url.fsPath)) return
+		const filePath = url.fsPath
+		if (this.shouldIgnoreFile(filePath, fs.statSync(filePath))) return
 
-		const eventKey = `create:${url.fsPath}`
+		const eventKey = `create:${filePath}`
 		const eventData: WorkspaceEventData = {
 			eventType: "add_file",
 			eventTime: `${Date.now()}`,
@@ -514,8 +516,9 @@ export class WorkspaceEventMonitor {
 		}
 
 		workspaceFolders.forEach((folder) => {
-			if (this.shouldIgnoreFile(folder.uri.fsPath)) return
-			const eventKey = `workspace:initial:${folder.uri.fsPath}`
+			const filePath = folder.uri.fsPath
+			if (this.shouldIgnoreFile(filePath, fs.statSync(filePath))) return
+			const eventKey = `workspace:initial:${filePath}`
 			const eventData: WorkspaceEventData = {
 				eventType: "open_workspace",
 				eventTime: `${Date.now()}`,
@@ -635,14 +638,10 @@ export class WorkspaceEventMonitor {
 				const response = await ZgsmCodebaseIndexManager.getInstance().publishWorkspaceEvents(request)
 
 				if (response.success) {
-					this.log.info(
-						`[WorkspaceEventMonitor] ${evts} events (count: ${events.length}) sent successfully, response: ${response.data}`,
-					)
+					this.log.info(`[WorkspaceEventMonitor] ${evts} events sent successfully`)
 					return
 				} else {
-					this.log.warn(
-						`[WorkspaceEventMonitor] ${evts} events (count: ${events.length}) send failed: ${response.message}`,
-					)
+					this.log.warn(`[WorkspaceEventMonitor] ${evts} events send failed: ${response.message}`)
 				}
 			} catch (error) {
 				// Check if total retry time limit is reached (prevent infinite loop)
