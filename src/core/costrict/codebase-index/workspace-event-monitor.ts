@@ -1,5 +1,5 @@
 import * as vscode from "vscode"
-import { watch, FSWatcher } from "chokidar"
+import * as fs from "fs"
 import { ZgsmCodebaseIndexManager } from "./index"
 import { WorkspaceEventData, WorkspaceEventRequest } from "./types"
 import { TelemetryService } from "@roo-code/telemetry"
@@ -10,6 +10,10 @@ import { CoIgnoreController } from "./CoIgnoreController"
 import { getWorkspacePath } from "../../../utils/path"
 import * as path from "path"
 import type { ClineProvider } from "../../webview/ClineProvider"
+import { LRUCache } from "lru-cache"
+
+type FileEventHandler = (uri: vscode.Uri) => void
+type RenameEventHandler = (oldPath: vscode.Uri, newPath: vscode.Uri) => void
 
 /**
  * Workspace event monitoring configuration
@@ -20,8 +24,6 @@ export interface WorkspaceEventMonitorConfig {
 	batchSize: number
 	maxRetries: number
 	retryDelayMs: number
-	adaptivePerformance: boolean
-	fileSystemWatchDepth: number
 }
 
 /**
@@ -31,10 +33,8 @@ const DEFAULT_CONFIG: WorkspaceEventMonitorConfig = {
 	enabled: true,
 	debounceMs: 1000, // Reduced from 1000ms to 500ms for faster response
 	batchSize: 100, // Reduced from 100 to 50 for more frequent smaller batches
-	maxRetries: 3, // Increased from 2 to 3 for better reliability
-	retryDelayMs: 2000, // Reduced from 2000ms to 1000ms for faster recovery
-	adaptivePerformance: true, // Enable adaptive performance adjustments
-	fileSystemWatchDepth: 15, // Limit file system watch depth
+	maxRetries: 2, // Increased from 2 to 3 for better reliability
+	retryDelayMs: 1000,
 }
 
 /**
@@ -53,11 +53,19 @@ export class WorkspaceEventMonitor {
 	private logger?: ILogger
 	private clineProvider?: ClineProvider
 	private ignoreController: CoIgnoreController
-	// File system monitor to solve command line file deletion issues
-	private fileSystemWatcher: FSWatcher | null = null
-
-	// Document status tracking to solve save issues without content changes
-	private documentContentCache: Map<string, { contentHash: string; version: number }> = new Map()
+	private skipNextDelete = new Set<string>()
+	private skipNextCreate = new Set<string>()
+	private addHandlers: FileEventHandler[] = []
+	private modifyHandlers: FileEventHandler[] = []
+	private deleteHandlers: FileEventHandler[] = []
+	private renameHandlers: RenameEventHandler[] = []
+	private documentContentCache: LRUCache<string, { contentHash: string }> = new LRUCache<
+		string,
+		{ contentHash: string }
+	>({
+		max: 500, // 缓存500个条目
+		ttl: 10 * 60 * 1000, // 10分钟TTL
+	})
 
 	// Performance monitoring
 	private performanceMetrics = {
@@ -103,7 +111,12 @@ export class WorkspaceEventMonitor {
 			this.log.info("[WorkspaceEventMonitor] Starting to initialize event monitor")
 
 			// Register VSCode event listeners
-			this.registerEventListeners()
+			if (typeof vscode !== "undefined" && vscode.workspace) {
+				// Register file system monitor to solve command line file deletion issues
+				this.registerFileSystemWatcher()
+			} else {
+				this.log.warn("[WorkspaceEventMonitor] VSCode API not available, skipping event listener registration")
+			}
 
 			// Handle currently opened workspaces
 			this.handleInitialWorkspaceOpen()
@@ -164,13 +177,6 @@ export class WorkspaceEventMonitor {
 		this.disposables.forEach((disposable) => disposable.dispose())
 		this.disposables = []
 
-		// Close file system monitor
-		if (this.fileSystemWatcher) {
-			this.fileSystemWatcher.close()
-			this.fileSystemWatcher = null
-			this.log.info("[WorkspaceEventMonitor] File system monitor closed")
-		}
-
 		// Clean up document content cache
 		this.documentContentCache.clear()
 		this.log.info("[WorkspaceEventMonitor] Document content cache cleared")
@@ -193,45 +199,6 @@ export class WorkspaceEventMonitor {
 	}
 
 	/**
-	 * Register event listeners
-	 */
-	private registerEventListeners(): void {
-		// Safely check if VSCode API exists
-		if (typeof vscode === "undefined" || !vscode.workspace) {
-			this.log.warn("[WorkspaceEventMonitor] VSCode API not available, skipping event listener registration")
-			return
-		}
-
-		try {
-			// File save event
-			if (vscode.workspace.onDidSaveTextDocument) {
-				this.disposables.push(vscode.workspace.onDidSaveTextDocument(this.handleDocumentSave.bind(this)))
-			}
-
-			if (vscode.workspace.onDidRenameFiles) {
-				this.disposables.push(vscode.workspace.onDidRenameFiles(this.handleFileRename.bind(this)))
-			}
-
-			// Workspace folder change events
-			if (vscode.workspace.onDidChangeWorkspaceFolders) {
-				this.disposables.push(
-					vscode.workspace.onDidChangeWorkspaceFolders(this.handleWorkspaceChange.bind(this)),
-				)
-			}
-
-			// Extension activation event
-			if (vscode.workspace.onWillCreateFiles) {
-				this.disposables.push(vscode.workspace.onWillCreateFiles(this.handleWillCreateFiles.bind(this)))
-			}
-
-			// Register file system monitor to solve command line file deletion issues
-			this.registerFileSystemWatcher()
-		} catch (error) {
-			this.log.warn("[WorkspaceEventMonitor] Failed to register event listeners:", error)
-		}
-	}
-
-	/**
 	 * Register file system monitor
 	 */
 	private registerFileSystemWatcher(): void {
@@ -241,32 +208,57 @@ export class WorkspaceEventMonitor {
 			return
 		}
 
+		// Workspace folder change events
+		if (vscode.workspace.onDidChangeWorkspaceFolders) {
+			this.disposables.push(vscode.workspace.onDidChangeWorkspaceFolders(this.handleWorkspaceChange.bind(this)))
+		}
+
+		if (vscode.workspace.onDidRenameFiles) {
+			this.disposables.push(
+				vscode.workspace.onDidRenameFiles((event) => {
+					for (const f of event.files) {
+						// 防止重复触发 add/delete
+						this.skipNextDelete.add(f.oldUri.fsPath)
+						this.skipNextCreate.add(f.newUri.fsPath)
+						this.emitRename(f.oldUri, f.newUri)
+					}
+				}),
+			)
+		}
+
 		// Monitor all workspace folders
 		const watchPaths = workspaceFolders.map((folder) => folder.uri.fsPath)
 
 		try {
-			this.fileSystemWatcher = watch(watchPaths, {
-				ignored: (path: string, stats?: any) => this.shouldIgnoreFile(path, stats),
-				persistent: true,
-				ignoreInitial: true, // Ignore initial scan
-				awaitWriteFinish: {
-					stabilityThreshold: this.config.adaptivePerformance ? 300 : 500, // Adaptive threshold
-					pollInterval: this.config.adaptivePerformance ? 150 : 200, // Adaptive polling interval
-				},
-				usePolling: false, // Use native file system events for better performance
-				interval: 1000, // Check interval for polling (fallback only)
-				binaryInterval: 2000, // Longer interval for binary files
-				alwaysStat: false, // Don't stat files unnecessarily
-				depth: this.config.fileSystemWatchDepth, // Use configured depth
-				ignorePermissionErrors: true, // Ignore permission errors to reduce noise
-				atomic: true, // Use atomic operations when available
-			})
+			watchPaths.forEach((watchPath) => {
+				const relPattern = new vscode.RelativePattern(vscode.Uri.file(watchPath), "**/*")
+				const watcher = vscode.workspace.createFileSystemWatcher(relPattern)
 
-			// Listen for file delete events
-			this.fileSystemWatcher?.on("unlink", (filePath: string) => {
-				this.handleFileSystemFileDelete(filePath)
-			})
+				watcher.onDidCreate((uri) => {
+					if (!this.skipNextCreate.has(uri.fsPath)) {
+						this.emitAdd(uri)
+					}
+					this.skipNextCreate.delete(uri.fsPath)
+				})
 
+				watcher.onDidChange((uri) => {
+					this.emitModify(uri)
+				})
+
+				watcher.onDidDelete((uri) => {
+					if (!this.skipNextDelete.has(uri.fsPath)) {
+						this.emitDelete(uri)
+					}
+					this.skipNextDelete.delete(uri.fsPath)
+				})
+
+				this.onAdd((path) => this.handleDidCreateFiles(path))
+				this.onModify((path) => this.handleDocumentSave(path))
+				this.onDelete((path) => this.handleDidFileDelete(path))
+				this.onRename((oldPath, newPath) => this.handleFileRename(oldPath, newPath))
+
+				this.disposables.push(watcher)
+			})
 			this.log.info(
 				`[WorkspaceEventMonitor] File system monitor registered, monitoring paths: ${watchPaths.join(", ")}`,
 			)
@@ -275,21 +267,39 @@ export class WorkspaceEventMonitor {
 		}
 	}
 
-	/**
-	 * Build ignore patterns from .gitignore and .coignore files
-	 */
-	private buildIgnorePatterns(): (string | RegExp)[] {
-		const patterns: (string | RegExp)[] = [
-			/(^|[\/\\])\../, // Ignore hidden files
-		]
-
-		return patterns
+	// --- 事件注册 ---
+	onAdd(handler: FileEventHandler) {
+		this.addHandlers.push(handler)
 	}
+	onModify(handler: FileEventHandler) {
+		this.modifyHandlers.push(handler)
+	}
+	onDelete(handler: FileEventHandler) {
+		this.deleteHandlers.push(handler)
+	}
+	onRename(handler: RenameEventHandler) {
+		this.renameHandlers.push(handler)
+	}
+
+	// --- 内部触发 ---
+	private emitAdd(uri: vscode.Uri) {
+		this.addHandlers.forEach((h) => h(uri))
+	}
+	private emitModify(uri: vscode.Uri) {
+		this.modifyHandlers.forEach((h) => h(uri))
+	}
+	private emitDelete(uri: vscode.Uri) {
+		this.deleteHandlers.forEach((h) => h(uri))
+	}
+	private emitRename(oldPath: vscode.Uri, newPath: vscode.Uri) {
+		this.renameHandlers.forEach((h) => h(oldPath, newPath))
+	}
+
 	/**
 	 * Determine if a file should be ignored using CoIgnoreController and pattern matching
 	 * This function is used by chokidar's ignored option
 	 */
-	private shouldIgnoreFile(filePath: string, stats?: any): boolean {
+	private shouldIgnoreFile(filePath: string): boolean {
 		// First, use CoIgnoreController if it's initialized
 		if (this.ignoreController && this.ignoreController.coignoreContentInitialized) {
 			if (!this.ignoreController.validateAccess(filePath)) {
@@ -301,52 +311,55 @@ export class WorkspaceEventMonitor {
 		if (/(^|[\/\\])\../.test(filePath)) {
 			return true
 		}
+		const stats = fs.statSync(filePath)
 
 		// Additional checks based on file stats if available
-		if (stats) {
-			// Ignore directories that match certain patterns
-			if (stats.isDirectory()) {
-				const dirName = path.basename(filePath)
-				if (dirName.startsWith(".") || ["node_modules", "dist", "build", "out", "coverage"].includes(dirName)) {
-					return true
-				}
+		// Ignore directories that match certain patterns
+		if (stats.isDirectory()) {
+			const dirName = path.basename(filePath)
+			if (
+				dirName.startsWith(".") ||
+				["node_modules", "dist", "build", "out", "coverage", "tests", "mocks"].includes(dirName)
+			) {
+				return true
 			}
+		}
 
-			// Ignore large files (optional, based on size)
-			if (stats.isFile() && stats.size > 10 * 1024 * 1024) {
-				// Files larger than 10MB
-				const ext = path.extname(filePath).toLowerCase()
-				const largeFileExtensions = [
-					".jpg",
-					".jpeg",
-					".png",
-					".gif",
-					".bmp",
-					".ico",
-					".svg",
-					".webp",
-					".mp3",
-					".mp4",
-					".avi",
-					".mov",
-					".wmv",
-					".flv",
-					".mkv",
-					".pdf",
-					".zip",
-					".rar",
-					".tar",
-					".gz",
-					".7z",
-					".exe",
-					".dll",
-					".so",
-					".dylib",
-					".bin",
-				]
-				if (largeFileExtensions.includes(ext)) {
-					return true
-				}
+		// Ignore large files (optional, based on size)
+		if (stats.isFile() && stats.size > 2 * 1024 * 1024) {
+			// Files larger than 10MB
+			const ext = path.extname(filePath).toLowerCase()
+			const largeFileExtensions = [
+				".jpg",
+				".jpeg",
+				".png",
+				".gif",
+				".bmp",
+				".ico",
+				".svg",
+				".webp",
+				".mp3",
+				".mp4",
+				".avi",
+				".mov",
+				".wmv",
+				".flv",
+				".mkv",
+				".pdf",
+				".zip",
+				".rar",
+				".tar",
+				".gz",
+				".7z",
+				".exe",
+				".dll",
+				".so",
+				".dylib",
+				".bin",
+				".map",
+			]
+			if (largeFileExtensions.includes(ext)) {
+				return true
 			}
 		}
 
@@ -356,9 +369,11 @@ export class WorkspaceEventMonitor {
 	/**
 	 * Handle file delete event detected by file system
 	 */
-	private async handleFileSystemFileDelete(filePath: string) {
-		if (!this.ignoreController.validateAccess(filePath)) return
+	private async handleDidFileDelete(url: vscode.Uri) {
+		const filePath = url.fsPath
+		if (url.scheme !== "file") return
 		if (!(await this.ensureServiceEnabled())) return
+		if (this.shouldIgnoreFile(filePath)) return
 
 		const eventKey = `delete:${filePath}`
 		const eventData: WorkspaceEventData = {
@@ -374,48 +389,39 @@ export class WorkspaceEventMonitor {
 	/**
 	 * Handle document save event
 	 */
-	private async handleDocumentSave(document: vscode.TextDocument) {
+	private async handleDocumentSave(url: vscode.Uri) {
+		const filePath = url.fsPath
+
+		if (url.scheme !== "file") return
 		if (!(await this.ensureServiceEnabled())) return
+		if (this.shouldIgnoreFile(filePath)) return
 
-		const uri = document.uri
-
-		if (uri.scheme !== "file") return
-
-		const filePath = uri.fsPath
-		if (!this.ignoreController.validateAccess(filePath)) return
-		const currentContentHash = computeHash(document.getText())
-		const currentVersion = document.version
-
-		// Debug log: record save event trigger
-		this.log.info(`[WorkspaceEventMonitor] Document save event triggered: ${filePath}`)
-
-		// Check if document content really changed
-		const cachedInfo = this.documentContentCache.get(filePath)
-		let hasContentChanged = false
-
-		if (cachedInfo) {
-			// Compare content
-			hasContentChanged = cachedInfo.contentHash !== currentContentHash
-			// this.log.info(
-			// 	`[WorkspaceEventMonitor] Content ${hasContentChanged ? "Changed" : "No change"}`,
-			// )
-		} else {
-			hasContentChanged = true
-			// this.log.info(`[WorkspaceEventMonitor] First time saving document, no cache information`)
-		}
-
-		// Update cache
-		this.documentContentCache.set(filePath, {
-			contentHash: currentContentHash,
-			version: currentVersion,
-		})
-
-		// Only trigger event when content really changes
-		if (!hasContentChanged) {
-			this.log.info(`[WorkspaceEventMonitor] Document content unchanged, skipping event trigger`)
+		// 1. 重新读取磁盘内容
+		let buf: Buffer
+		try {
+			buf = fs.readFileSync(filePath)
+		} catch {
+			// 文件瞬间被删，忽略
+			this.documentContentCache.delete(filePath)
 			return
 		}
-		// this.log.info(`[WorkspaceEventMonitor] Triggering modify event`)
+
+		// 2. 计算当前哈希
+		const nowHash = computeHash(buf.toString())
+		const oldHash = this.documentContentCache.get(filePath)?.contentHash
+
+		// 3. 比较
+		if (oldHash === undefined) {
+			// 第一次发现该文件
+			this.documentContentCache.set(filePath, { contentHash: nowHash })
+		} else if (oldHash !== nowHash) {
+			this.documentContentCache.set(filePath, { contentHash: nowHash })
+		} else {
+			this.log.info(`[WorkspaceEventMonitor] Document content unchanged, skipping event trigger: ${filePath}`)
+			return
+		}
+
+		this.log.info(`[WorkspaceEventMonitor] Triggering modify event`)
 		const eventKey = `modify:${filePath}`
 		const eventData: WorkspaceEventData = {
 			eventType: "modify_file",
@@ -430,23 +436,20 @@ export class WorkspaceEventMonitor {
 	/**
 	 * Handle file rename/move event
 	 */
-	private async handleFileRename(event: vscode.FileRenameEvent) {
+	private async handleFileRename(oldUri: vscode.Uri, newUri: vscode.Uri) {
+		if (oldUri.scheme !== "file" || newUri.scheme !== "file") return
 		if (!(await this.ensureServiceEnabled())) return
+		if (this.shouldIgnoreFile(newUri.fsPath)) return
 
-		event.files.forEach(({ oldUri, newUri }) => {
-			if (!this.ignoreController.validateAccess(newUri.fsPath)) return
-			if (oldUri.scheme !== "file" || newUri.scheme !== "file") return
+		const eventKey = `rename:${oldUri.fsPath}:${newUri.fsPath}`
+		const eventData: WorkspaceEventData = {
+			eventType: "rename_file",
+			eventTime: `${Date.now()}`,
+			sourcePath: oldUri.fsPath,
+			targetPath: newUri.fsPath,
+		}
 
-			const eventKey = `rename:${oldUri.fsPath}:${newUri.fsPath}`
-			const eventData: WorkspaceEventData = {
-				eventType: "rename_file",
-				eventTime: `${Date.now()}`,
-				sourcePath: oldUri.fsPath,
-				targetPath: newUri.fsPath,
-			}
-
-			this.addEvent(eventKey, eventData)
-		})
+		this.addEvent(eventKey, eventData)
 	}
 
 	/**
@@ -457,7 +460,7 @@ export class WorkspaceEventMonitor {
 
 		// Handle added workspaces
 		event.added.forEach((folder) => {
-			if (!this.ignoreController.validateAccess(folder.uri.fsPath)) return
+			if (this.shouldIgnoreFile(folder.uri.fsPath)) return
 			const eventKey = `workspace:open:${folder.uri.fsPath}`
 			const eventData: WorkspaceEventData = {
 				eventType: "open_workspace",
@@ -469,7 +472,7 @@ export class WorkspaceEventMonitor {
 
 		// Handle removed workspaces
 		event.removed.forEach((folder) => {
-			if (!this.ignoreController.validateAccess(folder.uri.fsPath)) return
+			if (this.shouldIgnoreFile(folder.uri.fsPath)) return
 			const eventKey = `workspace:close:${folder.uri.fsPath}`
 			const eventData: WorkspaceEventData = {
 				eventType: "close_workspace",
@@ -483,23 +486,20 @@ export class WorkspaceEventMonitor {
 	/**
 	 * Handle file creation event
 	 */
-	private async handleWillCreateFiles(event: vscode.FileWillCreateEvent) {
+	private async handleDidCreateFiles(url: vscode.Uri) {
+		if (url.scheme !== "file") return
 		if (!(await this.ensureServiceEnabled())) return
+		if (this.shouldIgnoreFile(url.fsPath)) return
 
-		event.files.forEach((uri) => {
-			if (!this.ignoreController.validateAccess(uri.fsPath)) return
-			if (uri.scheme !== "file") return
+		const eventKey = `create:${url.fsPath}`
+		const eventData: WorkspaceEventData = {
+			eventType: "add_file",
+			eventTime: `${Date.now()}`,
+			sourcePath: "",
+			targetPath: url.fsPath,
+		}
 
-			const eventKey = `create:${uri.fsPath}`
-			const eventData: WorkspaceEventData = {
-				eventType: "add_file",
-				eventTime: `${Date.now()}`,
-				sourcePath: "",
-				targetPath: uri.fsPath,
-			}
-
-			this.addEvent(eventKey, eventData)
-		})
+		this.addEvent(eventKey, eventData)
 	}
 
 	/**
@@ -514,7 +514,7 @@ export class WorkspaceEventMonitor {
 		}
 
 		workspaceFolders.forEach((folder) => {
-			if (!this.ignoreController.validateAccess(folder.uri.fsPath)) return
+			if (this.shouldIgnoreFile(folder.uri.fsPath)) return
 			const eventKey = `workspace:initial:${folder.uri.fsPath}`
 			const eventData: WorkspaceEventData = {
 				eventType: "open_workspace",
@@ -532,11 +532,6 @@ export class WorkspaceEventMonitor {
 		// Deduplication: use event key as unique identifier
 		this.eventBuffer.set(key, event)
 
-		// Adaptive performance adjustment
-		if (this.config.adaptivePerformance) {
-			this.adjustPerformanceBasedOnLoad()
-		}
-
 		// Check if immediate flush is needed
 		const now = Date.now()
 		if (now - this.lastFlushTime >= this.config.debounceMs) {
@@ -544,35 +539,6 @@ export class WorkspaceEventMonitor {
 		} else if (this.eventBuffer.size >= this.config.batchSize) {
 			// If buffer is full, flush immediately
 			this.flushEvents()
-		}
-	}
-
-	/**
-	 * Adjust performance based on current system load
-	 */
-	private adjustPerformanceBasedOnLoad(): void {
-		const now = Date.now()
-		const eventCount = this.eventBuffer.size
-
-		// Calculate system load based on event buffer size and processing time
-		this.performanceMetrics.systemLoad = Math.min((eventCount / this.config.batchSize) * 100, 100)
-
-		// Adaptive debounce adjustment
-		if (this.performanceMetrics.systemLoad > 80) {
-			// High load: increase debounce time to reduce frequency
-			this.config.debounceMs = Math.min(this.config.debounceMs * 1.2, 2000)
-		} else if (this.performanceMetrics.systemLoad < 30) {
-			// Low load: decrease debounce time for faster response
-			this.config.debounceMs = Math.max(this.config.debounceMs * 0.8, 200)
-		}
-
-		// Adaptive batch size adjustment
-		if (this.performanceMetrics.systemLoad > 70) {
-			// High load: reduce batch size for more frequent processing
-			this.config.batchSize = Math.max(this.config.batchSize * 0.8, 20)
-		} else if (this.performanceMetrics.systemLoad < 40) {
-			// Low load: increase batch size for better throughput
-			this.config.batchSize = Math.min(this.config.batchSize * 1.2, 100)
 		}
 	}
 
@@ -602,9 +568,6 @@ export class WorkspaceEventMonitor {
 	private async flushEvents(): Promise<void> {
 		if (this.eventBuffer.size === 0) return
 
-		const startTime = Date.now()
-		const eventCount = this.eventBuffer.size
-
 		// Get current workspace
 		const workspace = this.getCurrentWorkspace()
 		if (!workspace) {
@@ -624,13 +587,6 @@ export class WorkspaceEventMonitor {
 
 		// Send to server
 		await this.sendEventsToServer(workspace, events)
-
-		// Update performance metrics
-		const processingTime = Date.now() - startTime
-		this.performanceMetrics.eventProcessingTime = processingTime
-		this.performanceMetrics.lastEventCount = eventCount
-		this.performanceMetrics.averageProcessingTime =
-			this.performanceMetrics.averageProcessingTime * 0.7 + processingTime * 0.3
 	}
 
 	/**
@@ -665,7 +621,6 @@ export class WorkspaceEventMonitor {
 	 */
 	private async sendEventsToServer(workspace: string, events: WorkspaceEventData[]): Promise<void> {
 		if (events.length === 0) return
-
 		const request: WorkspaceEventRequest = {
 			workspace,
 			data: events,
@@ -681,11 +636,13 @@ export class WorkspaceEventMonitor {
 
 				if (response.success) {
 					this.log.info(
-						`[WorkspaceEventMonitor] ${evts} events sent successfully, response: ${response.data}`,
+						`[WorkspaceEventMonitor] ${evts} events (count: ${events.length}) sent successfully, response: ${response.data}`,
 					)
 					return
 				} else {
-					this.log.warn(`[WorkspaceEventMonitor] ${evts} events send failed: ${response.message}`)
+					this.log.warn(
+						`[WorkspaceEventMonitor] ${evts} events (count: ${events.length}) send failed: ${response.message}`,
+					)
 				}
 			} catch (error) {
 				// Check if total retry time limit is reached (prevent infinite loop)
@@ -749,32 +706,6 @@ export class WorkspaceEventMonitor {
 	}
 	public setProvider(clineProvider: ClineProvider): void {
 		this.clineProvider = clineProvider
-	}
-	/**
-	 * Get current status
-	 */
-	public getStatus(): {
-		isInitialized: boolean
-		eventBufferSize: number
-		config: WorkspaceEventMonitorConfig
-		performance: {
-			eventProcessingTime: number
-			averageProcessingTime: number
-			systemLoad: number
-			lastEventCount: number
-		}
-	} {
-		return {
-			isInitialized: this.isInitialized,
-			eventBufferSize: this.eventBuffer.size,
-			config: { ...this.config },
-			performance: {
-				eventProcessingTime: this.performanceMetrics.eventProcessingTime,
-				averageProcessingTime: this.performanceMetrics.averageProcessingTime,
-				systemLoad: this.performanceMetrics.systemLoad,
-				lastEventCount: this.performanceMetrics.lastEventCount,
-			},
-		}
 	}
 
 	private async ensureServiceEnabled() {
