@@ -1,6 +1,10 @@
 import * as vscode from "vscode"
 
 export const renderModes = {
+	noLimit: {
+		limit: 0,
+		interval: 16,
+	},
 	fast: {
 		limit: 2,
 		interval: 50,
@@ -18,7 +22,7 @@ export const renderModes = {
 export function getApiResponseRenderMode() {
 	const apiResponseRenderMode = vscode.workspace
 		.getConfiguration("zgsm")
-		.get<string>("apiResponseRenderMode", "medium") as "fast" | "medium" | "slow"
+		.get<string>("apiResponseRenderMode", "medium") as "fast" | "medium" | "slow" | "noLimit"
 
 	return renderModes[apiResponseRenderMode] || renderModes["medium"]
 }

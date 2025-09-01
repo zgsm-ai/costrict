@@ -636,6 +636,7 @@
 				"zgsm.apiResponseRenderMode": {
 					"type": "string",
 					"enum": [
+						"noLimit",
 						"fast",
 						"medium",
 						"slow"
