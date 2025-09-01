@@ -6,7 +6,7 @@ import { jwtDecode } from "jwt-decode"
 import { ZgsmAuthApi, ZgsmAuthConfig } from "../auth"
 import { getClientId } from "../../../utils/getClientId"
 import { ILogger } from "../../../utils/logger"
-import find, { ProcessInfo, FindConfig } from "find-process"
+import { default as findWin32Process } from "find-process"
 
 export function execPromise(command: string, opt: any = {}): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -97,7 +97,13 @@ export const getServiceConfig = (serverName: string) => {
 }
 
 export async function processIsRunning(processName: string, logger: ILogger): Promise<number[]> {
-	const plist = await find("name", processName, { strict: true })
+	const platform = os.platform()
+
+	if (["linux", "darwin"].includes(platform)) {
+		return await findProcess(processName)
+	}
+
+	const plist = await findWin32Process("name", processName, { strict: true })
 
 	return plist.map((item) => item.pid)
 }
@@ -145,4 +151,21 @@ export function spawnDetached(
 			child.unref()
 		}
 	})
+}
+
+export async function findProcess(name: string) {
+	try {
+		const pattern = `(^|/)(${name})( |$)`
+		const cmd = `pgrep -af -f '${pattern}'`
+		const output = await execPromise(cmd, { encoding: "utf8" })
+
+		if (!output) return []
+
+		return output
+			.split("\n")
+			.map((line) => parseInt(line.split(" ")[0], 10))
+			.filter((pid) => !isNaN(pid))
+	} catch {
+		return []
+	}
 }
