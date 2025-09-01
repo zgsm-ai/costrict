@@ -1,5 +1,9 @@
 # Costrict Change Log
 
+## [1.6.4]
+
+- Fix wsl2 `your 131072x1 screen size is bogus. expect trouble`
+
 ## [1.6.3]
 
 - Optimize history cache warning
