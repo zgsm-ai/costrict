@@ -402,17 +402,22 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 				fs.mkdirSync(versionDir, { recursive: true })
 			}
 
+			// Ensure directory exists
+			if (!fs.existsSync(packageDir)) {
+				fs.mkdirSync(packageDir, { recursive: true })
+			}
+
 			// Write version file
 			const versionData = {
 				...versionInfo,
 				updateAt: Date.now(),
 			}
 
-			fs.writeFileSync(versionFilePath, JSON.stringify(versionData, null, 2), "utf8")
-			fs.writeFile(packageInfoDir, JSON.stringify(versionData.packageInfo, null, 2), (err) => {
+			fs.writeFileSync(versionFilePath, JSON.stringify(versionData || {}, null, 2), "utf8")
+			fs.writeFile(packageInfoDir, JSON.stringify(versionData.packageInfo || {}, null, 2), (err) => {
 				if (err) console.error(err.message)
 			})
-			fs.writeFile(packageInfoVersionDir, JSON.stringify(versionData.packageInfo, null, 2), (err) => {
+			fs.writeFile(packageInfoVersionDir, JSON.stringify(versionData.packageInfo || {}, null, 2), (err) => {
 				if (err) console.error(err.message)
 			})
 		} catch (error) {
