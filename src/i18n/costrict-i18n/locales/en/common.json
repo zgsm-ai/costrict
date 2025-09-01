@@ -195,5 +195,9 @@
 			"cloud_auth_required": "Your organization requires Costrict Cloud authentication. Please sign in to continue.",
 			"organization_mismatch": "You must be authenticated with your organization's Costrict Cloud account."
 		}
+	},
+	"history": {
+		"warn": "History task cache exceeds {{size}}, you can manually clean up history to free disk space",
+		"viewAllHistory": "View all tasks"
 	}
 }

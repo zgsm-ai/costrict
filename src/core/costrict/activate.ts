@@ -36,6 +36,10 @@ import { workspaceEventMonitor } from "./codebase-index/workspace-event-monitor"
 import { initGitCheckoutDetector } from "./codebase-index/git-checkout-detector"
 import { writeCostrictAccessToken } from "./codebase-index/utils"
 import { getPanel } from "../../activate/registerCommands"
+import { t } from "../../i18n"
+import prettyBytes from "pretty-bytes"
+
+const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
 
 /**
  * Initialization entry
@@ -183,10 +187,15 @@ export async function activate(
 	}
 	provider.getState().then((state) => {
 		const size = (state.taskHistory || []).reduce((p, c) => p + Number(c.size), 0)
-		if (size > 1000 * 1000 * 1000 * 3) {
-			vscode.window.showWarningMessage(
-				`History task cache exceeds 3GB, you can manually clean up history to free disk space`,
-			)
+		if (size > HISTORY_WARN_SIZE) {
+			const btnText = t("common:history.viewAllHistory")
+			vscode.window
+				.showWarningMessage(t("common:history.warn", { size: prettyBytes(HISTORY_WARN_SIZE) }), btnText)
+				.then((selection) => {
+					if (btnText === selection) {
+						provider.postMessageToWebview({ type: "action", action: "switchTab", tab: "history" })
+					}
+				})
 		}
 	})
 	setTimeout(() => {

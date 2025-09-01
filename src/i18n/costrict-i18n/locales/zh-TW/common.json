@@ -191,5 +191,9 @@
 			"cloud_auth_required": "您的組織需要 Costrict Cloud 身份驗證。請登入以繼續。",
 			"organization_mismatch": "您必須使用組織的 Costrict Cloud 帳戶進行身份驗證。"
 		}
+	},
+	"history": {
+		"warn": "歷史任務快取超過 {{size}}，您可以手動清理歷史記錄以釋放磁碟空間",
+		"viewAllHistory": "檢視所有工作"
 	}
 }

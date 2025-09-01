@@ -195,5 +195,9 @@
 			"cloud_auth_required": "您的组织需要 Costrict Cloud 身份验证。请登录以继续。",
 			"organization_mismatch": "您必须使用组织的 Costrict Cloud 账户进行身份验证。"
 		}
+	},
+	"history": {
+		"warn": "历史任务缓存超过 {{size}}，您可以手动清理历史记录以释放磁盘空间",
+		"viewAllHistory": "查看所有历史记录"
 	}
 }
