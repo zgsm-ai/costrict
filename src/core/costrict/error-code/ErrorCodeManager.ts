@@ -17,6 +17,7 @@ export interface IErrorMap {
 export class ErrorCodeManager {
 	private static instance: ErrorCodeManager
 	private errorMap: IErrorMap = {}
+	private unknownError = { message: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
 	private provider!: ClineProvider
 
 	private constructor() {}
@@ -116,7 +117,6 @@ export class ErrorCodeManager {
 		const isHtml = error?.headers && error.headers["content-type"] && error.headers["content-type"] === "text/html"
 		let rawError = error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message
 		let status = error.status as number
-		const unknownError = { message: t("apiErrors:status.unknown"), solution: t("apiErrors:solution.unknown") }
 		const { code, headers } = error
 		const requestId = headers?.get("x-request-id") ?? null
 		const { apiConfiguration } = await this.provider.getState()
@@ -154,7 +154,7 @@ export class ErrorCodeManager {
 			"quota-manager.voucher_expired",
 		]
 		if (code) {
-			let { message, solution } = this.errorMap[code] || unknownError
+			let { message, solution } = this.errorMap[code] || this.unknownError
 			if (authRequiredCodes.includes(code)) {
 				rawError = message
 				message = defaultError["401"].message
@@ -186,7 +186,7 @@ ${checkRemainingQuotaStr}
 			this.provider.log(`[Costrict#apiErrors] task ${taskId}.${instanceId} Raw Error: ${rawError}`)
 			return `${t("apiErrors:request.error_details")}\n\n${message}\n\n${requestId ? `RequestID: ${requestId}\n\n` : ""}${t("apiErrors:request.solution")}\n${solution}`
 		}
-		const { message, solution } = defaultError[status] || unknownError
+		const { message, solution } = defaultError[status] || this.unknownError
 		if (defaultError[status]) {
 			TelemetryService.instance.captureError(
 				status === undefined ? `ApiError_unknown` : `ApiError_status_${status}`,
@@ -204,5 +204,9 @@ ${checkRemainingQuotaStr}
 		return Array.from(new Uint8Array(hashBuffer))
 			.map((b) => b.toString(16).padStart(2, "0"))
 			.join("")
+	}
+
+	getErrorMessageByCode(code: string) {
+		return this.errorMap[code] || this.unknownError
 	}
 }

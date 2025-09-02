@@ -59,7 +59,7 @@ import { MarketplaceManager, MarketplaceItemType } from "../../services/marketpl
 import { setPendingTodoList } from "../tools/updateTodoListTool"
 import { ZgsmAuthConfig } from "../costrict/auth"
 import { CodeReviewService, startReview } from "../costrict/code-review"
-import { ZgsmCodebaseIndexManager, IndexSwitchRequest } from "../costrict/codebase-index"
+import { ZgsmCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
 import { ErrorCodeManager } from "../costrict/error-code"
 import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
 
@@ -2460,8 +2460,21 @@ export const webviewMessageHandler = async (
 				// Call ZgsmCodebaseIndexManager.getIndexStatus()
 				const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
 				const response = await zgsmCodebaseIndexManager.getIndexStatus(workspacePath)
+				const errorCodeManager = ErrorCodeManager.getInstance()
 
-				// Return response message
+				const updateFailedReason = (item: IndexStatusInfo) => {
+					if (item.status === "failed") {
+						item.failedReason = errorCodeManager.getErrorMessageByCode(item.failedReason).message
+					}
+				}
+
+				if (response?.data?.codegraph) {
+					updateFailedReason(response.data.codegraph)
+				}
+				if (response?.data?.embedding) {
+					updateFailedReason(response.data.embedding)
+				}
+
 				await provider.postMessageToWebview({
 					type: "codebaseIndexStatusResponse",
 					payload: {
