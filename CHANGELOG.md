@@ -1,5 +1,12 @@
 # Costrict Change Log
 
+## [1.6.5]
+
+- Optimize file watching and ignore patterns
+- Updates project references and contact information
+- Optimize error handling and localization
+- Sync roocode
+
 ## [1.6.4]
 
 - Fix wsl2 `your 131072x1 screen size is bogus. expect trouble`
