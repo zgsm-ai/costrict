@@ -11,6 +11,8 @@ import { getWorkspacePath } from "../../../utils/path"
 import * as path from "path"
 import type { ClineProvider } from "../../webview/ClineProvider"
 import { LRUCache } from "lru-cache"
+import { isPathInIgnoredDirectory } from "../../../services/glob/ignore-utils"
+import { scannerExtensions } from "../../../services/code-index/shared/supported-extensions"
 
 type FileEventHandler = (uri: vscode.Uri) => void
 type RenameEventHandler = (oldPath: vscode.Uri, newPath: vscode.Uri) => void
@@ -231,7 +233,10 @@ export class WorkspaceEventMonitor {
 
 		try {
 			watchPaths.forEach((watchPath) => {
-				const relPattern = new vscode.RelativePattern(vscode.Uri.file(watchPath), "**/*")
+				const relPattern = new vscode.RelativePattern(
+					vscode.Uri.file(watchPath),
+					`**/*{${scannerExtensions.map((e) => e.substring(1)).join(",")}}`,
+				)
 				const watcher = vscode.workspace.createFileSystemWatcher(relPattern)
 
 				watcher.onDidCreate((uri) => {
@@ -308,7 +313,7 @@ export class WorkspaceEventMonitor {
 		}
 
 		// Then, check against our built-in patterns
-		if (/(^|[\/\\])\../.test(filePath)) {
+		if (isPathInIgnoredDirectory(filePath)) {
 			return true
 		}
 
@@ -316,10 +321,7 @@ export class WorkspaceEventMonitor {
 		// Ignore directories that match certain patterns
 		if (stats.isDirectory()) {
 			const dirName = path.basename(filePath)
-			if (
-				dirName.startsWith(".") ||
-				["node_modules", "dist", "build", "out", "coverage", "tests", "mocks"].includes(dirName)
-			) {
+			if (dirName.startsWith(".") || ["coverage", "tests", "mocks"].includes(dirName)) {
 				return true
 			}
 		}
