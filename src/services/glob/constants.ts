@@ -21,5 +21,9 @@ export const DIRS_TO_IGNORE = [
 	"pkg",
 	"Pods",
 	".git",
+	"coverage",
+	".history",
+	".turbo",
+	".cache",
 	".*",
 ]

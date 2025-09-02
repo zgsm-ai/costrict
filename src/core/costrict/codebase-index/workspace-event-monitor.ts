@@ -321,7 +321,7 @@ export class WorkspaceEventMonitor {
 		// Ignore directories that match certain patterns
 		if (stats.isDirectory()) {
 			const dirName = path.basename(filePath)
-			if (dirName.startsWith(".") || ["coverage", "tests", "mocks"].includes(dirName)) {
+			if (["tests", "mocks"].includes(dirName)) {
 				return true
 			}
 		}
