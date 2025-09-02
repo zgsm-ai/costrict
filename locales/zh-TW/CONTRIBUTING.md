@@ -1,19 +1,14 @@
 <div align="center">
 <sub>
 
-[English](../../CONTRIBUTING.md) • [Català](../ca/CONTRIBUTING.md) • [Deutsch](../de/CONTRIBUTING.md) • [Español](../es/CONTRIBUTING.md) • [Français](../fr/CONTRIBUTING.md) • [हिंदी](../hi/CONTRIBUTING.md) • [Bahasa Indonesia](../id/CONTRIBUTING.md) • [Italiano](../it/CONTRIBUTING.md) • [日本語](../ja/CONTRIBUTING.md)
-
-</sub>
-<sub>
-
-[한국어](../ko/CONTRIBUTING.md) • [Nederlands](../nl/CONTRIBUTING.md) • [Polski](../pl/CONTRIBUTING.md) • [Português (BR)](../pt-BR/CONTRIBUTING.md) • [Русский](../ru/CONTRIBUTING.md) • [Türkçe](../tr/CONTRIBUTING.md) • [Tiếng Việt](../vi/CONTRIBUTING.md) • [简体中文](../zh-CN/CONTRIBUTING.md) • <b>繁體中文</b>
+[English](../../CONTRIBUTING.md) • [简体中文](../zh-CN/CONTRIBUTING.md) • <b>繁體中文</b>
 
 </sub>
 </div>
 
-# 參與 Roo Code 貢獻
+# 參與 Costrict 貢獻
 
-Roo Code 是一個由社群驅動的專案，我們深深重視每一份貢獻。為了簡化協作流程，我們採用 [Issue-First](#issue-first-方式) 原則，這表示所有 [Pull Request (PR)](#提交-pull-request) 必須先關聯至 GitHub Issue。請仔細閱讀本指南。
+Costrict 是一個由社群驅動的專案，我們深深重視每一份貢獻。為了簡化協作流程，我們採用 [Issue-First](#issue-first-方式) 原則，這表示所有 [Pull Request (PR)](#提交-pull-request) 必須先關聯至 GitHub Issue。請仔細閱讀本指南。
 
 ## 目錄
 
@@ -52,10 +47,9 @@ Roo Code 是一個由社群驅動的專案，我們深深重視每一份貢獻�
 
 在 PR 中請提及與這些領域的關聯。
 
-### 3. 加入 Roo Code 社群
+### 3. 加入 Costrict 社群
 
-- **主要方式：** 加入我們的 [Discord](https://discord.gg/roocode) 並私訊 **Hannes Rudolph (`hrudolph`)**。
-- **替代方式：** 有經驗的貢獻者可透過 [GitHub Projects](https://github.com/orgs/RooCodeInc/projects/1) 直接參與。
+- **替代方式：** 有經驗的貢獻者可透過 [GitHub Projects](https://github.com/zgsm-ai/costrict/projects) 直接參與。
 
 ## 尋找與規劃你的貢獻
 
@@ -79,8 +73,8 @@ Roo Code 是一個由社群驅動的專案，我們深深重視每一份貢獻�
 
 ### 決定要做什麼
 
-- 查看 [GitHub 專案](https://github.com/orgs/RooCodeInc/projects/1) 中未分配的「Good First Issues」。
-- 文件相關，請訪問 [Roo Code Docs](https://github.com/zgsm-ai/costrict-Docs)。
+- 查看 [GitHub 專案](https://github.com/zgsm-ai/costrict/projects) 中未分配的「Good First Issues」。
+- 文件相關，請訪問 [Costrict Docs](https://docs.costrict.ai/)。
 
 ### 回報 Bug
 
@@ -95,7 +89,7 @@ Roo Code 是一個由社群驅動的專案，我們深深重視每一份貢獻�
 1. **Fork & Clone：**
 
 ```
-git clone https://github.com/你的帳號/Roo-Code.git
+git clone https://github.com/你的帳號/costrict.git
 ```
 
 2. **安裝相依套件：**
@@ -135,4 +129,4 @@ npm run install:all
 
 ## 法律聲明
 
-提交貢獻即表示你同意你的貢獻將基於 Apache 2.0 授權條款，與 Roo Code 的授權一致。
+提交貢獻即表示你同意你的貢獻將基於 Apache 2.0 授權條款，與 Costrict 的授權一致。

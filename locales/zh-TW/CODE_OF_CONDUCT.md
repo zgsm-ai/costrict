@@ -1,12 +1,7 @@
 <div align="center">
 <sub>
 
-[English](../../CODE_OF_CONDUCT.md) • [Català](../ca/CODE_OF_CONDUCT.md) • [Deutsch](../de/CODE_OF_CONDUCT.md) • [Español](../es/CODE_OF_CONDUCT.md) • [Français](../fr/CODE_OF_CONDUCT.md) • [हिंदी](../hi/CODE_OF_CONDUCT.md) • [Bahasa Indonesia](../id/CODE_OF_CONDUCT.md) • [Italiano](../it/CODE_OF_CONDUCT.md) • [日本語](../ja/CODE_OF_CONDUCT.md)
-
-</sub>
-<sub>
-
-[한국어](../ko/CODE_OF_CONDUCT.md) • [Nederlands](../nl/CODE_OF_CONDUCT.md) • [Polski](../pl/CODE_OF_CONDUCT.md) • [Português (BR)](../pt-BR/CODE_OF_CONDUCT.md) • [Русский](../ru/CODE_OF_CONDUCT.md) • [Türkçe](../tr/CODE_OF_CONDUCT.md) • [Tiếng Việt](../vi/CODE_OF_CONDUCT.md) • [简体中文](../zh-CN/CODE_OF_CONDUCT.md) • <b>繁體中文</b>
+[English](../../CODE_OF_CONDUCT.md) • [简体中文](../zh-CN/CODE_OF_CONDUCT.md) • <b>繁體中文</b>
 
 </sub>
 </div>
@@ -47,7 +42,7 @@
 
 ## 執行
 
-如發生辱罵、騷擾或其他不可接受的行為，請透過 support@roocode.com 聯絡專案團隊回報。所有申訴都將被審查和調查，並做出必要且合適的回應。專案團隊有義務為事件回報者保密。具體執行政策的更多細節可能另行公佈。
+如發生辱罵、騷擾或其他不可接受的行為，請透過 zgsm@sangfor.com.cn 聯絡專案團隊回報。所有申訴都將被審查和調查，並做出必要且合適的回應。專案團隊有義務為事件回報者保密。具體執行政策的更多細節可能另行公佈。
 
 未遵守或未切實執行本行為準則的專案維護者，可能會面臨由專案領導團隊其他成員所決定的暫時或永久的處置。
 
