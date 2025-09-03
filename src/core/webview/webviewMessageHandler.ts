@@ -768,22 +768,20 @@ export const webviewMessageHandler = async (
 
 			break
 		case "requestZgsmModels":
-			if (message?.values?.apiKey) {
-				const openAiModels = await getZgsmModels(
-					message?.values?.baseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl(),
-					message?.values?.apiKey,
-					message?.values?.openAiHeaders || {},
-				)
+			const openAiModels = await getZgsmModels(
+				message?.values?.baseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl(),
+				message?.values?.apiKey,
+				message?.values?.openAiHeaders || {},
+			)
 
-				// Get complete response data and send to WebView
-				const fullResponseData = getZgsmFullResponseData()
-				const modelsArray = Array.isArray(openAiModels) ? openAiModels : []
-				provider.postMessageToWebview({
-					type: "zgsmModels",
-					openAiModels: modelsArray,
-					fullResponseData,
-				})
-			}
+			// Get complete response data and send to WebView
+			const fullResponseData = getZgsmFullResponseData()
+			const modelsArray = Array.isArray(openAiModels) ? openAiModels : []
+			provider.postMessageToWebview({
+				type: "zgsmModels",
+				openAiModels: modelsArray,
+				fullResponseData,
+			})
 
 			break
 		case "requestVsCodeLmModels":
