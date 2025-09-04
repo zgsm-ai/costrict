@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { userInfo } from "os"
-import { getShell } from "../shell"
+import fs from "fs"
+import { getShell, SHELL_PATHS } from "../shell"
 
 // Mock the os module
 vi.mock("os", () => ({
@@ -11,6 +12,10 @@ describe("Shell Detection Tests", () => {
 	let originalPlatform: string
 	let originalEnv: NodeJS.ProcessEnv
 	let originalGetConfig: any
+
+	// Define whitelist constants for different shell path groups
+	const POWER_SHELL_WHITELIST = [SHELL_PATHS.POWERSHELL_7, SHELL_PATHS.POWERSHELL_LEGACY]
+	const ALL_SHELL_PATHS_WHITELIST = Object.values(SHELL_PATHS)
 
 	// Helper to mock VS Code configuration
 	function mockVsCodeConfig(platformKey: string, defaultProfileName: string | null, profiles: Record<string, any>) {
@@ -26,6 +31,25 @@ describe("Shell Detection Tests", () => {
 					return undefined
 				},
 			}) as any
+	}
+
+	// Helper to mock fs.existsSync with a whitelist of paths that should return true
+	function mockExistsSync(whitelist: string[] = []) {
+		return vi.spyOn(fs, "existsSync").mockImplementation((path: fs.PathLike) => {
+			const pathStr = path as string
+			return whitelist.includes(pathStr)
+		})
+	}
+
+	// Helper to mock fs.statSync with a whitelist of paths that should return file stats
+	function mockStatSync(whitelist: string[] = []) {
+		return vi.spyOn(fs, "statSync").mockImplementation((path: fs.PathLike) => {
+			const pathStr = path as string
+			if (whitelist.includes(pathStr)) {
+				return { isFile: () => true } as fs.Stats
+			}
+			return { isFile: () => false } as fs.Stats
+		})
 	}
 
 	beforeEach(() => {
@@ -66,17 +90,30 @@ describe("Shell Detection Tests", () => {
 		})
 
 		it("uses PowerShell 7 path if source is 'PowerShell' but no explicit path", () => {
+			const existsSyncMock = mockExistsSync(POWER_SHELL_WHITELIST)
+			const statSyncMock = mockStatSync(POWER_SHELL_WHITELIST)
+
 			mockVsCodeConfig("windows", "PowerShell", {
 				PowerShell: { source: "PowerShell" },
 			})
 			expect(getShell()).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+
+			// Restore mocks
+			existsSyncMock.mockRestore()
+			statSyncMock.mockRestore()
 		})
 
-		it("falls back to legacy PowerShell if profile includes 'powershell' but no path/source", () => {
+		it("falls back to PowerShell 7 if profile includes 'powershell' but no path/source", () => {
+			const existsSyncMock = mockExistsSync(POWER_SHELL_WHITELIST)
+			const statSyncMock = mockStatSync(POWER_SHELL_WHITELIST)
+
 			mockVsCodeConfig("windows", "PowerShell", {
 				PowerShell: {},
 			})
-			expect(getShell()).toBe("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
+			expect(getShell()).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+
+			existsSyncMock.mockRestore()
+			statSyncMock.mockRestore()
 		})
 
 		it("uses WSL bash when profile indicates WSL source", () => {
@@ -117,7 +154,11 @@ describe("Shell Detection Tests", () => {
 			vscode.workspace.getConfiguration = () => ({ get: () => undefined }) as any
 			process.env.COMSPEC = "D:\\CustomCmd\\cmd.exe"
 
+			const mock = mockExistsSync()
+
 			expect(getShell()).toBe("D:\\CustomCmd\\cmd.exe")
+
+			mock.mockRestore()
 		})
 	})
 
@@ -145,12 +186,24 @@ describe("Shell Detection Tests", () => {
 		it("falls back to SHELL env var if no userInfo shell is found", () => {
 			vscode.workspace.getConfiguration = () => ({ get: () => undefined }) as any
 			process.env.SHELL = "/usr/local/bin/zsh"
+			const existsSyncMock = mockExistsSync()
+			const statSyncMock = mockStatSync()
+
 			expect(getShell()).toBe("/usr/local/bin/zsh")
+
+			existsSyncMock.mockRestore()
+			statSyncMock.mockRestore()
 		})
 
 		it("falls back to /bin/zsh if no config, userInfo, or env variable is set", () => {
 			vscode.workspace.getConfiguration = () => ({ get: () => undefined }) as any
+			const existsSyncMock = mockExistsSync([SHELL_PATHS.ZSH])
+			const statSyncMock = mockStatSync([SHELL_PATHS.ZSH])
+
 			expect(getShell()).toBe("/bin/zsh")
+
+			existsSyncMock.mockRestore()
+			statSyncMock.mockRestore()
 		})
 	})
 
@@ -178,12 +231,24 @@ describe("Shell Detection Tests", () => {
 		it("falls back to SHELL env var if no userInfo shell is found", () => {
 			vscode.workspace.getConfiguration = () => ({ get: () => undefined }) as any
 			process.env.SHELL = "/usr/bin/fish"
+			const existsSyncMock = mockExistsSync()
+			const statSyncMock = mockStatSync()
+
 			expect(getShell()).toBe("/usr/bin/fish")
+
+			existsSyncMock.mockRestore()
+			statSyncMock.mockRestore()
 		})
 
 		it("falls back to /bin/bash if nothing is set", () => {
 			vscode.workspace.getConfiguration = () => ({ get: () => undefined }) as any
+			const existsSyncMock = mockExistsSync([SHELL_PATHS.BASH])
+			const statSyncMock = mockStatSync([SHELL_PATHS.BASH])
+
 			expect(getShell()).toBe("/bin/bash")
+
+			existsSyncMock.mockRestore()
+			statSyncMock.mockRestore()
 		})
 	})
 
@@ -212,8 +277,14 @@ describe("Shell Detection Tests", () => {
 			vi.mocked(userInfo).mockImplementation(() => {
 				throw new Error("userInfo error")
 			})
+			const existsSyncMock = mockExistsSync()
+			const statSyncMock = mockStatSync()
+
 			process.env.SHELL = "/bin/zsh"
 			expect(getShell()).toBe("/bin/zsh")
+
+			existsSyncMock.mockRestore()
+			statSyncMock.mockRestore()
 		})
 
 		it("falls back fully to default shell paths if everything fails", () => {
