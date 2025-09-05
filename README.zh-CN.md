@@ -62,7 +62,7 @@ Costrict是一款免费开源的AI辅助编程工具，支持企业私有化部�
 
 ### 部署
 
-请参考 [部署指南](/assets/docs/guide/zh-CN/installation/README.md)
+请参考 [部署指南](/assets/docs/devel/zh-CN/deployment.md)
 
 ### 构建
 

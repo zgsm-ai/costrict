@@ -50,7 +50,7 @@ Costrict is a **free**, **open-source AI-assisted programming tool** that suppor
 
 ### Deployment
 
-Refer to [Deployment Guide](/assets/docs/guide/en-US/installation/README.md)
+Refer to [Deployment Guide](/assets/docs/devel/en-US/deployment.md)
 
 ### Build
 
