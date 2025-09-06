@@ -210,25 +210,49 @@ export const useHoverEvent = (
 		[clearHoverTimeout, customSetHoverPreview],
 	)
 
-	// Use useEffect to manage event listeners
+	// Use useEffect to manage event listeners and MutationObserver
 	useEffect(() => {
 		const highlightLayer = highlightLayerRef.current
 		if (!highlightLayer) return
 
-		const filePathElements = highlightLayer.querySelectorAll(".file-path-highlight")
-		const eventListeners: Array<() => void> = []
+		// Function to bind events to all .file-path-highlight elements
+		const bindEventsToElements = () => {
+			const filePathElements = highlightLayer.querySelectorAll(".file-path-highlight")
+			const eventListeners: Array<() => void> = []
 
-		filePathElements.forEach((element: Element) => {
-			const enterHandler = (event: Event) => handleHighlightMouseEnter(event)
-			const leaveHandler = (event: Event) => handleHighlightMouseLeave(event as MouseEvent)
+			filePathElements.forEach((element: Element) => {
+				const enterHandler = (event: Event) => handleHighlightMouseEnter(event)
+				const leaveHandler = (event: Event) => handleHighlightMouseLeave(event as MouseEvent)
 
-			element.addEventListener("mouseenter", enterHandler)
-			element.addEventListener("mouseleave", leaveHandler)
+				element.addEventListener("mouseenter", enterHandler)
+				element.addEventListener("mouseleave", leaveHandler)
 
-			eventListeners.push(() => {
-				element.removeEventListener("mouseenter", enterHandler)
-				element.removeEventListener("mouseleave", leaveHandler)
+				eventListeners.push(() => {
+					element.removeEventListener("mouseenter", enterHandler)
+					element.removeEventListener("mouseleave", leaveHandler)
+				})
 			})
+
+			return eventListeners
+		}
+
+		// Initial event binding
+		let eventListeners: Array<() => void> = bindEventsToElements()
+
+		// Set up MutationObserver to watch for DOM changes
+		const observer = new MutationObserver(() => {
+			// Clean up existing event listeners
+			eventListeners.forEach((cleanup) => cleanup())
+
+			// Re-bind events to new elements
+			eventListeners = bindEventsToElements()
+		})
+
+		// Start observing the highlight layer for child changes
+		observer.observe(highlightLayer, {
+			childList: true, // Watch for addition/removal of child elements
+			subtree: true, // Watch all descendants
+			characterData: true, // Watch for text content changes
 		})
 
 		// Return cleanup function
@@ -238,6 +262,8 @@ export const useHoverEvent = (
 			// Clean up timers
 			clearHoverTimeout()
 			currentHoverRef.current = null
+			// Disconnect MutationObserver
+			observer.disconnect()
 		}
 	}, [handleHighlightMouseEnter, handleHighlightMouseLeave, clearHoverTimeout, highlightLayerRef])
 

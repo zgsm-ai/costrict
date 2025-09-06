@@ -655,9 +655,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			let newValue = text
 
 			if (inputValue !== "") {
-				newValue = inputValue + " " + text
+				newValue = `${inputValue}${inputValue.endsWith(" ") ? "" : " "}${text}`
 			}
-
 			setInputValue(newValue)
 			setSelectedImages([...selectedImages, ...images])
 
@@ -665,6 +664,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			if (filePathMatch) {
 				setHoverPreviewMap((prev) => new Map(prev.set(filePathMatch[0], selectText)))
 			}
+			textAreaRef.current?.focus()
 		},
 		[inputValue, selectedImages],
 	)
