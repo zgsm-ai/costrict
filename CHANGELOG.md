@@ -1,5 +1,18 @@
 # Costrict Change Log
 
+## [1.6.6]
+
+- Fixed non-UTF8 encoding file issues
+- Improved shell integration command logic
+- Enhanced hidden directory detection as workspace root
+- Disabled codebase in non-workspace
+- Added history conversation editing mode
+- Performance optimization: cached device features
+- Updated i18n translations
+- Fixed test cases
+- Improved dialog "@" and "/" hide logic with ESC exit
+- Sync roocode
+
 ## [1.6.5]
 
 - Optimize file watching and ignore patterns
