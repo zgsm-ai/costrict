@@ -27,7 +27,7 @@
 	},
 	"providers": {
 		"zgsm": "Costrict",
-		"zgsmBaseUrl": "Costrict Base Url",
+		"zgsmBaseUrl": "Costrict 基礎 URL",
 		"zgsmApiKey": "Costrict API 密鑰",
 		"getZgsmApiKey": "登入 Costrict",
 		"getZgsmApiKeyAgain": "重新登入",
