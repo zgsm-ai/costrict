@@ -803,101 +803,94 @@ const ApiOptions = ({
 				setApiConfigurationField={setApiConfigurationField}
 				modelInfo={selectedModelInfo}
 			/>
-			{(selectedProvider !== "zgsm" || useZgsmCustomConfig) && (
-				<>
-					{/* Gate Verbosity UI by capability flag */}
-					{selectedModelInfo?.supportsVerbosity && (
-						<Verbosity
-							apiConfiguration={apiConfiguration}
-							setApiConfigurationField={setApiConfigurationField}
-							modelInfo={selectedModelInfo}
-						/>
-					)}
+			{/* Gate Verbosity UI by capability flag */}
+			{selectedModelInfo?.supportsVerbosity && (
+				<Verbosity
+					apiConfiguration={apiConfiguration}
+					setApiConfigurationField={setApiConfigurationField}
+					modelInfo={selectedModelInfo}
+				/>
+			)}
 
-					{!fromWelcomeView && (
-						<Collapsible open={isAdvancedSettingsOpen} onOpenChange={setIsAdvancedSettingsOpen}>
-							<CollapsibleTrigger className="flex items-center gap-1 w-full cursor-pointer hover:opacity-80 mb-2">
-								<span
-									className={`codicon codicon-chevron-${isAdvancedSettingsOpen ? "down" : "right"}`}></span>
-								<span className="font-medium">{t("settings:advancedSettings.title")}</span>
-							</CollapsibleTrigger>
-							<CollapsibleContent className="space-y-3">
-								<TodoListSettingsControl
-									todoListEnabled={apiConfiguration.todoListEnabled}
-									onChange={(field, value) => setApiConfigurationField(field, value)}
-								/>
-								<DiffSettingsControl
-									diffEnabled={apiConfiguration.diffEnabled}
-									fuzzyMatchThreshold={apiConfiguration.fuzzyMatchThreshold}
-									onChange={(field, value) => setApiConfigurationField(field, value)}
-								/>
-								{selectedModelInfo?.supportsTemperature !== false && (
-									<TemperatureControl
-										value={apiConfiguration.modelTemperature}
-										onChange={handleInputChange("modelTemperature", noTransform)}
-										maxValue={2}
-									/>
-								)}
-								<RateLimitSecondsControl
-									value={apiConfiguration.rateLimitSeconds || 0}
-									onChange={(value) => setApiConfigurationField("rateLimitSeconds", value)}
-								/>
-								<ConsecutiveMistakeLimitControl
-									value={
-										apiConfiguration.consecutiveMistakeLimit !== undefined
-											? apiConfiguration.consecutiveMistakeLimit
-											: DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
-									}
-									onChange={(value) => setApiConfigurationField("consecutiveMistakeLimit", value)}
-								/>
-								{selectedProvider === "openrouter" &&
-									openRouterModelProviders &&
-									Object.keys(openRouterModelProviders).length > 0 && (
-										<div>
-											<div className="flex items-center gap-1">
-												<label className="block font-medium mb-1">
-													{t("settings:providers.openRouter.providerRouting.title")}
-												</label>
-												<a href={`https://openrouter.ai/${selectedModelId}/providers`}>
-													<ExternalLinkIcon className="w-4 h-4" />
-												</a>
-											</div>
-											<Select
-												value={
-													apiConfiguration?.openRouterSpecificProvider ||
-													OPENROUTER_DEFAULT_PROVIDER_NAME
-												}
-												onValueChange={(value) =>
-													setApiConfigurationField("openRouterSpecificProvider", value)
-												}>
-												<SelectTrigger className="w-full">
-													<SelectValue placeholder={t("settings:common.select")} />
-												</SelectTrigger>
-												<SelectContent>
-													<SelectItem value={OPENROUTER_DEFAULT_PROVIDER_NAME}>
-														{OPENROUTER_DEFAULT_PROVIDER_NAME}
-													</SelectItem>
-													{Object.entries(openRouterModelProviders).map(
-														([value, { label }]) => (
-															<SelectItem key={value} value={value}>
-																{label}
-															</SelectItem>
-														),
-													)}
-												</SelectContent>
-											</Select>
-											<div className="text-sm text-vscode-descriptionForeground mt-1">
-												{t("settings:providers.openRouter.providerRouting.description")}{" "}
-												<a href="https://openrouter.ai/docs/features/provider-routing">
-													{t("settings:providers.openRouter.providerRouting.learnMore")}.
-												</a>
-											</div>
-										</div>
-									)}
-							</CollapsibleContent>
-						</Collapsible>
-					)}
-				</>
+			{!fromWelcomeView && (
+				<Collapsible open={isAdvancedSettingsOpen} onOpenChange={setIsAdvancedSettingsOpen}>
+					<CollapsibleTrigger className="flex items-center gap-1 w-full cursor-pointer hover:opacity-80 mb-2">
+						<span className={`codicon codicon-chevron-${isAdvancedSettingsOpen ? "down" : "right"}`}></span>
+						<span className="font-medium">{t("settings:advancedSettings.title")}</span>
+					</CollapsibleTrigger>
+					<CollapsibleContent className="space-y-3">
+						<TodoListSettingsControl
+							todoListEnabled={apiConfiguration.todoListEnabled}
+							onChange={(field, value) => setApiConfigurationField(field, value)}
+						/>
+						<DiffSettingsControl
+							diffEnabled={apiConfiguration.diffEnabled}
+							fuzzyMatchThreshold={apiConfiguration.fuzzyMatchThreshold}
+							onChange={(field, value) => setApiConfigurationField(field, value)}
+						/>
+						{selectedModelInfo?.supportsTemperature !== false && (
+							<TemperatureControl
+								value={apiConfiguration.modelTemperature}
+								onChange={handleInputChange("modelTemperature", noTransform)}
+								maxValue={2}
+							/>
+						)}
+						<RateLimitSecondsControl
+							value={apiConfiguration.rateLimitSeconds || 0}
+							onChange={(value) => setApiConfigurationField("rateLimitSeconds", value)}
+						/>
+						<ConsecutiveMistakeLimitControl
+							value={
+								apiConfiguration.consecutiveMistakeLimit !== undefined
+									? apiConfiguration.consecutiveMistakeLimit
+									: DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
+							}
+							onChange={(value) => setApiConfigurationField("consecutiveMistakeLimit", value)}
+						/>
+						{selectedProvider === "openrouter" &&
+							openRouterModelProviders &&
+							Object.keys(openRouterModelProviders).length > 0 && (
+								<div>
+									<div className="flex items-center gap-1">
+										<label className="block font-medium mb-1">
+											{t("settings:providers.openRouter.providerRouting.title")}
+										</label>
+										<a href={`https://openrouter.ai/${selectedModelId}/providers`}>
+											<ExternalLinkIcon className="w-4 h-4" />
+										</a>
+									</div>
+									<Select
+										value={
+											apiConfiguration?.openRouterSpecificProvider ||
+											OPENROUTER_DEFAULT_PROVIDER_NAME
+										}
+										onValueChange={(value) =>
+											setApiConfigurationField("openRouterSpecificProvider", value)
+										}>
+										<SelectTrigger className="w-full">
+											<SelectValue placeholder={t("settings:common.select")} />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value={OPENROUTER_DEFAULT_PROVIDER_NAME}>
+												{OPENROUTER_DEFAULT_PROVIDER_NAME}
+											</SelectItem>
+											{Object.entries(openRouterModelProviders).map(([value, { label }]) => (
+												<SelectItem key={value} value={value}>
+													{label}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<div className="text-sm text-vscode-descriptionForeground mt-1">
+										{t("settings:providers.openRouter.providerRouting.description")}{" "}
+										<a href="https://openrouter.ai/docs/features/provider-routing">
+											{t("settings:providers.openRouter.providerRouting.learnMore")}.
+										</a>
+									</div>
+								</div>
+							)}
+					</CollapsibleContent>
+				</Collapsible>
 			)}
 			<ProviderChangeWarningDialog
 				open={showProviderChangeWarning}

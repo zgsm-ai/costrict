@@ -3030,7 +3030,6 @@ export const webviewMessageHandler = async (
 				const workspacePath = getWorkspacePath()
 				if (!workspacePath) {
 					provider.log("Unable to get workspace path", "error", "ZgsmCodebaseIndexManager")
-					vscode.window.showErrorMessage("Unable to get workspace path")
 					break
 				}
 
