@@ -89,3 +89,7 @@ Costrict项目采用 Github Forking 工作流：[Costrict项目代码贡献流�
 ## 版权声明
 
 [Apache 2.0 © 2025 Sangfor, Inc.](./LICENSE)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=zgsm-ai/costrict&type=Date)](https://www.star-history.com/#zgsm-ai/costrict&Date)
