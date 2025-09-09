@@ -74,6 +74,22 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 		}
 	}, [apiConfiguration?.openAiHeaders, customHeaders])
 
+	const [showSelect, setShowSelect] = useState(true)
+
+	useEffect(() => {
+		const handlePageChange = (event: MessageEvent) => {
+			// check messsage type only close with action
+			if (event.data && event.data.type === "action") {
+				setShowSelect(false)
+			}
+		}
+		window.addEventListener("message", handlePageChange)
+
+		return () => {
+			window.removeEventListener("message", handlePageChange)
+		}
+	}, [])
+
 	useDebounce(
 		() => {
 			if (selectedProvider === "zgsm") {
@@ -213,6 +229,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			<>
 				<div>
 					<Select
+						open={showSelect}
 						value={selectedModelId === "custom-arn" ? "custom-arn" : selectedModelId}
 						onValueChange={(value) => {
 							setApiConfigurationField(
@@ -226,6 +243,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 							}
 						}}
 						onOpenChange={(open) => {
+							setShowSelect(open)
 							if (open) {
 								document.body.style.padding = "0 20px"
 							}
