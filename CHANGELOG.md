@@ -1,5 +1,15 @@
 # Costrict Change Log
 
+## [1.6.7]
+
+- Implement MetricsSerializer for metric persistence and locking
+- Optimized shell integration
+- Optimized models cache
+- Optimized message edit
+- Update docs
+- Sync roocode
+- Fix known issues
+
 ## [1.6.6]
 
 - Fixed non-UTF8 encoding file issues
