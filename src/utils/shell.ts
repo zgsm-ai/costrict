@@ -440,7 +440,9 @@ export function getShell(): string {
 		shell = getShellFromUserInfo()
 	}
 
-	shell = detectSystemAvailableShell()
+	if (!shell) {
+		shell = detectSystemAvailableShell()
+	}
 
 	// 3. If still nothing, try environment variable
 	if (!shell) {

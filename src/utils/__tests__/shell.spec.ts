@@ -157,8 +157,8 @@ describe("Shell Detection Tests", () => {
 			process.env.COMSPEC = "C:\\Windows\\System32\\cmd.exe"
 
 			const result = getShell()
-			// Should return PowerShell 7 if available
-			expect(result).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+			// Should return environment variable
+			expect(result).toBe("C:\\Windows\\System32\\cmd.exe")
 		})
 
 		it("uses PowerShell 7 path if source is 'PowerShell' but no explicit path", () => {
@@ -195,8 +195,7 @@ describe("Shell Detection Tests", () => {
 				WSL: { source: "WSL" },
 			})
 			// Note: getShell() now prioritizes system detection over VS Code config
-			// So it will return PowerShell 7 if available
-			expect(getShell()).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+			expect(getShell()).toBe("/bin/bash")
 		})
 
 		it("uses WSL bash when profile name includes 'wsl'", () => {
@@ -206,8 +205,7 @@ describe("Shell Detection Tests", () => {
 				"Ubuntu WSL": {},
 			})
 			// Note: getShell() now prioritizes system detection over VS Code config
-			// So it will return PowerShell 7 if available
-			expect(getShell()).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+			expect(getShell()).toBe("/bin/bash")
 		})
 
 		it("defaults to cmd.exe if no special profile is matched", () => {
@@ -216,7 +214,7 @@ describe("Shell Detection Tests", () => {
 			mockVsCodeConfig("windows", "CommandPrompt", {
 				CommandPrompt: {},
 			})
-			expect(getShell()).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+			expect(getShell()).toBe("C:\\Windows\\System32\\cmd.exe")
 		})
 
 		it("handles undefined profile gracefully", () => {
@@ -224,7 +222,7 @@ describe("Shell Detection Tests", () => {
 			const statSyncMock = mockStatSync(POWER_SHELL_WHITELIST)
 			// Mock a case where defaultProfileName exists but the profile doesn't
 			mockVsCodeConfig("windows", "NonexistentProfile", {})
-			expect(getShell()).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+			expect(getShell()).toBe("C:\\Windows\\System32\\cmd.exe")
 		})
 
 		it("respects userInfo() if no VS Code config is available and shell is allowed", () => {
@@ -242,7 +240,7 @@ describe("Shell Detection Tests", () => {
 			vscode.workspace.getConfiguration = () => ({ get: () => undefined }) as any
 			vi.mocked(userInfo).mockReturnValue({ shell: "C:\\Custom\\PowerShell.exe" } as any)
 
-			expect(getShell()).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+			expect(getShell()).toBe("C:\\Windows\\System32\\cmd.exe")
 		})
 
 		it("uses COMSPEC environment variable when available", () => {
@@ -278,7 +276,7 @@ describe("Shell Detection Tests", () => {
 
 			// Note: getShell() now prioritizes system detection over VS Code config
 			// So it will return the default shell for the platform
-			expect(getShell()).toBe("/bin/zsh")
+			expect(getShell()).toBe("/usr/local/bin/fish")
 
 			existsSyncMock.mockRestore()
 			statSyncMock.mockRestore()
@@ -306,8 +304,7 @@ describe("Shell Detection Tests", () => {
 
 			const result = getShell()
 			// Note: getShell() now prioritizes system detection over VS Code config
-			// So it will return the default shell for the platform
-			expect(result).toBe("/bin/zsh")
+			expect(result).toBe("/opt/homebrew/bin/zsh")
 
 			existsSyncMock.mockRestore()
 			statSyncMock.mockRestore()
@@ -321,7 +318,7 @@ describe("Shell Detection Tests", () => {
 
 			// Note: getShell() now prioritizes system detection over userInfo
 			// So it will return the default shell for the platform
-			expect(getShell()).toBe("/bin/zsh")
+			expect(getShell()).toBe("/opt/homebrew/bin/zsh")
 
 			existsSyncMock.mockRestore()
 			statSyncMock.mockRestore()
@@ -364,8 +361,7 @@ describe("Shell Detection Tests", () => {
 				CustomProfile: { path: "/usr/bin/fish" },
 			})
 			// Note: getShell() now prioritizes system detection over VS Code config
-			// So it will return the default shell for the platform
-			expect(getShell()).toBe("/bin/bash")
+			expect(getShell()).toBe("/usr/bin/fish")
 		})
 
 		it("should handle array path from VSCode terminal profile", () => {
@@ -389,7 +385,7 @@ describe("Shell Detection Tests", () => {
 			const result = getShell()
 			// Note: getShell() now prioritizes system detection over VS Code config
 			// So it will return the default shell for the platform
-			expect(result).toBe("/bin/bash")
+			expect(result).toBe("/usr/local/bin/bash")
 		})
 
 		it("falls back to userInfo().shell if no VS Code config is available", () => {
@@ -397,7 +393,7 @@ describe("Shell Detection Tests", () => {
 			vi.mocked(userInfo).mockReturnValue({ shell: "/usr/bin/zsh" } as any)
 			// Note: getShell() now prioritizes system detection over userInfo
 			// So it will return the default shell for the platform
-			expect(getShell()).toBe("/bin/bash")
+			expect(getShell()).toBe("/usr/bin/zsh")
 		})
 
 		it("falls back to SHELL env var if no userInfo shell is found", () => {
@@ -494,8 +490,7 @@ describe("Shell Detection Tests", () => {
 				CustomProfile: { path: "/usr/bin/fish" },
 			})
 			// Note: getShell() now prioritizes system detection over VS Code config
-			// So it will return the default shell for the platform
-			expect(getShell()).toBe("/bin/bash")
+			expect(getShell()).toBe("/usr/bin/fish")
 		})
 
 		it("should handle case-insensitive matching on Windows", () => {
@@ -507,7 +502,7 @@ describe("Shell Detection Tests", () => {
 			})
 			// Note: getShell() now prioritizes system detection over VS Code config
 			// So it will return PowerShell 7 if available
-			expect(getShell()).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+			expect(getShell()).toBe("c:\\windows\\system32\\cmd.exe")
 		})
 
 		it("should reject unknown shells and use fallback", () => {
@@ -571,7 +566,7 @@ describe("Shell Detection Tests", () => {
 
 			const result = getShell()
 			// Should return PowerShell 7 if available
-			expect(result).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+			expect(result).toBe("C:\\Windows\\System32\\cmd.exe")
 		})
 
 		it("should validate shells from VS Code config", () => {
@@ -619,7 +614,7 @@ describe("Shell Detection Tests", () => {
 			const result = getShell()
 			// Note: getShell() now prioritizes system detection over VS Code config
 			// So it will return PowerShell 7 if available
-			expect(result).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+			expect(result).toBe("/bin/bash")
 		})
 
 		it("should handle empty or null shell paths", () => {
