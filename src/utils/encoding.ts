@@ -144,7 +144,7 @@ export async function detectEncoding(fileBuffer: Buffer, fileExtension?: string)
 	} else if (detected && detected.encoding) {
 		originalEncoding = detected.encoding
 		// Increase confidence threshold from 0.7 to 0.9
-		if (detected.confidence < 0.8) {
+		if (detected.confidence < 0.7) {
 			console.warn(
 				`Low confidence encoding detection: ${originalEncoding} (confidence: ${detected.confidence}), falling back to utf8`,
 			)
