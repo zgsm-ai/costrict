@@ -2188,16 +2188,17 @@ export class ClineProvider
 			openRouterImageApiKey: stateValues.openRouterImageApiKey,
 			openRouterImageGenerationSelectedModel: stateValues.openRouterImageGenerationSelectedModel,
 			featureRoomoteControlEnabled: (() => {
-				try {
-					const userSettings = CloudService.instance.getUserSettings()
-					const hasOrganization = cloudUserInfo && cloudUserInfo["organizationId"] != null
-					return hasOrganization || (userSettings?.features?.roomoteControlEnabled ?? false)
-				} catch (error) {
-					console.error(
-						`[getState] failed to get featureRoomoteControlEnabled: ${error instanceof Error ? error.message : String(error)}`,
-					)
-					return false
-				}
+				return false
+				// try {
+				// 	const userSettings = CloudService.instance.getUserSettings()
+				// 	const hasOrganization = cloudUserInfo && cloudUserInfo["organizationId"] != null
+				// 	return hasOrganization || (userSettings?.features?.roomoteControlEnabled ?? false)
+				// } catch (error) {
+				// 	console.error(
+				// 		`[getState] failed to get featureRoomoteControlEnabled: ${error instanceof Error ? error.message : String(error)}`,
+				// 	)
+				// 	return false
+				// }
 			})(),
 		}
 	}

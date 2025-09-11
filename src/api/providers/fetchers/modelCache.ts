@@ -55,7 +55,11 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
 	const { provider } = options
 	let models = getModelsFromCache(provider)
 	if (models) {
-		return models
+		if (provider === "zgsm" && JSON.stringify(models) !== "{}") {
+			models = undefined
+		} else {
+			return models
+		}
 	}
 
 	try {

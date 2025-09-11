@@ -9,6 +9,7 @@ import {
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
 	OPENAI_AZURE_AI_INFERENCE_PATH,
 	zgsmDefaultModelId,
+	zgsmModels,
 } from "@roo-code/types"
 
 import type { ApiHandlerOptions } from "../../shared/api"
@@ -452,7 +453,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 	async fetchModel() {
 		const id = this.options.zgsmModelId ?? zgsmDefaultModelId
 
-		this.modelInfo = (await getModels({ provider: "zgsm" }))[id]
+		this.modelInfo = (await getModels({ provider: "zgsm" }))[id] || zgsmModels.default
 	}
 
 	override getModel() {
