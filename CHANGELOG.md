@@ -1,5 +1,9 @@
 # Costrict Change Log
 
+## [1.6.9]
+
+- Fix binary file check
+
 ## [1.6.8]
 
 - Add chat search
