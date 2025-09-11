@@ -122,56 +122,6 @@ export const BINARY_MAGIC_NUMBERS = [
 ]
 
 /**
- * Analyze file content characteristics to determine if it's a binary file
- * @param buffer File buffer
- * @returns Whether it's a binary file
- */
-function analyzeContentCharacteristics(buffer: Buffer): boolean {
-	if (buffer.length === 0) {
-		return false
-	}
-
-	// Check for null bytes (typical characteristic of binary files)
-	const nullByteCount = (buffer.toString().match(/\0/g) || []).length
-	if (nullByteCount > buffer.length * 0.01) {
-		// More than 1% null bytes
-		return true
-	}
-
-	// Check the ratio of non-printable characters
-	let nonPrintableCount = 0
-	for (let i = 0; i < Math.min(buffer.length, 1024); i++) {
-		const byte = buffer[i]
-		if (byte < 32 && byte !== 9 && byte !== 10 && byte !== 13) {
-			// Not tab, newline, or carriage return
-			nonPrintableCount++
-		}
-	}
-
-	const nonPrintableRatio = nonPrintableCount / Math.min(buffer.length, 1024)
-	if (nonPrintableRatio > 0.3) {
-		// More than 30% non-printable characters
-		return true
-	}
-
-	// Check for consecutive high byte values (text files with UTF-16 encoding typically don't do this)
-	let highByteSequence = 0
-	for (let i = 0; i < buffer.length - 1; i++) {
-		if (buffer[i] > 127 && buffer[i + 1] > 127) {
-			highByteSequence++
-			if (highByteSequence > 10) {
-				// More than 10 consecutive high bytes
-				return true
-			}
-		} else {
-			highByteSequence = 0
-		}
-	}
-
-	return false
-}
-
-/**
  * Detect the encoding of a file buffer
  * @param fileBuffer The file buffer
  * @param fileExtension Optional file extension
@@ -194,7 +144,7 @@ export async function detectEncoding(fileBuffer: Buffer, fileExtension?: string)
 	} else if (detected && detected.encoding) {
 		originalEncoding = detected.encoding
 		// Increase confidence threshold from 0.7 to 0.9
-		if (detected.confidence < 0.9) {
+		if (detected.confidence < 0.8) {
 			console.warn(
 				`Low confidence encoding detection: ${originalEncoding} (confidence: ${detected.confidence}), falling back to utf8`,
 			)
@@ -261,8 +211,8 @@ export async function detectFileEncoding(filePath: string): Promise<string> {
  */
 export async function isBinaryFileWithEncodingDetection(filePath: string): Promise<boolean> {
 	try {
-		// 1. First check file extension
 		const fileExtension = path.extname(filePath).toLowerCase()
+		// 1. First check file extension
 		if (BINARY_EXTENSIONS.has(fileExtension)) {
 			return true
 		}
@@ -276,36 +226,17 @@ export async function isBinaryFileWithEncodingDetection(filePath: string): Promi
 				return true
 			}
 		}
-
-		// 4. Analyze content characteristics
-		if (analyzeContentCharacteristics(fileBuffer)) {
-			return true
-		}
-
-		// 5. Use isBinaryFile library for quick check
-		const isBinaryByLibrary = await isBinaryFile(fileBuffer).catch(() => false)
-		if (isBinaryByLibrary) {
-			return true
-		}
-
-		// 6. Finally perform encoding detection (only for files that might be text)
+		// Try to detect encoding first
 		try {
-			const encoding = await detectEncoding(fileBuffer, fileExtension)
-
-			// Even if encoding detection succeeds, check confidence
-			const detected = jschardet.detect(fileBuffer)
-			if (detected && typeof detected === "object" && detected.confidence < 0.9) {
-				// Low confidence, confirm again with isBinaryFile
-				return await isBinaryFile(fileBuffer).catch(() => true)
-			}
-
+			await detectEncoding(fileBuffer, fileExtension)
+			// If detectEncoding succeeds, it's a text file
 			return false
 		} catch (error) {
-			// Encoding detection failed, consider it as binary file
-			return true
+			// If detectEncoding fails, check if it's actually a binary file
+			return await isBinaryFile(fileBuffer).catch(() => false)
 		}
 	} catch (error) {
-		// File read error, consider it as binary file
+		// File read error, assume it's binary
 		return true
 	}
 }
