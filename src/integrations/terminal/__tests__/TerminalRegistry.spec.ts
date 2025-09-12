@@ -40,15 +40,22 @@ describe("TerminalRegistry", () => {
 		it("creates terminal with PAGER set appropriately for platform", () => {
 			TerminalRegistry.createTerminal("/test/path", "vscode")
 
+			const expectedEnv: Record<string, string> = {
+				PAGER,
+				VTE_VERSION: "0",
+				PROMPT_EOL_MARK: "",
+			}
+
+			// Only expect PYTHONIOENCODING on Windows
+			if (process.platform === "win32") {
+				expectedEnv.PYTHONIOENCODING = "utf-8"
+			}
+
 			expect(mockCreateTerminal).toHaveBeenCalledWith({
 				cwd: "/test/path",
 				name: "Costrict",
 				iconPath: expect.any(Object),
-				env: {
-					PAGER,
-					VTE_VERSION: "0",
-					PROMPT_EOL_MARK: "",
-				},
+				env: expectedEnv,
 			})
 		})
 
@@ -60,16 +67,23 @@ describe("TerminalRegistry", () => {
 			try {
 				TerminalRegistry.createTerminal("/test/path", "vscode")
 
+				const expectedEnv: Record<string, string> = {
+					PAGER,
+					PROMPT_COMMAND: "sleep 0.05",
+					VTE_VERSION: "0",
+					PROMPT_EOL_MARK: "",
+				}
+
+				// Only expect PYTHONIOENCODING on Windows
+				if (process.platform === "win32") {
+					expectedEnv.PYTHONIOENCODING = "utf-8"
+				}
+
 				expect(mockCreateTerminal).toHaveBeenCalledWith({
 					cwd: "/test/path",
 					name: "Costrict",
 					iconPath: expect.any(Object),
-					env: {
-						PAGER,
-						PROMPT_COMMAND: "sleep 0.05",
-						VTE_VERSION: "0",
-						PROMPT_EOL_MARK: "",
-					},
+					env: expectedEnv,
 				})
 			} finally {
 				// Restore original delay
@@ -82,16 +96,23 @@ describe("TerminalRegistry", () => {
 			try {
 				TerminalRegistry.createTerminal("/test/path", "vscode")
 
+				const expectedEnv: Record<string, string> = {
+					PAGER,
+					VTE_VERSION: "0",
+					PROMPT_EOL_MARK: "",
+					ITERM_SHELL_INTEGRATION_INSTALLED: "Yes",
+				}
+
+				// Only expect PYTHONIOENCODING on Windows
+				if (process.platform === "win32") {
+					expectedEnv.PYTHONIOENCODING = "utf-8"
+				}
+
 				expect(mockCreateTerminal).toHaveBeenCalledWith({
 					cwd: "/test/path",
 					name: "Costrict",
 					iconPath: expect.any(Object),
-					env: {
-						PAGER,
-						VTE_VERSION: "0",
-						PROMPT_EOL_MARK: "",
-						ITERM_SHELL_INTEGRATION_INSTALLED: "Yes",
-					},
+					env: expectedEnv,
 				})
 			} finally {
 				Terminal.setTerminalZshOhMy(false)
@@ -103,16 +124,23 @@ describe("TerminalRegistry", () => {
 			try {
 				TerminalRegistry.createTerminal("/test/path", "vscode")
 
+				const expectedEnv: Record<string, string> = {
+					PAGER,
+					VTE_VERSION: "0",
+					PROMPT_EOL_MARK: "",
+					POWERLEVEL9K_TERM_SHELL_INTEGRATION: "true",
+				}
+
+				// Only expect PYTHONIOENCODING on Windows
+				if (process.platform === "win32") {
+					expectedEnv.PYTHONIOENCODING = "utf-8"
+				}
+
 				expect(mockCreateTerminal).toHaveBeenCalledWith({
 					cwd: "/test/path",
 					name: "Costrict",
 					iconPath: expect.any(Object),
-					env: {
-						PAGER,
-						VTE_VERSION: "0",
-						PROMPT_EOL_MARK: "",
-						POWERLEVEL9K_TERM_SHELL_INTEGRATION: "true",
-					},
+					env: expectedEnv,
 				})
 			} finally {
 				Terminal.setTerminalZshP10k(false)

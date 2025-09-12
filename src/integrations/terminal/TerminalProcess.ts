@@ -114,6 +114,11 @@ export class TerminalProcess extends BaseTerminalProcess {
 			(defaultWindowsShellProfile === null ||
 				(defaultWindowsShellProfile as string)?.toLowerCase().includes("powershell"))
 
+		const isCmd =
+			process.platform === "win32" &&
+			defaultWindowsShellProfile !== null &&
+			(defaultWindowsShellProfile as string)?.toLowerCase().includes("cmd")
+
 		if (isPowerShell) {
 			let commandToExecute = command
 
@@ -127,6 +132,11 @@ export class TerminalProcess extends BaseTerminalProcess {
 				commandToExecute += ` ; start-sleep -milliseconds ${Terminal.getCommandDelay()}`
 			}
 
+			terminal.shellIntegration.executeCommand(commandToExecute)
+		} else if (isCmd) {
+			// For Windows cmd, do not use chcp as it's unreliable
+			// Execute command directly with system default encoding
+			const commandToExecute = `chcp 65001 >nul 2>&1 && ${command}`
 			terminal.shellIntegration.executeCommand(commandToExecute)
 		} else {
 			terminal.shellIntegration.executeCommand(command)

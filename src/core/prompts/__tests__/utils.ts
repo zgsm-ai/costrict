@@ -5,3 +5,8 @@ import { PathLike } from "fs"
 export function toPosix(filePath: PathLike | fs.FileHandle) {
 	return filePath.toString().toPosix()
 }
+
+// 修复版本的toPosix函数，避免调用不存在的toPosix方法
+export function toPosixFixed(filePath: PathLike | fs.FileHandle): string {
+	return filePath.toString().replace(/\\/g, "/")
+}

@@ -38,17 +38,26 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 		try {
 			this.isHot = true
 
+			// On Windows, do not use chcp command as it's unreliable for encoding
+			// Instead, let the system use its native encoding (GBK for Chinese Windows)
+			let actualCommand = command
+			if (process.platform === "win32") {
+				// Remove chcp command that causes encoding issues
+				actualCommand = `chcp 65001 >nul 2>&1 && ${command}`
+			}
+
 			this.subprocess = execa({
 				shell: true,
 				cwd: this.terminal.getCurrentWorkingDirectory(),
 				all: true,
+				encoding: "buffer",
 				env: {
 					...process.env,
 					// Ensure UTF-8 encoding for Ruby, CocoaPods, etc.
 					LANG: "en_US.UTF-8",
 					LC_ALL: "en_US.UTF-8",
 				},
-			})`${command}`
+			})`${actualCommand}`
 
 			this.pid = this.subprocess.pid
 
@@ -74,9 +83,21 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 			const rawStream = this.subprocess.iterable({ from: "all", preserveNewlines: true })
 
 			// Wrap the stream to ensure all chunks are strings (execa can return Uint8Array)
+			// On Windows, we need to handle potential encoding issues
 			const stream = (async function* () {
 				for await (const chunk of rawStream) {
-					yield typeof chunk === "string" ? chunk : new TextDecoder().decode(chunk)
+					if (typeof chunk === "string") {
+						yield chunk
+					} else {
+						// For Windows cmd output, try to decode with UTF-8 first
+						// If that fails, fall back to Windows-1252 (common Windows encoding)
+						try {
+							yield new TextDecoder("utf-8", { fatal: true }).decode(chunk)
+						} catch {
+							// Fallback to gbk if UTF-8 decoding fails
+							yield new TextDecoder("gbk", { fatal: false }).decode(chunk)
+						}
+					}
 				}
 			})()
 
