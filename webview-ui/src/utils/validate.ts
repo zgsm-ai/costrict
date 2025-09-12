@@ -312,7 +312,7 @@ export function validateModelId(apiConfiguration: ProviderSettings, routerModels
 
 	const models = routerModels?.[provider]
 
-	if (models && Object.keys(models).length > 1 && !Object.keys(models).includes(modelId)) {
+	if (provider !== "zgsm" && models && Object.keys(models).length > 1 && !Object.keys(models).includes(modelId)) {
 		return i18next.t("settings:validation.modelAvailability", { modelId })
 	}
 

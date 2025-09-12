@@ -14,6 +14,7 @@ import type {
 	OrganizationAllowList,
 	ShareVisibility,
 	QueuedMessage,
+	IZgsmModelResponseData,
 } from "@roo-code/types"
 
 import { GitCommit } from "../utils/git"
@@ -172,7 +173,7 @@ export interface ExtensionMessage {
 	openAiModels?: string[]
 	ollamaModels?: ModelRecord
 	lmStudioModels?: ModelRecord
-	fullResponseData?: ModelInfo[]
+	fullResponseData?: IZgsmModelResponseData[]
 	vsCodeLmModels?: { vendor?: string; family?: string; version?: string; id?: string }[]
 	huggingFaceModels?: Array<{
 		id: string

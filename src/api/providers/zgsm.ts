@@ -57,6 +57,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const urlHost = this._getUrlHost(this.baseURL)
 		const isAzureOpenAi = urlHost === "azure.com" || urlHost.endsWith(".azure.com") || options.openAiUseAzure
 
+		this.fetchModel()
 		this.headers = {
 			...COSTRICT_DEFAULT_HEADERS,
 			...(this.options.openAiHeaders || {}),

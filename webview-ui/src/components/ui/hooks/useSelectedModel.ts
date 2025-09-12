@@ -97,7 +97,7 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 				})
 			: {
 					id: apiConfiguration?.zgsmModelId || apiConfiguration?.apiModelId || zgsmDefaultModelId,
-					info: zgsmModels.default,
+					info: getZgsmModelFeedback({ apiConfiguration }, zgsmModels.default),
 				}
 
 	return {
@@ -113,6 +113,24 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 			openRouterModelProviders.isError ||
 			(apiConfiguration?.lmStudioModelId && lmStudioModels!.isError),
 	}
+}
+
+function getZgsmModelFeedback(
+	config: {
+		provider?: ProviderName
+		apiConfiguration?: ProviderSettings
+	},
+	defaultModelInfo: ModelInfo,
+): ModelInfo {
+	const { apiConfiguration } = config
+	if (
+		apiConfiguration?.useZgsmCustomConfig &&
+		apiConfiguration?.openAiCustomModelInfo &&
+		JSON.stringify(apiConfiguration.openAiCustomModelInfo) !== "{}"
+	) {
+		return apiConfiguration.openAiCustomModelInfo
+	}
+	return defaultModelInfo
 }
 
 function getSelectedModel({
@@ -136,7 +154,8 @@ function getSelectedModel({
 	switch (provider) {
 		case "zgsm": {
 			const id = apiConfiguration.zgsmModelId || apiConfiguration.apiModelId || zgsmDefaultModelId
-			const info = routerModels.zgsm[id]
+			const info = getZgsmModelFeedback({ apiConfiguration }, routerModels.zgsm[id] || zgsmModels.default)
+
 			return { id, info }
 		}
 		case "openrouter": {

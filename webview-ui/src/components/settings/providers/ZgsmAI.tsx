@@ -124,8 +124,15 @@ export const ZgsmAI = ({
 
 		switch (message.type) {
 			case "zgsmModels": {
-				const updatedModels = message.openAiModels ?? []
-				setOpenAiModels(Object.fromEntries(updatedModels.map((item) => [item, zgsmModels.default])))
+				const { openAiModels: updatedModels = [], fullResponseData = [] } = message
+				setOpenAiModels(
+					Object.fromEntries(
+						updatedModels.map((modelId) => [
+							modelId,
+							fullResponseData?.find(({ id }) => id === modelId) ?? zgsmModels.default,
+						]),
+					),
+				)
 				break
 			}
 		}
@@ -175,7 +182,9 @@ export const ZgsmAI = ({
 							onChange={(e: any) => {
 								setCachedStateField("useZgsmCustomConfig", e.target.checked)
 							}}>
-							<label className="block font-medium mb-1">{t("settings:providers.showCustomConfig")}</label>
+							<label className="block font-medium mb-1">
+								{t("settings:providers.useZgsmCustomConfig")}
+							</label>
 						</VSCodeCheckbox>
 					</div>
 				</>
