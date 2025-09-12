@@ -1,5 +1,11 @@
 # Costrict Change Log
 
+## [1.6.10]
+
+- Improves encoding handling for Windows terminal commands
+- Enhance model handling and configuration
+- Sync roocode
+
 ## [1.6.9]
 
 - Fix binary file check
