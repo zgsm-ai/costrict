@@ -48,6 +48,7 @@ jobs:
     unit-test:
         name: platform-unit-test (${{ matrix.name }})
         runs-on: ${{ matrix.os }}
+        timeout-minutes: 20
         strategy:
             matrix:
                 include:
