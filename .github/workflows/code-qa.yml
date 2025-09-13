@@ -13,15 +13,15 @@ on:
           - dev
 
 jobs:
-    # check-translations:
-    #     runs-on: ubuntu-latest
-    #     steps:
-    #         - name: Checkout code
-    #           uses: actions/checkout@v4
-    #         - name: Setup Node.js and pnpm
-    #           uses: ./.github/actions/setup-node-pnpm
-    #         - name: Verify all translations are complete
-    #           run: node scripts/find-missing-translations.js
+    check-translations:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Setup Node.js and pnpm
+              uses: ./.github/actions/setup-node-pnpm
+            - name: Verify all translations are complete
+              run: node scripts/find-missing-translations.js
 
     # knip:
     #     runs-on: ubuntu-latest
@@ -46,12 +46,10 @@ jobs:
               run: pnpm check-types
 
     unit-test:
-        name: platform-unit-test (${{ matrix.name }}, shard ${{ matrix.shard }})
+        name: platform-unit-test (${{ matrix.name }})
         runs-on: ${{ matrix.os }}
-        timeout-minutes: 20
         strategy:
             matrix:
-                shard: [1/4, 2/4, 3/4, 4/4]
                 include:
                     - os: ubuntu-latest
                       name: ubuntu-latest
@@ -63,7 +61,7 @@ jobs:
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
             - name: Run unit tests (shard ${{ matrix.shard }})
-              run: pnpm test -- --shard=${{ matrix.shard }} --hookTimeout=120000 --testTimeout=120000
+              run: pnpm test -- --hookTimeout=120000 --testTimeout=120000
 
     # check-openrouter-api-key:
     #     runs-on: ubuntu-latest
