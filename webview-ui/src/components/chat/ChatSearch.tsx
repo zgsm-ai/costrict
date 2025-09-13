@@ -1,18 +1,21 @@
-import React, { useCallback, useEffect } from "react"
+import React, { useCallback, useEffect, useRef } from "react"
 import { VSCodeButton, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import { useTranslation } from "react-i18next"
 import { StandardTooltip } from "@src/components/ui"
-import { useChatSearch } from "./useChatSearch"
+import { useChatSearch } from "./hooks/useChatSearch"
 import type { ClineMessage } from "@roo-code/types"
+import { useDebounceEffect } from "@/utils/useDebounceEffect"
 
 export interface ChatSearchProps {
 	messages: ClineMessage[]
 	onSearchChange?: (hasResults: boolean, searchQuery?: string) => void
 	onNavigateToResult: (messageIndex: number) => void
 	onClose: () => void
+	showSearch?: boolean
 }
 
 export const ChatSearch: React.FC<ChatSearchProps> = ({
+	showSearch,
 	messages,
 	onSearchChange = () => {},
 	onNavigateToResult,
@@ -30,10 +33,7 @@ export const ChatSearch: React.FC<ChatSearchProps> = ({
 		goToPreviousResult,
 		resetSearch,
 	} = useChatSearch(messages)
-
-	useEffect(() => {
-		onSearchChange(hasResults, searchQuery)
-	}, [hasResults, searchQuery, onSearchChange])
+	const searchInputRef = useRef<HTMLInputElement | null>(null)
 
 	const handleKeyDown = useCallback(
 		(event: React.KeyboardEvent) => {
@@ -58,17 +58,35 @@ export const ChatSearch: React.FC<ChatSearchProps> = ({
 	}, [resetSearch, onClose])
 
 	// 当搜索结果变化时，自动导航到当前结果
+	useDebounceEffect(
+		() => {
+			if (hasResults && searchResults[currentResultIndex]) {
+				const messageIndex = searchResults[currentResultIndex].index
+				onNavigateToResult(messageIndex)
+			}
+		},
+		500,
+		[currentResultIndex, hasResults, searchResults, onNavigateToResult],
+	)
+
 	useEffect(() => {
-		if (hasResults && searchResults[currentResultIndex]) {
-			const messageIndex = searchResults[currentResultIndex].index
-			onNavigateToResult(messageIndex)
+		onSearchChange(hasResults, searchQuery)
+	}, [hasResults, searchQuery, onSearchChange])
+	// Focus the manual URL input when it becomes visible
+	useEffect(() => {
+		if (showSearch && searchInputRef.current) {
+			// Small delay to ensure the DOM is ready
+			setTimeout(() => {
+				searchInputRef.current?.focus()
+			}, 100)
 		}
-	}, [currentResultIndex, hasResults, searchResults, onNavigateToResult])
+	}, [showSearch])
 
 	return (
 		<div className="flex items-center gap-4 px-3 py-2 border-b border-vscode-panel-border">
 			<div className="flex items-center gap-2 flex-1 min-w-0">
 				<VSCodeTextField
+					ref={searchInputRef as any}
 					value={searchQuery}
 					placeholder={t("settings:experimental.CHAT_SEARCH.placeholder")}
 					onInput={(e: any) => setSearchQuery(e.target.value)}

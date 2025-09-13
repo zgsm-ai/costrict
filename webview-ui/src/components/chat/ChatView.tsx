@@ -47,6 +47,8 @@ import TelemetryBanner from "../common/TelemetryBanner"
 import VersionIndicator from "../common/VersionIndicator"
 import { useTaskSearch } from "../history/useTaskSearch"
 import HistoryPreview from "../history/HistoryPreview"
+import type { Match } from "./hooks/useChatSearch"
+import { useChatSearch } from "./hooks/useChatSearch"
 // import Announcement from "./Announcement"
 import BrowserSessionRow from "./BrowserSessionRow"
 import ChatRow from "./ChatRow"
@@ -77,8 +79,7 @@ export const MAX_IMAGES_PER_MESSAGE = 20 // This is the Anthropic limit.
 const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0
 
 const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewProps> = (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	{ isHidden, showAnnouncement, hideAnnouncement },
+	{ isHidden /* showAnnouncement, hideAnnouncement */ },
 	ref,
 ) => {
 	const isMountedRef = useRef(true)
@@ -121,8 +122,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		alwaysAllowFollowupQuestions,
 		alwaysAllowUpdateTodoList,
 		customModes,
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		telemetrySetting,
+		// telemetrySetting,
 		hasSystemPromptOverride,
 		historyPreviewCollapsed, // Added historyPreviewCollapsed
 		soundEnabled,
@@ -175,6 +175,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const modifiedMessages = useMemo(() => combineApiRequests(combineCommandSequences(messages.slice(1))), [messages])
 
+	// Get search results from useChatSearch
+	const { searchResults, searchQuery, setSearchQuery } = useChatSearch(messages)
+
+	// Create a mapping from original message ts to modifiedMessages index
+
 	// Has to be after api_req_finished are all reduced into api_req_started messages.
 	const apiMetrics = useMemo(() => getApiMetrics(modifiedMessages), [modifiedMessages])
 
@@ -204,7 +209,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	// const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
 	const [hoverPreviewMap, setHoverPreviewMap] = useState<Map<string, string>>(new Map())
 	const [showSearch, setShowSearch] = useState(false)
-	const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined)
 	const everVisibleMessagesTsRef = useRef<LRUCache<number, boolean>>(
 		new LRUCache({
 			max: 100,
@@ -1408,7 +1412,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	// 滚动到指定消息
 	const scrollToMessage = useCallback(
 		(messageIndex: number) => {
-			if (virtuosoRef.current && messageIndex >= 0 && messageIndex < groupedMessages.length) {
+			if (virtuosoRef.current && messageIndex >= 0 && messageIndex < groupedMessages.length && !isStreaming) {
 				virtuosoRef.current.scrollToIndex({
 					index: messageIndex,
 					behavior: "smooth",
@@ -1418,7 +1422,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				disableAutoScrollRef.current = true
 			}
 		},
-		[groupedMessages.length],
+		[groupedMessages.length, isStreaming],
 	)
 
 	// Scroll when user toggles certain rows.
@@ -1552,17 +1556,28 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		// Mark that user has responded
 		userRespondedRef.current = true
 	}, [])
-	const shouldHighlight = useCallback((searchQuery?: string, messageOrGroup?: ClineMessage, showSearch?: boolean) => {
-		if (!searchQuery) {
-			return false
-		}
-		return !!(
-			showSearch &&
-			messageOrGroup &&
-			messageOrGroup.text &&
-			messageOrGroup.text.toLowerCase().includes(searchQuery.toLowerCase())
-		)
-	}, [])
+	const shouldHighlight = useCallback(
+		(messageOrGroup?: ClineMessage, showSearch?: boolean) => {
+			if (!searchQuery || !showSearch || !messageOrGroup || !searchResults || searchResults.length === 0) {
+				return false
+			}
+
+			// Find if this message is in searchResults
+			const matchingResult = searchResults.find((result) => result.ts === messageOrGroup.ts)
+			if (!matchingResult) {
+				return false
+			}
+
+			const plainText = messageOrGroup.text || ""
+			const query = searchQuery.trim()
+
+			// Check if any match in the result overlaps with this message
+			return matchingResult.matches.some((match: Match) =>
+				plainText.substring(match.start, match.end).toLowerCase().includes(query.toLowerCase()),
+			)
+		},
+		[searchQuery, searchResults],
+	)
 	const itemContent = useCallback(
 		(index: number, messageOrGroup: ClineMessage | ClineMessage[]) => {
 			// browser session group
@@ -1618,7 +1633,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							return tool.tool === "updateTodoList" && enableButtons && !!primaryButtonText
 						})()
 					}
-					shouldHighlight={shouldHighlight(searchQuery, messageOrGroup, showSearch)}
+					shouldHighlight={shouldHighlight(messageOrGroup, showSearch)}
+					searchResults={searchResults}
+					searchQuery={searchQuery}
 				/>
 			)
 		},
@@ -1634,8 +1651,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			handleFollowUpUnmount,
 			currentFollowUpTs,
 			shouldHighlight,
-			searchQuery,
 			showSearch,
+			searchResults,
+			searchQuery,
 			alwaysAllowUpdateTodoList,
 			enableButtons,
 			primaryButtonText,
@@ -1974,10 +1992,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				<>
 					{showSearch && !isHidden && experiments?.chatSearch && (
 						<ChatSearch
+							showSearch={showSearch}
 							messages={modifiedMessages}
 							onNavigateToResult={scrollToMessage}
-							onClose={() => setShowSearch(false)}
-							onSearchChange={(_, query) => setSearchQuery(query)}
+							onClose={() => {
+								setSearchQuery("")
+								setShowSearch(false)
+							}}
+							onSearchChange={(_, query) => setSearchQuery(query || "")}
 						/>
 					)}
 					<div className="grow flex" ref={scrollContainerRef}>

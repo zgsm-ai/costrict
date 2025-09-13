@@ -4,6 +4,8 @@ import { useTranslation, Trans } from "react-i18next"
 import deepEqual from "fast-deep-equal"
 import { VSCodeBadge, VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 
+import { type SearchResult } from "./hooks/useChatSearch"
+
 import type { ClineMessage, FollowUpData, SuggestionItem } from "@roo-code/types"
 import { Mode } from "@roo/modes"
 
@@ -47,6 +49,7 @@ import { McpExecution } from "./McpExecution"
 import { ChatTextArea } from "./ChatTextArea"
 import { MAX_IMAGES_PER_MESSAGE } from "./ChatView"
 import { useSelectedModel } from "../ui/hooks/useSelectedModel"
+import HighlightedPlainText from "../common/HighlightedPlainText"
 
 interface ChatRowProps {
 	message: ClineMessage
@@ -62,10 +65,14 @@ interface ChatRowProps {
 	isFollowUpAnswered?: boolean
 	editable?: boolean
 	shouldHighlight?: boolean
+	searchResults?: SearchResult[]
+	searchQuery?: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface ChatRowContentProps extends Omit<ChatRowProps, "onHeightChange"> {}
+interface ChatRowContentProps extends Omit<ChatRowProps, "onHeightChange" | "searchResults" | "searchQuery"> {
+	searchResults?: SearchResult[]
+	searchQuery?: string
+}
 
 const ChatRow = memo(
 	(props: ChatRowProps) => {
@@ -119,7 +126,9 @@ export const ChatRowContent = ({
 	onBatchFileResponse,
 	isFollowUpAnswered,
 	editable,
+	searchResults,
 }: ChatRowContentProps) => {
+	// const { searchResults: localSearchResults } = useChatSearch([]); // This is a placeholder, we need to use the prop
 	const { t } = useTranslation()
 
 	const { mcpServers, alwaysAllowMcp, currentCheckpoint, mode, apiConfiguration } = useExtensionState()
@@ -967,6 +976,12 @@ export const ChatRowContent = ({
 				return null
 		}
 	}
+	// Find matching search result for this message
+	let matches
+	if (searchResults && searchResults.length > 0) {
+		const matchingResult = searchResults?.find((result) => result.ts === message.ts)
+		matches = matchingResult?.matches
+	}
 
 	switch (message.type) {
 		case "say":
@@ -1195,7 +1210,10 @@ export const ChatRowContent = ({
 				case "text":
 					return (
 						<div>
-							<Markdown markdown={message.text} partial={message.partial} />
+							<Markdown
+								markdown={HighlightedPlainText({ text: message.text || "", matches })}
+								partial={message.partial}
+							/>
 							{message.images && message.images.length > 0 && (
 								<div style={{ marginTop: "10px" }}>
 									{message.images.map((image, index) => (
@@ -1316,7 +1334,7 @@ export const ChatRowContent = ({
 								{title}
 							</div>
 							<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
-								<Markdown markdown={message.text} />
+								<Markdown markdown={HighlightedPlainText({ text: message.text || "", matches })} />
 							</div>
 						</>
 					)
@@ -1374,7 +1392,10 @@ export const ChatRowContent = ({
 					return (
 						<>
 							<div style={{ paddingTop: 10 }}>
-								<Markdown markdown={message.text} partial={message.partial} />
+								<Markdown
+									markdown={HighlightedPlainText({ text: message.text || "", matches })}
+									partial={message.partial}
+								/>
 							</div>
 							<span
 								className="flex mt-2 text-vscode-textLink-foreground cursor-pointer"
@@ -1478,7 +1499,10 @@ export const ChatRowContent = ({
 								</div>
 							)}
 							<div style={{ paddingTop: 10 }}>
-								<Markdown markdown={message.text} partial={message.partial} />
+								<Markdown
+									markdown={HighlightedPlainText({ text: message.text || "", matches })}
+									partial={message.partial}
+								/>
 							</div>
 						</>
 					)
@@ -1572,7 +1596,10 @@ export const ChatRowContent = ({
 									{title}
 								</div>
 								<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
-									<Markdown markdown={message.text} partial={message.partial} />
+									<Markdown
+										markdown={HighlightedPlainText({ text: message.text || "", matches })}
+										partial={message.partial}
+									/>
 								</div>
 							</div>
 						)
