@@ -30,11 +30,11 @@ vi.mock("vscode", () => ({
 }))
 
 vi.mock("p-wait-for", () => ({
-	default: vi.fn(),
+	default: vi.fn().mockImplementation(() => Promise.resolve()),
 }))
 
 vi.mock("delay", () => ({
-	default: vi.fn(),
+	default: vi.fn().mockImplementation(() => Promise.resolve()),
 }))
 
 vi.mock("execa", () => ({
