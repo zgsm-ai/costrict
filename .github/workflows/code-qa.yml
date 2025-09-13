@@ -46,11 +46,12 @@ jobs:
               run: pnpm check-types
 
     unit-test:
-        name: platform-unit-test (${{ matrix.name }})
+        name: platform-unit-test (${{ matrix.name }}, shard ${{ matrix.shard }})
         runs-on: ${{ matrix.os }}
         timeout-minutes: 20
         strategy:
             matrix:
+                shard: [1/4, 2/4, 3/4, 4/4]
                 include:
                     - os: ubuntu-latest
                       name: ubuntu-latest
@@ -61,8 +62,8 @@ jobs:
               uses: actions/checkout@v4
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
-            - name: Run unit tests
-              run: pnpm test
+            - name: Run unit tests (shard ${{ matrix.shard }})
+              run: pnpm test -- --shard=${{ matrix.shard }} --hookTimeout=120000 --testTimeout=120000
 
     # check-openrouter-api-key:
     #     runs-on: ubuntu-latest
