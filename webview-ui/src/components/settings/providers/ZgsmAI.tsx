@@ -293,10 +293,10 @@ export const ZgsmAI = ({
 								setApiConfigurationField("enableReasoningEffort", checked)
 
 								if (!checked) {
-									const { reasoningEffort: _, ...openAiCustomModelInfo } =
-										apiConfiguration.openAiCustomModelInfo || zgsmModels.default
+									const { reasoningEffort: _, ...zgsmAiCustomModelInfo } =
+										apiConfiguration.zgsmAiCustomModelInfo || zgsmModels.default
 
-									setApiConfigurationField("openAiCustomModelInfo", openAiCustomModelInfo)
+									setApiConfigurationField("zgsmAiCustomModelInfo", zgsmAiCustomModelInfo)
 								}
 							}}>
 							{t("settings:providers.setReasoningLevel")}
@@ -305,21 +305,21 @@ export const ZgsmAI = ({
 							<ThinkingBudget
 								apiConfiguration={{
 									...apiConfiguration,
-									reasoningEffort: apiConfiguration.openAiCustomModelInfo?.reasoningEffort,
+									reasoningEffort: apiConfiguration.zgsmAiCustomModelInfo?.reasoningEffort,
 								}}
 								setApiConfigurationField={(field, value) => {
 									if (field === "reasoningEffort") {
-										const openAiCustomModelInfo =
-											apiConfiguration.openAiCustomModelInfo || zgsmModels.default
+										const zgsmAiCustomModelInfo =
+											apiConfiguration.zgsmAiCustomModelInfo || zgsmModels.default
 
-										setApiConfigurationField("openAiCustomModelInfo", {
-											...openAiCustomModelInfo,
+										setApiConfigurationField("zgsmAiCustomModelInfo", {
+											...zgsmAiCustomModelInfo,
 											reasoningEffort: value as ReasoningEffort,
 										})
 									}
 								}}
 								modelInfo={{
-									...(apiConfiguration.openAiCustomModelInfo || zgsmModels.default),
+									...(apiConfiguration.zgsmAiCustomModelInfo || zgsmModels.default),
 									supportsReasoningEffort: true,
 								}}
 							/>
@@ -333,14 +333,14 @@ export const ZgsmAI = ({
 						<div>
 							<VSCodeTextField
 								value={
-									apiConfiguration?.openAiCustomModelInfo?.maxTokens?.toString() ||
+									apiConfiguration?.zgsmAiCustomModelInfo?.maxTokens?.toString() ||
 									zgsmModels.default.maxTokens?.toString() ||
 									""
 								}
 								type="text"
 								style={{
 									borderColor: (() => {
-										const value = apiConfiguration?.openAiCustomModelInfo?.maxTokens
+										const value = apiConfiguration?.zgsmAiCustomModelInfo?.maxTokens
 
 										if (!value) {
 											return "var(--vscode-input-border)"
@@ -351,11 +351,11 @@ export const ZgsmAI = ({
 											: "var(--vscode-errorForeground)"
 									})(),
 								}}
-								onInput={handleInputChange("openAiCustomModelInfo", (e) => {
+								onInput={handleInputChange("zgsmAiCustomModelInfo", (e) => {
 									const value = parseInt((e.target as HTMLInputElement).value)
 
 									return {
-										...(apiConfiguration?.openAiCustomModelInfo || zgsmModels.default),
+										...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
 										maxTokens: isNaN(value) ? undefined : value,
 									}
 								})}
@@ -373,14 +373,14 @@ export const ZgsmAI = ({
 						<div>
 							<VSCodeTextField
 								value={
-									apiConfiguration?.openAiCustomModelInfo?.contextWindow?.toString() ||
+									apiConfiguration?.zgsmAiCustomModelInfo?.contextWindow?.toString() ||
 									zgsmModels.default.contextWindow?.toString() ||
 									""
 								}
 								type="text"
 								style={{
 									borderColor: (() => {
-										const value = apiConfiguration?.openAiCustomModelInfo?.contextWindow
+										const value = apiConfiguration?.zgsmAiCustomModelInfo?.contextWindow
 
 										if (!value) {
 											return "var(--vscode-input-border)"
@@ -391,12 +391,12 @@ export const ZgsmAI = ({
 											: "var(--vscode-errorForeground)"
 									})(),
 								}}
-								onInput={handleInputChange("openAiCustomModelInfo", (e) => {
+								onInput={handleInputChange("zgsmAiCustomModelInfo", (e) => {
 									const value = (e.target as HTMLInputElement).value
 									const parsed = parseInt(value)
 
 									return {
-										...(apiConfiguration?.openAiCustomModelInfo || zgsmModels.default),
+										...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
 										contextWindow: isNaN(parsed) ? zgsmModels.default.contextWindow : parsed,
 									}
 								})}
@@ -415,12 +415,12 @@ export const ZgsmAI = ({
 							<div className="flex items-center gap-1">
 								<Checkbox
 									checked={
-										apiConfiguration?.openAiCustomModelInfo?.supportsImages ??
+										apiConfiguration?.zgsmAiCustomModelInfo?.supportsImages ??
 										zgsmModels.default.supportsImages
 									}
-									onChange={handleInputChange("openAiCustomModelInfo", (checked) => {
+									onChange={handleInputChange("zgsmAiCustomModelInfo", (checked) => {
 										return {
-											...(apiConfiguration?.openAiCustomModelInfo || zgsmModels.default),
+											...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
 											supportsImages: checked,
 										}
 									})}>
@@ -443,10 +443,10 @@ export const ZgsmAI = ({
 						<div>
 							<div className="flex items-center gap-1">
 								<Checkbox
-									checked={apiConfiguration?.openAiCustomModelInfo?.supportsComputerUse ?? false}
-									onChange={handleInputChange("openAiCustomModelInfo", (checked) => {
+									checked={apiConfiguration?.zgsmAiCustomModelInfo?.supportsComputerUse ?? false}
+									onChange={handleInputChange("zgsmAiCustomModelInfo", (checked) => {
 										return {
-											...(apiConfiguration?.openAiCustomModelInfo || zgsmModels.default),
+											...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
 											supportsComputerUse: checked,
 										}
 									})}>
@@ -469,10 +469,10 @@ export const ZgsmAI = ({
 						<div>
 							<div className="flex items-center gap-1">
 								<Checkbox
-									checked={apiConfiguration?.openAiCustomModelInfo?.supportsPromptCache ?? false}
-									onChange={handleInputChange("openAiCustomModelInfo", (checked) => {
+									checked={apiConfiguration?.zgsmAiCustomModelInfo?.supportsPromptCache ?? false}
+									onChange={handleInputChange("zgsmAiCustomModelInfo", (checked) => {
 										return {
-											...(apiConfiguration?.openAiCustomModelInfo || zgsmModels.default),
+											...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
 											supportsPromptCache: checked,
 										}
 									})}>
@@ -495,14 +495,14 @@ export const ZgsmAI = ({
 						<div>
 							<VSCodeTextField
 								value={
-									apiConfiguration?.openAiCustomModelInfo?.inputPrice?.toString() ??
+									apiConfiguration?.zgsmAiCustomModelInfo?.inputPrice?.toString() ??
 									zgsmModels.default.inputPrice?.toString() ??
 									""
 								}
 								type="text"
 								style={{
 									borderColor: (() => {
-										const value = apiConfiguration?.openAiCustomModelInfo?.inputPrice
+										const value = apiConfiguration?.zgsmAiCustomModelInfo?.inputPrice
 
 										if (!value && value !== 0) {
 											return "var(--vscode-input-border)"
@@ -513,12 +513,12 @@ export const ZgsmAI = ({
 											: "var(--vscode-errorForeground)"
 									})(),
 								}}
-								onChange={handleInputChange("openAiCustomModelInfo", (e) => {
+								onChange={handleInputChange("zgsmAiCustomModelInfo", (e) => {
 									const value = (e.target as HTMLInputElement).value
 									const parsed = parseFloat(value)
 
 									return {
-										...(apiConfiguration?.openAiCustomModelInfo ?? zgsmModels.default),
+										...(apiConfiguration?.zgsmAiCustomModelInfo ?? zgsmModels.default),
 										inputPrice: isNaN(parsed) ? zgsmModels.default.inputPrice : parsed,
 									}
 								})}
@@ -542,14 +542,14 @@ export const ZgsmAI = ({
 						<div>
 							<VSCodeTextField
 								value={
-									apiConfiguration?.openAiCustomModelInfo?.outputPrice?.toString() ||
+									apiConfiguration?.zgsmAiCustomModelInfo?.outputPrice?.toString() ||
 									zgsmModels.default.outputPrice?.toString() ||
 									""
 								}
 								type="text"
 								style={{
 									borderColor: (() => {
-										const value = apiConfiguration?.openAiCustomModelInfo?.outputPrice
+										const value = apiConfiguration?.zgsmAiCustomModelInfo?.outputPrice
 
 										if (!value && value !== 0) {
 											return "var(--vscode-input-border)"
@@ -560,12 +560,12 @@ export const ZgsmAI = ({
 											: "var(--vscode-errorForeground)"
 									})(),
 								}}
-								onChange={handleInputChange("openAiCustomModelInfo", (e) => {
+								onChange={handleInputChange("zgsmAiCustomModelInfo", (e) => {
 									const value = (e.target as HTMLInputElement).value
 									const parsed = parseFloat(value)
 
 									return {
-										...(apiConfiguration?.openAiCustomModelInfo || zgsmModels.default),
+										...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
 										outputPrice: isNaN(parsed) ? zgsmModels.default.outputPrice : parsed,
 									}
 								})}
@@ -586,17 +586,17 @@ export const ZgsmAI = ({
 							</VSCodeTextField>
 						</div>
 
-						{apiConfiguration?.openAiCustomModelInfo?.supportsPromptCache && (
+						{apiConfiguration?.zgsmAiCustomModelInfo?.supportsPromptCache && (
 							<>
 								<div>
 									<VSCodeTextField
 										value={
-											apiConfiguration?.openAiCustomModelInfo?.cacheReadsPrice?.toString() ?? "0"
+											apiConfiguration?.zgsmAiCustomModelInfo?.cacheReadsPrice?.toString() ?? "0"
 										}
 										type="text"
 										style={{
 											borderColor: (() => {
-												const value = apiConfiguration?.openAiCustomModelInfo?.cacheReadsPrice
+												const value = apiConfiguration?.zgsmAiCustomModelInfo?.cacheReadsPrice
 
 												if (!value && value !== 0) {
 													return "var(--vscode-input-border)"
@@ -607,12 +607,12 @@ export const ZgsmAI = ({
 													: "var(--vscode-errorForeground)"
 											})(),
 										}}
-										onChange={handleInputChange("openAiCustomModelInfo", (e) => {
+										onChange={handleInputChange("zgsmAiCustomModelInfo", (e) => {
 											const value = (e.target as HTMLInputElement).value
 											const parsed = parseFloat(value)
 
 											return {
-												...(apiConfiguration?.openAiCustomModelInfo ?? zgsmModels.default),
+												...(apiConfiguration?.zgsmAiCustomModelInfo ?? zgsmModels.default),
 												cacheReadsPrice: isNaN(parsed) ? 0 : parsed,
 											}
 										})}
@@ -637,12 +637,12 @@ export const ZgsmAI = ({
 								<div>
 									<VSCodeTextField
 										value={
-											apiConfiguration?.openAiCustomModelInfo?.cacheWritesPrice?.toString() ?? "0"
+											apiConfiguration?.zgsmAiCustomModelInfo?.cacheWritesPrice?.toString() ?? "0"
 										}
 										type="text"
 										style={{
 											borderColor: (() => {
-												const value = apiConfiguration?.openAiCustomModelInfo?.cacheWritesPrice
+												const value = apiConfiguration?.zgsmAiCustomModelInfo?.cacheWritesPrice
 
 												if (!value && value !== 0) {
 													return "var(--vscode-input-border)"
@@ -653,12 +653,12 @@ export const ZgsmAI = ({
 													: "var(--vscode-errorForeground)"
 											})(),
 										}}
-										onChange={handleInputChange("openAiCustomModelInfo", (e) => {
+										onChange={handleInputChange("zgsmAiCustomModelInfo", (e) => {
 											const value = (e.target as HTMLInputElement).value
 											const parsed = parseFloat(value)
 
 											return {
-												...(apiConfiguration?.openAiCustomModelInfo ?? zgsmModels.default),
+												...(apiConfiguration?.zgsmAiCustomModelInfo ?? zgsmModels.default),
 												cacheWritesPrice: isNaN(parsed) ? 0 : parsed,
 											}
 										})}
@@ -685,7 +685,7 @@ export const ZgsmAI = ({
 
 						<Button
 							variant="secondary"
-							onClick={() => setApiConfigurationField("openAiCustomModelInfo", zgsmModels.default)}>
+							onClick={() => setApiConfigurationField("zgsmAiCustomModelInfo", zgsmModels.default)}>
 							{t("settings:providers.customModel.resetDefaults")}
 						</Button>
 					</div>

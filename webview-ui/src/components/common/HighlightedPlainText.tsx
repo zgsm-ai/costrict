@@ -21,7 +21,6 @@ const HighlightedPlainText = ({ text, matches }: HighlightedPlainTextProps) => {
 		if (match.start > lastIndex) {
 			parts.push(text.substring(lastIndex, match.start))
 		}
-		console.log(match.text)
 
 		// Add highlighted match
 		parts.push(`<mark>${match.text}</mark>`)

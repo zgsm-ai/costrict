@@ -112,7 +112,7 @@ export function initGitCheckoutDetector(context: vscode.ExtensionContext, logger
 
 			if (result.success) {
 				vscode.window.showInformationMessage(`Branch switched: ${oldBranch ?? "(unknown)"} → ${newBranch}`)
-				// logger.info(`[GitCheckoutDetector:${oldBranch} -> ${newBranch}] Successfully open_workspace event`)
+				logger.info(`[GitCheckoutDetector:${oldBranch} -> ${newBranch}] Successfully open_workspace event`)
 			} else {
 				logger.error(
 					`[GitCheckoutDetector:${oldBranch} -> ${newBranch}] Failed to open_workspace event: ${result.message}`,

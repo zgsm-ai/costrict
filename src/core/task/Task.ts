@@ -2558,14 +2558,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		let rateLimitDelay = 0
-
-		// Use the shared timestamp so that subtasks respect the same rate-limit
-		// window as their parent tasks.
-		if (Task.lastGlobalApiRequestTime) {
+		const rateLimit = apiConfiguration?.rateLimitSeconds || 0
+		if (Task.lastGlobalApiRequestTime && rateLimit > 0) {
 			const now = Date.now()
 			const timeSinceLastRequest = now - Task.lastGlobalApiRequestTime
-			const rateLimit = apiConfiguration?.rateLimitSeconds || 0
-			rateLimitDelay = Math.ceil(Math.max(0, rateLimit * 1000 - timeSinceLastRequest) / 1000)
+			const remainingDelay = rateLimit * 1000 - timeSinceLastRequest
+			// Only apply rate limit if there's actually time remaining to wait
+			if (remainingDelay > 0) {
+				rateLimitDelay = Math.ceil(remainingDelay / 1000)
+			}
 		}
 
 		// Only show rate limiting message if we're not retrying. If retrying, we'll include the delay there.

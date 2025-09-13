@@ -236,8 +236,8 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		workspacePath: string,
 	): Record<string, string> {
 		return {
-			...this.headers,
 			"Accept-Language": metadata?.language || "en",
+			...this.headers,
 			"x-quota-identity": this.chatType || "system",
 			"X-Request-ID": requestId,
 			"zgsm-task-id": metadata?.taskId || "",
@@ -461,7 +461,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const id = this.options.zgsmModelId ?? zgsmDefaultModelId
 		const defaultInfo = this.modelInfo
 		const info = this.options.useZgsmCustomConfig
-			? (this.options.openAiCustomModelInfo ?? defaultInfo)
+			? (this.options.zgsmAiCustomModelInfo ?? defaultInfo)
 			: defaultInfo
 		const params = getModelParams({ format: "zgsm", modelId: id, model: info, settings: this.options })
 		return { id, info, ...params }

@@ -31,7 +31,7 @@ export const RateLimitSecondsControl: React.FC<RateLimitSecondsControlProps> = (
 				<span className="w-10">{value}s</span>
 			</div>
 			<div className="text-sm text-vscode-descriptionForeground">
-				{t("settings:providers.rateLimitSeconds.description", { value })}
+				{t("settings:providers.rateLimitSeconds.description", { value: value || 0 })}
 			</div>
 		</div>
 	)

@@ -125,10 +125,10 @@ function getZgsmModelFeedback(
 	const { apiConfiguration } = config
 	if (
 		apiConfiguration?.useZgsmCustomConfig &&
-		apiConfiguration?.openAiCustomModelInfo &&
-		JSON.stringify(apiConfiguration.openAiCustomModelInfo) !== "{}"
+		apiConfiguration?.zgsmAiCustomModelInfo &&
+		JSON.stringify(apiConfiguration.zgsmAiCustomModelInfo) !== "{}"
 	) {
-		return apiConfiguration.openAiCustomModelInfo
+		return apiConfiguration.zgsmAiCustomModelInfo
 	}
 	return defaultModelInfo
 }
