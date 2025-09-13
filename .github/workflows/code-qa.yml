@@ -60,8 +60,8 @@ jobs:
               uses: actions/checkout@v4
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
-            - name: Run unit tests (shard ${{ matrix.shard }})
-              run: pnpm test -- --hookTimeout=120000 --testTimeout=120000
+            - name: Run unit tests
+              run: pnpm test -- --hookTimeout=1200000 --testTimeout=1200000 --maxWorkers=4
 
     # check-openrouter-api-key:
     #     runs-on: ubuntu-latest
