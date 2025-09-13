@@ -47,7 +47,18 @@ vi.mock("../../../shared/getApiMetrics")
 vi.mock("../../../services/glob/list-files")
 vi.mock("../../../integrations/terminal/TerminalRegistry")
 vi.mock("../../../integrations/terminal/Terminal")
-vi.mock("../../../utils/path")
+vi.mock("../../../utils/path", () => ({
+	arePathsEqual: vi.fn(),
+	getReadablePath: vi.fn(),
+	toRelativePath: vi.fn(),
+	getWorkspacePath: vi.fn(),
+	getWorkspacePathForContext: vi.fn(),
+}))
+
+// Mock String.prototype.toPosix for testing
+String.prototype.toPosix = function (this: string): string {
+	return this.replace(/\\/g, "/")
+}
 vi.mock("../../prompts/responses")
 
 describe("getEnvironmentDetails", () => {
