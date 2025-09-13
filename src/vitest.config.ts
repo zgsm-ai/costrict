@@ -11,7 +11,7 @@ export default defineConfig({
 		watch: false,
 		reporters,
 		silent,
-		maxWorkers: 4,
+		// maxWorkers: 4,
 		testTimeout: 20 * 60_000,
 		hookTimeout: 20 * 60_000,
 		onConsoleLog,

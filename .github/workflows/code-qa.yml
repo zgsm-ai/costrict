@@ -61,7 +61,7 @@ jobs:
             - name: Setup Node.js and pnpm
               uses: ./.github/actions/setup-node-pnpm
             - name: Run unit tests
-              run: pnpm test -- --hookTimeout=1200000 --testTimeout=1200000 --maxWorkers=4
+              run: pnpm test -- --hookTimeout=1200000 --testTimeout=1200000
 
     # check-openrouter-api-key:
     #     runs-on: ubuntu-latest
