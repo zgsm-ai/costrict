@@ -127,8 +127,8 @@ export const ChatRowContent = ({
 	isFollowUpAnswered,
 	editable,
 	searchResults,
+	shouldHighlight,
 }: ChatRowContentProps) => {
-	// const { searchResults: localSearchResults } = useChatSearch([]); // This is a placeholder, we need to use the prop
 	const { t } = useTranslation()
 
 	const { mcpServers, alwaysAllowMcp, currentCheckpoint, mode, apiConfiguration } = useExtensionState()
@@ -202,6 +202,15 @@ export const ChatRowContent = ({
 
 		return [undefined, undefined, undefined]
 	}, [message.text, message.say])
+
+	// Find matching search result for this message
+	const matches = useMemo(() => {
+		if (searchResults && searchResults.length > 0 && shouldHighlight) {
+			const matchingResult = searchResults?.find((result) => result.ts === message.ts)
+			return matchingResult?.matches || []
+		}
+		return []
+	}, [searchResults, message, shouldHighlight])
 
 	// When resuming task, last wont be api_req_failed but a resume_task
 	// message, so api_req_started will show loading spinner. That's why we just
@@ -976,12 +985,6 @@ export const ChatRowContent = ({
 				return null
 		}
 	}
-	// Find matching search result for this message
-	let matches
-	if (searchResults && searchResults.length > 0) {
-		const matchingResult = searchResults?.find((result) => result.ts === message.ts)
-		matches = matchingResult?.matches
-	}
 
 	switch (message.type) {
 		case "say":
@@ -1226,7 +1229,7 @@ export const ChatRowContent = ({
 				case "user_feedback":
 					return (
 						<div
-							className={`bg-vscode-editor-background border rounded-xs overflow-hidden whitespace-pre-wrap ${isEditing ? "p-0" : "p-1"}`}>
+							className={`bg-vscode-editor-background border rounded-xs ${isEditing ? "" : "overflow-hidden"} whitespace-pre-wrap ${isEditing ? "p-0" : "p-1"}`}>
 							{isEditing ? (
 								<div className="flex flex-col gap-2">
 									<ChatTextArea

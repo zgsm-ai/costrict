@@ -25,6 +25,7 @@ import { useSelectedModel } from "../ui/hooks/useSelectedModel"
 import { Brain, ChevronUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 export interface ProviderRendererProps {
+	isEditMode?: boolean
 	className?: string
 	selectedProvider: string
 	apiConfiguration: ProviderSettings
@@ -35,6 +36,7 @@ export interface ProviderRendererProps {
 }
 
 const ProviderRenderer: React.FC<ProviderRendererProps> = ({
+	isEditMode = false,
 	className = "",
 	apiConfiguration,
 	setApiConfigurationField,
@@ -77,7 +79,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 		}
 	}, [apiConfiguration?.openAiHeaders, customHeaders])
 
-	const [showSelect, setShowSelect] = useState(true)
+	const [showSelect, setShowSelect] = useState(false)
 
 	useEffect(() => {
 		const handlePageChange = (event: MessageEvent) => {
@@ -206,11 +208,12 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	const defaultModelId =
 		(apiConfiguration.apiProvider === "zgsm" ? apiConfiguration.zgsmModelId : apiConfiguration.apiModelId) ||
 		config.defaultModelId
-
+	const tooltip = showSelect ? "" : defaultModelId || t("chat:selectModel")
 	return (
 		<div className={cn(className)}>
 			{config?.modelIdKey ? (
 				<ModelPicker
+					modelPickerId={isEditMode ? "modelPickerEdit" : "modelPicker"}
 					apiConfiguration={apiConfiguration}
 					setApiConfigurationField={setApiConfigurationField}
 					defaultModelId={defaultModelId}
@@ -225,11 +228,11 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 					popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden text-xs"
 					PopoverTriggerContentClassName="w-[80%] overflow-hidden truncate whitespace-nowrap"
 					buttonIconType="up"
-					tooltip={defaultModelId || t("chat:selectModel")}
+					tooltip={tooltip}
 				/>
 			) : (
 				selectedProviderModels.length > 0 && (
-					<StandardTooltip content={defaultModelId || t("chat:selectModel")}>
+					<StandardTooltip content={tooltip}>
 						<div>
 							<Select
 								open={showSelect}
@@ -252,7 +255,10 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 									}
 								}}>
 								<SelectTrigger
-									className="rounded-md w-30 h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
+									className={cn(
+										"rounded-md w-30 h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150",
+										className,
+									)}
 									icon={
 										<ChevronUp
 											className={cn(

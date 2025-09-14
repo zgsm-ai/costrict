@@ -47,6 +47,7 @@ type ModelIdKey = keyof Pick<
 
 interface ModelPickerProps {
 	defaultModelId: string
+	modelPickerId?: string
 	models: Record<string, ModelInfo> | null
 	modelIdKey: ModelIdKey
 	serviceName: string
@@ -69,6 +70,7 @@ interface ModelPickerProps {
 }
 
 export const ModelPicker = ({
+	modelPickerId = "",
 	defaultModelId,
 	models,
 	modelIdKey,
@@ -184,9 +186,9 @@ export const ModelPicker = ({
 				return
 			}
 
-			const popoverElement = document.querySelector('[data-testid="model-picker-content"]')
+			const popoverElement = document.querySelector(`[data-testid="model-picker-content${modelPickerId}"]`)
 			if (popoverElement && !popoverElement.contains(event.target as Node)) {
-				const triggerButton = document.querySelector('[data-testid="model-picker-button"]')
+				const triggerButton = document.querySelector(`[data-testid="model-picker-button${modelPickerId}"]`)
 				if (triggerButton && !triggerButton.contains(event.target as Node)) {
 					setOpen(false)
 				}
@@ -209,7 +211,7 @@ export const ModelPicker = ({
 			document.removeEventListener("click", handleClickAnywhere)
 			window.removeEventListener("message", handlePageChange)
 		}
-	}, [open])
+	}, [modelPickerId, open])
 
 	// Use the shared ESC key handler hook
 	useEscapeKey(open, () => setOpen(false))
@@ -227,7 +229,7 @@ export const ModelPicker = ({
 									role="combobox"
 									aria-expanded={open}
 									className={cn("w-full", "justify-between", triggerClassName)}
-									data-testid="model-picker-button">
+									data-testid={`model-picker-button${modelPickerId}`}>
 									<Brain />
 									<div className={`truncate ${PopoverTriggerContentClassName}`}>
 										{selectedModelId ?? t("settings:common.select")}
@@ -252,7 +254,7 @@ export const ModelPicker = ({
 								role="combobox"
 								aria-expanded={open}
 								className={cn("w-full", "justify-between", triggerClassName)}
-								data-testid="model-picker-button">
+								data-testid={`model-picker-button${modelPickerId}`}>
 								<div className={PopoverTriggerContentClassName}>
 									{selectedModelId ?? t("settings:common.select")}
 								</div>
@@ -276,7 +278,8 @@ export const ModelPicker = ({
 							!open && "invisible",
 							popoverContentClassName,
 						)}
-						data-testid="model-picker-content">
+						align="start"
+						data-testid={`model-picker-content${modelPickerId}`}>
 						<Command>
 							<div className="relative">
 								<CommandInput
