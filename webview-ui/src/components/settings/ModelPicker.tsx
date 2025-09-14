@@ -230,8 +230,8 @@ export const ModelPicker = ({
 									aria-expanded={open}
 									className={cn("w-full", "justify-between", triggerClassName)}
 									data-testid={`model-picker-button${modelPickerId}`}>
-									<Brain />
 									<div className={`truncate ${PopoverTriggerContentClassName}`}>
+										<Brain className="inline-block mr-[4px]" />
 										{selectedModelId ?? t("settings:common.select")}
 									</div>
 									{buttonIconType === "upDown" ? (

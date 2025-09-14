@@ -208,7 +208,11 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	const defaultModelId =
 		(apiConfiguration.apiProvider === "zgsm" ? apiConfiguration.zgsmModelId : apiConfiguration.apiModelId) ||
 		config.defaultModelId
-	const tooltip = showSelect ? "" : defaultModelId || t("chat:selectModel")
+	const tooltip = showSelect
+		? ""
+		: defaultModelId
+			? `${t("settings:modelPicker.label")}: ${defaultModelId}`
+			: t("chat:selectModel")
 	return (
 		<div className={cn(className)}>
 			{config?.modelIdKey ? (
@@ -226,7 +230,6 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 					showLabel={false}
 					triggerClassName="rounded-md max-w-80 px-[6px] text-xs h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
 					popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden text-xs"
-					PopoverTriggerContentClassName="w-[80%] overflow-hidden truncate whitespace-nowrap"
 					buttonIconType="up"
 					tooltip={tooltip}
 				/>
@@ -250,14 +253,10 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 								}}
 								onOpenChange={(open) => {
 									setShowSelect(open)
-									if (open) {
-										document.body.style.padding = "0 20px"
-									}
 								}}>
 								<SelectTrigger
 									className={cn(
-										"rounded-md w-30 h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150",
-										className,
+										"rounded-md max-w-30 h-6 px-[6px] opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150",
 									)}
 									icon={
 										<ChevronUp
@@ -266,14 +265,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 												showSelect && "rotate-180",
 											)}
 										/>
-									}
-									onMouseDown={() => {
-										document.body.style.padding = "0 20px"
-									}}>
-									<Brain />
-									<div className="w-[80%] overflow-hidden truncate whitespace-nowrap">
-										<SelectValue placeholder={t("settings:common.select")} />
-									</div>
+									}>
+									<Brain className="inline-block mr-[4px]" />
+									<SelectValue placeholder={t("settings:common.select")} />
 								</SelectTrigger>
 								<SelectContent className="min-w-80 max-w-9/10 overflow-hidden">
 									{selectedProviderModels.map((option) => (

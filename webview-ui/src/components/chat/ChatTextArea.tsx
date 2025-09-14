@@ -1312,9 +1312,9 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							<>
 								<ModeSelector
 									value={mode}
-									title={mode || t("chat:selectMode")}
+									title={mode ? `${t("chat:modeSelector.title")}: ${mode}` : t("chat:selectMode")}
 									onChange={handleModeChange}
-									triggerClassName="min-w-20 max-w-24 text-ellipsis overflow-hidden"
+									triggerClassName="min-w-12 max-w-24 text-ellipsis overflow-hidden"
 									modeShortcutText={modeShortcutText}
 									customModes={customModes}
 									customModePrompts={customModePrompts}
@@ -1332,7 +1332,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							/> */}
 								<ProviderRenderer
 									isEditMode={isEditMode}
-									className="min-w-20 max-w-24 text-ellipsis overflow-hidden"
+									className="min-w-12 max-w-40 text-ellipsis overflow-hidden"
 									selectedProvider={apiConfiguration.apiProvider || "zgsm"}
 									apiConfiguration={apiConfiguration}
 									organizationAllowList={organizationAllowList}
@@ -1340,7 +1340,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									routerModels={(routerModels as RouterModels) || {}}
 									selectedProviderModels={selectedProviderModels}
 								/>
-								<AutoApproveDropdown triggerClassName="min-w-20 max-w-24 text-ellipsis overflow-hidden" />
+								<AutoApproveDropdown triggerClassName="min-w-12 max-w-24 text-ellipsis overflow-hidden" />
 							</>
 						)}
 					</div>
