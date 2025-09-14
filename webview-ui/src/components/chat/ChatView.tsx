@@ -1831,9 +1831,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				event.preventDefault()
 				event.stopPropagation() // Prevent event from bubbling to VSCode
 				setShowSearch(false)
+				setSearchQuery("")
 			}
 		},
-		[switchToNextMode, switchToPreviousMode, showSearch, setShowSearch],
+		[showSearch, switchToPreviousMode, switchToNextMode, setSearchQuery],
 	)
 
 	useEffect(() => {
