@@ -1,39 +1,37 @@
-import React from "react"
+import { ClineMessage } from "@roo-code/types"
 
 interface HighlightedPlainTextProps {
-	text: string
-	matches?: { start: number; end: number; text: string }[]
+	message: ClineMessage
+	query?: string
+	flag?: string
 }
 
-const HighlightedPlainText = ({ text, matches }: HighlightedPlainTextProps) => {
-	if (!matches || matches.length === 0) {
-		return text
-	}
+const HighlightedPlainText = ({ message, query = "", flag = "" }: HighlightedPlainTextProps) => {
+	if (!query?.trim() || !message?.text) return message.text
 
-	// Sort matches by start position
-	const sortedMatches = [...matches].sort((a, b) => a.start - b.start)
+	const originText = message.text || ""
+	const lowerQuery = query.toLowerCase()
+	const blockSplit = originText.split("```")
 
-	let lastIndex = 0
-	const parts: React.ReactNode[] = []
+	return blockSplit
+		.map((itemText, index) => {
+			if (index % 2 === 1) {
+				if (!itemText.toLowerCase().includes(lowerQuery)) return `\`\`\`${itemText}\`\`\``
+				return `<mark>⬇️${flag ? `${flag}: ` : ""}${query.length > 20 ? `${query.substring(0, 19)}...` : query}⬇️</mark>\n\`\`\`${itemText}\`\`\``
+			}
 
-	for (const match of sortedMatches) {
-		// Add text before the match
-		if (match.start > lastIndex) {
-			parts.push(text.substring(lastIndex, match.start))
-		}
-
-		// Add highlighted match
-		parts.push(`<mark>${match.text}</mark>`)
-
-		lastIndex = match.end
-	}
-
-	// Add remaining text
-	if (lastIndex < text.length) {
-		parts.push(text.substring(lastIndex))
-	}
-
-	return parts.join("")
+			return itemText
+				.split(/\n/)
+				.map((item) => {
+					if (item.includes(lowerQuery)) {
+						return `${item} <mark>⬅️${flag ? `${flag}: ` : ""}${query.length > 20 ? `${query.substring(0, 19)}...` : query}⬅️</mark>`
+					} else {
+						return item
+					}
+				})
+				.join("\n")
+		})
+		.join("")
 }
 
 export default HighlightedPlainText

@@ -120,7 +120,7 @@
 		"CHAT_SEARCH": {
 			"name": "視窗內聊天記錄搜尋",
 			"description": "啟用後，Costrict 可以搜尋對話視窗中的聊天記錄。",
-			"placeholder": "搜尋訊息...",
+			"placeholder": "搜尋訊息",
 			"noResults": "未找到結果",
 			"resultsCount": "{{current}} / {{total}}",
 			"previous": "上一個結果",

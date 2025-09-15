@@ -189,7 +189,6 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 							<h4 className="m-0 font-bold text-base text-vscode-foreground">
 								{t("chat:autoApprove.title")}
 							</h4>
-							<IconButton iconClass="codicon-settings-gear" onClick={handleOpenSettings} />
 						</div>
 						<p className="m-0 text-xs text-vscode-descriptionForeground">
 							{t("chat:autoApprove.description")}
@@ -259,6 +258,8 @@ export const AutoApproveDropdown = ({ disabled = false, triggerClassName = "" }:
 
 					{/* Bottom bar with Select All/None buttons */}
 					<div className="flex flex-row items-center justify-between px-2 py-2 border-t border-vscode-dropdown-border">
+						<IconButton iconClass="codicon-settings-gear" onClick={handleOpenSettings} />
+
 						<div className="flex flex-row gap-1">
 							<button
 								aria-label={t("chat:autoApprove.selectAll")}

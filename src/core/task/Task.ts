@@ -228,6 +228,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	api: ApiHandler & {
 		setChatType?: (type: "user" | "system") => void
 		getChatType?: () => "user" | "system"
+		cancelChat?: (cancelType: ClineApiReqCancelReason) => void
 	}
 	private static lastGlobalApiRequestTime?: number
 	private autoApprovalHandler: AutoApprovalHandler
@@ -1929,6 +1930,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					// Signals to provider that it can retrieve the saved messages
 					// from disk, as abortTask can not be awaited on in nature.
 					this.didFinishAbortingStream = true
+					this?.api?.cancelChat?.(cancelReason)
 				}
 
 				// Reset streaming state for each new API request

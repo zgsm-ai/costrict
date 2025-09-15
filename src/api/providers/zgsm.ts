@@ -34,6 +34,7 @@ import { Package } from "../../shared/package"
 import { COSTRICT_DEFAULT_HEADERS } from "../../shared/headers"
 import { handleOpenAIError } from "./utils/openai-error-handler"
 import { getModels } from "./fetchers/modelCache"
+import { ClineApiReqCancelReason } from "../../shared/ExtensionMessage"
 
 const autoModeModelId = "Auto"
 
@@ -47,6 +48,8 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 	private modelInfo = {} as ModelInfo
 	private apiResponseRenderModeInfo = renderModes.medium
 	private logger: ILogger
+	private curStream: any = null
+
 	constructor(options: ApiHandlerOptions) {
 		super()
 		this.options = options
@@ -170,6 +173,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					)
 					.withResponse()
 				stream = _stream
+				this.curStream = _stream
 				if (this.options.zgsmModelId === autoModeModelId) {
 					const userInputHeader = response.headers.get("x-user-input")
 					if (userInputHeader) {
@@ -643,5 +647,14 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 
 	getChatType() {
 		return this.chatType
+	}
+
+	cancelChat(type: ClineApiReqCancelReason): void {
+		try {
+			this.curStream?.controller?.abort?.()
+			this.logger.info(`[cancelChat] Cancelled chat request: ${type}`)
+		} catch (error) {
+			console.log(`Error while cancelling message: ${error}`)
+		}
 	}
 }

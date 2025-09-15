@@ -47,7 +47,7 @@ import TelemetryBanner from "../common/TelemetryBanner"
 import VersionIndicator from "../common/VersionIndicator"
 import { useTaskSearch } from "../history/useTaskSearch"
 import HistoryPreview from "../history/HistoryPreview"
-import type { Match } from "./hooks/useChatSearch"
+import type { SearchResult } from "./hooks/useChatSearch"
 import { useChatSearch } from "./hooks/useChatSearch"
 // import Announcement from "./Announcement"
 import BrowserSessionRow from "./BrowserSessionRow"
@@ -1555,26 +1555,27 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		userRespondedRef.current = true
 	}, [])
 	const shouldHighlight = useCallback(
-		(messageOrGroup?: ClineMessage, showSearch?: boolean) => {
+		(messageOrGroup?: ClineMessage, searchResults: SearchResult[] = [], showSearch?: boolean) => {
 			if (!searchQuery || !showSearch || !messageOrGroup || !searchResults || searchResults.length === 0) {
 				return false
 			}
 
 			// Find if this message is in searchResults
-			const matchingResult = searchResults.find((result) => result.ts === messageOrGroup.ts)
-			if (!matchingResult) {
-				return false
-			}
+			// const matchingResult = searchResults.find((result) => result.ts === messageOrGroup.ts)
+			return searchResults.find((result) => result.ts === messageOrGroup.ts) !== undefined
+			// if (!matchingResult) {
+			// 	return false
+			// }
 
-			const plainText = messageOrGroup.text || ""
-			const query = searchQuery.trim()
+			// const plainText = messageOrGroup.text || ""
+			// const query = searchQuery.trim()
 
-			// Check if any match in the result overlaps with this message
-			return matchingResult.matches.some((match: Match) =>
-				plainText.substring(match.start, match.end).toLowerCase().includes(query.toLowerCase()),
-			)
+			// // Check if any match in the result overlaps with this message
+			// return matchingResult.matches.some((match: Match) =>
+			// 	plainText.substring(match.start, match.end).toLowerCase().includes(query.toLowerCase()),
+			// )
 		},
-		[searchQuery, searchResults],
+		[searchQuery],
 	)
 	const itemContent = useCallback(
 		(index: number, messageOrGroup: ClineMessage | ClineMessage[]) => {
@@ -1631,7 +1632,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							return tool.tool === "updateTodoList" && enableButtons && !!primaryButtonText
 						})()
 					}
-					shouldHighlight={shouldHighlight(messageOrGroup, showSearch)}
+					shouldHighlight={shouldHighlight(messageOrGroup, searchResults, showSearch)}
 					searchResults={searchResults}
 					searchQuery={searchQuery}
 				/>

@@ -126,8 +126,7 @@ export const ChatRowContent = ({
 	onBatchFileResponse,
 	isFollowUpAnswered,
 	editable,
-	searchResults,
-	shouldHighlight,
+	searchQuery,
 }: ChatRowContentProps) => {
 	const { t } = useTranslation()
 
@@ -202,15 +201,6 @@ export const ChatRowContent = ({
 
 		return [undefined, undefined, undefined]
 	}, [message.text, message.say])
-
-	// Find matching search result for this message
-	const matches = useMemo(() => {
-		if (searchResults && searchResults.length > 0 && shouldHighlight) {
-			const matchingResult = searchResults?.find((result) => result.ts === message.ts)
-			return matchingResult?.matches || []
-		}
-		return []
-	}, [searchResults, message, shouldHighlight])
 
 	// When resuming task, last wont be api_req_failed but a resume_task
 	// message, so api_req_started will show loading spinner. That's why we just
@@ -1214,7 +1204,11 @@ export const ChatRowContent = ({
 					return (
 						<div>
 							<Markdown
-								markdown={HighlightedPlainText({ text: message.text || "", matches })}
+								markdown={HighlightedPlainText({
+									message: message || {},
+									query: searchQuery,
+									flag: t("settings:experimental.CHAT_SEARCH.placeholder"),
+								})}
 								partial={message.partial}
 							/>
 							{message.images && message.images.length > 0 && (
@@ -1337,7 +1331,13 @@ export const ChatRowContent = ({
 								{title}
 							</div>
 							<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
-								<Markdown markdown={HighlightedPlainText({ text: message.text || "", matches })} />
+								<Markdown
+									markdown={HighlightedPlainText({
+										message: message || {},
+										query: searchQuery,
+										flag: t("settings:experimental.CHAT_SEARCH.placeholder"),
+									})}
+								/>
 							</div>
 						</>
 					)
@@ -1396,7 +1396,11 @@ export const ChatRowContent = ({
 						<>
 							<div style={{ paddingTop: 10 }}>
 								<Markdown
-									markdown={HighlightedPlainText({ text: message.text || "", matches })}
+									markdown={HighlightedPlainText({
+										message: message || {},
+										query: searchQuery,
+										flag: t("settings:experimental.CHAT_SEARCH.placeholder"),
+									})}
 									partial={message.partial}
 								/>
 							</div>
@@ -1503,7 +1507,11 @@ export const ChatRowContent = ({
 							)}
 							<div style={{ paddingTop: 10 }}>
 								<Markdown
-									markdown={HighlightedPlainText({ text: message.text || "", matches })}
+									markdown={HighlightedPlainText({
+										message: message || {},
+										query: searchQuery,
+										flag: t("settings:experimental.CHAT_SEARCH.placeholder"),
+									})}
 									partial={message.partial}
 								/>
 							</div>
@@ -1600,7 +1608,11 @@ export const ChatRowContent = ({
 								</div>
 								<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
 									<Markdown
-										markdown={HighlightedPlainText({ text: message.text || "", matches })}
+										markdown={HighlightedPlainText({
+											message: message || {},
+											query: searchQuery,
+											flag: t("settings:experimental.CHAT_SEARCH.placeholder"),
+										})}
 										partial={message.partial}
 									/>
 								</div>

@@ -120,7 +120,7 @@
 		"CHAT_SEARCH": {
 			"name": "Chat History Search in Window",
 			"description": "When enabled, Costrict can search chat history in the conversation window.",
-			"placeholder": "Search messages...",
+			"placeholder": "Search messages",
 			"noResults": "No results found",
 			"resultsCount": "{{current}} of {{total}}",
 			"previous": "Previous result",
