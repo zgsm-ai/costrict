@@ -1978,7 +1978,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 								setSearchQuery("")
 								setShowSearch(false)
 							}}
-							onSearchChange={(_, query) => setSearchQuery(query || "")}
+							onSearchChange={(_, query) => setSearchQuery((query || "").trim())}
 						/>
 					)}
 					<div className="grow flex" ref={scrollContainerRef}>

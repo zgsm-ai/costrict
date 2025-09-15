@@ -15,7 +15,7 @@ export function useChatSearch(messages: ClineMessage[]) {
 
 	useDebounceEffect(
 		() => {
-			setDebouncedSearchQuery(searchQuery || "")
+			setDebouncedSearchQuery(searchQuery?.trim() || "")
 		},
 		300,
 		[searchQuery],
