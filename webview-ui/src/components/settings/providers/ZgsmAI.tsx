@@ -25,6 +25,7 @@ import { R1FormatSetting } from "../R1FormatSetting"
 import { ThinkingBudget } from "../ThinkingBudget"
 import { SetCachedStateField } from "../types"
 import { isValidUrl } from "@/utils/validate"
+import { vscode } from "@/utils/vscode"
 
 type OpenAICompatibleProps = {
 	fromWelcomeView?: boolean
@@ -34,6 +35,7 @@ type OpenAICompatibleProps = {
 	modelValidationError?: string
 	useZgsmCustomConfig?: boolean
 	setCachedStateField: SetCachedStateField<"useZgsmCustomConfig">
+	refetchRouterModels?: () => void
 }
 
 export const ZgsmAI = ({
@@ -44,6 +46,7 @@ export const ZgsmAI = ({
 	organizationAllowList,
 	modelValidationError,
 	useZgsmCustomConfig,
+	refetchRouterModels,
 }: OpenAICompatibleProps) => {
 	const { t } = useAppTranslation()
 
@@ -176,6 +179,17 @@ export const ZgsmAI = ({
 						organizationAllowList={organizationAllowList}
 						errorMessage={modelValidationError}
 					/>
+					<Button
+						variant="outline"
+						onClick={() => {
+							vscode.postMessage({ type: "flushRouterModels", text: "zgsm" })
+							refetchRouterModels?.()
+						}}>
+						<div className="flex items-center gap-2">
+							<span className="codicon codicon-refresh" />
+							{t("settings:providers.refreshModels.label")}
+						</div>
+					</Button>
 					<div>
 						<VSCodeCheckbox
 							checked={useZgsmCustomConfig}

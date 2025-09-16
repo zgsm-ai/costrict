@@ -505,6 +505,7 @@ const ApiOptions = ({
 					modelValidationError={modelValidationError}
 					useZgsmCustomConfig={useZgsmCustomConfig}
 					setCachedStateField={setCachedStateField}
+					refetchRouterModels={refetchRouterModels}
 				/>
 			)}
 			{selectedProvider === "openrouter" && (
