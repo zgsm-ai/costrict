@@ -214,7 +214,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			? `${t("settings:modelPicker.label")}: ${defaultModelId}`
 			: t("chat:selectModel")
 	return (
-		<div className={cn(className)}>
+		<div className={cn(className, config?.modelIdKey || selectedProviderModels.length > 0 ? "" : "hidden")}>
 			{config?.modelIdKey ? (
 				<ModelPicker
 					modelPickerId={isEditMode ? "modelPickerEdit" : "modelPicker"}
