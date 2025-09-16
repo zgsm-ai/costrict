@@ -50,6 +50,7 @@ import { ChatTextArea } from "./ChatTextArea"
 import { MAX_IMAGES_PER_MESSAGE } from "./ChatView"
 import { useSelectedModel } from "../ui/hooks/useSelectedModel"
 import HighlightedPlainText from "../common/HighlightedPlainText"
+import { getLine } from "@/utils/path-mentions"
 
 interface ChatRowProps {
 	message: ClineMessage
@@ -73,6 +74,8 @@ interface ChatRowContentProps extends Omit<ChatRowProps, "onHeightChange" | "sea
 	searchResults?: SearchResult[]
 	searchQuery?: string
 }
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface ChatRowContentProps extends Omit<ChatRowProps, "onHeightChange"> {}
 
 const ChatRow = memo(
 	(props: ChatRowProps) => {
@@ -139,6 +142,7 @@ export const ChatRowContent = ({
 	const [editMode, setEditMode] = useState<Mode>(mode || "code")
 	const [editImages, setEditImages] = useState<string[]>([])
 	const { copyWithFeedback } = useCopyToClipboard()
+	const userEditRef = useRef<HTMLDivElement>(null)
 
 	// Handle message events for image selection during edit mode
 	useEffect(() => {
@@ -373,6 +377,21 @@ export const ChatRowContent = ({
 			},
 		})
 	}, [])
+	// Scroll to user edits when they appear
+	useEffect(() => {
+		if (message.say === "user_feedback_diff" && userEditRef.current) {
+			const tool = safeJsonParse<ClineSayTool>(message.text)
+			if (tool?.diff) {
+				// Use a small delay to ensure the element is rendered
+				setTimeout(() => {
+					userEditRef.current?.scrollIntoView({
+						behavior: "smooth",
+						block: "center",
+					})
+				}, 100)
+			}
+		}
+	}, [message.say, message.text])
 
 	if (tool) {
 		const toolIcon = (name: string) => (
@@ -558,7 +577,13 @@ export const ChatRowContent = ({
 							isLoading={message.partial}
 							isExpanded={isExpanded}
 							onToggleExpand={handleToggleExpand}
-							onJumpToFile={() => vscode.postMessage({ type: "openFile", text: "./" + tool.path })}
+							onJumpToFile={() =>
+								vscode.postMessage({
+									type: "openFile",
+									text: "./" + tool.path,
+									values: { line: getLine(tool) },
+								})
+							}
 						/>
 					</>
 				)
@@ -605,7 +630,13 @@ export const ChatRowContent = ({
 						</div>
 						<ToolUseBlock>
 							<ToolUseBlockHeader
-								onClick={() => vscode.postMessage({ type: "openFile", text: tool.content })}>
+								onClick={() =>
+									vscode.postMessage({
+										type: "openFile",
+										text: tool.content,
+										values: { line: getLine(tool) },
+									})
+								}>
 								{tool.path?.startsWith(".") && <span>.</span>}
 								<span className="whitespace-nowrap overflow-hidden text-ellipsis text-left mr-2 rtl">
 									{removeLeadingNonAlphanumeric(tool.path ?? "") + "\u200E"}
@@ -1301,7 +1332,7 @@ export const ChatRowContent = ({
 				case "user_feedback_diff":
 					const tool = safeJsonParse<ClineSayTool>(message.text)
 					return (
-						<div style={{ marginTop: -10, width: "100%" }}>
+						<div ref={userEditRef} style={{ marginTop: -10, width: "100%" }}>
 							<CodeAccordian
 								code={tool?.diff}
 								language="diff"

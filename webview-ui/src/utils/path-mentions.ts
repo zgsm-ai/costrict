@@ -2,6 +2,8 @@
  * Utilities for handling path-related operations in mentions
  */
 
+import { ClineSayTool } from "@roo/ExtensionMessage"
+
 /**
  * Escapes spaces in a path with backslashes
  *
@@ -77,4 +79,20 @@ export function convertToMentionPath(path: string, cwd?: string): string {
 	}
 
 	return pathWithoutProtocol
+}
+
+export const getLine = (tool: ClineSayTool): number | undefined => {
+	if (!tool?.reason || !tool?.reason?.includes("-")) {
+		return
+	}
+
+	try {
+		const line = Number(tool.reason.split(" ")[2].split("-")[0])
+
+		if (!Number.isNaN(line)) {
+			return line
+		}
+	} catch {
+		return
+	}
 }

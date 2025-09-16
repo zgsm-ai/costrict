@@ -1319,7 +1319,11 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						width: "100%",
 						padding: "0 14px",
 					}}>
-					<div className="flex items-center gap-2 min-w-0 overflow-clip flex-1">
+					<div
+						className={cn(
+							"flex items-center gap-2 min-w-0 overflow-clip flex-1",
+							isEditMode ? "ml-[20px] py-[14px]" : "",
+						)}>
 						<ModeSelector
 							value={mode}
 							title={mode ? `${t("chat:modeSelector.title")}: ${mode}` : t("chat:selectMode")}
@@ -1354,7 +1358,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						)}
 						<AutoApproveDropdown triggerClassName="min-w-[28px] text-ellipsis overflow-hidden flex-shrink" />
 					</div>
-					<div className="flex flex-shrink-0 items-center gap-0.5">
+					<div className={cn("flex flex-shrink-0 items-center gap-0.5", isEditMode ? "mr-[8px]" : "")}>
 						{isTtsPlaying && (
 							<StandardTooltip content={t("chat:stopTts")}>
 								<button
