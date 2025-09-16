@@ -1,5 +1,17 @@
 # Costrict Change Log
 
+## [1.6.11]
+
+- Adds models refresh for costrict provider
+- Add line navigation for file jumps in chat interface
+- Implement chat cancellation and improve search functionality
+- Enhance metrics loading and pushing logic in PrometheusTelemetryClient
+- Update conditional class for provider renderer visibility
+- Enhance chat UI
+- Sync roocode
+- Update ci
+- Fix known issues
+
 ## [1.6.10]
 
 - Improves chat search
