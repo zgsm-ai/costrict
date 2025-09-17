@@ -5,7 +5,7 @@ export const zgsmDefaultModelId = "glm45-fp8"
 export const zgsmModels = {
 	default: {
 		maxTokens: 8192,
-		contextWindow: 128000,
+		contextWindow: 64000,
 		supportsImages: false,
 		supportsComputerUse: false,
 		supportsPromptCache: true,

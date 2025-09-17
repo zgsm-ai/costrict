@@ -1,5 +1,11 @@
 # Costrict Change Log
 
+## [1.6.12]
+
+- Improve default values for zgsm configuration
+- Sync roocode
+- Fix known issues
+
 ## [1.6.11]
 
 - Adds models refresh for costrict provider
