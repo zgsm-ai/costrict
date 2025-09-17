@@ -844,8 +844,8 @@ export const webviewMessageHandler = async (
 					key: "zgsm",
 					options: {
 						provider: "zgsm",
-						baseUrl: message?.values?.baseUrl,
-						apiKey: message?.values?.apiKey,
+						baseUrl: message?.values?.baseUrl || apiConfiguration.zgsmBaseUrl,
+						apiKey: message?.values?.apiKey || apiConfiguration.zgsmAccessToken,
 						openAiHeaders: message?.values?.openAiHeaders || {},
 					},
 				},
