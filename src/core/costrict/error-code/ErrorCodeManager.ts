@@ -167,7 +167,7 @@ export class ErrorCodeManager {
 				error.status = status = 401
 			} else if (code === "ai-gateway.insufficient_quota" || code === "ai-gateway.star_required") {
 				const hash = await this.hashToken(apiConfiguration.zgsmAccessToken || "")
-				const baseurl = ZgsmAuthConfig.getInstance().getDefaultLoginBaseUrl()
+				const baseurl = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultLoginBaseUrl()
 				const isQuota = code === "ai-gateway.insufficient_quota"
 
 				const solution1 = isQuota
