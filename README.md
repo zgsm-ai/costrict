@@ -4,7 +4,7 @@
 </div>
 <br>
 <div align="center">
-English | <a href="https://github.com/zgsm-ai/costrict/blob/main/README.zh-CN.md" target="_blank">简体中文</a>
+English | <a href="https://github.com/zgsm-ai/costrict/blob/main/README.zh-CN.md" target="_blank">简体中文</a> | <a href="https://github.com/zgsm-ai/costrict/blob/main/README.ja-JP.md" target="_blank">日本語</a> 
 </div>
 <br>
 <br>
