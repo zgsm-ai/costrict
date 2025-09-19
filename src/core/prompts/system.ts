@@ -28,6 +28,7 @@ import {
 	addCustomInstructions,
 	markdownFormattingSection,
 } from "./sections"
+import { defaultLang } from "../../utils/language"
 
 // Helper function to get prompt component, filtering out empty objects
 export function getPromptComponent(
@@ -125,7 +126,7 @@ ${getSystemInfoSection(cwd)}
 ${getObjectiveSection(codeIndexManager, experiments)}
 
 ${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
-	language: language ?? formatLanguage(vscode.env.language),
+	language: language ?? formatLanguage(await defaultLang()),
 	rooIgnoreInstructions,
 	settings,
 })}`
@@ -162,7 +163,7 @@ export const SYSTEM_PROMPT = async (
 	const variablesForPrompt: PromptVariables = {
 		workspace: cwd,
 		mode: mode,
-		language: language ?? formatLanguage(vscode.env.language),
+		language: language ?? formatLanguage(await defaultLang()),
 		shell: vscode.env.shell,
 		operatingSystem: os.type(),
 	}
@@ -188,7 +189,7 @@ export const SYSTEM_PROMPT = async (
 			cwd,
 			mode,
 			{
-				language: language ?? formatLanguage(vscode.env.language),
+				language: language ?? formatLanguage(await defaultLang()),
 				rooIgnoreInstructions,
 				settings,
 			},

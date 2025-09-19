@@ -53,6 +53,7 @@ import { defaultModeSlug, modes, Mode } from "../../../shared/modes"
 import "../../../utils/path"
 import { addCustomInstructions } from "../sections/custom-instructions"
 import { MultiSearchReplaceDiffStrategy } from "../../diff/strategies/multi-search-replace"
+import { resetLanguageCache } from "../../../utils/language"
 
 // Mock the sections
 vi.mock("../sections/modes", () => ({
@@ -394,6 +395,8 @@ describe("SYSTEM_PROMPT", () => {
 
 	it("should include vscode language in custom instructions", async () => {
 		// Mock vscode.env.language
+		resetLanguageCache()
+
 		const vscode = vi.mocked(await import("vscode")) as any
 		vscode.env = { language: "es" }
 		// Ensure workspace mock is maintained
@@ -444,6 +447,8 @@ describe("SYSTEM_PROMPT", () => {
 
 		// Reset mock
 		vscode.env = { language: "en" }
+		resetLanguageCache()
+
 		vscode.workspace = {
 			workspaceFolders: [
 				{

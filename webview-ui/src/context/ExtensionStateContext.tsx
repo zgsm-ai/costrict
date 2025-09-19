@@ -205,7 +205,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		useZgsmCustomConfig: false,
 		zgsmCodebaseIndexEnabled: true,
 		fuzzyMatchThreshold: 1.0,
-		language: "en", // Default language code
+		language: "en", // Default fallback language (will be updated from extension)
 		writeDelayMs: 1000,
 		browserViewportSize: "900x600",
 		screenshotQuality: 75,
@@ -343,6 +343,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					// Update includeTaskHistoryInEnhance if present in state message
 					if ((newState as any).includeTaskHistoryInEnhance !== undefined) {
 						setIncludeTaskHistoryInEnhance((newState as any).includeTaskHistoryInEnhance)
+					}
+					// Update language if present in state message
+					if (newState.language !== undefined) {
+						setState((prevState) => ({ ...prevState, language: newState.language }))
 					}
 					// Handle marketplace data if present in state message
 					if (newState.marketplaceItems !== undefined) {

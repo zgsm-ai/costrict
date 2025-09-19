@@ -22,6 +22,7 @@ import { Task } from "../task/Task"
 import { formatReminderSection } from "./reminder"
 import { getShell } from "../../utils/shell"
 import { getOperatingSystem } from "../../utils/zgsmUtils"
+import { defaultLang } from "../../utils/language"
 
 export async function getEnvironmentDetails(cline: Task, includeFileDetails: boolean = false) {
 	let details = ""
@@ -235,7 +236,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 	const modeDetails = await getFullModeDetails(currentMode, customModes, customModePrompts, {
 		cwd: cline.cwd,
 		globalCustomInstructions: promptSuggestion + simpleAskSuggestion + shellSuggestion + globalCustomInstructions,
-		language: language ?? formatLanguage(vscode.env.language),
+		language: language ?? formatLanguage(await defaultLang()),
 	})
 	details += `\n\n# Operating System\n${getOperatingSystem()}`
 	details += `\n\n# Default Shell\n${getShell()}`

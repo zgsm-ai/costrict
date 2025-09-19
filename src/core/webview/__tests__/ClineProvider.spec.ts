@@ -16,6 +16,7 @@ import { Task, TaskOptions } from "../../task/Task"
 import { safeWriteJson } from "../../../utils/safeWriteJson"
 
 import { ClineProvider } from "../ClineProvider"
+import { resetLanguageCache } from "../../../utils/language"
 
 // Mock setup must come before imports.
 vi.mock("../../prompts/sections/custom-instructions")
@@ -769,11 +770,14 @@ describe("ClineProvider", () => {
 	})
 
 	test("language is set to VSCode language", async () => {
+		resetLanguageCache()
 		// Mock VSCode language as Spanish
 		;(vscode.env as any).language = "pt-BR"
 
 		const state = await provider.getState()
 		expect(state.language).toBe("pt-BR")
+		;(vscode.env as any).language = "en"
+		resetLanguageCache()
 	})
 
 	test("diffEnabled defaults to true when not set", async () => {
