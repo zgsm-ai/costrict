@@ -29,7 +29,7 @@
 			"login_for_full_features": "登入後可使用完整功能"
 		},
 		"infor": {
-			"enable_disable_function_quick_menu": "啟用/禁用\"功能快捷選單\"和\"智能程式碼補全\""
+			"enable_disable_function_quick_menu": "啟用/禁用\"快捷選單\"和\"補全\""
 		},
 		"relogin_input": {
 			"title": "重新登錄",
@@ -41,7 +41,11 @@
 	"button": {
 		"enable_function_quick_menu": "啟用快捷選單",
 		"disable": "禁用",
-		"enable": "啟用"
+		"enable": "啟用",
+		"enable_completion": "啟用補全",
+		"enable_quick_menu": "啟用快捷菜單",
+		"disable_completion": "禁用補全",
+		"disable_quick_menu": "禁用快捷菜單"
 	},
 	"function": {
 		"completion": "補全",

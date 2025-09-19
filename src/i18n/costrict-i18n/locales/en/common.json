@@ -29,7 +29,7 @@
 			"login_for_full_features": "Full functionality available after login"
 		},
 		"infor": {
-			"enable_disable_function_quick_menu": "Enable/Disable \"Function Quick Menu\" and \"Intelligent Code Completion\""
+			"enable_disable_function_quick_menu": "Enable/Disable \"Quick Menu\" and \"Auto Completion\""
 		},
 		"relogin_input": {
 			"title": "Log in again",
@@ -42,13 +42,13 @@
 		"enable_function_quick_menu": "Enable Quick Menu",
 		"disable": "Disable ",
 		"enable": "Enable ",
-		"enable_completion": "Enable Intelligent Completion",
-		"enable_quick_menu": "Enable Function Quick Menu",
-		"disable_completion": "Disable Intelligent Completion",
-		"disable_quick_menu": "Disable Function Quick Menu"
+		"enable_completion": "Enable Auto Completion",
+		"enable_quick_menu": "Enable Quick Menu",
+		"disable_completion": "Disable Auto Completion",
+		"disable_quick_menu": "Disable Quick Menu"
 	},
 	"function": {
-		"completion": "Completion",
+		"completion": "Auto Completion",
 		"quick_menu": "Quick Menu"
 	},
 	"command": {
