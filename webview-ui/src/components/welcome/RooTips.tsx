@@ -10,6 +10,32 @@ import { ZgsmCodeMode } from "@roo/modes"
 
 const tips = [
 	{
+		icon: "codicon-debug-all",
+		click: (e?: any) => {
+			e?.preventDefault()
+		},
+		disabled: true,
+		titleKey: "rooTips.test.title",
+		descriptionKey: "rooTips.test.description",
+	},
+	{
+		icon: "codicon-book",
+		click: (e: any) => {
+			e.preventDefault()
+			vscode.postMessage({
+				type: "mode",
+				text: "code",
+			})
+			// 调用 project-wiki 自定义指令
+			vscode.postMessage({
+				type: "newTask",
+				text: "/project-wiki",
+			})
+		},
+		titleKey: "rooTips.projectWiki.title",
+		descriptionKey: "rooTips.projectWiki.description",
+	},
+	{
 		icon: "codicon-account",
 		// href: buildDocLink("basic-usage/using-modes", "tips"),
 		click: (e?: any) => {
@@ -50,6 +76,7 @@ const tips = [
 	href?: string
 	click: (e?: any) => void
 	titleKey: string
+	disabled?: boolean
 	descriptionKey: string
 }[]
 const RooTips = () => {
@@ -116,16 +143,20 @@ Building features in a structured way`,
 					}}
 				/>
 			</p>
-			<div className="flex flex-col items-center justify-center px-5 py-2.5 gap-4">
+			<div className="flex flex-row flex-wrap items-center justify-center px-5 py-2.5 gap-4">
 				{tips.map((tip) => (
 					<div
 						key={tip.titleKey}
-						className="flex items-center gap-2 text-vscode-editor-foreground font-vscode max-w-[250px]">
+						className="flex items-center gap-2 text-vscode-editor-foreground font-vscode w-[calc(50%-1rem)] max-w-[250px]">
 						<span className={`codicon ${tip.icon}`}></span>
 						<span>
-							<VSCodeLink className="forced-color-adjust-none" href="#" onClick={tip.click}>
-								{t(tip.titleKey)}
-							</VSCodeLink>
+							{tip.disabled ? (
+								t(tip.titleKey)
+							) : (
+								<VSCodeLink className="forced-color-adjust-none" href="#" onClick={tip.click}>
+									{t(tip.titleKey)}
+								</VSCodeLink>
+							)}
 							: {t(tip.descriptionKey)}
 						</span>
 					</div>

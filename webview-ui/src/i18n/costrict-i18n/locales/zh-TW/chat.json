@@ -107,5 +107,15 @@
 	},
 	"autoApprove": {
 		"triggerLabelAll": "全部批准"
+	},
+	"rooTips": {
+		"test": {
+			"title": "測試",
+			"description": "自動產生並執行單元測試來驗證程式碼"
+		},
+		"projectWiki": {
+			"title": "專案文件",
+			"description": "深度分析專案並產生全面的專案文件"
+		}
 	}
 }

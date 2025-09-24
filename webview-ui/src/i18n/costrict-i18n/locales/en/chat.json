@@ -104,5 +104,15 @@
 	"slashCommand": {
 		"wantsToRun": "Costrict wants to run a slash command",
 		"didRun": "Costrict ran a slash command"
+	},
+	"rooTips": {
+		"test": {
+			"title": "Test",
+			"description": "Automatically generate and run unit tests to validate your code"
+		},
+		"projectWiki": {
+			"title": "Project Wiki",
+			"description": "Analyze project deeply and generate a comprehensive project wiki"
+		}
 	}
 }
