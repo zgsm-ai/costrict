@@ -15,6 +15,179 @@ import { getApiMetrics } from "../../shared/getApiMetrics"
 import { DIFF_VIEW_URI_SCHEME } from "../../integrations/editor/DiffViewProvider"
 
 import { CheckpointServiceOptions, RepoPerTaskCheckpointService } from "../../services/checkpoints"
+import { CospecMetadataManager } from "../costrict/workflow/CospecMetadataManager"
+import * as path from "path"
+import * as fs from "fs/promises"
+
+/**
+ * ?? .cospec ????????
+ * ???? checkpoint ??????? workflow ??????
+ */
+async function updateCospecMetadataForCheckpoint(
+	workspaceDir: string,
+	taskId: string,
+	checkpointId: string,
+	checkpointService?: any
+): Promise<void> {
+	try {
+		// ???? workflow ??? .cospec ??
+		const cospecDirs = await findCospecDirectories(workspaceDir)
+		
+		console.log(`[updateCospecMetadataForCheckpoint] ?? ${cospecDirs.length} ? .cospec ??`)
+		
+		// ?? checkpoint ??????
+		let changedFiles: Set<string> = new Set()
+		if (checkpointService) {
+			try {
+				const diffs = await checkpointService.getDiff({ from: checkpointService.baseHash, to: checkpointId })
+				changedFiles = new Set(diffs.map((diff: any) => diff.paths.relative))
+				console.log(`[updateCospecMetadataForCheckpoint] checkpoint ??????:`, Array.from(changedFiles))
+			} catch (error) {
+				console.warn(`[updateCospecMetadataForCheckpoint] ???? checkpoint ??????????:`, error)
+				// ???????????????????
+				changedFiles = new Set(['requirements.md', 'design.md', 'tasks.md'])
+			}
+		} else {
+			// ???? checkpointService????????
+			changedFiles = new Set(['requirements.md', 'design.md', 'tasks.md'])
+		}
+		
+		for (const cospecDir of cospecDirs) {
+			try {
+				// ??????? - ???????????
+				const metadata = await CospecMetadataManager.getMetadataOrDefault(cospecDir)
+				
+				// ??????????? checkpoint ????
+				const fileTypes: Array<{ type: keyof typeof metadata; filename: string }> = [
+					{ type: 'design', filename: 'design.md' },
+					{ type: 'requirements', filename: 'requirements.md' },
+					{ type: 'tasks', filename: 'tasks.md' }
+				]
+				
+				let hasUpdates = false
+				for (const { type, filename } of fileTypes) {
+					// ???????? checkpoint ????
+					const fileChanged = Array.from(changedFiles).some(changedFile =>
+						changedFile.endsWith(filename) || changedFile.includes(`/.cospec/`) && changedFile.endsWith(filename)
+					)
+					
+					if (fileChanged && metadata[type]) {
+						metadata[type]!.lastTaskId = taskId
+						metadata[type]!.lastCheckpointId = checkpointId
+						hasUpdates = true
+						console.log(`[updateCospecMetadataForCheckpoint] ?? ${filename} ????: taskId=${taskId}, checkpointId=${checkpointId}`)
+					}
+				}
+				
+				// ????????????
+				if (hasUpdates) {
+					await CospecMetadataManager.writeMetadata(cospecDir, metadata)
+					console.log(`[updateCospecMetadataForCheckpoint] ??????: ${cospecDir}`)
+				} else {
+					console.log(`[updateCospecMetadataForCheckpoint] ???????: ${cospecDir}`)
+				}
+			} catch (error) {
+				console.error(`[updateCospecMetadataForCheckpoint] ???? ${cospecDir} ??:`, error)
+			}
+		}
+	} catch (error) {
+		console.error("[updateCospecMetadataForCheckpoint] ?? .cospec ?????:", error)
+		throw error
+	}
+}
+
+/**
+ * ???????? workflow ?????
+ * ?? .cospec ???????????workflow ?????
+ */
+async function findCospecDirectories(workspaceDir: string): Promise<string[]> {
+	const cospecDirs: string[] = []
+	
+	async function searchDirectory(dir: string, depth = 0): Promise<void> {
+		// ????????????
+		if (depth > 5) return
+		
+		try {
+			const entries = await fs.readdir(dir, { withFileTypes: true })
+			
+			for (const entry of entries) {
+				if (entry.isDirectory()) {
+					const fullPath = path.join(dir, entry.name)
+					
+					if (entry.name === '.cospec') {
+						// ?? .cospec ???????????
+						await searchCospecSubdirectories(fullPath)
+					} else if (!entry.name.startsWith('.') && !entry.name.includes('node_modules')) {
+						// ????????? node_modules?
+						await searchDirectory(fullPath, depth + 1)
+					}
+				}
+			}
+		} catch (error) {
+			// ??????
+		}
+	}
+	
+	/**
+	 * ? .cospec ????????? workflow ??????
+	 */
+	async function searchCospecSubdirectories(cospecDir: string): Promise<void> {
+		try {
+			// ???? .cospec ?????????
+			const supportedFiles = ['requirements.md', 'design.md', 'tasks.md']
+			let hasRootFiles = false
+			
+			for (const fileName of supportedFiles) {
+				const filePath = path.join(cospecDir, fileName)
+				try {
+					await fs.access(filePath)
+					hasRootFiles = true
+					break
+				} catch {
+					// ??????????
+				}
+			}
+			
+			if (hasRootFiles) {
+				cospecDirs.push(cospecDir)
+			}
+			
+			// ????????????workflow ?????
+			const entries = await fs.readdir(cospecDir, { withFileTypes: true })
+			
+			for (const entry of entries) {
+				if (entry.isDirectory() && !entry.name.startsWith('.')) {
+					const subDir = path.join(cospecDir, entry.name)
+					
+					// ????????? workflow ??
+					let hasWorkflowFiles = false
+					for (const fileName of supportedFiles) {
+						const filePath = path.join(subDir, fileName)
+						try {
+							await fs.access(filePath)
+							hasWorkflowFiles = true
+							break
+						} catch {
+							// ??????????
+						}
+					}
+					
+					if (hasWorkflowFiles) {
+						cospecDirs.push(subDir)
+					}
+					
+					// ????????????????? workflow ???
+					await searchCospecSubdirectories(subDir)
+				}
+			}
+		} catch (error) {
+			console.error(`[findCospecDirectories] ?? .cospec ?????: ${cospecDir}`, error)
+		}
+	}
+	
+	await searchDirectory(workspaceDir)
+	return cospecDirs
+}
 
 export async function getCheckpointService(
 	task: Task,
@@ -187,12 +360,30 @@ export async function checkpointSave(task: Task, force = false, suppressMessage 
 	TelemetryService.instance.captureCheckpointCreated(task.taskId)
 
 	// Start the checkpoint process in the background.
-	return service
+	const checkpointResult = service
 		.saveCheckpoint(`Task: ${task.taskId}, Time: ${Date.now()}`, { allowEmpty: force, suppressMessage })
+		.then(async (result) => {
+			// ? checkpoint ???????? .cospec ???? .cometa.json ??
+			if (result && result.commit) {
+				try {
+					const workspaceDir = task.cwd || getWorkspacePath()
+					if (workspaceDir) {
+						await updateCospecMetadataForCheckpoint(workspaceDir, task.taskId, result.commit, service)
+						console.log(`[checkpointSave] ??? .cospec ??? .cometa.json ??: taskId=${task.taskId}, checkpointId=${result.commit}`)
+					}
+				} catch (error) {
+					console.error("[checkpointSave] ?? .cometa.json ????:", error)
+					// ?????????? checkpoint ????
+				}
+			}
+			return result
+		})
 		.catch((err) => {
 			console.error("[Task#checkpointSave] caught unexpected error, disabling checkpoints", err)
 			task.enableCheckpoints = false
 		})
+
+	return checkpointResult
 }
 
 export type CheckpointRestoreOptions = {

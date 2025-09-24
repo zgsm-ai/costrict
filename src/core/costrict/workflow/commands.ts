@@ -6,11 +6,11 @@ import * as vscode from "vscode"
 import { CoworkflowCodeLens, CoworkflowCommandContext, ContentExtractionContext } from "./types"
 import { CoworkflowErrorHandler } from "./CoworkflowErrorHandler"
 import { getCommand } from "../../../utils/commands"
-import { supportPrompt, type SupportPromptType } from "../../../shared/support-prompt"
+import { type SupportPromptType } from "../../../shared/support-prompt"
 import { ClineProvider } from "../../webview/ClineProvider"
 import { SectionContentExtractor, createContentExtractionContext } from "./SectionContentExtractor"
-import { getCospecFileDiff } from "./diff-utils"
-import { getWorkspacePath } from "../../../utils/path"
+import { CospecDiffIntegration } from "./CospecDiffIntegration"
+import { CospecMetadataManager } from "./CospecMetadataManager"
 import path from "path"
 
 /**
@@ -329,54 +329,47 @@ async function handleUpdateSection(codeLens: CoworkflowCodeLens): Promise<void> 
 		const scope = getScopePath(commandContext.uri)
 
 		// 获取选中的文本内容
-		let selectedText: string
-
-		// 尝试获取文件差异作为 selectedText（新功能）
+		let selectedText = await getTaskBlockContent(commandContext)
+		let diffContent = ""
+		const provider = await ClineProvider.getInstance()
 		try {
-			// 获取当前任务实例
-			const providerInstance = await ClineProvider.getInstance()
-			const currentTask = providerInstance?.getCurrentTask()
+			// 检查是否应该获取差异
+			if (CospecDiffIntegration.shouldGetDiff(commandContext.uri) && provider) {
+				console.log("CoworkflowCommands: 开始获取文件与 checkpoint 的差异")
+				
+				// 获取全局存储目录
+				// const globalStorageDir = vscode.extensions.getExtension("zgsm-ai.zgsm")?.extensionPath
+				const globalStoragePath = provider.context.globalStorageUri.fsPath // '/home/mini/.config/Code/User/globalStorage/zgsm-ai.zgsm'
 
-			if (currentTask) {
-				// 获取工作区根目录
-				const workspaceRoot = getWorkspacePath()
-				if (workspaceRoot) {
-					// 构建 .cospec 目录下的相对文件路径
-					const relativePath = path.relative(workspaceRoot, commandContext.uri.fsPath)
-					const cospecRelativePath = relativePath.startsWith(".cospec/")
-						? relativePath.substring(8) // 移除 '.cospec/' 前缀
-						: relativePath
-
-					console.log("CoworkflowCommands: 尝试获取文件差异", {
-						workspaceRoot,
-						originalPath: commandContext.uri.fsPath,
-						relativePath,
-						cospecRelativePath,
-					})
-
-					// 调用 getCospecFileDiff 获取差异
-					const diffResult = await getCospecFileDiff(currentTask, cospecRelativePath, workspaceRoot)
-
-					if (diffResult.hasDifference && diffResult.diffString) {
-						selectedText = diffResult.diffString
+				if (globalStoragePath) {
+					const diffResult = await CospecDiffIntegration.getDiffForFile(
+						commandContext.uri,
+						globalStoragePath
+					)
+					
+					if (diffResult?.success && diffResult?.hasDifference) {
+						diffContent = CospecDiffIntegration.formatDiffForDisplay(diffResult)
 						console.log("CoworkflowCommands: 成功获取文件差异", {
-							filePath: cospecRelativePath,
-							diffLength: selectedText.length,
+							taskId: diffResult?.lastTaskId,
+							hasDifference: diffResult?.hasDifference
 						})
+					} else if (diffResult?.success && !diffResult?.hasDifference) {
+						console.log("CoworkflowCommands: 文件与 checkpoint 版本相同，无差异")
 					} else {
-						// 没有差异或获取失败，使用原有逻辑
-						throw new Error("No diff available, fallback to original logic")
+						console.log("CoworkflowCommands: 获取差异失败:", diffResult?.error)
 					}
 				} else {
-					throw new Error("No workspace root available")
+					console.log("CoworkflowCommands: 无法获取全局存储目录")
 				}
-			} else {
-				throw new Error("No current task available")
 			}
 		} catch (error) {
 			// 回退到原有的 getTaskBlockContent 逻辑
-			console.log("CoworkflowCommands: 获取文件差异失败，回退到原有逻辑:", error.message)
-			selectedText = await getTaskBlockContent(commandContext)
+			console.log("CoworkflowCommands: 获取文件差异失败，回退到原有逻辑:", error instanceof Error ? error.message : String(error))
+		}
+
+		// 如果有差异内容，将其添加到选中文本中
+		if (diffContent) {
+			selectedText = `${selectedText}\n\n## 与上次 Checkpoint 的差异\n\n${diffContent}`
 		}
 
 		const mode = commandContext.documentType === "requirements" ? requirementMode : designMode // 需求/设计相关操作使用 architect 模式
