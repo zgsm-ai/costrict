@@ -38,6 +38,7 @@ import { writeCostrictAccessToken } from "./codebase-index/utils"
 import { getPanel } from "../../activate/registerCommands"
 import { t } from "../../i18n"
 import prettyBytes from "pretty-bytes"
+import { ensureProjectWikiCommandExists } from "./wiki/projectWikiHelpers"
 
 const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
 
@@ -210,6 +211,7 @@ export async function activate(
 	})
 	setTimeout(() => {
 		loginTip()
+		ensureProjectWikiCommandExists()
 	}, 2000)
 }
 

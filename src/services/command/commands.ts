@@ -3,7 +3,7 @@ import * as path from "path"
 import matter from "gray-matter"
 import { getGlobalRooDirectory, getProjectRooDirectoryForCwd } from "../roo-config"
 import { getBuiltInCommands, getBuiltInCommand } from "./built-in-commands"
-import { ensureProjectWikiCommandExists } from "../../core/tools/helpers/projectWikiHelpers"
+import { ensureProjectWikiCommandExists } from "../../core/costrict/wiki/projectWikiHelpers"
 
 export interface Command {
 	name: string
@@ -20,12 +20,7 @@ export interface Command {
  */
 export async function getCommands(cwd: string): Promise<Command[]> {
 	// init project-wiki command.
-	try {
-		await ensureProjectWikiCommandExists()
-	} catch (error) {
-		// just log error
-		console.error("[commands] Failed to initialize project-wiki command:", error)
-	}
+	await ensureProjectWikiCommandExists()
 
 	const commands = new Map<string, Command>()
 

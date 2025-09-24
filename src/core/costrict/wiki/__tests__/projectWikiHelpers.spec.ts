@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { ensureProjectWikiCommandExists } from "../helpers/projectWikiHelpers"
+import { ensureProjectWikiCommandExists } from "../projectWikiHelpers"
 import { promises as fs } from "fs"
 import * as path from "path"
 import * as os from "os"

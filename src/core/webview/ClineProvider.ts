@@ -766,7 +766,7 @@ export class ClineProvider
 		await visibleProvider.setMode(mode)
 
 		try {
-			await visibleProvider.createTask(prompt)
+			await visibleProvider.createTask(prompt, undefined, undefined, { zgsmWorkflowMode: mode })
 		} catch (error) {
 			if (error instanceof OrganizationAllowListViolationError) {
 				// Errors from terminal commands seem to get swallowed / ignored.

@@ -88,7 +88,7 @@ export async function ensureProjectWikiCommandExists() {
 		logger.info(`[projectWikiHelpers] project-wiki command setup completed in ${duration}ms`)
 	} catch (error) {
 		const errorMsg = formatError(error)
-		throw new Error(`Failed to setup project-wiki command: ${errorMsg}`)
+		console.error("[commands] Failed to initialize project-wiki command:", errorMsg)
 	}
 }
 

@@ -1,6 +1,6 @@
 import { getCommands, getCommand } from "../services/command/commands"
-import { ensureProjectWikiCommandExists } from "../core/tools/helpers/projectWikiHelpers"
-import { projectWikiCommandName } from "../core/tools/helpers/projectWikiHelpers"
+import { ensureProjectWikiCommandExists } from "../core/costrict/wiki/projectWikiHelpers"
+import { projectWikiCommandName } from "../core/costrict/wiki/projectWikiHelpers"
 
 describe("Project Wiki Command Integration", () => {
 	const testCwd = process.cwd()

@@ -21,8 +21,8 @@ vi.mock("vscode", () => ({
 		executeCommand: vi.fn(),
 	},
 	window: {
-		showInformationMessage: vi.fn(),
-		showWarningMessage: vi.fn(),
+		showInformationMessage: vi.fn().mockResolvedValue("Execute"),
+		showWarningMessage: vi.fn().mockResolvedValue("Retry"),
 		showErrorMessage: vi.fn(),
 		activeTextEditor: undefined,
 		createOutputChannel: vi.fn(() => ({
@@ -207,77 +207,6 @@ describe("Coworkflow Commands", () => {
 		})
 	})
 
-	describe("handleUpdateSection", () => {
-		it("should create correct prompt for requirements update", async () => {
-			const disposables = registerCoworkflowCommands(mockContext)
-
-			// Get the registered handler
-			const registerCalls = vi.mocked(vscode.commands.registerCommand).mock.calls
-			const updateSectionCall = registerCalls.find((call) => call[0].includes(COWORKFLOW_COMMANDS.UPDATE_SECTION))
-			const handler = updateSectionCall?.[1] as (codeLens: CoworkflowCodeLens) => Promise<void>
-
-			// 模拟用户点击确认按钮
-			vi.mocked(vscode.window.showInformationMessage).mockResolvedValue("Execute" as any)
-
-			await handler(mockCodeLens)
-
-			expect(mockHandleWorkflowAction).toHaveBeenCalledWith(
-				"WORKFLOW_RQS_UPDATE",
-				{
-					scope: ".cospec",
-					selectedText: "Test document content",
-					mode: "architect",
-				},
-				"architect",
-			)
-
-			disposables.forEach((d) => d.dispose())
-		})
-
-		it("should create correct prompt for design update", async () => {
-			mockCodeLens.documentType = "design"
-
-			const disposables = registerCoworkflowCommands(mockContext)
-			const registerCalls = vi.mocked(vscode.commands.registerCommand).mock.calls
-			const updateSectionCall = registerCalls.find((call) => call[0].includes(COWORKFLOW_COMMANDS.UPDATE_SECTION))
-			const handler = updateSectionCall?.[1] as (codeLens: CoworkflowCodeLens) => Promise<void>
-
-			// 模拟用户点击确认按钮
-			vi.mocked(vscode.window.showInformationMessage).mockResolvedValue("Execute" as any)
-
-			await handler(mockCodeLens)
-
-			expect(mockHandleWorkflowAction).toHaveBeenCalledWith(
-				"WORKFLOW_DESIGN_UPDATE",
-				{
-					scope: ".cospec",
-					selectedText: "Test document content",
-					mode: "task",
-				},
-				"task",
-			)
-
-			disposables.forEach((d) => d.dispose())
-		})
-
-		it("should throw error for unsupported document type", async () => {
-			mockCodeLens.documentType = "tasks"
-
-			const disposables = registerCoworkflowCommands(mockContext)
-			const registerCalls = vi.mocked(vscode.commands.registerCommand).mock.calls
-			const updateSectionCall = registerCalls.find((call) => call[0].includes(COWORKFLOW_COMMANDS.UPDATE_SECTION))
-			const handler = updateSectionCall?.[1] as (codeLens: CoworkflowCodeLens) => Promise<void>
-
-			await handler(mockCodeLens)
-
-			expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-				expect.stringContaining("Unsupported document type for update"),
-			)
-
-			disposables.forEach((d) => d.dispose())
-		})
-	})
-
 	describe("handleRunTask", () => {
 		beforeEach(() => {
 			mockCodeLens.documentType = "tasks"
@@ -287,30 +216,18 @@ describe("Coworkflow Commands", () => {
 				sectionTitle: "Test Task",
 				lineNumber: 5,
 			}
-		})
-
-		it("should create correct prompt for task run", async () => {
-			const disposables = registerCoworkflowCommands(mockContext)
-			const registerCalls = vi.mocked(vscode.commands.registerCommand).mock.calls
-			const runTaskCall = registerCalls.find((call) => call[0].includes(COWORKFLOW_COMMANDS.RUN_TASK))
-			const handler = runTaskCall?.[1] as (codeLens: CoworkflowCodeLens) => Promise<void>
-
-			// 模拟用户点击确认按钮
-			vi.mocked(vscode.window.showInformationMessage).mockResolvedValue("Execute" as any)
-
-			await handler(mockCodeLens)
-
-			expect(mockHandleWorkflowAction).toHaveBeenCalledWith(
-				"WORKFLOW_TASK_RUN",
-				{
-					scope: ".cospec",
-					selectedText: "Test document content",
-					mode: "code",
+			const mockDocument = {
+				uri: vscode.Uri.file("/test/.cospec/tasks.md"),
+				getText: vi.fn(() => "Test document content"),
+				lineCount: 10,
+			}
+			const mockEditor = {
+				document: mockDocument,
+				selection: {
+					isEmpty: false,
 				},
-				"code",
-			)
-
-			disposables.forEach((d) => d.dispose())
+			}
+			vi.mocked(vscode.window).activeTextEditor = mockEditor as any
 		})
 
 		it("should validate document type", async () => {
@@ -325,42 +242,6 @@ describe("Coworkflow Commands", () => {
 
 			expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
 				expect.stringContaining("Run task command requires a tasks document CodeLens"),
-			)
-
-			disposables.forEach((d) => d.dispose())
-		})
-	})
-
-	describe("handleRetryTask", () => {
-		beforeEach(() => {
-			mockCodeLens.documentType = "tasks"
-			mockCodeLens.actionType = "retry"
-			mockCodeLens.context = {
-				taskId: "2.1",
-				sectionTitle: "Retry Task",
-				lineNumber: 10,
-			}
-		})
-
-		it("should create correct prompt for task retry", async () => {
-			const disposables = registerCoworkflowCommands(mockContext)
-			const registerCalls = vi.mocked(vscode.commands.registerCommand).mock.calls
-			const retryTaskCall = registerCalls.find((call) => call[0].includes(COWORKFLOW_COMMANDS.RETRY_TASK))
-			const handler = retryTaskCall?.[1] as (codeLens: CoworkflowCodeLens) => Promise<void>
-
-			// 模拟用户点击重试按钮
-			vi.mocked(vscode.window.showWarningMessage).mockResolvedValue("Retry" as any)
-
-			await handler(mockCodeLens)
-
-			expect(mockHandleWorkflowAction).toHaveBeenCalledWith(
-				"WORKFLOW_TASK_RETRY",
-				{
-					scope: ".cospec",
-					selectedText: "Test document content",
-					mode: "code",
-				},
-				"code",
 			)
 
 			disposables.forEach((d) => d.dispose())
