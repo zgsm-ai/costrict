@@ -9,6 +9,8 @@ import { getCommand } from "../../../utils/commands"
 import { supportPrompt, type SupportPromptType } from "../../../shared/support-prompt"
 import { ClineProvider } from "../../webview/ClineProvider"
 import { SectionContentExtractor, createContentExtractionContext } from "./SectionContentExtractor"
+import { getCospecFileDiff } from "./diff-utils"
+import { getWorkspacePath } from "../../../utils/path"
 import path from "path"
 
 /**
@@ -133,8 +135,8 @@ function getScopePath(uri: vscode.Uri): string {
 		return path.dirname(uri.fsPath)
 	}
 
-	const relativePath = path.relative(workspaceFolder.uri.fsPath, uri.fsPath)
-	return path.dirname(relativePath)
+	// 返回绝对路径而不是相对路径
+	return path.dirname(uri.fsPath)
 }
 
 /**
@@ -325,7 +327,57 @@ async function handleUpdateSection(codeLens: CoworkflowCodeLens): Promise<void> 
 
 		// Get required parameters for prompt
 		const scope = getScopePath(commandContext.uri)
-		const selectedText = await getTaskBlockContent(commandContext)
+
+		// 获取选中的文本内容
+		let selectedText: string
+
+		// 尝试获取文件差异作为 selectedText（新功能）
+		try {
+			// 获取当前任务实例
+			const providerInstance = await ClineProvider.getInstance()
+			const currentTask = providerInstance?.getCurrentTask()
+
+			if (currentTask) {
+				// 获取工作区根目录
+				const workspaceRoot = getWorkspacePath()
+				if (workspaceRoot) {
+					// 构建 .cospec 目录下的相对文件路径
+					const relativePath = path.relative(workspaceRoot, commandContext.uri.fsPath)
+					const cospecRelativePath = relativePath.startsWith(".cospec/")
+						? relativePath.substring(8) // 移除 '.cospec/' 前缀
+						: relativePath
+
+					console.log("CoworkflowCommands: 尝试获取文件差异", {
+						workspaceRoot,
+						originalPath: commandContext.uri.fsPath,
+						relativePath,
+						cospecRelativePath,
+					})
+
+					// 调用 getCospecFileDiff 获取差异
+					const diffResult = await getCospecFileDiff(currentTask, cospecRelativePath, workspaceRoot)
+
+					if (diffResult.hasDifference && diffResult.diffString) {
+						selectedText = diffResult.diffString
+						console.log("CoworkflowCommands: 成功获取文件差异", {
+							filePath: cospecRelativePath,
+							diffLength: selectedText.length,
+						})
+					} else {
+						// 没有差异或获取失败，使用原有逻辑
+						throw new Error("No diff available, fallback to original logic")
+					}
+				} else {
+					throw new Error("No workspace root available")
+				}
+			} else {
+				throw new Error("No current task available")
+			}
+		} catch (error) {
+			// 回退到原有的 getTaskBlockContent 逻辑
+			console.log("CoworkflowCommands: 获取文件差异失败，回退到原有逻辑:", error.message)
+			selectedText = await getTaskBlockContent(commandContext)
+		}
 
 		const mode = commandContext.documentType === "requirements" ? requirementMode : designMode // 需求/设计相关操作使用 architect 模式
 		// Determine prompt type based on document type
@@ -343,7 +395,7 @@ async function handleUpdateSection(codeLens: CoworkflowCodeLens): Promise<void> 
 			promptType,
 			{
 				scope,
-				selectedText,
+				selectedText: `<pre>\n${selectedText}\n</pre>`,
 				mode,
 			},
 			mode,

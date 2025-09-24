@@ -64,6 +64,56 @@ vi.mock("../../../../shared/support-prompt", () => ({
 	},
 }))
 
+// Mock ClineProvider
+const mockHandleWorkflowAction = vi.fn()
+const mockClineProvider = {
+	getInstance: vi.fn().mockResolvedValue({
+		getCurrentTask: vi.fn().mockReturnValue({
+			clineMessages: [],
+			checkpointService: {
+				isInitialized: true,
+				git: { show: vi.fn() },
+			},
+		}), // 返回有效的 task 对象
+	}),
+	handleWorkflowAction: mockHandleWorkflowAction,
+}
+
+vi.mock("../../webview/ClineProvider", () => ({
+	ClineProvider: {
+		...mockClineProvider,
+		handleWorkflowAction: mockHandleWorkflowAction, // 静态方法需要直接在类上定义
+	},
+}))
+
+// Mock diff-utils
+vi.mock("./diff-utils", () => ({
+	getCospecFileDiff: vi.fn().mockResolvedValue({
+		filePath: "test.md",
+		checkpointContent: null,
+		localContent: null,
+		diffString: null,
+		hasDifference: false,
+	}),
+}))
+
+// Mock utils/path
+vi.mock("../../../utils/path", () => ({
+	getWorkspacePath: vi.fn().mockReturnValue("/test"),
+}))
+
+// Mock SectionContentExtractor
+vi.mock("./SectionContentExtractor", () => ({
+	SectionContentExtractor: vi.fn().mockImplementation(() => ({
+		extractContentForCodeLens: vi.fn().mockResolvedValue({
+			success: true,
+			content: "Test document content",
+			type: "selection",
+		}),
+	})),
+	createContentExtractionContext: vi.fn().mockReturnValue({}),
+}))
+
 // Mock path module
 vi.mock("path", async (importOriginal) => {
 	const actual = (await importOriginal()) as any
@@ -166,15 +216,20 @@ describe("Coworkflow Commands", () => {
 			const updateSectionCall = registerCalls.find((call) => call[0].includes(COWORKFLOW_COMMANDS.UPDATE_SECTION))
 			const handler = updateSectionCall?.[1] as (codeLens: CoworkflowCodeLens) => Promise<void>
 
+			// 模拟用户点击确认按钮
 			vi.mocked(vscode.window.showInformationMessage).mockResolvedValue("Execute" as any)
 
 			await handler(mockCodeLens)
 
-			expect(supportPrompt.create).toHaveBeenCalledWith("WORKFLOW_RQS_UPDATE", {
-				scope: ".cospec",
-				selectedText: "Test document content",
-				mode: "architect",
-			})
+			expect(mockHandleWorkflowAction).toHaveBeenCalledWith(
+				"WORKFLOW_RQS_UPDATE",
+				{
+					scope: ".cospec",
+					selectedText: "Test document content",
+					mode: "architect",
+				},
+				"architect",
+			)
 
 			disposables.forEach((d) => d.dispose())
 		})
@@ -187,15 +242,20 @@ describe("Coworkflow Commands", () => {
 			const updateSectionCall = registerCalls.find((call) => call[0].includes(COWORKFLOW_COMMANDS.UPDATE_SECTION))
 			const handler = updateSectionCall?.[1] as (codeLens: CoworkflowCodeLens) => Promise<void>
 
+			// 模拟用户点击确认按钮
 			vi.mocked(vscode.window.showInformationMessage).mockResolvedValue("Execute" as any)
 
 			await handler(mockCodeLens)
 
-			expect(supportPrompt.create).toHaveBeenCalledWith("WORKFLOW_DESIGN_UPDATE", {
-				scope: ".cospec",
-				selectedText: "Test document content",
-				mode: "task",
-			})
+			expect(mockHandleWorkflowAction).toHaveBeenCalledWith(
+				"WORKFLOW_DESIGN_UPDATE",
+				{
+					scope: ".cospec",
+					selectedText: "Test document content",
+					mode: "task",
+				},
+				"task",
+			)
 
 			disposables.forEach((d) => d.dispose())
 		})
@@ -235,15 +295,20 @@ describe("Coworkflow Commands", () => {
 			const runTaskCall = registerCalls.find((call) => call[0].includes(COWORKFLOW_COMMANDS.RUN_TASK))
 			const handler = runTaskCall?.[1] as (codeLens: CoworkflowCodeLens) => Promise<void>
 
+			// 模拟用户点击确认按钮
 			vi.mocked(vscode.window.showInformationMessage).mockResolvedValue("Execute" as any)
 
 			await handler(mockCodeLens)
 
-			expect(supportPrompt.create).toHaveBeenCalledWith("WORKFLOW_TASK_RUN", {
-				scope: ".cospec",
-				selectedText: "Test document content",
-				mode: "code",
-			})
+			expect(mockHandleWorkflowAction).toHaveBeenCalledWith(
+				"WORKFLOW_TASK_RUN",
+				{
+					scope: ".cospec",
+					selectedText: "Test document content",
+					mode: "code",
+				},
+				"code",
+			)
 
 			disposables.forEach((d) => d.dispose())
 		})
@@ -283,15 +348,20 @@ describe("Coworkflow Commands", () => {
 			const retryTaskCall = registerCalls.find((call) => call[0].includes(COWORKFLOW_COMMANDS.RETRY_TASK))
 			const handler = retryTaskCall?.[1] as (codeLens: CoworkflowCodeLens) => Promise<void>
 
+			// 模拟用户点击重试按钮
 			vi.mocked(vscode.window.showWarningMessage).mockResolvedValue("Retry" as any)
 
 			await handler(mockCodeLens)
 
-			expect(supportPrompt.create).toHaveBeenCalledWith("WORKFLOW_TASK_RETRY", {
-				scope: ".cospec",
-				selectedText: "Test document content",
-				mode: "code",
-			})
+			expect(mockHandleWorkflowAction).toHaveBeenCalledWith(
+				"WORKFLOW_TASK_RETRY",
+				{
+					scope: ".cospec",
+					selectedText: "Test document content",
+					mode: "code",
+				},
+				"code",
+			)
 
 			disposables.forEach((d) => d.dispose())
 		})
