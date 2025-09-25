@@ -8,6 +8,7 @@ import * as fs from "fs"
 import * as vscode from "vscode"
 import { CospecMetadataManager } from "./CospecMetadataManager"
 import { simpleGit, SimpleGit } from "simple-git"
+import { isCoworkflowDocument } from "./commands"
 
 /**
  * 差异获取结果
@@ -55,7 +56,7 @@ export class CospecDiffIntegration {
 			}
 
 			// 检查是否是 .cospec 文件
-			if (!CospecMetadataManager.isCospecFile(filePath)) {
+			if (!isCoworkflowDocument(filePath)) {
 				return {
 					success: false,
 					error: "文件不在 .cospec 目录中",
@@ -132,10 +133,10 @@ export class CospecDiffIntegration {
 
 		// 获取文件在指定 commit 中的内容
 		const fileContent = await git.show([`${commitId}:${relativePath}`])
-
+		
 		if (diffResult) {
-			// 读取 filePath 文件内容
 			const curfileContent = await fs.promises.readFile(filePath, "utf-8")
+			// 读取 filePath 文件内容
 			// const fileContentString = Buffer.from(fileContent).toString('utf-8')
 			if (curfileContent === fileContent) {
 				throw new Error("文件内容相同，无差异")
@@ -210,7 +211,7 @@ export class CospecDiffIntegration {
 		// 只处理 .cospec 目录中的三个主要文件
 		const supportedFiles = ["requirements.md", "design.md", "tasks.md"]
 
-		return CospecMetadataManager.isCospecFile(filePath) && supportedFiles.includes(fileName)
+		return isCoworkflowDocument(filePath) && supportedFiles.includes(fileName)
 	}
 
 	/**

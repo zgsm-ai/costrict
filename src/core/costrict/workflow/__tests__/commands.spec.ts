@@ -243,9 +243,9 @@ describe("Coworkflow Commands", () => {
 			const designUri = vscode.Uri.file("/test/.cospec/design.md")
 			const tasksUri = vscode.Uri.file("/test/.cospec/tasks.md")
 
-			expect(isCoworkflowDocument(requirementsUri)).toBe(true)
-			expect(isCoworkflowDocument(designUri)).toBe(true)
-			expect(isCoworkflowDocument(tasksUri)).toBe(true)
+			expect(isCoworkflowDocument(requirementsUri.fsPath)).toBe(true)
+			expect(isCoworkflowDocument(designUri.fsPath)).toBe(true)
+			expect(isCoworkflowDocument(tasksUri.fsPath)).toBe(true)
 		})
 
 		it("should return false for invalid coworkflow documents", () => {
@@ -253,9 +253,9 @@ describe("Coworkflow Commands", () => {
 			const invalidUri2 = vscode.Uri.file("/test/.cospec/other.md")
 			const invalidUri3 = vscode.Uri.file("/test/.cospec/requirements.txt")
 
-			expect(isCoworkflowDocument(invalidUri1)).toBe(false)
-			expect(isCoworkflowDocument(invalidUri2)).toBe(false)
-			expect(isCoworkflowDocument(invalidUri3)).toBe(false)
+			expect(isCoworkflowDocument(invalidUri1.fsPath)).toBe(false)
+			expect(isCoworkflowDocument(invalidUri2.fsPath)).toBe(false)
+			expect(isCoworkflowDocument(invalidUri3.fsPath)).toBe(false)
 		})
 	})
 

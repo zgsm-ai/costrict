@@ -16,6 +16,8 @@ export interface FileMetadata {
 	lastTaskId: string
 	/** 最后的checkpoint ID */
 	lastCheckpointId: string
+	/* 文件内容 */
+	content?: string
 }
 
 /**
@@ -211,77 +213,4 @@ export class CospecMetadataManager {
 		}
 	}
 
-	/**
-	 * 检查元数据文件是否存在
-	 */
-	static async metadataExists(directoryPath: string): Promise<boolean> {
-		try {
-			const metadataPath = this.getMetadataPath(directoryPath)
-			await fs.access(metadataPath)
-			return true
-		} catch {
-			return false
-		}
-	}
-
-	/**
-	 * 删除元数据文件
-	 */
-	static async deleteMetadata(directoryPath: string): Promise<void> {
-		try {
-			const metadataPath = this.getMetadataPath(directoryPath)
-			await fs.unlink(metadataPath)
-			console.log(`[CospecMetadataManager] 删除元数据文件: ${metadataPath}`)
-		} catch (error) {
-			if ((error as any).code !== "ENOENT") {
-				console.error(`[CospecMetadataManager] 删除元数据文件失败: ${directoryPath}`, error)
-				throw error
-			}
-		}
-	}
-
-	/**
-	 * 从 .cospec 文档路径获取对应的目录路径
-	 */
-	static getCospecDirectoryFromFile(filePath: string): string | null {
-		const normalizedPath = path.normalize(filePath)
-		const pathParts = normalizedPath.split(path.sep)
-		
-		// 查找 .cospec 目录的位置
-		const cospecIndex = pathParts.findIndex(part => part === ".cospec")
-		if (cospecIndex === -1) {
-			return null
-		}
-		
-		// 返回包含文件的直接目录路径
-		return path.dirname(normalizedPath)
-	}
-
-	/**
-	 * 检查文件是否在 .cospec 目录中
-	 */
-	static isCospecFile(filePath: string): boolean {
-		const normalizedPath = path.normalize(filePath)
-		// 将路径分隔符统一为正斜杠进行检查
-		const unifiedPath = normalizedPath.replace(/\\/g, '/')
-		return unifiedPath.includes('/.cospec/') ||
-			   unifiedPath.endsWith('/.cospec')
-	}
-
-	/**
-	 * 获取 .cospec 文件的相对路径（相对于 .cospec 目录）
-	 */
-	static getRelativeCospecPath(filePath: string): string | null {
-		const normalizedPath = path.normalize(filePath)
-		const pathParts = normalizedPath.split(path.sep)
-		
-		const cospecIndex = pathParts.findIndex(part => part === ".cospec")
-		if (cospecIndex === -1) {
-			return null
-		}
-		
-		// 返回 .cospec 目录之后的路径部分
-		const relativeParts = pathParts.slice(cospecIndex + 1)
-		return relativeParts.join(path.sep)
-	}
 }

@@ -452,8 +452,9 @@ export class CoworkflowCodeLensProvider implements ICoworkflowCodeLensProvider {
 								// 未开始任务 - 只显示 "run"
 								actions.push("run")
 							} else if (status === "-") {
-								// 进行中任务 - 显示 loading 状态
+								// 进行中任务 - 显示 loading 状态和 retry 选项
 								actions.push("loading")
+								actions.push("retry")
 							} else if (status === "x") {
 								// 已完成任务 - 只显示 "retry"
 								actions.push("retry")

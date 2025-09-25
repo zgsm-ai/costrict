@@ -10,8 +10,10 @@ import { type SupportPromptType } from "../../../shared/support-prompt"
 import { ClineProvider } from "../../webview/ClineProvider"
 import { SectionContentExtractor, createContentExtractionContext } from "./SectionContentExtractor"
 import { CospecDiffIntegration } from "./CospecDiffIntegration"
-import { CospecMetadataManager } from "./CospecMetadataManager"
+import { CospecMetadata, CospecMetadataManager } from "./CospecMetadataManager"
 import path from "path"
+import * as fs from "fs/promises"
+import { createTwoFilesPatch } from 'diff';
 
 /**
  * Command identifiers for coworkflow operations
@@ -328,35 +330,27 @@ async function handleUpdateSection(codeLens: CoworkflowCodeLens): Promise<void> 
 		// Get required parameters for prompt
 		const scope = getScopePath(commandContext.uri)
 		const provider = await ClineProvider.getInstance()
-
 		// 获取选中的文本内容
 		let selectedText = ""
-
 		try {
 			// 检查是否应该获取差异
 			if (CospecDiffIntegration.shouldGetDiff(commandContext.uri) && provider) {
+				const checkpointMetadata = (await CospecMetadataManager.getMetadataOrDefault(scope))[commandContext.documentType as "requirements" | "design"]
 				console.log("CoworkflowCommands: 开始获取文件与 checkpoint 的差异")
-
-				// 获取全局存储目录
-				const globalStoragePath = provider.context.globalStorageUri.fsPath
-
-				if (globalStoragePath) {
-					const diffResult = await CospecDiffIntegration.getDiffForFile(commandContext.uri, globalStoragePath)
-
-					if (diffResult?.success && diffResult?.hasDifference && diffResult.diffContent) {
-						selectedText = CospecDiffIntegration.formatDiffForDisplay(diffResult)
-						console.log("CoworkflowCommands: 成功获取文件差异", {
-							taskId: diffResult?.lastTaskId,
-							hasDifference: diffResult?.hasDifference,
-						})
-					} else {
-						console.log("CoworkflowCommands: 文件与 checkpoint 版本相同，无差异")
-						selectedText = await getTaskBlockContent(commandContext)
-					}
-				} else {
-					console.log("CoworkflowCommands: 无法获取全局存储目录")
-					selectedText = await getTaskBlockContent(commandContext)
+				if (!checkpointMetadata?.content) {
+					throw new Error("未找到 checkpoint 内容")
+				} 
+				const filePath = commandContext.uri.fsPath
+				const content = await fs.readFile(filePath, "utf8")
+				if (content === checkpointMetadata.content) {
+					throw new Error("文件内容未发生变化")
 				}
+				const workspaceFolder = vscode.workspace.getWorkspaceFolder(commandContext.uri)
+				let diffFilePath = filePath
+				if (workspaceFolder) {
+					diffFilePath = path.relative(workspaceFolder?.uri.fsPath, filePath)
+				}
+				selectedText = createTwoFilesPatch(diffFilePath, diffFilePath, checkpointMetadata.content, content,'', '', { context: 0 })
 			}
 		} catch (error) {
 			// 回退到原有的 getTaskBlockContent 逻辑
@@ -423,20 +417,6 @@ async function handleRunTask(codeLens: CoworkflowCodeLens): Promise<void> {
 		}
 
 		const commandContext = createCommandContext(codeLens)
-
-		// // Validate task context
-		// if (!commandContext.context?.taskId) {
-		// 	errorHandler.logError(
-		// 		errorHandler.createError(
-		// 			"command_error",
-		// 			"warning",
-		// 			"Task ID not found - proceeding with generic task execution",
-		// 			undefined,
-		// 			commandContext.uri,
-		// 		),
-		// 	)
-		// }
-
 		// Get required parameters for prompt
 		const scope = getScopePath(commandContext.uri)
 		const selectedText = await getTaskBlockContent(commandContext)
@@ -475,19 +455,6 @@ async function handleRetryTask(codeLens: CoworkflowCodeLens): Promise<void> {
 		}
 
 		const commandContext = createCommandContext(codeLens)
-
-		// // Validate task context
-		// if (!commandContext.context?.taskId) {
-		// 	errorHandler.logError(
-		// 		errorHandler.createError(
-		// 			"command_error",
-		// 			"warning",
-		// 			"Task ID not found - proceeding with generic task execution",
-		// 			undefined,
-		// 			commandContext.uri,
-		// 		),
-		// 	)
-		// }
 
 		// Get required parameters for prompt
 		const scope = getScopePath(commandContext.uri)
@@ -623,7 +590,7 @@ function createCommandContext(codeLens: CoworkflowCodeLens): CoworkflowCommandCo
 		}
 
 		// Validate that the active editor is a coworkflow document
-		if (!isCoworkflowDocument(activeEditor.document.uri)) {
+		if (!isCoworkflowDocument(activeEditor.document.uri.fsPath)) {
 			throw new Error("Active editor is not a coworkflow document - expected .cospec/*.md file")
 		}
 
@@ -718,16 +685,17 @@ function handleCommandError(commandName: string, error: unknown, range?: vscode.
  * Utility function to check if a URI is a coworkflow document
  * Supports the three fixed files (requirements.md, design.md, tasks.md) in root and subdirectories
  */
-export function isCoworkflowDocument(uri: vscode.Uri): boolean {
-	const path = uri.path
-	const fileName = path.split("/").pop()
-	const parentDir = path.split("/")
-
-	// Check if file is within .cospec directory
-	if (!parentDir.includes(".cospec")) {
+export function isCoworkflowDocument(filePath: string): boolean {
+	const fileName = path.basename(filePath)
+	
+	// 检查路径是否包含 .cospec 目录
+	const normalizedPath = path.normalize(filePath)
+	const hasCospecDir = normalizedPath.split(path.sep).includes(".cospec")
+	
+	if (!hasCospecDir) {
 		return false
 	}
-
-	// Only allow the three specific file names
-	return ["requirements.md", "design.md", "tasks.md"].includes(fileName || "")
+	
+	// 检查文件名
+	return ["requirements.md", "design.md", "tasks.md"].includes(fileName)
 }

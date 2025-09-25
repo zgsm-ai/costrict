@@ -54,6 +54,7 @@ vi.mock('../../../utils/safeWriteJson', () => ({
 
 // Now import after mocking
 import { CospecMetadataManager, CospecMetadata } from '../CospecMetadataManager'
+import { isCoworkflowDocument } from '../commands'
 
 describe('CospecMetadataManager', () => {
 	const mockDirectoryPath = '/mock/cospec/directory'
@@ -103,52 +104,8 @@ describe('CospecMetadataManager', () => {
 			]
 
 			testCases.forEach(({ path, expected }) => {
-				expect(CospecMetadataManager.isCospecFile(path)).toBe(expected)
+				expect(isCoworkflowDocument(path)).toBe(expected)
 			})
-		})
-	})
-
-	describe('getRelativeCospecPath', () => {
-		it('应该正确获取相对路径', () => {
-			const testCases = [
-				{ 
-					path: '/project/.cospec/requirements.md', 
-					expected: 'requirements.md' 
-				},
-				{ 
-					path: '/project/.cospec/subdir/design.md', 
-					expected: path.join('subdir', 'design.md')
-				},
-				{ 
-					path: '/project/src/main.ts', 
-					expected: null 
-				}
-			]
-
-			testCases.forEach(({ path, expected }) => {
-				expect(CospecMetadataManager.getRelativeCospecPath(path)).toBe(expected)
-			})
-		})
-	})
-
-	describe('metadataExists', () => {
-		it('元数据文件存在时应该返回 true', async () => {
-			vi.mocked(fs.access).mockResolvedValue(undefined)
-
-			const result = await CospecMetadataManager.metadataExists(mockDirectoryPath)
-
-			expect(result).toBe(true)
-			expect(fs.access).toHaveBeenCalledWith(
-				path.join(mockDirectoryPath, '.cometa.json')
-			)
-		})
-
-		it('元数据文件不存在时应该返回 false', async () => {
-			vi.mocked(fs.access).mockRejectedValue(new Error('File not found'))
-
-			const result = await CospecMetadataManager.metadataExists(mockDirectoryPath)
-
-			expect(result).toBe(false)
 		})
 	})
 

@@ -7,7 +7,7 @@ import * as vscode from "vscode"
 import { CoworkflowFileWatcher } from "./CoworkflowFileWatcher"
 import { CoworkflowCodeLensProvider } from "./CoworkflowCodeLensProvider"
 import { CoworkflowDecorationProvider } from "./CoworkflowDecorationProvider"
-import { registerCoworkflowCommands, setCommandHandlerDependencies, clearCommandHandlerDependencies } from "./commands"
+import { registerCoworkflowCommands, setCommandHandlerDependencies, clearCommandHandlerDependencies, isCoworkflowDocument } from "./commands"
 import { CoworkflowErrorHandler } from "./CoworkflowErrorHandler"
 
 // Re-export classes and constants for external use
@@ -193,7 +193,7 @@ export class CoworkflowIntegration {
 		this.disposables.push(
 			vscode.workspace.onDidOpenTextDocument((document) => {
 				try {
-					if (this.isCoworkflowDocument(document)) {
+					if (isCoworkflowDocument(document.uri.fsPath)) {
 						this.decorationProvider?.updateDecorations(document)
 					}
 				} catch (error) {
@@ -280,34 +280,6 @@ export class CoworkflowIntegration {
 	}
 
 	/**
-	 * Check if a document is a coworkflow document
-	 */
-	private isCoworkflowDocument(document: vscode.TextDocument): boolean {
-		if (!this.fileWatcher) {
-			return false
-		}
-
-		// First try to get document info from file watcher
-		const documentInfo = this.fileWatcher.getDocumentInfoFromUri(document.uri)
-		if (documentInfo !== undefined) {
-			return true
-		}
-
-		// Fallback: check if the file path matches coworkflow pattern
-		const path = document.uri.path
-		const fileName = path.split("/").pop()
-		const parentDir = path.split("/")
-
-		// Check if file is within .cospec directory
-		if (!parentDir.includes(".cospec")) {
-			return false
-		}
-
-		// Check if it's one of the supported files
-		return fileName === "tasks.md" || fileName === "requirements.md" || fileName === "design.md"
-	}
-
-	/**
 	 * Get the current file watcher instance
 	 */
 	public getFileWatcher(): CoworkflowFileWatcher | undefined {
@@ -335,7 +307,7 @@ export class CoworkflowIntegration {
 		try {
 			// Apply decorations to already open coworkflow documents
 			vscode.workspace.textDocuments.forEach((document) => {
-				if (this.isCoworkflowDocument(document)) {
+				if (isCoworkflowDocument(document.uri.fsPath)) {
 					console.log(`CoworkflowIntegration: Initializing decorations for ${document.uri.path}`)
 					this.decorationProvider?.updateDecorations(document)
 				}
@@ -362,7 +334,7 @@ export class CoworkflowIntegration {
 			// Clear decorations from all open documents
 			if (this.decorationProvider) {
 				vscode.workspace.textDocuments.forEach((document) => {
-					if (this.isCoworkflowDocument(document)) {
+					if (isCoworkflowDocument(document.uri.fsPath)) {
 						this.decorationProvider?.clearDecorations(document)
 					}
 				})
