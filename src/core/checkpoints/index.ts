@@ -18,6 +18,7 @@ import { CheckpointServiceOptions, RepoPerTaskCheckpointService } from "../../se
 import { CospecMetadataManager } from "../costrict/workflow/CospecMetadataManager"
 import * as path from "path"
 import * as fs from "fs/promises"
+import { ClineMessage } from "@roo-code/types"
 
 /**
  */
@@ -26,15 +27,20 @@ async function updateCospecMetadataForCheckpoint(
 	taskId: string,
 	checkpointId: string,
 	checkpointService?: RepoPerTaskCheckpointService,
+	metadata?: ClineMessage,
 ): Promise<void> {
 	const cospecDirs = await findCospecDirectories(workspaceDir)
 
+	// todo
 	console.log(`[updateCospecMetadataForCheckpoint] ?? ${cospecDirs.length} ? .cospec ??`)
 
 	let changedFiles: Set<string> = new Set()
 	if (checkpointService) {
 		try {
-			const diffs = await checkpointService.getDiff({ from: checkpointService.baseHash, to: checkpointId })
+			const diffs = await checkpointService.getDiff({
+				from: (metadata?.checkpoint?.from as string) || checkpointService.baseHash,
+				to: (metadata?.checkpoint?.to as string) || checkpointId,
+			})
 			changedFiles = new Set(diffs.map((diff: any) => diff.paths.relative))
 		} catch (error) {
 			changedFiles = new Set(["requirements.md", "design.md", "tasks.md"])
@@ -42,8 +48,8 @@ async function updateCospecMetadataForCheckpoint(
 	} else {
 		changedFiles = new Set(["requirements.md", "design.md", "tasks.md"])
 	}
-
-	for (const cospecDir of cospecDirs) {
+	// 这是一个异步函数，用于更新工作区中所有 .cospec 目录的元数据。
+	for (const cospecDir of [...new Set(cospecDirs)]) {
 		try {
 			const metadata = await CospecMetadataManager.getMetadataOrDefault(cospecDir)
 
@@ -328,8 +334,15 @@ export async function checkpointSave(task: Task, force = false, suppressMessage 
 			if (result && result.commit) {
 				try {
 					const workspaceDir = task.cwd || getWorkspacePath()
-					if (workspaceDir) {
-						await updateCospecMetadataForCheckpoint(workspaceDir, task.taskId, result.commit, service)
+					const checkpointInfo = task.clineMessages.filter((v) => v.say === "checkpoint_saved").pop()
+					if (workspaceDir && checkpointInfo) {
+						await updateCospecMetadataForCheckpoint(
+							workspaceDir,
+							task.taskId,
+							result.commit,
+							service,
+							checkpointInfo,
+						)
 					}
 				} catch (error) {
 					console.error(

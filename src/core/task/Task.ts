@@ -1090,6 +1090,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			throw new Error(`[Costrict#say] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 
+		if (type === "checkpoint_saved") {
+		}
+		// "checkpoint_saved"
 		if (partial !== undefined) {
 			const lastMessage = this.clineMessages.at(-1)
 
