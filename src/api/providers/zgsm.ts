@@ -105,9 +105,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		await this.fetchModel()
 		const fromWorkflow =
 			metadata?.zgsmWorkflowMode ||
-			metadata?.mode === "workflow" ||
-			metadata?.rooTaskMode === "workflow" ||
-			metadata?.parentTaskMode === "workflow"
+			metadata?.mode === "strict" ||
+			metadata?.rooTaskMode === "strict" ||
+			metadata?.parentTaskMode === "strict"
 		this.apiResponseRenderModeInfo = getApiResponseRenderMode()
 		// 1. Cache calculation results and configuration
 		const { info: modelInfo, reasoning } = this.getModel()
@@ -169,7 +169,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			if (fromWorkflow) {
 				Object.assign(requestOptions, {
 					extra_body: {
-						prompt_mode: "workflow",
+						prompt_mode: "strict",
 					},
 				})
 			}
@@ -213,7 +213,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			if (fromWorkflow) {
 				Object.assign(requestOptions, {
 					extra_body: {
-						prompt_mode: "workflow",
+						prompt_mode: "strict",
 					},
 				})
 			}

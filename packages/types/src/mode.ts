@@ -195,8 +195,8 @@ export const DEFAULT_MODES: readonly modelType[] = [
 	},
 	// workflow customModes
 	// {
-	// 	slug: "workflow",
-	// 	name: "⛓ Workflow",
+	// 	slug: "strict",
+	// 	name: "⛓ Strict",
 	// 	roleDefinition:
 	// 		"You are Costrict, a strategic workflow controller who coordinates complex tasks by delegating them to appropriate specialized modes. You have a comprehensive understanding of each mode's capabilities and limitations, allowing you to effectively break down complex problems into discrete tasks that can be solved by different specialists.",
 	// 	whenToUse:

@@ -327,49 +327,44 @@ async function handleUpdateSection(codeLens: CoworkflowCodeLens): Promise<void> 
 
 		// Get required parameters for prompt
 		const scope = getScopePath(commandContext.uri)
+		const provider = await ClineProvider.getInstance()
 
 		// 获取选中的文本内容
-		let selectedText = await getTaskBlockContent(commandContext)
-		let diffContent = ""
-		const provider = await ClineProvider.getInstance()
+		let selectedText = ""
+
 		try {
 			// 检查是否应该获取差异
 			if (CospecDiffIntegration.shouldGetDiff(commandContext.uri) && provider) {
 				console.log("CoworkflowCommands: 开始获取文件与 checkpoint 的差异")
-				
+
 				// 获取全局存储目录
-				// const globalStorageDir = vscode.extensions.getExtension("zgsm-ai.zgsm")?.extensionPath
-				const globalStoragePath = provider.context.globalStorageUri.fsPath // '/home/mini/.config/Code/User/globalStorage/zgsm-ai.zgsm'
+				const globalStoragePath = provider.context.globalStorageUri.fsPath
 
 				if (globalStoragePath) {
-					const diffResult = await CospecDiffIntegration.getDiffForFile(
-						commandContext.uri,
-						globalStoragePath
-					)
-					
-					if (diffResult?.success && diffResult?.hasDifference) {
-						diffContent = CospecDiffIntegration.formatDiffForDisplay(diffResult)
+					const diffResult = await CospecDiffIntegration.getDiffForFile(commandContext.uri, globalStoragePath)
+
+					if (diffResult?.success && diffResult?.hasDifference && diffResult.diffContent) {
+						selectedText = CospecDiffIntegration.formatDiffForDisplay(diffResult)
 						console.log("CoworkflowCommands: 成功获取文件差异", {
 							taskId: diffResult?.lastTaskId,
-							hasDifference: diffResult?.hasDifference
+							hasDifference: diffResult?.hasDifference,
 						})
-					} else if (diffResult?.success && !diffResult?.hasDifference) {
-						console.log("CoworkflowCommands: 文件与 checkpoint 版本相同，无差异")
 					} else {
-						console.log("CoworkflowCommands: 获取差异失败:", diffResult?.error)
+						console.log("CoworkflowCommands: 文件与 checkpoint 版本相同，无差异")
+						selectedText = await getTaskBlockContent(commandContext)
 					}
 				} else {
 					console.log("CoworkflowCommands: 无法获取全局存储目录")
+					selectedText = await getTaskBlockContent(commandContext)
 				}
 			}
 		} catch (error) {
 			// 回退到原有的 getTaskBlockContent 逻辑
-			console.log("CoworkflowCommands: 获取文件差异失败，回退到原有逻辑:", error instanceof Error ? error.message : String(error))
-		}
-
-		// 如果有差异内容，将其添加到选中文本中
-		if (diffContent) {
-			selectedText = `${selectedText}\n\n## 与上次 Checkpoint 的差异\n\n${diffContent}`
+			selectedText = await getTaskBlockContent(commandContext)
+			console.log(
+				"CoworkflowCommands: 获取文件差异失败，回退到原有逻辑:",
+				error instanceof Error ? error.message : String(error),
+			)
 		}
 
 		const mode = commandContext.documentType === "requirements" ? requirementMode : designMode // 需求/设计相关操作使用 architect 模式

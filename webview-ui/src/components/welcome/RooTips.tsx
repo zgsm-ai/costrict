@@ -91,7 +91,7 @@ const RooTips = () => {
 			})
 			vscode.postMessage({
 				type: "mode",
-				text: slug === "vibe" ? "code" : "workflow",
+				text: slug === "vibe" ? "code" : "strict",
 			})
 		},
 		[setZgsmCodeMode],
@@ -115,7 +115,7 @@ Implementing a task`,
 		},
 		{
 			name: "Strict",
-			slug: "workflow",
+			slug: "strict",
 			description: "Chat first, then build. Explore ideas and iterate as you discover needs.",
 			// description: t("welcome:routers.requesty.description"),
 			// incentive: t("welcome:routers.requesty.incentive"),
@@ -125,7 +125,7 @@ Projects needing upfront planning
 Building features in a structured way`,
 			switchMode: (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
 				e.stopPropagation()
-				switchMode("workflow")
+				switchMode("strict")
 			},
 		},
 	]

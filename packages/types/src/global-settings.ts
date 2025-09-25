@@ -53,7 +53,7 @@ export const globalSettingsSchema = z.object({
 	// zgsm
 	useZgsmCustomConfig: z.boolean().optional(),
 	zgsmCodebaseIndexEnabled: z.boolean().optional(),
-	zgsmCodeMode: z.union([z.literal("vibe"), z.literal("workflow")]).optional(),
+	zgsmCodeMode: z.union([z.literal("vibe"), z.literal("strict")]).optional(),
 
 	autoApprovalEnabled: z.boolean().optional(),
 	alwaysAllowReadOnly: z.boolean().optional(),

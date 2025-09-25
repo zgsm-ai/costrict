@@ -17,7 +17,7 @@ import { EXPERIMENT_IDS } from "./experiments"
 import { TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS } from "./tools"
 
 export type Mode = string
-export type ZgsmCodeMode = "vibe" | "workflow"
+export type ZgsmCodeMode = "vibe" | "strict"
 
 // Helper to extract group name regardless of format
 export function getGroupName(group: GroupEntry): ToolGroup {
@@ -113,8 +113,8 @@ export function getAllModes(customModes?: ModeConfig[]): ModeConfig[] {
 // Filter modes based on zgsmCodeMode setting
 export function filterModesByZgsmCodeMode(modes: ModeConfig[], zgsmCodeMode?: ZgsmCodeMode): ModeConfig[] {
 	return modes.filter((mode) => {
-		// 如果模式标记了 workflow: true，只有在 zgsmCodeMode === "workflow" 时才显示
-		if (zgsmCodeMode === "workflow") {
+		// 如果模式标记了 workflow: true，只有在 zgsmCodeMode === "strict" 时才显示
+		if (zgsmCodeMode === "strict") {
 			return true
 		}
 

@@ -86,17 +86,6 @@ vi.mock("../../webview/ClineProvider", () => ({
 	},
 }))
 
-// Mock diff-utils
-vi.mock("./diff-utils", () => ({
-	getCospecFileDiff: vi.fn().mockResolvedValue({
-		filePath: "test.md",
-		checkpointContent: null,
-		localContent: null,
-		diffString: null,
-		hasDifference: false,
-	}),
-}))
-
 // Mock utils/path
 vi.mock("../../../utils/path", () => ({
 	getWorkspacePath: vi.fn().mockReturnValue("/test"),
