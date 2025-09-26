@@ -112,6 +112,14 @@ vi.mock("path", async (importOriginal) => {
 			dirname: vi.fn((p: string) => p.split("/").slice(0, -1).join("/")),
 			relative: vi.fn((from: string, to: string) => to.replace(from, "").replace(/^\//, "")),
 			join: vi.fn((...paths: string[]) => paths.join("/")),
+			basename: vi.fn((p: string) => {
+				// 处理 Windows 路径（反斜杠）
+				const normalizedPath = p.replace(/\\/g, "/")
+				const parts = normalizedPath.split("/")
+				return parts[parts.length - 1] || ""
+			}),
+			normalize: vi.fn((p: string) => p.replace(/\\/g, "/")),
+			sep: "/",
 		},
 	}
 })

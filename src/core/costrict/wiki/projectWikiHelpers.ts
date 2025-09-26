@@ -30,7 +30,7 @@ function getGlobalCommandsDir(): string {
 export const projectWikiCommandName = "project-wiki"
 export const projectWikiCommandDescription = `Analyze project deeply and generate a comprehensive project wiki.`
 
-const logger: ILogger = createLogger("ProjectWikiHelpers")
+const logger: ILogger = createLogger()
 
 // Unified error handling function, preserving stack information
 function formatError(error: unknown): string {

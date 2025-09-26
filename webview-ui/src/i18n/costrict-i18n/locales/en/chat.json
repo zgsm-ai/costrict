@@ -109,7 +109,7 @@
 	"rooTips": {
 		"test": {
 			"title": "Test",
-			"description": "Automatically generate and run unit tests to validate your code"
+			"description": "Automatically generate and run tests to ensure code reliability and stability"
 		},
 		"projectWiki": {
 			"title": "Project Wiki",

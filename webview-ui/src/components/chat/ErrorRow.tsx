@@ -101,7 +101,7 @@ export const ErrorRow = memo(
 						}`}
 						onClick={handleToggleExpand}>
 						<div className="flex items-center gap-2 flex-grow">
-							<MessageCircleWarning className="w-4 text-vscode-errorForeground" />
+							<MessageCircleWarning className="w-4" />
 							<span className="font-bold">{errorTitle}</span>
 						</div>
 						<div className="flex items-center">
@@ -135,7 +135,9 @@ export const ErrorRow = memo(
 					</div>
 				)}
 				{apiConfiguration.apiProvider !== "zgsm" ? (
-					<p className={messageClassName || "ml-6 my-0 whitespace-pre-wrap break-words"}>{message}</p>
+					<p className={messageClassName || "ml-6 my-0 whitespace-pre-wrap break-words opacity-80"}>
+						{message}
+					</p>
 				) : (
 					<p
 						className={messageClassName || "ml-6 my-0 whitespace-pre-wrap break-words opacity-80"}

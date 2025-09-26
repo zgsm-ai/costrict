@@ -13,7 +13,7 @@ import { CospecDiffIntegration } from "./CospecDiffIntegration"
 import { CospecMetadata, CospecMetadataManager } from "./CospecMetadataManager"
 import path from "path"
 import * as fs from "fs/promises"
-import { createTwoFilesPatch } from 'diff';
+import { createTwoFilesPatch } from "diff"
 
 /**
  * Command identifiers for coworkflow operations
@@ -57,9 +57,7 @@ export function setCommandHandlerDependencies(deps: CommandHandlerDependencies):
  */
 export function clearCommandHandlerDependencies(): void {
 	dependencies = {}
-	if (errorHandler) {
-		errorHandler.dispose()
-	}
+
 	if (sectionContentExtractor) {
 		sectionContentExtractor.cleanup()
 	}
@@ -335,11 +333,13 @@ async function handleUpdateSection(codeLens: CoworkflowCodeLens): Promise<void> 
 		try {
 			// 检查是否应该获取差异
 			if (CospecDiffIntegration.shouldGetDiff(commandContext.uri) && provider) {
-				const checkpointMetadata = (await CospecMetadataManager.getMetadataOrDefault(scope))[commandContext.documentType as "requirements" | "design"]
+				const checkpointMetadata = (await CospecMetadataManager.getMetadataOrDefault(scope))[
+					commandContext.documentType as "requirements" | "design"
+				]
 				console.log("CoworkflowCommands: 开始获取文件与 checkpoint 的差异")
 				if (!checkpointMetadata?.content) {
 					throw new Error("未找到 checkpoint 内容")
-				} 
+				}
 				const filePath = commandContext.uri.fsPath
 				const content = await fs.readFile(filePath, "utf8")
 				if (content === checkpointMetadata.content) {
@@ -350,7 +350,15 @@ async function handleUpdateSection(codeLens: CoworkflowCodeLens): Promise<void> 
 				if (workspaceFolder) {
 					diffFilePath = path.relative(workspaceFolder?.uri.fsPath, filePath)
 				}
-				selectedText = createTwoFilesPatch(diffFilePath, diffFilePath, checkpointMetadata.content, content,'', '', { context: 0 })
+				selectedText = createTwoFilesPatch(
+					diffFilePath,
+					diffFilePath,
+					checkpointMetadata.content,
+					content,
+					"",
+					"",
+					{ context: 0 },
+				)
 			}
 		} catch (error) {
 			// 回退到原有的 getTaskBlockContent 逻辑
@@ -687,15 +695,15 @@ function handleCommandError(commandName: string, error: unknown, range?: vscode.
  */
 export function isCoworkflowDocument(filePath: string): boolean {
 	const fileName = path.basename(filePath)
-	
+
 	// 检查路径是否包含 .cospec 目录
 	const normalizedPath = path.normalize(filePath)
 	const hasCospecDir = normalizedPath.split(path.sep).includes(".cospec")
-	
+
 	if (!hasCospecDir) {
 		return false
 	}
-	
+
 	// 检查文件名
 	return ["requirements.md", "design.md", "tasks.md"].includes(fileName)
 }

@@ -343,7 +343,6 @@ export class CoworkflowDecorationProvider implements IHierarchicalCoworkflowDeco
 				}
 			})
 			this.disposables = []
-			this.errorHandler.dispose()
 		} catch (error) {
 			console.error("CoworkflowDecorationProvider: Error during disposal", error)
 		}
@@ -484,7 +483,6 @@ export class CoworkflowDecorationProvider implements IHierarchicalCoworkflowDeco
 		const path = document.uri.path
 		const fileName = path.split("/").pop()
 		const parentDir = path.split("/")
-		console.log("[isTasksDocument]", `\n${path} \n${fileName} \n${parentDir}`)
 
 		// Check if file is within .cospec directory
 		if (!parentDir.includes(".cospec")) {

@@ -112,7 +112,7 @@
 	"rooTips": {
 		"test": {
 			"title": "测试",
-			"description": "自动生成并运行单元测试来验证代码"
+			"description": "自动生成并运行测试，确保代码可靠与稳定"
 		},
 		"projectWiki": {
 			"title": "项目文档",

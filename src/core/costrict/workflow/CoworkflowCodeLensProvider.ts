@@ -8,7 +8,6 @@ import {
 	ICoworkflowCodeLensProvider,
 	CoworkflowCodeLens,
 	CoworkflowDocumentType,
-	CoworkflowDocumentInfo,
 	CoworkflowActionType,
 	CoworkflowCommandContext,
 } from "./types"
@@ -32,7 +31,6 @@ export class CoworkflowCodeLensProvider implements ICoworkflowCodeLensProvider {
 
 	public dispose(): void {
 		this.onDidChangeCodeLensesEmitter.dispose()
-		this.errorHandler.dispose()
 	}
 
 	public provideCodeLenses(

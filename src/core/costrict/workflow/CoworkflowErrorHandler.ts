@@ -10,10 +10,11 @@ import {
 	CoworkflowErrorSeverity,
 	CoworkflowErrorConfig,
 } from "./types"
+import { createLogger, ILogger } from "../../../utils/logger"
 
 export class CoworkflowErrorHandler implements ICoworkflowErrorHandler {
 	private config: CoworkflowErrorConfig
-	private outputChannel: vscode.OutputChannel
+	private outputChannel: ILogger
 
 	constructor(config?: Partial<CoworkflowErrorConfig>) {
 		this.config = {
@@ -24,7 +25,7 @@ export class CoworkflowErrorHandler implements ICoworkflowErrorHandler {
 			...config,
 		}
 
-		this.outputChannel = vscode.window.createOutputChannel("Coworkflow")
+		this.outputChannel = createLogger()
 	}
 
 	public handleError(error: CoworkflowError): void {
@@ -63,7 +64,7 @@ export class CoworkflowErrorHandler implements ICoworkflowErrorHandler {
 		const logMessage = `[${timestamp}] ${error.severity.toUpperCase()}: ${error.message}${location}${details}`
 
 		// Log to output channel
-		this.outputChannel.appendLine(logMessage)
+		this.outputChannel.info(logMessage)
 
 		// Log to console if enabled
 		if (this.config.logToConsole) {
@@ -102,10 +103,6 @@ export class CoworkflowErrorHandler implements ICoworkflowErrorHandler {
 				vscode.window.showInformationMessage(message, ...actions)
 				break
 		}
-	}
-
-	public dispose(): void {
-		this.outputChannel.dispose()
 	}
 
 	private shouldShowNotification(severity: CoworkflowErrorSeverity): boolean {

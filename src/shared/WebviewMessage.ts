@@ -220,6 +220,7 @@ export interface WebviewMessage {
 		| "useZgsmCustomConfig"
 		| "zgsmCodebaseIndexEnabled"
 		| "showZgsmCodebaseDisableConfirmDialog"
+		| "fetchZgsmQuotaInfo"
 		// zgsm
 		| "profileThresholds"
 		| "shareTaskSuccess"

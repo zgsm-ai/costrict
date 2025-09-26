@@ -61,6 +61,10 @@ export enum TelemetryEventName {
 	ACCOUNT_LOGOUT_CLICKED = "Account Logout Clicked",
 	ACCOUNT_LOGOUT_SUCCESS = "Account Logout Success",
 
+	FEATURED_PROVIDER_CLICKED = "Featured Provider Clicked",
+	UPSELL_DISMISSED = "Upsell Dismissed",
+	UPSELL_CLICKED = "Upsell Clicked",
+
 	SCHEMA_VALIDATION_ERROR = "Schema Validation Error",
 	DIFF_APPLICATION_ERROR = "Diff Application Error",
 	SHELL_INTEGRATION_ERROR = "Shell Integration Error",
@@ -187,6 +191,9 @@ export const rooCodeTelemetryEventSchema = z.discriminatedUnion("type", [
 			TelemetryEventName.ACCOUNT_CONNECT_SUCCESS,
 			TelemetryEventName.ACCOUNT_LOGOUT_CLICKED,
 			TelemetryEventName.ACCOUNT_LOGOUT_SUCCESS,
+			TelemetryEventName.FEATURED_PROVIDER_CLICKED,
+			TelemetryEventName.UPSELL_DISMISSED,
+			TelemetryEventName.UPSELL_CLICKED,
 			TelemetryEventName.SCHEMA_VALIDATION_ERROR,
 			TelemetryEventName.DIFF_APPLICATION_ERROR,
 			TelemetryEventName.SHELL_INTEGRATION_ERROR,

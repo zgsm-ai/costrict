@@ -4,8 +4,8 @@
  */
 
 import * as vscode from "vscode"
-import { CoworkflowError, CoworkflowErrorSeverity, CoworkflowErrorType } from "./types"
 import { ExtractionResult, ContentExtractionContext } from "./SectionContentExtractor"
+import { createLogger, ILogger } from "../../../utils/logger"
 
 /**
  * 错误类型枚举
@@ -76,7 +76,7 @@ const DEFAULT_PERFORMANCE_CONFIG: PerformanceConfig = {
 export class SectionExtractionErrorHandler {
 	private errorStats: ErrorStatistics
 	private performanceConfig: PerformanceConfig
-	private outputChannel: vscode.OutputChannel
+	private outputChannel: ILogger
 
 	constructor(config: Partial<PerformanceConfig> = {}) {
 		this.performanceConfig = { ...DEFAULT_PERFORMANCE_CONFIG, ...config }
@@ -86,7 +86,7 @@ export class SectionExtractionErrorHandler {
 			errorsByDocumentType: new Map(),
 			fallbackUsage: new Map(),
 		}
-		this.outputChannel = vscode.window.createOutputChannel("Coworkflow Section Extraction")
+		this.outputChannel = createLogger()
 	}
 
 	/**
@@ -194,13 +194,6 @@ export class SectionExtractionErrorHandler {
 	 */
 	public updatePerformanceConfig(config: Partial<PerformanceConfig>): void {
 		this.performanceConfig = { ...this.performanceConfig, ...config }
-	}
-
-	/**
-	 * 清理资源
-	 */
-	public dispose(): void {
-		this.outputChannel.dispose()
 	}
 
 	/**
@@ -377,7 +370,7 @@ export class SectionExtractionErrorHandler {
 			"---",
 		].join("\n")
 
-		this.outputChannel.appendLine(logMessage)
+		this.outputChannel.info(logMessage)
 
 		if (this.performanceConfig.enableVerboseLogging) {
 			console.error("SectionExtractionErrorHandler:", logMessage)
@@ -398,7 +391,7 @@ export class SectionExtractionErrorHandler {
 			"---",
 		].join("\n")
 
-		this.outputChannel.appendLine(logMessage)
+		this.outputChannel.info(logMessage)
 
 		if (this.performanceConfig.enableVerboseLogging) {
 			console.warn("SectionExtractionErrorHandler:", logMessage)

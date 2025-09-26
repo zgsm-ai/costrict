@@ -7,7 +7,12 @@ import * as vscode from "vscode"
 import { CoworkflowFileWatcher } from "./CoworkflowFileWatcher"
 import { CoworkflowCodeLensProvider } from "./CoworkflowCodeLensProvider"
 import { CoworkflowDecorationProvider } from "./CoworkflowDecorationProvider"
-import { registerCoworkflowCommands, setCommandHandlerDependencies, clearCommandHandlerDependencies, isCoworkflowDocument } from "./commands"
+import {
+	registerCoworkflowCommands,
+	setCommandHandlerDependencies,
+	clearCommandHandlerDependencies,
+	isCoworkflowDocument,
+} from "./commands"
 import { CoworkflowErrorHandler } from "./CoworkflowErrorHandler"
 
 // Re-export classes and constants for external use
@@ -135,18 +140,9 @@ export class CoworkflowIntegration {
 				),
 			)
 
-			// Dispose error handler last
-			this.errorHandler.dispose()
-
 			console.log("CoworkflowIntegration: Successfully deactivated")
 		} catch (error) {
 			console.error("CoworkflowIntegration: Error during deactivation", error)
-			// Still try to dispose error handler
-			try {
-				this.errorHandler.dispose()
-			} catch (handlerError) {
-				console.error("CoworkflowIntegration: Error disposing error handler", handlerError)
-			}
 		}
 	}
 

@@ -60,7 +60,6 @@ export class CoworkflowFileWatcher implements ICoworkflowFileWatcher {
 			this.clearAllWatchers()
 			this.disposables.forEach((d) => d.dispose())
 			this.disposables = []
-			this.errorHandler.dispose()
 		} catch (error) {
 			const coworkflowError = this.errorHandler.createError(
 				"file_system_error",
