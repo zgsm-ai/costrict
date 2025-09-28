@@ -1,5 +1,12 @@
 # Costrict Change Log
 
+## [1.6.17]
+
+- Enhance rate limit detection and retry logic in API requests
+- Add `getAllInstance()` method to ClineProvider for better instance management
+- Update UI to properly handle rate limit retry messages
+- Fix known issues
+
 ## [1.6.16]
 
 - Add auto-generation of commit messages based on local i18n language
