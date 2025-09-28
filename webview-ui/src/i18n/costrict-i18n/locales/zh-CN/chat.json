@@ -108,15 +108,5 @@
 	},
 	"autoApprove": {
 		"triggerLabelAll": "全部批准"
-	},
-	"rooTips": {
-		"test": {
-			"title": "测试",
-			"description": "自动生成并运行测试，确保代码可靠与稳定"
-		},
-		"projectWiki": {
-			"title": "项目文档",
-			"description": "深度分析项目并生成全面的项目文档"
-		}
 	}
 }

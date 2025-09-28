@@ -149,7 +149,6 @@ export interface TaskOptions extends CreateTaskOptions {
 
 export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	readonly taskId: string
-	readonly zgsmWorkflowMode?: string
 	readonly rootTaskId?: string
 	readonly parentTaskId?: string
 	childTaskId?: string
@@ -327,14 +326,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		onCreated,
 		initialTodos,
 		workspacePath,
-		zgsmWorkflowMode,
 	}: TaskOptions) {
 		super()
 
 		if (startTask && !task && !images && !historyItem) {
 			throw new Error("Either historyItem or task/images must be provided")
 		}
-		this.zgsmWorkflowMode = zgsmWorkflowMode
+
 		this.taskId = historyItem ? historyItem.id : crypto.randomUUID()
 		this.rootTaskId = historyItem ? historyItem.rootTaskId : rootTask?.taskId
 		this.parentTaskId = historyItem ? historyItem.parentTaskId : parentTask?.taskId
@@ -1090,9 +1088,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			throw new Error(`[Costrict#say] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 
-		if (type === "checkpoint_saved") {
-		}
-		// "checkpoint_saved"
 		if (partial !== undefined) {
 			const lastMessage = this.clineMessages.at(-1)
 
@@ -2704,9 +2699,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		const metadata: ApiHandlerCreateMessageMetadata = {
 			mode: mode,
-			zgsmWorkflowMode: this.zgsmWorkflowMode,
-			rooTaskMode: this?.rootTask?._taskMode,
-			parentTaskMode: this?.parentTask?._taskMode,
 			taskId: this.taskId,
 			language: state?.language,
 			instanceId: this.instanceId,

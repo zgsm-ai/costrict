@@ -143,7 +143,6 @@ export interface WebviewMessage {
 		| "requestDelaySeconds"
 		| "setApiConfigPassword"
 		| "mode"
-		| "zgsmCodeMode"
 		| "updatePrompt"
 		| "updateSupportPrompt"
 		| "getSystemPrompt"

@@ -3,7 +3,7 @@
 	"displayName": "%extension.displayName.long%",
 	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
-	"version": "1.6.15-wf12",
+	"version": "1.6.15",
 	"icon": "assets/images/shenma_robot_logo_big.png",
 	"galleryBanner": {
 		"color": "#617A91",
@@ -240,31 +240,6 @@
 				"command": "zgsm.toggleAutoApprove",
 				"title": "%command.toggleAutoApprove.title%",
 				"category": "%configuration.title%"
-			},
-			{
-				"command": "zgsm.coworkflow.updateSection",
-				"title": "Update Section",
-				"category": "Coworkflow"
-			},
-			{
-				"command": "zgsm.coworkflow.runTask",
-				"title": "Run Task",
-				"category": "Coworkflow"
-			},
-			{
-				"command": "zgsm.coworkflow.retryTask",
-				"title": "Retry Task",
-				"category": "Coworkflow"
-			},
-			{
-				"command": "zgsm.coworkflow.refreshCodeLens",
-				"title": "Refresh CodeLens",
-				"category": "Coworkflow"
-			},
-			{
-				"command": "zgsm.coworkflow.refreshDecorations",
-				"title": "Refresh Decorations",
-				"category": "Coworkflow"
 			}
 		],
 		"menus": {

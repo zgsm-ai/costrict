@@ -2,7 +2,6 @@ import React from "react"
 import { render, screen } from "@/utils/test-utils"
 
 import RooTips from "../RooTips"
-import { ExtensionStateContextProvider } from "@/context/ExtensionStateContext"
 
 vi.mock("react-i18next", () => ({
 	useTranslation: () => ({
@@ -24,13 +23,6 @@ vi.mock("@vscode/webview-ui-toolkit/react", () => ({
 	VSCodeLink: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
 }))
 
-// Mock vscode to prevent postMessage errors
-vi.mock("@/utils/vscode", () => ({
-	vscode: {
-		postMessage: vi.fn(),
-	},
-}))
-
 describe("RooTips Component", () => {
 	beforeEach(() => {
 		vi.useFakeTimers()
@@ -43,16 +35,12 @@ describe("RooTips Component", () => {
 
 	describe("when cycle is false (default)", () => {
 		beforeEach(() => {
-			render(
-				<ExtensionStateContextProvider>
-					<RooTips />
-				</ExtensionStateContextProvider>,
-			)
+			render(<RooTips />)
 		})
 
 		test("renders only the top two tips", () => {
 			// Ensure only two tips are present plus the docs link in the Trans component (3 total links)
-			expect(screen.getAllByRole("link")).toHaveLength(4)
+			expect(screen.getAllByRole("link")).toHaveLength(3)
 		})
 	})
 })

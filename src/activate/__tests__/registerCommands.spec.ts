@@ -16,10 +16,6 @@ vi.mock("vscode", async (importOriginal) => ({
 	},
 	window: {
 		createTextEditorDecorationType: vi.fn().mockReturnValue({ dispose: vi.fn() }),
-		createOutputChannel: () => ({
-			appendLine: vi.fn(),
-			show: vi.fn(),
-		}),
 	},
 	workspace: {
 		workspaceFolders: [

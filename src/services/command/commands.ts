@@ -3,7 +3,6 @@ import * as path from "path"
 import matter from "gray-matter"
 import { getGlobalRooDirectory, getProjectRooDirectoryForCwd } from "../roo-config"
 import { getBuiltInCommands, getBuiltInCommand } from "./built-in-commands"
-import { ensureProjectWikiCommandExists } from "../../core/costrict/wiki/projectWikiHelpers"
 
 export interface Command {
 	name: string
@@ -19,9 +18,6 @@ export interface Command {
  * Priority order: project > global > built-in (later sources override earlier ones)
  */
 export async function getCommands(cwd: string): Promise<Command[]> {
-	// init project-wiki command.
-	await ensureProjectWikiCommandExists()
-
 	const commands = new Map<string, Command>()
 
 	// Add built-in commands first (lowest priority)

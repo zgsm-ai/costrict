@@ -42,7 +42,8 @@ import { useAutoApprovalState } from "@src/hooks/useAutoApprovalState"
 import { useAutoApprovalToggles } from "@src/hooks/useAutoApprovalToggles"
 // import { CloudUpsellDialog } from "@src/components/cloud/CloudUpsellDialog"
 
-// import TelemetryBanner from "../common/TelemetryBanner"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import TelemetryBanner from "../common/TelemetryBanner"
 import VersionIndicator from "../common/VersionIndicator"
 import { useTaskSearch } from "../history/useTaskSearch"
 import HistoryPreview from "../history/HistoryPreview"

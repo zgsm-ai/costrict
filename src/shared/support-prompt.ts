@@ -53,10 +53,6 @@ type SupportPromptType =
 	| "ZGSM_SIMPLIFY_CODE"
 	| "ZGSM_PERFORMANCE"
 	| "ZGSM_ADD_TEST"
-	| "WORKFLOW_TASK_RUN"
-	| "WORKFLOW_TASK_RETRY"
-	| "WORKFLOW_RQS_UPDATE"
-	| "WORKFLOW_DESIGN_UPDATE"
 
 const supportPromptConfigs: Record<SupportPromptType, SupportPromptConfig> = {
 	ENHANCE: {
@@ -102,104 +98,6 @@ Example summary structure:
   - [...]
 
 Output only the summary of the conversation so far, without any additional commentary or explanation.`,
-	},
-	WORKFLOW_TASK_RUN: {
-		template: `
-请开始执行用户需求的实现工作。基于 \`\${scope}\` 目录下已创建的需求文档(requirements.md)、架构设计文档(design.md)推进相应功能实现。
-
-## 实施前准备
-- 在执行任何开发任务前，请务必仔细阅读并理解 \`\${scope}\` 目录下的 requirements.md、design.md 文档
-- 若未充分理解需求或设计即开始执行任务，可能导致实现偏差或功能错误
-- **该过程不允许修改任何测试相关的文件比如修改测试案例**
-- 执行过程中及时更新 \`tasks.md\` 文档中对应任务的状态，状态说明：\`[ ]\` (未开始)、\`[-]\` (进行中)、\`[x]\` (已完成)
-- 任务开始前把 \`tasks.md\` 中对应任务状态更新为\`[-]\` (进行中)
-
-## 待完成任务
-
-==============  待完成任务: start ===============
-
-\${selectedText}
-
-**如果当前任务中明确有测试要求,请严格遵守以下规则:**
-
-- 确保所有测试用例（100%）都通过
-- 如果测试用例没有全部通过，**则绝对不许使用 attempt_completion**，而是**必须**使用 \`ask_followup_question\` 工具，并询问我：“测试未完全通过（当前通过率：[请填入实际通过率]%），是否可以结束任务？”。在我给出肯定答复前，请不要结束。
-
-==============  待完成任务: end   ===============
-
-当前任务开发完成后，请使用 attempt_completion 工具提交实现结果总结。请注意，以上具体操作指令优先于常规的\${mode}指令。
-`,
-	},
-	WORKFLOW_TASK_RETRY: {
-		template: `
-
-请重新执行用户需求的实现工作。基于 \`\${scope}\` 目录下已创建的需求文档(requirements.md)、架构设计文档(design.md)推进相应功能实现。
-
-## 实施前准备
-- 在执行任何开发任务前，请务必仔细阅读并理解 \`\${scope}\` 目录下的 requirements.md、design.md 文档
-- 若未充分理解需求或设计即开始执行任务，可能导致实现偏差或功能错误
-- **该过程不允许修改任何测试相关的文件比如修改测试案例**
-- 执行过程中及时更新 \`tasks.md\` 文档中对应任务的状态，状态说明：\`[ ]\` (未开始)、\`[-]\` (进行中)、\`[x]\` (已完成)
-- 任务开始前把 \`tasks.md\` 中对应任务状态更新为\`[-]\` (进行中)
-
-## 待重试任务
-
-==============  待重试任务: start ===============
-
-\${selectedText}
-
-**如果当前任务中明确有测试要求,请严格遵守以下规则:**
-
-- 确保所有测试用例（100%）都通过
-- 如果测试用例没有全部通过，**则绝对不许使用 attempt_completion**，而是**必须**使用 \`ask_followup_question\` 工具，并询问我：“测试未完全通过（当前通过率：[请填入实际通过率]%），是否可以结束任务？”。在我给出肯定答复前，请不要结束。
-
-==============  待重试任务: end   ===============
-
-当前任务开发完成后，请使用 attempt_completion 工具提交实现结果总结。请注意，以上具体操作指令优先于常规的\${mode}指令。
-`,
-	},
-	WORKFLOW_RQS_UPDATE: {
-		template: `
-用户更新了需求文档请更新相应的设计文档。基于 \`\${scope}\` 目录下已创建的需求文档(requirements.md)、架构设计文档(design.md)实施设计变更，如果没有则跳过。
-
-## 实施前准备：
-- 在执行任何更新任务前，请仔细阅读\`\${scope}\`下的requirements.md、design.md
-- 分析需求变更对现有设计的影响范围
-- 确认变更涉及的模块和需要调整的现有功能
-- 在没有充分理解变更影响的情况下执行任务将导致不准确的实现
-
-## 用户需求变更 (包含添加或删除)
-\${selectedText}
-
-
-## 变更实施要求：
-1. 评估设计文档需要调整的部分，更新相应的架构设计
-2. 确保向后兼容性，或制定适当的迁移方案
-
-完成后使用attempt_completion工具提供变更总结，包括更新的功能点、受影响模块和验证要点。这些具体指令优先于\${mode}模式的常规指令。
-`,
-	},
-	WORKFLOW_DESIGN_UPDATE: {
-		template: `
-用户更新了架构设计文档请更新相应的任务规划文档。基于 \`\${scope}\` 目录下已创建的需求文档(requirements.md)、架构设计文档(design.md)和任务规划文档(tasks.md),请更新任务规划文档(tasks.md)，如果没有则跳过。
-
-## 实施前准备：
-- 在执行任何更新任务前，请仔细阅读\`\${scope}\`下的requirements.md、design.md和tasks.md文件
-- 分析设计变更对现有任务规划的影响范围
-- 确认变更涉及的模块和需要调整的现有功能
-- 在没有充分理解变更影响的情况下执行任务将导致不准确的实现
-
-## 用户设计变更 (包含添加或删除)
-\${selectedText}
-
-## 变更实施要求：
-1. 评估任务规划文档需要调整的部分，更新相应的任务规划设计
-2. 重新规划受影响的任务，调整任务优先级和依赖关系
-3. 按照更新后的任务规划逐步实现变更功能
-4. 确保向后兼容性，或制定适当的迁移方案
-
-完成后使用attempt_completion工具提供变更总结，包括更新的功能点、受影响模块和验证要点。这些具体指令优先于\${mode}的常规指令。
-`,
 	},
 	EXPLAIN: {
 		template: `Explain the following code from file path \${filePath}:\${startLine}-\${endLine}
