@@ -1,8 +1,5 @@
 import {
-	WIKI_OUTPUT_DIR,
-	GENERAL_RULES_OUTPUT_DIR,
 	SUBTASK_FILENAMES,
-	SUBTASK_OUTPUT_FILENAMES,
 	subtaskDir,
 	deepAnalyzeThreshold,
 } from "./subtasks/constants"
@@ -22,7 +19,7 @@ createTime: ${projectWikiCreateTime}
 
 **您的身份**：资深架构师 + 技术文档专家
 
-**核心任务**：为AI Coding Agent生成高质量的项目技术文档和编码约束规则
+**核心任务**：为AI Coding Agent生成高质量的项目技术文档和编码约束规则。
 
 **成功标准**：
 - 🤖 **AI友好性**：使用结构化markdown，标题层级清晰，术语标准化
@@ -32,7 +29,7 @@ createTime: ${projectWikiCreateTime}
 
 ---
 
-## 🚀 两步执行流程
+## 🚀 执行流程
 
 ### 📏 步骤1：确定分析模式
 **目标**：通过项目规模评估，确定使用精简模式还是深度模式
@@ -138,28 +135,5 @@ ELSE 使用工具扫描：
 3. **文件生成失败** → 记录错误详情并尝试恢复
 4. **目录不存在** → 自动创建所需输出目录
 5. **文件已存在** → 直接覆盖，确保内容最新
-
----
-
-## 📁 输出文件结构（深度模式）
-
-### 📖 技术文档目录：\`${WIKI_OUTPUT_DIR}\`
-\`\`\`
-├── ${SUBTASK_OUTPUT_FILENAMES.INDEX_GENERATION_TASK_FILE}                           # AI知识库索引文件
-├── ${SUBTASK_OUTPUT_FILENAMES.PROJECT_OVERVIEW_TASK_FILE}      # 项目概览分析
-├── ${SUBTASK_OUTPUT_FILENAMES.OVERALL_ARCHITECTURE_TASK_FILE}  # 整体架构分析
-├── ${SUBTASK_OUTPUT_FILENAMES.SERVICE_DEPENDENCIES_TASK_FILE}  # 服务依赖分析
-├── ${SUBTASK_OUTPUT_FILENAMES.DATA_FLOW_INTEGRATION_TASK_FILE}      # 数据流分析
-├── ${SUBTASK_OUTPUT_FILENAMES.SERVICE_ANALYSIS_TASK_FILE}      # 服务模块分析
-├── ${SUBTASK_OUTPUT_FILENAMES.DATABASE_SCHEMA_TASK_FILE}      # 数据库分析
-├── ${SUBTASK_OUTPUT_FILENAMES.API_INTERFACE_TASK_FILE}           # API接口分析
-├── ${SUBTASK_OUTPUT_FILENAMES.DEPLOY_ANALYSIS_TASK_FILE}        # 部署配置分析
-├── ${SUBTASK_OUTPUT_FILENAMES.DEVELOPMENT_TEST_ANALYSIS_TASK_FILE}   # 开发测试分析
-\`\`\`
-
-### 📜 编码规则目录：\`${GENERAL_RULES_OUTPUT_DIR}\`
-\`\`\`
-└── ${SUBTASK_OUTPUT_FILENAMES.PROJECT_RULES_TASK_FILE}                 # 项目特有编码约束规则
-\`\`\`
 ---
 `
