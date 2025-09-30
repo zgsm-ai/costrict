@@ -4,7 +4,7 @@ import {
 	deepAnalyzeThreshold,
 } from "./subtasks/constants"
 
-export const projectWikiVersion = "v1.0.0"
+export const projectWikiVersion = "v1.0.1"
 const projectWikiCreateTime = new Date().toLocaleString()
 
 export const PROJECT_WIKI_TEMPLATE = `---
