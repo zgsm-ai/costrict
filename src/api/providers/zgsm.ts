@@ -47,7 +47,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 	private modelInfo = {} as ModelInfo
 	private apiResponseRenderModeInfo = renderModes.fast
 	private logger: ILogger
-	private curStream: any = null
+	private abortController?: AbortController
 
 	constructor(options: ApiHandlerOptions) {
 		super()
@@ -101,6 +101,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		metadata?: ApiHandlerCreateMessageMetadata,
 	): ApiStream {
 		// Performance monitoring log
+		this.abortController = new AbortController()
 		const requestId = uuidv7()
 		await this.fetchModel()
 		this.apiResponseRenderModeInfo = getApiResponseRenderMode()
@@ -137,7 +138,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			const tokens = await ZgsmAuthService.getInstance().getTokens()
 			this.client.apiKey = tokens?.access_token || "not-provided"
 		} catch (error) {
-			console.warn(
+			this.logger.info(
 				`[createMessage] getting new tokens failed \n\nuse old tokens: ${this.client.apiKey} \n\n${error.message}`,
 			)
 		}
@@ -165,18 +166,18 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			let stream
 			try {
 				this.logger.info(`[RequestID]:`, requestId)
-				const { data: _stream, response } = await this.client.chat.completions
+				const { data, response } = await this.client.chat.completions
 					.create(
 						requestOptions,
 						Object.assign(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
 							headers: _headers,
+							signal: this.abortController.signal,
 						}),
 					)
 					.withResponse()
 				this.logger.info(`[ResponseID]:`, response.headers.get("x-request-id"))
 
-				stream = _stream
-				this.curStream = _stream
+				stream = data
 				if (this.options.zgsmModelId === autoModeModelId) {
 					const userInputHeader = response.headers.get("x-user-input")
 					if (userInputHeader) {
@@ -208,6 +209,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					requestOptions,
 					Object.assign(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
 						headers: _headers,
+						signal: this.abortController.signal,
 					}),
 				)
 				this.logger.info(`[ResponseId]:`, response._request_id)
@@ -571,7 +573,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			try {
 				stream = await this.client.chat.completions.create(
 					requestOptions,
-					methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
+					Object.assign(methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
+						signal: this.abortController?.signal,
+					}),
 				)
 			} catch (error) {
 				throw handleOpenAIError(error, this.providerName)
@@ -601,7 +605,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			try {
 				response = await this.client.chat.completions.create(
 					requestOptions,
-					methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {},
+					Object.assign(methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
+						signal: this.abortController?.signal,
+					}),
 				)
 			} catch (error) {
 				throw handleOpenAIError(error, this.providerName)
@@ -680,12 +686,16 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		return this.chatType
 	}
 
-	cancelChat(type?: ClineApiReqCancelReason): void {
+	cancelChat(reason?: ClineApiReqCancelReason): void {
 		try {
-			this.curStream?.controller?.abort?.()
-			this.logger.info(`[cancelChat] Cancelled chat request ${type}`)
+			if (reason === "user_cancelled") {
+				this.logger.info(`[cancelChat] User Cancelled chat request: ${reason}`)
+			} else {
+				this.logger.info(`[cancelChat] AI Cancelled chat request: ${reason}`)
+			}
+			this.abortController?.abort(reason)
 		} catch (error) {
-			console.log(`Error while cancelling message ${error}`)
+			this.logger.info(`Error while cancelling message ${error}`)
 		}
 	}
 }

@@ -37,7 +37,7 @@ import {
 	QueuedMessage,
 } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
-import { CloudService, BridgeOrchestrator } from "@roo-code/cloud"
+// import { CloudService, BridgeOrchestrator } from "@roo-code/cloud"
 
 // api
 import { ApiHandler, ApiHandlerCreateMessageMetadata, buildApiHandler } from "../../api"
@@ -658,14 +658,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		await provider?.postMessageToWebview({ type: "messageUpdated", clineMessage: message })
 		this.emit(RooCodeEventName.Message, { action: "updated", message })
 
-		const shouldCaptureMessage = message.partial !== true && CloudService.isEnabled()
+		// const shouldCaptureMessage = message.partial !== true && CloudService.isEnabled()
 
-		if (shouldCaptureMessage) {
-			CloudService.instance.captureEvent({
-				event: TelemetryEventName.TASK_MESSAGE,
-				properties: { taskId: this.taskId, message },
-			})
-		}
+		// if (shouldCaptureMessage) {
+		// 	CloudService.instance.captureEvent({
+		// 		event: TelemetryEventName.TASK_MESSAGE,
+		// 		properties: { taskId: this.taskId, message },
+		// 	})
+		// }
 	}
 
 	private async saveClineMessages() {
@@ -1206,15 +1206,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// Start / Resume / Abort / Dispose
 
 	private async startTask(task?: string, images?: string[]): Promise<void> {
-		if (this.enableBridge) {
-			try {
-				await BridgeOrchestrator.subscribeToTask(this)
-			} catch (error) {
-				console.error(
-					`[Task#startTask] BridgeOrchestrator.subscribeToTask() failed: ${error instanceof Error ? error.message : String(error)}`,
-				)
-			}
-		}
+		// if (this.enableBridge) {
+		// 	try {
+		// 		await BridgeOrchestrator.subscribeToTask(this)
+		// 	} catch (error) {
+		// 		console.error(
+		// 			`[Task#startTask] BridgeOrchestrator.subscribeToTask() failed: ${error instanceof Error ? error.message : String(error)}`,
+		// 		)
+		// 	}
+		// }
 
 		// `conversationHistory` (for API) and `clineMessages` (for webview)
 		// need to be in sync.
@@ -1247,15 +1247,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 
 	private async resumeTaskFromHistory() {
-		if (this.enableBridge) {
-			try {
-				await BridgeOrchestrator.subscribeToTask(this)
-			} catch (error) {
-				console.error(
-					`[Task#resumeTaskFromHistory] BridgeOrchestrator.subscribeToTask() failed: ${error instanceof Error ? error.message : String(error)}`,
-				)
-			}
-		}
+		// if (this.enableBridge) {
+		// 	try {
+		// 		await BridgeOrchestrator.subscribeToTask(this)
+		// 	} catch (error) {
+		// 		console.error(
+		// 			`[Task#resumeTaskFromHistory] BridgeOrchestrator.subscribeToTask() failed: ${error instanceof Error ? error.message : String(error)}`,
+		// 		)
+		// 	}
+		// }
 
 		const modifiedClineMessages = await this.getSavedClineMessages()
 
@@ -1470,25 +1470,25 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		let newUserContent: Anthropic.Messages.ContentBlockParam[] = [...modifiedOldUserContent]
 
-		const agoText = ((): string => {
-			const timestamp = lastClineMessage?.ts ?? Date.now()
-			const now = Date.now()
-			const diff = now - timestamp
-			const minutes = Math.floor(diff / 60000)
-			const hours = Math.floor(minutes / 60)
-			const days = Math.floor(hours / 24)
+		// const agoText = ((): string => {
+		// 	const timestamp = lastClineMessage?.ts ?? Date.now()
+		// 	const now = Date.now()
+		// 	const diff = now - timestamp
+		// 	const minutes = Math.floor(diff / 60000)
+		// 	const hours = Math.floor(minutes / 60)
+		// 	const days = Math.floor(hours / 24)
 
-			if (days > 0) {
-				return `${days} day${days > 1 ? "s" : ""} ago`
-			}
-			if (hours > 0) {
-				return `${hours} hour${hours > 1 ? "s" : ""} ago`
-			}
-			if (minutes > 0) {
-				return `${minutes} minute${minutes > 1 ? "s" : ""} ago`
-			}
-			return "just now"
-		})()
+		// 	if (days > 0) {
+		// 		return `${days} day${days > 1 ? "s" : ""} ago`
+		// 	}
+		// 	if (hours > 0) {
+		// 		return `${hours} hour${hours > 1 ? "s" : ""} ago`
+		// 	}
+		// 	if (minutes > 0) {
+		// 		return `${minutes} minute${minutes > 1 ? "s" : ""} ago`
+		// 	}
+		// 	return "just now"
+		// })()
 
 		if (responseText) {
 			newUserContent.push({
@@ -1570,15 +1570,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.pauseInterval = undefined
 		}
 
-		if (this.enableBridge) {
-			BridgeOrchestrator.getInstance()
-				?.unsubscribeFromTask(this.taskId)
-				.catch((error) =>
-					console.error(
-						`[Task#dispose] BridgeOrchestrator#unsubscribeFromTask() failed: ${error instanceof Error ? error.message : String(error)}`,
-					),
-				)
-		}
+		// if (this.enableBridge) {
+		// 	BridgeOrchestrator.getInstance()
+		// 		?.unsubscribeFromTask(this.taskId)
+		// 		.catch((error) =>
+		// 			console.error(
+		// 				`[Task#dispose] BridgeOrchestrator#unsubscribeFromTask() failed: ${error instanceof Error ? error.message : String(error)}`,
+		// 			),
+		// 		)
+		// }
 
 		// Release any terminals associated with this task.
 		try {
@@ -1925,6 +1925,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					// Signals to provider that it can retrieve the saved messages
 					// from disk, as abortTask can not be awaited on in nature.
 					this.didFinishAbortingStream = true
+
 					this?.api?.cancelChat?.(cancelReason)
 				}
 
@@ -2230,6 +2231,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 						// Now abort (emits TaskAborted which provider listens to)
 						await this.abortTask()
+
 						this?.api?.cancelChat?.(cancelReason)
 						// Do not rehydrate here; provider owns rehydration to avoid duplication races
 					}
