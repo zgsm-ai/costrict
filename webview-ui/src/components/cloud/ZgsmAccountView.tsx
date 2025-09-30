@@ -349,7 +349,7 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 									/>
 								) : (
 									<div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-vscode-button-background to-vscode-button-hoverBackground text-vscode-button-foreground text-lg font-medium">
-										{userInfo?.name?.charAt(0) || userInfo?.email?.charAt(0) || "?"}
+										{userInfo?.name?.charAt(0) || userInfo?.email?.charAt(0) || "Costrict"}
 									</div>
 								)}
 							</div>
@@ -360,6 +360,9 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 							)}
 							{userInfo?.email && (
 								<p className="text-xs text-vscode-descriptionForeground mb-1">{userInfo?.email}</p>
+							)}
+							{userInfo.id && (
+								<h2 className="text-xs text-vscode-descriptionForeground mb-1">ID: {userInfo.id}</h2>
 							)}
 							{/* Star status card */}
 							{quotaInfo?.is_star != null && (
