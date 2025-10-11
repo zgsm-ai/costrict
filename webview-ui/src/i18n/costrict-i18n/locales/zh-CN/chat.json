@@ -117,15 +117,15 @@
 		},
 		"debug": {
 			"title": "问题排障",
-			"description": "输入问题日志或故障描述，AI协助定位问题根源，提供修复方案。"
+			"description": "输入问题日志或故障描述，AI协助定位问题根源，并提供修复方案。"
 		},
 		"projectWiki": {
 			"title": "项目文档",
-			"description": "大模型生成「适配AI读取」的项目知识库与规则（Rules），帮助AI理解业务，提升代码生成准确度。"
+			"description": "反推代码生成项目知识库与规则，帮助AI和人理解已有业务。Token消耗量大。"
 		},
 		"testGuide": {
 			"title": "测试方案",
-			"description": "分析并生成项目测试方案"
+			"description": "根据项目代码，分析并生成可执行的测试方案。"
 		}
 	}
 }
