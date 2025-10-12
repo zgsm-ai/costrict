@@ -49,7 +49,7 @@ export class CommitService {
 					const config = vscode.workspace.getConfiguration("zgsm.commit")
 					const useConventionalCommits = config.get<boolean>("useConventionalCommits", true)
 					const commitModelId = config.get<string>("commitModelId", "")
-					const maxLength = config.get<number>("maxLength", 72)
+					const maxLength = config.get<number>("maxLength", 150)
 					const language = config.get<string>("language", "auto")
 
 					// Generate commit message
