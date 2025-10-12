@@ -52,7 +52,6 @@ export const INDEX_GENERATION_TEMPLATE = `# 项目技术文档索引生成任务
 
 ### 🏗️ 组织结构
 
-\`\`\`
 src/
 ├── core/           # 核心功能模块
 ├── integrations/   # 集成功能
