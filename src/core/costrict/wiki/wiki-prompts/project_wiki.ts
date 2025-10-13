@@ -1,12 +1,14 @@
-import { SUBTASK_FILENAMES, subtaskDir, deepAnalyzeThreshold } from "./subtasks/constants"
-
-export const projectWikiVersion = "v1.0.4"
-const projectWikiCreateTime = new Date().toLocaleString()
+import {
+	SUBTASK_FILENAMES,
+	SUBTASK_OUTPUT_FILENAMES,
+	WIKI_OUTPUT_DIR,
+	GENERAL_RULES_OUTPUT_DIR,
+	subtaskDir,
+	deepAnalyzeThreshold,
+} from "./subtasks/constants"
 
 export const PROJECT_WIKI_TEMPLATE = `---
 description: "项目深度分析与知识文档生成"
-version: "${projectWikiVersion}"
-createTime: ${projectWikiCreateTime}
 ---
 
 # 🤖 项目深度分析与知识文档生成
@@ -20,21 +22,34 @@ createTime: ${projectWikiCreateTime}
 通过分析实际代码仓库，为AI Coding Agent生成项目专属的技术文档和编码规则。
 
 ### 具体职责
-1. **代码分析**：理解项目架构、技术栈、业务逻辑
-2. **文档生成**：创建结构化、准确的技术文档  
-3. **规则提取**：总结项目特有的编码规范和最佳实践
+- **代码分析**：理解项目架构、技术栈、业务逻辑
+- **文档生成**：创建结构化、准确的技术文档
+- **规则提取**：总结项目特有的编码规范和最佳实践
 
 ## ⚠️ 执行约束
 
 ### 必须遵守的原则
-1. **基于事实**：只分析实际存在的代码和文件，禁止虚构
-2. **顺序执行**：严格按照指定顺序执行，不得跳跃或省略
-3. **完整输出**：每个任务必须生成对应文件并声明完成状态
-4. **质量保证**：确保所有输出准确、完整、经过验证
+- **基于事实**：只分析实际存在的代码和文件，禁止虚构
+- **顺序执行**：严格按照指定顺序执行，不得跳跃或省略
+- **完整输出**：每个任务必须生成对应文件并声明完成状态
+- **质量保证**：确保所有输出准确、完整、经过验证
 
 ---
 
-## 🚀 执行流程
+## 📋 执行概览
+
+**整体流程**：
+1. **确定模式** → 根据项目规模选择精简或深度模式
+2. **执行分析** → 按选定模式执行对应的分析流程
+3. **输出结果** → 生成对应的技术文档和规则文件
+
+**关键决策点**：
+- 文件数 < ${deepAnalyzeThreshold} → 精简模式（直接执行）
+- 文件数 ≥ ${deepAnalyzeThreshold} → 深度模式（分步执行）
+
+---
+
+## 🚀 详细执行流程
 
 ### 步骤 1：确定分析模式
 **目标**：根据项目规模选择精简模式或深度模式
@@ -48,12 +63,6 @@ createTime: ${projectWikiCreateTime}
 **方法B：目录扫描**（备选）
 - 按优先级扫描源码目录
 - **早期终止**：累计文件数 ≥ ${deepAnalyzeThreshold} 时停止
-
-**扫描示例**：
-\`\`\`
-示例1：扫描 src/ → 10个文件 → 达标 → 深度模式
-示例2：扫描 src/ → 8个文件 → 扫描 utils/ → 3个文件 → 累计11个 → 深度模式
-\`\`\`
 
 **决策流程**：
 \`\`\`
@@ -148,7 +157,7 @@ new_task:
     message: |
         执行子任务X：[任务名称]
         
-        指令文件：\${subtaskDir}\${SUBTASK_FILENAMES.[对应文件名]}
+        指令文件：[指令文件路径]
         
         要求：
         1. 读取并理解指令文件内容
@@ -158,20 +167,32 @@ new_task:
         5. 仅执行此子任务，不执行其他任务
 \`\`\`
 
+#### 错误处理
+- 如果子任务失败：记录错误信息，跳过该子任务继续执行
+- 如果模式切换失败：使用当前模式继续执行，并记录警告
+- 如果文件生成失败：检查目录权限，重试一次
+
 #### 子任务列表
 
-| 序号 | 任务名称 | 指令文件 |
-|------|----------|----------|
-| 1 | 📊 项目概览分析 | \`${subtaskDir}${SUBTASK_FILENAMES.PROJECT_OVERVIEW_TASK_FILE}\` |
-| 2 | 🏗️ 整体架构分析 | \`${subtaskDir}${SUBTASK_FILENAMES.OVERALL_ARCHITECTURE_TASK_FILE}\` |
-| 3 | 🔗 服务依赖分析 | \`${subtaskDir}${SUBTASK_FILENAMES.SERVICE_DEPENDENCIES_TASK_FILE}\` |
-| 4 | 📈 数据流分析 | \`${subtaskDir}${SUBTASK_FILENAMES.DATA_FLOW_INTEGRATION_TASK_FILE}\` |
-| 5 | 🔧 服务模块分析 | \`${subtaskDir}${SUBTASK_FILENAMES.SERVICE_ANALYSIS_TASK_FILE}\` |
-| 6 | 🗄️ 数据库分析 | \`${subtaskDir}${SUBTASK_FILENAMES.DATABASE_SCHEMA_TASK_FILE}\` |
-| 7 | 🌐 API分析 | \`${subtaskDir}${SUBTASK_FILENAMES.API_INTERFACE_TASK_FILE}\` |
-| 8 | 🚀 部署分析 | \`${subtaskDir}${SUBTASK_FILENAMES.DEPLOY_ANALYSIS_TASK_FILE}\` |
-| 9 | 🧪 开发测试分析 | \`${subtaskDir}${SUBTASK_FILENAMES.Develop_TEST_ANALYSIS_TASK_FILE}\` |
-| 10 | 📋 索引文件生成 | \`${subtaskDir}${SUBTASK_FILENAMES.INDEX_GENERATION_TASK_FILE}\` |
-| 11 | 📜 项目规则生成 | \`${subtaskDir}${SUBTASK_FILENAMES.PROJECT_RULES_TASK_FILE}\` |
+**执行顺序**：严格按照 1→2→3→4→5→6→7→8→9→10→11 顺序执行
+
+| 序号 | 任务名称 | 指令文件路径 | 输出文件路径 |
+|------|----------|----------|----------|
+| 1 | 📊 项目概览分析 | \`${subtaskDir}${SUBTASK_FILENAMES.PROJECT_OVERVIEW_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.PROJECT_OVERVIEW_TASK_FILE}\` |
+| 2 | 🏗️ 整体架构分析 | \`${subtaskDir}${SUBTASK_FILENAMES.OVERALL_ARCHITECTURE_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.OVERALL_ARCHITECTURE_TASK_FILE}\` |
+| 3 | 🔗 服务依赖分析 | \`${subtaskDir}${SUBTASK_FILENAMES.SERVICE_DEPENDENCIES_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.SERVICE_DEPENDENCIES_TASK_FILE}\` |
+| 4 | 📈 数据流分析 | \`${subtaskDir}${SUBTASK_FILENAMES.DATA_FLOW_INTEGRATION_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.DATA_FLOW_INTEGRATION_TASK_FILE}\` |
+| 5 | 🔧 服务模块分析 | \`${subtaskDir}${SUBTASK_FILENAMES.SERVICE_ANALYSIS_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.SERVICE_ANALYSIS_TASK_FILE}\` |
+| 6 | 🗄️ 数据库分析 | \`${subtaskDir}${SUBTASK_FILENAMES.DATABASE_SCHEMA_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.DATABASE_SCHEMA_TASK_FILE}\` |
+| 7 | 🌐 API分析 | \`${subtaskDir}${SUBTASK_FILENAMES.API_INTERFACE_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.API_INTERFACE_TASK_FILE}\` |
+| 8 | 🚀 部署分析 | \`${subtaskDir}${SUBTASK_FILENAMES.DEPLOY_ANALYSIS_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.DEPLOY_ANALYSIS_TASK_FILE}\` |
+| 9 | 🧪 开发测试分析 | \`${subtaskDir}${SUBTASK_FILENAMES.Develop_TEST_ANALYSIS_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.DEVELOPMENT_TEST_ANALYSIS_TASK_FILE}\` |
+| 10 | 📋 索引文件生成 | \`${subtaskDir}${SUBTASK_FILENAMES.INDEX_GENERATION_TASK_FILE}\` | \`${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.INDEX_GENERATION_TASK_FILE}\` |
+| 11 | 📜 项目规则生成 | \`${subtaskDir}${SUBTASK_FILENAMES.PROJECT_RULES_TASK_FILE}\` | \`${GENERAL_RULES_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.PROJECT_RULES_TASK_FILE}\` |
+
+**注意事项**：
+- 每个子任务完成后必须声明"子任务X已完成"
+- 所有子任务必须按顺序执行，不得跳跃
+- 输出文件路径中的目录会自动创建
 
 `

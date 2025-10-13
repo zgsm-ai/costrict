@@ -25,12 +25,13 @@ export function formatError(error: unknown): string {
 	return String(error)
 }
 
-export const subtaskDir = path.join(getGlobalCommandsDir(), "project-wiki-tasks") + path.sep
+export const subtaskDir = path.join(getGlobalCommandsDir(), "costrict-project-wiki-tasks") + path.sep
 
 export const deepAnalyzeThreshold = 10
 
 // 子任务文件名常量
 export const SUBTASK_FILENAMES = {
+	VERSION_FILE: "version.md",
 	PROJECT_OVERVIEW_TASK_FILE: "01_Project_Overview_Analysis.md",
 	OVERALL_ARCHITECTURE_TASK_FILE: "02_Overall_Architecture_Analysis.md",
 	SERVICE_DEPENDENCIES_TASK_FILE: "03_Service_Dependencies_Analysis.md",

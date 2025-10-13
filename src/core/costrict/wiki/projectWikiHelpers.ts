@@ -13,6 +13,7 @@ import { DEVELOP_TEST_ANALYSIS_TEMPLATE } from "./wiki-prompts/subtasks/09_Devel
 import { PROJECT_RULES_GENERATION_TEMPLATE } from "./wiki-prompts/subtasks/11_Project_Rules_Generation"
 import { ILogger, createLogger } from "../../../utils/logger"
 import { INDEX_GENERATION_TEMPLATE } from "./wiki-prompts/subtasks/10_Index_Generation"
+import { PROJECT_WIKI_VERSION, VERSION_TEMPLATE } from "./wiki-prompts/subtasks/version"
 
 export const projectWikiCommandName = "project-wiki"
 export const projectWikiCommandDescription = `Perform an in-depth analysis of the project and create a comprehensive project wiki.`
@@ -27,6 +28,7 @@ export function setLogger(testLogger: ILogger): void {
 
 // Template data mapping for subtasks only
 const SUBTASK_TEMPLATES = {
+	[SUBTASK_FILENAMES.VERSION_FILE]: VERSION_TEMPLATE,
 	[SUBTASK_FILENAMES.PROJECT_OVERVIEW_TASK_FILE]: PROJECT_OVERVIEW_ANALYSIS_TEMPLATE,
 	[SUBTASK_FILENAMES.OVERALL_ARCHITECTURE_TASK_FILE]: OVERALL_ARCHITECTURE_ANALYSIS_TEMPLATE,
 	[SUBTASK_FILENAMES.SERVICE_DEPENDENCIES_TASK_FILE]: SERVICE_DEPENDENCIES_ANALYSIS_TEMPLATE,
@@ -104,11 +106,48 @@ async function checkSubtaskDirectory(subTaskDir: string): Promise<boolean> {
 // Check if subtask setup is needed
 async function checkIfSubtaskSetupNeeded(subTaskDir: string): Promise<boolean> {
 	try {
+		// Check version in existing file
+		const isVersionValid = await checkFileVersion(path.join(subTaskDir, SUBTASK_FILENAMES.VERSION_FILE))
+		if (!isVersionValid) {
+			return true
+		}
 		const isSubtaskDirValid = await checkSubtaskDirectory(subTaskDir)
 		return !isSubtaskDirValid
 	} catch (error) {
 		logger.info("[projectWikiHelpers] subTaskDir not accessible:", formatError(error))
 		return true
+	}
+}
+
+// Check if file version matches current version
+async function checkFileVersion(versionFile: string): Promise<boolean> {
+	try {
+		const existingContent = await fs.readFile(versionFile, "utf-8")
+
+		if (!existingContent) {
+			logger.info("[projectWikiHelpers] No valid version file found.")
+			return false
+		}
+
+		const versionMatch = existingContent.match(/^version:\s*"([^"]+)"/m)
+		if (!versionMatch) {
+			logger.info("[projectWikiHelpers] Version field not found in front matter")
+			return false
+		}
+
+		const existingVersion = versionMatch[1].trim()
+		if (existingVersion !== PROJECT_WIKI_VERSION) {
+			logger.info(
+				`[projectWikiHelpers] Version mismatch. Current: ${existingVersion}, Expected: ${PROJECT_WIKI_VERSION}`,
+			)
+			return false
+		}
+
+		logger.info(`[projectWikiHelpers] Version check passed: ${existingVersion}`)
+		return true
+	} catch (error) {
+		logger.info("[projectWikiHelpers] Failed to read or parse existing file version:", formatError(error))
+		return false
 	}
 }
 
