@@ -11,72 +11,12 @@ import SectionDivider from "@/components/common/SectionDivider"
 import { StandardTooltip } from "../ui"
 import { Button } from "@/components/ui"
 
-const tips = [
-	{
-		icon: "codicon-book",
-		click: (e: any) => {
-			e.preventDefault()
-			vscode.postMessage({
-				type: "mode",
-				text: "code",
-			})
-			vscode.postMessage({
-				type: "newTask",
-				text: "/project-wiki",
-				values: {
-					checkProjectWiki: true,
-				},
-			})
-		},
-		titleKey: "rooTips.projectWiki.title",
-		descriptionKey: "rooTips.projectWiki.description",
-	},
-	{
-		icon: "codicon-book",
-		click: (e: any) => {
-			e.preventDefault()
-			vscode.postMessage({
-				type: "mode",
-				text: "code",
-			})
-			vscode.postMessage({
-				type: "newTask",
-				text: "/test-guide",
-				values: {
-					checkProjectWiki: true,
-				},
-			})
-		},
-		titleKey: "rooTips.testGuide.title",
-		descriptionKey: "rooTips.testGuide.description",
-	},
-	{
-		icon: "codicon-debug-all",
-		click: (e?: any) => {
-			e?.preventDefault()
-			vscode.postMessage({
-				type: "mode",
-				text: "debug",
-			})
-		},
-		disabled: true,
-		titleKey: "rooTips.debug.title",
-		descriptionKey: "rooTips.debug.description",
-	},
-] as {
-	icon: string
-	href?: string
-	click: (e?: any) => void
-	titleKey: string
-	disabled?: boolean
-	descriptionKey: string
-}[]
 const RooTips = () => {
 	const { t } = useTranslation("chat")
 	const { t: tWelcome } = useTranslation("welcome")
 	const { zgsmCodeMode, setZgsmCodeMode } = useExtensionState()
 	const switchMode = useCallback(
-		(slug: ZgsmCodeMode) => {
+		(slug: ZgsmCodeMode, forceMode?: string) => {
 			setZgsmCodeMode(slug)
 			vscode.postMessage({
 				type: "zgsmCodeMode",
@@ -84,11 +24,62 @@ const RooTips = () => {
 			})
 			vscode.postMessage({
 				type: "mode",
-				text: slug === "vibe" ? "code" : "strict",
+				text: forceMode || (slug === "vibe" ? "code" : "strict"),
 			})
 		},
 		[setZgsmCodeMode],
 	)
+
+	const tips = [
+		{
+			icon: "codicon-book",
+			click: (e: any) => {
+				e.preventDefault()
+				vscode.postMessage({
+					type: "mode",
+					text: "code",
+				})
+				vscode.postMessage({
+					type: "newTask",
+					text: "/project-wiki",
+					values: {
+						checkProjectWiki: true,
+					},
+				})
+			},
+			titleKey: "rooTips.projectWiki.title",
+			descriptionKey: "rooTips.projectWiki.description",
+		},
+		{
+			icon: "codicon-book",
+			click: (e: any) => {
+				e.preventDefault()
+				switchMode("strict", "testguide")
+			},
+			titleKey: "rooTips.testGuide.title",
+			descriptionKey: "rooTips.testGuide.description",
+		},
+		{
+			icon: "codicon-debug-all",
+			click: (e?: any) => {
+				e?.preventDefault()
+				vscode.postMessage({
+					type: "mode",
+					text: "debug",
+				})
+			},
+			disabled: true,
+			titleKey: "rooTips.debug.title",
+			descriptionKey: "rooTips.debug.description",
+		},
+	] as {
+		icon: string
+		href?: string
+		click: (e?: any) => void
+		titleKey: string
+		disabled?: boolean
+		descriptionKey: string
+	}[]
 
 	const providers = [
 		{
@@ -110,6 +101,7 @@ const RooTips = () => {
 			},
 		},
 	]
+
 	return (
 		<div className="relative">
 			<p className="text-lg font-bold text-vscode-editor-foreground leading-tight font-vscode-font-family text-center text-balance max-w-[380px] mx-auto my-0">

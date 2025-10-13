@@ -2560,6 +2560,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			alwaysApproveResubmit,
 			requestDelaySeconds,
 			mode,
+			zgsmCodeMode,
 			autoCondenseContext = true,
 			autoCondenseContextPercent = 100,
 			profileThresholds = {},
@@ -2719,6 +2720,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		const metadata: ApiHandlerCreateMessageMetadata = {
 			mode: mode,
+			zgsmCodeMode,
 			zgsmWorkflowMode: this.zgsmWorkflowMode,
 			rooTaskMode: this?.rootTask?._taskMode,
 			parentTaskMode: this?.parentTask?._taskMode,
