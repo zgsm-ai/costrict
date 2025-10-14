@@ -1,6 +1,7 @@
 // import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useTranslation } from "react-i18next"
 import { Trans } from "react-i18next"
+import { delay } from "lodash-es"
 
 // import { buildDocLink } from "@src/utils/docLinks"
 import { vscode } from "@/utils/vscode"
@@ -39,13 +40,15 @@ const RooTips = () => {
 					type: "mode",
 					text: "code",
 				})
-				vscode.postMessage({
-					type: "newTask",
-					text: "/project-wiki",
-					values: {
-						checkProjectWiki: true,
-					},
-				})
+				delay(() => {
+					vscode.postMessage({
+						type: "newTask",
+						text: "/project-wiki",
+						values: {
+							checkProjectWiki: true,
+						},
+					})
+				}, 300)
 			},
 			titleKey: "rooTips.projectWiki.title",
 			descriptionKey: "rooTips.projectWiki.description",
@@ -55,6 +58,15 @@ const RooTips = () => {
 			click: (e: any) => {
 				e.preventDefault()
 				switchMode("strict", "testguide")
+				delay(() => {
+					vscode.postMessage({
+						type: "newTask",
+						text: t("rooTips.testGuide.initPrompt"),
+						values: {
+							checkProjectWiki: true,
+						},
+					})
+				}, 300)
 			},
 			titleKey: "rooTips.testGuide.title",
 			descriptionKey: "rooTips.testGuide.description",

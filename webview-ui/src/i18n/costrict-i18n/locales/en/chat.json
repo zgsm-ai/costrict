@@ -122,7 +122,8 @@
 		},
 		"testGuide": {
 			"title": "Test Solution",
-			"description": "Generates executable test solutions based on analysis of project code."
+			"description": "Generates executable test solutions based on analysis of project code.",
+			"initPrompt": "Generate test solution for the current project"
 		}
 	}
 }

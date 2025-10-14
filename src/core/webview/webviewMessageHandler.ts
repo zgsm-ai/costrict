@@ -70,7 +70,7 @@ import { ZgsmCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from ".
 import { ErrorCodeManager } from "../costrict/error-code"
 import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
 import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-event-monitor"
-import { fetchZgsmQuotaInfo } from "../../api/providers/fetchers/zgsm"
+import { fetchZgsmQuotaInfo, fetchZgsmInviteCode } from "../../api/providers/fetchers/zgsm"
 import { ensureProjectWikiSubtasksExists } from "../costrict/wiki/projectWikiHelpers"
 
 export const webviewMessageHandler = async (
@@ -3452,6 +3452,22 @@ export const webviewMessageHandler = async (
 				type: "dismissedUpsells",
 				list: dismissedUpsells,
 			})
+			break
+		}
+		case "fetchZgsmInviteCode": {
+			const { apiConfiguration } = await provider.getState()
+
+			// zgsmQuotaInfo
+			const data = await fetchZgsmInviteCode(
+				apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl(),
+				apiConfiguration.zgsmAccessToken,
+			)
+			if (data) {
+				await provider.postMessageToWebview({
+					type: "zgsmInviteCode",
+					values: data,
+				})
+			}
 			break
 		}
 		case "fetchZgsmQuotaInfo": {

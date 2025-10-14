@@ -221,6 +221,7 @@ export interface WebviewMessage {
 		| "zgsmCodebaseIndexEnabled"
 		| "showZgsmCodebaseDisableConfirmDialog"
 		| "fetchZgsmQuotaInfo"
+		| "fetchZgsmInviteCode"
 		// zgsm
 		| "profileThresholds"
 		| "shareTaskSuccess"

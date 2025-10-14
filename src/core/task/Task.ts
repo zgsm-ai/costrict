@@ -2022,7 +2022,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						}
 
 						if (this.abort) {
-							console.log(`aborting stream, this.abandoned = ${this.abandoned}`)
 							this?.api?.cancelChat?.(this.abortReason)
 
 							if (!this.abandoned) {
