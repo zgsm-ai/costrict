@@ -168,7 +168,7 @@ export async function updateIssueStatusAPI(
 	reviewTaskId: string,
 	status: IssueStatus,
 	options: AxiosRequestConfig = {},
-): Promise<{ success: boolean; message?: string }> {
+): Promise<UpdateIssueStatusResponse> {
 	// Validate input parameters
 	if (!issueId || issueId.trim() === "") {
 		throw new Error("Issue ID is required")
