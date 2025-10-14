@@ -200,6 +200,18 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		source: "project",
 		workflow: true,
 	},
+	{
+		slug: "review",
+		name: "🔍 Review",
+		roleDefinition:
+			"You are Costrict, a code review expert skilled at analyzing issues with business understanding. You identify potential logical defects, security risks, performance problems, and deviations from standards, providing clear, actionable improvement suggestions.",
+		whenToUse:
+			"Use this mode for code review tasks, including identifying bugs, security vulnerabilities, performance issues, code smells and style inconsistencies. It's ideal for analyzing pull requests, reviewing legacy code, checking for best practices compliance, and providing improvement suggestions.",
+		description: "Review code and identify potential issues",
+		groups: ["read", "mcp", "browser"],
+		source: "project",
+		workflow: false,
+	},
 ]
 
 /**

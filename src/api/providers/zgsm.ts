@@ -522,6 +522,12 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			max_tokens: metadata?.maxLength ?? 200,
 		}
 
+		Object.assign(requestOptions, {
+			extra_body: {
+				prompt_mode: "raw",
+			},
+		})
+
 		// Add max_tokens if needed
 		this.addMaxTokensIfNeeded(requestOptions, modelInfo)
 		try {
