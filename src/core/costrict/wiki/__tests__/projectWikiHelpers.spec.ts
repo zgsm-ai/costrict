@@ -41,9 +41,10 @@ vi.mock("fs", () => ({
 
 vi.mock("../wiki-prompts/subtasks/constants", () => ({
 	getGlobalCommandsDir: vi.fn(() => "/home/user/.roo/commands"),
-	subtaskDir: "/home/user/.roo/commands/project-wiki-tasks/",
+	subtaskDir: "/home/user/.roo/commands/costrict-project-wiki-tasks/",
 	MAIN_WIKI_FILENAME: "project-wiki.md",
 	SUBTASK_FILENAMES: {
+		VERSION_FILE: "version.md",
 		PROJECT_OVERVIEW_TASK_FILE: "01_Project_Overview_Analysis.md",
 		OVERALL_ARCHITECTURE_TASK_FILE: "02_Overall_Architecture_Analysis.md",
 		SERVICE_DEPENDENCIES_TASK_FILE: "03_Service_Dependencies_Analysis.md",
@@ -129,7 +130,7 @@ describe("projectWikiHelpers", () => {
 
 			await ensureProjectWikiSubtasksExists()
 
-			expect(fs.promises.mkdir).toHaveBeenCalledWith("/home/user/.roo/commands/project-wiki-tasks/", {
+			expect(fs.promises.mkdir).toHaveBeenCalledWith("/home/user/.roo/commands/costrict-project-wiki-tasks/", {
 				recursive: true,
 			})
 			expect(fs.promises.writeFile).toHaveBeenCalled()
@@ -164,6 +165,7 @@ describe("projectWikiHelpers", () => {
 				isDirectory: () => true,
 			} as any)
 			vi.mocked(fs.promises.readdir).mockResolvedValue([
+				"version.md",
 				"01_Project_Overview_Analysis.md",
 				"02_Overall_Architecture_Analysis.md",
 				"03_Service_Dependencies_Analysis.md",
@@ -176,6 +178,8 @@ describe("projectWikiHelpers", () => {
 				"10_Index_Generation.md",
 				"11_Project_Rules_Generation.md",
 			] as any)
+			// Mock 版本文件内容，确保版本检查通过
+			vi.mocked(fs.promises.readFile).mockResolvedValue(`version: "v1.0.5"`)
 			vi.mocked(fs.promises.mkdir).mockResolvedValue(undefined)
 			vi.mocked(fs.promises.writeFile).mockResolvedValue(undefined)
 			vi.mocked(fs.promises.rm).mockResolvedValue(undefined)
@@ -241,7 +245,7 @@ describe("projectWikiHelpers", () => {
 			expect(mockLogger.info).toHaveBeenCalledWith(
 				"[projectWikiHelpers] Starting ensureProjectWikiSubtasksExists...",
 			)
-			expect(fs.promises.mkdir).toHaveBeenCalledWith("/home/user/.roo/commands/project-wiki-tasks/", {
+			expect(fs.promises.mkdir).toHaveBeenCalledWith("/home/user/.roo/commands/costrict-project-wiki-tasks/", {
 				recursive: true,
 			})
 		})
