@@ -29,6 +29,7 @@ export async function insertContentTool(
 ) {
 	const relPath: string | undefined = block.params.path
 	const line: string | undefined = block.params.line
+	const column: string | undefined = block.params.column
 	const content: string | undefined = block.params.content
 
 	const sharedMessageProps: ClineSayTool = {
@@ -36,6 +37,7 @@ export async function insertContentTool(
 		path: getReadablePath(cline.cwd, removeClosingTag("path", relPath)),
 		diff: content,
 		lineNumber: line ? parseInt(line, 10) : undefined,
+		columnNumber: column ? parseInt(column, 10) : undefined,
 	}
 
 	try {
@@ -79,10 +81,19 @@ export async function insertContentTool(
 
 		const absolutePath = path.resolve(cline.cwd, relPath)
 		const lineNumber = parseInt(line, 10)
+		const columnNumber = column ? parseInt(column, 10) : 0
+
 		if (isNaN(lineNumber) || lineNumber < 0) {
 			cline.consecutiveMistakeCount++
 			cline.recordToolError("insert_content")
 			pushToolResult(formatResponse.toolError("Invalid line number. Must be a non-negative integer."))
+			return
+		}
+
+		if (column && (isNaN(columnNumber) || columnNumber < 0)) {
+			cline.consecutiveMistakeCount++
+			cline.recordToolError("insert_content")
+			pushToolResult(formatResponse.toolError("Invalid column number. Must be a non-negative integer."))
 			return
 		}
 
@@ -171,6 +182,43 @@ export async function insertContentTool(
 			TelemetryService.instance.captureCodeReject(language, diffLines)
 			await cline.diffViewProvider.reset()
 			return
+		}
+
+		// Track edit position for auto-focus
+		if (cline.editPositionTracker && lineNumber !== undefined) {
+			const editType = fileExists ? "insert" : "create"
+
+			if (editType === "create") {
+				return
+			}
+
+			const contentLines = content?.split("\n").length || 0
+			const contentFirstLineLength = content?.split("\n")[0]?.length || 0
+
+			// Calculate where the cursor should be positioned
+			let cursorLine: number
+			let cursorColumn: number
+
+			if (contentLines === 1) {
+				// Single-line content: The cursor is positioned at the end of the inserted content
+				cursorLine = lineNumber
+				cursorColumn = columnNumber + contentFirstLineLength + 1
+			} else {
+				// Multi-line content: The cursor is positioned at the end of the last line
+				const contentLinesArray = content?.split("\n") || []
+				const lastLineLength = contentLinesArray[contentLinesArray.length - 1]?.length || 0
+				cursorLine = lineNumber + contentLines - 1
+				cursorColumn = lastLineLength + 1
+			}
+
+			cline.editPositionTracker.trackPosition(relPath, {
+				filePath: relPath,
+				startLine: cursorLine,
+				endLine: cursorLine,
+				startColumn: cursorColumn,
+				endColumn: cursorColumn,
+				editType,
+			})
 		}
 
 		// Save the changes

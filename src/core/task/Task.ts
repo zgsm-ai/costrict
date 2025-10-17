@@ -114,6 +114,7 @@ import { Gpt5Metadata, ClineMessageWithMetadata } from "./types"
 import { MessageQueueService } from "../message-queue/MessageQueueService"
 
 import { AutoApprovalHandler } from "./AutoApprovalHandler"
+import { EditPositionTracker } from "../edit-position/EditPositionTracker"
 import { getShell } from "../../utils/shell"
 import { ErrorCodeManager } from "../costrict/error-code"
 import { ZgsmAuthService } from "../costrict/auth"
@@ -258,6 +259,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	diffEnabled: boolean = false
 	fuzzyMatchThreshold: number
 	didEditFile: boolean = false
+	editPositionTracker: EditPositionTracker
 
 	// LLM Messages & Chat Messages
 	apiConversationHistory: ApiMessage[] = []
@@ -371,6 +373,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.consecutiveMistakeLimit = consecutiveMistakeLimit ?? DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
 		this.providerRef = new WeakRef(provider)
 		this.globalStoragePath = provider.context.globalStorageUri.fsPath
+		this.editPositionTracker = new EditPositionTracker()
 		this.diffViewProvider = new DiffViewProvider(this.cwd, this)
 		this.enableCheckpoints = enableCheckpoints
 		this.enableBridge = enableBridge

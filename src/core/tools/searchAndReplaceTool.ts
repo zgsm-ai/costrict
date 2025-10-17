@@ -85,6 +85,10 @@ export async function searchAndReplaceTool(
 	const ignoreCase: boolean = block.params.ignore_case === "true"
 	const startLine: number | undefined = block.params.start_line ? parseInt(block.params.start_line, 10) : undefined
 	const endLine: number | undefined = block.params.end_line ? parseInt(block.params.end_line, 10) : undefined
+	const startColumn: number | undefined = block.params.start_column
+		? parseInt(block.params.start_column, 10)
+		: undefined
+	const endColumn: number | undefined = block.params.end_column ? parseInt(block.params.end_column, 10) : undefined
 
 	try {
 		// Handle partial tool use
@@ -98,6 +102,8 @@ export async function searchAndReplaceTool(
 				ignoreCase: block.params.ignore_case === "true",
 				startLine,
 				endLine,
+				startColumn,
+				endColumn,
 			}
 			await cline.ask("tool", JSON.stringify(partialMessageProps), block.partial).catch(() => {})
 			return
@@ -122,6 +128,8 @@ export async function searchAndReplaceTool(
 			ignoreCase: ignoreCase,
 			startLine: startLine,
 			endLine: endLine,
+			startColumn: startColumn,
+			endColumn: endColumn,
 		}
 
 		const accessAllowed = cline.rooIgnoreController?.validateAccess(validRelPath)
@@ -173,8 +181,8 @@ export async function searchAndReplaceTool(
 		const searchPattern = useRegex ? new RegExp(validSearch, flags) : new RegExp(escapeRegExp(validSearch), flags)
 
 		let newContent: string
-		if (startLine !== undefined || endLine !== undefined) {
-			// Handle line-specific replacement
+		if (startLine !== undefined || endLine !== undefined || startColumn !== undefined || endColumn !== undefined) {
+			// Handle line and column-specific replacement
 			const lines = fileContent.split("\n")
 			const start = Math.max((startLine ?? 1) - 1, 0)
 			const end = Math.min((endLine ?? lines.length) - 1, lines.length - 1)
@@ -183,10 +191,28 @@ export async function searchAndReplaceTool(
 			const beforeLines = lines.slice(0, start)
 			const afterLines = lines.slice(end + 1)
 
-			// Get and modify target section
-			const targetContent = lines.slice(start, end + 1).join("\n")
-			const modifiedContent = targetContent.replace(searchPattern, validReplace)
-			const modifiedLines = modifiedContent.split("\n")
+			// Get and modify target section with column constraints
+			const targetLines = lines.slice(start, end + 1)
+			const modifiedLines = targetLines.map((line, lineIndex) => {
+				const actualLineIndex = start + lineIndex
+				if (actualLineIndex >= start && actualLineIndex <= end) {
+					// Apply column constraints if specified
+					if (startColumn !== undefined || endColumn !== undefined) {
+						const lineStart = Math.max((startColumn ?? 1) - 1, 0)
+						const lineEnd = Math.min((endColumn ?? line.length) - 1, line.length - 1)
+
+						if (lineStart < lineEnd) {
+							const beforeColumn = line.slice(0, lineStart)
+							const targetColumn = line.slice(lineStart, lineEnd + 1)
+							const afterColumn = line.slice(lineEnd + 1)
+
+							const modifiedColumn = targetColumn.replace(searchPattern, validReplace)
+							return beforeColumn + modifiedColumn + afterColumn
+						}
+					}
+				}
+				return line
+			})
 
 			// Reconstruct full content
 			newContent = [...beforeLines, ...modifiedLines, ...afterLines].join("\n")
@@ -243,6 +269,146 @@ export async function searchAndReplaceTool(
 			await cline.diffViewProvider.reset()
 			TelemetryService.instance.captureCodeReject(language, diffLines)
 			return
+		}
+
+		// Track edit position for auto-focus
+		if (cline.editPositionTracker && search) {
+			// Find all match positions for search and replace
+			const lines = fileContent.split("\n")
+			const searchRegex = useRegex
+				? new RegExp(search, ignoreCase ? "gi" : "g")
+				: new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), ignoreCase ? "gi" : "g")
+			let matchCount = 0
+
+			// Reset regex lastIndex to ensure we start from the beginning
+			searchRegex.lastIndex = 0
+
+			// We need to track the last match position to set cursor at the end of replacement
+			let lastMatchPosition: {
+				startLine: number
+				endLine: number
+				startColumn: number
+				endColumn: number
+			} | null = null
+
+			// Search in the entire file content to properly handle multi-line matches
+			let match
+			while ((match = searchRegex.exec(fileContent)) !== null) {
+				// Calculate line and column positions for the match
+				const matchStart = match.index
+				const matchEnd = matchStart + match[0].length
+
+				// Find the start line and column
+				let startLineIndex = 0
+				let startColumn = matchStart + 1 // Convert to 1-based
+				let charCount = 0
+
+				for (let i = 0; i < lines.length; i++) {
+					const lineLength = lines[i].length + 1 // +1 for newline character
+					if (charCount + lineLength > matchStart) {
+						startLineIndex = i
+						startColumn = matchStart - charCount + 1 // Convert to 1-based
+						break
+					}
+					charCount += lineLength
+				}
+
+				// Find the end line and column
+				let endLineIndex = startLineIndex
+				let endColumn = startColumn + match[0].length - 1
+
+				// Check if the match spans multiple lines
+				let remainingLength = match[0].length
+				let currentLineIndex = startLineIndex
+				let currentColumnInLine = startColumn
+
+				while (remainingLength > 0 && currentLineIndex < lines.length) {
+					const lineLength = lines[currentLineIndex].length
+					const availableInLine = lineLength - currentColumnInLine + 1
+
+					if (remainingLength <= availableInLine) {
+						// Match ends on this line
+						endLineIndex = currentLineIndex
+						endColumn = currentColumnInLine + remainingLength - 1
+						break
+					} else {
+						// Match continues to next line
+						remainingLength -= availableInLine
+						currentLineIndex++
+						currentColumnInLine = 1
+					}
+				}
+
+				// Convert to 1-based line numbers
+				const startLineNumber = startLineIndex + 1
+				const endLineNumber = endLineIndex + 1
+
+				// Check if match is within specified line and column ranges
+				const withinLineRange =
+					startLine === undefined ||
+					endLine === undefined ||
+					(startLineNumber >= startLine && endLineNumber <= endLine)
+
+				// For multi-line matches, column range check is more complex
+				let withinColumnRange = true
+				if (startColumn !== undefined || endColumn !== undefined) {
+					if (startLineNumber === endLineNumber) {
+						// Single line match - simple column check
+						withinColumnRange =
+							startColumn === undefined ||
+							endColumn === undefined ||
+							(startColumn >= startColumn && endColumn <= endColumn)
+					} else {
+						// Multi-line match - check if any part of the match is within the column range
+						// For simplicity, we'll check if the start of the match is within range
+						withinColumnRange =
+							startColumn === undefined || endColumn === undefined || startColumn >= startColumn
+					}
+				}
+
+				// Only track if within specified ranges
+				if (withinLineRange && withinColumnRange) {
+					matchCount++
+					// Store the last match position
+					lastMatchPosition = {
+						startLine: startLineNumber,
+						endLine: endLineNumber,
+						startColumn: startColumn,
+						endColumn: endColumn,
+					}
+
+					// Avoid infinite loops with zero-length matches
+					if (match[0].length === 0) {
+						searchRegex.lastIndex++
+					}
+				}
+			}
+
+			// Track the position of the last match, but adjust it to be at the end of the replacement
+			if (lastMatchPosition) {
+				// Calculate the position at the end of the replacement text
+				const replacementLines = validReplace.split("\n")
+				const replacementEndLine = lastMatchPosition.startLine + replacementLines.length - 1
+				let replacementEndColumn: number
+
+				if (replacementLines.length === 1) {
+					// Single line replacement
+					replacementEndColumn = lastMatchPosition.startColumn + validReplace.length - 1
+				} else {
+					// Multi-line replacement - cursor is at the end of the last line
+					replacementEndColumn = replacementLines[replacementLines.length - 1].length
+				}
+
+				// Track the position at the end of the replacement
+				cline.editPositionTracker.trackPosition(validRelPath, {
+					filePath: validRelPath,
+					startLine: replacementEndLine,
+					endLine: replacementEndLine,
+					startColumn: replacementEndColumn,
+					endColumn: replacementEndColumn + 1,
+					editType: "replace",
+				})
+			}
 		}
 
 		// Save the changes

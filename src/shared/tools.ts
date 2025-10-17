@@ -49,6 +49,7 @@ export const toolParamNames = [
 	"mode_slug",
 	"reason",
 	"line",
+	"column",
 	"mode",
 	"message",
 	"cwd",
@@ -62,6 +63,8 @@ export const toolParamNames = [
 	"args",
 	"start_line",
 	"end_line",
+	"start_column",
+	"end_column",
 	"query",
 	"args",
 	"todos",
@@ -168,7 +171,12 @@ export interface RunSlashCommandToolUse extends ToolUse {
 export interface SearchAndReplaceToolUse extends ToolUse {
 	name: "search_and_replace"
 	params: Required<Pick<Record<ToolParamName, string>, "path" | "search" | "replace">> &
-		Partial<Pick<Record<ToolParamName, string>, "use_regex" | "ignore_case" | "start_line" | "end_line">>
+		Partial<
+			Pick<
+				Record<ToolParamName, string>,
+				"use_regex" | "ignore_case" | "start_line" | "end_line" | "start_column" | "end_column"
+			>
+		>
 }
 
 export interface GenerateImageToolUse extends ToolUse {

@@ -13,6 +13,7 @@ import { formatResponse } from "../../core/prompts/responses"
 import { diagnosticsToProblemsString, getNewDiagnostics } from "../diagnostics"
 import { ClineSayTool } from "../../shared/ExtensionMessage"
 import { Task } from "../../core/task/Task"
+import { EditPositionTracker } from "../../core/edit-position/EditPositionTracker"
 import { DEFAULT_WRITE_DELAY_MS } from "@roo-code/types"
 
 import { DecorationController } from "./DecorationController"
@@ -38,12 +39,14 @@ export class DiffViewProvider {
 	private streamedLines: string[] = []
 	private preDiagnostics: [vscode.Uri, vscode.Diagnostic[]][] = []
 	private taskRef: WeakRef<Task>
+	private editPositionTracker: EditPositionTracker
 
 	constructor(
 		private cwd: string,
 		task: Task,
 	) {
 		this.taskRef = new WeakRef(task)
+		this.editPositionTracker = task.editPositionTracker
 	}
 
 	async open(relPath: string): Promise<void> {
@@ -289,12 +292,22 @@ export class DiffViewProvider {
 			this.newProblemsMessage = newProblemsMessage
 			this.userEdits = userEdits
 
+			// Automatically focus on edit position after saving
+			if (this.relPath) {
+				await this.focusOnEditPosition(this.relPath)
+			}
+
 			return { newProblemsMessage, userEdits, finalContent: normalizedEditedContent }
 		} else {
 			// No changes to Costrict's edits.
 			// Store the results as class properties for formatFileWriteResponse to use
 			this.newProblemsMessage = newProblemsMessage
 			this.userEdits = undefined
+
+			// Automatically focus on edit position after saving
+			if (this.relPath) {
+				await this.focusOnEditPosition(this.relPath)
+			}
 
 			return { newProblemsMessage, userEdits: undefined, finalContent: normalizedEditedContent }
 		}
@@ -612,6 +625,57 @@ export class DiffViewProvider {
 		}
 	}
 
+	/**
+	 * Automatically focus on edit position
+	 * @param filePath File path
+	 */
+	private async focusOnEditPosition(filePath: string): Promise<void> {
+		// Safety check: ensure editPositionTracker exists
+		if (!this.editPositionTracker) {
+			return
+		}
+
+		const position = this.editPositionTracker.getPrimaryPosition(filePath)
+		if (!position) {
+			return
+		}
+
+		const absolutePath = path.resolve(this.cwd, filePath)
+		const uri = vscode.Uri.file(absolutePath)
+
+		try {
+			// Open document
+			const editor = await vscode.window.showTextDocument(uri, {
+				preview: false,
+				preserveFocus: false, // Key: don't preserve focus, allow repositioning
+			})
+
+			// Calculate focus position (convert to 0-based)
+			const focusLine = Math.max(0, position.startLine - 1)
+			const focusColumn = Math.max(0, (position.endColumn || 1) - 1) // Default to column 1
+			const focusPosition = new vscode.Position(focusLine, focusColumn)
+
+			// Set cursor position
+			editor.selection = new vscode.Selection(focusPosition, focusPosition)
+
+			// Calculate end position for display range
+			const endLine = Math.max(0, position.endLine - 1)
+			const endColumn = Math.max(0, (position.endColumn || 1) - 1)
+			const endPosition = new vscode.Position(endLine, endColumn)
+
+			// Scroll to position with some context
+			editor.revealRange(
+				new vscode.Range(focusLine, Math.max(0, focusColumn - 5), endLine, endColumn + 5),
+				vscode.TextEditorRevealType.InCenter,
+			)
+
+			// Clear position information
+			this.editPositionTracker.clearPositions(filePath)
+		} catch (error) {
+			// Failed to focus on edit position
+		}
+	}
+
 	private stripAllBOMs(input: string): string {
 		let result = input
 		let previous
@@ -725,6 +789,12 @@ export class DiffViewProvider {
 		this.userEdits = undefined
 		this.relPath = relPath
 		this.newContent = content
+
+		// Automatically focus on edit position after saving
+		// Even if openFile is false, we need to briefly open the file to focus, then can close it
+		if (this.editPositionTracker) {
+			await this.focusOnEditPosition(relPath)
+		}
 
 		return {
 			newProblemsMessage,
