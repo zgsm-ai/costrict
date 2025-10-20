@@ -1,7 +1,7 @@
 import * as os from "os"
 import * as path from "path"
 
-export const PROJECT_WIKI_VERSION = "v1.0.5"
+export const PROJECT_WIKI_VERSION = "v1.0.6"
 export const WIKI_OUTPUT_DIR = path.join(".cospec", "wiki") + path.sep
 export const GENERAL_RULES_OUTPUT_DIR = path.join(".roo", "rules") + path.sep
 
