@@ -1,4 +1,10 @@
-import { WIKI_OUTPUT_DIR, SUBTASK_OUTPUT_FILENAMES } from "./constants"
+import {
+	WIKI_OUTPUT_DIR,
+	SUBTASK_OUTPUT_FILENAMES,
+   EXECUTE_REQUIREMENT,
+   COMMON_OUTPUT_FILE_NAMING,
+   COMMON_FILE_OUTPUT,
+} from "../common/constants"
 
 export const INDEX_GENERATION_TEMPLATE = (workspace: string) => `# 项目技术文档索引生成任务
 
@@ -10,7 +16,9 @@ export const INDEX_GENERATION_TEMPLATE = (workspace: string) => `# 项目技术�
 2. **优先级明确**：按照"80/20法则"，优先提取对代码生成影响最大的索引信息
 3. **完整性**：确保覆盖所有已生成文档的索引信息
 
-## 分析流程
+## 分析流程（逐步思考）
+
+${EXECUTE_REQUIREMENT}
 
 ### 第一步：文档存在性检查
 1. 检查${WIKI_OUTPUT_DIR}文件夹下的所有.md技术文档
@@ -24,13 +32,10 @@ export const INDEX_GENERATION_TEMPLATE = (workspace: string) => `# 项目技术�
 1. 分析每个技术文档的核心内容
 2. 提取：文档主要内容、适用场景、关键信息点
 
-### 第四步：索引结构组织
-1. 按输出格式要求生成即可
+${COMMON_FILE_OUTPUT}
 
-### 第五步：自我反思检查清单（质量保证）
-
-在完成索引生成后，请进行以下自我检查：
-
+### 第五步：自我反思检查（质量保证）
+使用 \`read_file\` 工具读取前面输出的文档，对文档内容严格执行以下检查（如果检查不通过，则进行修改，然后重新检查，直到完全符合要求为止）：
 1. **文档完整性检查**
    - [ ] 是否包含所有已生成文档的索引信息？
    - [ ] 文档路径是否准确无误？
@@ -95,7 +100,5 @@ src/
 | **部署分析** | [\`${SUBTASK_OUTPUT_FILENAMES.DEPLOY_ANALYSIS_TASK_FILE}\`](${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.DEPLOY_ANALYSIS_TASK_FILE}) | {部署方式摘要，30字以内} | 部署配置、运维管理、扩容缩容 |
 \`\`\`\`
 
-## 输出文件命名
-\`${workspace}${WIKI_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.INDEX_GENERATION_TASK_FILE}\`
-注意：如果${workspace}${WIKI_OUTPUT_DIR}目录不存在，则创建。
+${COMMON_OUTPUT_FILE_NAMING(workspace, SUBTASK_OUTPUT_FILENAMES.INDEX_GENERATION_TASK_FILE)}
 `

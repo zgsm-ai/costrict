@@ -1,12 +1,18 @@
-import { GENERAL_RULES_OUTPUT_DIR, WIKI_OUTPUT_DIR, SUBTASK_OUTPUT_FILENAMES } from "./constants"
+import {
+	COMMON_FILE_OUTPUT,
+    EXECUTE_REQUIREMENT,
+	GENERAL_RULES_OUTPUT_DIR,
+	SUBTASK_OUTPUT_FILENAMES,
+} from "../common/constants"
 
 export const PROJECT_RULES_GENERATION_TEMPLATE = (workspace: string) => `# 项目规则生成任务
 
 ## 任务目标
 基于代码仓库深度分析，提取项目特有、强制、具体的开发测试规则，生成规则文档，解决"隐性约束未显性化"问题，提升AI Coding Agent代码生成精准性。
 
-## 核心要求（思维链执行）
-**执行要求**：请创建并维护一个todo_list，跟踪以下所有步骤的执行状态，确保不遗漏任何步骤。
+## 核心要求（逐步思考）
+
+${EXECUTE_REQUIREMENT}
 
 ### 第一步：项目规则价值评估
 思考：为什么项目规则对AI代码生成精准性至关重要？
@@ -50,7 +56,7 @@ export const PROJECT_RULES_GENERATION_TEMPLATE = (workspace: string) => `# 项�
 示例：
 - 数据库操作必须使用参数化查询，禁止字符串拼接
 
-### 步骤5：规则分类与组织
+### 第五步：规则分类与组织
 按项目实际特点选择合理分类：
 
 #### 基础分类（按需选择）
@@ -69,9 +75,8 @@ export const PROJECT_RULES_GENERATION_TEMPLATE = (workspace: string) => `# 项�
 #### 扩展分类（项目特有）
 根据项目特点添加专属分类，如"微前端""Serverless""实时通信"等
 
-### 第五步：规则格式化输出
-1. 按输出格式要求生成即可
-注意：
+${COMMON_FILE_OUTPUT}
+**注意**：
 #### 规则编写表述要求
 - 必须使用"必须""禁止""仅允许"等强制词汇
 - 每条规则必须包含具体信息（版本号、路径、配置参数等）
@@ -90,9 +95,9 @@ export const PROJECT_RULES_GENERATION_TEMPLATE = (workspace: string) => `# 项�
 - 接口返回格式统一（错误：未说明具体格式）
 - 尽量使用现有组件（错误："尽量"非强制）
 
-### 第六步：自我反思检查清单（质量保证）
+### 自我反思检查（质量保证）
 
-完成规则提取后，请进行以下自我检查：
+使用 \`read_file\` 工具读取前面输出的文档，对文档内容严格执行以下检查（如果检查不通过，则进行修改，然后重新检查，直到完全符合要求为止）：
 
 #### 格式强制要求
 1. 一级标题固定为"# 项目开发规范"
@@ -123,9 +128,9 @@ export const PROJECT_RULES_GENERATION_TEMPLATE = (workspace: string) => `# 项�
 - [ ] 规则具有实际指导价值
 - [ ] 规则数量符合项目规模要求
 
-## 输出格式（严格遵循）
+## 输出格式要求（严格遵循）
 
-### 标准格式
+### 文档结构
 \`\`\`markdown
 # 项目开发规范
 
@@ -160,7 +165,7 @@ export const PROJECT_RULES_GENERATION_TEMPLATE = (workspace: string) => `# 项�
 - 必须使用pnpm 8.6.0+版本管理依赖，版本锁定在package.json中
 \`\`\`\`
 
-
-## 输出文件路径
+## 输出文件命名
 \`${GENERAL_RULES_OUTPUT_DIR}${SUBTASK_OUTPUT_FILENAMES.PROJECT_RULES_TASK_FILE}\`
+注意：如果${GENERAL_RULES_OUTPUT_DIR}目录不存在，则创建。
 `

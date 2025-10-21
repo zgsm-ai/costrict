@@ -1,6 +1,6 @@
 import { promises as fs } from "fs"
 import * as path from "path"
-import { formatError, subtaskDir, SUBTASK_FILENAMES } from "./wiki-prompts/subtasks/constants"
+import { formatError, subtaskDir, SUBTASK_FILENAMES } from "./wiki-prompts/common/constants"
 import { PROJECT_OVERVIEW_ANALYSIS_TEMPLATE } from "./wiki-prompts/subtasks/01_Project_Overview_Analysis"
 import { OVERALL_ARCHITECTURE_ANALYSIS_TEMPLATE } from "./wiki-prompts/subtasks/02_Overall_Architecture_Analysis"
 import { SERVICE_DEPENDENCIES_ANALYSIS_TEMPLATE } from "./wiki-prompts/subtasks/03_Service_Dependencies_Analysis"

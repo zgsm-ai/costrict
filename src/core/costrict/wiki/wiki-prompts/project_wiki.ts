@@ -5,7 +5,7 @@ import {
 	GENERAL_RULES_OUTPUT_DIR,
 	subtaskDir,
 	deepAnalyzeThreshold,
-} from "./subtasks/constants"
+} from "./common/constants"
 
 export const PROJECT_WIKI_TEMPLATE = (workspace: string) => `---
 description: "项目深度分析与知识文档生成"
@@ -165,6 +165,8 @@ new_task:
         3. 生成对应的输出文件
         4. 使用 attempt_completion 确认完成
         5. 仅执行此子任务，不执行其他任务
+        背景信息：
+        1. [子任务执行所需要的背景知识]
 \`\`\`
 
 #### 错误处理
