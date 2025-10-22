@@ -12,9 +12,36 @@
 2、`@wiki-prompts-v2\`；
 3、`@/wiki-prompts-v2/v2-architecture-design.md`；
 ## 你的任务
-1、基于 `@/wiki-prompts-v2/v2-architecture-design.md`， 自顶向下，从整体架构、调度，到具体每一个文件，查看当前的实现是否符合设计，梳理出不合理的地方，以及具体的优化措施；
-
+1、对当前 `@wiki-prompts-v2\` 进行严格的检查和问题修复，包括但不限于以下：
+（1）将子任务之间的输入、输出抽取为常量到 @common/constants.ts 中；
+（3）检查子任务之间的逻辑关系是否一致；
+（3）是否有其他严重的逻辑问题，导致整个任务系统无法执行；
 ```
 ## 注意：
 1、提示词工程，让LLM理解、遵循；
-2、严格按步骤执行；3、先不要直接改代码，先出具体分析结论和优化方案
+2、严格按步骤执行；
+
+
+```xml
+<new_task>
+<mode>code</mode>
+<message>
+## Instructions
+你的指令
+## Attentions
+注意事项
+## Input
+输入
+## Output
+输出
+## Background
+其他背景信息
+</message>
+<todos>
+[ ] 第一步
+[ ] 第二步
+[ ] 第三步
+[ ] 第四步
+</todos>
+</new_task>
+```
