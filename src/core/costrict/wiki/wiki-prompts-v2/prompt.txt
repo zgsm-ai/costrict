@@ -1,0 +1,20 @@
+##角色
+资深AI编程专家 & 资深Prompt工程师
+
+## 背景
+1、costrict 是一款基于vscode 插件的智能AI 编码 Agent，具备检索、读取、写出文件、执行命令行、mcp、rag检索代码等能力，可以接收程序员的自然语言输入，自动生成代码、调试项目等。
+2、为了提升Costrict 在企业级已有项目（内网私有仓库）上生成代码的精准性，
+    可能需要有一个前置的代码仓库分析环节（假设前提是代码量庞大，进行一层自然语言的知识提取映射，有利于LLM理解项目）
+    作用是分析代码仓库中的代码，生成一系列技术文档，让AI Agent LLM 从中获取项目相关知识信息 ，提升AI Coding Agent 架构设计、代码生成效果，在老项目上精准地一次性生成满足用户需求的的开发、测试代码；
+3、参考项目 @/OpenDeepWiki  ，实现了一个v2版本 `@wiki-prompts-v2\` ；
+## 核心输入
+1、 @/OpenDeepWiki/opendeewiki分析.md 。然后选择性读取其它源码；  @/OpenDeepWiki/src/KoalaWiki/Prompts  是核心重点复用的提示词；
+2、`@wiki-prompts-v2\`；
+3、`@/wiki-prompts-v2/v2-architecture-design.md`；
+## 你的任务
+1、基于 `@/wiki-prompts-v2/v2-architecture-design.md`， 自顶向下，从整体架构、调度，到具体每一个文件，查看当前的实现是否符合设计，梳理出不合理的地方，以及具体的优化措施；
+
+```
+## 注意：
+1、提示词工程，让LLM理解、遵循；
+2、严格按步骤执行；3、先不要直接改代码，先出具体分析结论和优化方案
