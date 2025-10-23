@@ -24,7 +24,7 @@ describe("TerminalProcess", () => {
 			shellIntegration: {
 				executeCommand: vi.fn(),
 			},
-			name: "Costrict",
+			name: "CoStrict",
 			processId: Promise.resolve(123),
 			creationOptions: {},
 			exitStatus: undefined,

@@ -18,7 +18,7 @@ describe("TerminalRegistry", () => {
 			(...args: any[]) =>
 				({
 					exitStatus: undefined,
-					name: "Costrict",
+					name: "CoStrict",
 					processId: Promise.resolve(123),
 					creationOptions: {},
 					state: {
@@ -53,7 +53,7 @@ describe("TerminalRegistry", () => {
 
 			expect(mockCreateTerminal).toHaveBeenCalledWith({
 				cwd: "/test/path",
-				name: "Costrict",
+				name: "CoStrict",
 				iconPath: expect.any(Object),
 				env: expectedEnv,
 			})
@@ -81,7 +81,7 @@ describe("TerminalRegistry", () => {
 
 				expect(mockCreateTerminal).toHaveBeenCalledWith({
 					cwd: "/test/path",
-					name: "Costrict",
+					name: "CoStrict",
 					iconPath: expect.any(Object),
 					env: expectedEnv,
 				})
@@ -110,7 +110,7 @@ describe("TerminalRegistry", () => {
 
 				expect(mockCreateTerminal).toHaveBeenCalledWith({
 					cwd: "/test/path",
-					name: "Costrict",
+					name: "CoStrict",
 					iconPath: expect.any(Object),
 					env: expectedEnv,
 				})
@@ -138,7 +138,7 @@ describe("TerminalRegistry", () => {
 
 				expect(mockCreateTerminal).toHaveBeenCalledWith({
 					cwd: "/test/path",
-					name: "Costrict",
+					name: "CoStrict",
 					iconPath: expect.any(Object),
 					env: expectedEnv,
 				})

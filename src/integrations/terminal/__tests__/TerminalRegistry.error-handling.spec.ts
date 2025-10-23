@@ -57,7 +57,7 @@ describe("TerminalRegistry 错误处理测试", () => {
 			(...args: any[]) =>
 				({
 					exitStatus: undefined,
-					name: "Costrict",
+					name: "CoStrict",
 					processId: Promise.resolve(123),
 					creationOptions: {},
 					state: {
