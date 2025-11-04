@@ -2,9 +2,9 @@ import { promises as fs } from "fs"
 import * as path from "path"
 import { formatError, SUBTASK_FILENAMES, subtaskDir } from "./wiki-prompts/common/constants"
 import { ILogger, createLogger } from "../../../utils/logger"
-import { PROJECT_CLASSIFICATION_AGENT_TEMPLATE } from "./wiki-prompts/subtasks/01_project-classification-agent"
-import { GENERATE_THINK_CATALOGUE_TEMPLATE } from "./wiki-prompts/subtasks/02_analyze-catalogue-agent"
-import { DOCUMENT_GENERATION_AGENT_TEMPLATE } from "./wiki-prompts/subtasks/03_document-generation-agent"
+import { PROJECT_BASIC_ANALYZE_AGENT_TEMPLATE } from "./wiki-prompts/subtasks/01_project-basic-analyze-agent"
+import { GENERATE_THINK_CATALOGUE_TEMPLATE } from "./wiki-prompts/subtasks/02_catalogue-design-agent"
+import { DOCUMENT_GENERATION_AGENT_TEMPLATE } from "./wiki-prompts/subtasks/03_document-generate-agent"
 import { INDEX_GENERATION_AGENT_TEMPLATE } from "./wiki-prompts/subtasks/04_index-generation-agent"
 
 export const projectWikiCommandName = "project-wiki"
@@ -13,7 +13,7 @@ export const projectWikiCommandDescription = `执行项目深度分析并创建�
 
 // Template data mapping for subtasks only
 const SUBTASK_TEMPLATES = {
-	[SUBTASK_FILENAMES.PROJECT_CLASSIFICATION_AGENT]: PROJECT_CLASSIFICATION_AGENT_TEMPLATE,
+	[SUBTASK_FILENAMES.PROJECT_CLASSIFICATION_AGENT]: PROJECT_BASIC_ANALYZE_AGENT_TEMPLATE,
 	[SUBTASK_FILENAMES.THINK_CATALOGUE_AGENT]: GENERATE_THINK_CATALOGUE_TEMPLATE,
 	[SUBTASK_FILENAMES.DOCUMENT_GENERATION_AGENT]: DOCUMENT_GENERATION_AGENT_TEMPLATE,
 	[SUBTASK_FILENAMES.INDEX_GENERATION_AGENT]: INDEX_GENERATION_AGENT_TEMPLATE,

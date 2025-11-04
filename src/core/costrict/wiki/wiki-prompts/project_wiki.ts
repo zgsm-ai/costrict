@@ -4,11 +4,8 @@
 import {
   WIKI_OUTPUT_FILE_PATHS,
   SUBTASK_FILENAMES,
-  NEW_SUBTASK,
-  MODE_THRESHOLDS,
-  ANALYSIS_STRATEGIES,
   subtaskDir,
-  WIKI_OUTPUT_DIR
+  COMMON_RULES,
 } from './common/constants';
 
 
@@ -62,9 +59,9 @@ new_task:
         2. 根据上一步读取到的任务指令，规划 \`todo_list\` 待办项，逐个执行
         3. {其它指令}
       ## Rules
-        1. 必须使用 \`read_file\` 工具读取指令文件，严格按照指令文件中的指令执行
-        2. 每一步都要进行一步一步深度思考，展示思考过程和结果
-        2. {其他注意事项}
+        ${COMMON_RULES}
+        4. 必须使用 \`read_file\` 工具读取指令文件，严格按照指令文件中的指令执行
+        5. {其他注意事项}
       ## Input
         {输入参数}    
       ## Background

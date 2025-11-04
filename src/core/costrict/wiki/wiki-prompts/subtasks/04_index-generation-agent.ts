@@ -1,6 +1,6 @@
 import { WIKI_OUTPUT_FILE_PATHS, WIKI_OUTPUT_DIR } from "../common/constants";
 
-export const INDEX_GENERATION_AGENT_TEMPLATE = (workspace: string) => `# 索引生成专家
+export const INDEX_GENERATION_AGENT_TEMPLATE = (workspace: string) => `# 索引文档生成
 
 ## 角色定义
 您是一位专业的技术文档架构师和信息组织专家，擅长创建清晰、全面、易于导航的文档索引结构。您的专长是将复杂的技术内容组织成层次分明、逻辑清晰的导航体系。

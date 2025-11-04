@@ -1,12 +1,9 @@
 import {
+      COMMON_RULES,
 	WIKI_OUTPUT_FILE_PATHS
 } from "./common/constants"
 
-const COMMON_RULES = 
-`1. 使用\`todo_list\` 规划任务，逐个执行。
-2. 严格遵循每个步骤的**输出要求**，不要遗漏任何细节。
-3. 使用\`attempt_completion\`工具返回关键信息，供父任务使用。
-`
+const	PROJECT_RULES_OUTPUT_FILE = "generated_rules.md"
 
 export const RULES_GENERATION_TEMPLATE = (workspace: string) => `# 项目规则生成专家
 
@@ -43,7 +40,7 @@ new_task:
       ## Instructions
         {具体指令}
       ## Rules   
-        {其他注意事项}
+        {注意事项}
       ## Input
         {输入参数}    
       ## Output
@@ -147,7 +144,7 @@ ${COMMON_RULES}
 
 ## Output:
 **输出要求**：
-输出路径：\`${workspace}${WIKI_OUTPUT_FILE_PATHS.GENERAL_RULES_OUTPUT_DIR}${WIKI_OUTPUT_FILE_PATHS.PROJECT_RULES_OUTPUT_FILE}\`
+输出路径：\`${workspace}${WIKI_OUTPUT_FILE_PATHS.GENERAL_RULES_OUTPUT_DIR}${PROJECT_RULES_OUTPUT_FILE}\`
 注意：如果目录不存在，则自动创建。
 
 文档结构：
@@ -215,7 +212,7 @@ ${COMMON_RULES}
 3. **最终文档**：输出最终符合要求的规则文档
 
 ## Input
-  - 规则文档路径：\`${workspace}${WIKI_OUTPUT_FILE_PATHS.GENERAL_RULES_OUTPUT_DIR}${WIKI_OUTPUT_FILE_PATHS.PROJECT_RULES_OUTPUT_FILE}\`
+  - 规则文档路径：\`${workspace}${WIKI_OUTPUT_FILE_PATHS.GENERAL_RULES_OUTPUT_DIR}${PROJECT_RULES_OUTPUT_FILE}\`
 
 ## Output
 **输出要求**：

@@ -36,7 +36,7 @@ export const NEW_SUBTASK = `创建如下 \`subtask\`子任务，执行，根据�
 // v2 Agent文件名常量
 export const SUBTASK_FILENAMES = {
 	PROJECT_CLASSIFICATION_AGENT: "01_project-classification-agent.md",
-	THINK_CATALOGUE_AGENT: "02_analyze-catalogue-agent.md",
+	THINK_CATALOGUE_AGENT: "02_catalogue-design-agent.md",
 	DOCUMENT_GENERATION_AGENT: "03_document-generation-agent.md",
 	INDEX_GENERATION_AGENT: "04_index-generation-agent.md",
 } as const
@@ -48,7 +48,6 @@ export const AGENT_OUTPUT_FILENAMES = {
 	THINK_CATALOGUE_AGENT: "think-catalogue.md",
 	DOCUMENT_GENERATION_AGENT: "technical-documentation.md",
 	INDEX_GENERATION_AGENT: "index.md",
-	RULES_GENERATION_AGENT: "generated_rules.md",
 } as const
 
 // 主文件名
@@ -62,13 +61,11 @@ export const WIKI_OUTPUT_FILE_PATHS = {
 	GENERAL_RULES_OUTPUT_DIR: ".roo/rules-code/",
 	
 	// 各阶段输出文件
-	PROJECT_CLASSIFICATION_JSON: `.cospec/wiki/.staging/classification.json`,
+	PROJECT_BASIC_ANALYZE_JSON: `.cospec/wiki/.staging/basic_analyze.json`,
 	OUTPUT_CATALOGUE_JSON: ".cospec/wiki/.staging/catalogue.json",
 	
 	// 最终输出文件
 	DOCUMENT_INDEX_MD: ".cospec/wiki/index.md",
-	PROJECT_RULES_OUTPUT_FILE: "generated_rules.md",
-
 } as const
 
 // v2 模式选择阈值
@@ -78,13 +75,8 @@ export const MODE_THRESHOLDS = {
 	LARGE_PROJECT: 201,   // 大型项目文件数阈值
 } as const
 
-// v2 分析策略
-export const ANALYSIS_STRATEGIES = {
-	QUICK: "快速分析模式",
-	STANDARD: "标准分析模式",
-	DEEP: "深度分析模式"
-} as const
-
-// 子任务指令读取常量
-export const SUBTASK_INSTRUCTION_READ = `## Instructions
-使用read_file工具读取下面的指令文件，作为指令严格执行。`
+export const COMMON_RULES = 
+`1. 使用\`todo_list\` 规划任务，逐个执行。
+2. 严格遵循每个步骤的**输出要求**，不要遗漏任何细节。
+3. 使用\`attempt_completion\`工具返回关键信息，供父任务使用。
+`
