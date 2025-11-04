@@ -169,7 +169,7 @@ export const PROJECT_CLASSIFICATION_AGENT_TEMPLATE = (workspace: string) => `# �
   "techStack": ["技术栈1", "技术栈2"],
   "projectScale": "小型/中型/大型",
   "entrypoints": ["入口1","入口2"],
-  "coreModules": [
+  "modules": [
     { "name": "[模块名1]",
       "relatedSources": ["相关文件或目录1", "相关文件或目录2"]
     }，
