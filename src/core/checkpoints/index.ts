@@ -31,7 +31,7 @@ async function updateCospecMetadataForCheckpoint(
 	if (!isCoworkflowDocument(editFilePath)) {
 		return
 	}
-	const fileName =  path.basename(editFilePath)
+	const fileName = path.basename(editFilePath)
 	const cospecDir = path.join(workspaceDir, path.dirname(editFilePath))
 	const fileAbsPath = path.join(workspaceDir, editFilePath)
 	const metadata = await CospecMetadataManager.getMetadataOrDefault(cospecDir)
@@ -40,7 +40,7 @@ async function updateCospecMetadataForCheckpoint(
 			lastTaskId: taskId,
 			lastCheckpointId: checkpointId,
 			content: await fs.readFile(fileAbsPath, "utf-8"),
-		}
+		},
 	})
 
 	try {
@@ -50,10 +50,16 @@ async function updateCospecMetadataForCheckpoint(
 	}
 }
 
-export async function getCheckpointService(
-	task: Task,
-	{ interval = 250, timeout = 15_000 }: { interval?: number; timeout?: number } = {},
-) {
+const WARNING_THRESHOLD_MS = 5000
+
+function sendCheckpointInitWarn(task: Task, type?: "WAIT_TIMEOUT" | "INIT_TIMEOUT", timeout?: number) {
+	task.providerRef.deref()?.postMessageToWebview({
+		type: "checkpointInitWarning",
+		checkpointWarning: type && timeout ? { type, timeout } : undefined,
+	})
+}
+
+export async function getCheckpointService(task: Task, { interval = 250 }: { interval?: number } = {}) {
 	if (!task.enableCheckpoints) {
 		return undefined
 	}
@@ -63,6 +69,9 @@ export async function getCheckpointService(
 	}
 
 	const provider = task.providerRef.deref()
+
+	// Get checkpoint timeout from task settings (converted to milliseconds)
+	const checkpointTimeoutMs = task.checkpointTimeout * 1000
 
 	const log = (message: string) => {
 		console.log(message)
@@ -101,16 +110,32 @@ export async function getCheckpointService(
 		}
 
 		if (task.checkpointServiceInitializing) {
+			const checkpointInitStartTime = Date.now()
+			let warningShown = false
+
 			await pWaitFor(
 				() => {
-					console.log("[Task#getCheckpointService] waiting for service to initialize")
+					const elapsed = Date.now() - checkpointInitStartTime
+
+					// Show warning if we're past the threshold and haven't shown it yet
+					if (!warningShown && elapsed >= WARNING_THRESHOLD_MS) {
+						warningShown = true
+						sendCheckpointInitWarn(task, "WAIT_TIMEOUT", WARNING_THRESHOLD_MS / 1000)
+					}
+
+					console.log(
+						`[Task#getCheckpointService] waiting for service to initialize (${Math.round(elapsed / 1000)}s)`,
+					)
 					return !!task.checkpointService && !!task?.checkpointService?.isInitialized
 				},
-				{ interval, timeout },
+				{ interval, timeout: checkpointTimeoutMs },
 			)
 			if (!task?.checkpointService) {
+				sendCheckpointInitWarn(task, "INIT_TIMEOUT", task.checkpointTimeout)
 				task.enableCheckpoints = false
 				return undefined
+			} else {
+				sendCheckpointInitWarn(task)
 			}
 			return task.checkpointService
 		}
@@ -123,8 +148,14 @@ export async function getCheckpointService(
 		task.checkpointServiceInitializing = true
 		await checkGitInstallation(task, service, log, provider)
 		task.checkpointService = service
+		if (task.enableCheckpoints) {
+			sendCheckpointInitWarn(task)
+		}
 		return service
 	} catch (err) {
+		if (err.name === "TimeoutError" && task.enableCheckpoints) {
+			sendCheckpointInitWarn(task, "INIT_TIMEOUT", task.checkpointTimeout)
+		}
 		log(`[Task#getCheckpointService] ${err.message}`)
 		task.enableCheckpoints = false
 		task.checkpointServiceInitializing = false
@@ -167,6 +198,7 @@ async function checkGitInstallation(
 
 		service.on("checkpoint", ({ fromHash: from, toHash: to, suppressMessage }) => {
 			try {
+				sendCheckpointInitWarn(task)
 				// Always update the current checkpoint hash in the webview, including the suppress flag
 				provider?.postMessageToWebview({
 					type: "currentCheckpointUpdated",
@@ -306,10 +338,16 @@ export async function checkpointRestore(
 }
 
 export type CheckpointDiffOptions = {
-	ts: number
+	ts?: number
 	previousCommitHash?: string
 	commitHash: string
-	mode: "full" | "checkpoint"
+	/**
+	 * from-init: Compare from the first checkpoint to the selected checkpoint.
+	 * checkpoint: Compare the selected checkpoint to the next checkpoint.
+	 * to-current: Compare the selected checkpoint to the current workspace.
+	 * full: Compare from the first checkpoint to the current workspace.
+	 */
+	mode: "from-init" | "checkpoint" | "to-current" | "full"
 }
 
 export async function checkpointDiff(task: Task, { ts, previousCommitHash, commitHash, mode }: CheckpointDiffOptions) {
@@ -321,30 +359,57 @@ export async function checkpointDiff(task: Task, { ts, previousCommitHash, commi
 
 	TelemetryService.instance.captureCheckpointDiffed(task.taskId)
 
-	let prevHash = commitHash
-	let nextHash: string | undefined = undefined
+	let fromHash: string | undefined
+	let toHash: string | undefined
+	let title: string
 
-	if (mode !== "full") {
-		const checkpoints = task.clineMessages.filter(({ say }) => say === "checkpoint_saved").map(({ text }) => text!)
-		const idx = checkpoints.indexOf(commitHash)
-		if (idx !== -1 && idx < checkpoints.length - 1) {
-			nextHash = checkpoints[idx + 1]
-		} else {
-			nextHash = undefined
-		}
+	const checkpoints = task.clineMessages.filter(({ say }) => say === "checkpoint_saved").map(({ text }) => text!)
+
+	if (["from-init", "full"].includes(mode) && checkpoints.length < 1) {
+		vscode.window.showInformationMessage(t("common:errors.checkpoint_no_first"))
+		return
+	}
+
+	const idx = checkpoints.indexOf(commitHash)
+	switch (mode) {
+		case "checkpoint":
+			fromHash = commitHash
+			toHash = idx !== -1 && idx < checkpoints.length - 1 ? checkpoints[idx + 1] : undefined
+			title = t("common:errors.checkpoint_diff_with_next")
+			break
+		case "from-init":
+			fromHash = checkpoints[0]
+			toHash = commitHash
+			title = t("common:errors.checkpoint_diff_since_first")
+			break
+		case "to-current":
+			fromHash = commitHash
+			toHash = undefined
+			title = t("common:errors.checkpoint_diff_to_current")
+			break
+		case "full":
+			fromHash = checkpoints[0]
+			toHash = undefined
+			title = t("common:errors.checkpoint_diff_since_first")
+			break
+	}
+
+	if (!fromHash) {
+		vscode.window.showInformationMessage(t("common:errors.checkpoint_no_previous"))
+		return
 	}
 
 	try {
-		const changes = await service.getDiff({ from: prevHash, to: nextHash })
+		const changes = await service.getDiff({ from: fromHash, to: toHash })
 
 		if (!changes?.length) {
-			vscode.window.showInformationMessage("No changes found.")
+			vscode.window.showInformationMessage(t("common:errors.checkpoint_no_changes"))
 			return
 		}
 
 		await vscode.commands.executeCommand(
 			"vscode.changes",
-			mode === "full" ? "Changes since task started" : "Changes compare with next checkpoint",
+			title,
 			changes.map((change) => [
 				vscode.Uri.file(change.paths.absolute),
 				vscode.Uri.parse(`${DIFF_VIEW_URI_SCHEME}:${change.paths.relative}`).with({
@@ -371,14 +436,11 @@ export async function updateCospecMetadata(task: Task, editFilePath?: string) {
 				workspaceDir,
 				editFilePath,
 				task.taskId,
-				checkpointId
+				checkpointId,
 				// checkpointInfo?.checkpoint?.to as string,
 			)
 		}
 	} catch (error) {
-		console.error(
-			"[Task#updateCospecMetadataForCheckpoint] caught unexpected error, disabling checkpoints",
-			error,
-		)
+		console.error("[Task#updateCospecMetadataForCheckpoint] caught unexpected error, disabling checkpoints", error)
 	}
 }

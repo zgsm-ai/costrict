@@ -29,6 +29,7 @@ import {
 	markdownFormattingSection,
 } from "./sections"
 import { defaultLang } from "../../utils/language"
+import { getShell } from "../../utils/shell"
 
 // Helper function to get prompt component, filtering out empty objects
 export function getPromptComponent(
@@ -63,11 +64,12 @@ async function generatePrompt(
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
 	modelId?: string,
+	shell?: string,
 ): Promise<string> {
 	if (!context) {
 		throw new Error("Extension context is required for generating system prompt")
 	}
-
+	shell = shell || getShell(settings?.terminalShellIntegrationDisabled)
 	// If diff is disabled, don't pass the diffStrategy
 	const effectiveDiffStrategy = diffEnabled ? diffStrategy : undefined
 
@@ -121,7 +123,7 @@ ${modesSection}
 
 ${getRulesSection(cwd, supportsComputerUse, effectiveDiffStrategy, codeIndexManager)}
 
-${getSystemInfoSection(cwd)}
+${getSystemInfoSection(cwd, shell)}
 
 ${getObjectiveSection(codeIndexManager, experiments)}
 
@@ -129,6 +131,7 @@ ${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", 
 	language: language ?? formatLanguage(await defaultLang()),
 	rooIgnoreInstructions,
 	settings,
+	shell,
 })}`
 
 	return basePrompt
@@ -158,13 +161,14 @@ export const SYSTEM_PROMPT = async (
 	if (!context) {
 		throw new Error("Extension context is required for generating system prompt")
 	}
-
+	const shell = getShell(settings?.terminalShellIntegrationDisabled)
+	language = language ?? formatLanguage(await defaultLang())
 	// Try to load custom system prompt from file
 	const variablesForPrompt: PromptVariables = {
 		workspace: cwd,
 		mode: mode,
-		language: language ?? formatLanguage(await defaultLang()),
-		shell: vscode.env.shell,
+		language,
+		shell: process.env.NODE_ENV === "test" ? vscode.env.shell : shell,
 		operatingSystem: os.type(),
 	}
 	const fileCustomSystemPrompt = await loadSystemPromptFile(cwd, mode, variablesForPrompt)
@@ -189,9 +193,10 @@ export const SYSTEM_PROMPT = async (
 			cwd,
 			mode,
 			{
-				language: language ?? formatLanguage(await defaultLang()),
+				language,
 				rooIgnoreInstructions,
 				settings,
+				shell,
 			},
 		)
 
@@ -226,5 +231,6 @@ ${customInstructions}`
 		settings,
 		todoList,
 		modelId,
+		shell,
 	)
 }

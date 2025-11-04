@@ -14,6 +14,7 @@ import {
 	TelemetryEventName,
 	ModelInfo,
 	UserSettingsConfig,
+	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 } from "@roo-code/types"
 import { CloudService } from "@roo-code/cloud"
 import { TelemetryService } from "@roo-code/telemetry"
@@ -71,7 +72,7 @@ import { ErrorCodeManager } from "../costrict/error-code"
 import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
 import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-event-monitor"
 import { fetchZgsmQuotaInfo, fetchZgsmInviteCode } from "../../api/providers/fetchers/zgsm"
-import { ensureProjectWikiSubtasksExists } from "../costrict/wiki/projectWikiHelpers"
+// import { ensureProjectWikiSubtasksExists } from "../costrict/wiki/projectWikiHelpers"
 
 export const webviewMessageHandler = async (
 	provider: ClineProvider,
@@ -653,7 +654,7 @@ export const webviewMessageHandler = async (
 			break
 		case "terminalOperation":
 			if (message.terminalOperation) {
-				provider.getCurrentTask()?.handleTerminalOperation(message.terminalOperation)
+				provider.getCurrentTask()?.handleTerminalOperation(message.terminalOperation, message.terminalPid)
 			}
 			break
 		case "clearTask":
@@ -822,20 +823,28 @@ export const webviewMessageHandler = async (
 		case "requestRouterModels":
 			const { apiConfiguration } = await provider.getState()
 
-			const routerModels: Record<RouterName, ModelRecord> = {
-				zgsm: {},
-				openrouter: {},
-				"vercel-ai-gateway": {},
-				huggingface: {},
-				litellm: {},
-				deepinfra: {},
-				"io-intelligence": {},
-				requesty: {},
-				unbound: {},
-				glama: {},
-				ollama: {},
-				lmstudio: {},
-			}
+			// Optional single provider filter from webview
+			const requestedProvider = message?.values?.provider
+			const providerFilter = requestedProvider ? toRouterName(requestedProvider) : undefined
+
+			const routerModels: Record<RouterName, ModelRecord> = providerFilter
+				? ({} as Record<RouterName, ModelRecord>)
+				: {
+						zgsm: {},
+						openrouter: {},
+						"vercel-ai-gateway": {},
+						huggingface: {},
+						litellm: {},
+						deepinfra: {},
+						"io-intelligence": {},
+						requesty: {},
+						unbound: {},
+						glama: {},
+						ollama: {},
+						lmstudio: {},
+						roo: {},
+						chutes: {},
+					}
 
 			const safeGetModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
 				try {
@@ -850,7 +859,8 @@ export const webviewMessageHandler = async (
 				}
 			}
 
-			const modelFetchPromises: { key: RouterName; options: GetModelsOptions }[] = [
+			// Base candidates (only those handled by this aggregate fetcher)
+			const candidates: { key: RouterName; options: GetModelsOptions }[] = [
 				{
 					key: "zgsm",
 					options: {
@@ -880,30 +890,45 @@ export const webviewMessageHandler = async (
 						baseUrl: apiConfiguration.deepInfraBaseUrl,
 					},
 				},
+				{
+					key: "roo",
+					options: {
+						provider: "roo",
+						baseUrl: process.env.ROO_CODE_PROVIDER_URL ?? "https://api.roocode.com/proxy",
+						apiKey: CloudService.hasInstance()
+							? CloudService.instance.authService?.getSessionToken()
+							: undefined,
+					},
+				},
+				{
+					key: "chutes",
+					options: { provider: "chutes", apiKey: apiConfiguration.chutesApiKey },
+				},
 			]
 
-			// Add IO Intelligence if API key is provided.
-			const ioIntelligenceApiKey = apiConfiguration.ioIntelligenceApiKey
-
-			if (ioIntelligenceApiKey) {
-				modelFetchPromises.push({
+			// IO Intelligence is conditional on api key
+			if (apiConfiguration.ioIntelligenceApiKey) {
+				candidates.push({
 					key: "io-intelligence",
-					options: { provider: "io-intelligence", apiKey: ioIntelligenceApiKey },
+					options: { provider: "io-intelligence", apiKey: apiConfiguration.ioIntelligenceApiKey },
 				})
 			}
 
-			// Don't fetch Ollama and LM Studio models by default anymore.
-			// They have their own specific handlers: requestOllamaModels and requestLmStudioModels.
-
+			// LiteLLM is conditional on baseUrl+apiKey
 			const litellmApiKey = apiConfiguration.litellmApiKey || message?.values?.litellmApiKey
 			const litellmBaseUrl = apiConfiguration.litellmBaseUrl || message?.values?.litellmBaseUrl
 
 			if (litellmApiKey && litellmBaseUrl) {
-				modelFetchPromises.push({
+				candidates.push({
 					key: "litellm",
 					options: { provider: "litellm", apiKey: litellmApiKey, baseUrl: litellmBaseUrl },
 				})
 			}
+
+			// Apply single provider filter if specified
+			const modelFetchPromises = providerFilter
+				? candidates.filter(({ key }) => key === providerFilter)
+				: candidates
 
 			const results = await Promise.allSettled(
 				modelFetchPromises.map(async ({ key, options }) => {
@@ -933,18 +958,7 @@ export const webviewMessageHandler = async (
 				if (result.status === "fulfilled") {
 					routerModels[routerName] = result.value.models
 
-					// Ollama and LM Studio settings pages still need these events.
-					if (routerName === "ollama" && Object.keys(result.value.models).length > 0) {
-						provider.postMessageToWebview({
-							type: "ollamaModels",
-							ollamaModels: result.value.models,
-						})
-					} else if (routerName === "lmstudio" && Object.keys(result.value.models).length > 0) {
-						provider.postMessageToWebview({
-							type: "lmStudioModels",
-							lmStudioModels: result.value.models,
-						})
-					}
+					// Ollama and LM Studio settings pages still need these events. They are not fetched here.
 				} else {
 					// Handle rejection: Post a specific error message for this provider.
 					const errorMessage = result.reason instanceof Error ? result.reason.message : String(result.reason)
@@ -961,7 +975,11 @@ export const webviewMessageHandler = async (
 				}
 			})
 
-			provider.postMessageToWebview({ type: "routerModels", routerModels })
+			provider.postMessageToWebview({
+				type: "routerModels",
+				routerModels,
+				values: providerFilter ? { provider: requestedProvider } : undefined,
+			})
 			break
 		case "requestOllamaModels": {
 			// Specific handler for Ollama models only.
@@ -1006,6 +1024,38 @@ export const webviewMessageHandler = async (
 			} catch (error) {
 				// Silently fail - user hasn't configured LM Studio yet.
 				console.debug("LM Studio models fetch failed:", error)
+			}
+			break
+		}
+		case "requestRooModels": {
+			// Specific handler for Roo models only - flushes cache to ensure fresh auth token is used
+			try {
+				// Flush cache first to ensure fresh models with current auth state
+				await flushModels("roo")
+
+				const rooModels = await getModels({
+					provider: "roo",
+					baseUrl: process.env.ROO_CODE_PROVIDER_URL ?? "https://api.roocode.com/proxy",
+					apiKey: CloudService.hasInstance()
+						? CloudService.instance.authService?.getSessionToken()
+						: undefined,
+				})
+
+				// Always send a response, even if no models are returned
+				provider.postMessageToWebview({
+					type: "singleRouterModelFetchResponse",
+					success: true,
+					values: { provider: "roo", models: rooModels },
+				})
+			} catch (error) {
+				// Send error response
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				provider.postMessageToWebview({
+					type: "singleRouterModelFetchResponse",
+					success: false,
+					error: errorMessage,
+					values: { provider: "roo" },
+				})
 			}
 			break
 		}
@@ -1074,18 +1124,26 @@ export const webviewMessageHandler = async (
 			const result = checkoutRestorePayloadSchema.safeParse(message.payload)
 
 			if (result.success) {
-				await provider.cancelTask()
+				// Begin transaction to buffer state updates
+				provider.beginStateTransaction()
 
 				try {
-					await pWaitFor(() => provider.getCurrentTask()?.isInitialized === true, { timeout: 3_000 })
-				} catch (error) {
-					vscode.window.showErrorMessage(t("common:errors.checkpoint_timeout"))
-				}
+					await provider.cancelTask()
 
-				try {
-					await provider.getCurrentTask()?.checkpointRestore(result.data)
-				} catch (error) {
-					vscode.window.showErrorMessage(t("common:errors.checkpoint_failed"))
+					try {
+						await pWaitFor(() => provider.getCurrentTask()?.isInitialized === true, { timeout: 3_000 })
+					} catch (error) {
+						vscode.window.showErrorMessage(t("common:errors.checkpoint_timeout"))
+					}
+
+					try {
+						await provider.getCurrentTask()?.checkpointRestore(result.data)
+					} catch (error) {
+						vscode.window.showErrorMessage(t("common:errors.checkpoint_failed"))
+					}
+				} finally {
+					// End transaction and post consolidated state
+					await provider.endStateTransaction()
 				}
 			}
 
@@ -1356,6 +1414,10 @@ export const webviewMessageHandler = async (
 		case "useZgsmCustomConfig":
 			const useZgsmCustomConfig = message.bool ?? true
 			await updateGlobalState("useZgsmCustomConfig", useZgsmCustomConfig)
+			break
+		case "checkpointTimeout":
+			const checkpointTimeout = message.value ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS
+			await updateGlobalState("checkpointTimeout", checkpointTimeout)
 			await provider.postStateToWebview()
 			break
 		case "browserViewportSize":
@@ -1714,6 +1776,14 @@ export const webviewMessageHandler = async (
 			await updateGlobalState("includeDiagnosticMessages", includeValue)
 			await provider.postStateToWebview()
 			break
+		case "includeCurrentTime":
+			await updateGlobalState("includeCurrentTime", message.bool ?? true)
+			await provider.postStateToWebview()
+			break
+		case "includeCurrentCost":
+			await updateGlobalState("includeCurrentCost", message.bool ?? true)
+			await provider.postStateToWebview()
+			break
 		case "maxDiagnosticMessages":
 			await updateGlobalState("maxDiagnosticMessages", message.value ?? 50)
 			await provider.postStateToWebview()
@@ -1725,6 +1795,9 @@ export const webviewMessageHandler = async (
 		case "setReasoningBlockCollapsed":
 			await updateGlobalState("reasoningBlockCollapsed", message.bool ?? true)
 			// No need to call postStateToWebview here as the UI already updated optimistically
+			break
+		case "setApiRequestBlockHide":
+			await updateGlobalState("apiRequestBlockHide", message.bool ?? true)
 			break
 		case "toggleApiConfigPin":
 			if (message.text) {
@@ -1781,6 +1854,7 @@ export const webviewMessageHandler = async (
 						listApiConfigMeta = [],
 						enhancementApiConfigId,
 						includeTaskHistoryInEnhance,
+						language,
 					} = state
 
 					const currentCline = provider.getCurrentTask()
@@ -1794,6 +1868,7 @@ export const webviewMessageHandler = async (
 						includeTaskHistoryInEnhance,
 						currentClineMessages: currentCline?.clineMessages,
 						providerSettingsManager: provider.providerSettingsManager,
+						language,
 					})
 
 					if (result.success && result.enhancedText) {
@@ -2611,6 +2686,12 @@ export const webviewMessageHandler = async (
 						settings.codebaseIndexVercelAiGatewayApiKey,
 					)
 				}
+				if (settings.codebaseIndexOpenRouterApiKey !== undefined) {
+					await provider.contextProxy.storeSecret(
+						"codebaseIndexOpenRouterApiKey",
+						settings.codebaseIndexOpenRouterApiKey,
+					)
+				}
 
 				// Send success response first - settings are saved regardless of validation
 				await provider.postMessageToWebview({
@@ -2748,6 +2829,7 @@ export const webviewMessageHandler = async (
 			const hasVercelAiGatewayApiKey = !!(await provider.context.secrets.get(
 				"codebaseIndexVercelAiGatewayApiKey",
 			))
+			const hasOpenRouterApiKey = !!(await provider.context.secrets.get("codebaseIndexOpenRouterApiKey"))
 
 			provider.postMessageToWebview({
 				type: "codeIndexSecretStatus",
@@ -2758,6 +2840,7 @@ export const webviewMessageHandler = async (
 					hasGeminiApiKey,
 					hasMistralApiKey,
 					hasVercelAiGatewayApiKey,
+					hasOpenRouterApiKey,
 				},
 			})
 			break
@@ -2781,18 +2864,26 @@ export const webviewMessageHandler = async (
 					return
 				}
 				if (manager.isFeatureEnabled && manager.isFeatureConfigured) {
-					if (!manager.isInitialized) {
-						await manager.initialize(provider.contextProxy)
-					}
+					// Mimic extension startup behavior: initialize first, which will
+					// check if Qdrant container is active and reuse existing collection
+					await manager.initialize(provider.contextProxy)
 
-					// startIndexing now handles error recovery internally
-					manager.startIndexing()
-
-					// If startIndexing recovered from error, we need to reinitialize
-					if (!manager.isInitialized) {
-						await manager.initialize(provider.contextProxy)
-						// Try starting again after initialization
+					// Only call startIndexing if we're in a state that requires it
+					// (e.g., Standby or Error). If already Indexed or Indexing, the
+					// initialize() call above will have already started the watcher.
+					const currentState = manager.state
+					if (currentState === "Standby" || currentState === "Error") {
+						// startIndexing now handles error recovery internally
 						manager.startIndexing()
+
+						// If startIndexing recovered from error, we need to reinitialize
+						if (!manager.isInitialized) {
+							await manager.initialize(provider.contextProxy)
+							// Try starting again after initialization
+							if (manager.state === "Standby" || manager.state === "Error") {
+								manager.startIndexing()
+							}
+						}
 					}
 				}
 			} catch (error) {
@@ -2833,7 +2924,7 @@ export const webviewMessageHandler = async (
 				const { apiConfiguration } = await provider.getState()
 
 				if (apiConfiguration?.apiProvider !== "zgsm") {
-					provider.log("Only Costrict provider supports this service", "error", "ZgsmCodebaseIndexManager")
+					provider.log("Only CoStrict provider supports this service", "error", "ZgsmCodebaseIndexManager")
 					return
 				}
 
@@ -3245,7 +3336,7 @@ export const webviewMessageHandler = async (
 				const { apiConfiguration } = await provider.getState()
 
 				if (apiConfiguration?.apiProvider !== "zgsm") {
-					provider.log("Only Costrict provider supports this service", "error", "ZgsmCodebaseIndexManager")
+					provider.log("Only CoStrict provider supports this service", "error", "ZgsmCodebaseIndexManager")
 					return
 				}
 				// Get switch status from message.bool
@@ -3315,7 +3406,7 @@ export const webviewMessageHandler = async (
 				const { apiConfiguration } = await provider.getState()
 
 				if (apiConfiguration?.apiProvider !== "zgsm") {
-					provider.log("Only Costrict provider supports this service", "error", "ZgsmCodebaseIndexManager")
+					provider.log("Only CoStrict provider supports this service", "error", "ZgsmCodebaseIndexManager")
 					return
 				}
 				const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
@@ -3380,6 +3471,32 @@ export const webviewMessageHandler = async (
 			const { apiConfiguration } = await provider.getState()
 			const httpProxy = process.env.http_proxy || process.env.HTTP_PROXY
 			const httpsProxy = process.env.https_proxy || process.env.HTTPS_PROXY
+
+			// Get editor type information
+			const remoteName = vscode.env.remoteName
+			let editorType = ""
+			if (remoteName) {
+				// Remote connection - show the remote type (e.g., "ssh", "wsl", "dev-container", etc.)
+				editorType = `Remote (${remoteName})`
+			} else {
+				// Local editor - show the specific VS Code edition/type
+				const appName = vscode.env.appName
+				editorType = `${appName}`
+			}
+
+			// Extract request ID from error message
+			const requestIdMatch = errorMessage?.match(/RequestID:\s*([a-f0-9-]+)/i)
+			const requestId = requestIdMatch?.[1]
+
+			// Get raw error message if request ID exists and provider is zgsm
+			let rawErrorMessage = ""
+			if (requestId && apiConfiguration.apiProvider === "zgsm") {
+				const rawError = ErrorCodeManager.getInstance().getRawError(requestId)
+				if (rawError?.message) {
+					rawErrorMessage = `rawErrorMessage: ${rawError.message}`
+				}
+			}
+
 			try {
 				await vscode.env.clipboard.writeText(dedent`
 					message: ${errorMessage}
@@ -3388,8 +3505,10 @@ export const webviewMessageHandler = async (
 					${apiConfiguration.apiProvider === "zgsm" ? `BaseUrl: ${apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}` : ""}
 					vscodeVersion: ${vscode.version}
 					pluginVersion: ${Package.version}
+					editorType: ${editorType}
 					httpProxy: ${httpProxy}
 					httpsProxy: ${httpsProxy}
+					${rawErrorMessage ? `${rawErrorMessage}` : ""}
 				`)
 				vscode.window.showInformationMessage(t("common:window.success.copy_success"))
 			} catch (err) {

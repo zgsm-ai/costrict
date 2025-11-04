@@ -126,9 +126,30 @@ vi.mock("vscode", () => ({
 	workspace: {
 		workspaceFolders: [{ uri: { fsPath: "/test/path" } }],
 		getWorkspaceFolder: vi.fn().mockReturnValue({ uri: { fsPath: "/test/path" } }),
+		createFileSystemWatcher: () => ({
+			onDidCreate: () => ({ dispose: () => {} }),
+			onDidChange: () => ({ dispose: () => {} }),
+			onDidDelete: () => ({ dispose: () => {} }),
+			dispose: () => {},
+		}),
 	},
 	window: {
 		activeTextEditor: undefined,
+		createTextEditorDecorationType: () => ({ dispose: () => {} }),
+		createOutputChannel: () => ({
+			appendLine: () => {},
+			show: () => {},
+			dispose: () => {},
+		}),
+		tabGroups: { all: [] },
+	},
+	RelativePattern: class {
+		base: any
+		pattern: any
+		constructor(base: any, pattern: any) {
+			this.base = base
+			this.pattern = pattern
+		}
 	},
 	EventEmitter: vi.fn().mockImplementation(() => ({
 		event: vi.fn(),
@@ -193,7 +214,7 @@ describe("addCustomInstructions", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false, // supportsImages
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -216,7 +237,7 @@ describe("addCustomInstructions", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false, // supportsImages
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -241,7 +262,7 @@ describe("addCustomInstructions", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false, // supportsImages
 			mockMcpHub, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -267,7 +288,7 @@ describe("addCustomInstructions", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false, // supportsImages
 			mockMcpHub, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -291,7 +312,7 @@ describe("addCustomInstructions", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false, // supportsImages
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize

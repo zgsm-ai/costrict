@@ -80,7 +80,7 @@ export const window = {
 	}),
 	createTerminal: () => ({
 		exitStatus: undefined,
-		name: "Costrict",
+		name: "CoStrict",
 		processId: Promise.resolve(123),
 		creationOptions: {},
 		state: { isInteractedWith: true },
@@ -92,6 +92,7 @@ export const window = {
 	onDidCloseTerminal: () => mockDisposable,
 	createTextEditorDecorationType: () => ({ dispose: () => {} }),
 	showTextDocument: () => {},
+	tabGroups: { all: [] },
 }
 
 export const commands = {

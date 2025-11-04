@@ -1,13 +1,13 @@
 {
-	"greeting": "Costrict 能为您做什么？",
+	"greeting": "CoStrict 能为您做什么？",
 	"aboutMe": "得益于最新的代理编码能力突破，我可以逐步处理复杂的软件开发任务。通过允许我创建和编辑文件、探索复杂项目、使用浏览器以及执行终端命令（在您授予权限后）的工具，我可以以超越代码补全或技术支持的方式协助您。我甚至可以使用MCP创建新工具并扩展自己的能力。",
 	"instructions": {
-		"wantsToFetch": "Costrict 想要获取详细指令以协助当前任务"
+		"wantsToFetch": "CoStrict 想要获取详细指令以协助当前任务"
 	},
 	"about": "企业严肃开发的AI智能伙伴",
-	"error": "Costrict 将自动修复",
+	"error": "CoStrict 将自动修复",
 	"text": {
-		"rooSaid": "Costrict 说"
+		"rooSaid": "CoStrict 说"
 	},
 	"fileOperations": {
 		"wantsToRead": "需要读取文件",
@@ -22,9 +22,9 @@
 		"wantsToInsert": "需要在此文件中插入内容",
 		"wantsToInsertWithLineNumber": "需要在第 {{lineNumber}} 行插入内容",
 		"wantsToInsertAtEnd": "需要在文件末尾添加内容",
-		"wantsToReadAndXMore": "Costrict 想读取此文件以及另外 {{count}} 个文件",
-		"wantsToReadMultiple": "Costrict 想要读取多个文件",
-		"wantsToApplyBatchChanges": "Costrict 想要对多个文件应用更改",
+		"wantsToReadAndXMore": "CoStrict 想读取此文件以及另外 {{count}} 个文件",
+		"wantsToReadMultiple": "CoStrict 想要读取多个文件",
+		"wantsToApplyBatchChanges": "CoStrict 想要对多个文件应用更改",
 		"wantsToGenerateImage": "需要生成图片",
 		"wantsToGenerateImageOutsideWorkspace": "需要在工作区外生成图片",
 		"wantsToGenerateImageProtected": "需要在受保护位置生成图片",
@@ -35,8 +35,8 @@
 		"didViewTopLevel": "已查看目录文件列表",
 		"wantsToViewRecursive": "需要查看目录所有文件",
 		"didViewRecursive": "已查看目录所有文件",
-		"wantsToViewDefinitions": "Costrict想查看此目录中使用的源代码定义名称",
-		"didViewDefinitions": "Costrict已查看此目录中使用的源代码定义名称",
+		"wantsToViewDefinitions": "CoStrict想查看此目录中使用的源代码定义名称",
+		"didViewDefinitions": "CoStrict已查看此目录中使用的源代码定义名称",
 		"wantsToSearch": "需要搜索内容: {{regex}}",
 		"didSearch": "已完成内容搜索: {{regex}}",
 		"wantsToSearchOutsideWorkspace": "需要搜索内容（工作区外）: {{regex}}",
@@ -45,67 +45,67 @@
 		"didViewTopLevelOutsideWorkspace": "已查看目录文件列表（工作区外）",
 		"wantsToViewRecursiveOutsideWorkspace": "需要查看目录所有文件（工作区外）",
 		"didViewRecursiveOutsideWorkspace": "已查看目录所有文件（工作区外）",
-		"wantsToViewDefinitionsOutsideWorkspace": "Costrict想查看此目录中使用的源代码定义名称（工作区外）",
-		"didViewDefinitionsOutsideWorkspace": "Costrict已查看此目录中使用的源代码定义名称（工作区外）"
+		"wantsToViewDefinitionsOutsideWorkspace": "CoStrict想查看此目录中使用的源代码定义名称（工作区外）",
+		"didViewDefinitionsOutsideWorkspace": "CoStrict已查看此目录中使用的源代码定义名称（工作区外）"
 	},
 	"mcp": {
-		"wantsToUseTool": "Costrict 想要在{{serverName}} MCP服务器上使用工具：",
-		"wantsToAccessResource": "Costrict 想要访问{{serverName}} MCP服务器上的资源："
+		"wantsToUseTool": "CoStrict 想要在{{serverName}} MCP服务器上使用工具：",
+		"wantsToAccessResource": "CoStrict 想要访问{{serverName}} MCP服务器上的资源："
 	},
 	"modes": {
-		"wantsToSwitch": "Costrict 想要切换到{{mode}}模式",
-		"wantsToSwitchWithReason": "Costrict 想要切换到{{mode}}模式，因为：{{reason}}",
-		"didSwitch": "Costrict 已切换到{{mode}}模式",
-		"didSwitchWithReason": "Costrict 已切换到{{mode}}模式，因为：{{reason}}"
+		"wantsToSwitch": "CoStrict 想要切换到{{mode}}模式",
+		"wantsToSwitchWithReason": "CoStrict 想要切换到{{mode}}模式，因为：{{reason}}",
+		"didSwitch": "CoStrict 已切换到{{mode}}模式",
+		"didSwitchWithReason": "CoStrict 已切换到{{mode}}模式，因为：{{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "Costrict 想要在{{mode}}模式下创建新子任务",
-		"wantsToFinish": "Costrict 想要完成此子任务"
+		"wantsToCreate": "CoStrict 想要在{{mode}}模式下创建新子任务",
+		"wantsToFinish": "CoStrict 想要完成此子任务"
 	},
 	"questions": {
-		"hasQuestion": "Costrict 有一个问题"
+		"hasQuestion": "CoStrict 有一个问题"
 	},
-	"troubleMessage": "Costrict 遇到了一些问题...",
+	"troubleMessage": "CoStrict 遇到了一些问题...",
 	"browser": {
-		"rooWantsToUse": "Costrict 想要使用浏览器"
+		"rooWantsToUse": "CoStrict 想要使用浏览器"
 	},
 	"announcement": {
-		"title": "🎉 Costrict {{version}} 已发布",
-		"description": "Costrict {{version}} 带来基于您反馈的新功能和改进。",
-		"feature1": "<bold>消息队列</bold>: 在 Costrict 工作时将多个消息排队，让你可以不间断地继续规划工作流程。"
+		"title": "🎉 CoStrict {{version}} 已发布",
+		"description": "CoStrict {{version}} 带来基于您反馈的新功能和改进。",
+		"feature1": "<bold>消息队列</bold>: 在 CoStrict 工作时将多个消息排队，让你可以不间断地继续规划工作流程。"
 	},
 	"onboarding": "<strong>此工作区中的任务列表为空。</strong> 请在下方输入任务开始。",
 	"ask": {
 		"autoApprovedRequestLimitReached": {
-			"description": "Costrict 已达到 {{count}} 次 API 请求的自动批准限制。您想重置计数并继续任务吗？"
+			"description": "CoStrict 已达到 {{count}} 次 API 请求的自动批准限制。您想重置计数并继续任务吗？"
 		},
 		"autoApprovedCostLimitReached": {
-			"description": "Costrict 已经达到了${{count}}的自动批准成本限制。您想重置成本并继续任务吗？"
+			"description": "CoStrict 已经达到了${{count}}的自动批准成本限制。您想重置成本并继续任务吗？"
 		}
 	},
 	"shellIntegration": {
-		"description": "您的命令正在没有 VSCode 终端 shell 集成的情况下执行。要隐藏此警告，您可以在 <settingsLink>Costrict 设置</settingsLink>的 <strong>Terminal</strong> 部分禁用 shell 集成，或使用下方链接排查 VSCode 终端集成问题。"
+		"description": "您的命令正在没有 VSCode 终端 shell 集成的情况下执行。要隐藏此警告，您可以在 <settingsLink>CoStrict 设置</settingsLink>的 <strong>Terminal</strong> 部分禁用 shell 集成，或使用下方链接排查 VSCode 终端集成问题。"
 	},
 	"task": {
-		"connectToCloudDescription": "登录 Costrict Cloud 以分享任务"
+		"connectToCloudDescription": "登录 CoStrict Cloud 以分享任务"
 	},
 	"modeSelector": {
-		"description": "专门定制 Costrict 行为的角色。"
+		"description": "专门定制 CoStrict 行为的角色。"
 	},
 	"codebaseSearch": {
-		"wantsToSearch": "Costrict 需要搜索代码库: <code>{{query}}</code>",
-		"wantsToSearchWithPath": "Costrict 需要在 <code>{{path}}</code> 中搜索: <code>{{query}}</code>"
+		"wantsToSearch": "CoStrict 需要搜索代码库: <code>{{query}}</code>",
+		"wantsToSearchWithPath": "CoStrict 需要在 <code>{{path}}</code> 中搜索: <code>{{query}}</code>"
 	},
 	"rooCloudCTA": {
-		"title": "Costrict Cloud 即将推出！",
+		"title": "CoStrict Cloud 即将推出！",
 		"description": "在云端运行远程代理，随时随地访问任务，与他人协作等更多功能。"
 	},
 	"copy": {
 		"errorDetail": "复制错误详情，联系管理员"
 	},
 	"slashCommand": {
-		"wantsToRun": "Costrict 想要运行斜杠命令",
-		"didRun": "Costrict 运行了斜杠命令"
+		"wantsToRun": "CoStrict 想要运行斜杠命令",
+		"didRun": "CoStrict 运行了斜杠命令"
 	},
 	"autoApprove": {
 		"triggerLabelAll": "全部批准"
@@ -128,5 +128,9 @@
 			"description": "根据项目代码，分析并生成可执行的测试方案。",
 			"initPrompt": "生成当前项目的测试方案"
 		}
+	},
+	"autoMode": {
+		"selectedLlm": "Auto 模型：{{selectedLlm}}",
+		"selectReason": "选择原因：{{selectReason}}"
 	}
 }

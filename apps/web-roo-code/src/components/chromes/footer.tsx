@@ -12,15 +12,21 @@ import { ScrollButton } from "@/components/ui"
 
 export function Footer() {
 	const [privacyDropdownOpen, setPrivacyDropdownOpen] = useState(false)
+	const [cloudDropdownOpen, setCloudDropdownOpen] = useState(false)
 	const dropdownRef = useRef<HTMLDivElement>(null)
+	const cloudDropdownRef = useRef<HTMLDivElement>(null)
 	const logoSrc = useLogoSrc()
 	const { resolvedTheme } = useTheme()
 
 	// Close dropdown when clicking outside
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
-			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+			const target = event.target as Node
+			if (dropdownRef.current && !dropdownRef.current.contains(target)) {
 				setPrivacyDropdownOpen(false)
+			}
+			if (cloudDropdownRef.current && !cloudDropdownRef.current.contains(target)) {
+				setCloudDropdownOpen(false)
 			}
 		}
 
@@ -35,7 +41,7 @@ export function Footer() {
 				<div className="xl:grid xl:grid-cols-3 xl:gap-8">
 					<div className="space-y-8">
 						<div className="flex items-center">
-							<Image src={logoSrc} alt="Costrict Logo" width={120} height={40} className="h-6 w-auto" />
+							<Image src={logoSrc} alt="CoStrict Logo" width={120} height={40} className="h-6 w-auto" />
 						</div>
 						<p className="max-w-md text-sm leading-6 text-muted-foreground md:pr-16 lg:pr-32">
 							Empowering developers to build better software faster with AI-powered tools and insights.
@@ -68,6 +74,45 @@ export function Footer() {
 											className="text-sm leading-6 text-muted-foreground transition-colors hover:text-foreground">
 											Features
 										</ScrollButton>
+									</li>
+									<li>
+										<div className="relative z-10" ref={cloudDropdownRef}>
+											<button
+												onClick={() => setCloudDropdownOpen(!cloudDropdownOpen)}
+												className="flex items-center text-sm leading-6 text-muted-foreground transition-colors hover:text-foreground"
+												aria-expanded={cloudDropdownOpen}
+												aria-haspopup="true">
+												<span>Cloud Agents</span>
+												<ChevronDown
+													className={`ml-1 h-4 w-4 transition-transform ${cloudDropdownOpen ? "rotate-180" : ""}`}
+												/>
+											</button>
+
+											{cloudDropdownOpen && (
+												<div className="absolute z-50 mt-2 w-44 origin-top-left scale-95 rounded-md border border-border bg-background shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-100 ease-out data-[state=open]:scale-100 max-xs:right-0 max-xs:origin-top-right xs:left-0">
+													<div className="flex flex-col gap-1 p-2 text-sm text-muted-foreground">
+														<Link
+															href="/cloud"
+															onClick={() => setCloudDropdownOpen(false)}
+															className="rounded-md px-3 py-2 transition-colors hover:bg-accent/50 hover:text-foreground">
+															Cloud
+														</Link>
+														<Link
+															href="/reviewer"
+															onClick={() => setCloudDropdownOpen(false)}
+															className="rounded-md px-3 py-2 transition-colors hover:bg-accent/50 hover:text-foreground">
+															PR Reviewer
+														</Link>
+														<Link
+															href="/pr-fixer"
+															onClick={() => setCloudDropdownOpen(false)}
+															className="rounded-md px-3 py-2 transition-colors hover:bg-accent/50 hover:text-foreground">
+															PR Fixer
+														</Link>
+													</div>
+												</div>
+											)}
+										</div>
 									</li>
 									<li>
 										<a
@@ -231,7 +276,7 @@ export function Footer() {
 															href={INTERNAL_LINKS.PRIVACY_POLICY_WEBSITE}
 															onClick={() => setPrivacyDropdownOpen(false)}
 															className="rounded-md px-3 py-2 transition-colors hover:bg-accent/50 hover:text-foreground">
-															Costrict Cloud
+															CoStrict Cloud
 														</Link>
 													</div>
 												</div>
@@ -337,7 +382,7 @@ export function Footer() {
 
 				<div className="mt-16 flex border-t border-border pt-8 sm:mt-20 lg:mt-24">
 					<p className="mx-auto text-sm leading-5 text-muted-foreground">
-						&copy; {new Date().getFullYear()} Costrict. All rights reserved.
+						&copy; {new Date().getFullYear()} CoStrict. All rights reserved.
 					</p>
 				</div>
 			</div>

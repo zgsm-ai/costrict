@@ -1,111 +1,111 @@
 {
-	"greeting": "Costrict 可以為您做些什麼？",
+	"greeting": "CoStrict 可以為您做些什麼？",
 	"aboutMe": "得益於最新的代理編碼能力突破，我可以逐步處理複雜的軟件開發任務。通過允許我創建和編輯文件、探索複雜項目、使用瀏覽器以及執行終端命令（在您授予權限後）的工具，我可以以超越代碼補全或技術支持的方式協助您。我甚至可以使用MCP創建新工具並擴展自己的能力。",
 	"instructions": {
-		"wantsToFetch": "Costrict 想要獲取詳細指令以協助當前任務"
+		"wantsToFetch": "CoStrict 想要獲取詳細指令以協助當前任務"
 	},
 	"about": "企業嚴肅開發的AI智慧夥伴",
-	"error": "Costrict 將自動修復",
+	"error": "CoStrict 將自動修復",
 	"text": {
-		"rooSaid": "Costrict 說"
+		"rooSaid": "CoStrict 說"
 	},
 	"fileOperations": {
-		"wantsToRead": "Costrict 想要讀取此檔案",
-		"wantsToReadMultiple": "Costrict 想要讀取多個檔案",
-		"wantsToReadAndXMore": "Costrict 想要讀取此檔案以及另外 {{count}} 個檔案",
-		"wantsToReadOutsideWorkspace": "Costrict 想要讀取此工作區外的檔案",
-		"didRead": "Costrict 已讀取此檔案",
-		"wantsToEdit": "Costrict 想要編輯此檔案",
-		"wantsToEditOutsideWorkspace": "Costrict 想要編輯此工作區外的檔案",
-		"wantsToEditProtected": "Costrict 想要編輯受保護的設定檔案",
-		"wantsToApplyBatchChanges": "Costrict 想要對多個檔案套用變更",
-		"wantsToGenerateImage": "Costrict 想要產生圖片",
-		"wantsToGenerateImageOutsideWorkspace": "Costrict 想要在工作區外產生圖片",
-		"wantsToGenerateImageProtected": "Costrict 想要在受保護位置產生圖片",
-		"didGenerateImage": "Costrict 已產生圖片",
-		"wantsToCreate": "Costrict 想要建立新檔案",
-		"wantsToSearchReplace": "Costrict 想要在此檔案中搜尋和取代",
-		"didSearchReplace": "Costrict 已在此檔案執行搜尋和取代",
-		"wantsToInsert": "Costrict 想要在此檔案中插入內容",
-		"wantsToInsertWithLineNumber": "Costrict 想要在此檔案第 {{lineNumber}} 行插入內容",
-		"wantsToInsertAtEnd": "Costrict 想要在此檔案尾端新增內容"
+		"wantsToRead": "CoStrict 想要讀取此檔案",
+		"wantsToReadMultiple": "CoStrict 想要讀取多個檔案",
+		"wantsToReadAndXMore": "CoStrict 想要讀取此檔案以及另外 {{count}} 個檔案",
+		"wantsToReadOutsideWorkspace": "CoStrict 想要讀取此工作區外的檔案",
+		"didRead": "CoStrict 已讀取此檔案",
+		"wantsToEdit": "CoStrict 想要編輯此檔案",
+		"wantsToEditOutsideWorkspace": "CoStrict 想要編輯此工作區外的檔案",
+		"wantsToEditProtected": "CoStrict 想要編輯受保護的設定檔案",
+		"wantsToApplyBatchChanges": "CoStrict 想要對多個檔案套用變更",
+		"wantsToGenerateImage": "CoStrict 想要產生圖片",
+		"wantsToGenerateImageOutsideWorkspace": "CoStrict 想要在工作區外產生圖片",
+		"wantsToGenerateImageProtected": "CoStrict 想要在受保護位置產生圖片",
+		"didGenerateImage": "CoStrict 已產生圖片",
+		"wantsToCreate": "CoStrict 想要建立新檔案",
+		"wantsToSearchReplace": "CoStrict 想要在此檔案中搜尋和取代",
+		"didSearchReplace": "CoStrict 已在此檔案執行搜尋和取代",
+		"wantsToInsert": "CoStrict 想要在此檔案中插入內容",
+		"wantsToInsertWithLineNumber": "CoStrict 想要在此檔案第 {{lineNumber}} 行插入內容",
+		"wantsToInsertAtEnd": "CoStrict 想要在此檔案尾端新增內容"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "Costrict 想要檢視此目錄中最上層的檔案",
-		"didViewTopLevel": "Costrict 已檢視此目錄中最上層的檔案",
-		"wantsToViewTopLevelOutsideWorkspace": "Costrict 想要檢視此目錄（工作區外）中最上層的檔案",
-		"didViewTopLevelOutsideWorkspace": "Costrict 已檢視此目錄（工作區外）中最上層的檔案",
-		"wantsToViewRecursive": "Costrict 想要遞迴檢視此目錄中的所有檔案",
-		"didViewRecursive": "Costrict 已遞迴檢視此目錄中的所有檔案",
-		"wantsToViewRecursiveOutsideWorkspace": "Costrict 想要遞迴檢視此目錄（工作區外）中的所有檔案",
-		"didViewRecursiveOutsideWorkspace": "Costrict 已遞迴檢視此目錄（工作區外）中的所有檔案",
-		"wantsToViewDefinitions": "Costrict 想要檢視此目錄中使用的原始碼定義名稱",
-		"didViewDefinitions": "Costrict 已檢視此目錄中使用的原始碼定義名稱",
-		"wantsToViewDefinitionsOutsideWorkspace": "Costrict 想要檢視此目錄（工作區外）中使用的原始碼定義名稱",
-		"didViewDefinitionsOutsideWorkspace": "Costrict 已檢視此目錄（工作區外）中使用的原始碼定義名稱",
-		"wantsToSearch": "Costrict 想要在此目錄中搜尋 <code>{{regex}}</code>",
-		"didSearch": "Costrict 已在此目錄中搜尋 <code>{{regex}}</code>",
-		"wantsToSearchOutsideWorkspace": "Costrict 想要在此目錄（工作區外）中搜尋 <code>{{regex}}</code>",
-		"didSearchOutsideWorkspace": "Costrict 已在此目錄（工作區外）中搜尋 <code>{{regex}}</code>"
+		"wantsToViewTopLevel": "CoStrict 想要檢視此目錄中最上層的檔案",
+		"didViewTopLevel": "CoStrict 已檢視此目錄中最上層的檔案",
+		"wantsToViewTopLevelOutsideWorkspace": "CoStrict 想要檢視此目錄（工作區外）中最上層的檔案",
+		"didViewTopLevelOutsideWorkspace": "CoStrict 已檢視此目錄（工作區外）中最上層的檔案",
+		"wantsToViewRecursive": "CoStrict 想要遞迴檢視此目錄中的所有檔案",
+		"didViewRecursive": "CoStrict 已遞迴檢視此目錄中的所有檔案",
+		"wantsToViewRecursiveOutsideWorkspace": "CoStrict 想要遞迴檢視此目錄（工作區外）中的所有檔案",
+		"didViewRecursiveOutsideWorkspace": "CoStrict 已遞迴檢視此目錄（工作區外）中的所有檔案",
+		"wantsToViewDefinitions": "CoStrict 想要檢視此目錄中使用的原始碼定義名稱",
+		"didViewDefinitions": "CoStrict 已檢視此目錄中使用的原始碼定義名稱",
+		"wantsToViewDefinitionsOutsideWorkspace": "CoStrict 想要檢視此目錄（工作區外）中使用的原始碼定義名稱",
+		"didViewDefinitionsOutsideWorkspace": "CoStrict 已檢視此目錄（工作區外）中使用的原始碼定義名稱",
+		"wantsToSearch": "CoStrict 想要在此目錄中搜尋 <code>{{regex}}</code>",
+		"didSearch": "CoStrict 已在此目錄中搜尋 <code>{{regex}}</code>",
+		"wantsToSearchOutsideWorkspace": "CoStrict 想要在此目錄（工作區外）中搜尋 <code>{{regex}}</code>",
+		"didSearchOutsideWorkspace": "CoStrict 已在此目錄（工作區外）中搜尋 <code>{{regex}}</code>"
 	},
 	"mcp": {
-		"wantsToUseTool": "Costrict 想要在{{serverName}} MCP服務器上使用工具",
-		"wantsToAccessResource": "Costrict 想要訪問{{serverName}} MCP服務器上的資源"
+		"wantsToUseTool": "CoStrict 想要在{{serverName}} MCP服務器上使用工具",
+		"wantsToAccessResource": "CoStrict 想要訪問{{serverName}} MCP服務器上的資源"
 	},
 	"modes": {
-		"wantsToSwitch": "Costrict 想要切換到{{mode}}模式",
-		"wantsToSwitchWithReason": "Costrict 想要切換到{{mode}}模式，因為：{{reason}}",
-		"didSwitch": "Costrict 已切換到{{mode}}模式",
-		"didSwitchWithReason": "Costrict 已切換到{{mode}}模式，因為：{{reason}}"
+		"wantsToSwitch": "CoStrict 想要切換到{{mode}}模式",
+		"wantsToSwitchWithReason": "CoStrict 想要切換到{{mode}}模式，因為：{{reason}}",
+		"didSwitch": "CoStrict 已切換到{{mode}}模式",
+		"didSwitchWithReason": "CoStrict 已切換到{{mode}}模式，因為：{{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "Costrict 想要在{{mode}}模式下創建新子任務",
-		"wantsToFinish": "Costrict 想要完成此子任務"
+		"wantsToCreate": "CoStrict 想要在{{mode}}模式下創建新子任務",
+		"wantsToFinish": "CoStrict 想要完成此子任務"
 	},
 	"questions": {
-		"hasQuestion": "Costrict 有一個問題"
+		"hasQuestion": "CoStrict 有一個問題"
 	},
-	"troubleMessage": "Costrict 遇到了一些問題...",
+	"troubleMessage": "CoStrict 遇到了一些問題...",
 	"browser": {
-		"rooWantsToUse": "Costrict 想要使用瀏覽器"
+		"rooWantsToUse": "CoStrict 想要使用瀏覽器"
 	},
 	"announcement": {
-		"title": "🎉 Costrict {{version}} 已發布",
-		"description": "Costrict {{version}} 帶來基於您意見回饋的新功能與改進。",
-		"feature1": "<bold>訊息佇列</bold>：在 Costrict 工作時將多個訊息排入佇列，讓您可以不間斷地繼續規劃工作流程。"
+		"title": "🎉 CoStrict {{version}} 已發布",
+		"description": "CoStrict {{version}} 帶來基於您意見回饋的新功能與改進。",
+		"feature1": "<bold>訊息佇列</bold>：在 CoStrict 工作時將多個訊息排入佇列，讓您可以不間斷地繼續規劃工作流程。"
 	},
 	"onboarding": "<strong>此工作區中的任務列表為空。</strong> 請在下方輸入任務開始。",
 	"ask": {
 		"autoApprovedRequestLimitReached": {
-			"description": "Costrict 已達到 {{count}} 次 API 請求的自動批准限制。您想重設計數並繼續任務嗎？"
+			"description": "CoStrict 已達到 {{count}} 次 API 請求的自動批准限制。您想重設計數並繼續任務嗎？"
 		},
 		"autoApprovedCostLimitReached": {
-			"description": "Costrict 已達到 ${{count}} 的自動核准費用上限。您想重設費用並繼續工作嗎？"
+			"description": "CoStrict 已達到 ${{count}} 的自動核准費用上限。您想重設費用並繼續工作嗎？"
 		}
 	},
 	"shellIntegration": {
-		"description": "您的命令正在沒有 VSCode 終端 Shell 整合的情況下執行。若要隱藏此警告，您可以在 <settingsLink>Costrict 設定</settingsLink> 的 <strong>Terminal</strong> 區段中停用 Shell 整合，或使用下方連結排查 VSCode 終端整合問題。"
+		"description": "您的命令正在沒有 VSCode 終端 Shell 整合的情況下執行。若要隱藏此警告，您可以在 <settingsLink>CoStrict 設定</settingsLink> 的 <strong>Terminal</strong> 區段中停用 Shell 整合，或使用下方連結排查 VSCode 終端整合問題。"
 	},
 	"task": {
-		"connectToCloudDescription": "登入 Costrict Cloud 以分享工作"
+		"connectToCloudDescription": "登入 CoStrict Cloud 以分享工作"
 	},
 	"modeSelector": {
-		"description": "專門定制 Costrict 行為的角色。"
+		"description": "專門定制 CoStrict 行為的角色。"
 	},
 	"codebaseSearch": {
-		"wantsToSearch": "Costrict 想要搜尋程式碼庫：<code>{{query}}</code>",
-		"wantsToSearchWithPath": "Costrict 想要在 <code>{{path}}</code> 中搜尋：<code>{{query}}</code>"
+		"wantsToSearch": "CoStrict 想要搜尋程式碼庫：<code>{{query}}</code>",
+		"wantsToSearchWithPath": "CoStrict 想要在 <code>{{path}}</code> 中搜尋：<code>{{query}}</code>"
 	},
 	"rooCloudCTA": {
-		"title": "Costrict Cloud 即將推出！",
-		"description": "在雲端執行 Costrict 遠端代理、隨時隨地存取您的工作、與他人協作等等。"
+		"title": "CoStrict Cloud 即將推出！",
+		"description": "在雲端執行 CoStrict 遠端代理、隨時隨地存取您的工作、與他人協作等等。"
 	},
 	"copy": {
 		"errorDetail": "複製錯誤詳情，聯絡管理員"
 	},
 	"slashCommand": {
-		"wantsToRun": "Costrict 想要執行斜線指令",
-		"didRun": "Costrict 執行了斜線指令"
+		"wantsToRun": "CoStrict 想要執行斜線指令",
+		"didRun": "CoStrict 執行了斜線指令"
 	},
 	"autoApprove": {
 		"triggerLabelAll": "全部批准"
@@ -128,5 +128,9 @@
 			"description": "根據項目代碼，分析並生成可執行的測試方案。",
 			"initPrompt": "生成當前項目的測試方案"
 		}
+	},
+	"autoMode": {
+		"selectedLlm": "Auto 模型：{{selectedLlm}}",
+		"selectReason": "選擇原因：{{selectReason}}"
 	}
 }

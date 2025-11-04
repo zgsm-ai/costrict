@@ -204,7 +204,7 @@ describe("DiffViewProvider", () => {
 			// Setup
 			const mockEditor = {
 				document: {
-					uri: { fsPath: `${mockCwd}/test.md` },
+					uri: { fsPath: `${mockCwd}/test.md`, scheme: "file" },
 					getText: vi.fn().mockReturnValue(""),
 					lineCount: 0,
 				},
@@ -237,7 +237,7 @@ describe("DiffViewProvider", () => {
 			vi.mocked(vscode.workspace.onDidOpenTextDocument).mockImplementation((callback) => {
 				// Trigger the callback immediately with the document
 				setTimeout(() => {
-					callback({ uri: { fsPath: `${mockCwd}/test.md` } } as any)
+					callback({ uri: { fsPath: `${mockCwd}/test.md`, scheme: "file" } } as any)
 				}, 0)
 				return { dispose: vi.fn() }
 			})
@@ -429,8 +429,10 @@ describe("DiffViewProvider", () => {
 			const { writeFileWithEncodingPreservation } = await import("../../../utils/encoding")
 			expect(writeFileWithEncodingPreservation).toHaveBeenCalledWith(`${mockCwd}/test.ts`, "new content")
 
-			// Verify delay was NOT called
-			expect(mockDelay).not.toHaveBeenCalled()
+			// Verify delay was called only for directory creation (100ms), not for diagnostics (1000ms)
+			// The 100ms delay is for directory creation, the 1000ms would be for diagnostics if enabled
+			expect(mockDelay).toHaveBeenCalledWith(100) // Only the directory creation delay
+			expect(mockDelay).not.toHaveBeenCalledWith(1000) // Not the diagnostics delay
 			// getDiagnostics is called once for pre-diagnostics, but not for post-diagnostics
 			expect(vscode.languages.getDiagnostics).toHaveBeenCalledTimes(1)
 		})

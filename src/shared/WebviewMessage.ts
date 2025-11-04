@@ -70,6 +70,7 @@ export interface WebviewMessage {
 		| "requestOpenAiModels"
 		| "requestOllamaModels"
 		| "requestLmStudioModels"
+		| "requestRooModels"
 		| "requestVsCodeLmModels"
 		| "requestHuggingFaceModels"
 		| "openImage"
@@ -100,6 +101,7 @@ export interface WebviewMessage {
 		| "soundVolume"
 		| "diffEnabled"
 		| "enableCheckpoints"
+		| "checkpointTimeout"
 		| "browserViewportSize"
 		| "screenshotQuality"
 		| "remoteBrowserHost"
@@ -178,6 +180,8 @@ export interface WebviewMessage {
 		| "maxConcurrentFileReads"
 		| "includeDiagnosticMessages"
 		| "maxDiagnosticMessages"
+		| "includeCurrentTime"
+		| "includeCurrentCost"
 		| "searchFiles"
 		| "toggleApiConfigPin"
 		| "setHistoryPreviewCollapsed"
@@ -200,6 +204,7 @@ export interface WebviewMessage {
 		| "profileThresholds"
 		| "setHistoryPreviewCollapsed"
 		| "setReasoningBlockCollapsed"
+		| "setApiRequestBlockHide"
 		| "openExternal"
 		| "filterMarketplaceItems"
 		| "marketplaceButtonClicked"
@@ -285,6 +290,7 @@ export interface WebviewMessage {
 	ids?: string[]
 	hasSystemPromptOverride?: boolean
 	terminalOperation?: "continue" | "abort"
+	terminalPid?: number
 	messageTs?: number
 	restoreCheckpoint?: boolean
 	historyPreviewCollapsed?: boolean
@@ -312,6 +318,7 @@ export interface WebviewMessage {
 			| "gemini"
 			| "mistral"
 			| "vercel-ai-gateway"
+			| "openrouter"
 		codebaseIndexEmbedderBaseUrl?: string
 		codebaseIndexEmbedderModelId: string
 		codebaseIndexEmbedderModelDimension?: number // Generic dimension for all providers
@@ -326,15 +333,16 @@ export interface WebviewMessage {
 		codebaseIndexGeminiApiKey?: string
 		codebaseIndexMistralApiKey?: string
 		codebaseIndexVercelAiGatewayApiKey?: string
+		codebaseIndexOpenRouterApiKey?: string
 	}
 	issueId?: string
 }
 
 export const checkoutDiffPayloadSchema = z.object({
-	ts: z.number(),
+	ts: z.number().optional(),
 	previousCommitHash: z.string().optional(),
 	commitHash: z.string(),
-	mode: z.enum(["full", "checkpoint"]),
+	mode: z.enum(["full", "checkpoint", "from-init", "to-current"]),
 })
 
 export type CheckpointDiffPayload = z.infer<typeof checkoutDiffPayloadSchema>

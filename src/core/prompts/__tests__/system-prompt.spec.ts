@@ -127,9 +127,30 @@ vi.mock("vscode", () => ({
 	workspace: {
 		workspaceFolders: [{ uri: { fsPath: "/test/path" } }],
 		getWorkspaceFolder: vi.fn().mockReturnValue({ uri: { fsPath: "/test/path" } }),
+		createFileSystemWatcher: () => ({
+			onDidCreate: () => ({ dispose: () => {} }),
+			onDidChange: () => ({ dispose: () => {} }),
+			onDidDelete: () => ({ dispose: () => {} }),
+			dispose: () => {},
+		}),
 	},
 	window: {
 		activeTextEditor: undefined,
+		createTextEditorDecorationType: () => ({ dispose: () => {} }),
+		createOutputChannel: () => ({
+			appendLine: () => {},
+			show: () => {},
+			dispose: () => {},
+		}),
+		tabGroups: { all: [] },
+	},
+	RelativePattern: class {
+		base: any
+		pattern: any
+		constructor(base: any, pattern: any) {
+			this.base = base
+			this.pattern = pattern
+		}
 	},
 	EventEmitter: vi.fn().mockImplementation(() => ({
 		event: vi.fn(),
@@ -208,7 +229,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false, // supportsImages
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -227,11 +248,11 @@ describe("SYSTEM_PROMPT", () => {
 		expect(prompt).toMatchFileSnapshot("./__snapshots__/system-prompt/consistent-system-prompt.snap")
 	})
 
-	it("should include browser actions when supportsComputerUse is true", async () => {
+	it("should include browser actions when supportsImages is true", async () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			true, // supportsComputerUse
+			true, // supportsImages
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			"1280x800", // browserViewportSize
@@ -256,7 +277,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			mockMcpHub, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -279,7 +300,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // explicitly undefined mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -302,7 +323,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			true, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			"900x600", // different viewport size
@@ -325,7 +346,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			new MultiSearchReplaceDiffStrategy(), // Use actual diff strategy from the codebase
 			undefined, // browserViewportSize
@@ -349,7 +370,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false, // supportsImages
 			undefined, // mcpHub
 			new MultiSearchReplaceDiffStrategy(), // Use actual diff strategy from the codebase
 			undefined, // browserViewportSize
@@ -373,7 +394,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			new MultiSearchReplaceDiffStrategy(), // Use actual diff strategy from the codebase
 			undefined, // browserViewportSize
@@ -426,7 +447,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -489,7 +510,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -527,7 +548,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -560,7 +581,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -591,7 +612,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -624,7 +645,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize
@@ -656,7 +677,7 @@ describe("SYSTEM_PROMPT", () => {
 		const prompt = await SYSTEM_PROMPT(
 			mockContext,
 			"/test/path",
-			false, // supportsComputerUse
+			false,
 			undefined, // mcpHub
 			undefined, // diffStrategy
 			undefined, // browserViewportSize

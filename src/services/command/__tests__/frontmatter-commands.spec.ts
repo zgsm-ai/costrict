@@ -8,6 +8,7 @@ vi.mock("fs/promises")
 vi.mock("../roo-config", () => ({
 	getGlobalRooDirectory: vi.fn(() => "/mock/global/.roo"),
 	getProjectRooDirectoryForCwd: vi.fn(() => "/mock/project/.roo"),
+	getProjectCostrictSpecDirectoryForCwd: vi.fn(() => "/mock/project/.cospec"),
 }))
 vi.mock("../built-in-commands", () => ({
 	getBuiltInCommands: vi.fn(() => Promise.resolve([])),
@@ -154,29 +155,29 @@ Global setup instructions.`
 			})
 		})
 
-		it("should fall back to global command if project command doesn't exist", async () => {
-			const globalCommandContent = `---
-description: Global setup command
+		it("should fall back to project spec command if project command doesn't exist", async () => {
+			const projectSpecCommandContent = `---
+description: Project spec setup command
 ---
 
-# Global Setup
+# Project Spec Setup
 
-Global setup instructions.`
+Project spec setup instructions.`
 
 			mockFs.stat = vi.fn().mockResolvedValue({ isDirectory: () => true })
 			mockFs.readFile = vi
 				.fn()
 				.mockRejectedValueOnce(new Error("File not found")) // Project command doesn't exist
-				.mockResolvedValueOnce(globalCommandContent) // Global command exists
+				.mockResolvedValueOnce(projectSpecCommandContent) // Project spec command exists
 
 			const result = await getCommand("/test/cwd", "setup")
 
 			expect(result).toEqual({
 				name: "setup",
-				content: "# Global Setup\n\nGlobal setup instructions.",
-				source: "global",
-				filePath: expect.stringContaining(path.join(".roo", "commands", "setup.md")),
-				description: "Global setup command",
+				content: "# Project Spec Setup\n\nProject spec setup instructions.",
+				source: "project",
+				filePath: path.join("/test/cwd/.cospec/openspec/commands/setup.md"),
+				description: "Project spec setup command",
 				argumentHint: undefined,
 			})
 		})
@@ -185,7 +186,7 @@ Global setup instructions.`
 	describe("argument-hint functionality", () => {
 		it("should load command with argument-hint from frontmatter", async () => {
 			const commandContent = `---
-description: Create a new release of the Costrict extension
+description: Create a new release of the CoStrict extension
 argument-hint: patch | minor | major
 ---
 
@@ -203,7 +204,7 @@ Create a new release.`
 				content: "# Release Command\n\nCreate a new release.",
 				source: "project",
 				filePath: path.join("/test/cwd", ".roo", "commands", "release.md"),
-				description: "Create a new release of the Costrict extension",
+				description: "Create a new release of the CoStrict extension",
 				argumentHint: "patch | minor | major",
 			})
 		})

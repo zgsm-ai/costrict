@@ -44,7 +44,6 @@ import { useAutoApprovalToggles } from "@src/hooks/useAutoApprovalToggles"
 
 // import TelemetryBanner from "../common/TelemetryBanner"
 import VersionIndicator from "../common/VersionIndicator"
-import { useTaskSearch } from "../history/useTaskSearch"
 import HistoryPreview from "../history/HistoryPreview"
 import type { SearchResult } from "./hooks/useChatSearch"
 import { useChatSearch } from "./hooks/useChatSearch"
@@ -61,6 +60,8 @@ import ChatSearch from "./ChatSearch"
 // import DismissibleUpsell from "../common/DismissibleUpsell"
 // import { useCloudUpsell } from "@src/hooks/useCloudUpsell"
 // import { Cloud } from "lucide-react"
+// import CloudAgents from "../cloud/CloudAgents"
+import { safeJsonParse } from "../../../../src/shared/safeJsonParse"
 
 export interface ChatViewProps {
 	isHidden: boolean
@@ -96,6 +97,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		currentTaskItem,
 		currentTaskTodos,
 		taskHistory,
+		cwd,
 		apiConfiguration,
 		organizationAllowList,
 		mcpServers,
@@ -121,7 +123,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		customModes,
 		// telemetrySetting,
 		hasSystemPromptOverride,
-		historyPreviewCollapsed, // Added historyPreviewCollapsed
 		soundEnabled,
 		soundVolume,
 		// cloudIsAuthenticated,
@@ -135,25 +136,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		messagesRef.current = messages
 	}, [messages])
 
-	const { tasks } = useTaskSearch()
-
-	// Initialize expanded state based on the persisted setting (default to expanded if undefined)
-	const [isExpanded, setIsExpanded] = useState(
-		historyPreviewCollapsed === undefined ? true : !historyPreviewCollapsed,
-	)
-
-	const toggleExpanded = useCallback(() => {
-		const newState = !isExpanded
-		setIsExpanded(newState)
-		// Send message to extension to persist the new collapsed state
-		vscode.postMessage({ type: "setHistoryPreviewCollapsed", bool: !newState })
-	}, [isExpanded])
-
 	// Leaving this less safe version here since if the first message is not a
 	// task, then the extension is in a bad state and needs to be debugged (see
 	// Cline.abort).
 	const task = useMemo(() => messages.at(0), [messages])
-
+	const curWorkspaceHistory = useMemo(
+		() => (taskHistory || []).filter((t) => t.workspace === cwd),
+		[cwd, taskHistory],
+	)
 	const latestTodos = useMemo(() => {
 		// First check if we have initial todos from the state (for new subtasks)
 		if (currentTaskTodos && currentTaskTodos.length > 0) {
@@ -201,7 +191,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const [isAtBottom, setIsAtBottom] = useState(false)
 	const lastTtsRef = useRef<string>("")
 	const [wasStreaming, setWasStreaming] = useState<boolean>(false)
-	const [showCheckpointWarning, setShowCheckpointWarning] = useState<boolean>(false)
+	const [checkpointWarning, setCheckpointWarning] = useState<
+		{ type: "WAIT_TIMEOUT" | "INIT_TIMEOUT"; timeout: number } | undefined
+	>(undefined)
 	const [isCondensing, setIsCondensing] = useState<boolean>(false)
 	// const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
 	const [hoverPreviewMap, setHoverPreviewMap] = useState<Map<string, string>>(new Map())
@@ -556,10 +548,21 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				lastApiReqStarted.text !== undefined &&
 				lastApiReqStarted.say === "api_req_started"
 			) {
-				const cost = JSON.parse(lastApiReqStarted.text).cost
+				const info = safeJsonParse(lastApiReqStarted.text)
 
-				if (cost === undefined) {
-					return true // API request has not finished yet.
+				// If cancelReason is defined, the stream has been cancelled (terminal state)
+				if (typeof info === "object" && info !== null) {
+					if ("cancelReason" in info && info.cancelReason !== undefined) {
+						return false
+					}
+
+					// Otherwise, check if cost is defined to determine if streaming is complete
+					if ("cost" in info && info.cost !== undefined) {
+						return false // API request has finished.
+					}
+
+					// If we have api_req_started without cost or cancelReason, streaming is in progress
+					return true
 				}
 			}
 		}
@@ -605,7 +608,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			text = text.trim()
 
 			if (text || images.length > 0) {
-				if (sendingDisabled) {
+				// Queue message if:
+				// - Task is busy (sendingDisabled)
+				// - API request in progress (isStreaming)
+				// - Queue has items (preserve message order during drain)
+				if (sendingDisabled || isStreaming || messageQueue.length > 0) {
 					try {
 						vscode.postMessage({ type: "queueMessage", text, images })
 						setInputValue("")
@@ -661,7 +668,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				handleChatReset()
 			}
 		},
-		[handleChatReset, markFollowUpAsAnswered, sendingDisabled], // messagesRef and clineAskRef are stable
+		[handleChatReset, markFollowUpAsAnswered, sendingDisabled, isStreaming, messageQueue.length], // messagesRef and clineAskRef are stable
 	)
 
 	const handleSetChatBoxMessage = useCallback(
@@ -718,6 +725,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				case "use_mcp_server":
 				case "resume_task":
 				case "mistake_limit_reached":
+					if (clineAsk === "resume_task") {
+						markFollowUpAsAnswered()
+					}
 					// Only send text/images if they exist
 					if (trimmedInput || (images && images.length > 0)) {
 						vscode.postMessage({
@@ -747,7 +757,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			setClineAsk(undefined)
 			setEnableButtons(false)
 		},
-		[clineAsk, startNewTask],
+		[clineAsk, markFollowUpAsAnswered, startNewTask],
 	)
 
 	const handleSecondaryButtonClick = useCallback(
@@ -861,23 +871,27 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						setIsCondensing(false)
 					}
 					break
+				case "checkpointInitWarning":
+					setCheckpointWarning(message.checkpointWarning)
+					break
 			}
 			// textAreaRef.current is not explicitly required here since React
 			// guarantees that ref will be stable across re-renders, and we're
 			// not using its value but its reference.
 		},
 		[
-			isCondensing,
+			currentTaskItem?.id,
 			isHidden,
 			sendingDisabled,
 			enableButtons,
-			currentTaskItem,
 			handleChatReset,
 			handleSendMessage,
 			handleSetChatBoxMessage,
 			handlePrimaryButtonClick,
 			handleSecondaryButtonClick,
 			handeSetChatBoxMessageByContext,
+			isCondensing,
+			setCheckpointWarning,
 		],
 	)
 
@@ -1038,14 +1052,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 			const tool = JSON.parse(message.text)
 
-			return [
-				"editedExistingFile",
-				"appliedDiff",
-				"newFileCreated",
-				"searchAndReplace",
-				"insertContent",
-				"generateImage",
-			].includes(tool.tool)
+			return ["editedExistingFile", "appliedDiff", "newFileCreated", "insertContent", "generateImage"].includes(
+				tool.tool,
+			)
 		}
 
 		return false
@@ -1469,26 +1478,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	useEvent("wheel", handleWheel, window, { passive: true }) // passive improves scrolling performance
 
-	// Effect to handle showing the checkpoint warning after a delay
+	// Effect to clear checkpoint warning when messages appear or task changes
 	useEffect(() => {
-		// Only show the warning when there's a task but no visible messages yet
-		if (task && modifiedMessages.length === 0 && !isStreaming && !isHidden) {
-			const timer = setTimeout(() => {
-				setShowCheckpointWarning(true)
-			}, 5000) // 5 seconds
-
-			return () => clearTimeout(timer)
-		} else {
-			setShowCheckpointWarning(false)
+		if (isHidden || !task) {
+			setCheckpointWarning(undefined)
 		}
-	}, [task, modifiedMessages.length, isStreaming, isHidden])
-
-	// Effect to hide the checkpoint warning when messages appear
-	useEffect(() => {
-		if (modifiedMessages.length > 0 || isStreaming || isHidden) {
-			setShowCheckpointWarning(false)
-		}
-	}, [modifiedMessages.length, isStreaming, isHidden])
+	}, [modifiedMessages.length, isStreaming, isHidden, task])
 
 	const placeholderText = task ? t("chat:typeMessage") : t("chat:typeTask")
 
@@ -1539,7 +1534,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				setInputValue(preservedInput)
 			}
 		},
-		[handleSendMessage, setInputValue, switchToMode, alwaysAllowModeSwitch, clineAsk, markFollowUpAsAnswered],
+		[clineAsk, markFollowUpAsAnswered, alwaysAllowModeSwitch, switchToMode, handleSendMessage],
 	)
 
 	const handleBatchFileResponse = useCallback((response: { [key: string]: boolean }) => {
@@ -1561,17 +1556,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			// Find if this message is in searchResults
 			// const matchingResult = searchResults.find((result) => result.ts === messageOrGroup.ts)
 			return searchResults.find((result) => result.ts === messageOrGroup.ts) !== undefined
-			// if (!matchingResult) {
-			// 	return false
-			// }
-
-			// const plainText = messageOrGroup.text || ""
-			// const query = searchQuery.trim()
-
-			// // Check if any match in the result overlaps with this message
-			// return matchingResult.matches.some((match: Match) =>
-			// 	plainText.substring(match.start, match.end).toLowerCase().includes(query.toLowerCase()),
-			// )
 		},
 		[searchQuery],
 	)
@@ -1596,6 +1580,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					/>
 				)
 			}
+			const hasCheckpoint = modifiedMessages.some((message) => message.say === "checkpoint_saved")
 
 			// regular message
 			return (
@@ -1611,7 +1596,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					onSuggestionClick={handleSuggestionClickInRow} // This was already stabilized
 					onBatchFileResponse={handleBatchFileResponse}
 					onFollowUpUnmount={handleFollowUpUnmount}
-					isFollowUpAnswered={messageOrGroup.isAnswered === true || messageOrGroup.ts === currentFollowUpTs}
+					isFollowUpAnswered={
+						primaryButtonText === t("chat:resumeTask.title") ||
+						(currentFollowUpTs != null && messageOrGroup.ts <= currentFollowUpTs)
+					}
 					editable={
 						messageOrGroup.type === "ask" &&
 						messageOrGroup.ask === "tool" &&
@@ -1633,6 +1621,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					shouldHighlight={shouldHighlight(messageOrGroup, searchResults, showSearch)}
 					searchResults={searchResults}
 					searchQuery={searchQuery}
+					hasCheckpoint={hasCheckpoint}
 				/>
 			)
 		},
@@ -1646,14 +1635,15 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			handleSuggestionClickInRow,
 			handleBatchFileResponse,
 			handleFollowUpUnmount,
+			primaryButtonText,
+			t,
 			currentFollowUpTs,
 			shouldHighlight,
-			showSearch,
 			searchResults,
+			showSearch,
 			searchQuery,
 			alwaysAllowUpdateTodoList,
 			enableButtons,
-			primaryButtonText,
 		],
 	)
 
@@ -1663,6 +1653,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			autoApproveTimeoutRef.current = null
 		}
 
+		// Reset countdown when there's no ask or buttons are disabled
 		if (!clineAsk || !enableButtons) {
 			return
 		}
@@ -1902,29 +1893,16 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						</div>
 					)}
 
-					{showCheckpointWarning && (
+					{checkpointWarning && (
 						<div className="px-3">
-							<CheckpointWarning />
+							<CheckpointWarning warning={checkpointWarning} />
 						</div>
 					)}
 				</>
 			) : (
 				<div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 relative">
-					{/* Moved Task Bar Header Here */}
-					{tasks.length !== 0 && (
-						<div className="flex text-vscode-descriptionForeground w-full mx-auto px-5 pt-3">
-							<div className="flex items-center gap-1 cursor-pointer" onClick={toggleExpanded}>
-								{tasks.length < 10 && (
-									<span className={`font-medium text-xs `}>{t("history:recentTasks")}</span>
-								)}
-								<span
-									className={`codicon  ${isExpanded ? "codicon-eye" : "codicon-eye-closed"} scale-90`}
-								/>
-							</div>
-						</div>
-					)}
 					<div
-						className={` w-full flex flex-col gap-4 m-auto ${isExpanded && tasks.length > 0 ? "mt-0" : ""} px-3.5 min-[370px]:px-10 pt-5 transition-all duration-300`}>
+						className={` w-full flex flex-col gap-4 m-auto ${curWorkspaceHistory.length > 0 ? "mt-4" : ""} px-3.5 min-[370px]:px-10 pt-5 transition-all duration-300`}>
 						{/* Version indicator in top-right corner - only on welcome screen */}
 						{/* <VersionIndicator
 							onClick={() => setShowAnnouncementModal(false)}
@@ -1936,7 +1914,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						{/* {telemetrySetting === "unset" && <TelemetryBanner />} */}
 
 						{/* <div className="mb-2.5">
-							{cloudIsAuthenticated || taskHistory.length < 4 ? (
+							{cloudIsAuthenticated || curWorkspaceHistory.length < 4 ? (
 								<RooTips />
 							) : (
 								<>
@@ -1960,7 +1938,27 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							<RooTips />
 						</div>
 						{/* Show the task history preview if expanded and tasks exist */}
-						{taskHistory.length > 0 && isExpanded && <HistoryPreview />}
+						{curWorkspaceHistory.length > 0 && <HistoryPreview />}
+
+						{/* {cloudIsAuthenticated ? (
+							// Logged in users should always see their agents (or be upsold)
+							<CloudAgents />
+						) : (
+							// Logged out users should be upsold at least once on Cloud
+							<DismissibleUpsell
+								upsellId="taskList"
+								icon={<Cloud className="size-5 mt-0.5 shrink-0" />}
+								onClick={() => openUpsell()}
+								dismissOnClick={false}
+								className="!bg-vscode-editor-background mt-6 border-border rounded-xl pl-4 pr-3 py-3 !text-base">
+								<Trans
+									i18nKey="cloud:upsell.taskList"
+									components={{
+										learnMoreLink: <VSCodeLink href="#" />,
+									}}
+								/>
+							</DismissibleUpsell>
+						)} */}
 					</div>
 				</div>
 			)}

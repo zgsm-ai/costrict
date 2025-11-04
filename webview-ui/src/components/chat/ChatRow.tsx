@@ -38,7 +38,7 @@ import { BatchDiffApproval } from "./BatchDiffApproval"
 import { ProgressIndicator } from "./ProgressIndicator"
 import { Markdown } from "./Markdown"
 import { CommandExecution } from "./CommandExecution"
-import { CommandExecutionError } from "./CommandExecutionError"
+// import { CommandExecutionError } from "./CommandExecutionError"
 import { AutoApprovedRequestLimitWarning } from "./AutoApprovedRequestLimitWarning"
 import { CondenseContextErrorRow, CondensingContextRow, ContextCondenseRow } from "./ContextCondenseRow"
 import CodebaseSearchResultsDisplay from "./CodebaseSearchResultsDisplay"
@@ -49,10 +49,10 @@ import { MAX_IMAGES_PER_MESSAGE } from "./ChatView"
 import { useSelectedModel } from "../ui/hooks/useSelectedModel"
 import HighlightedPlainText from "../common/HighlightedPlainText"
 import {
-	ClipboardCheck,
-	ClipboardCopy,
 	ChevronRight,
 	ChevronDown,
+	ClipboardCheck,
+	ClipboardCopy,
 	Eye,
 	FileDiff,
 	ListTree,
@@ -82,11 +82,13 @@ interface ChatRowProps {
 	onSuggestionClick?: (suggestion: SuggestionItem, event?: React.MouseEvent) => void
 	onBatchFileResponse?: (response: { [key: string]: boolean }) => void
 	onFollowUpUnmount?: () => void
+	// isFollowUpAnswered?: boolean
 	isFollowUpAnswered?: boolean
 	editable?: boolean
 	shouldHighlight?: boolean
 	searchResults?: SearchResult[]
 	searchQuery?: string
+	hasCheckpoint?: boolean
 }
 
 interface ChatRowContentProps extends Omit<ChatRowProps, "onHeightChange" | "searchResults" | "searchQuery"> {
@@ -150,12 +152,14 @@ export const ChatRowContent = ({
 	onSuggestionClick,
 	onFollowUpUnmount,
 	onBatchFileResponse,
+	// isFollowUpAnswered,
 	isFollowUpAnswered,
 	editable,
 	searchQuery,
 }: ChatRowContentProps) => {
 	const { t } = useTranslation()
-	const { mcpServers, alwaysAllowMcp, currentCheckpoint, mode, apiConfiguration } = useExtensionState()
+	const { mcpServers, alwaysAllowMcp, currentCheckpoint, mode, apiConfiguration, apiRequestBlockHide } =
+		useExtensionState()
 	const { logoPic, userInfo } = useZgsmUserInfo(apiConfiguration?.zgsmAccessToken)
 	const { info: model } = useSelectedModel(apiConfiguration)
 	const [showCopySuccess, setShowCopySuccess] = useState(false)
@@ -219,13 +223,13 @@ export const ChatRowContent = ({
 		vscode.postMessage({ type: "selectImages", context: "edit", messageTs: message.ts })
 	}, [message.ts])
 
-	const [cost, apiReqCancelReason, apiReqStreamingFailedMessage] = useMemo(() => {
+	const [cost, apiReqCancelReason, apiReqStreamingFailedMessage, selectedLlm, selectReason] = useMemo(() => {
 		if (message.text !== null && message.text !== undefined && message.say === "api_req_started") {
 			const info = safeJsonParse<ClineApiReqInfo>(message.text)
-			return [info?.cost, info?.cancelReason, info?.streamingFailedMessage]
+			return [info?.cost, info?.cancelReason, info?.streamingFailedMessage, info?.selectedLlm, info?.selectReason]
 		}
 
-		return [undefined, undefined, undefined]
+		return [undefined, undefined, undefined, undefined, undefined]
 	}, [message.text, message.say])
 
 	// When resuming task, last wont be api_req_failed but a resume_task
@@ -316,10 +320,14 @@ export const ChatRowContent = ({
 							getIconSpan("error", errorColor)
 						)
 					) : cost !== null && cost !== undefined ? (
-						isExpanded ? (
-							<ChevronDown className="w-4 shrink-0" />
+						!apiRequestBlockHide ? (
+							isExpanded ? (
+								<ChevronDown className="w-4 shrink-0" />
+							) : (
+								<ChevronRight className="w-4 shrink-0" />
+							)
 						) : (
-							<ChevronRight className="w-4 shrink-0" />
+							getIconSpan("arrow-swap", normalColor)
 						)
 					) : apiRequestFailedMessage ? (
 						getIconSpan("error", errorColor)
@@ -363,13 +371,15 @@ export const ChatRowContent = ({
 	}, [
 		type,
 		isCommandExecuting,
-		message,
+		t,
+		message.text,
+		message.ts,
 		isMcpServerResponding,
 		apiReqCancelReason,
 		cost,
-		apiRequestFailedMessage,
-		t,
+		apiRequestBlockHide,
 		isExpanded,
+		apiRequestFailedMessage,
 	])
 
 	const headerStyle: React.CSSProperties = {
@@ -481,39 +491,6 @@ export const ChatRowContent = ({
 											: t("chat:fileOperations.wantsToInsertWithLineNumber", {
 													lineNumber: tool.lineNumber,
 												})}
-							</span>
-						</div>
-						<div className="pl-6">
-							<CodeAccordian
-								path={tool.path}
-								code={tool.diff}
-								language="diff"
-								progressStatus={message.progressStatus}
-								isLoading={message.partial && isLast}
-								isExpanded={isExpanded}
-								onToggleExpand={handleToggleExpand}
-							/>
-						</div>
-					</>
-				)
-			case "searchAndReplace":
-				return (
-					<>
-						<div style={headerStyle}>
-							{tool.isProtected ? (
-								<span
-									className="codicon codicon-lock"
-									style={{ color: "var(--vscode-editorWarning-foreground)", marginBottom: "-1.5px" }}
-								/>
-							) : (
-								toolIcon("replace")
-							)}
-							<span style={{ fontWeight: "bold" }}>
-								{tool.isProtected && message.type === "ask"
-									? t("chat:fileOperations.wantsToEditProtected")
-									: message.type === "ask"
-										? t("chat:fileOperations.wantsToSearchReplace")
-										: t("chat:fileOperations.didSearchReplace")}
 							</span>
 						</div>
 						<div className="pl-6">
@@ -1100,11 +1077,11 @@ export const ChatRowContent = ({
 							metadata={message.metadata as any}
 						/>
 					)
-				case "api_req_started":
+				case "api_req_started": {
 					// Determine if the API request is in progress
 					const isApiRequestInProgress =
 						apiReqCancelReason === undefined && apiRequestFailedMessage === undefined && cost === undefined
-
+					const apiReqStartedRequestText = safeJsonParse<any>(message.text)?.request
 					return (
 						<>
 							<div
@@ -1119,13 +1096,19 @@ export const ChatRowContent = ({
 											? 10
 											: 0,
 									justifyContent: "space-between",
-									cursor: "pointer",
-									userSelect: "none",
-									WebkitUserSelect: "none",
-									MozUserSelect: "none",
-									msUserSelect: "none",
+									...(!apiRequestBlockHide && apiReqStartedRequestText
+										? {
+												cursor: "pointer",
+												userSelect: "none",
+												WebkitUserSelect: "none",
+												MozUserSelect: "none",
+												msUserSelect: "none",
+											}
+										: {}),
 								}}
-								onClick={handleToggleExpand}>
+								onClick={
+									!apiRequestBlockHide && apiReqStartedRequestText ? handleToggleExpand : () => {}
+								}>
 								<div style={{ display: "flex", alignItems: "center", gap: "10px", flexGrow: 1 }}>
 									{icon}
 									{title}
@@ -1136,6 +1119,24 @@ export const ChatRowContent = ({
 									${Number(cost || 0)?.toFixed(4)}
 								</div>
 							</div>
+							{(selectedLlm || selectReason) && (
+								<div className="mt-2 flex items-center flex-wrap gap-2">
+									{selectedLlm && (
+										<div
+											className="text-xs text-vscode-descriptionForeground border-vscode-dropdown-border/50 border px-1.5 py-0.5 rounded-lg"
+											title="Selected Model">
+											{t("chat:autoMode.selectedLlm", { selectedLlm })}
+										</div>
+									)}
+									{selectReason && (
+										<div
+											className="text-xs text-vscode-descriptionForeground border-vscode-dropdown-border/50 border px-1.5 py-0.5 rounded-lg"
+											title="Selection Reason">
+											{t("chat:autoMode.selectReason", { selectReason })}
+										</div>
+									)}
+								</div>
+							)}
 							{(((cost === null || cost === undefined) && apiRequestFailedMessage) ||
 								apiReqStreamingFailedMessage) && (
 								<ErrorRow
@@ -1176,11 +1177,10 @@ export const ChatRowContent = ({
 									}
 								/>
 							)}
-
-							{isExpanded && (
+							{!apiRequestBlockHide && isExpanded && apiReqStartedRequestText && (
 								<div className="ml-6" style={{ marginTop: "10px" }}>
 									<CodeAccordian
-										code={safeJsonParse<any>(message.text)?.request}
+										code={apiReqStartedRequestText}
 										language="markdown"
 										isExpanded={true}
 										onToggleExpand={handleToggleExpand}
@@ -1189,6 +1189,7 @@ export const ChatRowContent = ({
 							)}
 						</>
 					)
+				}
 				case "api_req_finished":
 					return null // we should never see this message type
 				case "text":
@@ -1268,7 +1269,7 @@ export const ChatRowContent = ({
 										/>
 									</div>
 								) : (
-									<div className="flex justify-between">
+									<div className="flex justify-between cursor-pointer">
 										<div
 											className="flex-grow px-2 py-1 wrap-anywhere rounded-lg transition-colors"
 											onClick={(e) => {
@@ -1282,7 +1283,7 @@ export const ChatRowContent = ({
 										</div>
 										<div className="flex gap-2 pr-1">
 											<div
-												className="cursor-pointer shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+												className="cursor-copy shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
 												style={{ visibility: isStreaming ? "hidden" : "visible" }}
 												onClick={(e) => {
 													e.stopPropagation()
@@ -1357,7 +1358,10 @@ export const ChatRowContent = ({
 						</>
 					)
 				case "shell_integration_warning":
-					return <CommandExecutionError />
+					// console.log(t("chat:shellIntegration.title"), t("chat:shellIntegration.description"))
+
+					return null
+				// return <CommandExecutionError />
 				case "checkpoint_saved":
 					return (
 						<CheckpointSaved
@@ -1660,6 +1664,7 @@ export const ChatRowContent = ({
 									ts={message?.ts}
 									onCancelAutoApproval={onFollowUpUnmount}
 									isAnswered={isFollowUpAnswered}
+									// isAnswered={isFollowUpAnswered}
 								/>
 							</div>
 						</>

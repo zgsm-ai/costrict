@@ -28,7 +28,22 @@ export const DEFAULT_WRITE_DELAY_MS = 1000
  * while preventing context window explosions from extremely long lines.
  */
 export const DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT = 50_000
-export const DEFAULT_FILE_READ_CHARACTER_LIMIT = 30_000
+export const DEFAULT_FILE_READ_CHARACTER_LIMIT = 40_000
+
+/**
+ * Minimum checkpoint timeout in seconds.
+ */
+export const MIN_CHECKPOINT_TIMEOUT_SECONDS = 10
+
+/**
+ * Maximum checkpoint timeout in seconds.
+ */
+export const MAX_CHECKPOINT_TIMEOUT_SECONDS = 60
+
+/**
+ * Default checkpoint timeout in seconds.
+ */
+export const DEFAULT_CHECKPOINT_TIMEOUT_SECONDS = 15
 
 /**
  * GlobalSettings
@@ -84,6 +99,17 @@ export const globalSettingsSchema = z.object({
 	maxConcurrentFileReads: z.number().optional(),
 
 	/**
+	 * Whether to include current time in the environment details
+	 * @default true
+	 */
+	includeCurrentTime: z.boolean().optional(),
+	/**
+	 * Whether to include current cost in the environment details
+	 * @default true
+	 */
+	includeCurrentCost: z.boolean().optional(),
+
+	/**
 	 * Whether to include diagnostic messages (errors, warnings) in tool outputs
 	 * @default true
 	 */
@@ -102,6 +128,12 @@ export const globalSettingsSchema = z.object({
 	cachedChromeHostUrl: z.string().optional(),
 
 	enableCheckpoints: z.boolean().optional(),
+	checkpointTimeout: z
+		.number()
+		.int()
+		.min(MIN_CHECKPOINT_TIMEOUT_SECONDS)
+		.max(MAX_CHECKPOINT_TIMEOUT_SECONDS)
+		.optional(),
 
 	ttsEnabled: z.boolean().optional(),
 	ttsSpeed: z.number().optional(),
@@ -154,6 +186,7 @@ export const globalSettingsSchema = z.object({
 	includeTaskHistoryInEnhance: z.boolean().optional(),
 	historyPreviewCollapsed: z.boolean().optional(),
 	reasoningBlockCollapsed: z.boolean().optional(),
+	apiRequestBlockHide: z.boolean().optional(),
 	profileThresholds: z.record(z.string(), z.number()).optional(),
 	hasOpenedModeSelector: z.boolean().optional(),
 	lastModeExportPath: z.string().optional(),
@@ -198,6 +231,7 @@ export const SECRET_STATE_KEYS = [
 	"doubaoApiKey",
 	"moonshotApiKey",
 	"mistralApiKey",
+	"minimaxApiKey",
 	"unboundApiKey",
 	"requestyApiKey",
 	"xaiApiKey",
@@ -211,6 +245,7 @@ export const SECRET_STATE_KEYS = [
 	"codebaseIndexGeminiApiKey",
 	"codebaseIndexMistralApiKey",
 	"codebaseIndexVercelAiGatewayApiKey",
+	"codebaseIndexOpenRouterApiKey",
 	"huggingFaceApiKey",
 	"sambaNovaApiKey",
 	"zaiApiKey",
@@ -299,7 +334,7 @@ export const EVALS_SETTINGS: RooCodeSettings = {
 	terminalOutputCharacterLimit: DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT,
 	maxReadCharacterLimit: DEFAULT_FILE_READ_CHARACTER_LIMIT,
 	terminalShellIntegrationTimeout: 30000,
-	terminalCommandDelay: 0,
+	terminalCommandDelay: 150,
 	terminalPowershellCounter: false,
 	terminalZshOhMy: true,
 	terminalZshClearEolMark: true,
@@ -315,9 +350,9 @@ export const EVALS_SETTINGS: RooCodeSettings = {
 
 	enableCheckpoints: false,
 
-	rateLimitSeconds: 1,
+	rateLimitSeconds: 0,
 	maxOpenTabsContext: 20,
-	maxWorkspaceFiles: 200,
+	maxWorkspaceFiles: 300,
 	showRooIgnoredFiles: true,
 	maxReadFileLine: 500, // -1 to enable full file reading.
 

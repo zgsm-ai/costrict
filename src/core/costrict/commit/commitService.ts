@@ -29,7 +29,7 @@ export class CommitService {
 	/**
 	 * Generate commit message and populate it in SCM input
 	 */
-	async generateAndPopulateCommitMessage(): Promise<void> {
+	async generateAndPopulateCommitMessage(cb: any): Promise<void> {
 		if (!this.generator) {
 			throw new Error(t("commit:commit.error.notInitialized"))
 		}
@@ -43,7 +43,7 @@ export class CommitService {
 					cancellable: false,
 				},
 				async (progress) => {
-					progress.report({ increment: 50 })
+					progress.report({ increment: 80 })
 
 					// Get configuration from VSCode settings
 					const config = vscode.workspace.getConfiguration("zgsm.commit")
@@ -61,10 +61,10 @@ export class CommitService {
 						language,
 					})
 
-					progress.report({ increment: 80 })
+					progress.report({ increment: 90 })
 
 					// Populate the commit message in SCM input
-					await this.populateCommitMessage(suggestion)
+					await this.populateCommitMessage(suggestion, cb)
 
 					progress.report({ increment: 100 })
 				},
@@ -78,7 +78,7 @@ export class CommitService {
 	/**
 	 * Populate the generated commit message in SCM input
 	 */
-	private async populateCommitMessage(suggestion: CommitMessageSuggestion): Promise<void> {
+	private async populateCommitMessage(suggestion: CommitMessageSuggestion, cb: any): Promise<void> {
 		// Build the full commit message
 		let commitMessage = suggestion.subject
 
@@ -86,10 +86,9 @@ export class CommitService {
 			commitMessage += `\n\n${suggestion.body}`
 		}
 		try {
-			const gitExtension = vscode.extensions.getExtension("vscode.git")?.exports
-			const api = gitExtension.getAPI(1)
-			const repo = api.repositories[0]
-			repo.inputBox.value = commitMessage
+			if (cb && cb instanceof Function) {
+				cb(commitMessage)
+			}
 		} catch (error) {
 			await vscode.env.clipboard.writeText(commitMessage)
 			vscode.window.showInformationMessage(t("commit:commit.message.copiedToClipboard"))

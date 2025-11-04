@@ -55,19 +55,19 @@ export function readLines(filepath: string, endLine?: number, startLine?: number
 			)
 		}
 
-		// Sample the first 64KB for encoding detection
+		// Sample the first 8KB for encoding detection
 		open(filepath, "r")
 			.then((fileHandle) => {
-				const sampleBuffer = Buffer.alloc(65536)
+				const sampleBuffer = Buffer.alloc(8192)
 				return fileHandle
 					.read(sampleBuffer, 0, sampleBuffer.length, 0)
 					.then(() => sampleBuffer)
 					.finally(() => fileHandle.close())
 			})
-			.then((sampleBuffer) => detectEncoding(sampleBuffer))
+			.then((sampleBuffer) => detectEncoding(sampleBuffer, "", filepath))
 			.then((encoding) => {
 				// Node.js native supported encodings
-				const nodeEncodings = ["utf8", "ascii", "latin1"]
+				const nodeEncodings = ["utf8", "utf-8", "ascii", "latin1"]
 
 				// Choose decoding method based on native support
 				let input: NodeJS.ReadableStream

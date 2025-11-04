@@ -2,11 +2,12 @@ import * as path from "path"
 import * as vscode from "vscode"
 
 import { GlobalFileNames } from "../../../shared/globalFileNames"
+import { getSettingsDirectoryPath } from "../../../utils/storage"
 
 export async function createModeInstructions(context: vscode.ExtensionContext | undefined): Promise<string> {
 	if (!context) throw new Error("Missing VSCode Extension Context")
 
-	const settingsDir = path.join(context.globalStorageUri.fsPath, "settings")
+	const settingsDir = await getSettingsDirectoryPath(context.globalStorageUri.fsPath)
 	const customModesPath = path.join(settingsDir, GlobalFileNames.customModes)
 
 	return `
@@ -39,7 +40,7 @@ customModes:
     name: Designer  # Required: mode display name
     description: UI/UX design systems expert  # Optional but recommended: short description (5 words)
     roleDefinition: >-
-      You are Costrict, a UI/UX expert specializing in design systems and frontend development. Your expertise includes:
+      You are CoStrict, a UI/UX expert specializing in design systems and frontend development. Your expertise includes:
       - Creating and maintaining design systems
       - Implementing responsive and accessible web interfaces
       - Working with CSS, HTML, and modern frontend frameworks

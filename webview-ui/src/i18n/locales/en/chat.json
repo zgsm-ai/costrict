@@ -155,6 +155,9 @@
 		"initializingWarning": "Still initializing checkpoint... If this takes too long, you can disable checkpoints in <settingsLink>settings</settingsLink> and restart your task.",
 		"menu": {
 			"viewDiff": "View Diff",
+			"more": "More options",
+			"viewDiffFromInit": "View All Changes",
+			"viewDiffWithCurrent": "View Changes Since This Checkpoint",
 			"restore": "Restore Checkpoint",
 			"restoreFiles": "Restore Files",
 			"restoreFilesDescription": "Restores your project's files back to a snapshot taken at this point.",
@@ -191,8 +194,6 @@
 		"wantsToGenerateImageProtected": "Roo wants to generate an image in a protected location",
 		"didGenerateImage": "Roo generated an image",
 		"wantsToCreate": "Roo wants to create a new file",
-		"wantsToSearchReplace": "Roo wants to search and replace in this file",
-		"didSearchReplace": "Roo performed search and replace on this file",
 		"wantsToInsert": "Roo wants to insert content into this file",
 		"wantsToInsertWithLineNumber": "Roo wants to insert content into this file at line {{lineNumber}}",
 		"wantsToInsertAtEnd": "Roo wants to append content to the end of this file"
@@ -290,6 +291,7 @@
 		"toggleAriaLabel": "Toggle auto-approval",
 		"disabledAriaLabel": "Auto-approval disabled - select options first",
 		"triggerLabelOff": "Auto-approve off",
+		"triggerLabelOffShort": "Off",
 		"triggerLabel_zero": "0 auto-approve",
 		"triggerLabel_one": "1 auto-approved",
 		"triggerLabel_other": "{{count}} auto-approved",
@@ -304,6 +306,19 @@
 			"selectModel": "Select <code>roo/code-supernova</code> from the Roo Code Cloud provider in Settings to get started.",
 			"goToSettingsButton": "Go to Settings"
 		},
+		"release": {
+			"heading": "New in the Extension:",
+			"openRouterEmbeddings": "Support for OpenRouter embedding models",
+			"chutesDynamic": "Chutes now loads the latest models dynamically",
+			"queuedMessagesFix": "Fixes for queued messages getting lost"
+		},
+		"cloudAgents": {
+			"heading": "New in the Cloud:",
+			"prFixer": "Introducing the <bold>PR Fixer</bold> cloud agent to complement the PR Reviewer.",
+			"prFixerDescription": "The PR Fixer applies high-quality changes to your PRs, right from GitHub. Invoke via a PR comment and it will read the entire comment history to understand context, agreements, and tradeoffs - then implement the right fix.",
+			"tryPrFixerButton": "Try PR Fixer"
+		},
+		"careers": "Also, <careersLink>we're hiring!</careersLink>",
 		"socialLinks": "Join us on <xLink>X</xLink>, <discordLink>Discord</discordLink>, or <redditLink>r/RooCode</redditLink> 🚀"
 	},
 	"reasoning": {
@@ -351,18 +366,6 @@
 		"description": "Your command is being executed without VSCode terminal shell integration. To suppress this warning you can disable shell integration in the <strong>Terminal</strong> section of the <settingsLink>Roo Code settings</settingsLink> or troubleshoot VSCode terminal integration using the link below.",
 		"troubleshooting": "Click here for shell integration documentation."
 	},
-	"ask": {
-		"autoApprovedRequestLimitReached": {
-			"title": "Auto-Approved Request Limit Reached",
-			"description": "Roo has reached the auto-approved limit of {{count}} API request(s). Would you like to reset the count and proceed with the task?",
-			"button": "Reset and Continue"
-		},
-		"autoApprovedCostLimitReached": {
-			"title": "Auto-Approved Cost Limit Reached",
-			"description": "Roo has reached the auto-approved cost limit of ${{count}}. Would you like to reset the cost and proceed with the task?",
-			"button": "Reset and Continue"
-		}
-	},
 	"indexingStatus": {
 		"ready": "Index ready",
 		"indexing": "Indexing {{percentage}}%",
@@ -396,14 +399,6 @@
 			"confirm": "Delete"
 		}
 	},
-	"slashCommand": {
-		"wantsToRun": "Roo wants to run a slash command",
-		"didRun": "Roo ran a slash command"
-	},
-	"queuedMessages": {
-		"title": "Queued Messages",
-		"clickToEdit": "Click to edit message"
-	},
 	"contextMenu": {
 		"noResults": "No results",
 		"problems": "Problems",
@@ -412,5 +407,32 @@
 		"gitCommits": "Git Commits",
 		"addFile": "Add File",
 		"addFolder": "Add Folder"
+	},
+	"queuedMessages": {
+		"title": "Queued Messages",
+		"clickToEdit": "Click to edit message"
+	},
+	"slashCommand": {
+		"wantsToRun": "Roo wants to run a slash command",
+		"didRun": "Roo ran a slash command"
+	},
+	"ask": {
+		"autoApprovedRequestLimitReached": {
+			"title": "Auto-Approved Request Limit Reached",
+			"description": "Roo has reached the auto-approved limit of {{count}} API request(s). Would you like to reset the count and proceed with the task?",
+			"button": "Reset and Continue"
+		},
+		"autoApprovedCostLimitReached": {
+			"title": "Auto-Approved Cost Limit Reached",
+			"description": "Roo has reached the auto-approved cost limit of ${{count}}. Would you like to reset the cost and proceed with the task?",
+			"button": "Reset and Continue"
+		}
+	},
+	"cloudAgents": {
+		"create": "Create",
+		"title": "Cloud Agents",
+		"description": "You haven’t created any Cloud Agents yet.",
+		"createFirst": "Create your first",
+		"clickToRun": "Click to run {{name}}"
 	}
 }

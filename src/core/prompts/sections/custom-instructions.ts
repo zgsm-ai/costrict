@@ -269,14 +269,30 @@ export async function addCustomInstructions(
 	options: {
 		language?: string
 		rooIgnoreInstructions?: string
+		shell?: string
 		settings?: SystemPromptSettings
 	} = {},
 ): Promise<string> {
 	const sections = []
-	// globalCustomInstructions+
+
 	// Load mode-specific rules if mode is provided
 	let modeRuleContent = ""
 	let usedRuleFile = ""
+	const shellPath = options.shell ? options.shell.toLowerCase() : ""
+	// -Encoding UTF8
+	const mustRules =
+		process.env.NODE_ENV === "test"
+			? []
+			: [
+					`- **IMPORTANT: If the question is clearly informal or lacks actionable meaning (e.g., "hello", "who are you", "tell me a joke"), respond politely without attempting any deep logic or tool usage, and immediately respond using the \`attempt_completion\` tool.**`,
+					`- **IMPORTANT: If the file is not found, use \`ask_followup_question\` to inform the user and get two suggest: Skip or Create**`,
+					shellPath &&
+					(shellPath.includes("powershell.exe") ||
+						shellPath.includes("pwsh.exe") ||
+						shellPath.includes("cmd.exe"))
+						? `- **IMPORTANT: Before using the \`execute_command\` tool, you must first think about the <environment_details> context provided to understand the user's environment and tailor your commands to ensure they are compatible with their system.It must be ensured that the encoding during command execution is UTF-8. **`
+						: "",
+				]
 
 	if (mode) {
 		const modeRules: string[] = []
@@ -365,9 +381,8 @@ export async function addCustomInstructions(
 	if (rules.length > 0) {
 		sections.push(`Rules:\n\n${rules.join("\n\n")}`)
 	}
-
-	sections.push(MUST_FOLLOW_RULES)
-	const joinedSections = sections.join("\n\n")
+	sections.push(...mustRules)
+	const joinedSections = sections.join("\n").trim()
 
 	return joinedSections
 		? `
@@ -378,7 +393,7 @@ USER'S CUSTOM INSTRUCTIONS
 The following additional instructions are provided by the user, and should be followed to the best of your ability without interfering with the TOOL USE guidelines.
 
 ${joinedSections}`
-		: MUST_FOLLOW_RULES
+		: `MUST_FOLLOW_RULES:\n${mustRules.join("\n")}`
 }
 
 /**
@@ -421,9 +436,3 @@ function shouldIncludeRuleFile(filename: string): boolean {
 		}
 	})
 }
-
-export const MUST_FOLLOW_RULES = `MUST FOLLOW RULES:
-1. If in a new shell, you should \`cd\` to the appropriate directory and do necessary setup in addition to running the command. By default, the shell will initialize in the project root.
-2. If in the same shell, LOOK IN CHAT HISTORY for your current working directory.
-3. Before using the execute_command tool, you must first think about the <environment_details> context provided to understand the user's environment and tailor your commands to ensure they are compatible with their system. 
-`

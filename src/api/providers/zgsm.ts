@@ -176,6 +176,8 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				})
 			}
 			let stream
+			let selectedLlm: string | undefined
+			let selectReason: string | undefined
 			try {
 				this.logger.info(`[RequestID]:`, requestId)
 				const { data, response } = await this.client.chat.completions
@@ -189,20 +191,24 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					.withResponse()
 				this.logger.info(`[ResponseID]:`, response.headers.get("x-request-id"))
 
-				stream = data
 				if (this.options.zgsmModelId === autoModeModelId) {
+					selectedLlm = response.headers.get("x-select-llm") || ""
+					selectReason = response.headers.get("x-select-reason") || ""
+
 					const userInputHeader = response.headers.get("x-user-input")
 					if (userInputHeader) {
 						const decodedUserInput = Buffer.from(userInputHeader, "base64").toString("utf-8")
 						this.logger.info(`[x-user-input]: ${decodedUserInput}`)
 					}
 				}
+
+				stream = data
 			} catch (error) {
 				throw handleOpenAIError(error, this.providerName)
 			}
 
 			// 6. Optimize stream processing - use batch processing and buffer
-			yield* this.handleOptimizedStream(stream, modelInfo)
+			yield* this.handleOptimizedStream(stream, modelInfo, selectedLlm, selectReason)
 		} else {
 			// Non-streaming processing
 			const requestOptions = this.buildNonStreamingRequestOptions(
@@ -262,7 +268,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		requestId: string,
 		clientId: string,
 		workspacePath: string,
-		chatType?: string,
+		chatType?: "user" | "system",
 	): Record<string, string> {
 		return {
 			"Accept-Language": metadata?.language || "en",
@@ -273,6 +279,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			"zgsm-request-id": requestId,
 			"zgsm-client-id": clientId,
 			"zgsm-project-path": encodeURI(workspacePath),
+			"x-caller": metadata?.mode === "review" ? "review-checker" : "chat",
 		}
 	}
 
@@ -358,7 +365,8 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 	): OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming {
 		const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming = {
 			model: modelId,
-			temperature: this.options.modelTemperature ?? (isDeepseekReasoner ? DEEP_SEEK_DEFAULT_TEMPERATURE : 0),
+			temperature:
+				this.options.modelTemperature ?? (isDeepseekReasoner ? DEEP_SEEK_DEFAULT_TEMPERATURE : undefined),
 			messages,
 			stream: true as const,
 			...(isGrokXAI ? {} : { stream_options: { include_usage: true } }),
@@ -404,6 +412,8 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 	private async *handleOptimizedStream(
 		stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
 		modelInfo: ModelInfo,
+		selectedLlm?: string,
+		selectReason?: string,
 	): ApiStream {
 		const matcher = new XmlMatcher(
 			"think",
@@ -420,6 +430,14 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const contentBuffer: string[] = []
 		let time = Date.now()
 		let isPrinted = false
+
+		// Yield selected LLM info if available (for Auto model mode)
+		if (selectedLlm && this.options.zgsmModelId === autoModeModelId) {
+			yield {
+				type: "text",
+				text: `[Selected LLM: ${selectedLlm}${selectReason ? ` (${selectReason})` : ""}]`,
+			}
+		}
 
 		// chunk
 		for await (const chunk of stream) {
@@ -519,7 +537,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			model: metadata?.modelId || model.id,
 			messages: messages,
 			temperature: 0.9,
-			max_tokens: metadata?.maxLength ?? 200,
+			max_tokens: metadata?.maxLength ?? 300,
 		}
 
 		Object.assign(requestOptions, {
@@ -536,7 +554,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				Object.assign(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
 					headers: {
 						...this.buildHeaders(
-							{ language: metadata.language, taskId: requestId },
+							{ language: metadata?.language, taskId: requestId },
 							requestId,
 							cachedClientId,
 							cachedWorkspacePath,
@@ -684,11 +702,22 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			| OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
 		modelInfo: ModelInfo,
 	): void {
+		const _m = requestOptions.model.toLocaleLowerCase()
+
 		// Only add max_completion_tokens if includeMaxTokens is true
-		if (this.options.includeMaxTokens === true) {
+		if (this.options.useZgsmCustomConfig) {
+			const maxTokens = this.options.modelMaxTokens || modelInfo.maxTokens
 			// Use user-configured modelMaxTokens if available, otherwise fall back to model's default maxTokens
 			// Using max_completion_tokens as max_tokens is deprecated
-			requestOptions.max_completion_tokens = this.options.modelMaxTokens || modelInfo.maxTokens
+			if (this.options.includeMaxTokens) {
+				Object.assign(requestOptions, {
+					[modelInfo.maxTokensKey || "max_completion_tokens"]: maxTokens,
+				})
+			}
+		} else if (modelInfo.maxTokensKey) {
+			Object.assign(requestOptions, {
+				[modelInfo.maxTokensKey]: modelInfo.maxTokens,
+			})
 		}
 	}
 

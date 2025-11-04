@@ -31,7 +31,7 @@ import {
 	type TerminalActionPromptType,
 	type HistoryItem,
 	type CloudUserInfo,
-	type CloudOrganizationMembership,
+	// type CloudOrganizationMembership,
 	type CreateTaskOptions,
 	type TokenUsage,
 	RooCodeEventName,
@@ -43,14 +43,16 @@ import {
 	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_MODES,
 	DEFAULT_FILE_READ_CHARACTER_LIMIT,
+	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
-import { CloudService, BridgeOrchestrator, getRooCodeApiUrl } from "@roo-code/cloud"
+import { CloudService, BridgeOrchestrator } from "@roo-code/cloud"
 
 import { Package } from "../../shared/package"
 import { findLast } from "../../shared/array"
 import { supportPrompt, type SupportPromptType } from "../../shared/support-prompt"
 import { GlobalFileNames } from "../../shared/globalFileNames"
+import { safeJsonParse } from "../../shared/safeJsonParse"
 import type { ExtensionMessage, ExtensionState, MarketplaceInstalledMetadata } from "../../shared/ExtensionMessage"
 import { Mode, defaultModeSlug, getModeBySlug, ZgsmCodeMode } from "../../shared/modes"
 import { experimentDefault } from "../../shared/experiments"
@@ -92,17 +94,18 @@ import { Task } from "../task/Task"
 import { getSystemPromptFilePath } from "../prompts/sections/custom-system-prompt"
 
 import { webviewMessageHandler } from "./webviewMessageHandler"
-import type { ClineMessage } from "@roo-code/types"
-import { readApiMessages, saveApiMessages, saveTaskMessages } from "../task-persistence"
+// import type { ClineMessage } from "@roo-code/types"
+// import { readApiMessages, saveApiMessages, saveTaskMessages } from "../task-persistence"
 import { getNonce } from "./getNonce"
 import { getUri } from "./getUri"
 import { ZgsmAuthCommands } from "../costrict/auth"
-import { getClientId } from "../../utils/getClientId"
+import { generateNewSessionClientId, getClientId } from "../../utils/getClientId"
 import { defaultCodebaseIndexEnabled } from "../../services/code-index/constants"
 import { CodeReviewService, ReviewTargetType } from "../costrict/code-review"
 import { defaultLang } from "../../utils/language"
 import ZgsmCodebaseIndexManager from "../costrict/codebase-index"
 import { sendZgsmCloseWindow } from "../costrict/auth/ipc"
+import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 
 /**
  * https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -152,9 +155,13 @@ export class ClineProvider
 	private pendingOperations: Map<string, PendingEditOperation> = new Map()
 	private static readonly PENDING_OPERATION_TIMEOUT_MS = 30000 // 30 seconds
 
+	// Transactional state posting
+	private uiUpdatePaused: boolean = false
+	private pendingState: ExtensionState | null = null
+
 	public isViewLaunched = false
 	public settingsImportedAt?: number
-	public readonly latestAnnouncementId = "sep-2025-code-supernova-1m" // Code Supernova 1M context window announcement
+	public readonly latestAnnouncementId = "nov-2025-v3.30.0-pr-fixer" // v3.30.0 PR Fixer announcement
 	public readonly providerSettingsManager: ProviderSettingsManager
 	public readonly customModesManager: CustomModesManager
 
@@ -719,6 +726,7 @@ export class ClineProvider
 				text: pathOnly.length > 0 ? `${pathOnly} ` : "",
 				selectText: selectedText,
 			})
+			await visibleProvider.postMessageToWebview({ type: "action", action: "focusInput" })
 			return
 		}
 
@@ -742,7 +750,12 @@ export class ClineProvider
 		const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
 
 		if (command === "terminalAddToContext") {
-			await visibleProvider.postMessageToWebview({ type: "invoke", invoke: "setChatBoxMessage", text: prompt })
+			await visibleProvider.postMessageToWebview({
+				type: "invoke",
+				invoke: "setChatBoxMessage",
+				text: `${prompt}\n\n`,
+			})
+			await visibleProvider.postMessageToWebview({ type: "action", action: "focusInput" })
 			return
 		}
 
@@ -804,7 +817,7 @@ export class ClineProvider
 			({
 				terminalShellIntegrationTimeout = Terminal.defaultShellIntegrationTimeout,
 				terminalShellIntegrationDisabled = false,
-				terminalCommandDelay = 0,
+				terminalCommandDelay = 150,
 				terminalZshClearEolMark = true,
 				terminalZshOhMy = false,
 				terminalZshP10k = false,
@@ -968,6 +981,7 @@ export class ClineProvider
 			diffEnabled: enableDiff,
 			enableCheckpoints,
 			useZgsmCustomConfig,
+			checkpointTimeout,
 			fuzzyMatchThreshold,
 			experiments,
 			cloudUserInfo,
@@ -980,6 +994,7 @@ export class ClineProvider
 			enableDiff,
 			enableCheckpoints,
 			useZgsmCustomConfig,
+			checkpointTimeout,
 			fuzzyMatchThreshold,
 			consecutiveMistakeLimit: apiConfiguration.consecutiveMistakeLimit,
 			historyItem,
@@ -1135,7 +1150,7 @@ export class ClineProvider
 						window.AUDIO_BASE_URI = "${audioUri}"
 						window.MATERIAL_ICONS_BASE_URI = "${materialIconsUri}"
 					</script>
-					<title>Costrict</title>
+					<title>CoStrict</title>
 				</head>
 				<body>
 					<div id="root"></div>
@@ -1210,7 +1225,7 @@ export class ClineProvider
 				window.AUDIO_BASE_URI = "${audioUri}"
 				window.MATERIAL_ICONS_BASE_URI = "${materialIconsUri}"
 			</script>
-            <title>Costrict</title>
+            <title>CoStrict</title>
           </head>
           <body>
             <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -1535,8 +1550,8 @@ export class ClineProvider
 
 	// Requesty
 
-	async handleRequestyCallback(code: string) {
-		let { apiConfiguration, currentApiConfigName = "default" } = await this.getState()
+	async handleRequestyCallback(code: string, baseUrl: string | null) {
+		let { apiConfiguration } = await this.getState()
 
 		const newConfiguration: ProviderSettings = {
 			...apiConfiguration,
@@ -1545,7 +1560,16 @@ export class ClineProvider
 			requestyModelId: apiConfiguration?.requestyModelId || requestyDefaultModelId,
 		}
 
-		await this.upsertProviderProfile(currentApiConfigName, newConfiguration)
+		// set baseUrl as undefined if we don't provide one
+		// or if it is the default requesty url
+		if (!baseUrl || baseUrl === REQUESTY_BASE_URL) {
+			newConfiguration.requestyBaseUrl = undefined
+		} else {
+			newConfiguration.requestyBaseUrl = baseUrl
+		}
+
+		const profileName = `Requesty (${new Date().toLocaleString()})`
+		await this.upsertProviderProfile(profileName, newConfiguration)
 	}
 
 	// Task history
@@ -1679,8 +1703,26 @@ export class ClineProvider
 		await this.postStateToWebview()
 	}
 
+	public beginStateTransaction(): void {
+		this.uiUpdatePaused = true
+	}
+
+	public async endStateTransaction(): Promise<void> {
+		this.uiUpdatePaused = false
+		if (this.pendingState) {
+			await this.view?.webview.postMessage({ type: "state", state: this.pendingState })
+			this.pendingState = null
+		}
+	}
+
 	async postStateToWebview() {
 		const state = await this.getStateToPostToWebview()
+
+		if (this.uiUpdatePaused) {
+			this.pendingState = state
+			return
+		}
+
 		this.postMessageToWebview({ type: "state", state })
 
 		// Check MDM compliance and send user to account tab if not compliant
@@ -1828,6 +1870,7 @@ export class ClineProvider
 			enableCheckpoints,
 			useZgsmCustomConfig,
 			zgsmCodebaseIndexEnabled,
+			checkpointTimeout,
 			taskHistory,
 			soundVolume,
 			browserViewportSize,
@@ -1875,6 +1918,7 @@ export class ClineProvider
 			terminalCompressProgressBar,
 			historyPreviewCollapsed,
 			reasoningBlockCollapsed,
+			apiRequestBlockHide,
 			cloudUserInfo,
 			cloudIsAuthenticated,
 			sharingEnabled,
@@ -1891,6 +1935,8 @@ export class ClineProvider
 			includeDiagnosticMessages,
 			maxDiagnosticMessages,
 			includeTaskHistoryInEnhance,
+			includeCurrentTime,
+			includeCurrentCost,
 			taskSyncEnabled,
 			remoteControlEnabled,
 			openRouterImageApiKey,
@@ -1902,11 +1948,11 @@ export class ClineProvider
 		// let cloudOrganizations: CloudOrganizationMembership[] = []
 
 		// try {
-		// 	cloudOrganizations = await CloudService.instance.getOrganizationMemberships()
+		// 	if (!CloudService.instance.isCloudAgent) {
+		// 		cloudOrganizations = await CloudService.instance.getOrganizationMemberships()
+		// 	}
 		// } catch (error) {
-		// 	console.error(
-		// 		`[getStateToPostToWebview] failed to get cloud organizations: ${error instanceof Error ? error.message : String(error)}`,
-		// 	)
+		// 	// Ignore this error.
 		// }
 
 		const telemetryKey = process.env.POSTHOG_API_KEY
@@ -1955,6 +2001,7 @@ export class ClineProvider
 			enableCheckpoints: enableCheckpoints ?? true,
 			useZgsmCustomConfig: useZgsmCustomConfig ?? false,
 			zgsmCodebaseIndexEnabled: zgsmCodebaseIndexEnabled ?? true,
+			checkpointTimeout: checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			shouldShowAnnouncement:
 				telemetrySetting !== "disabled" && lastShownAnnouncementId !== this.latestAnnouncementId,
 			allowedCommands: mergedAllowedCommands,
@@ -1970,7 +2017,7 @@ export class ClineProvider
 			terminalOutputCharacterLimit: terminalOutputCharacterLimit ?? DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT,
 			terminalShellIntegrationTimeout: terminalShellIntegrationTimeout ?? Terminal.defaultShellIntegrationTimeout,
 			terminalShellIntegrationDisabled: terminalShellIntegrationDisabled ?? false,
-			terminalCommandDelay: terminalCommandDelay ?? 0,
+			terminalCommandDelay: terminalCommandDelay ?? 150,
 			terminalPowershellCounter: terminalPowershellCounter ?? false,
 			terminalZshClearEolMark: terminalZshClearEolMark ?? true,
 			terminalZshOhMy: terminalZshOhMy ?? false,
@@ -1994,7 +2041,7 @@ export class ClineProvider
 			experiments: experiments ?? experimentDefault,
 			mcpServers: this.mcpHub?.getAllServers() ?? [],
 			maxOpenTabsContext: maxOpenTabsContext ?? 20,
-			maxWorkspaceFiles: maxWorkspaceFiles ?? 200,
+			maxWorkspaceFiles: maxWorkspaceFiles ?? 300,
 			cwd,
 			browserToolEnabled: browserToolEnabled ?? true,
 			telemetrySetting,
@@ -2013,6 +2060,7 @@ export class ClineProvider
 			hasSystemPromptOverride,
 			historyPreviewCollapsed: historyPreviewCollapsed ?? false,
 			reasoningBlockCollapsed: reasoningBlockCollapsed ?? true,
+			apiRequestBlockHide: apiRequestBlockHide ?? true,
 			cloudUserInfo,
 			cloudIsAuthenticated: cloudIsAuthenticated ?? false,
 			// cloudOrganizations,
@@ -2037,13 +2085,15 @@ export class ClineProvider
 			// undefined means no MDM policy, true means compliant, false means non-compliant
 			mdmCompliant: this.mdmService?.requiresCloudAuth() ? this.checkMdmCompliance() : undefined,
 			profileThresholds: profileThresholds ?? {},
-			cloudApiUrl: getRooCodeApiUrl(),
+			// cloudApiUrl: getRooCodeApiUrl(),
 			hasOpenedModeSelector: this.getGlobalState("hasOpenedModeSelector") ?? false,
 			alwaysAllowFollowupQuestions: alwaysAllowFollowupQuestions ?? false,
 			followupAutoApproveTimeoutMs: followupAutoApproveTimeoutMs ?? 60000,
 			includeDiagnosticMessages: includeDiagnosticMessages ?? true,
 			maxDiagnosticMessages: maxDiagnosticMessages ?? 50,
 			includeTaskHistoryInEnhance: includeTaskHistoryInEnhance ?? true,
+			includeCurrentTime: includeCurrentTime ?? true,
+			includeCurrentCost: includeCurrentCost ?? true,
 			taskSyncEnabled,
 			remoteControlEnabled,
 			openRouterImageApiKey,
@@ -2182,6 +2232,7 @@ export class ClineProvider
 			enableCheckpoints: stateValues.enableCheckpoints ?? true,
 			useZgsmCustomConfig: stateValues.useZgsmCustomConfig ?? false,
 			zgsmCodebaseIndexEnabled: stateValues.zgsmCodebaseIndexEnabled ?? true,
+			checkpointTimeout: stateValues.checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			soundVolume: stateValues.soundVolume,
 			browserViewportSize: stateValues.browserViewportSize ?? "900x600",
 			screenshotQuality: stateValues.screenshotQuality ?? 75,
@@ -2196,7 +2247,7 @@ export class ClineProvider
 			terminalShellIntegrationTimeout:
 				stateValues.terminalShellIntegrationTimeout ?? Terminal.defaultShellIntegrationTimeout,
 			terminalShellIntegrationDisabled: stateValues.terminalShellIntegrationDisabled ?? false,
-			terminalCommandDelay: stateValues.terminalCommandDelay ?? 0,
+			terminalCommandDelay: stateValues.terminalCommandDelay ?? 150,
 			terminalPowershellCounter: stateValues.terminalPowershellCounter ?? false,
 			terminalZshClearEolMark: stateValues.terminalZshClearEolMark ?? true,
 			terminalZshOhMy: stateValues.terminalZshOhMy ?? false,
@@ -2221,7 +2272,7 @@ export class ClineProvider
 			autoApprovalEnabled: stateValues.autoApprovalEnabled ?? false,
 			customModes,
 			maxOpenTabsContext: stateValues.maxOpenTabsContext ?? 20,
-			maxWorkspaceFiles: stateValues.maxWorkspaceFiles ?? 200,
+			maxWorkspaceFiles: stateValues.maxWorkspaceFiles ?? 300,
 			openRouterUseMiddleOutTransform: stateValues.openRouterUseMiddleOutTransform,
 			browserToolEnabled: stateValues.browserToolEnabled ?? true,
 			telemetrySetting: stateValues.telemetrySetting || "unset",
@@ -2233,6 +2284,7 @@ export class ClineProvider
 			maxConcurrentFileReads: stateValues.maxConcurrentFileReads ?? 5,
 			historyPreviewCollapsed: stateValues.historyPreviewCollapsed ?? false,
 			reasoningBlockCollapsed: stateValues.reasoningBlockCollapsed ?? true,
+			apiRequestBlockHide: stateValues.apiRequestBlockHide ?? true,
 			cloudUserInfo,
 			cloudIsAuthenticated,
 			sharingEnabled,
@@ -2262,6 +2314,8 @@ export class ClineProvider
 			maxDiagnosticMessages: stateValues.maxDiagnosticMessages ?? 50,
 			includeTaskHistoryInEnhance: stateValues.includeTaskHistoryInEnhance ?? true,
 			taskSyncEnabled: false,
+			includeCurrentTime: stateValues.includeCurrentTime ?? true,
+			includeCurrentCost: stateValues.includeCurrentCost ?? true,
 			remoteControlEnabled: (() => {
 				return false
 				// try {
@@ -2373,7 +2427,7 @@ export class ClineProvider
 				}
 			}
 
-			sendZgsmCloseWindow(vscode.env.sessionId)
+			sendZgsmCloseWindow(generateNewSessionClientId())
 			await delay(1000)
 			await vscode.commands.executeCommand("workbench.action.closeWindow")
 		} catch (error) {
@@ -2496,7 +2550,7 @@ export class ClineProvider
 		await BridgeOrchestrator.connectOrDisconnect(userInfo, enabled, {
 			...config,
 			provider: this,
-			sessionId: vscode.env.sessionId,
+			sessionId: generateNewSessionClientId(),
 			isCloudAgent: CloudService.instance.isCloudAgent,
 		})
 
@@ -2690,6 +2744,7 @@ export class ClineProvider
 			organizationAllowList,
 			diffEnabled: enableDiff,
 			enableCheckpoints,
+			checkpointTimeout,
 			fuzzyMatchThreshold,
 			experiments,
 			cloudUserInfo,
@@ -2705,6 +2760,7 @@ export class ClineProvider
 			apiConfiguration,
 			enableDiff,
 			enableCheckpoints,
+			checkpointTimeout,
 			fuzzyMatchThreshold,
 			consecutiveMistakeLimit: apiConfiguration.consecutiveMistakeLimit,
 			task: text,
@@ -2737,24 +2793,13 @@ export class ClineProvider
 
 		console.log(`[cancelTask] cancelling task ${task.taskId}.${task.instanceId}`)
 
-		const { historyItem, uiMessagesFilePath } = await this.getTaskWithId(task.taskId)
-
-		// Preserve parent and root task information for history item.
-		const rootTask = task.rootTask
-		const parentTask = task.parentTask
-
-		// Mark this as a user-initiated cancellation so provider-only rehydration can occur
+		// Mark this as a user-initiated cancellation
 		task.abortReason = "user_cancelled"
 
-		// Capture the current instance to detect if rehydrate already occurred elsewhere
-		const originalInstanceId = task.instanceId
+		// Soft abort (isAbandoned = false) to keep the instance alive
+		await task.abortTask(false)
 
-		// Begin abort (non-blocking)
-		task.abortTask()
-
-		// Immediately mark the original instance as abandoned to prevent any residual activity
-		task.abandoned = true
-
+		// Wait for abort to complete
 		await pWaitFor(
 			() =>
 				this.getCurrentTask()! === undefined ||
@@ -2770,31 +2815,53 @@ export class ClineProvider
 		).catch(() => {
 			console.error("Failed to abort task")
 		})
-
 		task?.api?.cancelChat?.(task.abortReason)
-
-		// Defensive safeguard: if current instance already changed, skip rehydrate
-		const current = this.getCurrentTask()
-		if (current && current.instanceId !== originalInstanceId) {
-			this.log(
-				`[cancelTask] Skipping rehydrate: current instance ${current.instanceId} != original ${originalInstanceId}`,
-			)
-			return
-		}
-
-		// Final race check before rehydrate to avoid duplicate rehydration
-		{
-			const currentAfterCheck = this.getCurrentTask()
-			if (currentAfterCheck && currentAfterCheck.instanceId !== originalInstanceId) {
-				this.log(
-					`[cancelTask] Skipping rehydrate after final check: current instance ${currentAfterCheck.instanceId} != original ${originalInstanceId}`,
-				)
-				return
+		// Deterministic spinner stop: If the last api_req_started has no cost and no cancelReason,
+		// inject cancelReason to stop the spinner
+		try {
+			let lastApiReqStartedIndex = -1
+			for (let i = task.clineMessages.length - 1; i >= 0; i--) {
+				if (task.clineMessages[i].type === "say" && task.clineMessages[i].say === "api_req_started") {
+					lastApiReqStartedIndex = i
+					break
+				}
 			}
+
+			if (lastApiReqStartedIndex !== -1) {
+				const lastApiReqStarted = task.clineMessages[lastApiReqStartedIndex]
+				const apiReqInfo = safeJsonParse<{ cost?: number; cancelReason?: string }>(
+					lastApiReqStarted.text || "{}",
+					{},
+				)
+
+				if (apiReqInfo && apiReqInfo.cost === undefined && apiReqInfo.cancelReason === undefined) {
+					apiReqInfo.cancelReason = "user_cancelled"
+					lastApiReqStarted.text = JSON.stringify(apiReqInfo)
+					await task.overwriteClineMessages([...task.clineMessages])
+					console.log(`[cancelTask] Injected cancelReason for deterministic spinner stop`)
+				}
+			}
+		} catch (error) {
+			console.error(`[cancelTask] Failed to inject cancelReason:`, error)
 		}
 
-		// Clears task again, so we need to abortTask manually above.
-		await this.createTaskWithHistoryItem({ ...historyItem, rootTask, parentTask })
+		// Update UI immediately to reflect current state
+		await this.postStateToWebview()
+
+		// Schedule non-blocking resumption to present "Resume Task" ask
+		// Use setImmediate to avoid blocking the webview handler
+		setImmediate(() => {
+			if (task && !task.abandoned) {
+				// Present a resume ask without rehydrating - just show the Resume/Terminate UI
+				task.presentResumableAsk().catch((error) => {
+					console.error(
+						`[cancelTask] Failed to present resume ask: ${
+							error instanceof Error ? error.message : String(error)
+						}`,
+					)
+				})
+			}
+		})
 	}
 
 	// Clear the current task without treating it as a subtask.

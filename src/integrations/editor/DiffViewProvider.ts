@@ -18,7 +18,7 @@ import { DEFAULT_WRITE_DELAY_MS } from "@roo-code/types"
 import { DecorationController } from "./DecorationController"
 
 export const DIFF_VIEW_URI_SCHEME = "cline-diff"
-export const DIFF_VIEW_LABEL_CHANGES = "Original ↔ Costrict's Changes"
+export const DIFF_VIEW_LABEL_CHANGES = "Original ↔ CoStrict's Changes"
 
 // TODO: https://github.com/cline/cline/pull/3354
 export class DiffViewProvider {
@@ -55,8 +55,8 @@ export class DiffViewProvider {
 		// If the file is already open, ensure it's not dirty before getting its
 		// contents.
 		if (fileExists) {
-			const existingDocument = vscode.workspace.textDocuments.find((doc) =>
-				arePathsEqual(doc.uri.fsPath, absolutePath),
+			const existingDocument = vscode.workspace.textDocuments.find(
+				(doc) => doc.uri.scheme === "file" && arePathsEqual(doc.uri.fsPath, absolutePath),
 			)
 
 			if (existingDocument && existingDocument.isDirty) {
@@ -92,7 +92,10 @@ export class DiffViewProvider {
 			.map((tg) => tg.tabs)
 			.flat()
 			.filter(
-				(tab) => tab.input instanceof vscode.TabInputText && arePathsEqual(tab.input.uri.fsPath, absolutePath),
+				(tab) =>
+					tab.input instanceof vscode.TabInputText &&
+					tab.input.uri.scheme === "file" &&
+					arePathsEqual(tab.input.uri.fsPath, absolutePath),
 			)
 
 		for (const tab of tabs) {
@@ -208,21 +211,33 @@ export class DiffViewProvider {
 			await updatedDocument.save()
 		}
 
-		await vscode.window.showTextDocument(vscode.Uri.file(absolutePath), { preview: false, preserveFocus: true })
+		const editor = await vscode.window.showTextDocument(vscode.Uri.file(absolutePath), {
+			preview: false,
+			preserveFocus: true,
+		})
+
 		await this.closeAllDiffViews()
+
+		// Position cursor at first change asynchronously to avoid blocking diagnostics
+		if (this.originalContent !== undefined && this.newContent !== undefined) {
+			// Use setTimeout to make cursor positioning non-blocking
+			setTimeout(() => {
+				this.positionCursorAtFirstChange(editor, this.originalContent!, this.newContent!)
+			}, 0)
+		}
 
 		// Getting diagnostics before and after the file edit is a better approach than
 		// automatically tracking problems in real-time. This method ensures we only
 		// report new problems that are a direct result of this specific edit.
-		// Since these are new problems resulting from Costrict's edit, we know they're
-		// directly related to the work he's doing. This eliminates the risk of Costrict
+		// Since these are new problems resulting from CoStrict's edit, we know they're
+		// directly related to the work he's doing. This eliminates the risk of CoStrict
 		// going off-task or getting distracted by unrelated issues, which was a problem
 		// with the previous auto-debug approach. Some users' machines may be slow to
 		// update diagnostics, so this approach provides a good balance between automation
-		// and avoiding potential issues where Costrict might get stuck in loops due to
+		// and avoiding potential issues where CoStrict might get stuck in loops due to
 		// outdated problem information. If no new problems show up by the time the user
 		// accepts the changes, they can always debug later using the '@problems' mention.
-		// This way, Costrict only becomes aware of new problems resulting from his edits
+		// This way, CoStrict only becomes aware of new problems resulting from his edits
 		// and can address them accordingly. If problems don't change immediately after
 		// applying a fix, won't be notified, which is generally fine since the
 		// initial fix is usually correct and it may just take time for linters to catch up.
@@ -288,7 +303,7 @@ export class DiffViewProvider {
 
 			return { newProblemsMessage, userEdits, finalContent: normalizedEditedContent }
 		} else {
-			// No changes to Costrict's edits.
+			// No changes to CoStrict's edits.
 			// Store the results as class properties for formatFileWriteResponse to use
 			this.newProblemsMessage = newProblemsMessage
 			this.userEdits = undefined
@@ -510,13 +525,14 @@ export class DiffViewProvider {
 			// Listen for document open events - more efficient than scanning all tabs
 			disposables.push(
 				vscode.workspace.onDidOpenTextDocument(async (document) => {
-					if (arePathsEqual(document.uri.fsPath, uri.fsPath)) {
+					// Only match file:// scheme documents to avoid git diffs
+					if (document.uri.scheme === "file" && arePathsEqual(document.uri.fsPath, uri.fsPath)) {
 						// Wait a tick for the editor to be available
 						await new Promise((r) => setTimeout(r, 0))
 
 						// Find the editor for this document
-						const editor = vscode.window.visibleTextEditors.find((e) =>
-							arePathsEqual(e.document.uri.fsPath, uri.fsPath),
+						const editor = vscode.window.visibleTextEditors.find(
+							(e) => e.document.uri.scheme === "file" && arePathsEqual(e.document.uri.fsPath, uri.fsPath),
 						)
 
 						if (editor) {
@@ -530,7 +546,11 @@ export class DiffViewProvider {
 			// Also listen for visible editor changes as a fallback
 			disposables.push(
 				vscode.window.onDidChangeVisibleTextEditors((editors) => {
-					const editor = editors.find((e) => arePathsEqual(e.document.uri.fsPath, uri.fsPath))
+					const editor = editors.find((e) => {
+						const isFileScheme = e.document.uri.scheme === "file"
+						const pathMatches = arePathsEqual(e.document.uri.fsPath, uri.fsPath)
+						return isFileScheme && pathMatches
+					})
 					if (editor) {
 						cleanup()
 						resolve(editor)
@@ -604,6 +624,23 @@ export class DiffViewProvider {
 		}
 	}
 
+	/**
+	 * Position cursor at the first change in the file
+	 * @param editor - The text editor to position cursor in
+	 * @param originalContent - Original file content
+	 * @param newContent - New file content
+	 */
+	private positionCursorAtFirstChange(editor: vscode.TextEditor, originalContent: string, newContent: string) {
+		const changedLine = getFirstChangedNewLine(originalContent, newContent)
+
+		if (changedLine !== null) {
+			const lineIndex = changedLine - 1
+			const pos = new vscode.Position(lineIndex, 0)
+			editor.selection = new vscode.Selection(pos, pos)
+			editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter)
+		}
+	}
+
 	private stripAllBOMs(input: string): string {
 		let result = input
 		let previous
@@ -658,15 +695,23 @@ export class DiffViewProvider {
 		// Write the content directly to the file with encoding preservation
 		await createDirectoriesForFile(absolutePath)
 		await writeFileWithEncodingPreservation(absolutePath, content)
+		await delay(100) // Wait for directories to be created
 
 		// Open the document to ensure diagnostics are loaded
 		// When openFile is false (PREVENT_FOCUS_DISRUPTION enabled), we only open in memory
 		if (openFile) {
 			// Show the document in the editor
-			await vscode.window.showTextDocument(vscode.Uri.file(absolutePath), {
+			const editor = await vscode.window.showTextDocument(vscode.Uri.file(absolutePath), {
 				preview: false,
 				preserveFocus: true,
 			})
+
+			// Position cursor at first change asynchronously to avoid blocking diagnostics
+			if (this.originalContent !== undefined) {
+				setTimeout(() => {
+					this.positionCursorAtFirstChange(editor, this.originalContent!, content)
+				}, 0)
+			}
 		} else {
 			// Just open the document in memory to trigger diagnostics without showing it
 			const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(absolutePath))
@@ -724,4 +769,25 @@ export class DiffViewProvider {
 			finalContent: content,
 		}
 	}
+}
+
+function getFirstChangedNewLine(original: string, modified: string): number | null {
+	const diffs = diff.diffLines(original, modified)
+
+	let newLine = 0
+
+	for (let i = 0; i < diffs.length; i++) {
+		const part = diffs[i]
+		const lineCount = part.value.split("\n").length - 1
+
+		if (part.added || part.removed) {
+			return newLine + 1
+		}
+
+		if (!part.removed) {
+			newLine += lineCount
+		}
+	}
+
+	return null
 }

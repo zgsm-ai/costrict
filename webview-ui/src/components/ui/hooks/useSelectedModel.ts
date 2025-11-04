@@ -12,6 +12,8 @@ import {
 	deepSeekModels,
 	moonshotDefaultModelId,
 	moonshotModels,
+	minimaxDefaultModelId,
+	minimaxModels,
 	geminiDefaultModelId,
 	geminiModels,
 	mistralDefaultModelId,
@@ -25,7 +27,6 @@ import {
 	xaiModels,
 	groqModels,
 	groqDefaultModelId,
-	chutesModels,
 	chutesDefaultModelId,
 	vscodeLlmModels,
 	vscodeLlmDefaultModelId,
@@ -55,12 +56,12 @@ import {
 	ioIntelligenceDefaultModelId,
 	ioIntelligenceModels,
 	rooDefaultModelId,
-	rooModels,
 	qwenCodeDefaultModelId,
 	qwenCodeModels,
 	vercelAiGatewayDefaultModelId,
 	BEDROCK_1M_CONTEXT_MODEL_IDS,
 	deepInfraDefaultModelId,
+	isDynamicProvider,
 } from "@roo-code/types"
 
 import type { ModelRecord, RouterModels } from "@roo/api"
@@ -77,23 +78,38 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 	const lmStudioModelId = provider === "lmstudio" ? apiConfiguration?.lmStudioModelId : undefined
 	const ollamaModelId = provider === "ollama" ? apiConfiguration?.ollamaModelId : undefined
 
-	const routerModels = useRouterModels()
+	// Only fetch router models for dynamic providers
+	const shouldFetchRouterModels = isDynamicProvider(provider)
+	const routerModels = useRouterModels({
+		provider: shouldFetchRouterModels ? provider : undefined,
+		enabled: shouldFetchRouterModels,
+	})
+
 	const openRouterModelProviders = useOpenRouterModelProviders(openRouterModelId)
 	const lmStudioModels = useLmStudioModels(lmStudioModelId)
 	const ollamaModels = useOllamaModels(ollamaModelId)
+
+	// Compute readiness only for the data actually needed for the selected provider
+	const needRouterModels = shouldFetchRouterModels
+	const needOpenRouterProviders = provider === "openrouter"
+	const needLmStudio = typeof lmStudioModelId !== "undefined"
+	const needOllama = typeof ollamaModelId !== "undefined"
+
+	const isReady =
+		(!needLmStudio || typeof lmStudioModels.data !== "undefined") &&
+		(!needOllama || typeof ollamaModels.data !== "undefined") &&
+		(!needRouterModels || typeof routerModels.data !== "undefined") &&
+		(!needOpenRouterProviders || typeof openRouterModelProviders.data !== "undefined")
+
 	const { id, info } =
-		apiConfiguration &&
-		(typeof lmStudioModelId === "undefined" || typeof lmStudioModels.data !== "undefined") &&
-		(typeof ollamaModelId === "undefined" || typeof ollamaModels.data !== "undefined") &&
-		typeof routerModels.data !== "undefined" &&
-		typeof openRouterModelProviders.data !== "undefined"
+		apiConfiguration && isReady
 			? getSelectedModel({
 					provider,
 					apiConfiguration,
-					routerModels: routerModels.data,
-					openRouterModelProviders: openRouterModelProviders.data,
-					lmStudioModels: lmStudioModels.data,
-					ollamaModels: ollamaModels.data,
+					routerModels: (routerModels.data || {}) as RouterModels,
+					openRouterModelProviders: (openRouterModelProviders.data || {}) as Record<string, ModelInfo>,
+					lmStudioModels: (lmStudioModels.data || undefined) as ModelRecord | undefined,
+					ollamaModels: (ollamaModels.data || undefined) as ModelRecord | undefined,
 				})
 			: {
 					id: apiConfiguration?.zgsmModelId || apiConfiguration?.apiModelId || zgsmDefaultModelId,
@@ -105,13 +121,15 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 		id,
 		info,
 		isLoading:
-			routerModels.isLoading ||
-			openRouterModelProviders.isLoading ||
-			(apiConfiguration?.lmStudioModelId && lmStudioModels!.isLoading),
+			(needRouterModels && routerModels.isLoading) ||
+			(needOpenRouterProviders && openRouterModelProviders.isLoading) ||
+			(needLmStudio && lmStudioModels!.isLoading) ||
+			(needOllama && ollamaModels!.isLoading),
 		isError:
-			routerModels.isError ||
-			openRouterModelProviders.isError ||
-			(apiConfiguration?.lmStudioModelId && lmStudioModels!.isError),
+			(needRouterModels && routerModels.isError) ||
+			(needOpenRouterProviders && openRouterModelProviders.isError) ||
+			(needLmStudio && lmStudioModels!.isError) ||
+			(needOllama && ollamaModels!.isError),
 	}
 }
 
@@ -216,7 +234,7 @@ function getSelectedModel({
 		}
 		case "chutes": {
 			const id = apiConfiguration.apiModelId ?? chutesDefaultModelId
-			const info = chutesModels[id as keyof typeof chutesModels]
+			const info = routerModels.chutes[id]
 			return { id, info }
 		}
 		case "bedrock": {
@@ -273,8 +291,13 @@ function getSelectedModel({
 			const info = moonshotModels[id as keyof typeof moonshotModels]
 			return { id, info }
 		}
+		case "minimax": {
+			const id = apiConfiguration.apiModelId ?? minimaxDefaultModelId
+			const info = minimaxModels[id as keyof typeof minimaxModels]
+			return { id, info }
+		}
 		case "zai": {
-			const isChina = apiConfiguration.zaiApiLine === "china"
+			const isChina = apiConfiguration.zaiApiLine === "china_coding"
 			const models = isChina ? mainlandZAiModels : internationalZAiModels
 			const defaultModelId = isChina ? mainlandZAiDefaultModelId : internationalZAiDefaultModelId
 			const id = apiConfiguration.apiModelId ?? defaultModelId
@@ -366,21 +389,10 @@ function getSelectedModel({
 			return { id, info }
 		}
 		case "roo": {
-			const requestedId = apiConfiguration.apiModelId
-
-			// Check if the requested model exists in rooModels
-			if (requestedId && rooModels[requestedId as keyof typeof rooModels]) {
-				return {
-					id: requestedId,
-					info: rooModels[requestedId as keyof typeof rooModels],
-				}
-			}
-
-			// Fallback to default model if requested model doesn't exist or is not specified
-			return {
-				id: rooDefaultModelId,
-				info: rooModels[rooDefaultModelId as keyof typeof rooModels],
-			}
+			// Roo is a dynamic provider - models are loaded from API
+			const id = apiConfiguration.apiModelId ?? rooDefaultModelId
+			const info = routerModels.roo[id]
+			return { id, info }
 		}
 		case "qwen-code": {
 			const id = apiConfiguration.apiModelId ?? qwenCodeDefaultModelId

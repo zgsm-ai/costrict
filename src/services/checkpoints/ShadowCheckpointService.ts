@@ -109,7 +109,7 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 			await git.init()
 			await git.addConfig("core.worktree", this.workspaceDir) // Sets the working tree to the current workspace.
 			await git.addConfig("commit.gpgSign", "false") // Disable commit signing for shadow repo.
-			await git.addConfig("user.name", "Costrict")
+			await git.addConfig("user.name", "CoStrict")
 			await git.addConfig("user.email", "noreply@example.com")
 			await this.writeExcludeFile()
 			await this.stageAll(git)
@@ -152,7 +152,7 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 
 	private async stageAll(git: SimpleGit) {
 		try {
-			await git.add(".")
+			await git.add([".", "--ignore-errors"])
 		} catch (error) {
 			this.log(
 				`[${this.constructor.name}#stageAll] failed to add files to git: ${error instanceof Error ? error.message : String(error)}`,

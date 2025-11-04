@@ -1,4 +1,65 @@
-# Costrict Change Log
+# CoStrict Change Log
+
+## [2.0.7]
+
+- Delete legacy api and add timeout handling
+- Add auto discount
+- Sync roocode [last commit](https://github.com/zgsm-ai/costrict/commit/5fb36d9c852f412d05e2e980b8af11b28ef30a3f)
+- Fix known issues
+
+## [2.0.6]
+
+- Optimized auto completion
+- simplify custom instructions
+- Updated zgsm provider default temperature
+- Optimized logging
+- Sync roocode [last commit](https://github.com/zgsm-ai/costrict/commit/ca10cba3c4634d8b15e83423ea7abb374a3f82b6)
+- Fix known issues
+
+## [2.0.5]
+
+- Optimized request sending speed
+- Reduced file read/write handle usage
+- Optimized shell/non-shell integration compatibility and command execution efficiency
+- Updated brand name to CoStrict
+- Compatible with [jetbrains codereview](https://github.com/zgsm-ai/costrict-jetbrains-agent)
+- Added review mode request headers
+- Optimized static file size
+- Optimized conversation memory usage
+- Fixed background silent editing Chinese encoding issues
+- Optimized shell integration prompts
+- Optimized readfile prompts
+- Optimized tool logs
+- Sync roocode [last commit](https://github.com/zgsm-ai/costrict/commit/ff0c65af10064cc63626ce500800a8c388a1c6b4)
+- Fix known issues
+
+## [2.0.4]
+
+- Add support for project spec commands from .cospec directory (#583)
+- Sync roocode [last commit](https://github.com/zgsm-ai/costrict/commit/97331bcb2edbaece9a395ae20a3db05fffef8fc5)
+- Fix known issues
+
+## [2.0.3]
+
+- Add mode toggle with vibe/strict options in ModeSelector (#564)
+- Fix: update isInvalidId function to include additional invalid machine ID (#567)
+- Add error tracking with raw error storage enhancement (#569)
+- Add client ID header to API requests for completion (#570)
+- Refactor code-review to simplify startReview method (#572)
+- Add cursor positioning to first change after file save (#573)
+- Update default limits and delays, refactor follow-up countdown handling (#575)
+- Fix K2 model output truncation
+- Optimized CodeReview
+- Updated workflow prompts
+- Optimized api request performance and memory usage
+- Sync roocode [last commit](https://github.com/zgsm-ai/costrict/commit/ab9a48578c02f28403dd5644781ecd07d0c82a84)
+- Fix known issues
+
+## [2.0.2]
+
+- Optimized CodeReview
+- Sync roocode [last commit](https://github.com/zgsm-ai/costrict/commit/270dce5050f270aa30a2b39f5a84b931525a7a22)
+- Fix known issues
 
 ## [2.0.1]
 
@@ -23,7 +84,7 @@
 - Improve type definitions and global settings
 - Add AI-assisted review suggestion
 - Add commit model setting
-- Optimization costrict provider api performance
+- Optimization CoStrict provider api performance
 - Fix known issues
 
 ## [1.6.19]
@@ -94,7 +155,7 @@
 
 ## [1.6.11]
 
-- Adds models refresh for costrict provider
+- Adds models refresh for CoStrict provider
 - Add line navigation for file jumps in chat interface
 - Implement chat cancellation and improve search functionality
 - Enhance metrics loading and pushing logic in PrometheusTelemetryClient
@@ -317,7 +378,7 @@
 
 ## [1.4.2]
 
-- Update Costrict provider and error handling improvements
+- Update CoStrict provider and error handling improvements
 - Update vscode engine requirement to ^1.86.2
 
 ## [1.4.1]

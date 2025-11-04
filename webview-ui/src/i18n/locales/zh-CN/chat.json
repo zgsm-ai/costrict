@@ -149,6 +149,9 @@
 		"initializingWarning": "正在初始化检查点...如果耗时过长，你可以在<settingsLink>设置</settingsLink>中禁用检查点并重新启动任务。",
 		"menu": {
 			"viewDiff": "查看差异",
+			"more": "更多选项",
+			"viewDiffFromInit": "查看所有更改",
+			"viewDiffWithCurrent": "查看自此检查点以来的更改",
 			"restore": "恢复检查点",
 			"restoreFiles": "恢复文件",
 			"restoreFilesDescription": "将项目文件恢复到此检查点状态",
@@ -268,6 +271,7 @@
 		"toggleAriaLabel": "切换自动批准",
 		"disabledAriaLabel": "自动批准已禁用 - 请先选择选项",
 		"triggerLabelOff": "自动批准已关闭",
+		"triggerLabelOffShort": "关闭",
 		"triggerLabel_zero": "0 个自动批准",
 		"triggerLabel_one": "1 个自动批准",
 		"triggerLabel_other": "{{count}} 个自动批准",
@@ -297,6 +301,19 @@
 			"selectModel": "在设置中从 Roo Code Cloud 提供商选择 <code>roo/code-supernova</code> 开始使用。",
 			"goToSettingsButton": "前往设置"
 		},
+		"release": {
+			"heading": "扩展新功能：",
+			"openRouterEmbeddings": "支持 OpenRouter 嵌入模型",
+			"chutesDynamic": "Chutes 现在动态加载最新模型",
+			"queuedMessagesFix": "修复队列消息丢失问题"
+		},
+		"cloudAgents": {
+			"heading": "云端新功能：",
+			"prFixer": "推出 <bold>PR Fixer</bold> 云端 Agent 以补充 PR 审查员。",
+			"prFixerDescription": "Roo Code 的 PR Fixer 直接在 GitHub 上为你的 PR 应用高质量更改。通过 PR 评论调用，它会读取整个评论历史以理解上下文、协议和权衡 - 然后实施正确的修复。",
+			"tryPrFixerButton": "试用 PR Fixer"
+		},
+		"careers": "此外，<careersLink>我们正在招聘！</careersLink>",
 		"socialLinks": "在 <xLink>X</xLink>、<discordLink>Discord</discordLink> 或 <redditLink>r/RooCode</redditLink> 上关注我们 🚀"
 	},
 	"browser": {
@@ -419,5 +436,12 @@
 			"description": "Roo已经达到了${{count}}的自动批准成本限制。您想重置成本并继续任务吗？",
 			"button": "重置并继续"
 		}
+	},
+	"cloudAgents": {
+		"create": "创建",
+		"title": "云代理",
+		"description": "您还没有创建任何云代理。",
+		"createFirst": "创建您的第一个",
+		"clickToRun": "点击运行 {{name}}"
 	}
 }

@@ -153,6 +153,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		enableCheckpoints,
 		useZgsmCustomConfig,
 		zgsmCodebaseIndexEnabled,
+		checkpointTimeout,
 		diffEnabled,
 		experiments,
 		fuzzyMatchThreshold,
@@ -199,6 +200,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		openRouterImageApiKey,
 		openRouterImageGenerationSelectedModel,
 		reasoningBlockCollapsed,
+		apiRequestBlockHide,
+		includeCurrentTime,
+		includeCurrentCost,
 	} = cachedState
 
 	const apiConfiguration = useMemo(() => cachedState.apiConfiguration ?? {}, [cachedState.apiConfiguration])
@@ -346,6 +350,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			vscode.postMessage({ type: "enableCheckpoints", bool: enableCheckpoints })
 			vscode.postMessage({ type: "useZgsmCustomConfig", bool: useZgsmCustomConfig })
 			vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: zgsmCodebaseIndexEnabled })
+			vscode.postMessage({ type: "checkpointTimeout", value: checkpointTimeout })
 			vscode.postMessage({ type: "browserViewportSize", text: browserViewportSize })
 			vscode.postMessage({ type: "remoteBrowserHost", text: remoteBrowserHost })
 			vscode.postMessage({ type: "remoteBrowserEnabled", bool: remoteBrowserEnabled })
@@ -354,7 +359,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			vscode.postMessage({ type: "screenshotQuality", value: screenshotQuality ?? 75 })
 			vscode.postMessage({ type: "terminalOutputLineLimit", value: terminalOutputLineLimit ?? 500 })
 			vscode.postMessage({ type: "terminalOutputCharacterLimit", value: terminalOutputCharacterLimit ?? 50000 })
-			vscode.postMessage({ type: "maxReadCharacterLimit", value: maxReadCharacterLimit ?? 30000 })
+			vscode.postMessage({ type: "maxReadCharacterLimit", value: maxReadCharacterLimit ?? 40000 })
 			vscode.postMessage({ type: "terminalShellIntegrationTimeout", value: terminalShellIntegrationTimeout })
 			vscode.postMessage({ type: "terminalShellIntegrationDisabled", bool: terminalShellIntegrationDisabled })
 			vscode.postMessage({ type: "terminalCommandDelay", value: terminalCommandDelay })
@@ -368,7 +373,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			vscode.postMessage({ type: "alwaysApproveResubmit", bool: alwaysApproveResubmit })
 			vscode.postMessage({ type: "requestDelaySeconds", value: requestDelaySeconds })
 			vscode.postMessage({ type: "maxOpenTabsContext", value: maxOpenTabsContext })
-			vscode.postMessage({ type: "maxWorkspaceFiles", value: maxWorkspaceFiles ?? 200 })
+			vscode.postMessage({ type: "maxWorkspaceFiles", value: maxWorkspaceFiles ?? 300 })
 			vscode.postMessage({ type: "showRooIgnoredFiles", bool: showRooIgnoredFiles })
 			vscode.postMessage({ type: "maxReadFileLine", value: maxReadFileLine ?? 500 })
 			vscode.postMessage({ type: "maxImageFileSize", value: maxImageFileSize ?? 5 })
@@ -382,7 +387,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			vscode.postMessage({ type: "alwaysAllowSubtasks", bool: alwaysAllowSubtasks })
 			vscode.postMessage({ type: "alwaysAllowFollowupQuestions", bool: alwaysAllowFollowupQuestions })
 			vscode.postMessage({ type: "alwaysAllowUpdateTodoList", bool: alwaysAllowUpdateTodoList })
-			vscode.postMessage({ type: "followupAutoApproveTimeoutMs", value: followupAutoApproveTimeoutMs })
+			vscode.postMessage({ type: "followupAutoApproveTimeoutMs", value: followupAutoApproveTimeoutMs ?? 60000 })
 			vscode.postMessage({ type: "condensingApiConfigId", text: condensingApiConfigId || "" })
 			vscode.postMessage({ type: "updateCondensingPrompt", text: customCondensingPrompt || "" })
 			vscode.postMessage({ type: "updateSupportPrompt", values: customSupportPrompts || {} })
@@ -393,6 +398,10 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				apiConfiguration: { ...apiConfiguration, useZgsmCustomConfig, zgsmCodebaseIndexEnabled },
 			})
 			vscode.postMessage({ type: "setReasoningBlockCollapsed", bool: reasoningBlockCollapsed ?? true })
+			vscode.postMessage({ type: "setApiRequestBlockHide", bool: apiRequestBlockHide ?? true })
+			vscode.postMessage({ type: "includeCurrentTime", bool: includeCurrentTime ?? true })
+			vscode.postMessage({ type: "includeCurrentCost", bool: includeCurrentCost ?? true })
+			vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
 			vscode.postMessage({ type: "telemetrySetting", text: telemetrySetting })
 			vscode.postMessage({ type: "profileThresholds", values: profileThresholds })
 			vscode.postMessage({ type: "openRouterImageApiKey", text: openRouterImageApiKey })
@@ -722,6 +731,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					{activeTab === "checkpoints" && (
 						<CheckpointSettings
 							enableCheckpoints={enableCheckpoints}
+							checkpointTimeout={checkpointTimeout}
 							setCachedStateField={setCachedStateField}
 						/>
 					)}
@@ -744,7 +754,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							autoCondenseContextPercent={autoCondenseContextPercent}
 							listApiConfigMeta={listApiConfigMeta ?? []}
 							maxOpenTabsContext={maxOpenTabsContext}
-							maxWorkspaceFiles={maxWorkspaceFiles ?? 200}
+							maxWorkspaceFiles={maxWorkspaceFiles ?? 300}
 							showRooIgnoredFiles={showRooIgnoredFiles}
 							maxReadFileLine={maxReadFileLine}
 							maxReadCharacterLimit={maxReadCharacterLimit}
@@ -756,6 +766,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							includeDiagnosticMessages={includeDiagnosticMessages}
 							maxDiagnosticMessages={maxDiagnosticMessages}
 							writeDelayMs={writeDelayMs}
+							includeCurrentTime={includeCurrentTime}
+							includeCurrentCost={includeCurrentCost}
 							setCachedStateField={setCachedStateField}
 						/>
 					)}
@@ -798,6 +810,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					{activeTab === "ui" && (
 						<UISettings
 							reasoningBlockCollapsed={reasoningBlockCollapsed ?? true}
+							apiRequestBlockHide={apiRequestBlockHide ?? true}
 							setCachedStateField={setCachedStateField}
 						/>
 					)}

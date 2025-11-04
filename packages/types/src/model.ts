@@ -57,15 +57,20 @@ export const modelInfoSchema = z.object({
 	maxThinkingTokens: z.number().nullish(),
 	contextWindow: z.number(),
 	supportsImages: z.boolean().optional(),
-	supportsComputerUse: z.boolean().optional(),
+	// `max_completion_tokens`，`max_tokens` ,undefined
+	maxTokensKey: z.string().optional(),
 	supportsPromptCache: z.boolean(),
 	// Capability flag to indicate whether the model supports an output verbosity parameter
 	supportsVerbosity: z.boolean().optional(),
 	supportsReasoningBudget: z.boolean().optional(),
+	// Capability flag to indicate whether the model supports simple on/off binary reasoning
+	supportsReasoningBinary: z.boolean().optional(),
 	// Capability flag to indicate whether the model supports temperature parameter
 	supportsTemperature: z.boolean().optional(),
 	requiredReasoningBudget: z.boolean().optional(),
 	supportsReasoningEffort: z.boolean().optional(),
+	requiredReasoningEffort: z.boolean().optional(),
+	preserveReasoning: z.boolean().optional(),
 	supportedParameters: z.array(modelParametersSchema).optional(),
 	inputPrice: z.number().optional(),
 	outputPrice: z.number().optional(),
@@ -78,6 +83,11 @@ export const modelInfoSchema = z.object({
 	cachableFields: z.array(z.string()).optional(),
 	// Flag to indicate if the model is deprecated and should not be used
 	deprecated: z.boolean().optional(),
+	// Flag to indicate if the model is free (no cost)
+	isFree: z.boolean().optional(),
+	// Credit consumption and discount for the model
+	creditConsumption: z.number().optional(),
+	creditDiscount: z.number().optional(),
 	/**
 	 * Service tiers with pricing information.
 	 * Each tier can have a name (for OpenAI service tiers) and pricing overrides.

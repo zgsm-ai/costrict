@@ -13,9 +13,9 @@ type CheckpointSavedProps = {
 	checkpoint?: Record<string, unknown>
 }
 
-export const CheckpointSaved = ({ checkpoint, ...props }: CheckpointSavedProps) => {
+export const CheckpointSaved = ({ checkpoint, currentHash, ...props }: CheckpointSavedProps) => {
 	const { t } = useTranslation()
-	const isCurrent = props.currentHash === props.commitHash
+	const isCurrent = currentHash === props.commitHash
 	const [isPopoverOpen, setIsPopoverOpen] = useState(false)
 	const [isClosing, setIsClosing] = useState(false)
 	const closeTimer = useRef<number | null>(null)
@@ -67,7 +67,7 @@ export const CheckpointSaved = ({ checkpoint, ...props }: CheckpointSavedProps) 
 	}
 
 	return (
-		<div className="group flex items-center justify-between gap-2 pt-2 pb-3 ">
+		<div className="group flex items-center justify-between gap-2 pt-2 pb-3 cursor-pointer">
 			<div className="flex items-center gap-2 text-blue-400 whitespace-nowrap">
 				<GitCommitVertical className="w-4" />
 				<span className="font-semibold">{t("chat:checkpoint.regular")}</span>
@@ -85,9 +85,9 @@ export const CheckpointSaved = ({ checkpoint, ...props }: CheckpointSavedProps) 
 				data-testid="checkpoint-menu-container"
 				className={cn("h-4 -mt-2", menuVisible ? "block" : "hidden group-hover:block")}>
 				<CheckpointMenu
-					{...props}
+					ts={props.ts}
+					commitHash={props.commitHash}
 					checkpoint={metadata}
-					open={isPopoverOpen}
 					onOpenChange={handlePopoverOpenChange}
 				/>
 			</div>
