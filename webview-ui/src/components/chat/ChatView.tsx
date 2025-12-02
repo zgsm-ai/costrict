@@ -13,7 +13,7 @@ import { LRUCache } from "lru-cache"
 import { useDebounceEffect } from "@src/utils/useDebounceEffect"
 import { appendImages } from "@src/utils/imageUtils"
 
-import type { ClineAsk, ClineMessage } from "@roo-code/types"
+import type { ClineAsk, ClineMessage, MultipleChoiceResponse } from "@roo-code/types"
 
 import { ClineSayTool, ExtensionMessage } from "@roo/ExtensionMessage"
 import { findLast } from "@roo/array"
@@ -1244,7 +1244,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	)
 
 	const handleMultipleChoiceSubmit = useCallback(
-		(response: import("@roo-code/types").MultipleChoiceResponse) => {
+		(response: MultipleChoiceResponse) => {
 			// Mark that user has responded
 			// userRespondedRef.current = true
 
