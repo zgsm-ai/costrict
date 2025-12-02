@@ -26,6 +26,7 @@ import { executeCommandTool } from "../tools/ExecuteCommandTool"
 import { useMcpToolTool } from "../tools/UseMcpToolTool"
 import { accessMcpResourceTool } from "../tools/accessMcpResourceTool"
 import { askFollowupQuestionTool } from "../tools/AskFollowupQuestionTool"
+import { askMultipleChoiceTool } from "../costrict/plan/askMultipleChoiceTool"
 import { switchModeTool } from "../tools/SwitchModeTool"
 import { attemptCompletionTool, AttemptCompletionCallbacks } from "../tools/AttemptCompletionTool"
 import { newTaskTool } from "../tools/NewTaskTool"
@@ -399,9 +400,11 @@ export async function presentAssistantMessage(cline: Task) {
 						return `[${block.name} for '${block.params.server_name}']`
 					case "access_mcp_resource":
 						return `[${block.name} for '${block.params.server_name}']`
-					case "ask_followup_question":
-						return `[${block.name} for '${block.params.question}']`
-					case "attempt_completion":
+				case "ask_followup_question":
+					return `[${block.name} for '${block.params.question}']`
+				case "ask_multiple_choice":
+					return `[${block.name}${block.params.title ? ` - ${block.params.title}` : ""}]`
+				case "attempt_completion":
 						return `[${block.name}]`
 					case "switch_mode":
 						return `[${block.name} to '${block.params.mode_slug}'${block.params.reason ? ` because: ${block.params.reason}` : ""}]`
@@ -975,6 +978,16 @@ export async function presentAssistantMessage(cline: Task) {
 						removeClosingTag,
 						toolProtocol,
 					})
+					break
+				case "ask_multiple_choice":
+					await askMultipleChoiceTool(
+						cline,
+						block,
+						askApproval,
+						handleError,
+						pushToolResult,
+						removeClosingTag,
+					)
 					break
 				case "switch_mode":
 					await switchModeTool.handle(cline, block as ToolUse<"switch_mode">, {

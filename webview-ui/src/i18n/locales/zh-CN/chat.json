@@ -300,6 +300,25 @@
 		"autoSelectCountdown": "{{count}}秒后自动选择",
 		"countdownDisplay": "{{count}}秒"
 	},
+	"multipleChoice": {
+		"submit": "提交选择",
+		"confirm": "确认",
+		"skip": "跳过",
+		"selectAtLeastOne": "请至少选择一项",
+		"selectMultiple": "可多选",
+		"singleSelect": "单选",
+		"multiSelect": "多选",
+		"submitted": "已提交选择",
+		"questionnaire": "问卷调查",
+		"collapse": "收起",
+		"expand": "展开",
+		"headerTitle": "CoStrict 有如下问题需要您解答：",
+		"needHelp": "CoStrict 有如下问题需要您解答：",
+		"userSkipped": "已跳过",
+		"userConfirmed": "已确认",
+		"header": "为了更好地帮助您，CoStrict 需要了解以下信息，请您协助解答",
+		"skipHint": "如果选项都不满足您的需求，可以点击\"跳过\"或在下方输入框直接说明您的需求"
+	},
 	"announcement": {
 		"title": "🎉 Roo Code {{version}} 已发布",
 		"stealthModel": {

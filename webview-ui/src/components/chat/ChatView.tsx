@@ -290,6 +290,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setSecondaryButtonText(t("chat:startNewTask.title"))
 							break
 						case "followup":
+						case "multiple_choice":							    
 							setSendingDisabled(isPartial)
 							setClineAsk("followup")
 							// setting enable buttons to `false` would trigger a focus grab when
@@ -616,16 +617,17 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					switch (
 						clineAskRef.current // Use clineAskRef.current
 					) {
-						case "followup":
-						case "tool":
-						case "browser_action_launch":
-						case "command": // User can provide feedback to a tool or command use.
-						case "command_output": // User can send input to command stdin.
-						case "use_mcp_server":
-						case "completion_result": // If this happens then the user has feedback for the completion result.
-						case "resume_task":
-						case "resume_completed_task":
-						case "mistake_limit_reached":
+					case "followup":
+					case "multiple_choice":
+					case "tool":
+					case "browser_action_launch":
+					case "command": // User can provide feedback to a tool or command use.
+					case "command_output": // User can send input to command stdin.
+					case "use_mcp_server":
+					case "completion_result": // If this happens then the user has feedback for the completion result.
+					case "resume_task":
+					case "resume_completed_task":
+					case "mistake_limit_reached":
 							vscode.postMessage({
 								type: "askResponse",
 								askResponse: "messageResponse",
@@ -1241,6 +1243,30 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		[setMode],
 	)
 
+	const handleMultipleChoiceSubmit = useCallback(
+		(response: import("@roo-code/types").MultipleChoiceResponse) => {
+			// Mark that user has responded
+			// userRespondedRef.current = true
+
+			// Mark the multiple choice question as answered
+			if (clineAsk === "multiple_choice") {
+				markFollowUpAsAnswered()
+			}
+
+			// Send the response as JSON
+			vscode.postMessage({
+				type: "askResponse",
+				askResponse: "messageResponse",
+				text: JSON.stringify(response),
+			})
+
+			setSendingDisabled(true)
+			setClineAsk(undefined)
+			setEnableButtons(false)
+		},
+		[clineAsk, markFollowUpAsAnswered],
+	)
+
 	const handleSuggestionClickInRow = useCallback(
 		(suggestion: SuggestionItem, event?: React.MouseEvent) => {
 			// Mark that user has responded if this is a manual click (not auto-approval)
@@ -1353,6 +1379,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					onHeightChange={handleRowHeightChange}
 					isStreaming={isStreaming}
 					onSuggestionClick={handleSuggestionClickInRow} // This was already stabilized
+					onMultipleChoiceSubmit={handleMultipleChoiceSubmit}
 					onBatchFileResponse={handleBatchFileResponse}
 					onFollowUpUnmount={handleFollowUpUnmount}
 					isFollowUpAnswered={
@@ -1361,6 +1388,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						primaryButtonText === t("chat:startNewTask.title") ||
 						(currentFollowUpTs != null && messageOrGroup.ts <= currentFollowUpTs)
 					}
+					isMultipleChoiceAnswered={
+						primaryButtonText === t("chat:resumeTask.title") ||
+						primaryButtonText === t("chat:startNewTask.title") ||
+						(currentFollowUpTs != null && messageOrGroup.ts <= currentFollowUpTs)
+					}					
 					editable={
 						messageOrGroup.type === "ask" &&
 						messageOrGroup.ask === "tool" &&
@@ -1396,6 +1428,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			handleSuggestionClickInRow,
 			handleBatchFileResponse,
 			handleFollowUpUnmount,
+			handleMultipleChoiceSubmit,
 			primaryButtonText,
 			t,
 			currentFollowUpTs,

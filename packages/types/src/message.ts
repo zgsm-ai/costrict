@@ -27,6 +27,7 @@ import { z } from "zod"
  */
 export const clineAsks = [
 	"followup",
+	"multiple_choice",
 	"command",
 	"command_output",
 	"completion_result",
@@ -85,6 +86,7 @@ export function isResumableAsk(ask: ClineAsk): ask is ResumableAsk {
 
 export const interactiveAsks = [
 	"followup",
+	"multiple_choice",
 	"command",
 	"tool",
 	"browser_action_launch",

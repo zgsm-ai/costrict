@@ -337,6 +337,25 @@
 		"autoSelectCountdown": "Auto-selecting in {{count}}s",
 		"countdownDisplay": "{{count}}s"
 	},
+	"multipleChoice": {
+		"submit": "Submit",
+		"confirm": "Confirm",
+		"skip": "Skip",
+		"selectAtLeastOne": "Please select at least one option",
+		"selectMultiple": "select multiple",
+		"singleSelect": "single select",
+		"multiSelect": "multiple select",
+		"submitted": "Submitted",
+		"questionnaire": "Questionnaire",
+		"collapse": "Collapse",
+		"expand": "Expand",
+		"headerTitle": "CoStrict has the following questions for you:",
+		"needHelp": "CoStrict has the following questions for you:",
+		"userSkipped": "Skipped",
+		"userConfirmed": "Confirmed",
+		"header": "To better assist you, CoStrict needs the following information. Your help would be appreciated",
+		"skipHint": "If none of the options meet your needs, you can click \"Skip\" or type your requirements in the input box below"
+	},
 	"browser": {
 		"session": "Browser Session",
 		"rooWantsToUse": "Roo wants to use the browser",
