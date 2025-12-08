@@ -126,6 +126,8 @@ export enum ReviewTargetType {
 	FOLDER = "folder",
 	/** Code snippet - review specified line range of code */
 	CODE = "code",
+	/** Commit - review commit */
+	COMMIT = "commit",
 }
 
 /**
@@ -151,13 +153,12 @@ export enum ReviewTargetType {
 export interface ReviewTarget {
 	/** Review target type */
 	type: ReviewTargetType
-	/** File path (relative to workspace root) */
-	file_path: string
-	/** Line range - only valid when type is CODE, format: [start_line, end_line] */
-	line_range?: [number, number]
-}
-
-export interface ReviewPagePayload {
-	isCodebaseReady: boolean
-	targets: ReviewTarget[]
+	/** Commit hash - only valid when type is COMMIT */
+	commit?: string
+	data?: {
+		/** File path (relative to workspace root) */
+		file_path: string
+		/** Line range - only valid when type is CODE, format: [start_line, end_line] */
+		line_range?: [number, number]
+	}[]
 }

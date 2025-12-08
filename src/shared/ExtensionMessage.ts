@@ -145,7 +145,6 @@ export interface ExtensionMessage {
 		| "issueStatusUpdated"
 		| "commands"
 		| "insertTextIntoTextarea"
-		| "reviewPagePayload"
 		| "dismissedUpsells"
 		| "organizationSwitchResult"
 		| "interactionRequired"

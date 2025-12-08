@@ -203,25 +203,25 @@ export class CodeReviewService {
 		this.recordReviewError(CodeReviewErrorType.AuthError as TelemetryErrorType)
 	}
 
-	public async startReview(targets: ReviewTarget[]) {
+	public async startReview(target: ReviewTarget) {
 		const visibleProvider = this.getProvider()
 		if (visibleProvider) {
-			const chatMessage = targets
-				.map((item) => {
-					const { type, file_path } = item
-					if (type === ReviewTargetType.FILE) {
+			const chatMessage = target.data
+				?.map((item) => {
+					const { file_path } = item
+					if (target.type === ReviewTargetType.FILE) {
 						return `@/${file_path}`
-					} else if (type === ReviewTargetType.FOLDER) {
+					} else if (target.type === ReviewTargetType.FOLDER) {
 						return `@/${file_path}/`
 					}
 					return ""
 				})
 				.join(" ")
-			this.createReviewTask(chatMessage, targets)
+			this.createReviewTask(chatMessage ?? "", target)
 		}
 	}
 
-	public async createReviewTask(message: string, targets: ReviewTarget[]) {
+	public async createReviewTask(message: string, targets: ReviewTarget) {
 		const provider = this.getProvider()
 		if (!provider) {
 			return
@@ -397,7 +397,7 @@ export class CodeReviewService {
 		this.commentService?.clearAllCommentThreads()
 	}
 
-	public async getIssues(report: string, targets: ReviewTarget[]) {
+	public async getIssues(report: string, target: ReviewTarget) {
 		const clientId = getClientId()
 		const workspace = this.clineProvider?.cwd || ""
 		const requestOptions = await this.getRequestOptions()
@@ -407,7 +407,7 @@ export class CodeReviewService {
 					review_report: report,
 					client_id: clientId,
 					workspace,
-					review_code: targets,
+					review_target: target,
 				},
 				requestOptions,
 			)

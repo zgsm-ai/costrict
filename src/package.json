@@ -187,10 +187,6 @@
 				"title": "%command.codeReview.title%"
 			},
 			{
-				"command": "zgsm.reviewRepo",
-				"title": "%command.reviewRepo.title%"
-			},
-			{
 				"command": "zgsm.reviewCommit",
 				"title": "%command.reviewCommit.title%",
 				"icon": "$(shield)"

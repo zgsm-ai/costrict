@@ -3,7 +3,6 @@ import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { ReviewTaskStatus } from "@roo/codeReview"
 import CodeReviewPanel from "./CodeReviewPanel"
 import WelcomePage from "./WelcomePage"
-import CodebaseSync from "./CodebaseSync"
 
 interface CodeReviewPageProps {
 	isHidden?: boolean
@@ -18,17 +17,12 @@ enum Page {
 }
 
 const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ isHidden, onIssueClick, onTaskCancel }) => {
-	const { reviewTask, reviewPagePayload, setReviewTask } = useExtensionState()
+	const { reviewTask } = useExtensionState()
 	const {
 		status,
 		data: { issues, progress, error = "", message = "", reviewProgress = "" },
 	} = reviewTask
-	const { targets, isCodebaseReady } = reviewPagePayload
-	const [hasShownCodebaseSync, setHasShownCodebaseSync] = useState(false)
 	const [page, setPage] = useState<Page>(() => {
-		if (!isCodebaseReady) {
-			return Page.CodebaseSync
-		}
 		if (status === ReviewTaskStatus.INITIAL && issues.length === 0) {
 			return Page.Welcome
 		}
@@ -36,46 +30,13 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ isHidden, onIssueClick,
 	})
 
 	useEffect(() => {
-		if (!isCodebaseReady) {
-			setPage(Page.CodebaseSync)
-		} else if (status === ReviewTaskStatus.INITIAL && issues.length === 0) {
+		if (status === TaskStatus.INITIAL && issues.length === 0) {
 			setPage(Page.Welcome)
 		} else {
 			setPage(Page.Review)
 		}
-	}, [isCodebaseReady, status, issues.length])
-	useEffect(() => {
-		if ([ReviewTaskStatus.COMPLETED, ReviewTaskStatus.ERROR].includes(status)) {
-			setHasShownCodebaseSync(false)
-		}
-	}, [status])
-	const onCancel = () => {
-		setPage(Page.Welcome)
-		setHasShownCodebaseSync(false)
-		setReviewTask({
-			status: ReviewTaskStatus.INITIAL,
-			data: {
-				issues: [],
-				progress: null,
-				error: "",
-				message: "",
-			},
-		})
-	}
-	useEffect(() => {
-		if (page === Page.CodebaseSync && !hasShownCodebaseSync) {
-			setHasShownCodebaseSync(true)
-		}
-	}, [page, hasShownCodebaseSync])
-
+	}, [status, issues.length])
 	switch (page) {
-		case Page.CodebaseSync:
-			return (
-				<div
-					className={`fixed top-[28px] left-0 right-0 bottom-0 flex flex-col overflow-hidden ${isHidden ? "hidden" : ""}`}>
-					<CodebaseSync onCancel={onCancel} targets={targets} />
-				</div>
-			)
 		case Page.Welcome:
 			return <WelcomePage />
 		case Page.Review:
@@ -91,7 +52,6 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ isHidden, onIssueClick,
 						errorMessage={error}
 						onIssueClick={onIssueClick}
 						onTaskCancel={onTaskCancel}
-						hasRunCodebaseSync={hasShownCodebaseSync}
 					/>
 				</div>
 			)

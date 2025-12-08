@@ -11,7 +11,6 @@ interface TaskStatusBarProps {
 	errorMessage: string
 	issues: ReviewIssue[]
 	onTaskCancel: () => void
-	hasRunCodebaseSync?: boolean // 是否运行过索引同步服务
 }
 
 const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
@@ -22,12 +21,11 @@ const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
 	message,
 	errorMessage,
 	onTaskCancel,
-	hasRunCodebaseSync = false,
 }) => {
 	const { t } = useAppTranslation()
 	const adjustedProgress = useMemo(() => {
-		return hasRunCodebaseSync ? Math.round((progress ?? 0 * 0.7 + 0.3) * 100) : Math.round((progress ?? 0) * 100)
-	}, [progress, hasRunCodebaseSync])
+		return Math.round((progress ?? 0) * 100)
+	}, [progress])
 	return (
 		<div className="flex items-center mt-5">
 			{taskStatus === ReviewTaskStatus.RUNNING && (

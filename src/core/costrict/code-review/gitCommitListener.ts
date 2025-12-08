@@ -3,6 +3,7 @@ import { API as GitAPI, Repository, GitExtension } from "./git"
 import type { CodeReviewService } from "./codeReviewService"
 import { t } from "../../../i18n"
 import { EXPERIMENT_IDS, experiments as Experiments } from "../../../shared/experiments"
+import { ReviewTargetType } from "../../../shared/codeReview"
 
 export class GitCommitListener {
 	private lastSeenCommitHash: string | undefined
@@ -99,7 +100,10 @@ export class GitCommitListener {
 			if (!(await this.reviewService.checkApiProviderSupport())) {
 				return
 			}
-			this.reviewService.createReviewTask(prompt, [])
+			this.reviewService.createReviewTask(prompt, {
+				type: ReviewTargetType.COMMIT,
+				commit: commit.hash,
+			})
 		}
 	}
 }

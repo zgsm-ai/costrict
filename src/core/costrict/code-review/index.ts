@@ -77,13 +77,15 @@ export function initCodeReview(
 				selectedText: editor.document.getText(range),
 			}
 			const prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
-			reviewInstance.createReviewTask(prompt, [
-				{
-					type: ReviewTargetType.CODE,
-					file_path: filePath,
-					line_range: [range.start.line, range.end.line],
-				},
-			])
+			reviewInstance.createReviewTask(prompt, {
+				type: ReviewTargetType.CODE,
+				data: [
+					{
+						file_path: filePath,
+						line_range: [range.start.line, range.end.line],
+					},
+				],
+			})
 		},
 		reviewFilesAndFolders: async (_: vscode.Uri, selectedUris: vscode.Uri[]) => {
 			const visibleProvider = await ClineProvider.getInstance()
@@ -95,32 +97,12 @@ export function initCodeReview(
 				return
 			}
 			const cwd = visibleProvider.cwd.toPosix()
-			const targets: ReviewTarget[] = await Promise.all(
-				selectedUris.map(async (uri) => {
-					const stat = await vscode.workspace.fs.stat(uri)
-					return {
-						type: stat.type === vscode.FileType.Directory ? ReviewTargetType.FOLDER : ReviewTargetType.FILE,
-						file_path: toRelativePath(uri.fsPath.toPosix(), cwd),
-					}
-				}),
-			)
-			reviewInstance.startReview(targets)
-		},
-		reviewRepo: async () => {
-			const visibleProvider = await ClineProvider.getInstance()
-			if (!visibleProvider) {
-				return
-			}
-			reviewInstance.setProvider(visibleProvider)
-			if (!(await reviewInstance.checkApiProviderSupport())) {
-				return
-			}
-			reviewInstance.startReview([
-				{
-					type: ReviewTargetType.FOLDER,
-					file_path: "",
-				},
-			])
+			reviewInstance.startReview({
+				type: ReviewTargetType.FILE,
+				data: selectedUris.map((uri) => ({
+					file_path: toRelativePath(uri.fsPath.toPosix(), cwd),
+				})),
+			})
 		},
 		acceptIssue: async (thread: vscode.CommentThread) => {
 			const visibleProvider = await ClineProvider.getInstance()
@@ -177,14 +159,13 @@ export function initCodeReview(
 
 			visibleProvider.log(`[CodeReview] Found ${changedFiles.length} changed files`)
 
-			// 将变更文件作为 targets 传入，使用相对路径
-			const targets: ReviewTarget[] = changedFiles.map((file_path) => ({
-				type: ReviewTargetType.FILE,
-				file_path,
-			}))
-
 			// 使用 @git-changes 来审查当前的 git 变更
-			reviewInstance.createReviewTask("@git-changes", targets)
+			reviewInstance.createReviewTask("@git-changes", {
+				type: ReviewTargetType.FILE,
+				data: changedFiles.map((file_path) => ({
+					file_path,
+				})),
+			})
 		},
 		...(!isJetbrains
 			? {}
@@ -219,13 +200,15 @@ export function initCodeReview(
 							selectedText: selectedText,
 						}
 						const prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
-						reviewInstance.createReviewTask(prompt, [
-							{
-								type: ReviewTargetType.CODE,
-								file_path: toRelativePath(filePath.toPosix(), cwd),
-								line_range: [startLine, endLine],
-							},
-						])
+						reviewInstance.createReviewTask(prompt, {
+							type: ReviewTargetType.CODE,
+							data: [
+								{
+									file_path: toRelativePath(filePath.toPosix(), cwd),
+									line_range: [startLine, endLine],
+								},
+							],
+						})
 					},
 					reviewFilesAndFoldersJetbrains: async (args: any) => {
 						const visibleProvider = await ClineProvider.getInstance()
@@ -244,15 +227,12 @@ export function initCodeReview(
 						}
 						const cwd = visibleProvider.cwd.toPosix()
 						const { filePaths } = data
-						const targets: ReviewTarget[] = await Promise.all(
-							filePaths.map(async (filePath: string) => {
-								return {
-									type: ReviewTargetType.FILE,
-									file_path: toRelativePath(filePath.toPosix(), cwd),
-								}
-							}),
-						)
-						reviewInstance.startReview(targets)
+						reviewInstance.startReview({
+							type: ReviewTargetType.FILE,
+							data: filePaths.map((filePath: string) => ({
+								file_path: toRelativePath(filePath.toPosix(), cwd),
+							})),
+						})
 					},
 					acceptIssueJetbrains: async (args: any) => {
 						const visibleProvider = await ClineProvider.getInstance()

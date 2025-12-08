@@ -11,7 +11,6 @@ interface CodeReviewPanelProps {
 	message: string
 	onIssueClick: (issueId: string) => void
 	onTaskCancel: () => void
-	hasRunCodebaseSync?: boolean // 是否运行过索引同步服务
 }
 const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
 	issues,
@@ -22,7 +21,6 @@ const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
 	errorMessage,
 	onIssueClick,
 	onTaskCancel,
-	hasRunCodebaseSync = false,
 }) => {
 	return (
 		<div className="flex flex-col h-full">
@@ -35,7 +33,6 @@ const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
 					message={message}
 					errorMessage={errorMessage}
 					onTaskCancel={onTaskCancel}
-					hasRunCodebaseSync={hasRunCodebaseSync}
 				/>
 			</div>
 			<div className="flex-1 overflow-hidden">

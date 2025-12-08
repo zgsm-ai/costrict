@@ -111,7 +111,7 @@ export interface ReportIssueReuqest {
 	review_report: string
 	client_id: string
 	workspace: string
-	review_code: ReviewTarget[]
+	review_target: ReviewTarget
 }
 
 export interface ReportIssueResponse {

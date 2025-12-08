@@ -28,7 +28,7 @@ import { RouterModels } from "@roo/api"
 import { vscode } from "@src/utils/vscode"
 import { convertTextMateToHljs } from "@src/utils/textMateToHljs"
 import { defaultCodebaseIndexEnabled } from "../../../src/services/code-index/constants"
-import { ReviewTaskPayload, ReviewPagePayload, ReviewTaskStatus } from "@roo/codeReview"
+import { ReviewTaskPayload, TaskStatus } from "@roo/codeReview"
 
 export interface ExtensionStateContextType extends ExtensionState {
 	historyPreviewCollapsed?: boolean // Add the new state property
@@ -51,8 +51,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	maxConcurrentFileReads?: number
 	mdmCompliant?: boolean
 	hasOpenedModeSelector: boolean // New property to track if user has opened mode selector
-	reviewPagePayload: ReviewPagePayload
-	setReviewPagePayload: (value: ReviewPagePayload) => void
 	reviewTask: ReviewTaskPayload
 	setReviewTask: (value: ReviewTaskPayload) => void
 	setHasOpenedModeSelector: (value: boolean) => void // Setter for the new property
@@ -327,10 +325,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			progress: 0,
 		},
 	})
-	const [reviewPagePayload, setReviewPagePayload] = useState<ReviewPagePayload>({
-		targets: [],
-		isCodebaseReady: true,
-	})
 	const [includeTaskHistoryInEnhance, setIncludeTaskHistoryInEnhance] = useState(true)
 	// const [prevCloudIsAuthenticated, setPrevCloudIsAuthenticated] = useState(false)
 	const [includeCurrentTime, setIncludeCurrentTime] = useState(true)
@@ -475,10 +469,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					}
 					break
 				}
-				case "reviewPagePayload": {
-					setReviewPagePayload(message.payload as ReviewPagePayload)
-					break
-				}
 				case "reviewTaskUpdate": {
 					setReviewTask(message.values as ReviewTaskPayload)
 					break
@@ -559,8 +549,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		alwaysAllowFollowupQuestions,
 		followupAutoApproveTimeoutMs,
 		reviewTask,
-		reviewPagePayload,
-		setReviewPagePayload,
 		setReviewTask,
 		remoteControlEnabled: state.remoteControlEnabled ?? false,
 		taskSyncEnabled: state.taskSyncEnabled,

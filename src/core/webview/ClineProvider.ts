@@ -769,13 +769,15 @@ export class ClineProvider
 				endLine: Number(params.endLine) + 1 + "",
 				selectedText: params.selectedText,
 			})
-			reviewInstance.createReviewTask(chatMessage, [
-				{
-					type: ReviewTargetType.CODE,
-					file_path: toRelativePath(params.filePath as string, visibleProvider.cwd),
-					line_range: [Number(params.startLine), Number(params.endLine)],
-				},
-			])
+			reviewInstance.createReviewTask(chatMessage, {
+				type: ReviewTargetType.CODE,
+				data: [
+					{
+						file_path: toRelativePath(params.filePath as string, visibleProvider.cwd),
+						line_range: [Number(params.startLine), Number(params.endLine)],
+					},
+				],
+			})
 			return
 		}
 
