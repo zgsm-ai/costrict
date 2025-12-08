@@ -28,7 +28,7 @@ import { getOllamaModels } from "./ollama"
 import { getLMStudioModels } from "./lmstudio"
 import { getIOIntelligenceModels } from "./io-intelligence"
 import { getDeepInfraModels } from "./deepinfra"
-import { ZgsmAuthConfig } from "../../../core/costrict/auth"
+import { ZgsmAuthApi, ZgsmAuthConfig } from "../../../core/costrict/auth"
 import { IZgsmModelResponseData } from "@roo-code/types"
 import { getHuggingFaceModels } from "./huggingface"
 import { ClineProvider } from "../../../core/webview/ClineProvider"
@@ -73,8 +73,11 @@ async function fetchModelsFromProvider(options: GetModelsOptions): Promise<Model
 
 	switch (provider) {
 		case "zgsm": {
+			const { zgsmBaseUrl } = await ZgsmAuthApi.getInstance().getApiConfiguration()
+			const baseUrl = zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+
 			const _models = await getZgsmModels(
-				options.baseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl(),
+				options.baseUrl || baseUrl,
 				options.apiKey || clineProvider?.getValue("zgsmAccessToken"),
 				options.openAiHeaders,
 			)
