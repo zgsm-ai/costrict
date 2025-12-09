@@ -350,26 +350,6 @@
 		"autoSelectCountdown": "{{count}} 秒後自動選擇",
 		"countdownDisplay": "{{count}} 秒"
 	},
-	"multipleChoice": {
-		"submit": "提交選擇",
-		"confirm": "確認",
-		"skip": "跳過",
-		"selectAtLeastOne": "請至少選擇一項",
-		"selectMultiple": "可多選",
-		"singleSelect": "單選",
-		"multiSelect": "多選",
-		"submitted": "已提交選擇",
-		"questionnaire": "問卷調查",
-		"collapse": "收起",
-		"expand": "展開",
-		"headerTitle": "CoStrict 有以下問題需要您解答：",
-		"needHelp": "CoStrict 有以下問題需要您解答：",
-		"userSkipped": "已跳過",
-		"userConfirmed": "已確認",
-		"header": "為了更好地協助您，CoStrict 需要了解以下資訊，請您協助解答",
-		"skipHint": "如果選項都不符合您的需求，可以點選「跳過」或在下方輸入框直接說明您的需求",
-		"loading": "準備問題中..."
-	},
 	"browser": {
 		"session": "瀏覽器會話",
 		"rooWantsToUse": "Roo 想要使用瀏覽器",
