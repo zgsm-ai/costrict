@@ -1280,6 +1280,28 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				})
 			}
 		}
+
+		// CoStrict: Mark the last multiple choice question as answered and save response
+		if (askResponse === "messageResponse") {
+			const idx = findLastIndex(
+				this.clineMessages,
+				(msg) => msg.type === "ask" && msg.ask === "multiple_choice" && !msg.isAnswered,
+			)
+			if (idx === -1) return
+
+			let parsed: Record<string, unknown>
+			try {
+				parsed = JSON.parse(text || "{}")
+			} catch {
+				return
+			}
+			if (!parsed.__skipped && Object.keys(parsed).length === 0) return
+
+			const message = this.clineMessages[idx]
+			message.isAnswered = true
+			message.userResponse = parsed
+			this.saveClineMessages().catch((e) => console.error("Failed to save multiple choice state:", e))
+		}
 	}
 
 	public approveAsk({ text, images }: { text?: string; images?: string[] } = {}) {

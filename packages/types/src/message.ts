@@ -282,6 +282,8 @@ export const clineMessageSchema = z.object({
 	isProtected: z.boolean().optional(),
 	apiProtocol: z.union([z.literal("openai"), z.literal("anthropic")]).optional(),
 	isAnswered: z.boolean().optional(),
+	// Costrict : multiple choice user response
+	userResponse: z.record(z.string(), z.unknown()).optional(),
 	metadata: z
 		.object({
 			isRateLimit: z.boolean().optional(),

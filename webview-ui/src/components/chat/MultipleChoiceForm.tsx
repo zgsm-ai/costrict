@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui"
 import { cn } from "@/lib/utils"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
@@ -12,10 +12,15 @@ interface MultipleChoiceFormProps {
 
 export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: MultipleChoiceFormProps) => {
 	const { t } = useAppTranslation()
-	const [selections, setSelections] = useState<MultipleChoiceResponse>({})
+	const [selections, setSelections] = useState<MultipleChoiceResponse>(data.userResponse || {})
 	const [submitted, setSubmitted] = useState(isAnswered)
 	const [collapsed, setCollapsed] = useState(false)
 	const [submitAction, setSubmitAction] = useState<"confirm" | "skip" | null>(null)
+
+	// Sync submitted state when isAnswered prop changes
+	useEffect(() => {
+		setSubmitted(isAnswered)
+	}, [isAnswered])
 
 	const handleToggleOption = useCallback(
 		(questionId: string, optionId: string, allowMultiple: boolean) => {
@@ -73,8 +78,6 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 
 	// Don't return early when submitted - show the form with disabled buttons
 
-	const displayTitle = data.title || t("chat:multipleChoice.questionnaire")
-
 	return (
 		<div className="flex flex-col my-2 bg-vscode-sideBar-background border border-vscode-panel-border rounded-lg shadow-sm">
 			{/* Collapsible header - show questionnaire title */}
@@ -111,7 +114,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 		{/* Collapsible content */}
 		{!collapsed && (
 			<>
-				{/* Questions - scrollable */}
+				{/* Questions - scrollable area */}
 				<div className="flex flex-col gap-2.5 p-4 max-h-[400px] overflow-y-auto">
 					{data.questions.map((question, qIndex) => {
 						const currentSelections = selections[question.id] || []
@@ -187,8 +190,8 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 					})}
 				</div>
 
-				{/* Bottom: Buttons + Hint - fixed at bottom */}
-				<div className="flex flex-col gap-2 px-4 pb-4 pt-2.5 border-t border-vscode-panel-border/50">
+				{/* Bottom: Buttons + Hint - fixed at bottom (no flex properties, stays at bottom) */}
+				<div className="flex flex-col gap-2 px-4 pb-4 pt-2.5 border-t border-vscode-panel-border/50 bg-vscode-sideBar-background">
 					{/* Button group */}
 					<div className="flex items-center gap-2.5">
 						<Button 

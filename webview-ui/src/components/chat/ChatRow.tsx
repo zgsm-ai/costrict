@@ -443,10 +443,15 @@ export const ChatRowContent = ({
 
 	const multipleChoiceData = useMemo(() => {
 		if (message.type === "ask" && message.ask === "multiple_choice" && !message.partial) {
-			return safeJsonParse<import("@roo-code/types").MultipleChoiceData>(message.text)
+		const data = safeJsonParse<import("@roo-code/types").MultipleChoiceData>(message.text)
+		// Costrict: Merge saved user response for display on reload
+		if (data && message.userResponse) {
+			data.userResponse = message.userResponse as import("@roo-code/types").MultipleChoiceResponse
+		}
+		return data
 		}
 		return null
-	}, [message.type, message.ask, message.partial, message.text])
+	}, [message.type, message.ask, message.partial, message.text, message.userResponse])
 
 	const handleCopyErrorDetail = useCallback(
 		(message: string) => {

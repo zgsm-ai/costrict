@@ -10,6 +10,8 @@ export interface MultipleChoiceData {
 	title?: string
 	/** Array of questions to present to the user */
 	questions: Array<MultipleChoiceQuestion>
+	/** Saved user response (populated after user submits) */
+	userResponse?: MultipleChoiceResponse
 }
 
 /**

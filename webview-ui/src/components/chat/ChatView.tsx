@@ -289,18 +289,25 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setPrimaryButtonText(t("chat:proceedAnyways.title"))
 							setSecondaryButtonText(t("chat:startNewTask.title"))
 							break
-						case "followup":
-						case "multiple_choice":							    
-							setSendingDisabled(isPartial)
-							setClineAsk("followup")
-							// setting enable buttons to `false` would trigger a focus grab when
-							// the text area is enabled which is undesirable.
-							// We have no buttons for this tool, so no problem having them "enabled"
-							// to workaround this issue.  See #1358.
-							setEnableButtons(true)
-							setPrimaryButtonText(undefined)
-							setSecondaryButtonText(undefined)
-							break
+				        case "followup":
+				        	setSendingDisabled(isPartial)
+				        	setClineAsk("followup")
+				        	// setting enable buttons to `false` would trigger a focus grab when
+				        	// the text area is enabled which is undesirable.
+				        	// We have no buttons for this tool, so no problem having them "enabled"
+				        	// to workaround this issue.  See #1358.
+				        	setEnableButtons(true)
+				        	setPrimaryButtonText(undefined)
+				        	setSecondaryButtonText(undefined)
+				        	break
+				        // Costrict: ask_multiple_choice tool	
+				        case "multiple_choice":
+				        	setSendingDisabled(isPartial)
+				        	setClineAsk("multiple_choice")
+				        	setEnableButtons(true)
+				        	setPrimaryButtonText(undefined)
+				        	setSecondaryButtonText(undefined)
+				        	break
 						case "tool":
 							setSendingDisabled(isPartial)
 							setClineAsk("tool")
@@ -1257,15 +1264,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const handleMultipleChoiceSubmit = useCallback(
 		(response: MultipleChoiceResponse) => {
-			// Mark that user has responded
-			// userRespondedRef.current = true
-
-			// Mark the multiple choice question as answered
-			if (clineAsk === "multiple_choice") {
-				markFollowUpAsAnswered()
-			}
-
-			// Send the response as JSON
+			// 后端会在 handleWebviewAskResponse 中自动设置 isAnswered 和 userResponse
+			// 不需要前端处理，避免重复和耦合
 			vscode.postMessage({
 				type: "askResponse",
 				askResponse: "messageResponse",
@@ -1276,7 +1276,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			setClineAsk(undefined)
 			setEnableButtons(false)
 		},
-		[clineAsk, markFollowUpAsAnswered],
+		[], // 移除不必要的依赖
 	)
 
 	const handleSuggestionClickInRow = useCallback(
@@ -1400,11 +1400,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						primaryButtonText === t("chat:startNewTask.title") ||
 						(currentFollowUpTs != null && messageOrGroup.ts <= currentFollowUpTs)
 					}
-					isMultipleChoiceAnswered={
-						primaryButtonText === t("chat:resumeTask.title") ||
-						primaryButtonText === t("chat:startNewTask.title") ||
-						(currentFollowUpTs != null && messageOrGroup.ts <= currentFollowUpTs)
-					}					
+				// Costrict: ask_multiple_choice answered
+				isMultipleChoiceAnswered={
+					messageOrGroup.isAnswered === true
+				}
 					editable={
 						messageOrGroup.type === "ask" &&
 						messageOrGroup.ask === "tool" &&

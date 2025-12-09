@@ -26,7 +26,7 @@ import { executeCommandTool } from "../tools/ExecuteCommandTool"
 import { useMcpToolTool } from "../tools/UseMcpToolTool"
 import { accessMcpResourceTool } from "../tools/accessMcpResourceTool"
 import { askFollowupQuestionTool } from "../tools/AskFollowupQuestionTool"
-import { askMultipleChoiceTool } from "../costrict/plan/askMultipleChoiceTool"
+import { askMultipleChoiceTool } from "../tools/AskMultipleChoiceTool"
 import { switchModeTool } from "../tools/SwitchModeTool"
 import { attemptCompletionTool, AttemptCompletionCallbacks } from "../tools/AttemptCompletionTool"
 import { newTaskTool } from "../tools/NewTaskTool"
@@ -980,14 +980,13 @@ export async function presentAssistantMessage(cline: Task) {
 					})
 					break
 				case "ask_multiple_choice":
-					await askMultipleChoiceTool(
-						cline,
-						block,
+					await askMultipleChoiceTool.handle(cline, block as ToolUse<"ask_multiple_choice">, {
 						askApproval,
 						handleError,
 						pushToolResult,
 						removeClosingTag,
-					)
+						toolProtocol,
+					})
 					break
 				case "switch_mode":
 					await switchModeTool.handle(cline, block as ToolUse<"switch_mode">, {
