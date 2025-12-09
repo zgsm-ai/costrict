@@ -8,8 +8,7 @@
 import * as vscode from "vscode"
 import type { ClineProvider } from "../webview/ClineProvider"
 
-// Import from migrated modules
-import { AICompletionProvider, CompletionStatusBar, shortKeyCut } from "./completion"
+import { registerAutoCompletionProvider, CompletionStatusBar } from "./auto-complete"
 
 import { CostrictCodeLensProvider, codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codelens"
 
@@ -93,6 +92,10 @@ export async function activate(
 	await initialize(provider, logger)
 	startIPCServer()
 	connectIPC()
+	if (!isJetbrains) {
+		registerAutoCompletionProvider(context, provider)
+	}
+	const completionStatusBar = CompletionStatusBar.getInstance()
 
 	const zgsmAuthService = ZgsmAuthService.getInstance()
 	context.subscriptions.push(zgsmAuthService)
@@ -140,7 +143,6 @@ export async function activate(
 			})
 			// Start token refresh timer
 		} else {
-			// ZgsmAuthService.openStatusBarLoginTip()
 			loginTip = () => {
 				zgsmAuthService.getTokens().then(async (tokens) => {
 					if (!tokens) {
@@ -158,7 +160,6 @@ export async function activate(
 		provider.log("Failed to check login status at startup: " + error.message)
 	}
 	initCodeReview(context, provider, outputChannel)
-	CompletionStatusBar.create(context)
 	initTelemetry(provider)
 
 	context.subscriptions.push(
@@ -189,30 +190,23 @@ export async function activate(
 				// Function Quick Commands settings changed
 				updateCodelensConfig()
 			}
-			CompletionStatusBar.initByConfig()
+			// CompletionStatusBar.initByConfig()
+			completionStatusBar.setEnableState()
 		})
 		context.subscriptions.push(configChanged)
-		context.subscriptions.push(
-			// Code completion service
-			vscode.languages.registerInlineCompletionItemProvider(
-				{ pattern: "**" },
-				new AICompletionProvider(context, provider),
-			),
-			// Shortcut command to trigger auto-completion manually
-			vscode.commands.registerCommand(shortKeyCut.command, () => {
-				shortKeyCut.callback(context)
-			}),
-		)
 	}
 
 	// Get zgsmRefreshToken without webview resolve
 	const tokens = await ZgsmAuthStorage.getInstance().getTokens()
-	if (tokens?.access_token) {
-		CompletionStatusBar.initByConfig()
-	} else {
-		CompletionStatusBar.fail({
-			message: OPENAI_CLIENT_NOT_INITIALIZED,
-		})
+	if (!isJetbrains) {
+		if (tokens?.access_token) {
+			// CompletionStatusBar.initByConfig()
+			completionStatusBar.setEnableState()
+		} else {
+			completionStatusBar.fail({
+				message: OPENAI_CLIENT_NOT_INITIALIZED,
+			})
+		}
 	}
 	provider.getState().then((state) => {
 		const size = (state.taskHistory || []).reduce((p, c) => p + Number(c.size), 0)

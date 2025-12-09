@@ -87,7 +87,7 @@ describe("RooTips Component", () => {
 
 			// 验证文本内容
 			expect(vibeCard?.textContent).toContain("Vibe")
-			expect(specCard?.textContent).toContain("Spec")
+			expect(specCard?.textContent).toContain("Plan")
 
 			// 获取包含卡片样式的父容器
 			const vibeCardContainer = vibeCard?.closest(".border")
