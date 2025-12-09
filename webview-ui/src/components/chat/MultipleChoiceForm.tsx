@@ -15,12 +15,25 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 	const [selections, setSelections] = useState<MultipleChoiceResponse>(data.userResponse || {})
 	const [submitted, setSubmitted] = useState(isAnswered)
 	const [collapsed, setCollapsed] = useState(false)
-	const [submitAction, setSubmitAction] = useState<"confirm" | "skip" | null>(null)
+	
+	// Initialize submitAction based on existing userResponse
+	const getInitialSubmitAction = (): "confirm" | "skip" | null => {
+		if (!isAnswered || !data.userResponse) return null
+		return (data.userResponse as any).__skipped ? "skip" : "confirm"
+	}
+	const [submitAction, setSubmitAction] = useState<"confirm" | "skip" | null>(getInitialSubmitAction())
 
 	// Sync submitted state when isAnswered prop changes
 	useEffect(() => {
 		setSubmitted(isAnswered)
 	}, [isAnswered])
+
+	// Sync submitAction when props change
+	useEffect(() => {
+		if (isAnswered && data.userResponse) {
+			setSubmitAction((data.userResponse as any).__skipped ? "skip" : "confirm")
+		}
+	}, [isAnswered, data.userResponse])
 
 	const handleToggleOption = useCallback(
 		(questionId: string, optionId: string, allowMultiple: boolean) => {
@@ -58,6 +71,13 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 		return questionSelections.length > 0
 	})
 
+	// Calculate answered questions count
+	const answeredCount = data.questions.filter((question) => {
+		const questionSelections = selections[question.id] || []
+		return questionSelections.length > 0
+	}).length
+	const totalCount = data.questions.length
+
 	const handleSubmit = useCallback(() => {
 		// Allow submission even if no options are selected
 		setSubmitAction("confirm")
@@ -91,9 +111,18 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 					"codicon text-[12px] text-vscode-descriptionForeground transition-transform",
 					collapsed ? "codicon-chevron-right" : "codicon-chevron-down"
 				)} />
-				<div className="flex-1 flex items-baseline gap-2">
+				<div className="flex-1 flex items-baseline gap-1.5">
 					<span className="text-[13px] font-semibold text-vscode-foreground leading-relaxed">
 						{data.title || t("chat:multipleChoice.questionnaire")}
+					</span>
+					{/* Progress indicator */}
+					<span className={cn(
+						"text-[11px] font-medium transition-colors",
+						answeredCount === totalCount 
+							? "text-vscode-testing-iconPassed" 
+							: "text-vscode-descriptionForeground"
+					)}>
+						({answeredCount}/{totalCount})
 					</span>
 					{submitted && submitAction && (
 						<span className="text-[11px] text-vscode-descriptionForeground italic">
