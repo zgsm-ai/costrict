@@ -4,6 +4,7 @@ import { parseXml } from "../../utils/xml"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
 import type { MultipleChoiceData, MultipleChoiceQuestion, MultipleChoiceOption } from "@roo-code/types"
+import { t } from "../../i18n"
 
 interface AskMultipleChoiceParams {
 	title?: string
@@ -134,17 +135,17 @@ export class AskMultipleChoiceTool extends BaseTool<"ask_multiple_choice"> {
 				await task.say("error", `Failed to parse user response: ${(error as Error).message}`)
 			}
 
-			// Check if user skipped the questionnaire
-			if ("__skipped" in userResponse && userResponse.__skipped) {
-				await task.say("user_feedback", "User chose to skip this questionnaire", images)
-				pushToolResult(
-					formatResponse.toolResult(
-						"<answer>User chose to skip and will provide requirements directly</answer>",
-						images,
-					),
-				)
-				return
-			}
+		// Check if user skipped the questionnaire
+		if ("__skipped" in userResponse && userResponse.__skipped) {
+			await task.say("user_feedback", t("tools:multipleChoice.userSkippedMessage"), images)
+			pushToolResult(
+				formatResponse.toolResult(
+					"<answer>User chose to skip this questionnaire</answer>",
+					images,
+				),
+			)
+			return
+		}
 
 			// Format response for LLM
 			const responseLines: string[] = ["<answers>"]
