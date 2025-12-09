@@ -47,6 +47,12 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 		[],
 	)
 
+	// Validate that all questions have at least one selection
+	const isFormValid = data.questions.every((question) => {
+		const questionSelections = selections[question.id] || []
+		return questionSelections.length > 0
+	})
+
 	const handleSubmit = useCallback(() => {
 		// Allow submission even if no options are selected
 		setSubmitAction("confirm")
@@ -102,10 +108,11 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 				)}
 			</div>
 			
-			{/* Collapsible content */}
-			{!collapsed && (
+		{/* Collapsible content */}
+		{!collapsed && (
+			<>
+				{/* Questions - scrollable */}
 				<div className="flex flex-col gap-2.5 p-4 max-h-[400px] overflow-y-auto">
-					{/* Questions */}
 					{data.questions.map((question, qIndex) => {
 						const currentSelections = selections[question.id] || []
 						const selectionTypeLabel = question.allow_multiple 
@@ -178,42 +185,43 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 							</div>
 						)
 					})}
-
-					{/* Bottom: Buttons + Hint */}
-					<div className="flex flex-col gap-2 mt-1 pt-2.5 border-t border-vscode-panel-border/50">
-						{/* Button group */}
-						<div className="flex items-center gap-2.5">
-							<Button 
-								onClick={handleSubmit}
-								variant="primary"
-								disabled={submitted}
-								className={cn(
-									"px-4 py-1.5 text-[12px]",
-									submitted && submitAction === "confirm" && "opacity-100"
-								)}>
-								{submitted && submitAction === "confirm" ? "✓ " : ""}{t("chat:multipleChoice.confirm")}
-							</Button>
-							<Button 
-								onClick={handleSkip}
-								variant="secondary"
-								disabled={submitted}
-								className={cn(
-									"px-3 py-1.5 text-[12px]",
-									submitted && submitAction === "skip" && "opacity-100"
-								)}>
-								{submitted && submitAction === "skip" ? "✓ " : ""}{t("chat:multipleChoice.skip")}
-							</Button>
-						</div>
-						
-						{/* Hint text */}
-						{!submitted && (
-							<div className="text-[10px] text-vscode-descriptionForeground leading-snug opacity-75">
-								{t("chat:multipleChoice.skipHint")}
-							</div>
-						)}
-					</div>
 				</div>
-			)}
+
+				{/* Bottom: Buttons + Hint - fixed at bottom */}
+				<div className="flex flex-col gap-2 px-4 pb-4 pt-2.5 border-t border-vscode-panel-border/50">
+					{/* Button group */}
+					<div className="flex items-center gap-2.5">
+						<Button 
+							onClick={handleSubmit}
+							variant="primary"
+							disabled={submitted || !isFormValid}
+							className={cn(
+								"px-4 py-1.5 text-[12px]",
+								submitted && submitAction === "confirm" && "opacity-100"
+							)}>
+							{submitted && submitAction === "confirm" ? "✓ " : ""}{t("chat:multipleChoice.confirm")}
+						</Button>
+						<Button 
+							onClick={handleSkip}
+							variant="secondary"
+							disabled={submitted}
+							className={cn(
+								"px-3 py-1.5 text-[12px]",
+								submitted && submitAction === "skip" && "opacity-100"
+							)}>
+							{submitted && submitAction === "skip" ? "✓ " : ""}{t("chat:multipleChoice.skip")}
+						</Button>
+					</div>
+					
+					{/* Hint text */}
+					{!submitted && (
+						<div className="text-[10px] text-vscode-descriptionForeground leading-snug opacity-75">
+							{t("chat:multipleChoice.skipHint")}
+						</div>
+					)}
+				</div>
+			</>
+		)}
 		</div>
 	)
 }
