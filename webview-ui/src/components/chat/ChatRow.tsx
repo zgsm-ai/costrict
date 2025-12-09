@@ -2,7 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "
 import { useSize } from "react-use"
 import { useTranslation, Trans } from "react-i18next"
 import deepEqual from "fast-deep-equal"
-import { VSCodeBadge } from "@vscode/webview-ui-toolkit/react"
+import { VSCodeBadge, VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react"
 import { type SearchResult } from "./hooks/useChatSearch"
 import type { ClineMessage, FollowUpData, SuggestionItem } from "@roo-code/types"
 import { Mode } from "@roo/modes"
@@ -1832,26 +1832,33 @@ export const ChatRowContent = ({
 						</div>
 					</>
 				)
-			case "multiple_choice":
-				return (
-					<>
-						{title && (
-							<div style={headerStyle}>
-								{icon}
-								{title}
+		case "multiple_choice":
+			return (
+				<>
+					{title && (
+						<div style={headerStyle}>
+							{icon}
+							{title}
+						</div>
+					)}
+					<div className="flex flex-col gap-2 ml-6">
+						{message.partial ? (
+							<div className="flex items-center gap-2 py-2 text-vscode-descriptionForeground">
+								<VSCodeProgressRing className="size-4" />
+								<span className="text-sm">{t("chat:multipleChoice.loading")}</span>
 							</div>
-						)}
-						<div className="flex flex-col gap-2 ml-6">
-							{multipleChoiceData && onMultipleChoiceSubmit && (
+						) : (
+							multipleChoiceData && onMultipleChoiceSubmit && (
 								<MultipleChoiceForm
 									data={multipleChoiceData}
 									onSubmit={onMultipleChoiceSubmit}
 									isAnswered={isMultipleChoiceAnswered}
 								/>
-							)}
-						</div>
-					</>
-				)
+							)
+						)}
+					</div>
+				</>
+			)
 			case "auto_approval_max_req_reached": {
 					return <AutoApprovedRequestLimitWarning message={message} />
 			}

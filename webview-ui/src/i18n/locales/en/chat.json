@@ -363,7 +363,8 @@
 		"userSkipped": "Skipped",
 		"userConfirmed": "Confirmed",
 		"header": "To better assist you, CoStrict needs the following information. Your help would be appreciated",
-		"skipHint": "If none of the options meet your needs, you can click \"Skip\" or type your requirements in the input box below"
+		"skipHint": "If none of the options meet your needs, you can click \"Skip\" or type your requirements in the input box below",
+		"loading": "Preparing questions..."
 	},
 	"browser": {
 		"session": "Browser Session",

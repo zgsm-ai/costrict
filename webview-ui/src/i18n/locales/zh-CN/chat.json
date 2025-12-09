@@ -326,7 +326,8 @@
 		"userSkipped": "已跳过",
 		"userConfirmed": "已确认",
 		"header": "为了更好地帮助您，CoStrict 需要了解以下信息，请您协助解答",
-		"skipHint": "如果选项都不满足您的需求，可以点击\"跳过\"或在下方输入框直接说明您的需求"
+		"skipHint": "如果选项都不满足您的需求，可以点击\"跳过\"或在下方输入框直接说明您的需求",
+		"loading": "准备问题中..."
 	},
 	"announcement": {
 		"title": "🎉 Roo Code {{version}} 已发布",
