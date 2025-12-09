@@ -1,106 +1,80 @@
 export function getAskMultipleChoiceDescription(): string {
 	return `## ask_multiple_choice
-Description: Present structured multiple-choice questions to collect user decisions efficiently. Use this when you need the user to select from predefined options, supporting both single-select and multi-select modes. This tool is ideal for gathering categorical preferences, confirming implementation approaches, or collecting structured feedback.
+Description: Interrupts the current workflow to present structured multiple-choice questions to the user. Forces selection from predefined options (no free-text). Use this tool when you need explicit user decisions or to resolve ambiguity before proceeding.
 
-**IMPORTANT**: When you have multiple related decisions to make, ask ALL questions in a SINGLE tool call rather than making multiple separate calls. This significantly improves user experience by reducing back-and-forth interactions.
+Use this tool when:
+- You need to choose between mutually exclusive options (e.g., architecture patterns, frameworks).
+- You need to clarify user intent (e.g., "Add new file?" vs "Update existing?").
+- You want to collect multiple related decisions in a single interaction.
 
-Key differences from ask_followup_question:
-- ask_followup_question: Provides suggestions but allows free-text input (flexible)
-- ask_multiple_choice: Forces selection from given options only (structured, no free input)
+CRITICAL: Every question and every option MUST have an id field - results cannot be matched without ids.
 
 Parameters:
-- title: (optional) A brief title for the entire questionnaire
-- questions: (required) Array of question objects, each containing:
-  - id: (required) Unique identifier for this question (used to match answers in the result)
-  - prompt: (required) The question text to display
-  - options: (required) Array of option objects (minimum 2), each with:
-    - id: (required) Unique identifier for this option (used in the result to identify which option was selected)
-    - label: (required) Display text for this option
-  - allow_multiple: (optional) Boolean, defaults to false. Set to true for checkbox-style multi-select, false for radio-style single-select
+- title: (optional) A brief title for the decision group.
+- questions: (REQUIRED) An array of question objects (at least 1).
+  - id: (REQUIRED) A unique, program-friendly identifier (slug) for the question (e.g., "framework_choice").
+  - prompt: (REQUIRED) The text question to display to the user.
+  - options: (REQUIRED) An array of option objects (at least 2).
+    - id: (REQUIRED) A unique, program-friendly identifier (slug) for the option (e.g., "react", "vue").
+    - label: (REQUIRED) The user-facing display text.
+  - allow_multiple: (optional) Set to 'true' for checkboxes (multi-select), 'false' for radio buttons (single-select). Defaults to false.
 
 Usage:
 <ask_multiple_choice>
-<title>Optional Questionnaire Title</title>
-<questions>
-<question>
-<id>question_id</id>
-<prompt>Your question text here</prompt>
-<options>
-<option>
-<id>option_id</id>
-<label>First option text</label>
-</option>
-<option>
-<id>another_option_id</id>
-<label>Second option text</label>
-</option>
-</options>
-<allow_multiple>false</allow_multiple>
-</question>
-</questions>
+  <title>Decision Title</title>
+  <questions>
+    <question>
+      <id>question_slug</id>
+      <prompt>Question text?</prompt>
+      <options>
+        <option>
+          <id>option_slug_1</id>
+          <label>Option 1 Label</label>
+        </option>
+        <option>
+          <id>option_slug_2</id>
+          <label>Option 2 Label</label>
+        </option>
+      </options>
+      <allow_multiple>false</allow_multiple>
+    </question>
+  </questions>
 </ask_multiple_choice>
 
 Example:
 <ask_multiple_choice>
-<title>Project Configuration</title>
-<questions>
-<question>
-<id>framework</id>
-<prompt>Which framework should I use?</prompt>
-<options>
-<option>
-<id>react</id>
-<label>React</label>
-</option>
-<option>
-<id>vue</id>
-<label>Vue</label>
-</option>
-<option>
-<id>angular</id>
-<label>Angular</label>
-</option>
-</options>
-<allow_multiple>false</allow_multiple>
-</question>
-<question>
-<id>features</id>
-<prompt>Which features should be included? (Select all that apply)</prompt>
-<options>
-<option>
-<id>auth</id>
-<label>User authentication</label>
-</option>
-<option>
-<id>api</id>
-<label>REST API integration</label>
-</option>
-<option>
-<id>i18n</id>
-<label>Internationalization</label>
-</option>
-<option>
-<id>testing</id>
-<label>Unit testing setup</label>
-</option>
-</options>
-<allow_multiple>true</allow_multiple>
-</question>
-</questions>
-</ask_multiple_choice>
-
-Best Practices:
-- **Ask multiple related questions in ONE tool call** rather than calling this tool multiple times. This reduces interaction rounds and improves efficiency.
-- Use single-select (allow_multiple=false) for mutually exclusive choices (e.g., choosing a framework)
-- Use multi-select (allow_multiple=true) when multiple options can coexist (e.g., selecting features to include)
-- Keep option labels concise but descriptive (1-2 lines maximum per option)
-- Provide 2-6 options per question for optimal user experience
-- Group related questions together with a descriptive title that explains the overall context
-- Use clear, specific question prompts that explain what you're asking for
-- Choose meaningful IDs (e.g., "framework", "auth_method") that make the response self-documenting
-
-When to use ask_multiple_choice vs ask_followup_question:
-- Use ask_multiple_choice when you need structured, categorical decisions (choosing from predefined options)
-- Use ask_followup_question when you need free-form text input or simple confirmation with suggestions`
+  <title>Project Setup</title>
+  <questions>
+    <question>
+      <id>framework</id>
+      <prompt>Which framework would you like to use?</prompt>
+      <options>
+        <option>
+          <id>react</id>
+          <label>React</label>
+        </option>
+        <option>
+          <id>vue</id>
+          <label>Vue.js</label>
+        </option>
+      </options>
+      <allow_multiple>false</allow_multiple>
+    </question>
+    <question>
+      <id>features</id>
+      <prompt>Select additional features:</prompt>
+      <options>
+        <option>
+          <id>typescript</id>
+          <label>TypeScript</label>
+        </option>
+        <option>
+          <id>linting</id>
+          <label>ESLint + Prettier</label>
+        </option>
+      </options>
+      <allow_multiple>true</allow_multiple>
+    </question>
+  </questions>
+</ask_multiple_choice>`
 }
-
