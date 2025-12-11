@@ -350,6 +350,13 @@ export class CodeReviewService {
 				isCompleted: true,
 			})
 		})
+		task.on(RooCodeEventName.TaskAborted, () => {
+			if (completionHandled) return
+			this.updateTaskState({
+				error: new Error(t("common:review.tip.task_cancelled")),
+				isCompleted: true,
+			})
+		})
 
 		// 把 postMessageToWebview 移到事件注册之后
 		provider.postMessageToWebview({
@@ -420,8 +427,6 @@ export class CodeReviewService {
 		// Reset state
 		this.currentTask = null
 		this.currentActiveIssueId = null
-
-		// Note: No longer sending taskAborted message as per requirements
 	}
 
 	/**
