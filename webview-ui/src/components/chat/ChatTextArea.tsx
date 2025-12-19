@@ -1353,6 +1353,11 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							)}
 						</div>
 					</div>
+
+					{/* ModeSwitch positioned at the top left of the input area */}
+					<div className="absolute top-2 left-2 z-30">
+						<ModeSwitch />
+					</div>
 				</div>
 
 				{/* {selectedImages.length > 0 && (
@@ -1421,11 +1426,6 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						)}
 						<AutoApproveDropdown triggerClassName="min-w-[28px] text-ellipsis overflow-hidden flex-shrink" />
 					</div>
-				</div>
-
-				{/* ModeSwitch positioned at the top left of the input area */}
-				<div className="absolute top-2 left-4 z-30">
-					<ModeSwitch />
 				</div>
 			</div>
 		)
