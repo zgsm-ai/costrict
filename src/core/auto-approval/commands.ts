@@ -1,4 +1,5 @@
 import { parseCommand } from "../../shared/parse-command"
+import { getShell } from "../../utils/shell"
 
 /**
  * Detect dangerous parameter substitutions that could lead to command execution.
@@ -20,6 +21,26 @@ import { parseCommand } from "../../shared/parse-command"
  * @returns true if dangerous substitution patterns are detected, false otherwise
  */
 export function containsDangerousSubstitution(source: string): boolean {
+	// Get the current shell path for accurate dangerous pattern detection
+	const shellPath = process.platform === "win32" ? getShell(true).toLowerCase() : ""
+
+	// CMD-specific dangerous patterns
+	// ^ is a special escape character in CMD that can be used to bypass Unix-style command sanitizers
+	// Check for caret followed by any shell metacharacter: ", space, &, |, <, >, ^
+	if (shellPath.includes("cmd.exe") && /\^["\s&|<>^]/.test(source)) {
+		return true
+	}
+
+	// PowerShell-specific dangerous patterns
+	// Backtick (`) is the escape character in PowerShell
+	// Check for backtick followed by common metacharacters or used in expressions
+	if (
+		(shellPath.includes("pwsh.exe") || shellPath.includes("powershell.exe")) &&
+		/`["\s$;&|<>(){}[\]]/.test(source)
+	) {
+		return true
+	}
+
 	// Check for dangerous parameter expansion operators that can execute commands
 	// ${var@P} - Prompt string expansion (interprets escape sequences and executes embedded commands)
 	// ${var@Q} - Quote removal
