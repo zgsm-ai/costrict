@@ -55,6 +55,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	maxConcurrentFileReads?: number
 	mdmCompliant?: boolean
 	hasOpenedModeSelector: boolean // New property to track if user has opened mode selector
+	hasClosedCodeReviewWelcomeTips: boolean // Track if user has dismissed code review welcome tips
 	reviewTask: ReviewTaskPayload
 	setReviewTask: (value: ReviewTaskPayload) => void
 	setHasOpenedModeSelector: (value: boolean) => void // Setter for the new property
@@ -268,6 +269,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		condensingApiConfigId: "", // Default empty string for condensing API config ID
 		customCondensingPrompt: "", // Default empty string for custom condensing prompt
 		hasOpenedModeSelector: false, // Default to false (not opened yet)
+		hasClosedCodeReviewWelcomeTips: false, // Default to false (tips not dismissed yet)
 		autoApprovalEnabled: false,
 		customModes: [],
 		maxOpenTabsContext: 20,

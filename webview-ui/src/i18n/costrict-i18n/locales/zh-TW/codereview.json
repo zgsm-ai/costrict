@@ -2,8 +2,9 @@
 	"welcomePage": {
 		"title": "CoStrict",
 		"subtitle": "企業嚴肅開發的AI智慧夥伴",
-		"tips1": "1. 選擇函數、代碼塊、多文件",
-		"tips2": "2. 點擊鼠標右鍵，找到 CoStrict > Code Review 一鍵觸發"
+		"tips": "：你也可以選中函數/代碼塊/多文件，右鍵 > CoStrict > Code Review ",
+		"reviewCurrentChanges": "審查當前變更",
+		"noFiles": "沒有需要審查的文件"
 	},
 	"codebase": {
 		"syncTips": "當前codebase索引同步功能被關閉，無法運行代碼審查，是否開啟codebase索引並繼續代碼審查？",

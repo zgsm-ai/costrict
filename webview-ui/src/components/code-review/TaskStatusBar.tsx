@@ -22,7 +22,7 @@ const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
 }) => {
 	const { t } = useAppTranslation()
 	return (
-		<div className="flex items-center mt-5">
+		<div className="flex flex-shrink-0 items-center mt-5">
 			{taskStatus === ReviewTaskStatus.RUNNING && (
 				<div className="mb-4">
 					<div>

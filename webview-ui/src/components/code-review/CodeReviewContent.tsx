@@ -317,7 +317,7 @@ const CodeReviewContent: React.FC<CodeReviewContentProps> = ({ issues, taskStatu
 					)}
 				</div>
 			)}
-			<div className="flex-1 overflow-y-auto pl-5">
+			<div className="flex-1 overflow-y-auto">
 				<div className="flex flex-col space-y-4">
 					{Object.entries(groupedIssues).map(([filePath, fileIssues]) => (
 						<FileIssueList

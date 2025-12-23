@@ -2219,6 +2219,7 @@ export class ClineProvider
 			autoCleanup,
 			debug,
 			// Messages,
+			hasClosedCodeReviewWelcomeTips,
 		} = await this.getState()
 
 		// let cloudOrganizations: CloudOrganizationMembership[] = []
@@ -2401,6 +2402,7 @@ export class ClineProvider
 			openRouterImageApiKey,
 			openRouterImageGenerationSelectedModel,
 			featureRoomoteControlEnabled,
+			hasClosedCodeReviewWelcomeTips: hasClosedCodeReviewWelcomeTips ?? false,
 			claudeCodeIsAuthenticated: await (async () => {
 				try {
 					const { claudeCodeOAuthManager } = await import("../../integrations/claude-code/oauth.js")
@@ -2687,6 +2689,7 @@ export class ClineProvider
 				// }
 			})(),
 			errorCode: stateValues.errorCode ?? {},
+			hasClosedCodeReviewWelcomeTips: stateValues.hasClosedCodeReviewWelcomeTips ?? false,
 		}
 	}
 

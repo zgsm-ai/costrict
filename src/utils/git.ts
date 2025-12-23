@@ -485,3 +485,71 @@ export async function getGitStatus(cwd: string, maxFiles: number = 20): Promise<
 		return null
 	}
 }
+
+/**
+ * File change item interface for code review
+ */
+export interface FileChangeItem {
+	path: string // File relative path
+	status: string // Git status: 'A' | 'M' | 'D' | 'R' | 'C' | 'U' | '??' etc.
+}
+
+/**
+ * Gets list of uncommitted files (both staged and unstaged)
+ * @param cwd The working directory
+ * @returns Array of file change items
+ */
+export async function getUncommittedFiles(cwd: string): Promise<FileChangeItem[]> {
+	try {
+		const isInstalled = await checkGitInstalled()
+		if (!isInstalled) {
+			return []
+		}
+
+		const isRepo = await checkGitRepo(cwd)
+		if (!isRepo) {
+			return []
+		}
+
+		// Use porcelain format to get status
+		const { stdout } = await execAsync("git status --porcelain", { cwd })
+
+		if (!stdout.trim()) {
+			return []
+		}
+
+		const files: FileChangeItem[] = []
+		const lines = stdout.split("\n")
+		for (const line of lines) {
+			if (!line.trim()) continue
+
+			// Parse porcelain format: XY PATH
+			// X = index status (1 char), Y = working tree status (1 char)
+			// Followed by whitespace, then the file path
+			// Use regex for safer parsing
+			const match = line.match(/^(.{2})\s+(.+)$/)
+			if (!match) {
+				continue
+			}
+
+			let status = match[1] // First 2 characters (don't trim - spaces are meaningful!)
+			const path = match[2] // Everything after the whitespace
+
+			// Remove quotes if present (git adds quotes for paths with special chars)
+			const cleanPath = path.replace(/^"(.*)"$/, "$1")
+
+			if (status === "??" || !status) {
+				status = "U"
+			}
+			files.push({
+				path: cleanPath,
+				status: status,
+			})
+		}
+
+		return files
+	} catch (error) {
+		console.error("Error getting uncommitted files:", error)
+		return []
+	}
+}

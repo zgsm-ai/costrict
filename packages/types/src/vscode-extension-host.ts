@@ -110,6 +110,7 @@ export interface ExtensionMessage {
 		| "interactionRequired"
 		| "browserSessionUpdate"
 		| "browserSessionNavigate"
+		| "reviewFilesResponse"
 		| "claudeCodeRateLimits"
 		| "customToolsResult"
 		| "modes"
@@ -374,6 +375,7 @@ export type ExtensionState = Pick<
 	marketplaceInstalledMetadata?: { project: Record<string, any>; global: Record<string, any> }
 	profileThresholds: Record<string, number>
 	hasOpenedModeSelector: boolean
+	hasClosedCodeReviewWelcomeTips: boolean
 	openRouterImageApiKey?: string
 	messageQueue?: QueuedMessage[]
 	lastShownAnnouncementId?: string

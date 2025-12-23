@@ -628,6 +628,7 @@ describe("ClineProvider", () => {
 			taskSyncEnabled: false,
 			featureRoomoteControlEnabled: false,
 			errorCode: {},
+			hasClosedCodeReviewWelcomeTips: false,
 			checkpointTimeout: DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 		}
 
