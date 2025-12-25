@@ -4070,6 +4070,34 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				onRequestHeadersReady: (headers: Record<string, string>) => {
 					this.lastApiRequestHeaders = headers
 				},
+				onPerformanceTiming: async (timing: {
+					requestIdTimestamp?: number
+					responseIdTimestamp?: number
+					responseEndTimestamp?: number
+					completionTokens?: number
+				}) => {
+					// Find and update the api_req_started message with raw timing data
+					const lastApiReqIndex = findLastIndex(
+						this.clineMessages,
+						(msg) => msg.type === "say" && msg.say === "api_req_started",
+					)
+					if (lastApiReqIndex >= 0 && this.clineMessages[lastApiReqIndex]) {
+						const existingData = JSON.parse(this.clineMessages[lastApiReqIndex].text || "{}")
+						this.clineMessages[lastApiReqIndex].text = JSON.stringify({
+							...existingData,
+							requestIdTimestamp: timing.requestIdTimestamp,
+							responseIdTimestamp: timing.responseIdTimestamp,
+							responseEndTimestamp: timing.responseEndTimestamp,
+							completionTokens: timing.completionTokens,
+						} satisfies ClineApiReqInfo)
+						// Notify frontend that the message has been updated
+						const provider = this.providerRef.deref()
+						await provider?.postMessageToWebview({
+							type: "messageUpdated",
+							clineMessage: this.clineMessages[lastApiReqIndex],
+						})
+					}
+				},
 			},
 		)
 		const iterator = stream[Symbol.asyncIterator]()

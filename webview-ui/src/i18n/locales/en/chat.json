@@ -1,5 +1,10 @@
 {
 	"greeting": "Welcome to Roo Code!",
+	"performance": {
+		"firstToken": "First token arrival time",
+		"totalDuration": "Total duration",
+		"tokensPerSecond": "tokens/s"
+	},
 	"task": {
 		"viewParentTask": "View Parent Task",
 		"title": "Task",
