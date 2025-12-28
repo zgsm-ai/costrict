@@ -59,7 +59,7 @@
 		"manageSettings": "Manage Settings"
 	},
 	"slashCommands": {
-		"description": "Manage your slash commands to quickly execute custom workflows and actions. <DocsLink>Learn more</DocsLink>"
+		"description": "Manage your slash commands to quickly execute custom workflows and actions. <SlashCommandLink>Learn more</SlashCommandLink>"
 	},
 	"ui": {
 		"collapseThinking": {

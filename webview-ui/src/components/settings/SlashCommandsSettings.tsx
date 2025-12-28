@@ -24,6 +24,8 @@ import { SectionHeader } from "./SectionHeader"
 import { Section } from "./Section"
 import { SlashCommandItem } from "../chat/SlashCommandItem"
 
+import { buildSlashCommandLink } from "@/utils/SlashCommandLinks"
+
 export const SlashCommandsSettings: React.FC = () => {
 	const { t } = useAppTranslation()
 	const { commands, cwd } = useExtensionState()
@@ -116,9 +118,9 @@ export const SlashCommandsSettings: React.FC = () => {
 						<Trans
 							i18nKey="settings:slashCommands.description"
 							components={{
-								DocsLink: (
+								SlashCommandLink: (
 									<a
-										href={buildDocLink("features/slash-commands", "slash_commands_settings")}
+										href={buildSlashCommandLink("features/slash-commands", "slash_commands_settings")}
 										target="_blank"
 										rel="noopener noreferrer"
 										className="text-vscode-textLink-foreground hover:underline">
