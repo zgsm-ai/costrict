@@ -1,5 +1,10 @@
 # CoStrict Change Log
 
+## [2.1.8]
+
+- Ensure default model info is merged before custom overrides
+- Sync roocode [last commit](https://github.com/zgsm-ai/costrict/commit/a18c9b7a560f56c63d29f06448784e3ecbffe9ed)
+
 ## [2.1.7]
 
 - Add concurrent file reads limit to read_file tool (default max 5 files)
