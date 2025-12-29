@@ -701,16 +701,19 @@ const ModesView = () => {
 					</div>
 
 					<div className="text-sm text-vscode-descriptionForeground mb-3">
-						<Trans i18nKey="prompts:modes.createModeHelpText">
-							<VSCodeLink
-								href={buildDocLink("basic-usage/using-modes", "prompts_view_modes")}
-								style={{ display: "inline" }}
-								aria-label="Learn about using modes"></VSCodeLink>
-							<VSCodeLink
-								href={buildDocLink("features/custom-modes", "prompts_view_modes")}
-								style={{ display: "inline" }}
-								aria-label="Learn about customizing modes"></VSCodeLink>
-						</Trans>
+						<Trans
+							i18nKey="prompts:modes.createModeHelpText"
+							components={{
+								DocsLink: (
+									<a
+										href="https://docs.costrict.ai/product-features/rules"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-vscode-textLink-foreground hover:underline">
+										{t("common:docsLink.label")}
+									</a>
+								),
+							}}></Trans>
 					</div>
 
 					<div className="flex items-center gap-1 mb-3">

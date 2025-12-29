@@ -1,6 +1,6 @@
 {
 	"modes": {
-		"createModeHelpText": "點選 + 建立新的自訂模式，或者在聊天中直接請 CoStrict 為您建立！"
+		"createModeHelpText": "點選 + 建立新的自訂模式，或者在聊天中直接請 CoStrict 為您建立！<DocsLink>了解更多</DocsLink>"
 	},
 	"roleDefinition": {
 		"description": "定義此模式下 CoStrict 的專業知識和個性。此描述會形塑 CoStrict 如何展現自己並處理工作。"

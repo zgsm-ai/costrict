@@ -1,10 +1,10 @@
-import { HTMLAttributes } from "react"
+import { HTMLAttributes, ReactNode } from "react"
 
 import { cn } from "@/lib/utils"
 
 type SectionHeaderProps = HTMLAttributes<HTMLDivElement> & {
-	children: React.ReactNode
-	description?: string
+	children: ReactNode
+	description?: ReactNode
 }
 
 export const SectionHeader = ({ description, children, className, ...props }: SectionHeaderProps) => {

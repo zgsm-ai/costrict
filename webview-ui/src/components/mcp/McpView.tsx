@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import { Trans } from "react-i18next"
 import {
 	VSCodeCheckbox,
-	VSCodeLink,
+	// VSCodeLink,
 	VSCodePanels,
 	VSCodePanelTab,
 	VSCodePanelView,
@@ -26,7 +26,7 @@ import {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	StandardTooltip,
 } from "@src/components/ui"
-import { buildDocLink } from "@src/utils/docLinks"
+// import { buildDocLink } from "@src/utils/docLinks"
 import { Section } from "@src/components/settings/Section"
 import { SectionHeader } from "@src/components/settings/SectionHeader"
 
@@ -63,13 +63,19 @@ const McpView = () => {
 						marginBottom: "10px",
 						marginTop: "5px",
 					}}>
-					<Trans i18nKey="mcp:description">
-						<VSCodeLink
-							href={buildDocLink("features/mcp/using-mcp-in-roo", "mcp_settings")}
-							style={{ display: "inline" }}>
-							Learn More
-						</VSCodeLink>
-					</Trans>
+					<Trans
+						i18nKey="mcp:description"
+						components={{
+							DocsLink: (
+								<a
+									href="https://docs.costrict.ai/product-features/mcp"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-vscode-textLink-foreground hover:underline">
+									{t("common:docsLink.label")}
+								</a>
+							),
+						}}></Trans>
 				</div>
 
 				<McpEnabledToggle />
@@ -91,17 +97,19 @@ const McpView = () => {
 									marginTop: "5px",
 									color: "var(--vscode-descriptionForeground)",
 								}}>
-								<Trans i18nKey="mcp:enableServerCreation.description">
-									<VSCodeLink
-										href={buildDocLink(
-											"features/mcp/using-mcp-in-roo#how-to-use-roo-to-create-an-mcp-server",
-											"mcp_server_creation",
-										)}
-										style={{ display: "inline" }}>
-										Learn about server creation
-									</VSCodeLink>
-									<strong>new</strong>
-								</Trans>
+								<Trans
+									i18nKey="mcp:enableServerCreation.description"
+									components={{
+										DocsLink: (
+											<a
+												href="https://docs.costrict.ai/product-features/mcp"
+												target="_blank"
+												rel="noopener noreferrer"
+												className="text-vscode-textLink-foreground hover:underline">
+												{t("common:docsLink.label")}
+											</a>
+										),
+									}}></Trans>
 								<p style={{ marginTop: "8px" }}>{t("mcp:enableServerCreation.hint")}</p>
 							</div>
 						</div>

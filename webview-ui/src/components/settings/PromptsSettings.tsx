@@ -20,6 +20,7 @@ import {
 
 import { SectionHeader } from "./SectionHeader"
 import { Section } from "./Section"
+import { Trans } from "react-i18next"
 
 interface PromptsSettingsProps {
 	customSupportPrompts: Record<string, string | undefined>
@@ -138,7 +139,22 @@ const PromptsSettings = ({
 
 	return (
 		<div>
-			<SectionHeader description={t("settings:prompts.description")}>
+			<SectionHeader
+				description={
+					<Trans
+						i18nKey="settings:prompts.description"
+						components={{
+							DocsLink: (
+								<a
+									href="https://docs.costrict.ai/product-features/prompt"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-vscode-textLink-foreground hover:underline">
+									{t("common:docsLink.label")}
+								</a>
+							),
+						}}></Trans>
+				}>
 				<div className="flex items-center gap-2">
 					<MessageSquare className="w-4" />
 					<div>{t("settings:sections.prompts")}</div>

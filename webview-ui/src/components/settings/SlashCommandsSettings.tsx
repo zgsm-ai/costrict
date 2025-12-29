@@ -18,7 +18,7 @@ import {
 	Button,
 } from "@/components/ui"
 import { vscode } from "@/utils/vscode"
-import { buildDocLink } from "@/utils/docLinks"
+// import { buildDocLink } from "@/utils/docLinks"
 
 import { SectionHeader } from "./SectionHeader"
 import { Section } from "./Section"
@@ -118,7 +118,7 @@ export const SlashCommandsSettings: React.FC = () => {
 							components={{
 								DocsLink: (
 									<a
-										href={buildDocLink("features/slash-commands", "slash_commands_settings")}
+										href="https://docs.costrict.ai/product-features/slash-command"
 										target="_blank"
 										rel="noopener noreferrer"
 										className="text-vscode-textLink-foreground hover:underline">

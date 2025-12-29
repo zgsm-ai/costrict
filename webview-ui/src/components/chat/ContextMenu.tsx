@@ -13,7 +13,7 @@ import {
 } from "@src/utils/context-mentions"
 import { removeLeadingNonAlphanumeric } from "@src/utils/removeLeadingNonAlphanumeric"
 import { vscode } from "@src/utils/vscode"
-import { buildDocLink } from "@/utils/docLinks"
+// import { buildDocLink } from "@/utils/docLinks"
 import { Trans } from "react-i18next"
 import { t } from "i18next"
 
@@ -307,10 +307,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 										components={{
 											DocsLink: (
 												<a
-													href={buildDocLink(
-														"features/slash-commands",
-														"slash_commands_settings",
-													)}
+													href="https://docs.costrict.ai/product-features/slash-command"
 													target="_blank"
 													rel="noopener noreferrer"
 													className="text-vscode-textLink-foreground hover:underline">

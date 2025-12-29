@@ -150,7 +150,7 @@
 		"description": "選中後，CoStrict 將不會為此模型使用提示詞快取。"
 	},
 	"prompts": {
-		"description": "設定用於快速操作的支援提示詞，如增強提示詞、解釋程式碼和修復問題。這些提示詞幫助 CoStrict 為常見開發工作提供更好的支援。"
+		"description": "設定用於快速操作的支援提示詞，如增強提示詞、解釋程式碼和修復問題。這些提示詞幫助 CoStrict 為常見開發工作提供更好的支援。<DocsLink>了解更多</DocsLink>"
 	},
 	"providerChangeWarning": {
 		"title": "確定從 CoStrict 切換到其他提供商？",

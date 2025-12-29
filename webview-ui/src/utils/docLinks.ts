@@ -7,7 +7,7 @@
  */
 export function buildDocLink(path: string, campaign: string): string {
 	// todo: add docs path
-	return "https://costrict.ai"
+	return "https://docs.costrict.ai"
 	// Remove any leading slash from path
 	const cleanPath = path.replace(/^\//, "")
 	const [basePath, hash] = cleanPath.split("#")

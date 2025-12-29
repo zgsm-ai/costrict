@@ -1,6 +1,6 @@
 {
 	"modes": {
-		"createModeHelpText": "Hit the + to create a new custom mode, or just ask CoStrict in chat to create one for you!"
+		"createModeHelpText": "Click + to create a new custom mode, or simply ask CoStrict to create one for you! <DocsLink>Learn more</DocsLink>"
 	},
 	"roleDefinition": {
 		"description": "Define CoStrict's expertise and personality for this mode. This description shapes how CoStrict presents itself and approaches tasks."
