@@ -169,7 +169,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					modelInfo,
 					isNative,
 				)
-
 				const requestOptions = this.buildStreamingRequestOptions(
 					convertedMessages,
 					deepseekReasoner,
@@ -744,7 +743,8 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const info = this.options.useZgsmCustomConfig
 			? {
 					...NATIVE_TOOL_DEFAULTS,
-					...(this.options.zgsmAiCustomModelInfo ?? defaultInfo),
+					...defaultInfo,
+					...(this.options.zgsmAiCustomModelInfo ?? {}),
 				}
 			: defaultInfo
 		const params = getModelParams({ format: "zgsm", modelId: id, model: info, settings: this.options })
