@@ -81,7 +81,6 @@ export class CodeReviewService {
 				taskId: "",
 				isCompleted: false,
 				progress: 0,
-				review_progress: "",
 				total: 0,
 			}
 		}
@@ -386,7 +385,6 @@ export class CodeReviewService {
 			taskId: "",
 			isCompleted: false,
 			progress: 0,
-			review_progress: "",
 			total: 0,
 			error: undefined,
 			timeoutId: undefined,

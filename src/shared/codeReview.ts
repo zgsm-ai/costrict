@@ -100,7 +100,6 @@ export enum ReviewTaskStatus {
 export interface ReviewTaskData {
 	issues: ReviewIssue[]
 	progress: number | null
-	reviewProgress?: string
 	error?: string
 	message?: string
 }

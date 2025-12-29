@@ -92,7 +92,6 @@ export interface ReviewTask {
 	isCompleted: boolean
 	/** Current progress */
 	progress: number
-	review_progress: string
 	/** Total items to process */
 	total: number
 	/** Timeout ID for cleanup */

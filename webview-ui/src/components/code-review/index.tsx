@@ -20,7 +20,7 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ isHidden, onIssueClick,
 	const { reviewTask } = useExtensionState()
 	const {
 		status,
-		data: { issues, progress, error = "", message = "", reviewProgress = "" },
+		data: { issues, progress, error = "", message = "" },
 	} = reviewTask
 	const [page, setPage] = useState<Page>(() => {
 		if (status === ReviewTaskStatus.INITIAL && issues.length === 0) {
@@ -30,7 +30,7 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ isHidden, onIssueClick,
 	})
 
 	useEffect(() => {
-		if (status === TaskStatus.INITIAL && issues.length === 0) {
+		if (status === ReviewTaskStatus.INITIAL && issues.length === 0) {
 			setPage(Page.Welcome)
 		} else {
 			setPage(Page.Review)
@@ -47,7 +47,6 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ isHidden, onIssueClick,
 						issues={issues} // To be sourced from context
 						taskStatus={status}
 						progress={progress} // To be sourced from context
-						reviewProgress={reviewProgress}
 						message={message}
 						errorMessage={error}
 						onIssueClick={onIssueClick}

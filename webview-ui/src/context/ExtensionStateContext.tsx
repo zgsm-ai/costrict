@@ -28,7 +28,7 @@ import { RouterModels } from "@roo/api"
 import { vscode } from "@src/utils/vscode"
 import { convertTextMateToHljs } from "@src/utils/textMateToHljs"
 import { defaultCodebaseIndexEnabled } from "../../../src/services/code-index/constants"
-import { ReviewTaskPayload, TaskStatus } from "@roo/codeReview"
+import { ReviewTaskPayload, ReviewTaskStatus } from "@roo/codeReview"
 
 export interface ExtensionStateContextType extends ExtensionState {
 	historyPreviewCollapsed?: boolean // Add the new state property

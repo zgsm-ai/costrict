@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React from "react"
 import { ReviewIssue, ReviewTaskStatus } from "@roo/codeReview"
 import { CheckIcon, InfoCircledIcon } from "@radix-ui/react-icons"
 import { useAppTranslation } from "@/i18n/TranslationContext"
@@ -6,7 +6,6 @@ import { useAppTranslation } from "@/i18n/TranslationContext"
 interface TaskStatusBarProps {
 	taskStatus: ReviewTaskStatus
 	progress: number | null
-	reviewProgress: string
 	message: string
 	errorMessage: string
 	issues: ReviewIssue[]
@@ -16,16 +15,12 @@ interface TaskStatusBarProps {
 const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
 	taskStatus,
 	progress,
-	reviewProgress,
 	issues,
 	message,
 	errorMessage,
 	onTaskCancel,
 }) => {
 	const { t } = useAppTranslation()
-	const adjustedProgress = useMemo(() => {
-		return Math.round((progress ?? 0) * 100)
-	}, [progress])
 	return (
 		<div className="flex items-center mt-5">
 			{taskStatus === ReviewTaskStatus.RUNNING && (
@@ -39,9 +34,9 @@ const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
 							{progress !== null && (
 								<div>
 									<span className="ml-2">
-										{reviewProgress
-											? `${reviewProgress} ${adjustedProgress}%`
-											: t("codereview:taskStatusBar.running", { progress: adjustedProgress })}
+										{t("codereview:taskStatusBar.running", {
+											progress: Math.round((progress ?? 0) * 100),
+										})}
 									</span>
 									<span className="ml-2 text-[#1876F2] cursor-pointer" onClick={() => onTaskCancel()}>
 										{t("codereview:taskStatusBar.cancel")}
