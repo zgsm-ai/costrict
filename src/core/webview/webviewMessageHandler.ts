@@ -1346,6 +1346,14 @@ export const webviewMessageHandler = async (
 
 			break
 		}
+		// case "setAutoCleanup": {
+		// 	if (message.autoCleanup) {
+		// 		await updateGlobalState("autoCleanup", message.autoCleanup)
+		// 		// 同步更新 webview 状态
+		// 		await provider.postStateToWebview()
+		// 	}
+		// 	break
+		// }
 		case "openCustomModesSettings": {
 			const customModesFilePath = await provider.customModesManager.getCustomModesFilePath()
 

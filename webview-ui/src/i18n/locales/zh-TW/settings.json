@@ -36,7 +36,8 @@
 		"ui": "UI",
 		"experimental": "實驗性",
 		"language": "語言",
-		"about": "關於 Roo Code"
+		"about": "關於 Roo Code",
+		"autoCleanup": "自動清理"
 	},
 	"about": {
 		"bugReport": {
@@ -664,6 +665,10 @@
 			"inheritDescription": "此檔案繼承全域預設閾值（{{threshold}}%）",
 			"usesGlobal": "（使用全域 {{threshold}}%）"
 		},
+		"filterErrorCorrection": {
+			"name": "過濾錯誤糾正訊息對",
+			"description": "啟用後，系統會在模型成功自我糾正後，自動從上下文中過濾掉模型錯誤（如工具使用失敗）及其糾正回應。這可以減少 token 使用量和對話歷史中的噪音。"
+		},
 		"maxImageFileSize": {
 			"label": "最大圖片檔案大小",
 			"mb": "MB",
@@ -995,6 +1000,41 @@
 		"requireCtrlEnterToSend": {
 			"label": "需要 {{primaryMod}}+Enter 傳送訊息",
 			"description": "啟用後，必須按 {{primaryMod}}+Enter 傳送訊息，而不只是 Enter"
+		}
+	},
+	"autoCleanup": {
+		"description": "自動清理舊任務歷史以釋放磁碟空間",
+		"enabled": {
+			"label": "啟用自動清理",
+			"description": "啟用後，擴充程式將根據設定自動刪除舊任務"
+		},
+		"strategy": {
+			"label": "清理策略",
+			"basedOnTime": {
+				"label": "基於時間",
+				"description": "刪除指定天數之前的任務"
+			},
+			"basedOnCount": {
+				"label": "基於數量",
+				"description": "保留最近的N條任務（包含活躍任務）"
+			}
+		},
+		"retentionDays": {
+			"label": "保留天數",
+			"description": "刪除超過此天數的任務 (1-365)"
+		},
+		"maxHistoryCount": {
+			"label": "最大歷史記錄數",
+			"tasks": "條任務",
+			"description": "保留最近的N條任務，包含活躍任務在內 (10-500)"
+		},
+		"excludeActive": {
+			"label": "排除當前任務",
+			"description": "不刪除正在執行的任務"
+		},
+		"cleanupOnStartup": {
+			"label": "啟動時清理",
+			"description": "擴充程式啟動時執行自動清理"
 		}
 	}
 }

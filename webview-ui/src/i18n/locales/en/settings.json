@@ -31,6 +31,7 @@
 		"notifications": "Notifications",
 		"contextManagement": "Context",
 		"terminal": "Terminal",
+		"autoCleanup": "Auto Cleanup",
 		"slashCommands": "Slash Commands",
 		"prompts": "Prompts",
 		"ui": "UI",
@@ -73,6 +74,41 @@
 		"requireCtrlEnterToSend": {
 			"label": "Require {{primaryMod}}+Enter to send messages",
 			"description": "When enabled, you must press {{primaryMod}}+Enter to send messages instead of just Enter"
+		}
+	},
+	"autoCleanup": {
+		"description": "Automatically clean up old task history to free up disk space",
+		"enabled": {
+			"label": "Enable Auto Cleanup",
+			"description": "When enabled, the extension will automatically remove old tasks based on your settings"
+		},
+		"strategy": {
+			"label": "Cleanup Strategy",
+			"basedOnTime": {
+				"label": "Based on Time",
+				"description": "Remove tasks older than specified days"
+			},
+			"basedOnCount": {
+				"label": "Based on Count",
+				"description": "Keep only the most recent N tasks (including active task)"
+			}
+		},
+		"retentionDays": {
+			"label": "Retention Days",
+			"description": "Tasks older than this number of days will be removed (1-365)"
+		},
+		"maxHistoryCount": {
+			"label": "Max History Count",
+			"tasks": "tasks",
+			"description": "Keep only this many most recent tasks including active task (10-500)"
+		},
+		"excludeActive": {
+			"label": "Exclude Active Task",
+			"description": "Do not delete the currently running task"
+		},
+		"cleanupOnStartup": {
+			"label": "Cleanup on Startup",
+			"description": "Run auto cleanup when the extension starts"
 		}
 	},
 	"prompts": {
@@ -685,6 +721,10 @@
 			"profileDescription": "Custom threshold for this profile only (overrides global default)",
 			"inheritDescription": "This profile inherits the global default threshold ({{threshold}}%)",
 			"usesGlobal": "(uses global {{threshold}}%)"
+		},
+		"filterErrorCorrection": {
+			"name": "Filter error-correction message pairs",
+			"description": "When enabled, the system will automatically filter out model errors (like failed tool usage) and their correction responses from the context after the model successfully corrects itself. This reduces token usage and noise in the conversation history."
 		},
 		"includeCurrentTime": {
 			"label": "Include current time in context",

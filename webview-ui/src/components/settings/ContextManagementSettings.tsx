@@ -17,6 +17,7 @@ type ContextManagementSettingsProps = HTMLAttributes<HTMLDivElement> & {
 	zgsmCodebaseIndexEnabled: boolean
 	autoCondenseContext: boolean
 	autoCondenseContextPercent: number
+	filterErrorCorrectionMessages?: boolean
 	listApiConfigMeta: any[]
 	maxOpenTabsContext: number
 	maxWorkspaceFiles: number
@@ -36,6 +37,7 @@ type ContextManagementSettingsProps = HTMLAttributes<HTMLDivElement> & {
 	setCachedStateField: SetCachedStateField<
 		| "autoCondenseContext"
 		| "autoCondenseContextPercent"
+		| "filterErrorCorrectionMessages"
 		| "maxOpenTabsContext"
 		| "maxWorkspaceFiles"
 		| "showRooIgnoredFiles"
@@ -58,6 +60,7 @@ export const ContextManagementSettings = ({
 	zgsmCodebaseIndexEnabled,
 	autoCondenseContext,
 	autoCondenseContextPercent,
+	filterErrorCorrectionMessages,
 	listApiConfigMeta,
 	maxOpenTabsContext,
 	maxWorkspaceFiles,
@@ -512,6 +515,23 @@ export const ContextManagementSettings = ({
 											threshold: autoCondenseContextPercent,
 										})
 									: t("settings:contextManagement.condensingThreshold.profileDescription")}
+							</div>
+						</div>
+
+						{/* Error Correction Filtering */}
+						<div className="mt-2">
+							<VSCodeCheckbox
+								checked={filterErrorCorrectionMessages ?? false}
+								onChange={(e: any) =>
+									setCachedStateField("filterErrorCorrectionMessages", e.target.checked)
+								}
+								data-testid="filter-error-correction-checkbox">
+								<span className="font-medium">
+									{t("settings:contextManagement.filterErrorCorrection.name")}
+								</span>
+							</VSCodeCheckbox>
+							<div className="text-vscode-descriptionForeground text-sm mt-1 ml-6">
+								{t("settings:contextManagement.filterErrorCorrection.description")}
 							</div>
 						</div>
 					</div>

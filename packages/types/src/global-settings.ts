@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { CleanupStrategy } from "./auto-cleanup.js"
 import { type Keys } from "./type-fu.js"
 import {
 	type ProviderSettings,
@@ -55,6 +56,15 @@ export const globalSettingsSchema = z.object({
 	currentApiConfigName: z.string().optional(),
 	listApiConfigMeta: z.array(providerSettingsEntrySchema).optional(),
 	pinnedApiConfigs: z.record(z.string(), z.boolean()).optional(),
+	// Auto cleanup settings
+	autoCleanup: z.object({
+		enabled: z.boolean().optional(),
+		strategy: z.nativeEnum(CleanupStrategy).optional(),
+		retentionDays: z.number().min(1).max(365).optional(),
+		maxHistoryCount: z.number().min(10).max(500).optional(),
+		excludeActive: z.boolean().optional(),
+		cleanupOnStartup: z.boolean().optional(),
+	}).optional(),
 
 	lastShownAnnouncementId: z.string().optional(),
 	customInstructions: z.string().optional(),
@@ -98,6 +108,7 @@ export const globalSettingsSchema = z.object({
 	allowedMaxCost: z.number().nullish(),
 	autoCondenseContext: z.boolean().optional(),
 	autoCondenseContextPercent: z.number().optional(),
+	filterErrorCorrectionMessages: z.boolean().optional(),
 	maxConcurrentFileReads: z.number().optional(),
 
 	/**

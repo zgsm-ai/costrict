@@ -211,6 +211,9 @@
 		"warn": "歷史任務快取超過 {{size}}，您可以手動清理歷史記錄以釋放磁碟空間",
 		"viewAllHistory": "檢視所有工作"
 	},
+	"autoCleanup": {
+		"completed": "自動清理完成：已刪除 {{count}} 個任務，釋放 {{space}} 空間"
+	},
 	"notification": {
 		"confirm": "確定"
 	}

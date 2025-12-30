@@ -592,13 +592,23 @@ export class NativeToolCallParser {
 		}
 
 		// Resolve tool alias to canonical name
-		const resolvedName = resolveToolAlias(toolCall.name as string) as TName
+		let resolvedName = resolveToolAlias(toolCall.name as string) as TName
 
 		// Validate tool name (after alias resolution).
-		if (!toolNames.includes(resolvedName as ToolName) && !customToolRegistry.has(resolvedName)) {
+		const matchBuiltinToolName = (toolNames.find((name) => name === resolvedName || resolvedName.indexOf(name) > -1) ?? "")  as TName
+		const matchCustomToolName = (customToolRegistry.list().find((name) => name === resolvedName || resolvedName.indexOf(name) > -1) ?? "" ) as TName
+		
+		const _resolvedName = matchBuiltinToolName || matchCustomToolName
+
+		if (!_resolvedName) {
 			console.error(`Invalid tool name: ${toolCall.name} (resolved: ${resolvedName})`)
 			console.error(`Valid tool names:`, toolNames)
 			return null
+		} else {
+			if (toolCall.name !== _resolvedName) {
+				console.warn(`Resolved tool alias '${toolCall.name}' to '${_resolvedName}'`)
+			}
+			resolvedName = _resolvedName
 		}
 
 		try {

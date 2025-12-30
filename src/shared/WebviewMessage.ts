@@ -9,6 +9,7 @@ import {
 	type MarketplaceItem,
 	type ShareVisibility,
 	type QueuedMessage,
+	type AutoCleanupSettings,
 	marketplaceItemSchema,
 } from "@roo-code/types"
 
@@ -197,6 +198,7 @@ export interface WebviewMessage {
 		| "updateSettings"
 		| "allowedCommands"
 		| "deniedCommands"
+		| "setAutoCleanup"
 		| "killBrowserSession"
 		| "openBrowserSessionPanel"
 		| "showBrowserSessionPanelAtStep"
@@ -262,6 +264,8 @@ export interface WebviewMessage {
 	list?: string[] // For dismissedUpsells response
 	organizationId?: string | null // For organization switching
 	useProviderSignup?: boolean // For rooCloudSignIn to use provider signup flow
+	autoCleanup?: AutoCleanupSettings
+	filterErrorCorrectionMessages?: boolean
 	codeIndexSettings?: {
 		// Global state settings
 		zgsmCodebaseIndexEnabled: boolean

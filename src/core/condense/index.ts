@@ -436,9 +436,11 @@ export function getMessagesSinceLastSummary(messages: ApiMessage[]): ApiMessage[
  * as they have been replaced by that summary.
  * Messages with a truncationParent that points to an existing truncation marker are also filtered out,
  * as they have been hidden by sliding window truncation.
+ * Messages with an errorCorrectionParent that points to an existing error correction marker are also filtered out,
+ * as they represent error-correction pairs that can be omitted to reduce context.
  *
- * This allows non-destructive condensing and truncation where messages are tagged but not deleted,
- * enabling accurate rewind operations while still sending condensed/truncated history to the API.
+ * This allows non-destructive condensing, truncation, and error filtering where messages are tagged but not deleted,
+ * enabling accurate rewind operations while still sending condensed/truncated/filtered history to the API.
  *
  * @param messages - The full API conversation history including tagged messages
  * @returns The filtered history that should be sent to the API
@@ -448,6 +450,8 @@ export function getEffectiveApiHistory(messages: ApiMessage[]): ApiMessage[] {
 	const existingSummaryIds = new Set<string>()
 	// Collect all truncationIds of truncation markers that exist in the current history
 	const existingTruncationIds = new Set<string>()
+	// Collect all errorCorrectionIds of error correction markers that exist in the current history
+	const existingErrorCorrectionIds = new Set<string>()
 
 	for (const msg of messages) {
 		if (msg.isSummary && msg.condenseId) {
@@ -456,10 +460,14 @@ export function getEffectiveApiHistory(messages: ApiMessage[]): ApiMessage[] {
 		if (msg.isTruncationMarker && msg.truncationId) {
 			existingTruncationIds.add(msg.truncationId)
 		}
+		if (msg.isErrorCorrectionMarker && msg.errorCorrectionId) {
+			existingErrorCorrectionIds.add(msg.errorCorrectionId)
+		}
 	}
 
-	// Filter out messages whose condenseParent points to an existing summary
-	// or whose truncationParent points to an existing truncation marker.
+	// Filter out messages whose condenseParent points to an existing summary,
+	// whose truncationParent points to an existing truncation marker,
+	// or whose errorCorrectionParent points to an existing error correction marker.
 	// Messages with orphaned parents (summary/marker was deleted) are included
 	return messages.filter((msg) => {
 		// Filter out condensed messages if their summary exists
@@ -470,26 +478,32 @@ export function getEffectiveApiHistory(messages: ApiMessage[]): ApiMessage[] {
 		if (msg.truncationParent && existingTruncationIds.has(msg.truncationParent)) {
 			return false
 		}
+		// Filter out error-correction messages if their correction marker exists
+		if (msg.errorCorrectionParent && existingErrorCorrectionIds.has(msg.errorCorrectionParent)) {
+			return false
+		}
 		return true
 	})
 }
 
 /**
- * Cleans up orphaned condenseParent and truncationParent references after a truncation operation (rewind/delete).
- * When a summary message or truncation marker is deleted, messages that were tagged with its ID
+ * Cleans up orphaned condenseParent, truncationParent, and errorCorrectionParent references after a truncation operation (rewind/delete).
+ * When a summary message, truncation marker, or error correction marker is deleted, messages that were tagged with its ID
  * should have their parent reference cleared so they become active again.
  *
  * This function should be called after any operation that truncates the API history
- * to ensure messages are properly restored when their summary or truncation marker is deleted.
+ * to ensure messages are properly restored when their summary, truncation marker, or error correction marker is deleted.
  *
  * @param messages - The API conversation history after truncation
- * @returns The cleaned history with orphaned condenseParent and truncationParent fields cleared
+ * @returns The cleaned history with orphaned condenseParent, truncationParent, and errorCorrectionParent fields cleared
  */
 export function cleanupAfterTruncation(messages: ApiMessage[]): ApiMessage[] {
 	// Collect all condenseIds of summaries that still exist
 	const existingSummaryIds = new Set<string>()
 	// Collect all truncationIds of truncation markers that still exist
 	const existingTruncationIds = new Set<string>()
+	// Collect all errorCorrectionIds of error correction markers that still exist
+	const existingErrorCorrectionIds = new Set<string>()
 
 	for (const msg of messages) {
 		if (msg.isSummary && msg.condenseId) {
@@ -498,9 +512,12 @@ export function cleanupAfterTruncation(messages: ApiMessage[]): ApiMessage[] {
 		if (msg.isTruncationMarker && msg.truncationId) {
 			existingTruncationIds.add(msg.truncationId)
 		}
+		if (msg.isErrorCorrectionMarker && msg.errorCorrectionId) {
+			existingErrorCorrectionIds.add(msg.errorCorrectionId)
+		}
 	}
 
-	// Clear orphaned parent references for messages whose summary or truncation marker was deleted
+	// Clear orphaned parent references for messages whose summary, truncation marker, or error correction marker was deleted
 	return messages.map((msg) => {
 		let needsUpdate = false
 
@@ -514,9 +531,14 @@ export function cleanupAfterTruncation(messages: ApiMessage[]): ApiMessage[] {
 			needsUpdate = true
 		}
 
+		// Check for orphaned errorCorrectionParent
+		if (msg.errorCorrectionParent && !existingErrorCorrectionIds.has(msg.errorCorrectionParent)) {
+			needsUpdate = true
+		}
+
 		if (needsUpdate) {
 			// Create a new object without orphaned parent references
-			const { condenseParent, truncationParent, ...rest } = msg
+			const { condenseParent, truncationParent, errorCorrectionParent, ...rest } = msg
 			const result: ApiMessage = rest as ApiMessage
 
 			// Keep condenseParent if its summary still exists
@@ -527,6 +549,11 @@ export function cleanupAfterTruncation(messages: ApiMessage[]): ApiMessage[] {
 			// Keep truncationParent if its truncation marker still exists
 			if (truncationParent && existingTruncationIds.has(truncationParent)) {
 				result.truncationParent = truncationParent
+			}
+
+			// Keep errorCorrectionParent if its error correction marker still exists
+			if (errorCorrectionParent && existingErrorCorrectionIds.has(errorCorrectionParent)) {
+				result.errorCorrectionParent = errorCorrectionParent
 			}
 
 			return result

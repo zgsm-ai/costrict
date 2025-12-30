@@ -266,6 +266,7 @@ export type ExtensionState = Pick<
 	| "alwaysAllowReadOnly"
 	| "alwaysAllowReadOnlyOutsideWorkspace"
 	| "alwaysAllowWrite"
+	| "autoCleanup"
 	| "alwaysAllowWriteOutsideWorkspace"
 	| "alwaysAllowWriteProtected"
 	| "alwaysAllowBrowser"
@@ -328,6 +329,7 @@ export type ExtensionState = Pick<
 	| "includeCurrentCost"
 	| "maxGitStatusFiles"
 	| "requestDelaySeconds"
+	| "filterErrorCorrectionMessages"
 > & {
 	version: string
 	clineMessages: ClineMessage[]

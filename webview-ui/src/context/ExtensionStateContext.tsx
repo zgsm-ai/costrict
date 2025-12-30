@@ -12,6 +12,8 @@ import {
 	type CloudOrganizationMembership,
 	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
+	type AutoCleanupSettings,
+	DEFAULT_AUTO_CLEANUP_SETTINGS,
 } from "@roo-code/types"
 
 import { ExtensionMessage, ExtensionState, MarketplaceInstalledMetadata, Command } from "@roo/ExtensionMessage"
@@ -165,6 +167,10 @@ export interface ExtensionStateContextType extends ExtensionState {
 	autoCondenseContextPercent: number
 	setAutoCondenseContextPercent: (value: number) => void
 	routerModels?: RouterModels
+	autoCleanup?: AutoCleanupSettings
+	setAutoCleanup: (value: AutoCleanupSettings) => void
+	filterErrorCorrectionMessages?: boolean
+	setFilterErrorCorrectionMessages: (value: boolean) => void
 	includeDiagnosticMessages?: boolean
 	setIncludeDiagnosticMessages: (value: boolean) => void
 	maxDiagnosticMessages?: number
@@ -206,6 +212,8 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 	const [state, setState] = useState<ExtensionState>({
 		apiConfiguration: {},
 		version: "",
+		autoCleanup: DEFAULT_AUTO_CLEANUP_SETTINGS,
+		filterErrorCorrectionMessages: false, // 默认禁用错误纠正消息过滤
 		clineMessages: [],
 		taskHistory: [],
 		shouldShowAnnouncement: false,
@@ -385,6 +393,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					// Update includeCurrentCost if present in state message
 					if ((newState as any).includeCurrentCost !== undefined) {
 						setIncludeCurrentCost((newState as any).includeCurrentCost)
+					}
+					// Update autoCleanup if present in state message
+					if ((newState as any).autoCleanup !== undefined) {
+						setState((prevState) => ({ ...prevState, autoCleanup: (newState as any).autoCleanup }))
 					}
 					// Handle marketplace data if present in state message
 					if (newState.marketplaceItems !== undefined) {
@@ -659,6 +671,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setAutoCondenseContextPercent: (value) =>
 			setState((prevState) => ({ ...prevState, autoCondenseContextPercent: value })),
 		setCondensingApiConfigId: (value) => setState((prevState) => ({ ...prevState, condensingApiConfigId: value })),
+		autoCleanup: state.autoCleanup ?? DEFAULT_AUTO_CLEANUP_SETTINGS,
+		setAutoCleanup: (value) => setState((prevState) => ({ ...prevState, autoCleanup: value })),
+		filterErrorCorrectionMessages: state.filterErrorCorrectionMessages ?? false,
+		setFilterErrorCorrectionMessages: (value) => setState((prevState) => ({ ...prevState, filterErrorCorrectionMessages: value })),
 		setCustomCondensingPrompt: (value) =>
 			setState((prevState) => ({ ...prevState, customCondensingPrompt: value })),
 		setProfileThresholds: (value) => setState((prevState) => ({ ...prevState, profileThresholds: value })),

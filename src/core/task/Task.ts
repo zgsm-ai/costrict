@@ -357,7 +357,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	assistantMessageContent: AssistantMessageContent[] = []
 	presentAssistantMessageLocked = false
 	presentAssistantMessageHasPendingUpdates = false
-	userMessageContent: (Anthropic.TextBlockParam | Anthropic.ImageBlockParam | Anthropic.ToolResultBlockParam)[] = []
+	userMessageContent: ((Anthropic.TextBlockParam | Anthropic.ImageBlockParam | Anthropic.ToolResultBlockParam) & { __isNoToolsUsed?: boolean; })[] = []
 	userMessageContentReady = false
 	didRejectTool = false
 	didAlreadyUseTool = false
@@ -915,6 +915,91 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	async overwriteApiConversationHistory(newHistory: ApiMessage[]) {
 		this.apiConversationHistory = newHistory
+		await this.saveApiConversationHistory()
+	}
+
+	/**
+	 * Mark recent error-correction message pairs when the model successfully uses tools after an error.
+	 * This allows the system to filter out error messages and their corrections to reduce context.
+	 *
+	 * When enabled, this will tag:
+	 * 1. The assistant message that failed to use tools
+	 * 2. The user message with the error correction prompt
+	 * 3. Mark the current successful assistant message as a correction marker
+	 */
+	private async markErrorCorrectionPair(): Promise<void> {
+		// Check if error correction filtering is enabled
+		const state = await this.providerRef.deref()?.getState()
+		if (!state?.filterErrorCorrectionMessages) {
+			return // Feature is disabled, do nothing
+		}
+
+		// Find all unmarked error messages (with __isNoToolsUsed that haven't been tagged yet)
+		const errorUserMessageIndices: number[] = []
+		for (let i = this.apiConversationHistory.length - 1; i >= 0; i--) {
+			const msg = this.apiConversationHistory[i]
+			if (msg.role === "user" && Array.isArray(msg.content)) {
+				// Skip messages that are already marked as part of an error-correction pair
+				if (msg.errorCorrectionParent) {
+					continue
+				}
+
+				const hasNoToolsUsedError = msg.content.some(
+					(block: any) => block.__isNoToolsUsed === true
+				)
+				if (hasNoToolsUsedError) {
+					errorUserMessageIndices.push(i)
+				}
+			}
+		}
+
+		// If no unmarked error messages found, nothing to do
+		if (errorUserMessageIndices.length === 0) {
+			return
+		}
+
+		// Verify that the last message in history is an assistant message
+		// This is a safety check to ensure we're in the expected state
+		const lastMessageIndex = this.apiConversationHistory.length - 1
+		if (lastMessageIndex < 0 || this.apiConversationHistory[lastMessageIndex].role !== "assistant") {
+			// Unexpected state: last message should be the successful assistant response
+			this.providerRef?.deref()?.log(
+				`Warning: markErrorCorrectionPair called but last message is not from assistant`
+			)
+			return
+		}
+
+		// Avoid marking the same assistant message as a correction marker multiple times
+		if (this.apiConversationHistory[lastMessageIndex].isErrorCorrectionMarker) {
+			// This assistant message is already marked as a correction marker
+			return
+		}
+
+		// Generate a single errorCorrectionId for all the error-correction pairs
+		const errorCorrectionId = crypto.randomUUID()
+
+		// Mark all found error messages and their preceding assistant messages
+		for (const errorUserMessageIndex of errorUserMessageIndices) {
+			// Mark the error user message
+			this.apiConversationHistory[errorUserMessageIndex].errorCorrectionParent = errorCorrectionId
+
+			// Find and mark the assistant message that triggered the error (the one before the error user message)
+			for (let i = errorUserMessageIndex - 1; i >= 0; i--) {
+				if (this.apiConversationHistory[i].role === "assistant") {
+					// Only mark if not already marked (defensive check)
+					if (!this.apiConversationHistory[i].errorCorrectionParent) {
+						this.apiConversationHistory[i].errorCorrectionParent = errorCorrectionId
+					}
+					break
+				}
+			}
+		}
+
+		// Mark the current (most recent) assistant message as the correction marker
+		this.apiConversationHistory[lastMessageIndex].isErrorCorrectionMarker = true
+		this.apiConversationHistory[lastMessageIndex].errorCorrectionId = errorCorrectionId
+
+		// Save the updated history
 		await this.saveApiConversationHistory()
 	}
 
@@ -2337,7 +2422,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	// Task Loop
 
-	private async initiateTaskLoop(userContent: Anthropic.Messages.ContentBlockParam[]): Promise<void> {
+	private async initiateTaskLoop(userContent: Array<Anthropic.Messages.ContentBlockParam & { __isNoToolsUsed?: boolean; }>): Promise<void> {
 		// Kicks off the checkpoints initialization process in the background.
 		getCheckpointService(this)
 
@@ -2375,6 +2460,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				nextUserContent = [
 					{
 						type: "text",
+						__isNoToolsUsed: true,
 						text: formatResponse.noToolsUsed(this._taskToolProtocol ?? "xml", _nextUserContent?.text),
 					},
 				]
@@ -3256,6 +3342,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								}
 							}
 
+							// Check if we should stop due to critical errors (e.g., 401, quota)
+							if (shouldStop) {
+								// Don't add retry task, break the loop to stop processing
+								console.log(
+									`[Task#${this.taskId}.${this.instanceId}] Stopping due to critical error (shouldStop=true)`,
+								)
+								break
+							}
+
 							// Push the same content back onto the stack to retry, incrementing the retry attempt counter
 							stack.push({
 								userContent: currentUserContent,
@@ -3263,9 +3358,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								retryAttempt: (currentItem.retryAttempt ?? 0) + 1,
 							})
 							// Continue to retry the request
-							if (!shouldStop) {
-								continue
-							}
+							continue
 						}
 					}
 				} finally {
@@ -3469,6 +3562,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						// Use the task's locked protocol for consistent behavior
 						this.userMessageContent.push({
 							type: "text",
+							__isNoToolsUsed: true,
 							text: formatResponse.noToolsUsed(
 								this._taskToolProtocol ?? "xml",
 								undefined,
@@ -3478,6 +3572,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					} else {
 						// Reset counter when tools are used successfully
 						this.consecutiveNoToolUseCount = 0
+
+						// Mark error-correction pairs if this is a successful response after an error
+						// This allows filtering out the error and its correction from context
+						await this.markErrorCorrectionPair()
 					}
 
 					// Push to stack if there's content OR if we're paused waiting for a subtask.

@@ -35,6 +35,13 @@ export type ApiMessage = Anthropic.MessageParam & {
 	truncationParent?: string
 	// Identifies a message as a truncation boundary marker
 	isTruncationMarker?: boolean
+	// For error correction filtering: unique identifier for a successful correction
+	errorCorrectionId?: string
+	// For error correction filtering: points to the errorCorrectionId that marks this as part of an error-correction pair
+	// Messages with errorCorrectionParent are filtered out when sending to API if the correction marker exists
+	errorCorrectionParent?: string
+	// Identifies a message as an error correction marker (the successful response after error)
+	isErrorCorrectionMarker?: boolean
 }
 
 export async function readApiMessages({

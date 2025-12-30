@@ -59,7 +59,7 @@ export class ListFilesTool extends BaseTool<"list_files"> {
 			const [files, didHitLimit] = await listFiles(
 				absolutePath,
 				recursive || false,
-				(alwaysIncludeFileDetails ? 3 : 1) * maxWorkspaceFiles,
+				(alwaysIncludeFileDetails ? 2 : 1) * maxWorkspaceFiles,
 			)
 
 			const result = formatResponse.formatFilesList(

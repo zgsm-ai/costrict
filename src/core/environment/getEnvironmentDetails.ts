@@ -360,7 +360,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 				const [files, didHitLimit] = await listFiles(
 					cline.cwd,
 					true,
-					(alwaysIncludeFileDetails ? 3 : 1) * maxFiles,
+					(alwaysIncludeFileDetails ? 2 : 1) * maxFiles,
 				)
 				const { showRooIgnoredFiles = false } = state ?? {}
 

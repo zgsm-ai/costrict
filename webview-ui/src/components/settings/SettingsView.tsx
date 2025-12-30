@@ -29,6 +29,7 @@ import {
 	Plug,
 	Server,
 	Users2,
+	Trash2,
 } from "lucide-react"
 import { isEqual } from "lodash-es"
 import {
@@ -79,6 +80,7 @@ import { Section } from "./Section"
 import PromptsSettings from "./PromptsSettings"
 import { SlashCommandsSettings } from "./SlashCommandsSettings"
 import { UISettings } from "./UISettings"
+import { AutoCleanupSettings } from "./AutoCleanupSettings"
 import { ExtensionMessage } from "@roo/ExtensionMessage"
 import ModesView from "../modes/ModesView"
 import McpView from "../mcp/McpView"
@@ -103,6 +105,7 @@ const sectionNames = [
 	"notifications",
 	"contextManagement",
 	"terminal",
+	"autoCleanup",
 	"modes",
 	"mcp",
 	"prompts",
@@ -163,6 +166,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		alwaysAllowWriteProtected,
 		autoCondenseContext,
 		autoCondenseContextPercent,
+		filterErrorCorrectionMessages,
 		browserToolEnabled,
 		browserViewportSize,
 		enableCheckpoints,
@@ -219,6 +223,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		includeCurrentTime,
 		includeCurrentCost,
 		maxGitStatusFiles,
+		autoCleanup,
 	} = cachedState
 
 	const apiConfiguration = useMemo(() => cachedState.apiConfiguration ?? {}, [cachedState.apiConfiguration])
@@ -372,6 +377,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					allowedMaxCost: allowedMaxCost ?? null,
 					autoCondenseContext,
 					autoCondenseContextPercent,
+					filterErrorCorrectionMessages: filterErrorCorrectionMessages ?? false,
 					browserToolEnabled: browserToolEnabled ?? true,
 					soundEnabled: soundEnabled ?? true,
 					soundVolume: soundVolume ?? 0.5,
@@ -428,6 +434,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					useZgsmCustomConfig: useZgsmCustomConfig ?? false,
 					zgsmCodebaseIndexEnabled: zgsmCodebaseIndexEnabled ?? true,
 					maxReadCharacterLimit: maxReadCharacterLimit ?? 40000,
+					autoCleanup,
 				},
 			})
 			// These have more complex logic so they aren't (yet) handled
@@ -551,6 +558,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			{ id: "notifications", icon: Bell },
 			{ id: "contextManagement", icon: Database },
 			{ id: "terminal", icon: SquareTerminal },
+			{ id: "autoCleanup", icon: Trash2 },
 			{ id: "prompts", icon: MessageSquare },
 			{ id: "ui", icon: Glasses },
 			{ id: "experimental", icon: FlaskConical },
@@ -813,6 +821,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						<ContextManagementSettings
 							autoCondenseContext={autoCondenseContext}
 							autoCondenseContextPercent={autoCondenseContextPercent}
+							filterErrorCorrectionMessages={filterErrorCorrectionMessages ?? false}
 							listApiConfigMeta={listApiConfigMeta ?? []}
 							maxOpenTabsContext={maxOpenTabsContext}
 							maxWorkspaceFiles={maxWorkspaceFiles ?? 300}
@@ -854,6 +863,11 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							terminalCompressProgressBar={terminalCompressProgressBar}
 							setCachedStateField={setCachedStateField}
 						/>
+					)}
+
+					{/* Auto Cleanup Section */}
+					{activeTab === "autoCleanup" && (
+						<AutoCleanupSettings autoCleanup={autoCleanup} setCachedStateField={setCachedStateField} />
 					)}
 
 					{/* Modes Section */}

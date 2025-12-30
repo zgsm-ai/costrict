@@ -180,7 +180,7 @@ const RooTips = () => {
 					const isHalf = provider.layout === "half"
 
 					return provider.type === "divider" ? (
-						<SectionDivider title={provider.name} icon="" className="w-full" align={provider.align} />
+						<SectionDivider key={`divider-${index}`} title={provider.name} icon="" className="w-full" align={provider.align} />
 					) : (
 						<div
 							key={`${index}${provider.slug}`}

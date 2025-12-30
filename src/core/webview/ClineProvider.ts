@@ -2,6 +2,7 @@ import os from "os"
 import * as path from "path"
 import fs from "fs/promises"
 import EventEmitter from "events"
+import { AutoCleanupService } from "./autoCleanup"
 
 import { Anthropic } from "@anthropic-ai/sdk"
 import delay from "delay"
@@ -46,6 +47,7 @@ import {
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	getModelId,
 	MAX_WORKSPACE_FILES,
+	DEFAULT_AUTO_CLEANUP_SETTINGS,
 } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
 import { CloudService, BridgeOrchestrator } from "@roo-code/cloud"
@@ -156,6 +158,7 @@ export class ClineProvider
 	private marketplaceManager: MarketplaceManager
 	private mdmService?: MdmService
 	private zgsmAuthCommands?: ZgsmAuthCommands
+	private autoCleanupService?: AutoCleanupService
 	private taskCreationCallback: (task: Task) => void
 	private taskEventListeners: WeakMap<Task, Array<() => void>> = new WeakMap()
 	private currentWorkspacePath: string | undefined
@@ -221,6 +224,11 @@ export class ClineProvider
 		})
 
 		this.marketplaceManager = new MarketplaceManager(this.context, this.customModesManager)
+
+		// Initialize auto cleanup service
+		if (this.context?.globalStorageUri?.fsPath) {
+			this.autoCleanupService = new AutoCleanupService(this.context.globalStorageUri.fsPath)
+		}
 
 		// Forward <most> task events to the provider.
 		// We do something fairly similar for the IPC-based API.
@@ -316,6 +324,61 @@ export class ClineProvider
 		// } else {
 		// 	this.log("CloudService not ready, deferring cloud profile sync")
 		// }
+	}
+
+	/**
+	 * Perform automatic cleanup of task history based on configured settings
+	 */
+	private async performAutoCleanup() {
+		if (!this.autoCleanupService) {
+			return
+		}
+
+		try {
+			const { DEFAULT_AUTO_CLEANUP_SETTINGS } = await import("@roo-code/types")
+			const settings = this.getGlobalState("autoCleanup") ?? DEFAULT_AUTO_CLEANUP_SETTINGS
+
+			// Only run cleanup if enabled
+			if (!settings.enabled) {
+				this.log("Auto cleanup is disabled, skipping")
+				return
+			}
+
+			const currentTask = this.getCurrentTask()
+			const taskHistory = this.getGlobalState("taskHistory") ?? []
+
+			// Perform cleanup
+			const result = await this.autoCleanupService.performCleanup(
+				taskHistory,
+				settings,
+				currentTask?.taskId,
+			)
+
+			if (result.tasksRemoved > 0) {
+				this.log(`Auto cleanup removed ${result.tasksRemoved} tasks, freed ${AutoCleanupService.formatBytes(result.spaceFreed)}`)
+
+				// Delete task files for each removed task
+				for (const taskId of result.removedTaskIds) {
+					try {
+						await this.deleteTaskWithId(taskId)
+					} catch (error) {
+						this.log(`Failed to delete task ${taskId}: ${error}`)
+					}
+				}
+
+				// Show notification to user
+				vscode.window.showInformationMessage(
+					t("common:autoCleanup.completed", {
+						count: result.tasksRemoved,
+						space: AutoCleanupService.formatBytes(result.spaceFreed),
+					}),
+				)
+			} else {
+				this.log("Auto cleanup no tasks to remove")
+			}
+		} catch (error) {
+			this.log(`Auto cleanup failed: ${error instanceof Error ? error.message : String(error)}`)
+		}
 	}
 
 	/**
@@ -924,6 +987,11 @@ export class ClineProvider
 			null,
 			this.disposables,
 		)
+
+		// Perform auto cleanup on startup if configured
+		this.performAutoCleanup().then(() => {
+			this.log("Auto cleanup check completed on startup")
+		})
 
 		// Listen for when color changes
 		const configDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
@@ -2014,6 +2082,8 @@ export class ClineProvider
 			openRouterImageGenerationSelectedModel,
 			featureRoomoteControlEnabled,
 			isBrowserSessionActive,
+			autoCleanup,
+			filterErrorCorrectionMessages
 		} = await this.getState()
 
 		// let cloudOrganizations: CloudOrganizationMembership[] = []
@@ -2051,6 +2121,8 @@ export class ClineProvider
 		return {
 			version: this.context.extension?.packageJSON?.version ?? "",
 			apiConfiguration,
+			autoCleanup,
+			filterErrorCorrectionMessages,
 			customInstructions,
 			alwaysAllowReadOnly: alwaysAllowReadOnly ?? false,
 			alwaysAllowReadOnlyOutsideWorkspace: alwaysAllowReadOnlyOutsideWorkspace ?? false,
@@ -2311,6 +2383,8 @@ export class ClineProvider
 		// Return the same structure as before.
 		providerSettings.openAiHeaders = providerSettings.openAiHeaders ?? {}
 		return {
+			autoCleanup: stateValues.autoCleanup ?? DEFAULT_AUTO_CLEANUP_SETTINGS,
+			filterErrorCorrectionMessages: stateValues.filterErrorCorrectionMessages ?? false,
 			apiConfiguration: providerSettings,
 			lastShownAnnouncementId: stateValues.lastShownAnnouncementId,
 			customInstructions: stateValues.customInstructions,
