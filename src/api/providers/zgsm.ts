@@ -522,6 +522,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		if (this.abortController?.signal.aborted) {
 			return
 		}
+		// For MiniMax models, allow matching <think> tags anywhere in the stream
+		// because MiniMax may include newlines before the <think> tag
+		const isMiniMax = modelInfo?.id?.toLowerCase().includes("minimax")
 		const matcher = new XmlMatcher(
 			"think",
 			(chunk) =>
@@ -529,6 +532,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					type: chunk.matched ? "reasoning" : "text",
 					text: chunk.data,
 				}) as const,
+			isMiniMax ? Infinity : 0, // Only use Infinity for MiniMax models
 		)
 
 		let lastUsage
