@@ -13,7 +13,6 @@ interface CodeReviewPageProps {
 
 enum Page {
 	Welcome = "welcome",
-	CodebaseSync = "codebaseSync",
 	Review = "review",
 }
 
@@ -38,6 +37,14 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({
 	const navigateToWelcome = useCallback(() => setPage(Page.Welcome), [])
 	const navigateToReview = useCallback(() => setPage(Page.Review), [])
 
+	// Sync page state with reviewTask status
+	useEffect(() => {
+		// When review task starts running, auto-navigate to review page
+		if (status === ReviewTaskStatus.RUNNING && page === Page.Welcome) {
+			setPage(Page.Review)
+		}
+	}, [status, page])
+
 	// Expose navigateToWelcome to parent component
 	useEffect(() => {
 		onNavigateToWelcome?.(navigateToWelcome)
@@ -51,7 +58,7 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({
 				<div
 					className={`fixed top-[28px] left-0 right-0 bottom-0 flex flex-col overflow-hidden px-5 ${isHidden ? "hidden" : ""}`}>
 					<CodeReviewPanel
-						issues={issues} // To be sourced from context
+						issues={issues}
 						taskStatus={status}
 						progress={progress} // To be sourced from context
 						message={message}

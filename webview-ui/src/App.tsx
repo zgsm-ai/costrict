@@ -16,6 +16,7 @@ import ChatView, { ChatViewRef } from "./components/chat/ChatView"
 import HistoryView from "./components/history/HistoryView"
 import SettingsView, { SettingsViewRef } from "./components/settings/SettingsView"
 import CodeReviewPage from "./components/code-review"
+import CodeReviewHistoryView from "./components/code-review/CodeReviewHistoryView"
 import WelcomeView from "./components/welcome/WelcomeViewProvider"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
 import { CheckpointRestoreDialog } from "./components/chat/CheckpointRestoreDialog"
@@ -34,7 +35,15 @@ import { useTranslation } from "react-i18next"
 import { EXPERIMENT_IDS } from "@roo/experiments"
 
 // type Tab = "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "cloud" | "zgsm-account" | "codeReview"
-type Tab = "settings" | "history" | "chat" | "marketplace" | "cloud" | "zgsm-account" | "codeReview"
+type Tab =
+	| "settings"
+	| "history"
+	| "chat"
+	| "marketplace"
+	| "cloud"
+	| "zgsm-account"
+	| "codeReview"
+	| "codeReviewHistory"
 
 interface HumanRelayDialogState {
 	isOpen: boolean
@@ -373,6 +382,7 @@ const App = () => {
 			{tab === "zgsm-account" && (
 				<ZgsmAccountView apiConfiguration={apiConfiguration} onDone={() => switchTab("chat")} />
 			)}
+			{tab === "codeReviewHistory" && <CodeReviewHistoryView onDone={() => switchTab("codeReview")} />}
 			<div className={`${isChatTab ? "fixed inset-0 flex flex-col" : "hidden"}`}>
 				<div className={`header flex items-center justify-between px-5 ${isChatTab ? "" : "hidden"}`}>
 					<TabList value={tab} onValueChange={(val) => switchTab(val as Tab)} className="header-left h-7">
@@ -430,7 +440,7 @@ const App = () => {
 							<StandardTooltip content={t("history:history")}>
 								<i
 									className="codicon codicon-history cursor-pointer p-0.5"
-									onClick={() => switchTab("history")}></i>
+									onClick={() => switchTab("codeReviewHistory")}></i>
 							</StandardTooltip>
 						</div>
 					)}

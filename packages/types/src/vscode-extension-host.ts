@@ -103,6 +103,8 @@ export interface ExtensionMessage {
 		| "showZgsmCodebaseDisableConfirmDialog"
 		| "reviewTaskUpdate"
 		| "issueStatusUpdated"
+		| "reviewHistoryResponse"
+		| "reviewHistoryEntryDeleted"
 		| "commands"
 		| "insertTextIntoTextarea"
 		| "dismissedUpsells"

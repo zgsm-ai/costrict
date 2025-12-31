@@ -3945,6 +3945,62 @@ export const webviewMessageHandler = async (
 			break
 		}
 
+		case "getReviewHistory": {
+			try {
+				const reviewInstance = CodeReviewService.getInstance()
+				const history = await reviewInstance.getReviewHistory()
+				await provider.postMessageToWebview({
+					type: "reviewHistoryResponse",
+					values: { history },
+				})
+			} catch (error) {
+				provider.log(`Error getting review history: ${error}`, "error")
+				await provider.postMessageToWebview({
+					type: "reviewHistoryResponse",
+					values: { history: [], error: error instanceof Error ? error.message : String(error) },
+				})
+			}
+			break
+		}
+
+		case "deleteReviewHistoryItem": {
+			try {
+				const { reviewTaskId } = message.values || {}
+				if (!reviewTaskId) {
+					vscode.window.showErrorMessage("Missing review task ID")
+					break
+				}
+				const reviewInstance = CodeReviewService.getInstance()
+				await reviewInstance.deleteReviewHistoryItem(reviewTaskId)
+				await provider.postMessageToWebview({
+					type: "reviewHistoryEntryDeleted",
+					values: { reviewTaskId },
+				})
+			} catch (error) {
+				provider.log(`Error deleting review history entry: ${error}`, "error")
+				vscode.window.showErrorMessage(
+					error instanceof Error ? error.message : "Failed to delete review history entry",
+				)
+			}
+			break
+		}
+
+		case "showReviewComment": {
+			try {
+				const { issue, reviewTaskId } = message.values || {}
+				if (!issue) {
+					vscode.window.showErrorMessage("Missing issue")
+					break
+				}
+				const reviewInstance = CodeReviewService.getInstance()
+				await reviewInstance.showReviewComment(issue, reviewTaskId)
+			} catch (error) {
+				provider.log(`Error showing review comment: ${error}`, "error")
+				vscode.window.showErrorMessage(error instanceof Error ? error.message : "Failed to show review comment")
+			}
+			break
+		}
+
 		default: {
 			// console.log(`Unhandled message type: ${message.type}`)
 			//

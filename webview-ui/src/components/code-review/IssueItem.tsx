@@ -5,9 +5,10 @@ import { severityColor } from "./contants"
 interface IssueItemProps {
 	issue: ReviewIssue
 	onIssueClick: (issueId: string) => void
+	renderAction?: (issue: ReviewIssue) => React.ReactNode
 }
 
-const IssueItem: React.FC<IssueItemProps> = ({ issue, onIssueClick }) => {
+const IssueItem: React.FC<IssueItemProps> = ({ issue, onIssueClick, renderAction }) => {
 	const colors = severityColor()
 	const isNotInitial = ![IssueStatus.INITIAL, IssueStatus.IGNORE].includes(issue.status)
 	const badges = (issue.issue_types ?? []).map((type, i) => {
@@ -26,7 +27,10 @@ const IssueItem: React.FC<IssueItemProps> = ({ issue, onIssueClick }) => {
 			onClick={() => onIssueClick(issue.id)}>
 			<div className="w-[2px]" style={{ backgroundColor: colors[issue.severity] }}></div>
 			<div className="pl-3 py-[5px] flex-1" style={{ width: "calc(100% - 2px)" }}>
-				<div className="w-full h-4 text-vscode-foreground truncate">{issue.title || issue.message}</div>
+				<div className="flex items-center h-4 gap-2">
+					<div className="flex-1 text-vscode-foreground truncate">{issue.title || issue.message}</div>
+					{renderAction && <div className="flex-shrink-0">{renderAction(issue)}</div>}
+				</div>
 				<div className="flex flex-wrap gap-1 mt-2">{badges}</div>
 			</div>
 		</div>

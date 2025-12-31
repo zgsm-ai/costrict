@@ -45,9 +45,6 @@ const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
 							)}
 							{message && <span className="ml-2">{message}</span>}
 						</div>
-						{progress !== null && (
-							<div className="text-neutral-500 italic text-sm mt-2">{t("codereview:tips")}</div>
-						)}
 					</div>
 				</div>
 			)}

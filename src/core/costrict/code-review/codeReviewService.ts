@@ -17,9 +17,10 @@ import type { AxiosRequestConfig } from "axios"
 import { v7 as uuidv7 } from "uuid"
 import { ExtensionMessage, RooCodeEventName, type TaskEvents } from "@roo-code/types"
 
-import { ReviewTask } from "./types"
+import { ReviewTask, UpdateIssueStatusResponse } from "./types"
 import { updateIssueStatusAPI, getPrompt, reportIssue } from "./api"
 import { ReviewComment } from "./reviewComment"
+import { HistoryManager } from "./HistoryManager"
 import { ZgsmAuthConfig, ZgsmAuthService } from "../auth"
 
 import {
@@ -55,6 +56,7 @@ export class CodeReviewService {
 	// Dependencies
 	private clineProvider: ClineProvider | null = null
 	private commentService: CommentService | null = null // TODO: Change to CommentService when implemented
+	private historyManager: HistoryManager
 
 	// Task management
 	private currentTask: ReviewTask | null = null
@@ -64,11 +66,13 @@ export class CodeReviewService {
 	private currentActiveIssueId: string | null = null
 	private logger: ILogger
 	private taskList: Map<string, string> = new Map()
+	private historyTaskId: string | null = null
 	/**
 	 * Private constructor for singleton pattern
 	 */
 	private constructor() {
 		this.logger = createLogger(Package.outputChannel)
+		this.historyManager = new HistoryManager()
 	}
 
 	/**
@@ -276,6 +280,11 @@ export class CodeReviewService {
 						const validIssues = issues.filter((_, index) => existsResults[index])
 
 						this.updateCachedIssues(validIssues)
+
+						if (validIssues.length > 0 && review_task_id) {
+							await this.historyManager.addEntry(review_task_id, validIssues)
+						}
+
 						this.updateTaskState({
 							taskId: review_task_id,
 							isCompleted: true,
@@ -464,6 +473,40 @@ export class CodeReviewService {
 	// ===== Issue Management Methods =====
 
 	/**
+	 * Update issue status on server (pure API call)
+	 *
+	 * @param issueId - Issue ID to update
+	 * @param taskId - Task ID
+	 * @param status - New status to set
+	 * @returns API response
+	 * @throws Error if API call fails
+	 */
+	public async updateIssueStatusOnServer(
+		issueId: string,
+		taskId: string,
+		status: IssueStatus,
+	): Promise<UpdateIssueStatusResponse> {
+		const requestOptions = await this.getRequestOptions()
+
+		this.logger.info(`Calling API to update issue status: issueId=${issueId}, taskId=${taskId}`)
+
+		const result = await updateIssueStatusAPI(issueId, taskId, status, {
+			...requestOptions,
+		})
+
+		return result
+	}
+
+	/**
+	 * Collapse comment thread for an issue
+	 *
+	 * @param issueId - Issue ID
+	 */
+	public async collapseCommentThread(issueId: string): Promise<void> {
+		await this.commentService?.collapseCommentThread(issueId)
+	}
+
+	/**
 	 * Set active issue for comment thread creation
 	 *
 	 * @param issueId - Issue ID to set as active
@@ -516,16 +559,9 @@ export class CodeReviewService {
 			throw new Error("No active task")
 		}
 
-		const requestOptions = await this.getRequestOptions()
-
 		try {
 			// Call API to update issue status on server
-			this.logger.info(
-				`Calling API to update issue status: issueId=${issueId}, taskId=${this.currentTask.taskId}`,
-			)
-			const result = await updateIssueStatusAPI(issueId, this.currentTask.taskId, status, {
-				...requestOptions,
-			})
+			const result = await this.updateIssueStatusOnServer(issueId, this.currentTask.taskId, status)
 
 			// Check if API call was successful
 			if (!result.success) {
@@ -534,10 +570,12 @@ export class CodeReviewService {
 			}
 			this.logger.info(`Successfully updated issue status on server: issueId=${issueId}, status=${status}`)
 
+			// Collapse comment thread after successful status update
+			await this.collapseCommentThread(issueId)
+
 			// Create updated issue copy and update cache only after successful API call
 			const updatedIssue = { ...issue, status }
 			this.updateCachedIssues([updatedIssue])
-			this.commentService?.collapseCommentThread(issueId)
 
 			// Update current active issue if this was the active one and status changed
 			if (this.currentActiveIssueId === issueId && status !== IssueStatus.INITIAL) {
@@ -620,11 +658,16 @@ export class CodeReviewService {
 		return Array.from(this.cachedIssues.values())
 	}
 
-	public async askWithAI(id: string) {
+	public async getReviewHistory() {
+		return await this.historyManager.loadAll()
+	}
+
+	public async askWithAI(id: string, taskId?: string) {
 		const provider = this.getProvider()
 		if (!provider) {
 			return
 		}
+		this.historyTaskId = taskId || null
 		const requestOptions = await this.getRequestOptions()
 		const { data } = await getPrompt(id, requestOptions)
 
@@ -642,7 +685,11 @@ export class CodeReviewService {
 			return
 		}
 		const issueId = this.taskList.get(taskId)!
-		await this.updateIssueStatus(issueId, IssueStatus.ACCEPT)
+		if (this.historyTaskId) {
+			await this.updateIssueStatusOnServer(issueId, this.historyTaskId, IssueStatus.ACCEPT)
+		} else {
+			await this.updateIssueStatus(issueId, IssueStatus.ACCEPT)
+		}
 		this.taskList.delete(taskId)
 	}
 
@@ -703,7 +750,7 @@ export class CodeReviewService {
 	 * @param issue - Review issue to create comment info for
 	 * @returns CommentThreadInfo object
 	 */
-	private createCommentThreadInfo(issue: ReviewIssue): CommentThreadInfo {
+	private createCommentThreadInfo(issue: ReviewIssue, taskId?: string): CommentThreadInfo {
 		const iconPath = vscode.Uri.joinPath(
 			this.clineProvider!.contextProxy.extensionUri,
 			"assets",
@@ -721,7 +768,7 @@ export class CodeReviewService {
 				vscode.CommentMode.Preview,
 				{ name: "CoStrict", iconPath },
 				undefined,
-				isJetbrainsPlatform() ? issue.id : "Intial",
+				isJetbrainsPlatform() ? issue.id : (taskId ?? "Intial"),
 			),
 		}
 	}
@@ -750,14 +797,42 @@ export class CodeReviewService {
 		})
 	}
 
+	public async deleteReviewHistoryItem(reviewTaskId: string): Promise<void> {
+		await this.historyManager.deleteEntry(reviewTaskId)
+	}
+
+	public async loadReviewHistoryEntry(reviewTaskId: string): Promise<void> {
+		const entry = this.historyManager.getById(reviewTaskId)
+		if (!entry) {
+			throw new Error(`Review history entry not found: ${reviewTaskId}`)
+		}
+
+		this.updateCachedIssues(entry.issues)
+
+		this.sendReviewTaskUpdateMessage(ReviewTaskStatus.COMPLETED, {
+			issues: entry.issues,
+			progress: 1,
+		})
+	}
+
+	public async showReviewComment(issue: ReviewIssue, taskId?: string): Promise<void> {
+		if (!this.commentService) {
+			throw new Error("Comment service not available")
+		}
+
+		const commentInfo = this.createCommentThreadInfo(issue, taskId)
+		await this.commentService.focusOrCreateCommentThread(commentInfo)
+	}
+
 	private recordReviewError(type: TelemetryErrorType) {
 		TelemetryService.instance.captureError(`CodeReviewError_${type}`)
 	}
 
-	public dispose(): void {
+	public async dispose(): Promise<void> {
 		this.currentTask = null
 		this.cachedIssues.clear()
 		this.currentActiveIssueId = null
 		this.commentService?.dispose()
+		await this.historyManager.dispose()
 	}
 }

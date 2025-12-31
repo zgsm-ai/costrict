@@ -18,7 +18,6 @@ interface WelcomePageProps {
 const WelcomePage: React.FC<WelcomePageProps> = ({ onStartReview }) => {
 	const { t } = useAppTranslation()
 	const { hasClosedCodeReviewWelcomeTips } = useExtensionState()
-	console.log("hasClosedCodeReviewWelcomeTips", hasClosedCodeReviewWelcomeTips)
 	const [files, setFiles] = useState<FileChangeItem[]>([])
 	const [isLoading, setIsLoading] = useState(false)
 
@@ -61,10 +60,10 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onStartReview }) => {
 			<div className="flex justify-between bg-[#2D2D30] text-white p-4 px-5 rounded-lg text-base">
 				<div className="flex items-center">
 					<i className="codicon codicon-lightbulb" style={{ color: "rgba(255, 252, 196, 0.7)" }} />
-					<span>{t("codereview:welcomePage.tips")}</span>
+					<span className="ml-1">{t("codereview:welcomePage.tips")}</span>
 				</div>
 				<span className="text-[#85858D] cursor-pointer" onClick={handleDismiss}>
-					不再提示
+					{t("codereview:welcomePage.dismiss")}
 				</span>
 			</div>
 		)
