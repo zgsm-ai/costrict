@@ -1,5 +1,16 @@
 # CoStrict Change Log
 
+## [2.1.9]
+
+- Fix update documentation links to use direct URLs
+- Add auto cleanup service
+- Enhance stream handling for MiniMax models with flexible <think> tag matching
+- Enhance ZgsmAi provider for native protocol support
+- Add tool protocol auto roolback
+- Support AI assistant chat message deletion
+- Sync roocode [last commit](https://github.com/zgsm-ai/costrict/commit/d23824dba59579e136fc5a0523b56dee20d5fc28)
+- Fix known issues
+
 ## [2.1.8]
 
 - Ensure default model info is merged before custom overrides
