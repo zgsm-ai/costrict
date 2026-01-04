@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useCallback, useState } from "react"
 import styled from "styled-components"
 import { useCopyToClipboard } from "@src/utils/clipboard"
+import { useDebounceEffect } from "@src/utils/useDebounceEffect"
 import { getHighlighter, isLanguageLoaded, normalizeLanguage } from "@src/utils/highlighter"
 import type { ShikiTransformer } from "shiki"
 import { toJsxRuntime } from "hast-util-to-jsx-runtime"
@@ -290,14 +291,19 @@ const CodeBlock = memo(
 		}, [source, currentLanguage, collapsedHeight])
 
 		// Check if content height exceeds collapsed height whenever content changes
-		useEffect(() => {
-			const codeBlock = codeBlockRef.current
+		// Debounced to avoid excessive DOM measurements during rapid scrolling
+		useDebounceEffect(
+			() => {
+				const codeBlock = codeBlockRef.current
 
-			if (codeBlock) {
-				const actualHeight = codeBlock.scrollHeight
-				setShowCollapseButton(actualHeight >= WINDOW_SHADE_SETTINGS.collapsedHeight)
-			}
-		}, [highlightedCode])
+				if (codeBlock) {
+					const actualHeight = codeBlock.scrollHeight
+					setShowCollapseButton(actualHeight >= WINDOW_SHADE_SETTINGS.collapsedHeight)
+				}
+			},
+			100, // 100ms debounce delay
+			[highlightedCode],
+		)
 
 		// Ref to track if user was scrolled up *before* the source update
 		// potentially changes scrollHeight
@@ -658,8 +664,6 @@ const CodeBlock = memo(
 								side="top">
 								<CodeBlockButton
 									onClick={() => {
-										// Get the current code block element
-										const codeBlock = codeBlockRef.current // Capture ref early
 										// Toggle window shade state
 										setWindowShade(!windowShade)
 
@@ -667,20 +671,11 @@ const CodeBlock = memo(
 										if (collapseTimeout1Ref.current) clearTimeout(collapseTimeout1Ref.current)
 										if (collapseTimeout2Ref.current) clearTimeout(collapseTimeout2Ref.current)
 
-										// After UI updates, ensure code block is visible and update button position
+										// After UI transition completes, update button position
+										// Let ChatView/Virtuoso handle scrolling to avoid conflicts
 										collapseTimeout1Ref.current = setTimeout(
 											() => {
-												if (codeBlock) {
-													// Check if codeBlock element still exists
-													codeBlock.scrollIntoView({ behavior: "smooth", block: "nearest" })
-
-													// Wait for scroll to complete before updating button position
-													collapseTimeout2Ref.current = setTimeout(() => {
-														// updateCodeBlockButtonPosition itself should also check for refs if needed
-														updateCodeBlockButtonPosition()
-														collapseTimeout2Ref.current = null
-													}, 50)
-												}
+												updateCodeBlockButtonPosition()
 												collapseTimeout1Ref.current = null
 											},
 											WINDOW_SHADE_SETTINGS.transitionDelayS * 1000 + 50,

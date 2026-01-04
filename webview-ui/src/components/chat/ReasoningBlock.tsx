@@ -57,12 +57,7 @@ export const ReasoningBlock = ({ content, isStreaming, isLast }: ReasoningBlockP
 					)}
 				</div>
 				<div className="flex items-center gap-2">
-					<ChevronUp
-						className={cn(
-							"w-4 transition-all opacity-0 group-hover:opacity-100",
-							isCollapsed && "-rotate-180",
-						)}
-					/>
+					<ChevronUp className={cn("w-4 transition-all", isCollapsed && "-rotate-180")} />
 				</div>
 			</div>
 			{(content?.trim()?.length ?? 0) > 0 && !isCollapsed && (

@@ -1501,7 +1501,7 @@ export const ChatRowContent = ({
 				case "api_req_finished":
 					return null // we should never see this message type
 				case "text":
-					return (
+					return !message?.text?.trim() ? null : (
 						<div>
 							<div style={headerStyle}>
 								<MessageCircle className="w-4 shrink-0" aria-label="Speech bubble icon" />

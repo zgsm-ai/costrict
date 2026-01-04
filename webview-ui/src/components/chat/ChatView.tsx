@@ -1227,23 +1227,28 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		[handleSetExpandedRow],
 	)
 
-	const handleRowHeightChange = useCallback(
-		(isTaller: boolean) => {
-			// Don't auto-scroll if the user is actively expanding/collapsing content
-			// This prevents scroll conflicts when user manually expands the last message
-			// or expands Markdown content
-			if (userExpandingRef.current || markdownExpandingRef.current) {
-				return
-			}
+	const handleRowHeightChange = useMemo(
+		() =>
+			debounce(
+				(isTaller: boolean) => {
+					// Don't auto-scroll if the user is actively expanding/collapsing content
+					// This prevents scroll conflicts when user manually expands the last message
+					// or expands Markdown content
+					if (userExpandingRef.current || markdownExpandingRef.current) {
+						return
+					}
 
-			if (isAtBottom) {
-				if (isTaller) {
-					scrollToBottomSmooth()
-				} else {
-					setTimeout(() => scrollToBottomAuto(), 0)
-				}
-			}
-		},
+					if (isAtBottom) {
+						if (isTaller) {
+							scrollToBottomSmooth()
+						} else {
+							setTimeout(() => scrollToBottomAuto(), 0)
+						}
+					}
+				},
+				100, // 50ms debounce to batch rapid height changes
+				{ immediate: false },
+			),
 		[scrollToBottomSmooth, scrollToBottomAuto, isAtBottom],
 	)
 
