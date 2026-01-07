@@ -781,9 +781,10 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				? {
 						...NATIVE_TOOL_DEFAULTS,
 						...defaultInfo,
+						id,
 						...(this.options.zgsmAiCustomModelInfo ?? {}),
 					}
-				: defaultInfo
+				: { ...defaultInfo, id }
 		const params = getModelParams({ format: "zgsm", modelId: id, model: info, settings: this.options })
 		if (!info.id) {
 			info.id = id
