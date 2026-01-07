@@ -1,5 +1,23 @@
 # CoStrict Change Log
 
+## [2.1.10]
+
+- Improve terminal process error handling and abort operation
+- Optimize chat UI performance and message handling
+- Extend ZgsmAi message format to support more models (glm, claude, minimax)
+- Refactor code review module, simplify issue structure and remove repo review command
+- Add tool protocol auto rollback
+- Add tool alias support for model-specific tool customization
+- Add native tool calling support for multiple providers (Anthropic, Z.ai, OpenAI compatible, Vertex AI, etc.)
+- Add downloadable error diagnostics feature
+- Improve graceful retry for "no tools used" and "no assistant messages" errors
+- Sanitize MCP server/tool names for API compatibility
+- Add CRLF line ending normalization to search_replace and search_and_replace tools
+- Fix default info model id for zgsmAiCustomModel
+- Add debug mode toggle to control zgsmAiCustomModelInfo usage
+- Sync roocode [last commit](https://github.com/zgsm-ai/costrict/commit/2d22804d4a3bca31602094195bed02355c2492b4)
+- Fix known issues
+
 ## [2.1.9]
 
 - Fix update documentation links to use direct URLs

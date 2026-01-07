@@ -96,17 +96,15 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 			await this.terminal.setActiveStream(stream, Promise.resolve(this.pid))
 
 			let outputIndex = 0
-			if (isBackgroundCommand) {
-				delay(10_000).then(() => {
-					if (this.aborted || outputIndex > 0) {
-						return
-					}
+			delay(10_000).then(() => {
+				if (this.aborted || outputIndex > 0) {
+					return
+				}
 
-					const warning = `background command running [${command.length > 30 ? `${command.slice(0, 30)}...` : command}]\n`
-					this.emit("line", warning)
-					this.startHotTimer(warning)
-				})
-			}
+				const warning = `[${isBackgroundCommand ? "background " : ""}command running] ${command.length > 30 ? `${command.slice(0, 30)}...` : command}\n`
+				this.emit("line", warning)
+				this.startHotTimer(warning)
+			})
 
 			for await (const line of stream) {
 				if (this.aborted) {
@@ -119,7 +117,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 
 				if (
 					this.isListening &&
-					(now - this.lastEmitTime_ms > 600 || this.lastEmitTime_ms === 0 || outputIndex < 3)
+					(now - this.lastEmitTime_ms > 500 || this.lastEmitTime_ms === 0 || outputIndex < 3)
 				) {
 					this.emitRemainingBufferIfListening()
 					this.lastEmitTime_ms = now
@@ -128,7 +126,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				this.startHotTimer(line)
 			}
 
-			await delay(500)
+			await delay(150)
 			this.emitRemainingBufferIfListening()
 			this.startHotTimer(this.fullOutput.slice(-2000))
 
