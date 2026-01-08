@@ -172,7 +172,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 
 		let preOutput = ""
 		let commandOutputStarted = false
-		let outputIndex = 0
+		let outputCount = 0
 		/*
 		 * Extract clean output from raw accumulated output. FYI:
 		 * ]633 is a custom sequence number used by VSCode shell integration:
@@ -185,7 +185,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 
 		// Process stream data
 		for await (let data of stream) {
-			outputIndex++
+			if (outputCount < 3) outputCount++
 			// Check for command output start marker
 			if (!commandOutputStarted) {
 				preOutput += data
@@ -214,7 +214,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 
 			if (
 				this.isListening &&
-				(now - this.lastEmitTime_ms > 150 || this.lastEmitTime_ms === 0 || outputIndex < 3)
+				(now - this.lastEmitTime_ms > 150 || this.lastEmitTime_ms === 0 || outputCount <= 3)
 			) {
 				this.emitRemainingBufferIfListening()
 				this.lastEmitTime_ms = now
