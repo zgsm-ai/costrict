@@ -13,6 +13,11 @@ export const fixNativeToolname = (toolname: string | ToolName) => {
 		fixedToolname = tags[0] as ToolName
 	}
 
+	if (fixedToolname.includes("</tool_call>")) {
+		tags = fixedToolname.split("</tool_call>").sort((a, b) => b.length - a.length)
+		fixedToolname = tags[0] as ToolName
+	}
+
 	if (fixedToolname.includes("<arg_value>")) {
 		tags = fixedToolname.split("<arg_value>").sort((a, b) => b.length - a.length)
 		fixedToolname = tags[0] as ToolName
