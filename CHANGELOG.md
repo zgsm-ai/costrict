@@ -1,5 +1,18 @@
 # CoStrict Change Log
 
+## [2.1.11]
+
+- Add image file @mentions support - Reference images directly in chat using @ mentions
+- Add evals-context skill for evaluation system infrastructure
+- Add filtering to file search results
+- Add chat search feature to UI settings
+- Update environment variables: ZGSM*\* prefixes migrated to COSTRICT*\* (with backward compatibility)
+- Update auto-approve mode label from "YOLO" to "BRRR"
+- Remove deprecated Bedrock Claude models (2.1, 2.0, instant)
+- Improve follow-up suggestion UI with better edit button positioning
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/f84beade7a114b737b22bde485da2f4a0f2a325a)
+- Fix known issues
+
 ## [2.1.10]
 
 - Improve terminal process error handling and abort operation
