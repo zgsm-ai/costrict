@@ -1007,7 +1007,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			}
 		})
 
-		const placeholderBottomText = `\n(${t("chat:addContext")}${shouldDisableImages ? `, ${t("chat:dragFiles")}` : `, ${t("chat:dragFilesImages")}`})`
+		const placeholderBottomText = t("chat:aiContentWarning")
 
 		// Common mode selector handler
 		const handleModeChange = useCallback(
@@ -1361,7 +1361,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							{!inputValue && (
 								<div
 									className={cn(
-										"absolute left-2 z-30 flex items-center h-8 font-vscode-font-family text-vscode-editor-font-size leading-vscode-editor-line-height",
+										"absolute left-2 z-30 flex items-center h-8 font-vscode-font-family text-xs leading-vscode-editor-line-height",
 										isEditMode ? "pr-20" : "pr-9",
 									)}
 									style={{

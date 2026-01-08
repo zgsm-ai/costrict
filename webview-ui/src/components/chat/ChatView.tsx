@@ -1285,7 +1285,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		}
 	}, [modifiedMessages.length, isStreaming, isHidden, task])
 
-	const placeholderText = task ? t("chat:typeMessage") : t("chat:typeTask")
+	const placeholderTip = `\n(${t("chat:addContext")}${shouldDisableImages ? `, ${t("chat:dragFiles")}` : `, ${t("chat:dragFilesImages")}`})`
+
+	const placeholderText = `${task ? t("chat:typeMessage") : t("chat:typeTask")}${placeholderTip}`
 
 	const switchToMode = useCallback(
 		(modeSlug: string): void => {
