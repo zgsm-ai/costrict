@@ -1,5 +1,15 @@
 # CoStrict Change Log
 
+## [2.1.12]
+
+- Add path stabilization handling for file editing tools to prevent truncated paths during streaming
+- Optimize model selection logic in ModelPicker and ProviderRenderer components
+- Refactor terminal output tracking with improved count logic
+- Fix toolname parsing to handle special characters (tool_call tags)
+- Preserve DeepSeek reasoning_content during tool call sequences
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/2ff08b5e5c2b1c2458b74ece774399b63f210a9a)
+- Fix known issues
+
 ## [2.1.11]
 
 - Add image file @mentions support - Reference images directly in chat using @ mentions

@@ -18,7 +18,7 @@ describe("Claude Code Streaming Client", () => {
 		})
 
 		test("should have correct user agent", () => {
-			expect(CLAUDE_CODE_API_CONFIG.userAgent).toMatch(/^Costrict\/\d+\.\d+\.\d+$/)
+			expect(CLAUDE_CODE_API_CONFIG.userAgent).toBe("claude-cli/2.1.2 (external, cli)")
 		})
 	})
 

@@ -96,7 +96,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 			await this.terminal.setActiveStream(stream, Promise.resolve(this.pid))
 
 			let outputCount = 0
-			delay(10_000).then(() => {
+			delay(6_000).then(() => {
 				if (this.aborted || outputCount > 0) {
 					return
 				}

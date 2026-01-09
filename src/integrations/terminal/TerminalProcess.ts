@@ -223,7 +223,7 @@ export class TerminalProcess extends BaseTerminalProcess {
 			this.startHotTimer(data)
 		}
 
-		await delay(500)
+		await delay(300)
 		this.emitRemainingBufferIfListening()
 		this.startHotTimer(this.fullOutput.slice(-2000))
 
