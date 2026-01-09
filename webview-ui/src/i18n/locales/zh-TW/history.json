@@ -9,6 +9,7 @@
 	"oldest": "最舊",
 	"mostExpensive": "費用最高",
 	"mostTokens": "最多 Token",
+	"largestSize": "佔用最大",
 	"mostRelevant": "最相關",
 	"deleteTaskTitle": "刪除工作（按住 Shift 並點選可跳過確認）",
 	"copyPrompt": "複製提示詞",
@@ -39,6 +40,7 @@
 		"oldest": "最舊",
 		"mostExpensive": "費用最高",
 		"mostTokens": "最多 Token",
+		"largestSize": "佔用最大",
 		"mostRelevant": "最相關"
 	},
 	"viewAllHistory": "檢視全部"

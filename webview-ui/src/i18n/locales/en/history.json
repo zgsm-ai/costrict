@@ -9,6 +9,7 @@
 	"oldest": "Oldest",
 	"mostExpensive": "Most Expensive",
 	"mostTokens": "Most Tokens",
+	"largestSize": "Largest Size",
 	"mostRelevant": "Most Relevant",
 	"deleteTaskTitle": "Delete Task (Shift + Click to skip confirmation)",
 	"copyPrompt": "Copy Prompt",
@@ -39,6 +40,7 @@
 		"oldest": "Oldest",
 		"mostExpensive": "Most Expensive",
 		"mostTokens": "Most Tokens",
+		"largestSize": "Largest Size",
 		"mostRelevant": "Most Relevant"
 	},
 	"viewAllHistory": "View all"

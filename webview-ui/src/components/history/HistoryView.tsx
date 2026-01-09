@@ -26,7 +26,7 @@ type HistoryViewProps = {
 	onDone: () => void
 }
 
-type SortOption = "newest" | "oldest" | "mostExpensive" | "mostTokens" | "mostRelevant"
+type SortOption = "newest" | "oldest" | "mostExpensive" | "mostTokens" | "largestSize" | "mostRelevant"
 
 const HistoryView = ({ onDone }: HistoryViewProps) => {
 	const {
@@ -185,6 +185,12 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 									<div className="flex items-center gap-2">
 										<span className="codicon codicon-symbol-numeric" />
 										{t("history:mostTokens")}
+									</div>
+								</SelectItem>
+								<SelectItem value="largestSize" data-testid="select-largest-size">
+									<div className="flex items-center gap-2">
+										<span className="codicon codicon-database" />
+										{t("history:largestSize")}
 									</div>
 								</SelectItem>
 								<SelectItem

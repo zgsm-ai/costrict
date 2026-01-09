@@ -4,7 +4,7 @@ import { Fzf } from "fzf"
 import { highlightFzfMatch } from "@/utils/highlight"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 
-type SortOption = "newest" | "oldest" | "mostExpensive" | "mostTokens" | "mostRelevant"
+type SortOption = "newest" | "oldest" | "mostExpensive" | "mostTokens" | "largestSize" | "mostRelevant"
 
 export const useTaskSearch = () => {
 	const { taskHistory, cwd } = useExtensionState()
@@ -68,6 +68,8 @@ export const useTaskSearch = () => {
 					const aTokens = (a.tokensIn || 0) + (a.tokensOut || 0) + (a.cacheWrites || 0) + (a.cacheReads || 0)
 					const bTokens = (b.tokensIn || 0) + (b.tokensOut || 0) + (b.cacheWrites || 0) + (b.cacheReads || 0)
 					return bTokens - aTokens
+				case "largestSize":
+					return (b.size || 0) - (a.size || 0)
 				case "mostRelevant":
 					// Keep fuse order if searching, otherwise sort by newest
 					return searchQuery ? 0 : (b.ts || 0) - (a.ts || 0)

@@ -5,6 +5,7 @@ import { CopyButton } from "./CopyButton"
 import { ExportButton } from "./ExportButton"
 import { DeleteButton } from "./DeleteButton"
 import { StandardTooltip } from "../ui/standard-tooltip"
+import prettyBytes from "pretty-bytes"
 
 export interface TaskItemFooterProps {
 	item: HistoryItem
@@ -21,12 +22,23 @@ const TaskItemFooter: React.FC<TaskItemFooterProps> = ({ item, variant, isSelect
 				<StandardTooltip content={new Date(item.ts).toLocaleString()}>
 					<span className="first-letter:uppercase">{formatTimeAgo(item.ts)}</span>
 				</StandardTooltip>
-				<span>·</span>
 				{/* Cost */}
 				{!!item.totalCost && (
-					<span className="flex items-center" data-testid="cost-footer-compact">
-						{"$" + item.totalCost.toFixed(2)}
-					</span>
+					<>
+						<span>·</span>
+						<span className="flex items-center" data-testid="cost-footer-compact">
+							{"$" + item.totalCost.toFixed(2)}
+						</span>
+					</>
+				)}
+				{/* Disk Size */}
+				{!!item.size && (
+					<>
+						<span>·</span>
+						<span className="flex items-center" data-testid="size-footer-compact">
+							{prettyBytes(item.size)}
+						</span>
+					</>
 				)}
 			</div>
 

@@ -9,6 +9,7 @@
 	"oldest": "最旧",
 	"mostExpensive": "费用最高",
 	"mostTokens": "最多 Token",
+	"largestSize": "占用最大",
 	"mostRelevant": "最相关",
 	"deleteTaskTitle": "删除任务（Shift + 点击跳过确认）",
 	"copyPrompt": "复制提示词",
@@ -39,6 +40,7 @@
 		"oldest": "最旧",
 		"mostExpensive": "费用最高",
 		"mostTokens": "最多 Token",
+		"largestSize": "占用最大",
 		"mostRelevant": "最相关"
 	},
 	"viewAllHistory": "查看全部"
