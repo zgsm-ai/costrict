@@ -104,7 +104,15 @@ export const ModelPicker = ({
 	const selectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-	const { id: selectedModelId, info: selectedModelInfo } = useSelectedModel(apiConfiguration)
+	const { id: selectedModelId, info: selectedModelInfoFromHook } = useSelectedModel(apiConfiguration)
+
+	// If the `models` prop has a value, the `modelInfo` from the prop will be used preferentially over the one returned by the hook.
+	const selectedModelInfo = useMemo(() => {
+		if (apiConfiguration?.apiProvider === "zgsm" && models && selectedModelId && models[selectedModelId]) {
+			return models[selectedModelId]
+		}
+		return selectedModelInfoFromHook
+	}, [apiConfiguration?.apiProvider, models, selectedModelId, selectedModelInfoFromHook])
 
 	const modelIds = useMemo(() => {
 		const filteredModels = filterModels(models, apiConfiguration.apiProvider, organizationAllowList)

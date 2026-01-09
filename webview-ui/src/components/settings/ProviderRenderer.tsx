@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { ModelPicker } from "./ModelPicker"
 
 import {
@@ -151,50 +151,53 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	)
 
 	// Define provider configuration mapping
-	const providerConfig = {
-		zgsm: {
-			modelIdKey: "zgsmModelId",
-			serviceName: "zgsm",
-			defaultModelId: apiConfiguration.zgsmModelId || zgsmDefaultModelId,
-			serviceUrl: apiConfiguration.zgsmBaseUrl?.trim() || "",
-			models: openAiModels ?? {},
-		},
-		openrouter: {
-			modelIdKey: "openRouterModelId",
-			serviceName: "OpenRouter",
-			defaultModelId: openRouterDefaultModelId,
-			serviceUrl: "https://openrouter.ai/models",
-			models: routerModels?.openrouter ?? {},
-		},
-		requesty: {
-			modelIdKey: "requestyModelId",
-			serviceName: "Requesty",
-			defaultModelId: requestyDefaultModelId,
-			serviceUrl: "https://requesty.ai",
-			models: routerModels?.requesty ?? {},
-		},
-		unbound: {
-			modelIdKey: "unboundModelId",
-			serviceName: "Unbound",
-			defaultModelId: unboundDefaultModelId,
-			serviceUrl: "https://api.getunbound.ai/models",
-			models: routerModels?.unbound ?? {},
-		},
-		openai: {
-			modelIdKey: "openAiModelId",
-			serviceName: "OpenAI",
-			defaultModelId: "gpt-4o",
-			serviceUrl: "https://platform.openai.com",
-			models: openAiModels ?? {},
-		},
-		litellm: {
-			modelIdKey: "litellmModelId",
-			serviceName: "LiteLLM",
-			defaultModelId: litellmDefaultModelId,
-			serviceUrl: "https://docs.litellm.ai/",
-			models: routerModels?.litellm ?? {},
-		},
-	}
+	const providerConfig = useMemo(
+		() => ({
+			zgsm: {
+				modelIdKey: "zgsmModelId",
+				serviceName: "zgsm",
+				defaultModelId: apiConfiguration.zgsmModelId || zgsmDefaultModelId,
+				serviceUrl: apiConfiguration.zgsmBaseUrl?.trim() || "",
+				models: openAiModels ?? {},
+			},
+			openrouter: {
+				modelIdKey: "openRouterModelId",
+				serviceName: "OpenRouter",
+				defaultModelId: openRouterDefaultModelId,
+				serviceUrl: "https://openrouter.ai/models",
+				models: routerModels?.openrouter ?? {},
+			},
+			requesty: {
+				modelIdKey: "requestyModelId",
+				serviceName: "Requesty",
+				defaultModelId: requestyDefaultModelId,
+				serviceUrl: "https://requesty.ai",
+				models: routerModels?.requesty ?? {},
+			},
+			unbound: {
+				modelIdKey: "unboundModelId",
+				serviceName: "Unbound",
+				defaultModelId: unboundDefaultModelId,
+				serviceUrl: "https://api.getunbound.ai/models",
+				models: routerModels?.unbound ?? {},
+			},
+			openai: {
+				modelIdKey: "openAiModelId",
+				serviceName: "OpenAI",
+				defaultModelId: "gpt-4o",
+				serviceUrl: "https://platform.openai.com",
+				models: openAiModels ?? {},
+			},
+			litellm: {
+				modelIdKey: "litellmModelId",
+				serviceName: "LiteLLM",
+				defaultModelId: litellmDefaultModelId,
+				serviceUrl: "https://docs.litellm.ai/",
+				models: routerModels?.litellm ?? {},
+			},
+		}),
+		[apiConfiguration.zgsmModelId, apiConfiguration.zgsmBaseUrl, openAiModels, routerModels],
+	)
 
 	const config = providerConfig[selectedProvider as keyof typeof providerConfig] || {}
 
