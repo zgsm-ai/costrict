@@ -148,7 +148,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 
 		// 4. Handle O1 family models
 		if (isO1Family) {
-			yield* this.handleO3FamilyMessage(modelId, systemPrompt, messages, undefined, isNative)
+			yield* this.handleO3FamilyMessage(modelId, systemPrompt, messages, undefined, isNative, requestId)
 			return
 		}
 
@@ -651,7 +651,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				}
 			}
 
-			yield* this.processToolCalls(delta, finishReason, activeToolCallIds, requestId, contentBuffer.length > 0)
+			yield* this.processToolCalls(delta, finishReason, activeToolCallIds, requestId)
 
 			// Cache usage information
 			if (chunk.usage) {
@@ -716,15 +716,10 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		finishReason: string | null | undefined,
 		activeToolCallIds: Set<string>,
 		requestId?: string,
-		skip: boolean = false,
 	): Generator<
 		| { type: "tool_call_partial"; index: number; id?: string; name?: string; arguments?: string }
 		| { type: "tool_call_end"; id: string }
 	> {
-		if (skip) {
-			return
-		}
-
 		if (delta?.tool_calls) {
 			for (const toolCall of delta.tool_calls) {
 				if (toolCall.id) {
@@ -853,6 +848,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		messages: Anthropic.Messages.MessageParam[],
 		metadata?: ApiHandlerCreateMessageMetadata,
 		isNative?: boolean,
+		requestId?: string,
 	): ApiStream {
 		await this.updateModelInfo()
 		const modelInfo = this.getModel().info
@@ -899,7 +895,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				throw handleOpenAIError(error, this.providerName)
 			}
 
-			yield* this.handleStreamResponse(stream)
+			yield* this.handleStreamResponse(stream, requestId)
 		} else {
 			const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
 				model: modelId,
@@ -960,7 +956,10 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		}
 	}
 
-	private async *handleStreamResponse(stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>): ApiStream {
+	private async *handleStreamResponse(
+		stream: AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>,
+		requestId?: string,
+	): ApiStream {
 		// Check if request was aborted
 		if (this.abortController?.signal.aborted) {
 			return
@@ -983,7 +982,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					}
 				}
 
-				yield* this.processToolCalls(delta, finishReason, activeToolCallIds)
+				yield* this.processToolCalls(delta, finishReason, activeToolCallIds, requestId)
 			}
 
 			if (chunk.usage) {
