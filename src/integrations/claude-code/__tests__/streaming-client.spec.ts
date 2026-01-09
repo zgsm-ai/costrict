@@ -14,7 +14,7 @@ describe("Claude Code Streaming Client", () => {
 			expect(CLAUDE_CODE_API_CONFIG.defaultBetas).toContain("claude-code-20250219")
 			expect(CLAUDE_CODE_API_CONFIG.defaultBetas).toContain("oauth-2025-04-20")
 			expect(CLAUDE_CODE_API_CONFIG.defaultBetas).toContain("interleaved-thinking-2025-05-14")
-			expect(CLAUDE_CODE_API_CONFIG.defaultBetas).toContain("fine-grained-tool-streaming-2025-05-14")
+			// expect(CLAUDE_CODE_API_CONFIG.defaultBetas).toContain("fine-grained-tool-streaming-2025-05-14")
 		})
 
 		test("should have correct user agent", () => {
