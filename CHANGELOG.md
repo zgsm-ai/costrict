@@ -1,5 +1,10 @@
 # CoStrict Change Log
 
+## [2.1.13]
+
+- Fix Claude Code OAuth authentication compatibility
+- Add disk usage display to history page
+
 ## [2.1.12]
 
 - Add path stabilization handling for file editing tools to prevent truncated paths during streaming
