@@ -1,5 +1,13 @@
 # CoStrict Change Log
 
+## [2.1.14]
+
+- Optimize JetBrains response rendering configuration for better streaming performance
+- Adjust JetBrains platform default rendering mode
+- Update debug state management, add defaultDebug state tracking
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/611bb70166def6e0163e397ee2fbcedf1bc3151d)
+- Fix known issues
+
 ## [2.1.13]
 
 - Fix Claude Code OAuth authentication compatibility
