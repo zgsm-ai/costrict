@@ -233,19 +233,26 @@ export async function activate(
 		loginTip()
 		// init project-wiki subtasks.
 		ensureProjectWikiSubtasksExists()
-		flushModels({ provider: "zgsm" }, true, (models: ModelRecord) => {
-			const openAiModels = [] as string[]
-			const fullResponseData = [] as ModelInfo[]
-			for (const [id, value] of Object.entries(models)) {
-				openAiModels.push(id)
-				fullResponseData.push(value)
-			}
-			provider.postMessageToWebview({
-				type: "zgsmModels",
-				openAiModels,
-				fullResponseData,
-			})
-		})
+		flushModels(
+			{
+				provider: "zgsm",
+				baseUrl: provider.getValue("zgsmBaseUrl"),
+			},
+			true,
+			(models: ModelRecord) => {
+				const openAiModels = [] as string[]
+				const fullResponseData = [] as ModelInfo[]
+				for (const [id, value] of Object.entries(models)) {
+					openAiModels.push(id)
+					fullResponseData.push(value)
+				}
+				provider.postMessageToWebview({
+					type: "zgsmModels",
+					openAiModels,
+					fullResponseData,
+				})
+			},
+		)
 	}, 2000)
 }
 
