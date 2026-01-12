@@ -1,5 +1,18 @@
 # CoStrict Change Log
 
+## [2.1.15]
+
+- Fix zgsm provider model flush to include baseUrl from provider configuration
+- Performance optimization: Use shallow copy instead of deep clone in message processing (80-90% reduction in cloning overhead)
+- Add settings search functionality with fuzzy matching and highlight animation
+- Add RandomLoadingMessage component for varied loading messages
+- Refactor settings view with improved tab management and search integration
+- Add multilingual support for reasoning status messages (English, Simplified Chinese, Traditional Chinese)
+- Improve ChatRow component rendering and state management
+- Enhance ReasoningBlock with better message formatting
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/55b732485bef49bd9075bc57d3b10608f0355711)
+- Fix known issues
+
 ## [2.1.14]
 
 - Optimize JetBrains response rendering configuration for better streaming performance
