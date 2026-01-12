@@ -110,6 +110,7 @@ export interface ReportIssueReuqest {
 	review_report: string
 	client_id: string
 	workspace: string
+	source: string
 	review_target: ReviewTarget
 }
 
@@ -120,5 +121,7 @@ export interface ReportIssueResponse {
 		review_task_id: string
 		count: number
 		issues: ReviewIssue[]
+		title: string
+		conclusion: string
 	}
 }

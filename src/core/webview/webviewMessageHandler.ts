@@ -84,6 +84,8 @@ import delay from "delay"
 import { setPendingTodoList } from "../tools/UpdateTodoListTool"
 import { getEditorType } from "../../utils/getEditorType"
 import { updateDefaultDebug } from "../../utils/getDebugState"
+import { isJetbrainsPlatform } from "../../utils/platform"
+import { ReviewTargetType } from "../../shared/codeReview"
 
 export const webviewMessageHandler = async (
 	provider: ClineProvider,
@@ -3562,7 +3564,13 @@ export const webviewMessageHandler = async (
 		}
 		case "createReviewTask": {
 			const reviewInstance = CodeReviewService.getInstance()
-			await reviewInstance.createReviewTask("@git-changes", [])
+			const { files } = message.payload! as CreateReviewTaskPayload
+			await reviewInstance.createReviewTask("@git-changes", {
+				type: ReviewTargetType.FILE,
+				data: files?.map((item) => ({
+					file_path: item.path,
+				})),
+			})
 			break
 		}
 		case "showFileDiff": {
@@ -3963,6 +3971,35 @@ export const webviewMessageHandler = async (
 			break
 		}
 
+		case "getReviewIssueById": {
+			try {
+				const { reviewTaskId } = message.values || {}
+				if (!reviewTaskId) {
+					await provider.postMessageToWebview({
+						type: "reviewIssueByIdLoaded",
+						values: { reviewTaskId: "", issues: [] },
+					})
+					break
+				}
+				const reviewInstance = CodeReviewService.getInstance()
+				const result = await reviewInstance.getReviewHistoryById(reviewTaskId)
+				await provider.postMessageToWebview({
+					type: "reviewIssueByIdLoaded",
+					values: {
+						reviewTaskId,
+						issues: result?.issues || [],
+					},
+				})
+			} catch (error) {
+				provider.log(`Error getting review history entry: ${error}`, "error")
+				await provider.postMessageToWebview({
+					type: "reviewIssueByIdLoaded",
+					values: { reviewTaskId: "", issues: [] },
+				})
+			}
+			break
+		}
+
 		case "deleteReviewHistoryItem": {
 			try {
 				const { reviewTaskId } = message.values || {}
@@ -3987,6 +4024,9 @@ export const webviewMessageHandler = async (
 
 		case "showReviewComment": {
 			try {
+				if (isJetbrainsPlatform()) {
+					return
+				}
 				const { issue, reviewTaskId } = message.values || {}
 				if (!issue) {
 					vscode.window.showErrorMessage("Missing issue")

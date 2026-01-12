@@ -164,6 +164,7 @@ export interface ReviewTarget {
 
 export interface ReviewHistoryEntry {
 	review_task_id: string
-	issues: ReviewIssue[]
+	title: string
 	timestamp: string
+	conclusion?: string
 }

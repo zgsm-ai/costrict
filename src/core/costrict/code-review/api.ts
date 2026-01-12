@@ -116,3 +116,11 @@ export async function reportIssue(params: ReportIssueReuqest, options: AxiosRequ
 	)
 	return response.data
 }
+
+export async function getIssueByTaskId(taskId: string, options: AxiosRequestConfig = {}) {
+	const response = await axiosInstance.get<ReportIssueResponse>(
+		`/issue-manager/api/v1/issues?review_task_id=${taskId}`,
+		options,
+	)
+	return response.data
+}

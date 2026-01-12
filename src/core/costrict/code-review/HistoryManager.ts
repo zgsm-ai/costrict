@@ -30,19 +30,18 @@ export class HistoryManager {
 		}
 	}
 
-	public async addEntry(reviewTaskId: string, issues: ReviewHistoryEntry["issues"]): Promise<void> {
+	public async addEntry(reviewTaskId: string, title: string, conclusion?: string): Promise<void> {
 		const entry: ReviewHistoryEntry = {
 			review_task_id: reviewTaskId,
-			issues,
+			title,
 			timestamp: new Date().toISOString(),
+			conclusion,
 		}
 		this.entries.push(entry)
 
 		try {
 			await fs.appendFile(this.historyFilePath, JSON.stringify(entry) + "\n", "utf-8")
-			this.logger.info(
-				`[HistoryManager] Added and persisted entry for task ${reviewTaskId} with ${issues.length} issues`,
-			)
+			this.logger.info(`[HistoryManager] Added and persisted entry for task ${reviewTaskId}`)
 		} catch (error) {
 			this.logger.error(`[HistoryManager] Failed to write entry to file: ${error}`)
 		}
@@ -60,7 +59,7 @@ export class HistoryManager {
 				try {
 					const entry = JSON.parse(line) as ReviewHistoryEntry
 
-					if (entry.review_task_id && Array.isArray(entry.issues) && entry.timestamp) {
+					if (entry.review_task_id && entry.title && entry.timestamp) {
 						loadedEntries.push(entry)
 						this.entries.push(entry)
 					} else {
@@ -81,10 +80,6 @@ export class HistoryManager {
 			this.logger.error(`[HistoryManager] Failed to load history: ${error}`)
 			return []
 		}
-	}
-
-	public getById(reviewTaskId: string): ReviewHistoryEntry | undefined {
-		return this.entries.find((entry) => entry.review_task_id === reviewTaskId)
 	}
 
 	public async deleteEntry(reviewTaskId: string): Promise<void> {

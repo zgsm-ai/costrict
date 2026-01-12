@@ -113,9 +113,8 @@ export function initCodeReview(
 			reviewInstance.setProvider(visibleProvider)
 			const comments = thread.comments as ReviewComment[]
 			comments.forEach(async (comment) => {
-				if (comment.contextValue !== "intial") {
-					reviewInstance.updateIssueStatusOnServer(comment.id, comment.contextValue!, IssueStatus.ACCEPT)
-					reviewInstance.collapseCommentThread(comment.id)
+				if (comment.contextValue !== "Intial") {
+					await reviewInstance.updateHistoryIssueStatus(comment.id, comment.contextValue!, IssueStatus.ACCEPT)
 					return
 				}
 				reviewInstance.updateIssueStatus(comment.id, IssueStatus.ACCEPT)
@@ -129,9 +128,8 @@ export function initCodeReview(
 			reviewInstance.setProvider(visibleProvider)
 			const comments = thread.comments as ReviewComment[]
 			comments.forEach(async (comment) => {
-				if (comment.contextValue !== "intial") {
-					reviewInstance.updateIssueStatusOnServer(comment.id, comment.contextValue!, IssueStatus.REJECT)
-					reviewInstance.collapseCommentThread(comment.id)
+				if (comment.contextValue !== "Intial") {
+					await reviewInstance.updateHistoryIssueStatus(comment.id, comment.contextValue!, IssueStatus.REJECT)
 					return
 				}
 				reviewInstance.updateIssueStatus(comment.id, IssueStatus.REJECT)

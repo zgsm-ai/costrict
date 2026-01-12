@@ -18,7 +18,7 @@ import { v7 as uuidv7 } from "uuid"
 import { ExtensionMessage, RooCodeEventName, type TaskEvents } from "@roo-code/types"
 
 import { ReviewTask, UpdateIssueStatusResponse } from "./types"
-import { updateIssueStatusAPI, getPrompt, reportIssue } from "./api"
+import { updateIssueStatusAPI, getPrompt, reportIssue, getIssueByTaskId } from "./api"
 import { ReviewComment } from "./reviewComment"
 import { HistoryManager } from "./HistoryManager"
 import { ZgsmAuthConfig, ZgsmAuthService } from "../auth"
@@ -266,13 +266,14 @@ export class CodeReviewService {
 
 			try {
 				this.logger.info("[CodeReview] Review Task completed")
-
 				const reportMessage = [...task.clineMessages]
 					.reverse()
 					.find((msg) => msg.type === "say" && msg?.text?.includes("I-AM-CODE-REVIEW-REPORT-V1"))
-
 				if (reportMessage?.text) {
-					const { issues, review_task_id } = await this.getIssues(reportMessage.text, targets)
+					const { issues, review_task_id, title, conclusion } = await this.getIssues(
+						reportMessage.text,
+						targets,
+					)
 					if (issues) {
 						const existsResults = await Promise.all(
 							issues.map((issue) => fileExistsAtPath(path.resolve(provider.cwd, issue.file_path))),
@@ -280,9 +281,8 @@ export class CodeReviewService {
 						const validIssues = issues.filter((_, index) => existsResults[index])
 
 						this.updateCachedIssues(validIssues)
-
 						if (validIssues.length > 0 && review_task_id) {
-							await this.historyManager.addEntry(review_task_id, validIssues)
+							await this.historyManager.addEntry(review_task_id, title, conclusion)
 						}
 
 						this.updateTaskState({
@@ -413,6 +413,7 @@ export class CodeReviewService {
 					review_report: report,
 					client_id: clientId,
 					workspace,
+					source: "",
 					review_target: target,
 				},
 				requestOptions,
@@ -422,6 +423,8 @@ export class CodeReviewService {
 					issues: [],
 					review_task_id: "",
 					count: 0,
+					title: "",
+					conclusion: "",
 				}
 			)
 		} catch (error) {
@@ -429,6 +432,8 @@ export class CodeReviewService {
 				issues: [],
 				review_task_id: "",
 				count: 0,
+				title: "",
+				conclusion: "",
 			}
 		}
 	}
@@ -481,7 +486,7 @@ export class CodeReviewService {
 	 * @returns API response
 	 * @throws Error if API call fails
 	 */
-	public async updateIssueStatusOnServer(
+	private async updateIssueStatusOnServer(
 		issueId: string,
 		taskId: string,
 		status: IssueStatus,
@@ -614,6 +619,51 @@ export class CodeReviewService {
 			const absolutePath = path.resolve(this.clineProvider!.cwd, file_path)
 			workspaceEdit.replace(vscode.Uri.file(absolutePath), new vscode.Range(startLine, 0, endLine, 0), fix_code)
 			await vscode.workspace.applyEdit(workspaceEdit)
+		}
+	}
+
+	/**
+	 * Update history issue status and refresh history view
+	 * This method replaces the logic in acceptIssue and rejectIssue
+	 * when contextValue is not "Initial"
+	 *
+	 * @param issueId - Issue ID to update
+	 * @param taskId - Task ID (contextValue from comment)
+	 * @param status - New status to set (ACCEPT or REJECT)
+	 */
+	public async updateHistoryIssueStatus(issueId: string, taskId: string, status: IssueStatus): Promise<void> {
+		this.logger.info(`Updating history issue status: issueId=${issueId}, taskId=${taskId}, status=${status}`)
+
+		try {
+			const result = await this.updateIssueStatusOnServer(issueId, taskId, status)
+
+			if (!result.success) {
+				this.logger.error(`Failed to update issue status on server: ${result.message}`)
+				throw new Error(`Failed to update issue status: ${result.message}`)
+			}
+
+			this.logger.info(`Successfully updated issue status on server: issueId=${issueId}, status=${status}`)
+
+			await this.collapseCommentThread(issueId)
+
+			const issuesResult = await this.getReviewHistoryById(taskId)
+			if (issuesResult) {
+				this.sendMessageToWebview({
+					type: "reviewIssueByIdLoaded",
+					values: {
+						reviewTaskId: taskId,
+						issues: issuesResult.issues,
+					},
+				})
+			}
+		} catch (error) {
+			this.logger.error(`Failed to update history issue status: issueId=${issueId}, error=${error}`)
+			if (error.name === "AuthError") {
+				await this.handleAuthError()
+				return
+			}
+			this.recordReviewError(CodeReviewErrorType.UpdateIssueError as TelemetryErrorType)
+			throw error
 		}
 	}
 
@@ -801,18 +851,18 @@ export class CodeReviewService {
 		await this.historyManager.deleteEntry(reviewTaskId)
 	}
 
-	public async loadReviewHistoryEntry(reviewTaskId: string): Promise<void> {
-		const entry = this.historyManager.getById(reviewTaskId)
-		if (!entry) {
-			throw new Error(`Review history entry not found: ${reviewTaskId}`)
+	public async getReviewHistoryById(reviewTaskId: string): Promise<{ issues: ReviewIssue[] } | null> {
+		const requestOptions = await this.getRequestOptions()
+		try {
+			const result = await getIssueByTaskId(reviewTaskId, requestOptions)
+			if (result.success && result.data) {
+				return { issues: result.data.issues }
+			}
+			return null
+		} catch (error) {
+			this.logger.error(`Failed to get issues for task ${reviewTaskId}: ${error}`)
+			return null
 		}
-
-		this.updateCachedIssues(entry.issues)
-
-		this.sendReviewTaskUpdateMessage(ReviewTaskStatus.COMPLETED, {
-			issues: entry.issues,
-			progress: 1,
-		})
 	}
 
 	public async showReviewComment(issue: ReviewIssue, taskId?: string): Promise<void> {

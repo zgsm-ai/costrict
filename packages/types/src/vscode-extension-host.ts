@@ -105,6 +105,8 @@ export interface ExtensionMessage {
 		| "issueStatusUpdated"
 		| "reviewHistoryResponse"
 		| "reviewHistoryEntryDeleted"
+		| "reviewIssueByIdLoaded"
+		| "getReviewIssueById"
 		| "commands"
 		| "insertTextIntoTextarea"
 		| "dismissedUpsells"

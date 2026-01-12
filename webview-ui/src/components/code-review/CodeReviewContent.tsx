@@ -123,7 +123,7 @@ const CodeReviewContent: React.FC<CodeReviewContentProps> = ({ issues, taskStatu
 	return (
 		<div className="flex flex-col h-full">
 			{taskStatus === ReviewTaskStatus.COMPLETED && (
-				<div className="px-5 mb-4">
+				<div className="mb-4">
 					<div className="flex justify-between items-start flex-shrink-0">
 						<div className="flex flex-col space-y-2">
 							{/* Severity filter - shown left, above TaskSummary */}
