@@ -441,6 +441,14 @@ export interface WebviewMessage {
 		| "checkReviewSuggestion"
 		| "cancelReviewTask"
 		| "startCodereview"
+		| "getReviewFiles"
+		| "createReviewTask"
+		| "setCodeReviewWelcomeTips"
+		| "showFileDiff"
+		| "getReviewHistory"
+		| "getReviewIssueById"
+		| "deleteReviewHistoryItem"
+		| "showReviewComment"
 		// costrict-end
 		| "humanRelayResponse"
 		| "settingsButtonclicked"
@@ -742,6 +750,18 @@ export type InstallMarketplaceItemWithParametersPayload = z.infer<
 	typeof installMarketplaceItemWithParametersPayloadSchema
 >
 
+export interface ReviewFilesPayload {
+	reviewType: "uncommitted" | "committed"
+}
+
+export interface CreateReviewTaskPayload {
+	files?: Array<{ path: string; status: string }>
+}
+
+export interface CodeReviewWelcomeTipsPayload {
+	value: boolean
+}
+
 export type WebViewMessagePayload =
 	| CheckpointDiffPayload
 	| CheckpointRestorePayload
@@ -750,6 +770,9 @@ export type WebViewMessagePayload =
 	| InstallMarketplaceItemWithParametersPayload
 	| UpdateTodoListPayload
 	| EditQueuedMessagePayload
+	| ReviewFilesPayload
+	| CreateReviewTaskPayload
+	| CodeReviewWelcomeTipsPayload
 
 export interface IndexingStatus {
 	systemStatus: string

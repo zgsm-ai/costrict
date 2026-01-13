@@ -14,6 +14,20 @@ interface ReviewHistoryItemProps {
 	onDelete: (e: React.MouseEvent) => void
 }
 
+const formatTimestamp = (timestamp: string): string => {
+	try {
+		const date = new Date(timestamp)
+		const year = date.getFullYear()
+		const month = String(date.getMonth() + 1).padStart(2, "0")
+		const day = String(date.getDate()).padStart(2, "0")
+		const hours = String(date.getHours()).padStart(2, "0")
+		const minutes = String(date.getMinutes()).padStart(2, "0")
+		return `${year}-${month}-${day} ${hours}:${minutes}`
+	} catch {
+		return timestamp
+	}
+}
+
 const renderIssueAction = (issue: ReviewIssue) => {
 	if (issue.status === IssueStatus.ACCEPT) {
 		return <i className="codicon codicon-check"></i>
@@ -128,7 +142,7 @@ const ReviewHistoryItem: React.FC<ReviewHistoryItemProps> = ({
 								className="max-w-xl border-transparent py-2 px-3"
 								onMouseEnter={handleTitleMouseEnter}
 								onMouseLeave={handleTitleMouseLeave}>
-								<div>
+								<div className="max-h-[400px] overflow-y-auto">
 									<MarkdownBlock markdown={conclusion || title} />
 								</div>
 							</PopoverContent>
@@ -158,7 +172,9 @@ const ReviewHistoryItem: React.FC<ReviewHistoryItemProps> = ({
 					)}
 
 					<div className="text-xs text-vscode-descriptionForeground flex justify-between items-center">
-						<div className="flex gap-1 items-center text-vscode-descriptionForeground/60">{timestamp}</div>
+						<div className="flex gap-1 items-center text-vscode-descriptionForeground/60">
+							{formatTimestamp(timestamp)}
+						</div>
 						<div className="flex flex-row gap-0 -mx-2 items-center text-vscode-descriptionForeground/60 hover:text-vscode-descriptionForeground">
 							<Button
 								variant="ghost"

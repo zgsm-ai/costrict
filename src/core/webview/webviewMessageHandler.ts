@@ -16,6 +16,8 @@ import {
 	type ModelRecord,
 	type WebviewMessage,
 	type EditQueuedMessagePayload,
+	type CodeReviewWelcomeTipsPayload,
+	type CreateReviewTaskPayload,
 	TelemetryEventName,
 	ModelInfo,
 	RooCodeSettings,
