@@ -1,5 +1,16 @@
 # CoStrict Change Log
 
+## [2.1.16]
+
+- Fix parallel_tool_calls parameter handling for LiteLLM/Bedrock compatibility
+- Add Stop button with queue message functionality for task management
+- Improve RandomLoadingMessage with static display support and 28 new emoji-based loading phrases
+- Optimize OpenAI format transformation with enhanced test coverage
+- Optimize ChatRow/ChatTextArea/ChatView components for better user experience
+- Add tool ID validation utilities
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/749026a44bf7e855960074aa2b616202f79abb7a)
+- Fix known issues
+
 ## [2.1.15]
 
 - Fix zgsm provider model flush to include baseUrl from provider configuration
