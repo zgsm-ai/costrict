@@ -262,13 +262,12 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 	const handleVisitCloudWebsite = useCallback(() => {
 		// Send telemetry for cloud website visit
 		telemetryClient.capture(TelemetryEventName.ACCOUNT_CONNECT_CLICKED)
-		const cloudUrl = `${apiConfiguration?.zgsmBaseUrl?.trim() || "https://zgsm.sangfor.com"}/credit/manager?state=${hash}&tab=usage`
+		const cloudUrl = `${apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager?state=${hash}&tab=usage`
 		vscode.postMessage({ type: "openExternal", url: cloudUrl })
 	}, [apiConfiguration?.zgsmBaseUrl, hash])
 
-	// https://zgsm.sangfor.com/credit/manager/credit-reward-plan?code=GY5P
 	const handleGetMoreQuota = useCallback(() => {
-		const cloudUrl = `${apiConfiguration?.zgsmBaseUrl?.trim() || "https://zgsm.sangfor.com"}/credit/manager/credit-reward-plan?code=${inviteCodeInfo?.invite_code || ""}`
+		const cloudUrl = `${apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager/credit-reward-plan?code=${inviteCodeInfo?.invite_code || ""}`
 		vscode.postMessage({ type: "openExternal", url: cloudUrl })
 	}, [apiConfiguration?.zgsmBaseUrl, inviteCodeInfo?.invite_code])
 
@@ -277,7 +276,7 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 	}, [])
 
 	const handlePurchaseQuota = useCallback(() => {
-		const cloudUrl = `${apiConfiguration?.zgsmBaseUrl?.trim() || "https://zgsm.sangfor.com"}/credit/manager?state=${hash}&tab=subscription`
+		const cloudUrl = `${apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager?state=${hash}&tab=subscription`
 		vscode.postMessage({ type: "openExternal", url: cloudUrl })
 	}, [apiConfiguration?.zgsmBaseUrl, hash])
 

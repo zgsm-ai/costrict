@@ -236,6 +236,7 @@ export class CompletionProvider {
 		if (!this.serverHostInfo.port || !this.serverHostInfo.protocol) {
 			this.serverHost = this._getServerHostConfig()
 		}
+		console.log(`[Completion Request ${input.completionId}]: ${this.serverHost}`)
 		const response = await fetch(`${this.serverHost}/completion-agent/api/v1/completions`, {
 			method: "post",
 			headers,

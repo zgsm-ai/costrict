@@ -177,7 +177,7 @@ const WelcomeViewProvider = () => {
 									type="url"
 									onInput={handleInputChange}
 									placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
-										zgsmBaseUrl: "https://zgsm.sangfor.com",
+										zgsmBaseUrl: (window as any).COSTRICT_BASE_URL,
 									})}
 									className="w-full">
 									<label className="block font-medium mb-1">

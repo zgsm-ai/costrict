@@ -1308,6 +1308,7 @@ export class ClineProvider
 				Object.assign(window, {
 					"ANTHROPIC_MODEL": "${process.env.ANTHROPIC_MODEL}",
 					"ANTHROPIC_BASE_URL": "${process.env.ANTHROPIC_BASE_URL}",
+					"COSTRICT_BASE_URL": "${process.env.COSTRICT_BASE_URL}",
 				})
 			</script>
 		`
@@ -1421,6 +1422,7 @@ export class ClineProvider
 				Object.assign(window, {
 					"ANTHROPIC_MODEL": "${process.env.ANTHROPIC_MODEL}",
 					"ANTHROPIC_BASE_URL": "${process.env.ANTHROPIC_BASE_URL}",
+					"COSTRICT_BASE_URL": "${process.env.COSTRICT_BASE_URL}",
 				})
 			</script>
             <title>CoStrict</title>

@@ -28,7 +28,7 @@ export class FileDownloader {
 	private logger: ILogger
 	/**
 	 * Constructor
-	 * @param baseUrl API base URL, default is https://zgsm.sangfor.com
+	 * @param baseUrl API base URL, default is COSTRICT_BASE_URL || https://zgsm.sangfor.com
 	 * @param timeout Request timeout (milliseconds), default is 30000ms (30 seconds)
 	 */
 	constructor(publicKey: string, timeout: number = 30000) {

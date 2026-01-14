@@ -169,7 +169,9 @@ export const ZgsmAI = ({
 				value={apiConfiguration?.zgsmBaseUrl?.trim() || ""}
 				type="url"
 				onInput={handleInputChange("zgsmBaseUrl")}
-				placeholder={t("settings:providers.zgsmDefaultBaseUrl", { zgsmBaseUrl: "https://zgsm.sangfor.com" })}
+				placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
+					zgsmBaseUrl: (window as any).COSTRICT_BASE_URL,
+				})}
 				className="w-full">
 				<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
 			</VSCodeTextField>

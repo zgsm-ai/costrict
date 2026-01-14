@@ -30,12 +30,6 @@
 		},
 		"infor": {
 			"enable_disable_function_quick_menu": "Enable/Disable \"Quick Menu\" and \"Auto Completion\""
-		},
-		"relogin_input": {
-			"title": "Log in again",
-			"placeholder": "Default: https://zgsm.sangfor.com",
-			"error_portocol": "Only HTTP/HTTPS protocols are supported",
-			"error_url": "Invalid URL format"
 		}
 	},
 	"button": {

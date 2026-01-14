@@ -64,7 +64,6 @@ export default defineConfig(({ mode }) => {
 		"process.env.COSTRICT_PKG_NAME": JSON.stringify(pkg.name),
 		"process.env.COSTRICT_PKG_VERSION": JSON.stringify(pkg.version),
 		"process.env.COSTRICT_PKG_OUTPUT_CHANNEL": JSON.stringify("CoStrict"),
-		"process.env.COSTRICT_BASE_URL": JSON.stringify(process.env.COSTRICT_BASE_URL || ""),
 		"process.env.COSTRICT_PUBLIC_KEY": JSON.stringify(
 			process.env.COSTRICT_PUBLIC_KEY || process.env.ZGSM_PUBLIC_KEY || "",
 		),
