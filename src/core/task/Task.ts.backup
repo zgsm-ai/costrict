@@ -142,8 +142,6 @@ import psTree from "ps-tree"
 import { MessageManager } from "../message-manager"
 import { validateAndFixToolResultIds } from "./validateToolResultIds"
 import { fixNativeToolname } from "../../utils/fixNativeToolname"
-import { BattleModeManager } from "../battle-mode/BattleModeManager"
-import type { BattleModeConfig, ErrorContext, RecoveryResult } from "../battle-mode/types"
 
 const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000 // 5 seconds
@@ -174,8 +172,6 @@ export interface TaskOptions extends CreateTaskOptions {
 	workspacePath?: string
 	/** Initial status for the task's history item (e.g., "active" for child tasks) */
 	initialStatus?: "active" | "delegated" | "completed"
-	/** 战斗模式配置（可选） */
-	battleModeConfig?: Partial<BattleModeConfig>
 }
 
 export class Task extends EventEmitter<TaskEvents> implements TaskLike {
@@ -472,9 +468,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// MessageManager for high-level message operations (lazy initialized)
 	private _messageManager?: MessageManager
 
-	// BattleModeManager for error recovery (lazy initialized)
-	private _battleModeManager?: BattleModeManager
-
 	constructor({
 		provider,
 		apiConfiguration,
@@ -497,7 +490,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		workspacePath,
 		zgsmWorkflowMode,
 		initialStatus,
-		battleModeConfig,
 	}: TaskOptions) {
 		super()
 
@@ -686,9 +678,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			{ leading: true, trailing: true, maxWait: this.TOKEN_USAGE_EMIT_INTERVAL_MS },
 		)
 
-		// 初始化战斗模式（可选）
-		this.initializeBattleMode(battleModeConfig)
-
 		onCreated?.(this)
 
 		if (startTask) {
@@ -776,173 +765,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			const errorMessage = `Failed to initialize task API config name: ${error instanceof Error ? error.message : String(error)}`
 			provider.log(errorMessage)
 		}
-	}
-
-	/**
-	 * Initialize battle mode manager if enabled.
-	 * This method creates a BattleModeManager instance if battle mode is configured.
-	 *
-	 * ## Flow
-	 * 1. Checks if battle mode config is provided
-	 * 2. Creates BattleModeManager instance with provided config
-	 * 3. Initializes the manager
-	 *
-	 * @private
-	 * @param config - Optional battle mode configuration
-	 */
-	private initializeBattleMode(config?: Partial<BattleModeConfig>): void {
-		if (!config) {
-			// 战斗模式未配置，不初始化
-			return
-		}
-
-		try {
-			this._battleModeManager = new BattleModeManager(config)
-			this._battleModeManager.initialize(config)
-			console.log(`[Task#${this.taskId}] Battle mode initialized`)
-		} catch (error) {
-			// 初始化失败不影响任务执行
-			console.error(`[Task#${this.taskId}] Failed to initialize battle mode:`, error)
-			this._battleModeManager = undefined
-		}
-	}
-
-	/**
-	 * Get the battle mode manager instance.
-	 *
-	 * @public
-	 * @returns The BattleModeManager instance if initialized, undefined otherwise
-	 */
-	public getBattleModeManager(): BattleModeManager | undefined {
-		return this._battleModeManager
-	}
-
-	/**
-	 * Create error context for battle mode error handling.
-	 *
-	 * @private
-	 * @param error - The error that occurred
-	 * @returns ErrorContext with relevant information
-	 */
-	private createErrorContext(error: Error): ErrorContext {
-		// Determine if error is recoverable or fatal
-		const isRecoverable =
-			error.name.includes("timeout") ||
-			error.name.includes("rate") ||
-			error.name.includes("limit") ||
-			error.name.includes("context") ||
-			error.message.includes("timeout") ||
-			error.message.includes("rate limit") ||
-			error.message.includes("context window")
-
-		// Map ApiMessage[] to Message[] format for battle mode
-		const conversationHistory = this.apiConversationHistory.map((msg) => ({
-			role: msg.role,
-			content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
-		}))
-
-		return {
-			timestamp: Date.now(),
-			taskId: this.taskId,
-			conversationHistory,
-			currentModel: this.api.getModel().id,
-			errorType: isRecoverable ? "recovery" : "fatal",
-			errorSource: "api_response",
-			metadata: {
-				workspacePath: this.cwd,
-				instanceId: this.instanceId,
-				errorMessage: error.message,
-				errorName: error.name,
-			},
-		}
-	}
-
-	/**
-	 * Handle battle mode recovery result.
-	 *
-	 * @private
-	 * @param result - The recovery result from battle mode manager
-	 */
-	private async handleBattleModeRecovery(result: RecoveryResult): Promise<void> {
-		if (!result.success) {
-			// 恢复失败，记录错误但不中断任务
-			console.error(`[Task#${this.taskId}] Battle mode recovery failed:`, result)
-			return
-		}
-
-		// 根据恢复操作类型执行相应操作
-		switch (result.action) {
-			case "continue":
-				// Level 1: 忽略错误继续执行，无需额外操作
-				console.log(`[Task#${this.taskId}] Battle mode: Ignoring error and continuing`)
-				break
-
-			case "retry":
-				// Level 2: 上下文清理后重试
-				console.log(`[Task#${this.taskId}] Battle mode: Retrying after context cleanup`)
-				if (result.details.removedMessages) {
-					console.log(
-						`[Task#${this.taskId}] Removed ${result.details.removedMessages} messages from conversation`,
-					)
-				}
-				break
-
-			case "switch_model":
-				// Level 3: 切换模型
-				console.log(`[Task#${this.taskId}] Battle mode: Switching model to ${result.details.switchedToModel}`)
-				if (result.details.switchedToModel) {
-					// 模型切换后的处理由 BattleModeManager 内部完成
-					// 这里可以添加额外的日志或通知
-					await this.say(
-						"text",
-						`[Battle Mode] 已切换到模型 ${result.details.switchedToModel}`,
-						undefined,
-						false,
-						undefined,
-						undefined,
-						{ isNonInteractive: true },
-					)
-				}
-				break
-
-			case "abort":
-				// 战斗模式决定终止任务
-				console.log(`[Task#${this.taskId}] Battle mode: Aborting task`)
-				this.abortTask()
-				return
-		}
-	}
-
-	/**
-	 * Get the battle mode status.
-	 *
-	 * @public
-	 * @returns The battle mode status if battle mode is enabled, undefined otherwise
-	 */
-	public getBattleModeStatus() {
-		return this._battleModeManager?.getStatus()
-	}
-
-	/**
-	 * Update battle mode configuration.
-	 *
-	 * @public
-	 * @param config - Partial configuration to update
-	 */
-	public updateBattleModeConfig(config: Partial<BattleModeConfig>): void {
-		if (this._battleModeManager) {
-			this._battleModeManager.updateConfig(config)
-		}
-	}
-
-	/**
-	 * Get battle mode statistics.
-	 *
-	 * @public
-	 * @returns The battle mode statistics if battle mode is enabled, undefined otherwise
-	 */
-	public getBattleModeStatistics() {
-		return this._battleModeManager?.getStatistics()
 	}
 
 	/**
@@ -4680,27 +4502,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.isWaitingForFirstChunk = false
 			this.currentRequestAbortController = undefined
 			const isContextWindowExceededError = checkContextWindowExceededError(error)
-
-			// Battle mode error handling: Try to recover from errors using battle mode strategies
-			if (this._battleModeManager && this._battleModeManager.getStatus().state === "active") {
-				try {
-					const errorContext = this.createErrorContext(error as Error)
-					const recoveryResult = await this._battleModeManager.handleError(error as Error, errorContext)
-
-					if (recoveryResult.success) {
-						await this.handleBattleModeRecovery(recoveryResult)
-
-						// After successful recovery, retry the request
-						console.log(`[Task#${this.taskId}] Battle mode recovery successful. Retrying request...`)
-						this.api?.setChatType?.("system")
-						yield* this.attemptApiRequest(retryAttempt)
-						return
-					}
-				} catch (recoveryError) {
-					console.warn(`[Task#${this.taskId}] Battle mode recovery failed:`, recoveryError)
-					// Continue with normal error handling
-				}
-			}
 
 			// Automatic protocol fallback: If using native protocol and error is protocol-related,
 			// switch to XML protocol and retry. This only happens once per task.

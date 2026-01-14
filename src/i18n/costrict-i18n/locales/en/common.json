@@ -215,5 +215,49 @@
 		"connectionFailed": "IPC connection failed, unable to connect to local server",
 		"reloadWindow": "Reload Window",
 		"manualRetry": "Manual Retry"
+	},
+	"battleMode": {
+		"title": "Battle Mode",
+		"description": "Automatic error recovery system for improved robustness",
+		"status": {
+			"label": "Status",
+			"active": "Active",
+			"paused": "Paused",
+			"inactive": "Inactive"
+		},
+		"errors": {
+			"label": "Errors",
+			"count": "Error Count",
+			"recovery": "Recovery Actions",
+			"cleared": "Cleared",
+			"none": "No errors"
+		},
+		"strategies": {
+			"label": "Recovery Strategies",
+			"continue": "Continue",
+			"cleanContext": "Clean Context",
+			"switchModel": "Switch Model"
+		},
+		"config": {
+			"enabled": "Enable Battle Mode",
+			"errorThreshold": "Error Threshold",
+			"errorThresholdDescription": "Number of errors before activating recovery strategies",
+			"contextThreshold": "Context Clean Threshold",
+			"contextThresholdDescription": "Number of errors before cleaning conversation context",
+			"modelThreshold": "Model Switch Threshold",
+			"modelThresholdDescription": "Number of errors before switching to backup model",
+			"backupModel": "Backup Model",
+			"backupModelDescription": "Model to switch to when primary model fails",
+			"resetCounters": "Reset Error Counters",
+			"save": "Save Configuration",
+			"cancel": "Cancel"
+		},
+		"logs": {
+			"label": "Recovery Logs",
+			"timestamp": "Time",
+			"action": "Action",
+			"details": "Details",
+			"noLogs": "No recovery actions recorded"
+		}
 	}
 }

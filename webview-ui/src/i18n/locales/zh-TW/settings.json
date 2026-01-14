@@ -1,4 +1,48 @@
 {
+	"battleMode": {
+		"title": "戰鬥模式",
+		"description": "自動錯誤恢復系統，提升魯棒性",
+		"status": {
+			"label": "狀態",
+			"active": "已激活",
+			"paused": "已暫停",
+			"inactive": "未激活"
+		},
+		"errors": {
+			"label": "錯誤",
+			"count": "錯誤計數",
+			"recovery": "恢復操作",
+			"cleared": "已清除",
+			"none": "無錯誤"
+		},
+		"strategies": {
+			"label": "恢復策略",
+			"continue": "繼續執行",
+			"cleanContext": "清理上下文",
+			"switchModel": "切換模型"
+		},
+		"config": {
+			"enabled": "啟用戰鬥模式",
+			"errorThreshold": "錯誤閾值",
+			"errorThresholdDescription": "激活恢復策略前的錯誤次數",
+			"contextThreshold": "上下文清理閾值",
+			"contextThresholdDescription": "清理對話上下文前的錯誤次數",
+			"modelThreshold": "模型切換閾值",
+			"modelThresholdDescription": "切換到備用模型前的錯誤次數",
+			"backupModel": "備用模型",
+			"backupModelDescription": "主模型失敗時切換的模型",
+			"resetCounters": "重置錯誤計數器",
+			"save": "儲存配置",
+			"cancel": "取消"
+		},
+		"logs": {
+			"label": "恢復日誌",
+			"timestamp": "時間",
+			"action": "操作",
+			"details": "詳情",
+			"noLogs": "無恢復操作記錄"
+		}
+	},
 	"back": "返回工作檢視",
 	"common": {
 		"save": "儲存",

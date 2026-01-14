@@ -86,6 +86,12 @@ import ModesView from "../modes/ModesView"
 import McpView from "../mcp/McpView"
 import { SettingsSearch } from "./SettingsSearch"
 import { useSearchIndexRegistry, SearchIndexProvider } from "./useSettingsSearch"
+import BattleModeConfigPanel from "../battle-mode/BattleModeConfigPanel"
+import { useBattleMode } from "@src/hooks/useBattleMode"
+import { useRouterModels } from "@src/components/ui/hooks/useRouterModels"
+// import { filterModels } from "./utils/organizationFilters"
+// import { MODELS_BY_PROVIDER } from "./constants"
+// import type { ModelInfo } from "@roo-code/types"
 
 export const settingsTabsContainer = "flex flex-1 overflow-hidden [&.narrow_.tab-label]:hidden"
 export const settingsTabList =
@@ -114,6 +120,7 @@ export const sectionNames = [
 	"ui",
 	"experimental",
 	"language",
+	"battleMode",
 	"about",
 ] as const
 
@@ -128,7 +135,14 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 	const { t } = useAppTranslation()
 
 	const extensionState = useExtensionState()
-	const { currentApiConfigName, listApiConfigMeta, uriScheme, settingsImportedAt } = extensionState
+	const { currentApiConfigName, listApiConfigMeta, apiConfiguration: stateApiConfig, uriScheme, settingsImportedAt } = extensionState
+
+	// Battle Mode hook
+	const battleMode = useBattleMode()
+
+	// Get router models for battle mode
+	const { data: routerModels } = useRouterModels()
+
 
 	const [isDiscardDialogShow, setDiscardDialogShow] = useState(false)
 	const [isChangeDetected, setChangeDetected] = useState(false)
@@ -232,6 +246,15 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 	const apiConfiguration = useMemo(() => cachedState.apiConfiguration ?? {}, [cachedState.apiConfiguration])
 
+	// Compute available models for battle mode (only for zgsm provider)
+	const availableBattleModels = useMemo(() => {
+		if (apiConfiguration?.apiProvider !== "zgsm") {
+			return []
+		}
+		const models = routerModels?.zgsm
+		if (!models) return []
+		return Object.keys(models).sort((a, b) => a.localeCompare(b))
+	}, [apiConfiguration?.apiProvider, routerModels])
 	useEffect(() => {
 		// Update only when currentApiConfigName is changed.
 		// Expected to be triggered by loadApiConfiguration/upsertApiConfiguration.
@@ -564,7 +587,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		}
 	}, [handleMessage])
 
-	const sections: { id: SectionName; icon: LucideIcon }[] = useMemo(
+	const sections: { id: SectionName; icon: LucideIcon, hidden?: boolean }[] = useMemo(
 		() => [
 			{ id: "providers", icon: Plug },
 			{ id: "modes", icon: Users2 },
@@ -581,6 +604,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			{ id: "ui", icon: Glasses },
 			{ id: "experimental", icon: FlaskConical },
 			{ id: "language", icon: Globe },
+			{ id: "battleMode", icon: Globe, hidden: apiConfiguration?.apiProvider !== "zgsm"  },
 			{ id: "about", icon: Info },
 		],
 		[], // No dependencies needed now
@@ -686,7 +710,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							<span className="sr-only">{t("settings:common.done")}</span>
 						</Button>
 					</StandardTooltip>
-					<h3 className="text-vscode-foreground m-0 flex-shrink-0">{t("settings:header.title")}</h3>
+					<h3 className="text-vscode-foreground m-0 shrink-0">{t("settings:header.title")}</h3>
 				</div>
 				<div className="flex items-center gap-2 shrink-0">
 					{isIndexingComplete && (
@@ -728,7 +752,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					className={cn(settingsTabList)}
 					data-compact={isCompactMode}
 					data-testid="settings-tab-list">
-					{sections.map(({ id, icon: Icon }) => {
+					{sections.filter((section) => !section.hidden).map(({ id, icon: Icon }) => {
 						const isSelected = id === activeTab
 						const onSelect = () => handleTabChange(id)
 
@@ -995,6 +1019,17 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						{/* Language Section */}
 						{renderTab === "language" && (
 							<LanguageSettings language={language || "en"} setCachedStateField={setCachedStateField} />
+						)}
+						{/* Battle Mode Section */}
+						{renderTab === "battleMode" && apiConfiguration?.apiProvider === "zgsm" && (
+							<BattleModeConfigPanel
+								config={battleMode.config}
+								availableModels={availableBattleModels}
+								onSave={battleMode.updateBattleModeConfig}
+								{...(apiConfiguration?.apiProvider !== "zgsm" && {
+									onResetCounters: undefined
+								})}
+							/>
 						)}
 
 						{/* About Section */}

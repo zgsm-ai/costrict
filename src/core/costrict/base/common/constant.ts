@@ -194,3 +194,138 @@ export const configCodeLens = "FunctionQuickCommands"
 // OpenAI Client
 export const OPENAI_CLIENT_NOT_INITIALIZED = "OpenAI client not initialized"
 export const OPENAI_REQUEST_ABORTED = "Request was aborted"
+
+// Battle Mode 相关常量
+export const BATTLE_MODE_CONST = {
+	// 战斗模式开关
+	enabled: false, // 默认禁用
+
+	// 错误阈值配置
+	errorThresholds: {
+		level1: 3, // L1 策略阈值（忽略继续）
+		level2: 5, // L2 策略阈值（上下文清理）
+		level3: 5, // L3 策略最小阈值（模型切换）
+	},
+
+	// 上下文清理配置
+	contextCleanup: {
+		keepLastUserMessage: true, // 保留最后的用户消息
+		keepLastSystemMessage: true, // 保留系统消息
+		maxMessagesToRemove: 10, // 最多移除的消息数量
+	},
+
+	// 模型切换配置
+	modelSwitching: {
+		fallbackModels: ["gpt-4o", "claude-3-5-sonnet", "gemini-1.5-pro"], // 备用模型列表
+		maxSwitches: 3, // 最大切换次数
+		validateBeforeSwitch: true, // 切换前验证模型可用性
+	},
+
+	// L1 策略配置
+	l1Strategy: {
+		maxErrorCount: 3, // 最大错误计数
+		toleratedErrorTypes: ["timeout", "rate limit", "network error", "temporary error", "service unavailable"], // 可容忍的错误类型
+		logToleratedErrors: true, // 记录容忍的错误
+		retryDelay: 1000, // 重试延迟（毫秒）
+	},
+
+	// L2 策略配置
+	l2Strategy: {
+		minErrorCount: 3, // 最小错误计数
+		maxErrorCount: 5, // 最大错误计数
+		triggerErrorTypes: ["context window", "token limit", "memory", "too long", "size limit"], // 触发清理的错误类型
+		keepLastUserMessage: true, // 保留最后的用户消息
+		keepSystemMessages: true, // 保留系统消息
+		maxMessagesToRemove: 10, // 最多移除的消息数量
+		retryDelay: 2000, // 重试延迟（毫秒）
+	},
+
+	// L3 策略配置
+	l3Strategy: {
+		minErrorCount: 5, // 最小错误计数
+		maxSwitches: 3, // 最大切换次数
+		triggerErrorTypes: ["internal error", "model unavailable", "service error", "unavailable", "failed"], // 触发切换的错误类型
+		fallbackModels: ["gpt-4o", "claude-3-5-sonnet", "gemini-1.5-pro"], // 默认备用模型
+		retryDelay: 3000, // 重试延迟（毫秒）
+		validateBeforeSwitch: true, // 切换前验证模型可用性
+	},
+
+	// 历史记录限制
+	history: {
+		maxToleratedErrors: 100, // 最大容忍错误历史记录数
+		maxCleanupHistory: 50, // 最大清理历史记录数
+		maxSwitchHistory: 20, // 最大切换历史记录数
+	},
+
+	// 配置验证限制
+	validation: {
+		minLevel1Threshold: 1, // L1 阈值最小值
+		maxLevel1Threshold: 10, // L1 阈值最大值
+		minLevel2Threshold: 2, // L2 阈值最小值
+		maxLevel2Threshold: 20, // L2 阈值最大值
+		minLevel3Threshold: 3, // L3 阈值最小值
+		maxLevel3Threshold: 30, // L3 阈值最大值
+		minMaxSwitches: 1, // 最大切换次数最小值
+		maxMaxSwitches: 10, // 最大切换次数最大值
+		minMaxMessagesToRemove: 1, // 最大移除消息数最小值
+		maxMaxMessagesToRemove: 50, // 最大移除消息数最大值
+	},
+}
+
+// 战斗模式状态枚举
+export enum BattleModeState {
+	INACTIVE = "inactive", // 非激活状态
+	ACTIVE = "active", // 激活状态
+	PAUSED = "paused", // 暂停状态
+}
+
+// 恢复策略级别枚举
+export enum RecoveryStrategyLevel {
+	Level1 = "level1", // L1: 忽略继续
+	Level2 = "level2", // L2: 上下文清理
+	Level3 = "level3", // L3: 模型切换
+}
+
+// 恢复动作类型枚举
+export enum RecoveryAction {
+	CONTINUE = "continue", // 继续执行
+	RETRY = "retry", // 重试
+	SWITCH_MODEL = "switch_model", // 切换模型
+	ABORT = "abort", // 中止
+}
+
+// 错误类型枚举
+export enum BattleModeErrorType {
+	RECOVERY = "recovery", // 可恢复错误
+	FATAL = "fatal", // 致命错误
+}
+
+// 战斗模式配置相关消息
+export const BATTLE_MODE_MESSAGES = {
+	// 启用/禁用消息
+	enabled: "战斗模式已启用",
+	disabled: "战斗模式已禁用",
+	paused: "战斗模式已暂停",
+	resumed: "战斗模式已恢复",
+
+	// L1 策略消息
+	l1Continue: "错误已容忍并忽略，继续执行",
+	l1ThresholdReached: "已达到 L1 策略错误阈值，升级到 L2 策略",
+
+	// L2 策略消息
+	l2Cleanup: "已清理对话上下文后重试",
+	l2ThresholdReached: "已达到 L2 策略错误阈值，升级到 L3 策略",
+	l2NoCleaner: "未配置对话清理器，直接重试",
+
+	// L3 策略消息
+	l3SwitchModel: "已切换到备用模型后重试",
+	l3MaxSwitchesReached: "已达到最大模型切换次数，无法继续切换",
+	l3NoSwitcher: "未配置模型切换器，无法进行模型切换",
+	l3NoFallbackModels: "没有可用的备用模型",
+
+	// 错误消息
+	cleanupFailed: "上下文清理失败",
+	switchFailed: "模型切换失败",
+	validationFailed: "配置验证失败",
+	invalidConfig: "无效的战斗模式配置",
+}

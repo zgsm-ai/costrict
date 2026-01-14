@@ -215,5 +215,49 @@
 		"connectionFailed": "IPC 连接失败，无法连接到本地服务器",
 		"reloadWindow": "重新加载窗口",
 		"manualRetry": "手动重试"
+	},
+	"battleMode": {
+		"title": "战斗模式",
+		"description": "自动错误恢复系统，提升鲁棒性",
+		"status": {
+			"label": "状态",
+			"active": "已激活",
+			"paused": "已暂停",
+			"inactive": "未激活"
+		},
+		"errors": {
+			"label": "错误",
+			"count": "错误计数",
+			"recovery": "恢复操作",
+			"cleared": "已清除",
+			"none": "无错误"
+		},
+		"strategies": {
+			"label": "恢复策略",
+			"continue": "继续执行",
+			"cleanContext": "清理上下文",
+			"switchModel": "切换模型"
+		},
+		"config": {
+			"enabled": "启用战斗模式",
+			"errorThreshold": "错误阈值",
+			"errorThresholdDescription": "激活恢复策略前的错误次数",
+			"contextThreshold": "上下文清理阈值",
+			"contextThresholdDescription": "清理对话上下文前的错误次数",
+			"modelThreshold": "模型切换阈值",
+			"modelThresholdDescription": "切换到备用模型前的错误次数",
+			"backupModel": "备用模型",
+			"backupModelDescription": "主模型失败时切换的模型",
+			"resetCounters": "重置错误计数器",
+			"save": "保存配置",
+			"cancel": "取消"
+		},
+		"logs": {
+			"label": "恢复日志",
+			"timestamp": "时间",
+			"action": "操作",
+			"details": "详情",
+			"noLogs": "无恢复操作记录"
+		}
 	}
 }

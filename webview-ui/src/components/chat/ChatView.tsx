@@ -35,6 +35,7 @@ import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { useSelectedModel } from "@src/components/ui/hooks/useSelectedModel"
+import { useBattleMode } from "@src/hooks/useBattleMode"
 import RooHero from "@src/components/welcome/RooHero"
 import RooTips from "@src/components/welcome/RooTips"
 import { StandardTooltip, Button } from "@src/components/ui"
@@ -52,6 +53,7 @@ import { useChatSearch } from "./hooks/useChatSearch"
 import BrowserActionRow from "./BrowserActionRow"
 import BrowserSessionStatusRow from "./BrowserSessionStatusRow"
 import ChatRow from "./ChatRow"
+import BattleModeStatus from "../battle-mode/BattleModeStatus"
 import { ChatTextArea } from "./ChatTextArea"
 import { markdownExpandingRef } from "./Markdown"
 import TaskHeader from "./TaskHeader"
@@ -114,6 +116,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		experiments,
 		isBrowserSessionActive,
 	} = useExtensionState()
+
+	// Battle mode integration
+	const battleModeState = useBattleMode()
 
 	const messagesRef = useRef(messages)
 
@@ -1617,6 +1622,17 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					{checkpointWarning && (
 						<div className="px-3">
 							<CheckpointWarning warning={checkpointWarning} />
+						</div>
+					)}
+
+					{battleModeState.isActive && (
+						<div className="px-3 mb-2">
+							<BattleModeStatus
+								isActive={battleModeState.isActive}
+								isPaused={battleModeState.isPaused}
+								errorCount={battleModeState.errorCount}
+								recoveryActions={battleModeState.recoveryActions}
+							/>
 						</div>
 					)}
 				</>
