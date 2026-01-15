@@ -1288,7 +1288,10 @@ export const ChatRowContent = ({
 										padding: "12px 16px",
 										backgroundColor: "var(--vscode-editor-background)",
 									}}>
-									<CollapsibleMarkdownBlock markdown={message.text} />
+									<CollapsibleMarkdownBlock
+										markdown={message.text}
+										collapseWithoutScroll={collapseWithoutScrollEnabled}
+									/>
 								</div>
 							</div>
 						</div>
