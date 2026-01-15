@@ -459,7 +459,7 @@ const TaskHeader = ({
 							}}
 							className="mt-1 -mx-2.5 border-t border-vscode-sideBar-background flex items-center justify-start text-sm text-muted-foreground/70 pt-2 px-2.5 cursor-pointer select-none">
 							<span className="font-medium">{t("chat:task.lastUserFeedback")}</span>
-							<span className=" max-w-[calc(100%-100px)] truncate ">
+							<span className=" max-w-[calc(100%-120px)] truncate ">
 								<Mention
 									text={
 										lastUserFeedback.length > 500
@@ -474,8 +474,6 @@ const TaskHeader = ({
 				{/* Todo list - always shown at bottom when todos exist */}
 				{hasTodos && <TodoListDisplay todos={todos ?? (task as any)?.tool?.todos ?? []} />}
 			</div>
-			{/* <TodoListDisplay todos={todos ?? (task as any)?.tool?.todos ?? []} /> */}
-			{/* <CloudUpsellDialog open={isOpen} onOpenChange={closeUpsell} onConnect={handleConnect} /> */}
 		</div>
 	)
 }
