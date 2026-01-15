@@ -125,6 +125,16 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	// task, then the extension is in a bad state and needs to be debugged (see
 	// Cline.abort).
 	const task = useMemo(() => messages.at(0), [messages])
+
+	// Dynamically calculating the current task text: Extract the latest user_feedback message from messages to use as the current task.
+	const currentTaskText = useMemo(() => {
+		const lastUserFeedback = findLast(messages, (msg) => msg.say === "user_feedback")
+		if (lastUserFeedback?.text) {
+			return lastUserFeedback.text
+		}
+		return task?.text ?? ""
+	}, [messages, task])
+
 	const curWorkspaceHistory = useMemo(
 		() => (taskHistory || []).filter((t) => t.workspace === cwd),
 		[cwd, taskHistory],
@@ -1606,6 +1616,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						buttonsDisabled={sendingDisabled}
 						handleCondenseContext={handleCondenseContext}
 						todos={latestTodos}
+						currentTaskText={currentTaskText}
 					/>
 
 					{hasSystemPromptOverride && (

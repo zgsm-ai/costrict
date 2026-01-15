@@ -17,6 +17,7 @@
 		"apiCost": "API 费用",
 		"toolProtocol": "工具协议",
 		"size": "大小",
+		"currentTask": "当前对话内容：",
 		"contextWindow": "上下文长度",
 		"closeAndStart": "关闭任务并开始新任务",
 		"export": "导出任务历史",

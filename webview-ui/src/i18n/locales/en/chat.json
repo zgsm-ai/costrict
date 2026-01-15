@@ -17,6 +17,7 @@
 		"apiCost": "API Cost",
 		"toolProtocol": "Tool Protocol",
 		"size": "Size",
+		"currentTask": "Current conversation content:",
 		"condenseContext": "Intelligently condense context",
 		"contextWindow": "Context Length",
 		"closeAndStart": "Close task and start a new one",

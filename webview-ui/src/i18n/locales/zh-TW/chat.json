@@ -17,6 +17,7 @@
 		"apiCost": "API 費用",
 		"toolProtocol": "工具協議",
 		"size": "大小",
+		"currentTask": "目前對話內容：",
 		"condenseContext": "智慧壓縮內容",
 		"contextWindow": "上下文長度",
 		"closeAndStart": "關閉現有工作並開始新工作",
