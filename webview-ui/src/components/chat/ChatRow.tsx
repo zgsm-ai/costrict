@@ -218,6 +218,7 @@ export const ChatRowContent = ({
 		reviewTask,
 		showSpeedInfo,
 		language,
+		collapseMarkdownWithoutScroll,
 	} = useExtensionState()
 	const { logoPic, userInfo } = useZgsmUserInfo(apiConfiguration?.zgsmAccessToken)
 	const { info: model } = useSelectedModel(apiConfiguration)
@@ -228,6 +229,7 @@ export const ChatRowContent = ({
 	const [editImages, setEditImages] = useState<string[]>([])
 	const { copyWithFeedback } = useCopyToClipboard()
 	const userEditRef = useRef<HTMLDivElement>(null)
+	const collapseWithoutScrollEnabled = collapseMarkdownWithoutScroll ?? true
 
 	// Handle message events for image selection during edit mode
 	useEffect(() => {
@@ -1570,6 +1572,7 @@ export const ChatRowContent = ({
 							</div>
 							<div className="pl-6">
 								<Markdown
+									collapseWithoutScroll={collapseWithoutScrollEnabled}
 									markdown={HighlightedPlainText({
 										message: message || {},
 										query: searchQuery,
@@ -1756,6 +1759,7 @@ export const ChatRowContent = ({
 							</div>
 							<div className="border-l border-green-600/30 ml-2 pl-4 pb-1">
 								<Markdown
+									collapseWithoutScroll={collapseWithoutScrollEnabled}
 									markdown={HighlightedPlainText({
 										message: message || {},
 										query: searchQuery,
@@ -1947,6 +1951,7 @@ export const ChatRowContent = ({
 							)}
 							<div style={{ paddingTop: 10 }}>
 								<Markdown
+									collapseWithoutScroll={collapseWithoutScrollEnabled}
 									markdown={HighlightedPlainText({
 										message: message || {},
 										query: searchQuery,

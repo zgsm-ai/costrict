@@ -161,5 +161,8 @@
 		"skipHint": "如果选项都不满足您的需求，<code>可以在下方输入框直接说明您的需求；</code><code>点击\"跳过\"，将跳过此问卷</code>",
 		"loading": "准备问题中..."
 	},
+	"markdown": {
+		"expandPrompt": "点击展开"
+	},
 	"aiContentWarning": "内容由AI生成，请仔细甄别！"
 }

@@ -222,6 +222,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		reasoningBlockCollapsed,
 		showSpeedInfo,
 		automaticallyFocus,
+		collapseMarkdownWithoutScroll,
 		enterBehavior,
 		includeCurrentTime,
 		includeCurrentCost,
@@ -437,6 +438,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					reasoningBlockCollapsed: reasoningBlockCollapsed ?? true,
 					showSpeedInfo: showSpeedInfo ?? false,
 					automaticallyFocus: automaticallyFocus ?? false,
+					collapseMarkdownWithoutScroll: collapseMarkdownWithoutScroll ?? true,
 					enterBehavior: enterBehavior ?? "send",
 					includeCurrentTime: includeCurrentTime ?? true,
 					includeCurrentCost: includeCurrentCost ?? true,
@@ -966,6 +968,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								reasoningBlockCollapsed={reasoningBlockCollapsed ?? true}
 								showSpeedInfo={showSpeedInfo ?? false}
 								automaticallyFocus={automaticallyFocus ?? false}
+								collapseMarkdownWithoutScroll={collapseMarkdownWithoutScroll ?? true}
 								enterBehavior={enterBehavior ?? "send"}
 								experiments={experiments}
 								apiConfiguration={apiConfiguration}

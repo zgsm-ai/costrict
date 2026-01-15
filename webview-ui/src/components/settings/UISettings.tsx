@@ -15,6 +15,7 @@ interface UISettingsProps extends HTMLAttributes<HTMLDivElement> {
 	reasoningBlockCollapsed: boolean
 	showSpeedInfo: boolean
 	automaticallyFocus: boolean
+	collapseMarkdownWithoutScroll: boolean
 	enterBehavior: "send" | "newline"
 	experiments: Experiments
 	apiConfiguration?: any
@@ -26,6 +27,7 @@ export const UISettings = ({
 	reasoningBlockCollapsed,
 	showSpeedInfo,
 	automaticallyFocus,
+	collapseMarkdownWithoutScroll,
 	enterBehavior,
 	experiments,
 	apiConfiguration,
@@ -76,6 +78,14 @@ export const UISettings = ({
 		// Track telemetry event
 		telemetryClient.capture("ui_settings_enter_behavior_changed", {
 			behavior: newBehavior,
+		})
+	}
+
+	const handleCollapseMarkdownWithoutScrollChange = (enabled: boolean) => {
+		setCachedStateField("collapseMarkdownWithoutScroll", enabled)
+
+		telemetryClient.capture("ui_settings_collapse_markdown_without_scroll_changed", {
+			enabled,
 		})
 	}
 
@@ -164,6 +174,25 @@ export const UISettings = ({
 							</VSCodeCheckbox>
 							<div className="text-vscode-descriptionForeground text-sm ml-5 mt-1">
 								{t("settings:ui.requireCtrlEnterToSend.description", { primaryMod })}
+							</div>
+						</div>
+					</SearchableSetting>
+					{/* Collapse long markdown without scroll */}
+					<SearchableSetting
+						settingId="ui-collapse-markdown-without-scroll"
+						section="ui"
+						label={t("settings:ui.collapseMarkdownWithoutScroll.label")}>
+						<div className="flex flex-col gap-1">
+							<VSCodeCheckbox
+								checked={collapseMarkdownWithoutScroll}
+								onChange={(e: any) => handleCollapseMarkdownWithoutScrollChange(e.target.checked)}
+								data-testid="collapse-markdown-without-scroll-checkbox">
+								<span className="font-medium">
+									{t("settings:ui.collapseMarkdownWithoutScroll.label")}
+								</span>
+							</VSCodeCheckbox>
+							<div className="text-vscode-descriptionForeground text-sm ml-5 mt-1">
+								{t("settings:ui.collapseMarkdownWithoutScroll.description")}
 							</div>
 						</div>
 					</SearchableSetting>

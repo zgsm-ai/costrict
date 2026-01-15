@@ -165,6 +165,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	showSpeedInfo?: boolean
 	setAutomaticallyFocus: (value: boolean) => void
 	automaticallyFocus?: boolean
+	collapseMarkdownWithoutScroll?: boolean
 	enterBehavior?: "send" | "newline"
 	setEnterBehavior: (value: "send" | "newline") => void
 	autoCondenseContext: boolean
@@ -282,6 +283,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		reasoningBlockCollapsed: true, // Default to collapsed
 		showSpeedInfo: false, // Default to not showing speed info
 		automaticallyFocus: false, // Default to not showing speed info
+		collapseMarkdownWithoutScroll: true, // Default to collapsed without scroll
 		enterBehavior: "send", // Default: Enter sends, Shift+Enter creates newline
 		cloudUserInfo: null,
 		cloudIsAuthenticated: false,

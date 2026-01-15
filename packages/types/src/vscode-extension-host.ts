@@ -286,6 +286,7 @@ export type ExtensionState = Pick<
 	| "reasoningBlockCollapsed"
 	| "showSpeedInfo"
 	| "automaticallyFocus"
+	| "collapseMarkdownWithoutScroll"
 	| "errorCode"
 	| "enterBehavior"
 	| "includeCurrentTime"

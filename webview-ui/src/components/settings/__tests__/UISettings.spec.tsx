@@ -7,6 +7,7 @@ describe("UISettings", () => {
 		reasoningBlockCollapsed: false,
 		showSpeedInfo: false,
 		automaticallyFocus: false,
+		collapseMarkdownWithoutScroll: false,
 		apiConfiguration: {
 			apiProvider: "zgsm",
 		},

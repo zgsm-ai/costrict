@@ -152,6 +152,12 @@
 	"prompts": {
 		"description": "Configure support prompts for quick actions like enhancing prompts, explaining code, and fixing issues. These prompts help CoStrict provide better support for common development tasks.<DocsLink>Learn more</DocsLink>"
 	},
+	"ui": {
+		"collapseMarkdownWithoutScroll": {
+			"label": "Collapse long markdown",
+			"description": "When enabled, long markdown blocks are collapsed and can be expanded from the bottom."
+		}
+	},
 	"providerChangeWarning": {
 		"title": "Are you sure you want to switch from CoStrict to another provider?",
 		"description": "Advanced features such as code completion, code review, Codebase will not be available",
