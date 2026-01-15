@@ -69,11 +69,15 @@ export const CollapsibleMarkdownBlock = memo(({ markdown, collapseWithoutScroll 
 
 			<div
 				ref={contentRef}
-				style={{
-					maxHeight: !isExpanded && showExpandButton ? `${MAX_COLLAPSED_HEIGHT}px` : "none",
-					overflow: !isExpanded && showExpandButton && collapseWithoutScroll ? "hidden" : "auto",
-					position: "relative",
-				}}>
+				style={
+					collapseWithoutScroll
+						? {
+								maxHeight: !isExpanded && showExpandButton ? `${MAX_COLLAPSED_HEIGHT}px` : "none",
+								overflow: !isExpanded && showExpandButton && collapseWithoutScroll ? "hidden" : "auto",
+								position: "relative",
+							}
+						: { position: "relative" }
+				}>
 				<MarkdownBlock markdown={markdown} />
 			</div>
 			{collapseWithoutScroll && showExpandButton && !isExpanded && (

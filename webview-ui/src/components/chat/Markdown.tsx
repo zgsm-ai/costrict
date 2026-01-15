@@ -118,13 +118,18 @@ export const Markdown = memo(
 
 				<div
 					ref={contentRef}
-					style={{
-						wordBreak: "break-word",
-						overflowWrap: "anywhere",
-						maxHeight: !isExpanded && showExpandButton ? `${MAX_COLLAPSED_HEIGHT}px` : "none",
-						overflow: !isExpanded && showExpandButton && collapseWithoutScroll ? "hidden" : "auto",
-						position: "relative",
-					}}>
+					style={
+						collapseWithoutScroll
+							? {
+									wordBreak: "break-word",
+									overflowWrap: "anywhere",
+									maxHeight: !isExpanded && showExpandButton ? `${MAX_COLLAPSED_HEIGHT}px` : "none",
+									overflow:
+										!isExpanded && showExpandButton && collapseWithoutScroll ? "hidden" : "auto",
+									position: "relative",
+								}
+							: { position: "relative" }
+					}>
 					<MarkdownBlock markdown={markdown} />
 				</div>
 				{collapseWithoutScroll && showExpandButton && !isExpanded && !partial && (
