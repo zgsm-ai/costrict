@@ -83,6 +83,7 @@ import { BrowserSession } from "../../services/browser/BrowserSession"
 import { McpHub } from "../../services/mcp/McpHub"
 import { McpServerManager } from "../../services/mcp/McpServerManager"
 import { RepoPerTaskCheckpointService } from "../../services/checkpoints"
+import { MultiRepoCheckpointService } from "../../services/checkpoints/MultiRepoCheckpointService"
 
 // integrations
 import { DiffViewProvider } from "../../integrations/editor/DiffViewProvider"
@@ -389,7 +390,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// Checkpoints
 	enableCheckpoints: boolean
 	checkpointTimeout: number
-	checkpointService?: RepoPerTaskCheckpointService
+	checkpointService?: RepoPerTaskCheckpointService | MultiRepoCheckpointService
 	checkpointServiceInitializing = false
 
 	// Task Bridge

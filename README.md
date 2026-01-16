@@ -50,8 +50,9 @@ It supports users in conducting code checks on functions, selected code lines, c
 
 - **More features:**
     - **Code Completion:** Automatically generates subsequent code based on the cursor's context code, quickly outputs code in seconds
-    - **Vibe Code:** Vibe Code is designed for rapid development and simple tasks. It supports multi-turn natural language dialogue, allowing for real-time refinement and precise code generation.
-    - **MCP Service:** Seamlessly integrates with the MCP open ecosystem to enable standardized system connectivity. You can Integrate external APIs、Connect to databases、Develop custom tools through MCP services.
+    - **Vibe Code:** Vibe Code is designed for rapid development and simple tasks. It supports multi-turn natural language dialogue, allowing for real-time refinement and precise code generation.
+    - **Multi-Repo Checkpoints:** Support for managing checkpoints across multiple independent Git repositories in a single workspace, perfect for monorepo or multi-project workflows. [Learn more](./docs/multi-repo-checkpoints.md)
+    - **MCP Service:** Seamlessly integrates with the MCP open ecosystem to enable standardized system connectivity. You can Integrate external APIs、Connect to databases、Develop custom tools through MCP services.
     - **APIs & Model Customization:** Officially provided are multiple free advanced models; it also supports using third-party API providers such as Anthropic, OpenAI, etc.; you can also configure any API compatible with OpenAl; or use local models through I M Studio/Ollama
     - **Mode Customization:** We provide various default modes to adapt to different scenarios, such as the Code mode with outstanding coding capabilities and the Orchestrator mode skilled in complex task decomposition. You can also customize mode according to your needs.
     - **Context:** CoStrict will automatically incorporate all repository data of large files into the context, and for code completion scenarios, it will also dynamically perceive the context based on the cursor position. You can also add files/folders, terminals, issues, etc. using the @ key to provide more precise context information for the input.

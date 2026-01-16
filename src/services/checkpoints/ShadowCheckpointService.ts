@@ -132,15 +132,15 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 		const nestedGitPath = await this.getNestedGitRepository()
 
 		if (nestedGitPath) {
-			// Show persistent error message with the offending path
+			// 改为警告而不是错误
 			const relativePath = path.relative(this.workspaceDir, nestedGitPath)
 			const message = t("common:errors.nested_git_repos_warning", { path: relativePath })
-			vscode.window.showErrorMessage(message)
+			vscode.window.showWarningMessage(message)
 
-			throw new Error(
-				`Checkpoints are disabled because a nested git repository was detected at: ${relativePath}. ` +
-					"Please remove or relocate nested git repositories to use the checkpoints feature.",
-			)
+			this.log(`[${this.constructor.name}#initShadowGit] 检测到嵌套 Git 仓库: ${relativePath}，将自动排除该目录`)
+
+			// 不再抛出错误，继续初始化
+			// nestedGitPath 会在 writeExcludeFile() 中被自动排除
 		}
 
 		await fs.mkdir(this.checkpointsDir, { recursive: true })
@@ -206,6 +206,14 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 	protected async writeExcludeFile() {
 		await fs.mkdir(path.join(this.dotGitDir, "info"), { recursive: true })
 		const patterns = await getExcludePatterns(this.workspaceDir)
+
+		// 获取嵌套的 Git 仓库路径并添加到排除列表
+		const nestedGitPath = await this.getNestedGitRepository()
+		if (nestedGitPath) {
+			const relativePath = path.relative(this.workspaceDir, nestedGitPath)
+			patterns.push(relativePath)
+		}
+
 		await fs.writeFile(path.join(this.dotGitDir, "info", "exclude"), patterns.join("\n"))
 	}
 

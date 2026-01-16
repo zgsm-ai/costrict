@@ -15,6 +15,8 @@ import { getApiMetrics } from "../../shared/getApiMetrics"
 import { DIFF_VIEW_URI_SCHEME } from "../../integrations/editor/DiffViewProvider"
 
 import { CheckpointServiceOptions, RepoPerTaskCheckpointService } from "../../services/checkpoints"
+import { RepoScanner } from "../../services/checkpoints/RepoScanner"
+import { MultiRepoCheckpointService } from "../../services/checkpoints/MultiRepoCheckpointService"
 import { CospecMetadataManager } from "../costrict/workflow/CospecMetadataManager"
 import * as path from "path"
 import * as fs from "fs/promises"
@@ -49,6 +51,23 @@ async function updateCospecMetadataForCheckpoint(
 }
 
 const WARNING_THRESHOLD_MS = 5000
+
+/**
+ * 检测工作区是否包含多个独立仓库
+ */
+async function detectMultiRepoScenario(workspaceDir: string): Promise<boolean> {
+	try {
+		const repos = await RepoScanner.scanRepos(workspaceDir)
+		const standaloneRepos = RepoScanner.filterStandaloneRepos(repos)
+
+		// 如果有多个独立仓库，返回 true
+		// 如果只有一个独立仓库（可能是工作区本身的 .git），返回 false
+		return standaloneRepos.length > 1 || (standaloneRepos.length === 1 && standaloneRepos[0].name !== ".")
+	} catch (error) {
+		console.error(`[detectMultiRepoScenario] 检测失败: ${error instanceof Error ? error.message : String(error)}`)
+		return false
+	}
+}
 
 function sendCheckpointInitWarn(task: Task, type?: "WAIT_TIMEOUT" | "INIT_TIMEOUT", timeout?: number) {
 	task.providerRef.deref()?.postMessageToWebview({
@@ -91,6 +110,10 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 			task.enableCheckpoints = false
 			return undefined
 		}
+
+		// 新增：检测是否为多仓库场景
+		const isMultiRepo = await detectMultiRepoScenario(workspaceDir)
+		log(`[Task#getCheckpointService] 多仓库检测: ${isMultiRepo ? "是" : "否"}`)
 
 		const globalStorageDir = provider?.context.globalStorageUri.fsPath
 
@@ -142,9 +165,20 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 			return undefined
 		}
 
-		const service = RepoPerTaskCheckpointService.create(options)
+		let service: any // 使用 any 以支持两种服务类型
+
+		if (isMultiRepo) {
+			// 多仓库场景：使用 MultiRepoCheckpointService
+			log(`[Task#getCheckpointService] 使用 MultiRepoCheckpointService`)
+			service = new MultiRepoCheckpointService(options.taskId, options.workspaceDir, globalStorageDir, log)
+		} else {
+			// 单仓库场景：使用 RepoPerTaskCheckpointService
+			log(`[Task#getCheckpointService] 使用 RepoPerTaskCheckpointService`)
+			service = RepoPerTaskCheckpointService.create(options)
+		}
+
 		task.checkpointServiceInitializing = true
-		await checkGitInstallation(task, service, log, provider)
+		await checkGitInstallation(task, service, log, provider, isMultiRepo)
 		task.checkpointService = service
 		if (task.enableCheckpoints) {
 			sendCheckpointInitWarn(task)
@@ -163,9 +197,10 @@ export async function getCheckpointService(task: Task, { interval = 250 }: { int
 
 async function checkGitInstallation(
 	task: Task,
-	service: RepoPerTaskCheckpointService,
+	service: RepoPerTaskCheckpointService | MultiRepoCheckpointService,
 	log: (message: string) => void,
 	provider: any,
+	isMultiRepo: boolean = false,
 ) {
 	try {
 		const gitInstalled = await checkGitInstalled()
@@ -189,12 +224,17 @@ async function checkGitInstallation(
 		}
 
 		// Git is installed, proceed with initialization
-		service.on("initialize", () => {
-			log("[Task#getCheckpointService] service initialized")
+		;(service as any).on("initialize", (data: any) => {
+			if (isMultiRepo) {
+				log(
+					`[Task#getCheckpointService] multi-repo service initialized, ${data.initializedRepos}/${data.repoCount} repos ready`,
+				)
+			} else {
+				log("[Task#getCheckpointService] service initialized")
+			}
 			task.checkpointServiceInitializing = false
 		})
-
-		service.on("checkpoint", ({ fromHash: from, toHash: to, suppressMessage }) => {
+		;(service as any).on("checkpoint", ({ fromHash: from, toHash: to, suppressMessage }: any) => {
 			try {
 				sendCheckpointInitWarn(task)
 				// Always update the current checkpoint hash in the webview, including the suppress flag
@@ -228,9 +268,15 @@ async function checkGitInstallation(
 		log("[Task#getCheckpointService] initializing shadow git")
 
 		try {
-			await service.initShadowGit()
+			if (isMultiRepo) {
+				// MultiRepoCheckpointService 有自己的 initialize 方法
+				await (service as MultiRepoCheckpointService).initialize()
+			} else {
+				// RepoPerTaskCheckpointService 使用 initShadowGit 方法
+				await (service as RepoPerTaskCheckpointService).initShadowGit()
+			}
 		} catch (err) {
-			log(`[Task#getCheckpointService] initShadowGit -> ${err.message}`)
+			log(`[Task#getCheckpointService] 初始化失败: ${err instanceof Error ? err.message : String(err)}`)
 			task.enableCheckpoints = false
 		}
 	} catch (err) {
@@ -253,7 +299,7 @@ export async function checkpointSave(task: Task, force = false, suppressMessage 
 	// Start the checkpoint process in the background.
 	return service
 		.saveCheckpoint(`Task: ${task.taskId}, Time: ${Date.now()}`, { allowEmpty: force, suppressMessage })
-		.catch((err) => {
+		.catch((err: any) => {
 			console.error("[Task#checkpointSave] caught unexpected error, disabling checkpoints", err)
 			task.enableCheckpoints = false
 		})
@@ -403,10 +449,34 @@ export async function checkpointDiff(task: Task, { ts, previousCommitHash, commi
 			return
 		}
 
+		// 处理多仓库和单仓库的不同返回类型
+		let allChanges: any[] = []
+
+		if (service instanceof MultiRepoCheckpointService) {
+			// 多仓库场景：处理 MultiDiffResult[]
+			const multiChanges = changes as any[]
+			for (const multiChange of multiChanges) {
+				if (multiChange.error) {
+					continue
+				}
+				if (multiChange.changes && Array.isArray(multiChange.changes)) {
+					allChanges.push(...multiChange.changes)
+				}
+			}
+		} else {
+			// 单仓库场景：使用 CheckpointDiff[]
+			allChanges = changes as any[]
+		}
+
+		if (!allChanges.length) {
+			vscode.window.showInformationMessage(t("common:errors.checkpoint_no_changes"))
+			return
+		}
+
 		await vscode.commands.executeCommand(
 			"vscode.changes",
 			title,
-			changes.map((change) => [
+			allChanges.map((change: any) => [
 				vscode.Uri.file(change.paths.absolute),
 				vscode.Uri.parse(`${DIFF_VIEW_URI_SCHEME}:${change.paths.relative}`).with({
 					query: Buffer.from(change.content.before ?? "").toString("base64"),
