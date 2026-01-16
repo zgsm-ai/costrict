@@ -53,12 +53,14 @@ vi.mock("vscode", () => ({
 	RelativePattern: vi.fn(),
 }))
 
-// Global roo directory - computed once
+// Global roo/costrict directories - computed once
 const GLOBAL_ROO_DIR = p(HOME_DIR, ".roo")
+const GLOBAL_COSTRICT_DIR = p(HOME_DIR, ".costrict")
 
 // Mock roo-config
 vi.mock("../../roo-config", () => ({
 	getGlobalRooDirectory: () => GLOBAL_ROO_DIR,
+	getGlobalCostrictDirectory: () => GLOBAL_COSTRICT_DIR,
 	directoryExists: mockDirectoryExists,
 	fileExists: mockFileExists,
 }))

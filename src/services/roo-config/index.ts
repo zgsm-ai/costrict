@@ -28,6 +28,11 @@ export function getGlobalRooDirectory(): string {
 	return path.join(homeDir, ".roo")
 }
 
+export function getGlobalCostrictDirectory(): string {
+	const homeDir = os.homedir()
+	return path.join(homeDir, ".costrict")
+}
+
 /**
  * Gets the project-local .roo directory path for a given cwd
  *

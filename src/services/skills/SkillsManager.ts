@@ -4,7 +4,7 @@ import * as vscode from "vscode"
 import matter from "gray-matter"
 
 import type { ClineProvider } from "../../core/webview/ClineProvider"
-import { getGlobalRooDirectory } from "../roo-config"
+import { getGlobalRooDirectory, getGlobalCostrictDirectory } from "../roo-config"
 import { directoryExists, fileExists } from "../roo-config"
 import { SkillMetadata, SkillContent } from "../../shared/skills"
 import { modes, getAllModes } from "../../shared/modes"
@@ -251,6 +251,7 @@ export class SkillsManager {
 	> {
 		const dirs: Array<{ dir: string; source: "global" | "project"; mode?: string }> = []
 		const globalRooDir = getGlobalRooDirectory()
+		const globalCostrictDir = getGlobalCostrictDirectory()
 		const provider = this.providerRef.deref()
 		const projectRooDir = provider?.cwd ? path.join(provider.cwd, ".roo") : null
 
@@ -259,6 +260,7 @@ export class SkillsManager {
 
 		// Global directories
 		dirs.push({ dir: path.join(globalRooDir, "skills"), source: "global" })
+		dirs.push({ dir: path.join(globalCostrictDir, "skills"), source: "global" })
 		for (const mode of modesList) {
 			dirs.push({ dir: path.join(globalRooDir, `skills-${mode}`), source: "global", mode })
 		}
@@ -309,10 +311,13 @@ export class SkillsManager {
 
 		// Watch for changes in skills directories
 		const globalSkillsDir = path.join(getGlobalRooDirectory(), "skills")
+		const globalCostrictDir = path.join(getGlobalCostrictDirectory(), "skills")
+
 		const projectSkillsDir = path.join(provider.cwd, ".roo", "skills")
 
 		// Watch global skills directory
 		this.watchDirectory(globalSkillsDir)
+		this.watchDirectory(globalCostrictDir)
 
 		// Watch project skills directory
 		this.watchDirectory(projectSkillsDir)
