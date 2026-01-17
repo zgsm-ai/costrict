@@ -135,6 +135,18 @@
 		"COMMIT_REVIEW": {
 			"name": "Commit 審查",
 			"description": "啟用後，CoStrict 可以對提交進行代碼審查。"
+		},
+		"SMART_MISTAKE_DETECTION": {
+			"name": "強制完成模式",
+			"description": "啟用後，CoStrict 將使用智能錯誤檢測系統，該系統採用加權評分和漸進式警告。相比簡單的連續錯誤計數，這提供了更細緻的錯誤追蹤和自動執行恢復能力。（token 消耗量大）"
+		},
+		"AUTO_SWITCH_MODEL": {
+			"name": "自動切換模型",
+			"description": "當連續錯誤次數超過閾值時自動切換到其他模型"
+		},
+		"AUTO_SWITCH_MODEL_THRESHOLD": {
+			"name": "切換閾值",
+			"description": "切換模型前的連續錯誤次數（1-10）"
 		}
 	},
 	"modelPicker": {

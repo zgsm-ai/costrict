@@ -230,7 +230,10 @@ export const ChatRowContent = ({
 	const { copyWithFeedback } = useCopyToClipboard()
 	const userEditRef = useRef<HTMLDivElement>(null)
 	const collapseWithoutScrollEnabled = collapseMarkdownWithoutScroll ?? true
-
+	const deleteMessageTs = useMemo(
+		() => (clineMessages.findIndex((m) => m.ts === message.ts) > 1 ? message.ts : -1),
+		[clineMessages, message.ts],
+	)
 	// Handle message events for image selection during edit mode
 	useEffect(() => {
 		const handleMessage = (event: MessageEvent) => {
@@ -1227,6 +1230,7 @@ export const ChatRowContent = ({
 				case "rollback_xml_tool":
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="rollback_xml_tool"
 							message={message.text || ""}
 							expandable={true}
@@ -1236,6 +1240,7 @@ export const ChatRowContent = ({
 				case "diff_error":
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="diff_error"
 							message={message.text || ""}
 							expandable={true}
@@ -1349,14 +1354,14 @@ export const ChatRowContent = ({
 									style={{ opacity: cost !== null && cost !== undefined && cost > 0 ? 1 : 0 }}>
 									${Number(cost || 0)?.toFixed(4)}
 								</div>
-								{!isApiRequestInProgress && clineMessages.findIndex((m) => m.ts === message.ts) > 1 && (
+								{!isApiRequestInProgress && deleteMessageTs > -1 && (
 									<StandardTooltip content={t("common:confirmation.deleteMessage")}>
 										<TimerReset
 											className="size-5 mt-[3px] cursor-pointer"
 											onClick={(e) => {
 												e.preventDefault()
 												e.stopPropagation()
-												vscode.postMessage({ type: "deleteMessage", value: message.ts })
+												vscode.postMessage({ type: "deleteMessage", value: deleteMessageTs })
 											}}
 										/>
 									</StandardTooltip>
@@ -1398,6 +1403,7 @@ export const ChatRowContent = ({
 							{/* content */}
 							{showApiFetchErrorIcon ? (
 								<ErrorRow
+									deleteMessageTs={deleteMessageTs}
 									type="api_failure"
 									message={apiRequestFailedMessage || apiReqStreamingFailedMessage || ""}
 									docsURL={
@@ -1489,6 +1495,7 @@ export const ChatRowContent = ({
 					}
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="api_req_retry_delayed"
 							code={code}
 							message={apiConfiguration.apiProvider === "zgsm" ? message.text || "" : body}
@@ -1688,7 +1695,10 @@ export const ChatRowContent = ({
 												title={t("common:confirmation.deleteMessage")}
 												onClick={(e) => {
 													e.stopPropagation()
-													vscode.postMessage({ type: "deleteMessage", value: message.ts })
+													vscode.postMessage({
+														type: "deleteMessage",
+														value: deleteMessageTs,
+													})
 												}}>
 												<Trash2 className="w-4 shrink-0" aria-label="Delete message icon" />
 											</div>
@@ -1722,6 +1732,7 @@ export const ChatRowContent = ({
 					if (isNoToolsUsedError) {
 						return (
 							<ErrorRow
+								deleteMessageTs={deleteMessageTs}
 								type="error"
 								title={t("chat:modelResponseIncomplete")}
 								message={t("chat:modelResponseErrors.noToolsUsed")}
@@ -1733,6 +1744,7 @@ export const ChatRowContent = ({
 					if (isNoAssistantMessagesError) {
 						return (
 							<ErrorRow
+								deleteMessageTs={deleteMessageTs}
 								type="error"
 								title={t("chat:modelResponseIncomplete")}
 								message={t("chat:modelResponseErrors.noAssistantMessages")}
@@ -1744,6 +1756,7 @@ export const ChatRowContent = ({
 					// Fallback for generic errors
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="error"
 							message={message.text || t("chat:error")}
 							errorDetails={message.text}
@@ -1797,6 +1810,7 @@ export const ChatRowContent = ({
 				case "condense_context_error":
 					// return (
 					// 	<ErrorRow
+					//      deleteMessageTs={deleteMessageTs}
 					// 		type="error"
 					// 		apiConfiguration={apiConfiguration}
 					// 		title={t("chat:contextCondense.errorHeader")}
@@ -1971,6 +1985,7 @@ export const ChatRowContent = ({
 				case "mistake_limit_reached":
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="mistake_limit"
 							message={message.text || ""}
 							errorDetails={message.text}

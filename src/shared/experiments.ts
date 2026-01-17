@@ -13,6 +13,7 @@ export const EXPERIMENT_IDS = {
 	RUN_SLASH_COMMAND: "runSlashCommand",
 	MULTIPLE_NATIVE_TOOL_CALLS: "multipleNativeToolCalls",
 	CUSTOM_TOOLS: "customTools",
+	SMART_MISTAKE_DETECTION: "smartMistakeDetection",
 } as const satisfies Record<string, ExperimentId>
 
 // type _AssertExperimentIds = AssertEqual<Equals<ExperimentId, Values<typeof EXPERIMENT_IDS>>>
@@ -25,6 +26,7 @@ interface ExperimentConfig {
 
 export const experimentConfigsMap: Record<ExperimentKey, ExperimentConfig> = {
 	CHAT_SEARCH: { enabled: false },
+	SMART_MISTAKE_DETECTION: { enabled: false },
 	ALWAYS_INCLUDE_FILE_DETAILS: { enabled: undefined },
 	COMMIT_REVIEW: { enabled: undefined },
 	MULTI_FILE_APPLY_DIFF: { enabled: false },

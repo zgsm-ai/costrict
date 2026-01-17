@@ -278,5 +278,18 @@
 	"docsLink": {
 		"label": "Docs",
 		"url": "https://docs.roocode.com"
+	},
+	"smartMistakeDetector": {
+		"errorCountNearLimit": "錯誤數量接近上限（{{count}} 次錯誤，加權分數：{{weightedScore}}/{{baseLimit}}）",
+		"warningHighErrorCount": "警告：錯誤數量較高，請檢查操作（{{count}} 次錯誤，加權分數：{{weightedScore}}/{{baseLimit}}）",
+		"multipleErrorsDetected": "注意：已出現多次錯誤（{{count}} 次）",
+		"noErrorRecords": "目前沒有錯誤記錄",
+		"errorAnalysisReport": "錯誤分析報告（最近 {{minutes}} 分鐘）：\n",
+		"totalErrorCount": "- 總錯誤次數：{{count}}\n",
+		"weightedScore": "- 加權分數：{{score}}\n",
+		"errorTypeDistribution": "- 錯誤類型分佈：\n",
+		"errorTypeItem": "  • {{type}}: {{count}} 次\n",
+		"severityDistribution": "- 嚴重程度分佈：\n",
+		"severityItem": "  • {{severity}}: {{count}} 次\n"
 	}
 }
