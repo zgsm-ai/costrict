@@ -1,5 +1,19 @@
 # CoStrict Change Log
 
+## [2.1.17]
+
+- Add smart mistake detection and automatic model switching capability
+- Add auto_switch_model type support for quota display improvements
+- Add support for global Costrict directory in skills system
+- Enable markdown collapse by default for better readability
+- Add setting to toggle long markdown collapse without scroll
+- Add current task display with multilingual support (English, Simplified Chinese, Traditional Chinese)
+- Refactor chat display to show last user feedback instead of current task
+- Replace hardcoded zgsm base URL with COSTRICT_BASE_URL environment variable
+- Improve error handling and display in chat components
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/6608ed618a3bd5e44f3d7420b18c317fb1c24ea1)
+- Fix known issues
+
 ## [2.1.16]
 
 - Fix parallel_tool_calls parameter handling for LiteLLM/Bedrock compatibility
