@@ -267,5 +267,18 @@
 	"docsLink": {
 		"label": "Docs",
 		"url": "https://docs.roocode.com"
+	},
+	"smartMistakeDetector": {
+		"errorCountNearLimit": "Error count near limit ({{count}} errors, weighted score: {{weightedScore}}/{{baseLimit}})",
+		"warningHighErrorCount": "Warning: High error count, please check operations ({{count}} errors, weighted score: {{weightedScore}}/{{baseLimit}})",
+		"multipleErrorsDetected": "Note: Multiple errors have occurred ({{count}} times)",
+		"noErrorRecords": "No error records currently",
+		"errorAnalysisReport": "Error analysis report (last {{minutes}} minutes):\n",
+		"totalErrorCount": "- Total errors: {{count}}\n",
+		"weightedScore": "- Weighted score: {{score}}\n",
+		"errorTypeDistribution": "- Error type distribution:\n",
+		"errorTypeItem": "  • {{type}}: {{count}} times\n",
+		"severityDistribution": "- Severity distribution:\n",
+		"severityItem": "  • {{severity}}: {{count}} times\n"
 	}
 }

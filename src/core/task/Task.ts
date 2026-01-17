@@ -5,6 +5,7 @@ import crypto from "crypto"
 import { v7 as uuidv7 } from "uuid"
 import EventEmitter from "events"
 
+import { SmartMistakeDetector, MistakeType } from "./SmartMistakeDetector"
 import { AskIgnoredError } from "./AskIgnoredError"
 
 import { Anthropic } from "@anthropic-ai/sdk"
@@ -143,6 +144,7 @@ import psTree from "ps-tree"
 import { MessageManager } from "../message-manager"
 import { validateAndFixToolResultIds } from "./validateToolResultIds"
 import { fixNativeToolname } from "../../utils/fixNativeToolname"
+import { getModelsFromCache } from "../../api/providers/fetchers/modelCache"
 
 const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000 // 5 seconds
@@ -164,6 +166,12 @@ export interface TaskOptions extends CreateTaskOptions {
 	images?: string[]
 	historyItem?: HistoryItem
 	experiments?: Record<string, boolean>
+	experimentSettings?: {
+		smartMistakeDetectionConfig?: {
+			autoSwitchModel?: boolean
+			autoSwitchModelThreshold?: number
+		}
+	}
 	startTask?: boolean
 	rootTask?: Task
 	parentTask?: Task
@@ -469,6 +477,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// MessageManager for high-level message operations (lazy initialized)
 	private _messageManager?: MessageManager
 
+	// Smart Mistake Detection
+	private smartMistakeDetector?: SmartMistakeDetector
+	private useSmartMistakeDetection: boolean = false
+
 	constructor({
 		provider,
 		apiConfiguration,
@@ -482,6 +494,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		images,
 		historyItem,
 		experiments: experimentsConfig,
+		experimentSettings,
 		startTask = true,
 		rootTask,
 		parentTask,
@@ -493,7 +506,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		initialStatus,
 	}: TaskOptions) {
 		super()
-
+		this.setMaxListeners(14)
 		if (startTask && !task && !images && !historyItem) {
 			throw new Error("Either historyItem or task/images must be provided")
 		}
@@ -575,6 +588,20 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.enableCheckpoints = enableCheckpoints
 		this.checkpointTimeout = checkpointTimeout
 		this.enableBridge = enableBridge
+
+		// Initialize smart mistake detection if experiment is enabled
+		this.useSmartMistakeDetection = experiments.isEnabled(
+			experimentsConfig ?? {},
+			EXPERIMENT_IDS.SMART_MISTAKE_DETECTION,
+		)
+		if (this.useSmartMistakeDetection) {
+			const config = experimentSettings?.smartMistakeDetectionConfig
+			this.smartMistakeDetector = new SmartMistakeDetector(
+				undefined, // timeWindowMs
+				config?.autoSwitchModel,
+				config?.autoSwitchModelThreshold,
+			)
+		}
 
 		// // Initialize cancellation token
 		// this.cancellationTokenSource = new vscode.CancellationTokenSource()
@@ -2606,43 +2633,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				throw new Error(`[CoStrict#recursivelyMakeRooRequests] task ${this.taskId}.${this.instanceId} aborted`)
 			}
 
-			if (this.consecutiveMistakeLimit > 0 && this.consecutiveMistakeCount >= this.consecutiveMistakeLimit) {
-				// Track consecutive mistake errors in telemetry via event and PostHog exception tracking.
-				// The reason is "no_tools_used" because this limit is reached via initiateTaskLoop
-				// which increments consecutiveMistakeCount when the model doesn't use any tools.
-				TelemetryService.instance.captureConsecutiveMistakeError(this.taskId)
-				TelemetryService.instance.captureException(
-					new ConsecutiveMistakeError(
-						`Task reached consecutive mistake limit (${this.consecutiveMistakeLimit})`,
-						this.taskId,
-						this.consecutiveMistakeCount,
-						this.consecutiveMistakeLimit,
-						"no_tools_used",
-						this.apiConfiguration.apiProvider,
-						getModelId(this.apiConfiguration),
-					),
-				)
-
-				const { response, text, images } = await this.ask(
-					"mistake_limit_reached",
-					t("common:errors.mistake_limit_guidance"),
-				)
-
-				if (response === "messageResponse") {
-					currentUserContent.push(
-						...[
-							{ type: "text" as const, text: formatResponse.tooManyMistakes(text) },
-							...formatResponse.imageBlocks(images),
-						],
-					)
-
-					await this.say("user_feedback", text, images)
-
-					// Track consecutive mistake errors in telemetry.
-					TelemetryService.instance.captureConsecutiveMistakeError(this.taskId)
-				}
-
-				this.consecutiveMistakeCount = 0
+			// Handle mistake limit based on experiment flag
+			if (
+				this.useSmartMistakeDetection &&
+				this.smartMistakeDetector &&
+				this.apiConfiguration.apiProvider === "zgsm"
+			) {
+				await this.handleSmartMistakeLimit(currentUserContent)
+			} else {
+				await this.handleLegacyMistakeLimit(currentUserContent)
 			}
 
 			// Getting verbose details is an expensive operation, it uses ripgrep to
@@ -4684,6 +4683,16 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						true,
 					)
 				}
+				if (this.smartMistakeDetector?.shouldAutoSwitchModel(retryAttempt)) {
+					try {
+						await this.switchModel()
+						this.consecutiveMistakeCount = 0
+						this.smartMistakeDetector.clear()
+						return
+					} catch (error) {
+						console.error("Failed to auto switch model:", error)
+					}
+				}
 				await delay(1000)
 			}
 
@@ -5316,5 +5325,157 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		return errorMsg
+	}
+
+	private async handleSmartMistakeLimit(currentUserContent: Anthropic.Messages.ContentBlockParam[]): Promise<void> {
+		if (!this.smartMistakeDetector) {
+			return
+		}
+
+		// 注意：这里需要根据实际情况跟踪错误类型
+		// 当前实现基于 consecutiveMistakeCount，可以后续扩展使用 MistakeType
+		if (this.consecutiveMistakeCount > 0) {
+			this.smartMistakeDetector.addMistake(
+				MistakeType.NO_TOOL_USE,
+				`consecutiveMistakeCount: ${this.consecutiveMistakeCount}`,
+				"medium",
+			)
+
+			if (this.smartMistakeDetector.shouldAutoSwitchModel(this.consecutiveMistakeCount)) {
+				try {
+					await this.switchModel()
+					this.consecutiveMistakeCount = 0
+					this.smartMistakeDetector.clear()
+					return
+				} catch (error) {
+					console.error("Failed to auto switch model:", error)
+				}
+			}
+		}
+
+		const checkResult = this.smartMistakeDetector.checkLimit(this.consecutiveMistakeLimit)
+
+		// 如果触发限制或存在警告
+		if (checkResult.shouldTrigger || checkResult.warning) {
+			// 记录遥测数据
+			TelemetryService.instance.captureConsecutiveMistakeError(this.taskId)
+			TelemetryService.instance.captureException(
+				new ConsecutiveMistakeError(
+					`Task reached consecutive mistake limit (${this.consecutiveMistakeLimit})`,
+					this.taskId,
+					this.consecutiveMistakeCount,
+					this.consecutiveMistakeLimit,
+					"no_tools_used",
+					this.apiConfiguration.apiProvider,
+					getModelId(this.apiConfiguration),
+				),
+			)
+
+			if (checkResult.warning) {
+				await this.say("error", checkResult.warning)
+			}
+
+			if (checkResult.shouldTrigger) {
+				const { response, text, images } = await this.ask(
+					"mistake_limit_reached",
+					t("common:errors.mistake_limit_guidance"),
+				)
+
+				if (response === "messageResponse") {
+					currentUserContent.push(
+						...[
+							{
+								type: "text" as const,
+								text: formatResponse.tooManyMistakes(text),
+							},
+							...formatResponse.imageBlocks(images),
+						],
+					)
+
+					await this.say("user_feedback", text, images)
+
+					TelemetryService.instance.captureConsecutiveMistakeError(this.taskId)
+				}
+			}
+
+			this.consecutiveMistakeCount = 0
+			this.smartMistakeDetector.clear()
+		}
+	}
+
+	async switchModel() {
+		const oldModelId = getModelId(this.apiConfiguration)
+		const models = Object.entries(getModelsFromCache("zgsm") || {}).filter((m) => {
+			return oldModelId !== m[0]
+		})
+		// this.model
+		if (models.length === 0) {
+			throw new Error("No available models")
+		}
+
+		models
+			.sort((a, b) => {
+				const aModel = a[1]
+				const bModel = b[1]
+				if (aModel.contextWindow === bModel.contextWindow) {
+					return aModel.creditConsumption! - bModel.creditConsumption!
+				}
+				return bModel.contextWindow - aModel.contextWindow
+			})
+			.slice(0, 5)
+
+		const modelId = models[(models.length * Math.random()) << 0][0]
+
+		// todo: zgsm 提供商，这里需要加个需求，开启智能错误检测 时，智能错误支持自动切换模型
+		const provider = await this.providerRef.deref()
+
+		if (provider) {
+			await provider.upsertProviderProfile(this._taskApiConfigName!, {
+				// ...provider.getProviderProfile(this._taskApiConfigName!)
+				...this.apiConfiguration,
+				zgsmModelId: modelId || "Auto",
+			})
+		}
+	}
+
+	private async handleLegacyMistakeLimit(currentUserContent: Anthropic.Messages.ContentBlockParam[]): Promise<void> {
+		if (this.consecutiveMistakeLimit > 0 && this.consecutiveMistakeCount >= this.consecutiveMistakeLimit) {
+			// Track consecutive mistake errors in telemetry via event and PostHog exception tracking.
+			// The reason is "no_tools_used" because this limit is reached via initiateTaskLoop
+			// which increments consecutiveMistakeCount when the model doesn't use any tools.
+			TelemetryService.instance.captureConsecutiveMistakeError(this.taskId)
+			TelemetryService.instance.captureException(
+				new ConsecutiveMistakeError(
+					`Task reached consecutive mistake limit (${this.consecutiveMistakeLimit})`,
+					this.taskId,
+					this.consecutiveMistakeCount,
+					this.consecutiveMistakeLimit,
+					"no_tools_used",
+					this.apiConfiguration.apiProvider,
+					getModelId(this.apiConfiguration),
+				),
+			)
+
+			const { response, text, images } = await this.ask(
+				"mistake_limit_reached",
+				t("common:errors.mistake_limit_guidance"),
+			)
+
+			if (response === "messageResponse") {
+				currentUserContent.push(
+					...[
+						{ type: "text" as const, text: formatResponse.tooManyMistakes(text) },
+						...formatResponse.imageBlocks(images),
+					],
+				)
+
+				await this.say("user_feedback", text, images)
+
+				// Track consecutive mistake errors in telemetry.
+				TelemetryService.instance.captureConsecutiveMistakeError(this.taskId)
+			}
+
+			this.consecutiveMistakeCount = 0
+		}
 	}
 }

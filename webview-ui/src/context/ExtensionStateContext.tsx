@@ -195,23 +195,30 @@ export interface ExtensionStateContextType extends ExtensionState {
 export const ExtensionStateContext = createContext<ExtensionStateContextType | undefined>(undefined)
 
 export const mergeExtensionState = (prevState: ExtensionState, newState: ExtensionState) => {
-	const { customModePrompts: prevCustomModePrompts, experiments: prevExperiments, ...prevRest } = prevState
+	const {
+		customModePrompts: prevCustomModePrompts,
+		experiments: prevExperiments,
+		experimentSettings: prevExperimentSettings,
+		...prevRest
+	} = prevState
 
 	const {
 		apiConfiguration,
 		customModePrompts: newCustomModePrompts,
 		customSupportPrompts,
 		experiments: newExperiments,
+		experimentSettings: newExperimentSettings,
 		...newRest
 	} = newState
 
 	const customModePrompts = { ...prevCustomModePrompts, ...newCustomModePrompts }
 	const experiments = { ...prevExperiments, ...newExperiments }
+	const experimentSettings = { ...prevExperimentSettings, ...newExperimentSettings }
 	const rest = { ...prevRest, ...newRest }
 
 	// Note that we completely replace the previous apiConfiguration and customSupportPrompts objects
 	// with new ones since the state that is broadcast is the entire objects so merging is not necessary.
-	return { ...rest, apiConfiguration, customModePrompts, customSupportPrompts, experiments }
+	return { ...rest, apiConfiguration, customModePrompts, customSupportPrompts, experiments, experimentSettings }
 }
 
 export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -256,6 +263,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		customModePrompts: defaultPrompts,
 		customSupportPrompts: {},
 		experiments: experimentDefault,
+		experimentSettings: {},
 		enhancementApiConfigId: "",
 		condensingApiConfigId: "", // Default empty string for condensing API config ID
 		customCondensingPrompt: "", // Default empty string for custom condensing prompt

@@ -301,6 +301,7 @@ export type ExtensionState = Pick<
 	| "includeCurrentCost"
 	| "maxGitStatusFiles"
 	| "requestDelaySeconds"
+	| "experimentSettings"
 > & {
 	version: string
 	clineMessages: ClineMessage[]

@@ -163,6 +163,7 @@
 		"errorTitle": "Provider Error {{code}}",
 		"errorMessage": {
 			"docs": "Docs",
+			"email": "Email",
 			"goToSettings": "Settings",
 			"400": "The provider couldn't process the request as made. Stop the task and try a different approach.",
 			"401": "Couldn't authenticate with provider. Please check your API key configuration.",

@@ -163,6 +163,7 @@
 		"errorTitle": "提供商錯誤 {{code}}",
 		"errorMessage": {
 			"docs": "文件",
+			"email": "Email",
 			"goToSettings": "設定",
 			"400": "提供商無法按照此方式處理請求。請停止工作並嘗試其他方法。",
 			"401": "無法向提供商進行身份驗證。請檢查您的 API 金鑰設定。",
