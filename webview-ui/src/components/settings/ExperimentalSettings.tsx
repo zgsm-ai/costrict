@@ -177,7 +177,10 @@ export const ExperimentalSettings = ({
 													{smartMistakeDetectionConfig.autoSwitchModel && (
 														<div className="pl-6 flex items-center gap-2">
 															<label className="text-sm text-vscode-foreground">
-																切换阈值:
+																{t(
+																	"settings:experimental.AUTO_SWITCH_MODEL_THRESHOLD.name",
+																)}
+																:
 															</label>
 															<input
 																type="number"
@@ -201,7 +204,9 @@ export const ExperimentalSettings = ({
 																className="w-16 px-2 py-1 text-sm bg-vscode-input-background border border-vscode-input-border rounded text-vscode-foreground focus:outline-none focus:border-vscode-focusBorder"
 															/>
 															<span className="text-sm text-vscode-descriptionForeground">
-																次连续错误后切换
+																{t(
+																	"settings:experimental.AUTO_SWITCH_MODEL_THRESHOLD.description",
+																)}
 															</span>
 														</div>
 													)}

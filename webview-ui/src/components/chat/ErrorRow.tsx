@@ -57,6 +57,7 @@ export interface ErrorRowProps {
 		| "diff_error"
 		| "streaming_failed"
 		| "rollback_xml_tool"
+		| "auto_switch_model"
 		| "cancelled"
 		| "api_req_retry_delayed"
 	title?: string
@@ -200,6 +201,25 @@ export const ErrorRow = memo(
 
 		const errorTitle = getDefaultTitle()
 
+		if (type === "auto_switch_model" && expandable) {
+			return (
+				<div className="mt-0 overflow-hidden mb-2 pr-1 group">
+					<div className="text-sm bg-vscode-editor-background border border-vscode-border rounded-lg p-3 ml-6">
+						<div className="flex items-center gap-2 flex-grow  text-vscode-editorWarning-foreground">
+							{isLast && <ProgressIndicator />}
+							<span
+								className="font-bold grow cursor-pointer"
+								style={{
+									color: "var(--vscode-charts-green)",
+								}}>
+								{`🪄 CoStrict Auto Switch Model：${message}`}
+							</span>
+						</div>
+					</div>
+				</div>
+			)
+		}
+
 		// For rollback_xml_tool type with expandable content
 		if (type === "rollback_xml_tool" && expandable) {
 			return (
@@ -214,7 +234,7 @@ export const ErrorRow = memo(
 								style={{
 									color: "var(--vscode-charts-green)",
 								}}>
-								{"🪄 CoStrict Auto Switch ToolProtocol: NATIVE -> XML"}
+								{"🪄 CoStrict Auto Switch Model: NATIVE -> XML"}
 							</span>
 							<div className="flex items-center transition-opacity opacity-0 group-hover:opacity-100">
 								{showCopyButton && (

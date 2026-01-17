@@ -1228,6 +1228,16 @@ export const ChatRowContent = ({
 	switch (message.type) {
 		case "say":
 			switch (message.say) {
+				case "auto_switch_model":
+					return (
+						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
+							type="auto_switch_model"
+							message={message.text || ""}
+							expandable={true}
+							isLast={isLast}
+						/>
+					)
 				case "rollback_xml_tool":
 					return (
 						<ErrorRow

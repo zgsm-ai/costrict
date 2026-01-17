@@ -127,7 +127,7 @@
 			"description": "Automatically switch to another model when consecutive errors exceed threshold"
 		},
 		"AUTO_SWITCH_MODEL_THRESHOLD": {
-			"name": "Switch Threshold",
+			"name": "Threshold",
 			"description": "Number of consecutive errors before switching models (1-10)"
 		},
 		"CHAT_SEARCH": {

@@ -5413,7 +5413,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			throw new Error("No available models")
 		}
 
-		models
+		const top5Models = models
 			.sort((a, b) => {
 				const aModel = a[1]
 				const bModel = b[1]
@@ -5424,7 +5424,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			})
 			.slice(0, 5)
 
-		const modelId = models[(models.length * Math.random()) << 0][0]
+		const modelId = top5Models[(top5Models.length * Math.random()) << 0][0]
 
 		// todo: zgsm 提供商，这里需要加个需求，开启智能错误检测 时，智能错误支持自动切换模型
 		const provider = await this.providerRef.deref()
@@ -5436,6 +5436,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				zgsmModelId: modelId || "Auto",
 			})
 		}
+
+		await this.say("auto_switch_model", `${oldModelId} --> ${modelId}`)
 	}
 
 	private async handleLegacyMistakeLimit(currentUserContent: Anthropic.Messages.ContentBlockParam[]): Promise<void> {

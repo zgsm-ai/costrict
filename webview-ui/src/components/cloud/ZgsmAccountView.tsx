@@ -135,6 +135,9 @@ const QuotaInfoDisplay = memo(
 				usagePercentage,
 				progressWidth,
 				isStarred,
+				RemainingQuotaDisplay: quotaInfo.total_quota
+					? ((quotaInfo.total_quota * 100 - (quotaInfo.used_quota ?? 0) * 100) / 100).toLocaleString()
+					: "",
 				totalQuotaDisplay: quotaInfo.total_quota ? quotaInfo.total_quota.toLocaleString() : "",
 				usedQuotaDisplay: quotaInfo.used_quota ? quotaInfo.used_quota.toLocaleString() : "",
 			}
@@ -221,9 +224,9 @@ const QuotaInfoDisplay = memo(
 						</div>
 						<div className="flex items-baseline gap-1">
 							<span className="text-sm font-bold text-vscode-foreground group-hover:text-vscode-focusBorder transition-colors">
-								{quotaCalculations.usedQuotaDisplay}
+								{quotaCalculations.RemainingQuotaDisplay}
 							</span>
-							{quotaInfo.used_quota && (
+							{quotaCalculations.RemainingQuotaDisplay && (
 								<span className="text-xs text-vscode-descriptionForeground opacity-60">Credit</span>
 							)}
 						</div>
