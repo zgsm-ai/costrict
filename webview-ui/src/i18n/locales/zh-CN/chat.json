@@ -12,6 +12,8 @@
 		"collapse": "收起任务",
 		"seeMore": "展开",
 		"seeLess": "收起",
+		"collapseContent": "收起内容",
+		"expandAllContent": "展开全部内容",
 		"tokens": "Token 用量",
 		"cache": "缓存",
 		"apiCost": "API 费用",
@@ -157,6 +159,7 @@
 		"errorTitle": "提供商错误 {{code}}",
 		"errorMessage": {
 			"docs": "文档",
+			"email": "Email",
 			"goToSettings": "设置",
 			"400": "提供商无法按此方式处理请求。请停止任务并尝试不同方法。",
 			"401": "无法向提供商进行身份验证。请检查您的 API 密钥配置。",

@@ -86,6 +86,7 @@ import { format } from "date-fns"
 import { PathTooltip } from "../ui/PathTooltip"
 import { ReviewTaskStatus } from "@roo/codeReview"
 import { RandomLoadingMessage, RandomLoadingMessageLanguage } from "@/components/chat/RandomLoadingMessage"
+import { OpenMarkdownPreviewButton } from "./OpenMarkdownPreviewButton"
 
 // Helper function to get previous todos before a specific message
 function getPreviousTodos(messages: ClineMessage[], currentMessageTs: number): any[] {
@@ -230,7 +231,10 @@ export const ChatRowContent = ({
 	const { copyWithFeedback } = useCopyToClipboard()
 	const userEditRef = useRef<HTMLDivElement>(null)
 	const collapseWithoutScrollEnabled = collapseMarkdownWithoutScroll ?? true
-
+	const deleteMessageTs = useMemo(
+		() => (clineMessages.findIndex((m) => m.ts === message.ts) > 1 ? message.ts : -1),
+		[clineMessages, message.ts],
+	)
 	// Handle message events for image selection during edit mode
 	useEffect(() => {
 		const handleMessage = (event: MessageEvent) => {
@@ -1053,7 +1057,10 @@ export const ChatRowContent = ({
 								{t("chat:subtasks.newTaskContent")}
 							</div>
 							<div style={{ padding: "12px 16px", backgroundColor: "var(--vscode-editor-background)" }}>
-								<MarkdownBlock markdown={tool.content} />
+								<CollapsibleMarkdownBlock
+									markdown={tool.content}
+									collapseWithoutScroll={collapseWithoutScrollEnabled}
+								/>
 							</div>
 						</div>
 					</>
@@ -1224,9 +1231,20 @@ export const ChatRowContent = ({
 	switch (message.type) {
 		case "say":
 			switch (message.say) {
+				case "auto_switch_model":
+					return (
+						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
+							type="auto_switch_model"
+							message={message.text || ""}
+							expandable={true}
+							isLast={isLast}
+						/>
+					)
 				case "rollback_xml_tool":
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="rollback_xml_tool"
 							message={message.text || ""}
 							expandable={true}
@@ -1236,6 +1254,7 @@ export const ChatRowContent = ({
 				case "diff_error":
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="diff_error"
 							message={message.text || ""}
 							expandable={true}
@@ -1349,14 +1368,14 @@ export const ChatRowContent = ({
 									style={{ opacity: cost !== null && cost !== undefined && cost > 0 ? 1 : 0 }}>
 									${Number(cost || 0)?.toFixed(4)}
 								</div>
-								{!isApiRequestInProgress && clineMessages.findIndex((m) => m.ts === message.ts) > 1 && (
+								{!isApiRequestInProgress && deleteMessageTs > -1 && (
 									<StandardTooltip content={t("common:confirmation.deleteMessage")}>
 										<TimerReset
 											className="size-5 mt-[3px] cursor-pointer"
 											onClick={(e) => {
 												e.preventDefault()
 												e.stopPropagation()
-												vscode.postMessage({ type: "deleteMessage", value: message.ts })
+												vscode.postMessage({ type: "deleteMessage", value: deleteMessageTs })
 											}}
 										/>
 									</StandardTooltip>
@@ -1398,6 +1417,7 @@ export const ChatRowContent = ({
 							{/* content */}
 							{showApiFetchErrorIcon ? (
 								<ErrorRow
+									deleteMessageTs={deleteMessageTs}
 									type="api_failure"
 									message={apiRequestFailedMessage || apiReqStreamingFailedMessage || ""}
 									docsURL={
@@ -1489,6 +1509,7 @@ export const ChatRowContent = ({
 					}
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="api_req_retry_delayed"
 							code={code}
 							message={apiConfiguration.apiProvider === "zgsm" ? message.text || "" : body}
@@ -1567,11 +1588,13 @@ export const ChatRowContent = ({
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
-						<div>
+						<div className="group">
 							<div style={headerStyle}>
 								<MessageCircle className="w-4 shrink-0" aria-label="Speech bubble icon" />
 								<span style={{ fontWeight: "bold" }}>{t("chat:text.rooSaid")}</span>
 								{message.ts ? format(new Date(message.ts), "yyyy-MM-dd HH:mm:ss") : ""}
+								<div style={{ flexGrow: 1 }} />
+								<OpenMarkdownPreviewButton markdown={message.text} />
 							</div>
 							<div className="pl-6">
 								<Markdown
@@ -1688,7 +1711,10 @@ export const ChatRowContent = ({
 												title={t("common:confirmation.deleteMessage")}
 												onClick={(e) => {
 													e.stopPropagation()
-													vscode.postMessage({ type: "deleteMessage", value: message.ts })
+													vscode.postMessage({
+														type: "deleteMessage",
+														value: deleteMessageTs,
+													})
 												}}>
 												<Trash2 className="w-4 shrink-0" aria-label="Delete message icon" />
 											</div>
@@ -1722,6 +1748,7 @@ export const ChatRowContent = ({
 					if (isNoToolsUsedError) {
 						return (
 							<ErrorRow
+								deleteMessageTs={deleteMessageTs}
 								type="error"
 								title={t("chat:modelResponseIncomplete")}
 								message={t("chat:modelResponseErrors.noToolsUsed")}
@@ -1733,6 +1760,7 @@ export const ChatRowContent = ({
 					if (isNoAssistantMessagesError) {
 						return (
 							<ErrorRow
+								deleteMessageTs={deleteMessageTs}
 								type="error"
 								title={t("chat:modelResponseIncomplete")}
 								message={t("chat:modelResponseErrors.noAssistantMessages")}
@@ -1744,6 +1772,7 @@ export const ChatRowContent = ({
 					// Fallback for generic errors
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="error"
 							message={message.text || t("chat:error")}
 							errorDetails={message.text}
@@ -1755,10 +1784,12 @@ export const ChatRowContent = ({
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
-						<>
+						<div className="group">
 							<div style={headerStyle}>
 								{icon}
 								{title}
+								<div style={{ flexGrow: 1 }} />
+								<OpenMarkdownPreviewButton markdown={message.text} />
 							</div>
 							<div className="border-l border-green-600/30 ml-2 pl-4 pb-1">
 								<Markdown
@@ -1770,7 +1801,7 @@ export const ChatRowContent = ({
 									})}
 								/>
 							</div>
-						</>
+						</div>
 					)
 				case "shell_integration_warning":
 					return <CommandExecutionError />
@@ -1797,6 +1828,7 @@ export const ChatRowContent = ({
 				case "condense_context_error":
 					// return (
 					// 	<ErrorRow
+					//      deleteMessageTs={deleteMessageTs}
 					// 		type="error"
 					// 		apiConfiguration={apiConfiguration}
 					// 		title={t("chat:contextCondense.errorHeader")}
@@ -1971,6 +2003,7 @@ export const ChatRowContent = ({
 				case "mistake_limit_reached":
 					return (
 						<ErrorRow
+							deleteMessageTs={deleteMessageTs}
 							type="mistake_limit"
 							message={message.text || ""}
 							errorDetails={message.text}
@@ -2054,10 +2087,12 @@ export const ChatRowContent = ({
 					}
 					if (message.text) {
 						return (
-							<div>
+							<div className="group">
 								<div style={headerStyle}>
 									{icon}
 									{title}
+									<div style={{ flexGrow: 1 }} />
+									<OpenMarkdownPreviewButton markdown={message.text} />
 								</div>
 								<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
 									<Markdown

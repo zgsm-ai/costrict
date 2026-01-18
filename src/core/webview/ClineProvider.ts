@@ -91,7 +91,7 @@ import { setPanel } from "../../activate/registerCommands"
 
 import { t } from "../../i18n"
 
-import { buildApiHandler } from "../../api"
+// import { buildApiHandler } from "../../api"
 import { forceFullModelDetailsLoad, hasLoadedFullDetails } from "../../api/providers/fetchers/lmstudio"
 
 import { ContextProxy } from "../config/ContextProxy"
@@ -1119,6 +1119,7 @@ export class ClineProvider
 			useZgsmCustomConfig,
 			checkpointTimeout,
 			fuzzyMatchThreshold,
+			experimentSettings,
 			experiments,
 			// cloudUserInfo,
 			// taskSyncEnabled,
@@ -1141,6 +1142,7 @@ export class ClineProvider
 			workspacePath: historyItem.workspace,
 			onCreated: this.taskCreationCallback,
 			startTask: options?.startTask ?? true,
+			experimentSettings,
 			enableBridge: false,
 			// Preserve the status from the history item to avoid overwriting it when the task saves messages
 			initialStatus: historyItem.status,
@@ -2168,6 +2170,7 @@ export class ClineProvider
 			autoApprovalEnabled,
 			customModes,
 			experiments,
+			experimentSettings,
 			maxOpenTabsContext,
 			maxWorkspaceFiles,
 			browserToolEnabled,
@@ -2326,6 +2329,7 @@ export class ClineProvider
 			autoApprovalEnabled: autoApprovalEnabled ?? false,
 			customModes,
 			experiments: experiments ?? experimentDefault,
+			experimentSettings: experimentSettings ?? {},
 			mcpServers: this.mcpHub?.getAllServers() ?? [],
 			maxOpenTabsContext: maxOpenTabsContext ?? 20,
 			maxWorkspaceFiles: maxWorkspaceFiles ?? MAX_WORKSPACE_FILES,
@@ -2596,6 +2600,7 @@ export class ClineProvider
 			customSupportPrompts: stateValues.customSupportPrompts ?? {},
 			enhancementApiConfigId: stateValues.enhancementApiConfigId,
 			experiments: stateValues.experiments ?? experimentDefault,
+			experimentSettings: stateValues.experimentSettings ?? {},
 			autoApprovalEnabled: stateValues.autoApprovalEnabled ?? false,
 			customModes,
 			maxOpenTabsContext: stateValues.maxOpenTabsContext ?? 20,
@@ -3095,6 +3100,7 @@ export class ClineProvider
 			checkpointTimeout,
 			fuzzyMatchThreshold,
 			experiments,
+			experimentSettings,
 			cloudUserInfo,
 			remoteControlEnabled,
 		} = await this.getState()
@@ -3129,6 +3135,7 @@ export class ClineProvider
 			onCreated: this.taskCreationCallback,
 			enableBridge: BridgeOrchestrator.isEnabled(cloudUserInfo, remoteControlEnabled),
 			initialTodos: options.initialTodos,
+			experimentSettings,
 			...options,
 		})
 

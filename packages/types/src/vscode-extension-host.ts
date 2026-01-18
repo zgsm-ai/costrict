@@ -301,6 +301,7 @@ export type ExtensionState = Pick<
 	| "includeCurrentCost"
 	| "maxGitStatusFiles"
 	| "requestDelaySeconds"
+	| "experimentSettings"
 > & {
 	version: string
 	clineMessages: ClineMessage[]
@@ -569,6 +570,7 @@ export interface WebviewMessage {
 		| "editQueuedMessage"
 		| "dismissUpsell"
 		| "getDismissedUpsells"
+		| "openMarkdownPreview"
 		| "updateSettings"
 		| "allowedCommands"
 		| "getTaskWithAggregatedCosts"

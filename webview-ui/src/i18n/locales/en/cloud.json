@@ -30,7 +30,7 @@
 	"createTeamAccount": "Create Team Account",
 	"quota": {
 		"totalQuota": "Total Quota",
-		"usedQuota": "Used",
+		"usedQuota": "Remaining Quota",
 		"usageRate": "Usage Rate",
 		"getMoreQuota": "Get More Quota"
 	},

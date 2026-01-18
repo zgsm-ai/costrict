@@ -36,6 +36,7 @@ import {
 	type ProviderSettings,
 	type ExperimentId,
 	type TelemetrySetting,
+	type SmartMistakeDetectionConfig,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	ImageGenerationProvider,
 	ExtensionMessage,
@@ -228,6 +229,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		includeCurrentCost,
 		maxGitStatusFiles,
 		autoCleanup,
+		experimentSettings,
 		debug,
 	} = cachedState
 
@@ -366,6 +368,24 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		})
 	}, [])
 
+	const setSmartMistakeDetectionConfig = useCallback((config: SmartMistakeDetectionConfig) => {
+		setCachedState((prevState) => {
+			const currentConfig = prevState.experimentSettings?.smartMistakeDetectionConfig || {}
+			if (isEqual(currentConfig, config)) {
+				return prevState
+			}
+
+			setChangeDetected(true)
+			return {
+				...prevState,
+				experimentSettings: {
+					...prevState.experimentSettings,
+					smartMistakeDetectionConfig: config,
+				},
+			}
+		})
+	}, [])
+
 	const isSettingValid = !errorMessage
 
 	const handleSubmit = () => {
@@ -448,6 +468,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					openRouterImageApiKey,
 					openRouterImageGenerationSelectedModel,
 					experiments,
+					experimentSettings,
 					customSupportPrompts,
 					useZgsmCustomConfig: useZgsmCustomConfig ?? false,
 					zgsmCodebaseIndexEnabled: zgsmCodebaseIndexEnabled ?? true,
@@ -703,7 +724,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							<span className="sr-only">{t("settings:common.done")}</span>
 						</Button>
 					</StandardTooltip>
-					<h3 className="text-vscode-foreground m-0 flex-shrink-0">{t("settings:header.title")}</h3>
+					<h3 className="text-vscode-foreground m-0 shrink-0">{t("settings:header.title")}</h3>
 				</div>
 				<div className="flex items-center gap-2 shrink-0">
 					{isIndexingComplete && (
@@ -1007,6 +1028,15 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								setImageGenerationProvider={setImageGenerationProvider}
 								setOpenRouterImageApiKey={setOpenRouterImageApiKey}
 								setImageGenerationSelectedModel={setImageGenerationSelectedModel}
+								setSmartMistakeDetectionConfig={setSmartMistakeDetectionConfig}
+								experimentSettings={
+									cachedState.experimentSettings || {
+										smartMistakeDetectionConfig: {
+											autoSwitchModel: false,
+											autoSwitchModelThreshold: 3,
+										},
+									}
+								}
 							/>
 						)}
 

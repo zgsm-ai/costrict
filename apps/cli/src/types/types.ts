@@ -19,19 +19,20 @@ export function isSupportedProvider(provider: string): provider is SupportedProv
 export type ReasoningEffortFlagOptions = ReasoningEffortExtended | "unspecified" | "disabled"
 
 export type FlagOptions = {
-	prompt?: string
+	promptFile?: string
+	workspace?: string
+	print: boolean
 	extension?: string
 	debug: boolean
 	yes: boolean
+	dangerouslySkipPermissions: boolean
 	apiKey?: string
-	provider: SupportedProvider
+	provider?: SupportedProvider
 	model?: string
 	mode?: string
 	reasoningEffort?: ReasoningEffortFlagOptions
-	exitOnComplete: boolean
-	waitOnComplete: boolean
 	ephemeral: boolean
-	tui: boolean
+	oneshot: boolean
 }
 
 export enum OnboardingProviderChoice {
@@ -41,10 +42,22 @@ export enum OnboardingProviderChoice {
 
 export interface OnboardingResult {
 	choice: OnboardingProviderChoice
-	authenticated?: boolean
+	token?: string
 	skipped: boolean
 }
 
 export interface CliSettings {
 	onboardingProviderChoice?: OnboardingProviderChoice
+	/** Default mode to use (e.g., "code", "architect", "ask", "debug") */
+	mode?: string
+	/** Default provider to use */
+	provider?: SupportedProvider
+	/** Default model to use */
+	model?: string
+	/** Default reasoning effort level */
+	reasoningEffort?: ReasoningEffortFlagOptions
+	/** Auto-approve all prompts (use with caution) */
+	dangerouslySkipPermissions?: boolean
+	/** Exit upon task completion */
+	oneshot?: boolean
 }

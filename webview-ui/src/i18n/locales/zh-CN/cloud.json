@@ -30,7 +30,7 @@
 	"cloudUrlPillLabel": "Roo Code Cloud URL",
 	"quota": {
 		"totalQuota": "总配额",
-		"usedQuota": "已使用",
+		"usedQuota": "剩余配额",
 		"usageRate": "配额用量",
 		"getMoreQuota": "获取更多配额"
 	},

@@ -58,16 +58,17 @@ export interface ExtensionHostOptions {
 	workspacePath: string
 	extensionPath: string
 	nonInteractive?: boolean
-	debug?: boolean
+	/**
+	 * When true, uses a temporary storage directory that is cleaned up on exit.
+	 */
+	ephemeral: boolean
+	debug: boolean
+	exitOnComplete: boolean
 	/**
 	 * When true, completely disables all direct stdout/stderr output.
 	 * Use this when running in TUI mode where Ink controls the terminal.
 	 */
 	disableOutput?: boolean
-	/**
-	 * When true, uses a temporary storage directory that is cleaned up on exit.
-	 */
-	ephemeral?: boolean
 	/**
 	 * When true, don't suppress node warnings and console output since we're
 	 * running in an integration test and we want to see the output.
@@ -436,9 +437,6 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 		this.sendToExtension({ type: "newTask", text: prompt })
 
 		return new Promise((resolve, reject) => {
-			let timeoutId: NodeJS.Timeout | null = null
-			const timeoutMs: number = 110_000
-
 			const completeHandler = () => {
 				cleanup()
 				resolve()
@@ -450,22 +448,9 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 			}
 
 			const cleanup = () => {
-				if (timeoutId) {
-					clearTimeout(timeoutId)
-					timeoutId = null
-				}
-
 				this.client.off("taskCompleted", completeHandler)
 				this.client.off("error", errorHandler)
 			}
-
-			// Set timeout to prevent indefinite hanging.
-			timeoutId = setTimeout(() => {
-				cleanup()
-				reject(
-					new Error(`Task completion timeout after ${timeoutMs}ms - no completion or error event received`),
-				)
-			}, timeoutMs)
 
 			this.client.once("taskCompleted", completeHandler)
 			this.client.once("error", errorHandler)

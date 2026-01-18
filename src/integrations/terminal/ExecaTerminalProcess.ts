@@ -101,7 +101,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 					return
 				}
 
-				const warning = `[${isBackgroundCommand ? "background " : ""}command running] ${command.length > 30 ? `${command.slice(0, 30)}...` : command}\n`
+				const warning = `[${isBackgroundCommand ? "background " : ""}command running] ${command.length > 80 ? `${command.slice(0, 80)}...` : command}\n`
 				this.emit("line", warning)
 				this.startHotTimer(warning)
 			})

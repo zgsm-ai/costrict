@@ -620,7 +620,7 @@ export function NewRun() {
 																	<ChevronsUpDown className="opacity-50" />
 																</Button>
 															</PopoverTrigger>
-															<PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
+															<PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
 																<Command>
 																	<CommandInput
 																		placeholder="Search configs..."
@@ -733,7 +733,7 @@ export function NewRun() {
 																<ChevronsUpDown className="opacity-50" />
 															</Button>
 														</PopoverTrigger>
-														<PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
+														<PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
 															<Command filter={onFilter}>
 																<CommandInput
 																	placeholder="Search"

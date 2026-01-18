@@ -1,12 +1,12 @@
 import React, { useState, useCallback, memo, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
-import { BookOpenText, MessageCircleWarning, Copy, Check, Microscope, Info } from "lucide-react"
+import { BookOpenText, MessageCircleWarning, Copy, Check, Microscope, Info, TimerReset } from "lucide-react"
 import { useCopyToClipboard } from "@src/utils/clipboard"
 import { vscode } from "@src/utils/vscode"
 import CodeBlock from "../common/CodeBlock"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@src/components/ui/dialog"
-import { Button } from "../ui"
+import { Button, StandardTooltip } from "../ui"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { useSelectedModel } from "@src/components/ui/hooks/useSelectedModel"
 import { ProgressIndicator } from "./ProgressIndicator"
@@ -57,6 +57,7 @@ export interface ErrorRowProps {
 		| "diff_error"
 		| "streaming_failed"
 		| "rollback_xml_tool"
+		| "auto_switch_model"
 		| "cancelled"
 		| "api_req_retry_delayed"
 	title?: string
@@ -69,6 +70,7 @@ export interface ErrorRowProps {
 	headerClassName?: string
 	messageClassName?: string
 	code?: number
+	deleteMessageTs?: number
 	docsURL?: string // Optional documentation link
 	errorDetails?: string // Optional detailed error message shown in modal
 }
@@ -90,6 +92,7 @@ export const ErrorRow = memo(
 		messageClassName,
 		docsURL,
 		code,
+		deleteMessageTs = -1,
 		errorDetails,
 	}: ErrorRowProps) => {
 		const { t } = useTranslation()
@@ -198,6 +201,25 @@ export const ErrorRow = memo(
 
 		const errorTitle = getDefaultTitle()
 
+		if (type === "auto_switch_model" && expandable) {
+			return (
+				<div className="mt-0 overflow-hidden mb-2 pr-1 group">
+					<div className="text-sm bg-vscode-editor-background border border-vscode-border rounded-lg p-3 ml-6">
+						<div className="flex items-center gap-2 flex-grow  text-vscode-editorWarning-foreground">
+							{isLast && <ProgressIndicator />}
+							<span
+								className="font-bold grow cursor-pointer"
+								style={{
+									color: "var(--vscode-charts-green)",
+								}}>
+								{`🪄 CoStrict Auto Switch Model：${message}`}
+							</span>
+						</div>
+					</div>
+				</div>
+			)
+		}
+
 		// For rollback_xml_tool type with expandable content
 		if (type === "rollback_xml_tool" && expandable) {
 			return (
@@ -212,7 +234,7 @@ export const ErrorRow = memo(
 								style={{
 									color: "var(--vscode-charts-green)",
 								}}>
-								{"🪄 CoStrict Auto Switch ToolProtocol: NATIVE -> XML"}
+								{"🪄 CoStrict Auto Switch Model: NATIVE -> XML"}
 							</span>
 							<div className="flex items-center transition-opacity opacity-0 group-hover:opacity-100">
 								{showCopyButton && (
@@ -314,10 +336,24 @@ export const ErrorRow = memo(
 											? t("chat:apiRequest.errorMessage.goToSettings", {
 													defaultValue: "Settings",
 												})
-											: t("chat:apiRequest.errorMessage.docs")}
+											: docsURL.startsWith("mailto:")
+												? t("chat:apiRequest.errorMessage.email")
+												: t("chat:apiRequest.errorMessage.docs")}
 									</a>
 								)}
 							</div>
+							{deleteMessageTs > -1 && (
+								<StandardTooltip content={t("common:confirmation.deleteMessage")}>
+									<TimerReset
+										className="size-5 mt-[3px] mr-[-6px] cursor-pointer"
+										onClick={(e) => {
+											e.preventDefault()
+											e.stopPropagation()
+											vscode.postMessage({ type: "deleteMessage", value: deleteMessageTs })
+										}}
+									/>
+								</StandardTooltip>
+							)}
 						</div>
 					)}
 					<div
