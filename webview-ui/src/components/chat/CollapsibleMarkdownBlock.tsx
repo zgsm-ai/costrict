@@ -6,7 +6,7 @@ import { StandardTooltip } from "@src/components/ui"
 
 import MarkdownBlock from "../common/MarkdownBlock"
 
-const MAX_COLLAPSED_HEIGHT = 300
+const MAX_COLLAPSED_HEIGHT = 400
 
 interface CollapsibleMarkdownBlockProps {
 	markdown?: string
@@ -17,7 +17,7 @@ export const CollapsibleMarkdownBlock = memo(({ markdown, collapseWithoutScroll 
 	const { t } = useTranslation()
 	const [isHovering, setIsHovering] = useState(false)
 	const [isExpanded, setIsExpanded] = useState(false)
-	const [showExpandButton, setShowExpandButton] = useState(false)
+	const [showExpandButton, setShowExpandButton] = useState(collapseWithoutScroll)
 	const contentRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
@@ -51,7 +51,8 @@ export const CollapsibleMarkdownBlock = memo(({ markdown, collapseWithoutScroll 
 					}}>
 					<style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1.0; } }`}</style>
 
-					<StandardTooltip content={isExpanded ? "收起内容" : "展开全部内容"}>
+					<StandardTooltip
+						content={isExpanded ? t("chat:task.collapseContent") : t("chat:task.expandAllContent")}>
 						<VSCodeButton
 							appearance="icon"
 							style={{
@@ -72,6 +73,8 @@ export const CollapsibleMarkdownBlock = memo(({ markdown, collapseWithoutScroll 
 				style={
 					collapseWithoutScroll
 						? {
+								wordBreak: "break-word",
+								overflowWrap: "anywhere",
 								maxHeight: !isExpanded && showExpandButton ? `${MAX_COLLAPSED_HEIGHT}px` : "none",
 								overflow: !isExpanded && showExpandButton && collapseWithoutScroll ? "hidden" : "auto",
 								position: "relative",
@@ -92,14 +95,21 @@ export const CollapsibleMarkdownBlock = memo(({ markdown, collapseWithoutScroll 
 						}
 					}}
 					style={{
-						marginTop: "6px",
+						// marginTop: "6px",
 						height: "40px",
+						position: "absolute",
+						bottom: "0",
+						width: "100%",
 						display: "flex",
 						alignItems: "center",
 						justifyContent: "center",
 						cursor: "pointer",
-						background: "linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--vscode-editor-background))",
-						color: "var(--vscode-descriptionForeground)",
+						background:
+							"linear-gradient(to bottom, rgba(255, 255, 255, 0.3), var(--vscode-descriptionForeground))",
+						color: "var(--vscode-input-background)",
+						fontSize: "16px",
+						fontStyle: "italic",
+						fontWeight: "bold",
 					}}>
 					{t("chat:markdown.expandPrompt")}
 				</div>

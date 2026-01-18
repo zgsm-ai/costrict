@@ -1057,7 +1057,10 @@ export const ChatRowContent = ({
 								{t("chat:subtasks.newTaskContent")}
 							</div>
 							<div style={{ padding: "12px 16px", backgroundColor: "var(--vscode-editor-background)" }}>
-								<MarkdownBlock markdown={tool.content} />
+								<CollapsibleMarkdownBlock
+									markdown={tool.content}
+									collapseWithoutScroll={collapseWithoutScrollEnabled}
+								/>
 							</div>
 						</div>
 					</>
