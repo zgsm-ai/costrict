@@ -1,5 +1,10 @@
 # CoStrict Change Log
 
+## [2.1.18]
+
+- Fix markdown collapse flickers
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/802b40a790d6dc79136596719f830062f92352f2)
+
 ## [2.1.17]
 
 - Add smart mistake detection and automatic model switching capability
