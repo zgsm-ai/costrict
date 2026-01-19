@@ -9,6 +9,7 @@ import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
 import { isJetbrainsPlatform } from "../../utils/platform"
 import { t } from "../../i18n"
 import delay from "delay"
+import { isGbkEncodedCommand } from "./constants"
 
 export class ExecaTerminalProcess extends BaseTerminalProcess {
 	private terminalRef: WeakRef<RooTerminal>
@@ -82,7 +83,10 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 			// Check if this is a background command (ends with &)
 			const isBackgroundCommand = /&\s*(#.*)?$/.test(command.trim())
 			const rawStream = this.subprocess.iterable({ from: "all", preserveNewlines: true })
-			const decoder = new TextDecoder("utf-8")
+			const useGbkEncoding = isGbkEncodedCommand(command)
+
+			// Select the decoder based on the command type.
+			const decoder = new TextDecoder(useGbkEncoding ? "gbk" : "utf-8", { fatal: false })
 			const stream = (async function* () {
 				for await (const chunk of rawStream) {
 					if (typeof chunk === "string") {
