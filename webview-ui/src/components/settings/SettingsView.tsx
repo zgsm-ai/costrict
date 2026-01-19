@@ -224,6 +224,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		showSpeedInfo,
 		automaticallyFocus,
 		collapseMarkdownWithoutScroll,
+		autoStartCliServer,
 		enterBehavior,
 		includeCurrentTime,
 		includeCurrentCost,
@@ -458,6 +459,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					reasoningBlockCollapsed: reasoningBlockCollapsed ?? true,
 					showSpeedInfo: showSpeedInfo ?? false,
 					automaticallyFocus: automaticallyFocus ?? false,
+					autoStartCliServer: autoStartCliServer ?? false,
 					collapseMarkdownWithoutScroll: collapseMarkdownWithoutScroll ?? true,
 					enterBehavior: enterBehavior ?? "send",
 					includeCurrentTime: includeCurrentTime ?? true,
@@ -1004,6 +1006,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								reasoningBlockCollapsed={reasoningBlockCollapsed ?? true}
 								showSpeedInfo={showSpeedInfo ?? false}
 								automaticallyFocus={automaticallyFocus ?? false}
+								autoStartCliServer={autoStartCliServer ?? false}
 								collapseMarkdownWithoutScroll={collapseMarkdownWithoutScroll ?? true}
 								enterBehavior={enterBehavior ?? "send"}
 								experiments={experiments}

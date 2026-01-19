@@ -165,6 +165,10 @@
 		"description": "Configure support prompts for quick actions like enhancing prompts, explaining code, and fixing issues. These prompts help CoStrict provide better support for common development tasks.<DocsLink>Learn more</DocsLink>"
 	},
 	"ui": {
+		"autoStartCliServer": {
+			"label": "Auto-start CLI Server",
+			"description": "When enabled, CoStrict will automatically start the CLI server when the extension is activated."
+		},
 		"collapseMarkdownWithoutScroll": {
 			"label": "Collapse long markdown",
 			"description": "When enabled, long markdown blocks are collapsed and can be expanded from the bottom."

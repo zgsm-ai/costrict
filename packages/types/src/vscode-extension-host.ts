@@ -295,6 +295,7 @@ export type ExtensionState = Pick<
 	| "showSpeedInfo"
 	| "automaticallyFocus"
 	| "collapseMarkdownWithoutScroll"
+	| "autoStartCliServer"
 	| "errorCode"
 	| "enterBehavior"
 	| "includeCurrentTime"

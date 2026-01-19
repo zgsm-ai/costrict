@@ -50,17 +50,23 @@ import { ensureProjectWikiSubtasksExists } from "./wiki/projectWikiHelpers"
 import { isCliPatform, isJetbrainsPlatform } from "../../utils/platform"
 import type { ModelInfo, ModelRecord } from "@roo-code/types"
 import { updateDefaultDebug } from "../../utils/getDebugState"
+import { costrictCliDeactivate, costrictCliActivate } from "./vscode-ide-companion/extension"
 
 const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
 
 /**
  * Initialization entry
  */
-async function initialize(provider: ClineProvider, logger: ILogger) {
+async function initialize(context: vscode.ExtensionContext, provider: ClineProvider, logger: ILogger) {
 	const oldDebug = provider.getValue("debug")
+	const oldAutoStartCli = provider.getValue("autoStartCliServer")
 	const oldEnabled = provider.getValue("zgsmCodebaseIndexEnabled")
 	if (oldEnabled == null) {
 		await provider.setValue("zgsmCodebaseIndexEnabled", true)
+	}
+	if (oldAutoStartCli) {
+		// auto start
+		costrictCliActivate(context)
 	}
 	updateDefaultDebug(oldDebug ?? false)
 	//
@@ -94,7 +100,7 @@ export async function activate(
 	const logger = createLogger(Package.outputChannel)
 	initErrorCodeManager(provider)
 	initGitCheckoutDetector(context, logger)
-	await initialize(provider, logger)
+	await initialize(context, provider, logger)
 	await startIPCServer()
 	connectIPC()
 
@@ -278,4 +284,5 @@ export async function deactivate() {
 
 	// Currently no specific cleanup needed
 	loggerDeactivate()
+	costrictCliDeactivate()
 }

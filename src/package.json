@@ -73,6 +73,11 @@
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
+		"languages": [
+			{
+				"id": "costrict-diff-editable"
+			}
+		],
 		"viewsContainers": {
 			"activitybar": [
 				{
@@ -93,6 +98,24 @@
 			]
 		},
 		"commands": [
+			{
+				"command": "gemini.diff.accept",
+				"title": "Gemini CLI: Accept Diff",
+				"icon": "$(check)"
+			},
+			{
+				"command": "gemini.diff.cancel",
+				"title": "Gemini CLI: Close Diff Editor",
+				"icon": "$(close)"
+			},
+			{
+				"command": "gemini-cli.runGeminiCLI",
+				"title": "Gemini CLI: Run"
+			},
+			{
+				"command": "gemini-cli.showNotices",
+				"title": "Gemini CLI: View Third-Party Notices"
+			},
 			{
 				"command": "zgsm-completion.shortKeyCut",
 				"title": "%command.shortKeyCut.title%",
@@ -329,6 +352,16 @@
 			}
 		],
 		"menus": {
+			"commandPalette": [
+				{
+					"command": "gemini.diff.accept",
+					"when": "gemini.diff.isVisible"
+				},
+				{
+					"command": "gemini.diff.cancel",
+					"when": "gemini.diff.isVisible"
+				}
+			],
 			"editor/context": [
 				{
 					"submenu": "zgsm",
@@ -400,6 +433,16 @@
 				}
 			],
 			"view/title": [
+				{
+					"command": "gemini.diff.accept",
+					"when": "gemini.diff.isVisible",
+					"group": "navigation"
+				},
+				{
+					"command": "gemini.diff.cancel",
+					"when": "gemini.diff.isVisible",
+					"group": "navigation"
+				},
 				{
 					"command": "zgsm.marketplaceButtonClicked",
 					"group": "navigation@1",
@@ -504,6 +547,16 @@
 			]
 		},
 		"keybindings": [
+			{
+				"command": "gemini.diff.accept",
+				"key": "ctrl+s",
+				"when": "gemini.diff.isVisible"
+			},
+			{
+				"command": "gemini.diff.accept",
+				"key": "cmd+s",
+				"when": "gemini.diff.isVisible"
+			},
 			{
 				"command": "zgsm.addToContext",
 				"key": "cmd+l",
@@ -857,12 +910,14 @@
 		"cheerio": "^1.0.0",
 		"chokidar": "^4.0.3",
 		"clone-deep": "^4.0.1",
+		"cors": "^2.8.5",
 		"dedent": "^1.6.0",
 		"default-shell": "^2.2.0",
 		"delay": "^6.0.0",
 		"diff": "^5.2.0",
 		"diff-match-patch": "^1.0.5",
 		"exceljs": "^4.4.0",
+		"express": "^5.2.1",
 		"fast-deep-equal": "^3.1.3",
 		"fast-xml-parser": "^5.0.0",
 		"fastest-levenshtein": "^1.0.16",
@@ -933,9 +988,11 @@
 		"@roo-code/config-typescript": "workspace:^",
 		"@types/async-retry": "^1.4.9",
 		"@types/clone-deep": "^4.0.4",
+		"@types/cors": "^2.8.19",
 		"@types/debug": "^4.1.12",
 		"@types/diff": "^5.2.1",
 		"@types/diff-match-patch": "^1.0.36",
+		"@types/express": "^5.0.6",
 		"@types/glob": "^8.1.0",
 		"@types/lodash.debounce": "^4.0.9",
 		"@types/mocha": "^10.0.10",

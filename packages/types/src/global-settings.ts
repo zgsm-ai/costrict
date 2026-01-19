@@ -214,6 +214,7 @@ export const globalSettingsSchema = z.object({
 	showSpeedInfo: z.boolean().optional(),
 	automaticallyFocus: z.boolean().optional(),
 	collapseMarkdownWithoutScroll: z.boolean().optional(),
+	autoStartCliServer: z.boolean().optional(),
 	/**
 	 * Controls the keyboard behavior for sending messages in the chat input.
 	 * - "send": Enter sends message, Shift+Enter creates newline (default)
