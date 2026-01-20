@@ -2384,6 +2384,18 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// 	console.error("Error cancelling cancellation token:", error)
 		// }
 
+		// Clear any pending context condensation state in the UI
+		// This prevents the "condensing..." indicator from getting stuck when:
+		// 1. User cancels during condensation
+		// 2. User changes settings to avoid future condensation
+		const provider = this.providerRef.deref()
+		if (provider && typeof provider.postMessageToWebview === "function") {
+			await provider.postMessageToWebview({
+				type: "condenseTaskContextResponse",
+				text: this.taskId,
+			})
+		}
+
 		// Force final token usage update before abort event
 		this.emitFinalTokenUsageUpdate()
 
