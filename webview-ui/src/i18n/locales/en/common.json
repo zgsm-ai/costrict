@@ -69,6 +69,7 @@
 	},
 	"confirmation": {
 		"deleteMessage": "Delete Message",
+		"deleteMessageOrRollback": "Delete Message or Restore the checkpoint",
 		"deleteWarning": "Deleting this message will delete all subsequent messages in the conversation. Do you want to proceed?",
 		"editMessage": "Edit Message",
 		"editWarning": "Editing this message will delete all subsequent messages in the conversation. Do you want to proceed?",

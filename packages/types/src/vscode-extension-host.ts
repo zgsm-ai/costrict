@@ -30,6 +30,8 @@ export interface ExtensionMessage {
 	type:
 		| "action"
 		| "state"
+		| "taskHistoryUpdated"
+		| "taskHistoryItemUpdated"
 		| "selectedImages"
 		| "theme"
 		| "workspaceUpdated"
@@ -141,7 +143,7 @@ export interface ExtensionMessage {
 		| "secondaryButtonClick"
 		| "setChatBoxMessage"
 		| "setChatBoxMessageByContext"
-	state?: ExtensionState
+	state?: Partial<ExtensionState>
 	images?: string[]
 	filePaths?: string[]
 	openedTabs?: Array<{
@@ -224,6 +226,9 @@ export interface ExtensionMessage {
 		childrenCost: number
 	}
 	historyItem?: HistoryItem
+	taskHistory?: HistoryItem[] // For taskHistoryUpdated: full sorted task history
+	/** For taskHistoryItemUpdated: single updated/added history item */
+	taskHistoryItem?: HistoryItem
 }
 
 export interface OpenAiCodexRateLimitsMessage {

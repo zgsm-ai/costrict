@@ -221,6 +221,7 @@ export const ChatRowContent = ({
 		showSpeedInfo,
 		language,
 		collapseMarkdownWithoutScroll,
+		enableCheckpoints,
 	} = useExtensionState()
 	const { logoPic, userInfo } = useZgsmUserInfo(apiConfiguration?.zgsmAccessToken)
 	const { info: model } = useSelectedModel(apiConfiguration)
@@ -1370,9 +1371,17 @@ export const ChatRowContent = ({
 									${Number(cost || 0)?.toFixed(4)}
 								</div>
 								{!isApiRequestInProgress && deleteMessageTs > -1 && (
-									<StandardTooltip content={t("common:confirmation.deleteMessage")}>
+									<StandardTooltip
+										content={
+											enableCheckpoints
+												? t("common:confirmation.deleteMessageOrRollback")
+												: t("common:confirmation.deleteMessage")
+										}>
 										<TimerReset
 											className="size-5 mt-[3px] cursor-pointer"
+											style={{
+												color: "rgba(0, 188, 255, 1)",
+											}}
 											onClick={(e) => {
 												e.preventDefault()
 												e.stopPropagation()

@@ -1,5 +1,16 @@
 # CoStrict Change Log
 
+## [2.1.19]
+
+- Added GBK encoding support for Windows system commands, including tasklist, ping, netstat, etc.
+- Added OpenAI Codex rate limit monitoring and usage dashboard
+- Optimized task history update mechanism, supporting incremental updates to reduce communication overhead
+- Fixed issue where context compression state gets stuck when task is cancelled
+- Improved error messages when read_file tool is used on directories
+- Added MCP tool count statistics and warning UI components (WarningRow, TooManyToolsWarning)
+- Fixed known issues
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/06039400cd3ac7b2b75d3365f1b8355598ae6bb1)
+
 ## [2.1.18]
 
 - Fix markdown collapse flickers

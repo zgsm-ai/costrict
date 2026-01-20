@@ -69,6 +69,7 @@
 	},
 	"confirmation": {
 		"deleteMessage": "刪除訊息",
+		"deleteMessageOrRollback": "刪除訊息或恢復存檔點",
 		"deleteWarning": "刪除此訊息將會刪除對話中所有後續的訊息。您要繼續嗎？",
 		"editMessage": "編輯訊息",
 		"editWarning": "編輯此訊息將刪除對話中的所有後續訊息。是否繼續？",

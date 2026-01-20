@@ -101,7 +101,7 @@ export const ErrorRow = memo(
 		const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
 		const [showDetailsCopySuccess, setShowDetailsCopySuccess] = useState(false)
 		const { copyWithFeedback } = useCopyToClipboard()
-		const { version, apiConfiguration } = useExtensionState()
+		const { version, apiConfiguration, enableCheckpoints } = useExtensionState()
 		const { provider, id: modelId } = useSelectedModel(apiConfiguration)
 
 		const usesProxy = PROVIDERS.find((p) => p.value === provider)?.proxy ?? false
@@ -343,9 +343,17 @@ export const ErrorRow = memo(
 								)}
 							</div>
 							{deleteMessageTs > -1 && (
-								<StandardTooltip content={t("common:confirmation.deleteMessage")}>
+								<StandardTooltip
+									content={
+										enableCheckpoints
+											? t("common:confirmation.deleteMessageOrRollback")
+											: t("common:confirmation.deleteMessage")
+									}>
 									<TimerReset
 										className="size-5 mt-[3px] mr-[-6px] cursor-pointer"
+										style={{
+											color: "rgba(0, 188, 255, 1)",
+										}}
 										onClick={(e) => {
 											e.preventDefault()
 											e.stopPropagation()

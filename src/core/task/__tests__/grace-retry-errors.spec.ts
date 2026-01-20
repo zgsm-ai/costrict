@@ -227,6 +227,7 @@ describe("Grace Retry Error Handling", () => {
 
 		mockProvider.postMessageToWebview = vi.fn().mockResolvedValue(undefined)
 		mockProvider.postStateToWebview = vi.fn().mockResolvedValue(undefined)
+		mockProvider.postStateToWebviewWithoutTaskHistory = vi.fn().mockResolvedValue(undefined)
 		mockProvider.getState = vi.fn().mockResolvedValue({})
 	})
 

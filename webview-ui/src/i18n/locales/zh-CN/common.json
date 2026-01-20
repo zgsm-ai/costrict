@@ -69,6 +69,7 @@
 	},
 	"confirmation": {
 		"deleteMessage": "删除消息",
+		"deleteMessageOrRollback": "删除消息或恢复存档点",
 		"deleteWarning": "删除此消息将删除对话中的所有后续消息。是否继续？",
 		"editMessage": "编辑消息",
 		"editWarning": "编辑此消息将删除对话中的所有后续消息。是否继续？",
