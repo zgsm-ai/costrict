@@ -9,6 +9,7 @@ import FileListPreview from "./FileListPreview"
 interface FileChangeItem {
 	path: string
 	status: string
+	oldPath?: string
 }
 
 interface WelcomePageProps {
@@ -48,6 +49,13 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onStartReview }) => {
 		})
 		onStartReview() // Immediately switch to Review page
 	}
+
+	const handleRefresh = () => {
+		setIsLoading(true)
+		vscode.postMessage({
+			type: "getReviewFiles",
+		})
+	}
 	const Tips = () => {
 		const handleDismiss = () => {
 			vscode.postMessage({
@@ -76,6 +84,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onStartReview }) => {
 					<FileListPreview files={files} isLoading={isLoading} />
 					<ReviewControlBar
 						onStartReview={handleStartReview}
+						onRefresh={handleRefresh}
 						hasFiles={files.length > 0}
 						isLoading={isLoading}
 					/>

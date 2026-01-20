@@ -4,12 +4,13 @@ import { vscode } from "@/utils/vscode"
 interface FileStatusItemProps {
 	path: string
 	status: string
+	oldPath?: string
 }
 
 /**
  * Component to display a single file with its Git status
  */
-const FileStatusItem = ({ path, status }: FileStatusItemProps) => {
+const FileStatusItem = ({ path, status, oldPath }: FileStatusItemProps) => {
 	// Determine status color based on Git status
 	const getStatusColor = (status: string): string => {
 		const normalizedStatus = status.trim()
@@ -48,7 +49,9 @@ const FileStatusItem = ({ path, status }: FileStatusItemProps) => {
 			type: "showFileDiff",
 			values: {
 				filePath: path,
-				status: status.trim(),
+				oldFilePath: oldPath,
+				// Keep original porcelain XY status (e.g. " M", "AM") for backend logic.
+				status,
 			},
 		})
 	}
@@ -61,7 +64,7 @@ const FileStatusItem = ({ path, status }: FileStatusItemProps) => {
 				<SetiFileIcon fileName={path} />
 				<span className="truncate text-vscode-foreground">{path}</span>
 			</div>
-			<span className={`ml-2 font-mono text-xs font-semibold ${getStatusColor(status)} flex-shrink-0`}>
+			<span className={`ml-2 font-mono text-lg font-semibold ${getStatusColor(status)} shrink-0`}>
 				{status.trim()}
 			</span>
 		</div>

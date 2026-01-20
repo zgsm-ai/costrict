@@ -52,7 +52,7 @@ import { discoverChromeHostUrl, tryChromeHostUrl } from "../../services/browser/
 import { searchWorkspaceFiles } from "../../services/search/file-search"
 import { fileExistsAtPath } from "../../utils/fs"
 import { playTts, setTtsEnabled, setTtsSpeed, stopTts } from "../../utils/tts"
-import { searchCommits, getUncommittedFiles } from "../../utils/git"
+import { searchCommits, getUncommittedFiles, addFilesIntent, restoreFilesFromStaged } from "../../utils/git"
 import { exportSettings, importSettingsWithFeedback } from "../config/importExport"
 import { getOpenAiModels } from "../../api/providers/openai"
 import { getVsCodeLmModels } from "../../api/providers/vscode-lm"
@@ -74,7 +74,6 @@ const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 import { MarketplaceManager, MarketplaceItemType } from "../../services/marketplace"
 import { ZgsmAuthConfig } from "../costrict/auth"
 import { CodeReviewService } from "../costrict/code-review"
-import { API as GitAPI, GitExtension } from "../costrict/code-review/git"
 import { ZgsmCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
 import { ErrorCodeManager } from "../costrict/error-code"
 import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
@@ -87,6 +86,7 @@ import { setPendingTodoList } from "../tools/UpdateTodoListTool"
 import { getEditorType } from "../../utils/getEditorType"
 import { updateDefaultDebug } from "../../utils/getDebugState"
 import { isJetbrainsPlatform } from "../../utils/platform"
+import { showFileDiffFromGitStatus } from "../../utils/zgsmUtils"
 import { ReviewTargetType } from "../../shared/codeReview"
 
 export const webviewMessageHandler = async (
@@ -3567,91 +3567,50 @@ export const webviewMessageHandler = async (
 		case "createReviewTask": {
 			const reviewInstance = CodeReviewService.getInstance()
 			const { files } = message.payload! as CreateReviewTaskPayload
-			await reviewInstance.createReviewTask("@git-changes", {
-				type: ReviewTargetType.FILE,
-				data: files?.map((item) => ({
-					file_path: item.path,
-				})),
-			})
+			const cwd = getCurrentCwd()
+
+			const untrackedFiles =
+				files?.filter((item) => item.status === "??" || item.status === "U").map((item) => item.path) || []
+			let intentAddedFiles: string[] = []
+
+			if (untrackedFiles.length > 0) {
+				intentAddedFiles = await addFilesIntent(cwd, untrackedFiles)
+			}
+
+			await reviewInstance.createReviewTask(
+				"@git-changes",
+				{
+					type: ReviewTargetType.FILE,
+					data: files?.map((item) => ({
+						file_path: item.path,
+					})),
+				},
+				{
+					onTaskComplete: async () => {
+						if (intentAddedFiles.length > 0) {
+							await restoreFilesFromStaged(cwd, intentAddedFiles)
+						}
+					},
+				},
+			)
 			break
 		}
 		case "showFileDiff": {
-			try {
-				const { filePath, status } = message.values || {}
-				if (!filePath || !status) {
-					console.error("Missing required parameters for showFileDiff")
-					break
-				}
-
-				const cwd = getCurrentCwd()
-				const absolutePath = path.isAbsolute(filePath) ? filePath : path.join(cwd, filePath)
-				const fileUri = vscode.Uri.file(absolutePath)
-
-				// Get Git API
-				const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git")
-				if (!gitExtension) {
-					vscode.window.showErrorMessage("Git extension not found")
-					break
-				}
-
-				const git = gitExtension.exports
-				if (!git.enabled) {
-					vscode.window.showErrorMessage("Git is not enabled")
-					break
-				}
-
-				const gitApi: GitAPI = git.getAPI(1)
-				if (!gitApi) {
-					vscode.window.showErrorMessage("Failed to get Git API")
-					break
-				}
-
-				// Fixed comparison base: HEAD (working tree vs HEAD)
-				const leftRef = "HEAD"
-
-				// Handle different file statuses
-				const normalizedStatus = status.trim()
-				const emptyFileUri = vscode.Uri.parse(`untitled:${path.basename(absolutePath)}`)
-
-				// Default rightUri (working tree version for M and A)
-				const defaultRightUri = fileUri
-
-				let leftUri: vscode.Uri
-				let rightUri: vscode.Uri = defaultRightUri
-
-				// Set leftUri based on file status, override rightUri when necessary
-				if (normalizedStatus === "M") {
-					// Modified files
-					leftUri = gitApi.toGitUri(fileUri, leftRef)
-				} else if (normalizedStatus === "A") {
-					// Added files
-					leftUri = emptyFileUri
-				} else if (normalizedStatus === "D") {
-					// Deleted files
-					leftUri = gitApi.toGitUri(fileUri, leftRef)
-					rightUri = emptyFileUri
-				} else if (normalizedStatus === "U" || normalizedStatus === "??") {
-					// Untracked files
-					leftUri = emptyFileUri
-					rightUri = fileUri
-				} else {
-					// Fallback for other statuses
-					console.warn(`Unsupported file status: ${normalizedStatus}`)
-					leftUri = gitApi.toGitUri(fileUri, leftRef)
-					rightUri = fileUri
-				}
-
-				// Fixed title format: Working Tree ↔ HEAD
-				const title = `${path.basename(filePath)} (Working Tree ↔ HEAD)`
-
-				// Open diff window
-				await vscode.commands.executeCommand("vscode.diff", leftUri, rightUri, title)
-			} catch (error) {
-				console.error("Error showing file diff:", error)
-				vscode.window.showErrorMessage(
-					`Failed to show diff: ${error instanceof Error ? error.message : String(error)}`,
-				)
+			const { filePath, status, oldFilePath } = message.values || {}
+			if (isJetbrainsPlatform()) {
+				return
 			}
+			if (!filePath || !status) {
+				console.error("Missing required parameters for showFileDiff")
+				break
+			}
+
+			await showFileDiffFromGitStatus({
+				cwd: getCurrentCwd(),
+				filePath,
+				status,
+				oldFilePath,
+			})
 			break
 		}
 		case "settingsButtonclicked": {

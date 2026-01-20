@@ -492,6 +492,7 @@ export async function getGitStatus(cwd: string, maxFiles: number = 20): Promise<
 export interface FileChangeItem {
 	path: string // File relative path
 	status: string // Git status: 'A' | 'M' | 'D' | 'R' | 'C' | 'U' | '??' etc.
+	oldPath?: string // For renames/copies: original file path (relative)
 }
 
 /**
@@ -511,45 +512,141 @@ export async function getUncommittedFiles(cwd: string): Promise<FileChangeItem[]
 			return []
 		}
 
-		// Use porcelain format to get status
-		const { stdout } = await execAsync("git status --porcelain", { cwd })
+		// Use porcelain v1 with NUL terminators for robust parsing.
+		// - `-z` avoids quoting/escaping and handles special chars safely
+		// - `-uall` ensures untracked content is listed as files (not collapsed to directories like `?? dir/`)
+		const { stdout } = await execAsync("git status --porcelain=v1 -z -uall", { cwd })
 
 		if (!stdout.trim()) {
 			return []
 		}
 
-		const files: FileChangeItem[] = []
-		const lines = stdout.split("\n")
-		for (const line of lines) {
-			if (!line.trim()) continue
+		const filesMap = new Map<string, FileChangeItem>()
+		// Each entry is NUL-terminated. For rename/copy, git outputs TWO paths as separate NUL-terminated fields.
+		const parts = stdout.split("\0").filter((p) => p.length > 0)
+		for (let i = 0; i < parts.length; i++) {
+			const part = parts[i]
 
-			// Parse porcelain format: XY PATH
-			// X = index status (1 char), Y = working tree status (1 char)
-			// Followed by whitespace, then the file path
-			// Use regex for safer parsing
-			const match = line.match(/^(.{2})\s+(.+)$/)
-			if (!match) {
+			// Format: XY<space>PATH (PATH is raw, unquoted when -z is used)
+			const match = part.match(/^(.{2})\s+(.+)$/)
+			if (!match) continue
+
+			const rawStatus = match[1] // two chars, spaces are meaningful
+			const pathA = match[2]
+
+			// Normalize untracked from "??" to "U" for UI compatibility
+			if (rawStatus.trim() === "??") {
+				filesMap.set(pathA, { path: pathA, status: "U" })
 				continue
 			}
 
-			let status = match[1] // First 2 characters (don't trim - spaces are meaningful!)
-			const path = match[2] // Everything after the whitespace
+			// Handle rename/copy: consume next NUL field as the second path.
+			// We store the "new" path in `path` and keep original in `oldPath`.
+			if (rawStatus.includes("R") || rawStatus.includes("C")) {
+				const pathB = parts[i + 1]
+				if (typeof pathB === "string" && pathB.length > 0) {
+					i += 1
 
-			// Remove quotes if present (git adds quotes for paths with special chars)
-			const cleanPath = path.replace(/^"(.*)"$/, "$1")
+					let newPath = pathB
+					let oldPath = pathA
 
-			if (status === "??" || !status) {
-				status = "U"
+					// Heuristic: prefer the path that exists in working tree as the "new" path.
+					// (This avoids relying on porcelain ordering differences between versions/implementations.)
+					try {
+						await fs.stat(path.join(cwd, pathA))
+						try {
+							await fs.stat(path.join(cwd, pathB))
+							// both exist -> default to old=pathA, new=pathB
+						} catch {
+							// only A exists
+							newPath = pathA
+							oldPath = pathB
+						}
+					} catch {
+						try {
+							await fs.stat(path.join(cwd, pathB))
+							// only B exists -> default old=pathA, new=pathB
+						} catch {
+							// neither exists -> default to old=pathA, new=pathB
+						}
+					}
+
+					filesMap.set(newPath, { path: newPath, status: rawStatus, oldPath })
+					continue
+				}
 			}
-			files.push({
-				path: cleanPath,
-				status: status,
-			})
-		}
 
-		return files
+			filesMap.set(pathA, { path: pathA, status: rawStatus })
+		}
+		return Array.from(filesMap.values())
 	} catch (error) {
 		console.error("Error getting uncommitted files:", error)
+		return []
+	}
+}
+
+export async function addFilesIntent(cwd: string, files: string[]): Promise<string[]> {
+	if (files.length === 0) return []
+
+	try {
+		const isInstalled = await checkGitInstalled()
+		if (!isInstalled) throw new Error("Git is not installed")
+
+		const isRepo = await checkGitRepo(cwd)
+		if (!isRepo) throw new Error("Not a git repository")
+
+		const addedFiles: string[] = []
+		const batchSize = 50
+
+		for (let i = 0; i < files.length; i += batchSize) {
+			const batch = files.slice(i, i + batchSize)
+			const escapedFiles = batch.map((f) => `"${f.replace(/"/g, '\\"')}"`)
+			const fileList = escapedFiles.join(" ")
+
+			try {
+				await execAsync(`git add -N ${fileList}`, { cwd })
+				addedFiles.push(...batch)
+			} catch (error) {
+				console.error(`Error running git add -N on batch starting at index ${i}:`, error)
+			}
+		}
+
+		return addedFiles
+	} catch (error) {
+		console.error("Error in addFilesIntent:", error)
+		return []
+	}
+}
+
+export async function restoreFilesFromStaged(cwd: string, files: string[]): Promise<string[]> {
+	if (files.length === 0) return []
+
+	try {
+		const isInstalled = await checkGitInstalled()
+		if (!isInstalled) throw new Error("Git is not installed")
+
+		const isRepo = await checkGitRepo(cwd)
+		if (!isRepo) throw new Error("Not a git repository")
+
+		const unstagedFiles: string[] = []
+		const batchSize = 50
+
+		for (let i = 0; i < files.length; i += batchSize) {
+			const batch = files.slice(i, i + batchSize)
+			const escapedFiles = batch.map((f) => `"${f.replace(/"/g, '\\"')}"`)
+			const fileList = escapedFiles.join(" ")
+
+			try {
+				await execAsync(`git restore --staged ${fileList}`, { cwd })
+				unstagedFiles.push(...batch)
+			} catch (error) {
+				console.error(`Error running git restore --staged on batch starting at index ${i}:`, error)
+			}
+		}
+
+		return unstagedFiles
+	} catch (error) {
+		console.error("Error in restoreFilesFromStaged:", error)
 		return []
 	}
 }

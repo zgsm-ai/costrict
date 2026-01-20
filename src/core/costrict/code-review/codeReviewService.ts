@@ -223,7 +223,13 @@ export class CodeReviewService {
 		}
 	}
 
-	public async createReviewTask(message: string, targets: ReviewTarget) {
+	public async createReviewTask(
+		message: string,
+		targets: ReviewTarget,
+		options?: {
+			onTaskComplete?: () => void
+		},
+	) {
 		const provider = this.getProvider()
 		if (!provider) {
 			return
@@ -304,10 +310,12 @@ export class CodeReviewService {
 				})
 			} finally {
 				clearTimeout(timeoutId)
+
 				setTimeout(async () => {
 					await provider.removeClineFromStack()
 					await provider.refreshWorkspace()
 					await resetMode()
+					options?.onTaskComplete?.()
 				}, 500)
 			}
 		}

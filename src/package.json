@@ -189,7 +189,7 @@
 			{
 				"command": "zgsm.reviewCommit",
 				"title": "%command.reviewCommit.title%",
-				"icon": "$(shield)"
+				"icon": "assets/images/reviewLogo.png"
 			},
 			{
 				"command": "zgsm.coworkflow.runTaskJetbrains",
@@ -295,7 +295,7 @@
 				"command": "zgsm.generateCommitMessage",
 				"title": "%command.generateCommitMessage.title%",
 				"category": "%configuration.title%",
-				"icon": "assets/images/shenma_robot_logo_big.png"
+				"icon": "assets/images/commitLogo.png"
 			},
 			{
 				"command": "zgsm.coworkflow.updateSection",
