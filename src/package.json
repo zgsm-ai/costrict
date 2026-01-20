@@ -99,21 +99,21 @@
 		},
 		"commands": [
 			{
-				"command": "gemini.diff.accept",
+				"command": "costrict.diff.accept",
 				"title": "Gemini CLI: Accept Diff",
 				"icon": "$(check)"
 			},
 			{
-				"command": "gemini.diff.cancel",
+				"command": "costrict.diff.cancel",
 				"title": "Gemini CLI: Close Diff Editor",
 				"icon": "$(close)"
 			},
 			{
-				"command": "gemini-cli.runGeminiCLI",
+				"command": "costrict.runGeminiCLI",
 				"title": "Gemini CLI: Run"
 			},
 			{
-				"command": "gemini-cli.showNotices",
+				"command": "costrict.showNotices",
 				"title": "Gemini CLI: View Third-Party Notices"
 			},
 			{
@@ -354,12 +354,12 @@
 		"menus": {
 			"commandPalette": [
 				{
-					"command": "gemini.diff.accept",
-					"when": "gemini.diff.isVisible"
+					"command": "costrict.diff.accept",
+					"when": "costrict.diff.isVisible"
 				},
 				{
-					"command": "gemini.diff.cancel",
-					"when": "gemini.diff.isVisible"
+					"command": "costrict.diff.cancel",
+					"when": "costrict.diff.isVisible"
 				}
 			],
 			"editor/context": [
@@ -434,13 +434,13 @@
 			],
 			"view/title": [
 				{
-					"command": "gemini.diff.accept",
-					"when": "gemini.diff.isVisible",
+					"command": "costrict.diff.accept",
+					"when": "costrict.diff.isVisible",
 					"group": "navigation"
 				},
 				{
-					"command": "gemini.diff.cancel",
-					"when": "gemini.diff.isVisible",
+					"command": "costrict.diff.cancel",
+					"when": "costrict.diff.isVisible",
 					"group": "navigation"
 				},
 				{
@@ -548,14 +548,14 @@
 		},
 		"keybindings": [
 			{
-				"command": "gemini.diff.accept",
+				"command": "costrict.diff.accept",
 				"key": "ctrl+s",
-				"when": "gemini.diff.isVisible"
+				"when": "costrict.diff.isVisible"
 			},
 			{
-				"command": "gemini.diff.accept",
+				"command": "costrict.diff.accept",
 				"key": "cmd+s",
-				"when": "gemini.diff.isVisible"
+				"when": "costrict.diff.isVisible"
 			},
 			{
 				"command": "zgsm.addToContext",

@@ -50,7 +50,7 @@ import { ensureProjectWikiSubtasksExists } from "./wiki/projectWikiHelpers"
 import { isCliPatform, isJetbrainsPlatform } from "../../utils/platform"
 import type { ModelInfo, ModelRecord } from "@roo-code/types"
 import { updateDefaultDebug } from "../../utils/getDebugState"
-import { costrictCliDeactivate, costrictCliActivate } from "./vscode-ide-companion/extension"
+import { costrictCliDeactivate, costrictCliActivate } from "./ide-companion/extension"
 
 const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
 

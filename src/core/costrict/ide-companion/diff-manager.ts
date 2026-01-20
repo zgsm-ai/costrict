@@ -92,7 +92,7 @@ export class DiffManager {
 		})
 
 		const diffTitle = `${path.basename(filePath)} ↔ Modified`
-		await vscode.commands.executeCommand("setContext", "gemini.diff.isVisible", true)
+		await vscode.commands.executeCommand("setContext", "costrict.diff.isVisible", true)
 
 		let leftDocUri
 		try {
@@ -199,7 +199,7 @@ export class DiffManager {
 				}
 			}
 		}
-		await vscode.commands.executeCommand("setContext", "gemini.diff.isVisible", isVisible)
+		await vscode.commands.executeCommand("setContext", "costrict.diff.isVisible", isVisible)
 	}
 
 	private addDiffDocument(uri: vscode.Uri, diffInfo: DiffInfo) {
@@ -208,7 +208,7 @@ export class DiffManager {
 
 	private async closeDiffEditor(rightDocUri: vscode.Uri) {
 		const diffInfo = this.diffDocuments.get(rightDocUri.toString())
-		await vscode.commands.executeCommand("setContext", "gemini.diff.isVisible", false)
+		await vscode.commands.executeCommand("setContext", "costrict.diff.isVisible", false)
 
 		if (diffInfo) {
 			this.diffDocuments.delete(rightDocUri.toString())

@@ -120,13 +120,13 @@ export async function costrictCliActivate(context: vscode.ExtensionContext) {
 			}
 		}),
 		vscode.workspace.registerTextDocumentContentProvider(DIFF_SCHEME, diffContentProvider),
-		(vscode.commands.registerCommand("gemini.diff.accept", (uri?: vscode.Uri) => {
+		(vscode.commands.registerCommand("costrict.diff.accept", (uri?: vscode.Uri) => {
 			const docUri = uri ?? vscode.window.activeTextEditor?.document.uri
 			if (docUri && docUri.scheme === DIFF_SCHEME) {
 				diffManager.acceptDiff(docUri)
 			}
 		}),
-		vscode.commands.registerCommand("gemini.diff.cancel", (uri?: vscode.Uri) => {
+		vscode.commands.registerCommand("costrict.diff.cancel", (uri?: vscode.Uri) => {
 			const docUri = uri ?? vscode.window.activeTextEditor?.document.uri
 			if (docUri && docUri.scheme === DIFF_SCHEME) {
 				diffManager.cancelDiff(docUri)
@@ -156,7 +156,7 @@ export async function costrictCliActivate(context: vscode.ExtensionContext) {
 		vscode.workspace.onDidGrantWorkspaceTrust(() => {
 			ideServer.syncEnvVars()
 		})),
-		vscode.commands.registerCommand("gemini-cli.runGeminiCLI", async () => {
+		vscode.commands.registerCommand("costrict.runGeminiCLI", async () => {
 			const workspaceFolders = vscode.workspace.workspaceFolders
 			if (!workspaceFolders || workspaceFolders.length === 0) {
 				vscode.window.showInformationMessage("No folder open. Please open a folder to run Gemini CLI.")
@@ -182,7 +182,7 @@ export async function costrictCliActivate(context: vscode.ExtensionContext) {
 				terminal.sendText(geminiCmd)
 			}
 		}),
-		vscode.commands.registerCommand("gemini-cli.showNotices", async () => {
+		vscode.commands.registerCommand("costrict.showNotices", async () => {
 			const noticePath = vscode.Uri.joinPath(context.extensionUri, "NOTICES.txt")
 			await vscode.window.showTextDocument(noticePath)
 		}),

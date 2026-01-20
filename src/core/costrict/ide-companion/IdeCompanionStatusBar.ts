@@ -40,7 +40,7 @@ export class IdeCompanionStatusBar {
 
 		if (status.running) {
 			this.statusBarItem.text = `$(check) IDE Companion (${status.connections})`
-			this.statusBarItem.tooltip = `CoStrict IDE Companion\nPort: ${status.port}\nConnections: ${status.connections}`
+			this.statusBarItem.tooltip = `CoStrict IDE Companion\nPort: ${status.port}\nConnection count: ${status.connections}`
 			this.statusBarItem.backgroundColor = undefined
 		} else {
 			this.statusBarItem.text = `$(circle-slash) IDE Companion`
