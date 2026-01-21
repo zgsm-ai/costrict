@@ -107,6 +107,7 @@ export function connectIPC() {
 		if (result === reloadButton) {
 			vscode.commands.executeCommand("workbench.action.reloadWindow")
 		} else if (result === retryButton) {
+			client?.destroy?.()
 			connectIPC()
 		}
 	}
