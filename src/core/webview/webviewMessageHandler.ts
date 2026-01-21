@@ -3667,7 +3667,6 @@ export const webviewMessageHandler = async (
 					editorType: ${editorType}
 					httpProxy: ${httpProxy}
 					httpsProxy: ${httpsProxy}
-					toolProtocol: ${currentTaskItem?.toolProtocol || apiConfiguration?.toolProtocol}
 					${rawErrorMessage ? `${rawErrorMessage}` : ""}
 				`)
 				vscode.window.showInformationMessage(t("common:window.success.copy_success"))

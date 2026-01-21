@@ -257,7 +257,6 @@ describe("Command Execution Timeout Integration", () => {
 		let mockAskApproval: any
 		let mockHandleError: any
 		let mockPushToolResult: any
-		let mockRemoveClosingTag: any
 
 		beforeEach(() => {
 			// Reset mocks for allowlist tests
@@ -265,9 +264,15 @@ describe("Command Execution Timeout Integration", () => {
 			;(fs.access as any).mockResolvedValue(undefined)
 			;(TerminalRegistry.getOrCreateTerminal as any).mockResolvedValue(mockTerminal)
 
-			// Mock the executeCommandTool parameters
+			// Mock the executeCommandTool parameters (native-only)
 			mockBlock = {
+				type: "tool_use",
+				name: "execute_command",
 				params: {
+					command: "",
+					cwd: undefined,
+				},
+				nativeArgs: {
 					command: "",
 					cwd: undefined,
 				},
@@ -277,7 +282,6 @@ describe("Command Execution Timeout Integration", () => {
 			mockAskApproval = vitest.fn().mockResolvedValue(true) // Always approve
 			mockHandleError = vitest.fn()
 			mockPushToolResult = vitest.fn()
-			mockRemoveClosingTag = vitest.fn()
 
 			// Mock task with additional properties needed by executeCommandTool
 			mockTask = {
@@ -317,6 +321,7 @@ describe("Command Execution Timeout Integration", () => {
 			;(vscode.workspace.getConfiguration as any).mockReturnValue(mockGetConfiguration())
 
 			mockBlock.params.command = "npm install"
+			mockBlock.nativeArgs.command = "npm install"
 
 			// Create a process that would timeout if not allowlisted
 			const longRunningProcess = new Promise((resolve) => {
@@ -328,8 +333,6 @@ describe("Command Execution Timeout Integration", () => {
 				askApproval: mockAskApproval,
 				handleError: mockHandleError,
 				pushToolResult: mockPushToolResult,
-				removeClosingTag: mockRemoveClosingTag,
-				toolProtocol: "xml",
 			})
 
 			// Should complete successfully without timeout because "npm" is in allowlist
@@ -350,6 +353,7 @@ describe("Command Execution Timeout Integration", () => {
 			;(vscode.workspace.getConfiguration as any).mockReturnValue(mockGetConfiguration())
 
 			mockBlock.params.command = "sleep 10" // Not in allowlist
+			mockBlock.nativeArgs.command = "sleep 10"
 
 			// Create a process that never resolves
 			const neverResolvingProcess = new Promise(() => {})
@@ -360,8 +364,6 @@ describe("Command Execution Timeout Integration", () => {
 				askApproval: mockAskApproval,
 				handleError: mockHandleError,
 				pushToolResult: mockPushToolResult,
-				removeClosingTag: mockRemoveClosingTag,
-				toolProtocol: "xml",
 			})
 
 			// Should timeout because "sleep" is not in allowlist
@@ -382,6 +384,7 @@ describe("Command Execution Timeout Integration", () => {
 			;(vscode.workspace.getConfiguration as any).mockReturnValue(mockGetConfiguration())
 
 			mockBlock.params.command = "npm install"
+			mockBlock.nativeArgs.command = "npm install"
 
 			// Create a process that never resolves
 			const neverResolvingProcess = new Promise(() => {})
@@ -392,8 +395,6 @@ describe("Command Execution Timeout Integration", () => {
 				askApproval: mockAskApproval,
 				handleError: mockHandleError,
 				pushToolResult: mockPushToolResult,
-				removeClosingTag: mockRemoveClosingTag,
-				toolProtocol: "xml",
 			})
 
 			// Should timeout because allowlist is empty
@@ -421,14 +422,13 @@ describe("Command Execution Timeout Integration", () => {
 
 			// Test exact prefix match - should not timeout
 			mockBlock.params.command = "git log --oneline"
+			mockBlock.nativeArgs.command = "git log --oneline"
 			mockTerminal.runCommand.mockReturnValueOnce(longRunningProcess)
 
 			await executeCommandTool.handle(mockTask as Task, mockBlock, {
 				askApproval: mockAskApproval,
 				handleError: mockHandleError,
 				pushToolResult: mockPushToolResult,
-				removeClosingTag: mockRemoveClosingTag,
-				toolProtocol: "xml",
 			})
 
 			expect(mockPushToolResult).toHaveBeenCalled()
@@ -440,14 +440,13 @@ describe("Command Execution Timeout Integration", () => {
 
 			// Test partial prefix match (should not match) - should timeout
 			mockBlock.params.command = "git status" // "git" alone is not in allowlist, only "git log"
+			mockBlock.nativeArgs.command = "git status"
 			mockTerminal.runCommand.mockReturnValueOnce(neverResolvingProcess)
 
 			await executeCommandTool.handle(mockTask as Task, mockBlock, {
 				askApproval: mockAskApproval,
 				handleError: mockHandleError,
 				pushToolResult: mockPushToolResult,
-				removeClosingTag: mockRemoveClosingTag,
-				toolProtocol: "xml",
 			})
 
 			expect(mockPushToolResult).toHaveBeenCalled()

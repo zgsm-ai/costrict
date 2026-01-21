@@ -23,8 +23,6 @@ export type HandleError = (action: string, error: Error) => Promise<void>
 
 export type PushToolResult = (content: ToolResponse) => void
 
-export type RemoveClosingTag = (tag: ToolParamName, content?: string) => string
-
 export type AskFinishSubTaskApproval = () => Promise<boolean>
 
 export type ToolDescription = () => string
@@ -83,8 +81,6 @@ export const toolParamNames = [
 
 export type ToolParamName = (typeof toolParamNames)[number]
 
-export type ToolProtocol = "xml" | "native"
-
 /**
  * Type map defining the native (typed) argument structure for each tool.
  * Tools not listed here will fall back to `any` for backward compatibility.
@@ -99,6 +95,8 @@ export type NativeToolArgs = {
 	search_replace: { file_path: string; old_string: string; new_string: string }
 	edit_file: { file_path: string; old_string: string; new_string: string; expected_replacements?: number }
 	apply_patch: { patch: string }
+	list_files: { path: string; recursive?: boolean }
+	new_task: { mode: string; message: string; todos?: string }
 	ask_followup_question: {
 		question: string
 		follow_up: Array<{ text: string; mode?: string }>
@@ -122,7 +120,6 @@ export type NativeToolArgs = {
 	update_todo_list: { todos: string }
 	use_mcp_tool: { server_name: string; tool_name: string; arguments?: Record<string, unknown> }
 	write_to_file: { path: string; content: string }
-	list_files: { path: string; recursive?: boolean }
 	// Add more tools as they are migrated to native protocol
 }
 

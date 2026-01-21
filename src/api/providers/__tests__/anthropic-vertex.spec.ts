@@ -162,7 +162,7 @@ describe("VertexHandler", () => {
 			})
 
 			expect(mockCreate).toHaveBeenCalledWith(
-				{
+				expect.objectContaining({
 					model: "claude-3-5-sonnet-v2@20241022",
 					max_tokens: 8192,
 					temperature: 0,
@@ -191,8 +191,11 @@ describe("VertexHandler", () => {
 						},
 					],
 					stream: true,
-				},
-				{},
+					// Tools are now always present (minimum 6 from ALWAYS_AVAILABLE_TOOLS)
+					tools: expect.any(Array),
+					tool_choice: expect.any(Object),
+				}),
+				undefined,
 			)
 		})
 
@@ -1203,13 +1206,11 @@ describe("VertexHandler", () => {
 			)
 		})
 
-		it("should not include tools when toolProtocol is set to xml (user preference takes precedence)", async () => {
-			// When toolProtocol is set to xml, user preference takes precedence over model capabilities
+		it("should include tools when tools are provided", async () => {
 			handler = new AnthropicVertexHandler({
 				apiModelId: "claude-3-5-sonnet-v2@20241022",
 				vertexProjectId: "test-project",
 				vertexRegion: "us-central1",
-				toolProtocol: "xml",
 			})
 
 			const mockStream = [
@@ -1245,7 +1246,7 @@ describe("VertexHandler", () => {
 				// Just consume
 			}
 
-			// XML protocol means no tools should be included in the request
+			// Tool calling is request-driven: if tools are provided, we should include them.
 			expect(mockCreate).toHaveBeenCalledWith(
 				expect.not.objectContaining({
 					tools: expect.anything(),

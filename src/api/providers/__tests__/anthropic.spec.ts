@@ -423,8 +423,7 @@ describe("AnthropicHandler", () => {
 			},
 		]
 
-		it("should include tools in request by default (native is default)", async () => {
-			// Handler uses native protocol by default via model's defaultToolProtocol
+		it("should include tools in request when tools are provided", async () => {
 			const stream = handler.createMessage(systemPrompt, messages, {
 				taskId: "test-task",
 				tools: mockTools,
@@ -454,11 +453,9 @@ describe("AnthropicHandler", () => {
 			)
 		})
 
-		it("should not include tools when toolProtocol is set to xml (user preference takes precedence)", async () => {
-			// When toolProtocol is set to xml, it takes precedence over supportsNativeTools
+		it("should include tools when tools are provided", async () => {
 			const xmlHandler = new AnthropicHandler({
 				...mockOptions,
-				toolProtocol: "xml",
 			})
 
 			const stream = xmlHandler.createMessage(systemPrompt, messages, {
@@ -471,7 +468,7 @@ describe("AnthropicHandler", () => {
 				// Just consume
 			}
 
-			// XML protocol means no tools should be included in the request
+			// Tool calling is request-driven: if tools are provided, we should include them.
 			expect(mockCreate).toHaveBeenCalledWith(
 				expect.not.objectContaining({
 					tools: expect.anything(),
@@ -480,7 +477,7 @@ describe("AnthropicHandler", () => {
 			)
 		})
 
-		it("should not include tools when no tools are provided", async () => {
+		it("should always include tools in request (tools are always present after PR #10841)", async () => {
 			// Handler uses native protocol by default
 			const stream = handler.createMessage(systemPrompt, messages, {
 				taskId: "test-task",
@@ -491,9 +488,11 @@ describe("AnthropicHandler", () => {
 				// Just consume
 			}
 
+			// Tools are now always present (minimum 6 from ALWAYS_AVAILABLE_TOOLS)
 			expect(mockCreate).toHaveBeenCalledWith(
-				expect.not.objectContaining({
-					tools: expect.anything(),
+				expect.objectContaining({
+					tools: expect.any(Array),
+					tool_choice: expect.any(Object),
 				}),
 				expect.anything(),
 			)
@@ -541,7 +540,7 @@ describe("AnthropicHandler", () => {
 			)
 		})
 
-		it("should omit both tools and tool_choice when tool_choice is 'none'", async () => {
+		it("should set tool_choice to undefined when tool_choice is 'none' (tools are still passed)", async () => {
 			// Handler uses native protocol by default
 			const stream = handler.createMessage(systemPrompt, messages, {
 				taskId: "test-task",
@@ -554,16 +553,13 @@ describe("AnthropicHandler", () => {
 				// Just consume
 			}
 
-			// Verify that neither tools nor tool_choice are included in the request
+			// Tools are now always present (minimum 6 from ALWAYS_AVAILABLE_TOOLS)
+			// When tool_choice is 'none', the converter returns undefined for tool_choice
+			// but tools are still passed since they're always present
 			expect(mockCreate).toHaveBeenCalledWith(
-				expect.not.objectContaining({
-					tools: expect.anything(),
-				}),
-				expect.anything(),
-			)
-			expect(mockCreate).toHaveBeenCalledWith(
-				expect.not.objectContaining({
-					tool_choice: expect.anything(),
+				expect.objectContaining({
+					tools: expect.any(Array),
+					tool_choice: undefined,
 				}),
 				expect.anything(),
 			)

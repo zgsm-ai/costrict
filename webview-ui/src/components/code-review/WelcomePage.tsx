@@ -65,7 +65,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onStartReview }) => {
 		}
 
 		return (
-			<div className="flex justify-between bg-[#2D2D30] text-white p-4 px-5 rounded-lg text-base">
+			<div className="flex justify-between bg-[#2D2D30] text-white p-4 px-5 rounded-lg text-base ml-4 mr-4 mt-4">
 				<div className="flex items-center">
 					<i className="codicon codicon-lightbulb" style={{ color: "rgba(255, 252, 196, 0.7)" }} />
 					<span className="ml-1">{t("codereview:welcomePage.tips")}</span>

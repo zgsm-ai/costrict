@@ -177,7 +177,6 @@ export const clineSays = [
 	"subtask_result",
 	"checkpoint_saved",
 	"rooignore_error",
-	"rollback_xml_tool",
 	"auto_switch_model",
 	"diff_error",
 	"condense_context",

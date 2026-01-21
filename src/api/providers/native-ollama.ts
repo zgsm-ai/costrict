@@ -6,7 +6,7 @@ import { ApiStream } from "../transform/stream"
 import { BaseProvider } from "./base-provider"
 import type { ApiHandlerOptions } from "../../shared/api"
 import { getOllamaModels } from "./fetchers/ollama"
-import { XmlMatcher } from "../../utils/xml-matcher"
+import { TagMatcher } from "../../utils/tag-matcher"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 
 interface OllamaChatOptions {
@@ -208,7 +208,7 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 		metadata?: ApiHandlerCreateMessageMetadata,
 	): ApiStream {
 		const client = this.ensureClient()
-		const { id: modelId, info: modelInfo } = await this.fetchModel()
+		const { id: modelId } = await this.fetchModel()
 		const useR1Format = modelId.toLowerCase().includes("deepseek-r1")
 
 		const ollamaMessages: Message[] = [
@@ -216,7 +216,7 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 			...convertToOllamaMessages(messages),
 		]
 
-		const matcher = new XmlMatcher(
+		const matcher = new TagMatcher(
 			"think",
 			(chunk) =>
 				({
@@ -224,11 +224,6 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 					text: chunk.data,
 				}) as const,
 		)
-
-		// Check if we should use native tool calling
-		const supportsNativeTools = modelInfo.supportsNativeTools ?? false
-		const useNativeTools =
-			supportsNativeTools && metadata?.tools && metadata.tools.length > 0 && metadata?.toolProtocol !== "xml"
 
 		try {
 			// Build options object conditionally
@@ -247,8 +242,7 @@ export class NativeOllamaHandler extends BaseProvider implements SingleCompletio
 				messages: ollamaMessages,
 				stream: true,
 				options: chatOptions,
-				// Native tool calling support
-				...(useNativeTools && { tools: this.convertToolsToOllama(metadata.tools) }),
+				tools: this.convertToolsToOllama(metadata?.tools),
 			})
 
 			let totalInputTokens = 0

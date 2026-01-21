@@ -7,17 +7,15 @@ import {
 	azureOpenAiDefaultApiVersion,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
 	OPENAI_AZURE_AI_INFERENCE_PATH,
-	NATIVE_TOOL_DEFAULTS,
 	zgsmDefaultModelId,
 	zgsmModelsConfig as zgsmModels,
 	// TOOL_PROTOCOL,
-	isNativeProtocol,
 	ClineApiReqCancelReason,
 } from "@roo-code/types"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
-import { XmlMatcher } from "../../utils/xml-matcher"
+import { TagMatcher } from "../../utils/tag-matcher"
 
 import { convertToOpenAiMessages } from "../transform/openai-format"
 import { convertToR1Format } from "../transform/r1-format"
@@ -49,7 +47,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 	private client: OpenAI
 	private readonly providerName = "zgsm"
 	private baseURL: string
-	private toolProtocol: "native" | "xml" = "xml"
 	private chatType?: "user" | "system"
 	private modelInfo = {} as ModelInfo
 	private apiResponseRenderModeInfo = renderModes.fast
@@ -106,7 +103,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		messages: Anthropic.Messages.MessageParam[],
 		metadata?: ApiHandlerCreateMessageMetadata,
 	): ApiStream {
-		this.setToolProtocol(metadata?.toolProtocol)
 		// Performance monitoring log
 		this.abortController = new AbortController()
 		const requestId = uuidv7()
@@ -126,7 +122,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const { info: modelInfo, reasoning, id: modelId } = this.getModel()
 		const modelUrl = this.baseURL || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
-		const isNative = isNativeProtocol(this?.toolProtocol)
+		const isNative = true
 
 		// Cache boolean calculation results
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
@@ -220,10 +216,10 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 
 					stream = data
 
-					// todo: use supportsNativeTools to check if the model supports native tools
-					if (isNative && modelId.toLowerCase().includes("qwen-2.5-vl")) {
-						throw new Error("qwen-2.5-vl does not support native protocol")
-					}
+					// // todo: use supportsNativeTools to check if the model supports native tools
+					// if (isNative && modelId.toLowerCase().includes("qwen-2.5-vl")) {
+					// 	throw new Error("qwen-2.5-vl does not support native protocol")
+					// }
 				} catch (error) {
 					throw handleOpenAIError(error, this.providerName)
 				}
@@ -373,11 +369,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const _mid = modelInfo.id?.toLowerCase()
 		if (isDeepseekReasoner) {
 			convertedMessages = convertToR1Format([{ role: "user", content: systemPrompt }, ...messages])
-		} else if (isNative && (_mid?.includes("glm") || isMiniMax || _mid?.includes("claude"))) {
-			convertedMessages = [
-				{ role: "system", content: systemPrompt },
-				...convertToZAiFormat(messages, { mergeToolResultText: true }),
-			]
 		} else {
 			const systemMessage = modelInfo.supportsPromptCache
 				? {
@@ -391,8 +382,17 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 						],
 					}
 				: { role: "system" as const, content: systemPrompt }
-
-			convertedMessages = [systemMessage, ...convertToOpenAiMessages(messages, { mergeToolResultText: isNative })]
+			if (isNative && (_mid?.includes("glm") || isMiniMax || _mid?.includes("claude"))) {
+				convertedMessages = [
+					{ role: "system", content: systemPrompt },
+					...convertToZAiFormat(messages, { mergeToolResultText: true }),
+				]
+			} else {
+				convertedMessages = [
+					systemMessage,
+					...convertToOpenAiMessages(messages, { mergeToolResultText: isNative }),
+				]
+			}
 		}
 
 		// Apply cache control logic
@@ -537,7 +537,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		// For MiniMax models, allow matching <think> tags anywhere in the stream
 		// because MiniMax may include newlines before the <think> tag
 		const isMiniMax = modelInfo?.id?.toLowerCase().includes("minimax")
-		const matcher = new XmlMatcher(
+		const matcher = new TagMatcher(
 			"think",
 			(chunk) =>
 				({
@@ -870,7 +870,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const info =
 			this.options.useZgsmCustomConfig && isDebug()
 				? {
-						...NATIVE_TOOL_DEFAULTS,
 						...defaultInfo,
 						...(this.options.zgsmAiCustomModelInfo ?? {}),
 					}
@@ -1154,10 +1153,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 
 	setChatType(type: "user" | "system"): void {
 		this.chatType = type
-	}
-	setToolProtocol(toolProtocol?: "native" | "xml"): void {
-		if (!toolProtocol) return
-		this.toolProtocol = toolProtocol
 	}
 
 	getChatType() {

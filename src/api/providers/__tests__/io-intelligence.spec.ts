@@ -259,7 +259,6 @@ describe("IOIntelligenceHandler", () => {
 			description: "Llama 4 Maverick 17B model",
 			supportsImages: true,
 			supportsPromptCache: false,
-			supportsNativeTools: true,
 		})
 	})
 
@@ -276,7 +275,6 @@ describe("IOIntelligenceHandler", () => {
 			description: "Llama 4 Maverick 17B model",
 			supportsImages: true,
 			supportsPromptCache: false,
-			supportsNativeTools: true,
 		})
 	})
 

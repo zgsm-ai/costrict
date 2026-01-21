@@ -49,8 +49,6 @@ export const claudeCodeModels = {
 		contextWindow: 200_000,
 		supportsImages: true,
 		supportsPromptCache: true,
-		supportsNativeTools: true,
-		defaultToolProtocol: "native",
 		supportsReasoningEffort: ["disable", "low", "medium", "high"],
 		reasoningEffort: "medium",
 		description: "Claude Haiku 4.5 - Fast and efficient with thinking",
@@ -60,8 +58,6 @@ export const claudeCodeModels = {
 		contextWindow: 200_000,
 		supportsImages: true,
 		supportsPromptCache: true,
-		supportsNativeTools: true,
-		defaultToolProtocol: "native",
 		supportsReasoningEffort: ["disable", "low", "medium", "high"],
 		reasoningEffort: "medium",
 		description: "Claude Sonnet 4.5 - Balanced performance with thinking",
@@ -71,8 +67,6 @@ export const claudeCodeModels = {
 		contextWindow: 200_000,
 		supportsImages: true,
 		supportsPromptCache: true,
-		supportsNativeTools: true,
-		defaultToolProtocol: "native",
 		supportsReasoningEffort: ["disable", "low", "medium", "high"],
 		reasoningEffort: "medium",
 		description: "Claude Opus 4.5 - Most capable with thinking",
@@ -88,9 +82,9 @@ export function getClaudeCodeModels(localDefaultModelId?: string): Record<string
 	if (!local_anthropic_model) {
 		try {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			local_anthropic_model = (window as any || {})?.ANTHROPIC_MODEL
+			local_anthropic_model = ((window as any) || {})?.ANTHROPIC_MODEL
 		} catch (error) {
-			console.log(error);
+			console.log(error)
 		}
 	}
 

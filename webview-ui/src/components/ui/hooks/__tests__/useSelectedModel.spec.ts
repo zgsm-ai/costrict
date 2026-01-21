@@ -581,7 +581,6 @@ describe("useSelectedModel", () => {
 			expect(result.current.id).toBe("claude-3-7-sonnet-20250219")
 			// Should use litellmDefaultModelInfo as fallback
 			expect(result.current.info).toEqual(litellmDefaultModelInfo)
-			expect(result.current.info?.supportsNativeTools).toBe(true)
 		})
 
 		it("should use litellmDefaultModelInfo when selected model not found in routerModels", () => {
@@ -596,7 +595,6 @@ describe("useSelectedModel", () => {
 							contextWindow: 8192,
 							supportsImages: false,
 							supportsPromptCache: false,
-							supportsNativeTools: true,
 						},
 					},
 					"io-intelligence": {},
@@ -618,16 +616,14 @@ describe("useSelectedModel", () => {
 			expect(result.current.id).toBe("claude-3-7-sonnet-20250219")
 			// Should use litellmDefaultModelInfo as fallback since default model also not in router models
 			expect(result.current.info).toEqual(litellmDefaultModelInfo)
-			expect(result.current.info?.supportsNativeTools).toBe(true)
 		})
 
-		it("should merge only native tool defaults with routerModels when model exists", () => {
+		it("should return routerModels info when model exists", () => {
 			const customModelInfo: ModelInfo = {
 				maxTokens: 16384,
 				contextWindow: 128000,
 				supportsImages: true,
 				supportsPromptCache: true,
-				supportsNativeTools: true,
 				description: "Custom LiteLLM model",
 			}
 
@@ -655,15 +651,7 @@ describe("useSelectedModel", () => {
 
 			expect(result.current.provider).toBe("litellm")
 			expect(result.current.id).toBe("custom-model")
-			// Should only merge native tool defaults, not prices or other model-specific info
-			// Router model values override the defaults
-			const nativeToolDefaults = {
-				supportsNativeTools: litellmDefaultModelInfo.supportsNativeTools,
-				defaultToolProtocol: litellmDefaultModelInfo.defaultToolProtocol,
-			}
-			expect(result.current.info).toEqual({ ...nativeToolDefaults, ...customModelInfo })
-			expect(result.current.info?.supportsNativeTools).toBe(true)
-			expect(result.current.info?.defaultToolProtocol).toBe("native")
+			expect(result.current.info).toEqual(customModelInfo)
 		})
 	})
 
@@ -700,11 +688,9 @@ describe("useSelectedModel", () => {
 			expect(result.current.provider).toBe("openai")
 			expect(result.current.id).toBe("gpt-4o")
 			expect(result.current.info).toEqual(openAiModelInfoSaneDefaults)
-			expect(result.current.info?.supportsNativeTools).toBe(true)
-			expect(result.current.info?.defaultToolProtocol).toBe("native")
 		})
 
-		it("should merge native tool defaults with custom model info", () => {
+		it("should return custom model info when provided", () => {
 			const customModelInfo: ModelInfo = {
 				maxTokens: 16384,
 				contextWindow: 128000,
@@ -726,24 +712,15 @@ describe("useSelectedModel", () => {
 
 			expect(result.current.provider).toBe("openai")
 			expect(result.current.id).toBe("custom-model")
-			// Should merge native tool defaults with custom model info
-			const nativeToolDefaults = {
-				supportsNativeTools: openAiModelInfoSaneDefaults.supportsNativeTools,
-				defaultToolProtocol: openAiModelInfoSaneDefaults.defaultToolProtocol,
-			}
-			expect(result.current.info).toEqual({ ...nativeToolDefaults, ...customModelInfo })
-			expect(result.current.info?.supportsNativeTools).toBe(true)
-			expect(result.current.info?.defaultToolProtocol).toBe("native")
+			expect(result.current.info).toEqual(customModelInfo)
 		})
 
-		it("should allow custom model info to override native tool defaults", () => {
+		it("should return custom model info as-is", () => {
 			const customModelInfo: ModelInfo = {
 				maxTokens: 8192,
 				contextWindow: 32000,
 				supportsImages: false,
 				supportsPromptCache: false,
-				supportsNativeTools: false, // Explicitly disable
-				defaultToolProtocol: "xml", // Override default to use XML instead of native
 			}
 
 			const apiConfiguration: ProviderSettings = {
@@ -757,9 +734,7 @@ describe("useSelectedModel", () => {
 
 			expect(result.current.provider).toBe("openai")
 			expect(result.current.id).toBe("custom-model-no-tools")
-			// Custom model info should override the native tool defaults
-			expect(result.current.info?.supportsNativeTools).toBe(false)
-			expect(result.current.info?.defaultToolProtocol).toBe("xml")
+			expect(result.current.info).toEqual(customModelInfo)
 		})
 	})
 })

@@ -56,7 +56,6 @@ export interface ErrorRowProps {
 		| "api_failure"
 		| "diff_error"
 		| "streaming_failed"
-		| "rollback_xml_tool"
 		| "auto_switch_model"
 		| "cancelled"
 		| "api_req_retry_delayed"
@@ -220,48 +219,6 @@ export const ErrorRow = memo(
 			)
 		}
 
-		// For rollback_xml_tool type with expandable content
-		if (type === "rollback_xml_tool" && expandable) {
-			return (
-				<div className="mt-0 overflow-hidden mb-2 pr-1 group">
-					<div className="text-sm bg-vscode-editor-background border border-vscode-border rounded-lg p-3 ml-6">
-						<div
-							className="flex items-center gap-2 flex-grow  text-vscode-editorWarning-foreground"
-							onClick={handleToggleExpand}>
-							{isLast && <ProgressIndicator />}
-							<span
-								className="font-bold grow cursor-pointer"
-								style={{
-									color: "var(--vscode-charts-green)",
-								}}>
-								{"🪄 CoStrict Auto Switch Model: NATIVE -> XML"}
-							</span>
-							<div className="flex items-center transition-opacity opacity-0 group-hover:opacity-100">
-								{showCopyButton && (
-									<VSCodeButton
-										appearance="icon"
-										className="p-0.75 h-6 mr-1 text-vscode-editor-foreground flex items-center justify-center bg-transparent"
-										onClick={handleCopy}>
-										<span className={`codicon codicon-${showCopySuccess ? "check" : "copy"}`} />
-									</VSCodeButton>
-								)}
-								<span
-									className={`cursor-pointer text-vscode-editor-foreground codicon codicon-chevron-${isExpanded ? "up" : "down"}`}
-								/>
-							</div>
-						</div>
-						{isExpanded && (
-							<div className="flex flex-col gap-2">
-								<div className="flex items-center">
-									<CodeBlock source={message} language="log" />
-								</div>
-							</div>
-						)}
-					</div>
-				</div>
-			)
-		}
-
 		// For diff_error type with expandable content
 		if (type === "diff_error" && expandable) {
 			return (
@@ -289,7 +246,7 @@ export const ErrorRow = memo(
 					</div>
 					{isExpanded && (
 						<div className="px-2 py-1 mt-2 bg-vscode-editor-background ml-6 rounded-lg">
-							<CodeBlock source={message} language="xml" />
+							<CodeBlock source={message} language="text" />
 						</div>
 					)}
 				</div>

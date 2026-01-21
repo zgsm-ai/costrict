@@ -41,8 +41,8 @@ import {
 	vercelAiGatewayDefaultModelId,
 	deepInfraDefaultModelId,
 	minimaxDefaultModelId,
-	type ToolProtocol,
-	TOOL_PROTOCOL,
+	// type ToolProtocol,
+	// TOOL_PROTOCOL,
 } from "@roo-code/types"
 
 import {
@@ -486,10 +486,10 @@ const ApiOptions = ({
 	// 	}
 	// }, [selectedProvider])
 
-	const defaultProtocol =
-		selectedModelInfo?.defaultToolProtocol ??
-		(selectedProvider === "zgsm" ? TOOL_PROTOCOL.XML : TOOL_PROTOCOL.NATIVE)
-	const showToolProtocolSelector = selectedModelInfo?.supportsNativeTools ?? true
+	// const defaultProtocol =
+	// 	selectedModelInfo?.defaultToolProtocol ??
+	// 	(selectedProvider === "zgsm" ? TOOL_PROTOCOL.XML : TOOL_PROTOCOL.NATIVE)
+	// const showToolProtocolSelector = selectedModelInfo?.supportsNativeTools ?? true
 	// Convert providers to SearchableSelect options
 	const providerOptions = useMemo(() => {
 		// First filter by organization allow list
@@ -901,12 +901,14 @@ const ApiOptions = ({
 				</>
 			)}
 
-			<ThinkingBudget
-				key={`${selectedProvider}-${selectedModelId}`}
-				apiConfiguration={apiConfiguration}
-				setApiConfigurationField={setApiConfigurationField}
-				modelInfo={selectedModelInfo}
-			/>
+			{!fromWelcomeView && (
+				<ThinkingBudget
+					key={`${selectedProvider}-${selectedModelId}`}
+					apiConfiguration={apiConfiguration}
+					setApiConfigurationField={setApiConfigurationField}
+					modelInfo={selectedModelInfo}
+				/>
+			)}
 			{/* Gate Verbosity UI by capability flag */}
 			{!fromWelcomeView && selectedModelInfo?.supportsVerbosity && (
 				<Verbosity
@@ -994,7 +996,7 @@ const ApiOptions = ({
 									</div>
 								</div>
 							)}
-						{showToolProtocolSelector && (
+						{/* {showToolProtocolSelector && (
 							<div>
 								<label className="block font-medium mb-1">{t("settings:toolProtocol.label")}</label>
 								<Select
@@ -1026,7 +1028,7 @@ const ApiOptions = ({
 									{t("settings:toolProtocol.description")}
 								</div>
 							</div>
-						)}
+						)} */}
 					</CollapsibleContent>
 				</Collapsible>
 			)}

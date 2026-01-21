@@ -3,9 +3,16 @@ import { memo } from "react"
 import { ToolUseBlock, ToolUseBlockHeader } from "../common/ToolUseBlock"
 import { vscode } from "@src/utils/vscode"
 import { getJumpLine } from "@/utils/path-mentions"
-import { FilePermissionItem } from "@roo-code/types"
 import { formatPathTooltip } from "@src/utils/formatPathTooltip"
 import { PathTooltip } from "../ui/PathTooltip"
+
+interface FilePermissionItem {
+	path: string
+	lineSnippet?: string
+	isOutsideWorkspace?: boolean
+	key: string
+	content?: string // full path
+}
 
 export interface BatchFilePermissionProps {
 	files: FilePermissionItem[]

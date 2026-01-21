@@ -1243,16 +1243,6 @@ export const ChatRowContent = ({
 							isLast={isLast}
 						/>
 					)
-				case "rollback_xml_tool":
-					return (
-						<ErrorRow
-							deleteMessageTs={deleteMessageTs}
-							type="rollback_xml_tool"
-							message={message.text || ""}
-							expandable={true}
-							isLast={isLast}
-						/>
-					)
 				case "diff_error":
 					return (
 						<ErrorRow
