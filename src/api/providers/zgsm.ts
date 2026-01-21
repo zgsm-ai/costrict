@@ -382,12 +382,29 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 						],
 					}
 				: { role: "system" as const, content: systemPrompt }
-			if (isNative && (_mid?.includes("glm") || isMiniMax || _mid?.includes("claude"))) {
+			if (_mid?.includes("glm") || isMiniMax || _mid?.includes("claude")) {
 				convertedMessages = [
 					{ role: "system", content: systemPrompt },
 					...convertToZAiFormat(messages, { mergeToolResultText: true }),
 				]
 			} else {
+				if (_mid?.includes("qwen")) {
+					const xmlToolGuide = `
+## Tool Call Guide (IMPORTANT):
+your answer response should be in xml format. like this:
+\`\`\`
+<tool_call>{
+"name":  {{tool_name}}, // the name of the tool
+"arguments":  {{tool_args}} // the arguments of the tool
+}</tool_call>
+\`\`\`
+`
+					if (Array.isArray(systemMessage.content)) {
+						systemMessage.content[0].text = systemMessage.content[0].text + "\n" + xmlToolGuide
+					} else {
+						systemMessage.content = systemMessage.content + "\n" + xmlToolGuide
+					}
+				}
 				convertedMessages = [
 					systemMessage,
 					...convertToOpenAiMessages(messages, { mergeToolResultText: isNative }),
@@ -537,15 +554,32 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		// For MiniMax models, allow matching <think> tags anywhere in the stream
 		// because MiniMax may include newlines before the <think> tag
 		const isMiniMax = modelInfo?.id?.toLowerCase().includes("minimax")
-		const matcher = new TagMatcher(
-			"think",
-			(chunk) =>
-				({
-					type: chunk.matched ? "reasoning" : "text",
+		const isQwen = modelInfo?.id?.toLowerCase().includes("qwen") // Qwen model understands <tool_call> tags
+		let matcher: TagMatcher<{
+			readonly type: "reasoning" | "text" | "fake_tool_call"
+			readonly text: string
+		}>
+		// let mockToolId = ""
+		if (isQwen) {
+			// mockToolId = "fake_tool_call"
+			matcher = new TagMatcher("tool_call", (chunk) => {
+				console.log("tool_call", chunk)
+				return {
+					type: chunk.matched ? "fake_tool_call" : "text",
 					text: chunk.data,
-				}) as const,
-			isMiniMax ? Infinity : 0, // Only use Infinity for MiniMax models
-		)
+				}
+			})
+		} else {
+			matcher = new TagMatcher(
+				"think",
+				(chunk) =>
+					({
+						type: chunk.matched ? "reasoning" : "text",
+						text: chunk.data,
+					}) as const,
+				isMiniMax ? Infinity : 0, // Only use Infinity for MiniMax models
+			)
+		}
 
 		let lastUsage
 		const activeToolCallIds = new Set<string>()

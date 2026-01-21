@@ -14,6 +14,7 @@ import debounce from "lodash.debounce"
 import delay from "delay"
 import pWaitFor from "p-wait-for"
 import { serializeError } from "serialize-error"
+import { parseJSON } from "partial-json"
 import { Package } from "../../shared/package"
 import { formatToolInvocation } from "../tools/helpers/toolResultFormatting"
 
@@ -2807,6 +2808,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				const stream = this.attemptApiRequest(currentItem.retryAttempt ?? 0, { skipProviderRateLimit: true })
 				let assistantMessage = ""
 				let reasoningMessage = ""
+				let assistantXmlToolMessage = ""
+				let assistantXmlToolCallId = ""
 				let streamingFailedMessage: string | undefined = ""
 				let pendingGroundingSources: GroundingSource[] = []
 				this.isStreaming = true
@@ -3054,16 +3057,32 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								}
 								break
 							}
+							case "fake_tool_call": {
+								// During streaming, only accumulate fake_tool_call content without executing tools
+								// This maintains streaming output continuity
+								assistantXmlToolMessage += chunk.text
+
+								// Generate unique tool call ID if not already set
+								if (!assistantXmlToolCallId) {
+									assistantXmlToolCallId = uuidv7()
+								}
+
+								// Don't call presentAssistantMessage() here, wait until stream ends
+								break
+							}
 							case "text": {
 								assistantMessage += chunk.text
-								// Native tool calling: text chunks are plain text.
-								// Create or update a text content block directly
+								// // Native tool calling: text chunks are plain text.
+								// // Create or update a text content block directly
 								const lastBlock = this.assistantMessageContent[this.assistantMessageContent.length - 1]
-								const _assistantMessage = assistantMessage.includes("<tool_call>")
-									? assistantMessage.split("<tool_call>")[0]
-									: assistantMessage
+								const _assistantMessage = assistantMessage
+								// const _assistantMessage = assistantMessage.includes("<tool_call>")
+								// 	? assistantMessage.split("<tool_call>")[0]
+								// 	: assistantMessage
 								if (lastBlock?.type === "text" && lastBlock.partial) {
 									lastBlock.content = _assistantMessage
+								} else if (lastBlock?.type === "text" && lastBlock.partial === false) {
+									console.log("assistantMessage", assistantMessage)
 								} else {
 									this.assistantMessageContent.push({
 										type: "text",
@@ -3107,6 +3126,55 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								"\n\n[Response interrupted by a tool use result. Only one tool may be used at a time and should be placed at the end of the message.]"
 							break
 						}
+					}
+
+					// Process accumulated fake_tool_call after stream ends
+					// Content was only accumulated during streaming, now parse and execute tool calls
+					if (assistantXmlToolCallId && assistantXmlToolMessage) {
+						try {
+							const toolCallData = JSON.parse(assistantXmlToolMessage)
+							if (toolCallData && toolCallData.name && toolCallData.arguments) {
+								// Convert arguments to JSON string if not already
+								const argumentsStr =
+									typeof toolCallData.arguments === "string"
+										? toolCallData.arguments
+										: JSON.stringify(toolCallData.arguments)
+
+								// Use NativeToolCallParser to process tool call
+								NativeToolCallParser.startStreamingToolCall(assistantXmlToolCallId, toolCallData.name)
+								NativeToolCallParser.processStreamingChunk(assistantXmlToolCallId, argumentsStr)
+
+								// Finalize tool call and get ToolUse object
+								const toolUse = NativeToolCallParser.finalizeStreamingToolCall(assistantXmlToolCallId)
+
+								if (toolUse) {
+									// Add ToolUse to assistantMessageContent
+									this.assistantMessageContent.push(toolUse)
+
+									// Update streaming tool call index
+									const toolUseIndex = this.assistantMessageContent.length - 1
+									this.streamingToolCallIndices.set(assistantXmlToolCallId, toolUseIndex)
+
+									// Mark that we have new content to process
+									this.userMessageContentReady = false
+
+									// Present the tool call to user - presentAssistantMessage will execute
+									// tools sequentially and accumulate all results in userMessageContent
+									await presentAssistantMessage(this)
+								}
+							}
+						} catch (error) {
+							// JSON parsing failed, log warning
+							console.warn(
+								"[Task] Failed to parse fake_tool_call JSON after stream ended:",
+								assistantXmlToolMessage,
+								error,
+							)
+						}
+
+						// Clean up fake_tool_call state
+						assistantXmlToolMessage = ""
+						assistantXmlToolCallId = ""
 					}
 
 					// Finalize any remaining streaming tool calls that weren't explicitly ended

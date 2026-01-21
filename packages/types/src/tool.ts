@@ -15,6 +15,7 @@ export type ToolGroup = z.infer<typeof toolGroupsSchema>
  */
 
 export const toolNames = [
+	"fake_tool_call",
 	"execute_command",
 	"read_file",
 	"write_to_file",

@@ -381,6 +381,12 @@ export class NativeToolCallParser {
 		let nativeArgs: any = undefined
 
 		switch (name) {
+			case "fake_tool_call": {
+				// fake_tool_call 是一个虚拟工具，用于兼容不支持原生 function call 的模型
+				// 它不需要实际的 nativeArgs，因为它只是一个占位符
+				// 实际的工具调用会在 Task.ts 中通过解析 <tool_call> 标签来处理
+				break
+			}
 			case "read_file":
 				if (partialArgs.files && Array.isArray(partialArgs.files)) {
 					nativeArgs = { files: this.convertFileEntries(partialArgs.files) }
@@ -595,6 +601,7 @@ export class NativeToolCallParser {
 
 		const result: ToolUse = {
 			type: "tool_use" as const,
+			id, // Set the tool call ID required by the validation in presentAssistantMessage.ts
 			name,
 			params,
 			partial,
@@ -928,6 +935,7 @@ export class NativeToolCallParser {
 
 			const result: ToolUse<TName> = {
 				type: "tool_use" as const,
+				id: toolCall.id, // Set the tool call ID required by the validation in presentAssistantMessage.ts
 				name: resolvedName,
 				params,
 				partial: false, // Native tool calls are always complete when yielded

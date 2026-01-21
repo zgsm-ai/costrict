@@ -283,6 +283,7 @@ export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
 	run_slash_command: "run slash command",
 	generate_image: "generate images",
 	custom_tool: "use custom tools",
+	fake_tool_call: "use tool calls",
 } as const
 
 // Define available tool groups.
