@@ -144,7 +144,7 @@ export class SmartMistakeDetector {
 		if (scoreRatio >= 0.9) {
 			return {
 				shouldTrigger: true,
-				warning: t("smartMistakeDetector.errorCountNearLimit", {
+				warning: t("common:smartMistakeDetector.errorCountNearLimit", {
 					count: currentCount,
 					weightedScore: weightedScore.toFixed(1),
 					baseLimit: baseLimit.toFixed(1),
@@ -154,7 +154,7 @@ export class SmartMistakeDetector {
 		} else if (scoreRatio >= 0.75) {
 			return {
 				shouldTrigger: false,
-				warning: t("smartMistakeDetector.warningHighErrorCount", {
+				warning: t("common:smartMistakeDetector.warningHighErrorCount", {
 					count: currentCount,
 					weightedScore: weightedScore.toFixed(1),
 					baseLimit: baseLimit.toFixed(1),
@@ -164,7 +164,7 @@ export class SmartMistakeDetector {
 		} else if (scoreRatio >= 0.4) {
 			return {
 				shouldTrigger: false,
-				warning: t("smartMistakeDetector.multipleErrorsDetected", {
+				warning: t("common:smartMistakeDetector.multipleErrorsDetected", {
 					count: currentCount,
 				}),
 				canAutoRecover: this.canAutoRecover(),
@@ -203,7 +203,7 @@ export class SmartMistakeDetector {
 		this.cleanOldMistakes()
 
 		if (this.mistakes.length === 0) {
-			return t("smartMistakeDetector.noErrorRecords")
+			return t("common:smartMistakeDetector.noErrorRecords")
 		}
 
 		const now = Date.now()
@@ -221,27 +221,27 @@ export class SmartMistakeDetector {
 
 		const weightedScore = this.calculateWeightedScore()
 
-		let analysis = t("smartMistakeDetector.errorAnalysisReport", {
+		let analysis = t("common:smartMistakeDetector.errorAnalysisReport", {
 			minutes: timeRangeMinutes,
 		})
-		analysis += t("smartMistakeDetector.totalErrorCount", {
+		analysis += t("common:smartMistakeDetector.totalErrorCount", {
 			count: this.mistakes.length,
 		})
-		analysis += t("smartMistakeDetector.weightedScore", {
+		analysis += t("common:smartMistakeDetector.weightedScore", {
 			score: weightedScore.toFixed(1),
 		})
-		analysis += t("smartMistakeDetector.errorTypeDistribution")
+		analysis += t("common:smartMistakeDetector.errorTypeDistribution")
 
 		for (const [type, count] of Object.entries(typeCounts)) {
-			analysis += t("smartMistakeDetector.errorTypeItem", {
+			analysis += t("common:smartMistakeDetector.errorTypeItem", {
 				type,
 				count,
 			})
 		}
 
-		analysis += t("smartMistakeDetector.severityDistribution")
+		analysis += t("common:smartMistakeDetector.severityDistribution")
 		for (const [severity, count] of Object.entries(severityCounts)) {
-			analysis += t("smartMistakeDetector.severityItem", {
+			analysis += t("common:smartMistakeDetector.severityItem", {
 				severity,
 				count,
 			})
