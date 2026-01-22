@@ -25,8 +25,6 @@ import { SearchableSetting } from "./SearchableSetting"
 interface PromptsSettingsProps {
 	customSupportPrompts: Record<string, string | undefined>
 	setCustomSupportPrompts: (prompts: Record<string, string | undefined>) => void
-	customCondensingPrompt?: string
-	setCustomCondensingPrompt?: (value: string) => void
 	includeTaskHistoryInEnhance?: boolean
 	setIncludeTaskHistoryInEnhance?: (value: boolean) => void
 }
@@ -34,27 +32,14 @@ interface PromptsSettingsProps {
 const PromptsSettings = ({
 	customSupportPrompts,
 	setCustomSupportPrompts,
-	customCondensingPrompt: propsCustomCondensingPrompt,
-	setCustomCondensingPrompt: propsSetCustomCondensingPrompt,
 	includeTaskHistoryInEnhance: propsIncludeTaskHistoryInEnhance,
 	setIncludeTaskHistoryInEnhance: propsSetIncludeTaskHistoryInEnhance,
 }: PromptsSettingsProps) => {
 	const { t } = useAppTranslation()
 	const {
-		// listApiConfigMeta,
-		// enhancementApiConfigId,
-		// setEnhancementApiConfigId,
-		// condensingApiConfigId,
-		// setCondensingApiConfigId,
-		customCondensingPrompt: contextCustomCondensingPrompt,
-		setCustomCondensingPrompt: contextSetCustomCondensingPrompt,
 		includeTaskHistoryInEnhance: contextIncludeTaskHistoryInEnhance,
 		setIncludeTaskHistoryInEnhance: contextSetIncludeTaskHistoryInEnhance,
 	} = useExtensionState()
-
-	// Use props if provided, otherwise fall back to context
-	const customCondensingPrompt = propsCustomCondensingPrompt ?? contextCustomCondensingPrompt
-	const setCustomCondensingPrompt = propsSetCustomCondensingPrompt ?? contextSetCustomCondensingPrompt
 
 	// Use props if provided, otherwise fall back to context
 	const includeTaskHistoryInEnhance = propsIncludeTaskHistoryInEnhance ?? contextIncludeTaskHistoryInEnhance ?? true
@@ -84,46 +69,22 @@ const PromptsSettings = ({
 		// Use nullish coalescing to preserve empty strings
 		const finalValue = value ?? undefined
 
-		if (type === "CONDENSE") {
-			setCustomCondensingPrompt(finalValue ?? supportPrompt.default.CONDENSE)
-			// Also update the customSupportPrompts to trigger change detection
-			const updatedPrompts = { ...customSupportPrompts }
-			if (finalValue === undefined) {
-				delete updatedPrompts[type]
-			} else {
-				updatedPrompts[type] = finalValue
-			}
-			setCustomSupportPrompts(updatedPrompts)
+		const updatedPrompts = { ...customSupportPrompts }
+		if (finalValue === undefined) {
+			delete updatedPrompts[type]
 		} else {
-			const updatedPrompts = { ...customSupportPrompts }
-			if (finalValue === undefined) {
-				delete updatedPrompts[type]
-			} else {
-				updatedPrompts[type] = finalValue
-			}
-			setCustomSupportPrompts(updatedPrompts)
+			updatedPrompts[type] = finalValue
 		}
+		setCustomSupportPrompts(updatedPrompts)
 	}
 
 	const handleSupportReset = (type: SupportPromptType) => {
-		if (type === "CONDENSE") {
-			setCustomCondensingPrompt(supportPrompt.default.CONDENSE)
-			// Also update the customSupportPrompts to trigger change detection
-			const updatedPrompts = { ...customSupportPrompts }
-			delete updatedPrompts[type]
-			setCustomSupportPrompts(updatedPrompts)
-		} else {
-			const updatedPrompts = { ...customSupportPrompts }
-			delete updatedPrompts[type]
-			setCustomSupportPrompts(updatedPrompts)
-		}
+		const updatedPrompts = { ...customSupportPrompts }
+		delete updatedPrompts[type]
+		setCustomSupportPrompts(updatedPrompts)
 	}
 
 	const getSupportPromptValue = (type: SupportPromptType): string => {
-		if (type === "CONDENSE") {
-			// Preserve empty string - only fall back to default when value is nullish
-			return customCondensingPrompt ?? supportPrompt.default.CONDENSE
-		}
 		return supportPrompt.get(customSupportPrompts, type)
 	}
 

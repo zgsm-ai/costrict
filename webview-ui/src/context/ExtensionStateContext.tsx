@@ -65,8 +65,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setFollowupAutoApproveTimeoutMs: (value: number) => void // Setter for the timeout
 	condensingApiConfigId?: string
 	setCondensingApiConfigId: (value: string) => void
-	customCondensingPrompt?: string
-	setCustomCondensingPrompt: (value: string) => void
 	marketplaceItems?: any[]
 	marketplaceInstalledMetadata?: MarketplaceInstalledMetadata
 	profileThresholds: Record<string, number>
@@ -274,7 +272,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		experimentSettings: {},
 		enhancementApiConfigId: "",
 		condensingApiConfigId: "", // Default empty string for condensing API config ID
-		customCondensingPrompt: "", // Default empty string for custom condensing prompt
 		hasOpenedModeSelector: false, // Default to false (not opened yet)
 		hasClosedCodeReviewWelcomeTips: false, // Default to false (tips not dismissed yet)
 		autoApprovalEnabled: false,
@@ -733,8 +730,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setAutoCleanup: (value) => setState((prevState) => ({ ...prevState, autoCleanup: value })),
 		debug: state.debug ?? false,
 		setDebug: (value) => setState((prevState) => ({ ...prevState, debug: value })),
-		setCustomCondensingPrompt: (value) =>
-			setState((prevState) => ({ ...prevState, customCondensingPrompt: value })),
 		setProfileThresholds: (value) => setState((prevState) => ({ ...prevState, profileThresholds: value })),
 		includeDiagnosticMessages: state.includeDiagnosticMessages,
 		setIncludeDiagnosticMessages: (value) => {
