@@ -258,7 +258,9 @@ export class CodeReviewService {
 		this.updateTaskState({ timeoutId })
 
 		const resetMode = async () => {
-			await provider.handleModeSwitch(this.prevMode === "review" ? "code" : this.prevMode)
+			const preMode = this.prevMode === "review" ? "code" : this.prevMode
+			await provider.handleModeSwitch(preMode)
+			task.updateModel(preMode)
 			this.prevMode = ""
 		}
 

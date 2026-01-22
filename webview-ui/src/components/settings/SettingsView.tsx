@@ -695,9 +695,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						element.scrollIntoView({ behavior: "smooth", block: "center" })
 
 						// Add highlight animation
-						element.classList.add("settings-highlight")
+						element?.classList?.add("settings-highlight")
 						setTimeout(() => {
-							element.classList.remove("settings-highlight")
+							element?.classList?.remove("settings-highlight")
 						}, 1500)
 					}
 				}, 100) // Small delay to ensure tab content is rendered

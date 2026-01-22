@@ -128,7 +128,8 @@ const ModesView = () => {
 			if (m.apiProvider != null && apiConfiguration?.apiProvider !== "zgsm") {
 				return false
 			}
-			return true
+
+			return m.zgsmCodeModeGroup !== "hide"
 		})
 
 	// Direct update functions

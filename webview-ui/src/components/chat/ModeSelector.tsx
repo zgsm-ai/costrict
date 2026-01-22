@@ -86,6 +86,7 @@ export const ModeSelector = ({
 
 	// Notify parent when current mode is invalid so it can update its state
 	React.useEffect(() => {
+		if (apiConfiguration?.apiProvider === "zgsm" && value === "review") return
 		const isValidMode = modes.some((mode) => mode.slug === value)
 
 		if (isValidMode) {

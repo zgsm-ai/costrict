@@ -406,11 +406,9 @@ const App = () => {
 					</TabList>
 
 					{tab === "chat" && (
-						<div className="header-right flex absolute right-3">
+						<div className="header-right flex absolute right-3 gap-1">
 							<StandardTooltip content={t("chat:startNewTask.title")}>
-								<i
-									className="codicon codicon-add mr-1 cursor-pointer p-0.5"
-									onClick={() => resetTabs()}></i>
+								<i className="codicon codicon-add cursor-pointer p-0.5" onClick={() => resetTabs()}></i>
 							</StandardTooltip>
 							<StandardTooltip content={t("worktrees:title")}>
 								<i

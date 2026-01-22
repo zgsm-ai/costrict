@@ -459,6 +459,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						case "api_req_retry_delayed":
 						case "api_req_rate_limit_wait":
 							setSendingDisabled(true)
+							setEnableButtons(false)
 							break
 						case "api_req_started":
 							// Clear button state when a new API request starts
@@ -1696,7 +1697,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							onClick={() => setShowAnnouncementModal(false)}
 							className="absolute top-2 right-3 z-10"
 						/> */}
-						<VersionIndicator onClick={() => {}} className="absolute top-2 right-3 z-10" />
+						<VersionIndicator onClick={() => {}} className="fixed top-10 right-6 z-10" />
 
 						<RooHero />
 						{/* {telemetrySetting === "unset" && <TelemetryBanner />} */}

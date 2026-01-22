@@ -586,14 +586,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// For history items, use the stored values; for new tasks, we'll set them
 		// after getting state.
 		if (historyItem) {
-			this._taskMode = historyItem.mode || defaultModeSlug
+			this.updateModel(historyItem.mode || defaultModeSlug)
 			this._taskApiConfigName = historyItem.apiConfigName
 			this.taskModeReady = Promise.resolve()
 			this.taskApiConfigReady = Promise.resolve()
 			TelemetryService.instance.captureTaskRestarted(this.taskId)
 		} else {
 			// For new tasks, don't set the mode/apiConfigName yet - wait for async initialization.
-			this._taskMode = undefined
+			this.updateModel()
 			this._taskApiConfigName = undefined
 			this.taskModeReady = this.initializeTaskMode(provider)
 			this.taskApiConfigReady = this.initializeTaskApiConfigName(provider)
@@ -699,10 +699,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private async initializeTaskMode(provider: ClineProvider): Promise<void> {
 		try {
 			const state = await provider.getState()
-			this._taskMode = state?.mode || defaultModeSlug
+			this.updateModel(state?.mode || defaultModeSlug)
 		} catch (error) {
 			// If there's an error getting state, use the default mode
-			this._taskMode = defaultModeSlug
+			this.updateModel(defaultModeSlug)
 			// Use the provider's log method for better error visibility
 			const errorMessage = `Failed to initialize task mode: ${error instanceof Error ? error.message : String(error)}`
 			provider.log(errorMessage)
@@ -5001,7 +5001,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.smartMistakeDetector.clear()
 		}
 	}
-
+	updateModel(mode?: string) {
+		this._taskMode = mode
+	}
 	async switchModel() {
 		const oldModelId = getModelId(this.apiConfiguration)
 		const models = Object.entries(getModelsFromCache("zgsm") || {}).filter((m) => {
