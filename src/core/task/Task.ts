@@ -4088,6 +4088,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			profileThresholds = {},
 			showSpeedInfo = false,
 			automaticallyFocus = false,
+			experiments,
 		} = state ?? {}
 
 		// Get condensing configuration for automatic triggers.
@@ -4292,7 +4293,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			if (!provider) {
 				throw new Error("Provider reference lost during tool building")
 			}
-
 			const toolsResult = await buildNativeToolsArrayWithRestrictions({
 				provider,
 				cwd: this.cwd,
@@ -4304,6 +4304,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				maxConcurrentFileReads: state?.maxConcurrentFileReads ?? 5,
 				browserToolEnabled: state?.browserToolEnabled ?? true,
 				modelInfo,
+				liteMode: experiments?.liteMode ?? false,
 				diffEnabled: this.diffEnabled,
 				includeAllToolsWithRestrictions: supportsAllowedFunctionNames,
 			})

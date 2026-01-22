@@ -26,6 +26,27 @@ export { getMcpServerTools } from "./mcp_server"
 export { convertOpenAIToolToAnthropic, convertOpenAIToolsToAnthropic } from "./converters"
 export type { ReadFileToolOptions } from "./read_file"
 
+import {
+	getLiteWriteToFileDescription,
+	getLiteApplyPatchDescription,
+	getLiteSearchFilesDescription,
+	getLiteListFilesDescription,
+	getLiteExecuteCommandDescription,
+	getLiteAskFollowupQuestionDescription,
+	getLiteAttemptCompletionDescription,
+	getLiteBrowserActionDescription,
+	getLiteSwitchModeDescription,
+	getLiteNewTaskDescription,
+	getLiteUpdateTodoListDescription,
+	getLiteFetchInstructionsDescription,
+	getLiteCodebaseSearchDescription,
+	getLiteAccessMcpResourceDescription,
+	getLiteGenerateImageDescription,
+	getLiteRunSlashCommandDescription,
+	getLiteEditFileDescription,
+	getLiteAskMultipleChoiceDescription,
+} from "./lite-descriptions"
+
 /**
  * Options for customizing the native tools array.
  */
@@ -36,6 +57,50 @@ export interface NativeToolsOptions {
 	maxConcurrentFileReads?: number
 	/** Whether the model supports image processing (default: false) */
 	supportsImages?: boolean
+	liteMode?: boolean
+}
+
+function getLiteDescription(tool: OpenAI.Chat.ChatCompletionFunctionTool): string {
+	switch (tool.function!.name) {
+		case "access_mcp_resource":
+			return getLiteAccessMcpResourceDescription()
+		case "apply_patch":
+			return getLiteApplyPatchDescription()
+		case "ask_followup_question":
+			return getLiteAskFollowupQuestionDescription()
+		case "ask_multiple_choice":
+			return getLiteAskMultipleChoiceDescription()
+		case "attempt_completion":
+			return getLiteAttemptCompletionDescription()
+		case "browser_action":
+			return getLiteBrowserActionDescription()
+		case "codebase_search":
+			return getLiteCodebaseSearchDescription()
+		case "execute_command":
+			return getLiteExecuteCommandDescription()
+		case "fetch_instructions":
+			return getLiteFetchInstructionsDescription()
+		case "generate_image":
+			return getLiteGenerateImageDescription()
+		case "list_files":
+			return getLiteListFilesDescription()
+		case "new_task":
+			return getLiteNewTaskDescription()
+		case "run_slash_command":
+			return getLiteRunSlashCommandDescription()
+		case "edit_file":
+			return getLiteEditFileDescription()
+		case "search_files":
+			return getLiteSearchFilesDescription()
+		case "switch_mode":
+			return getLiteSwitchModeDescription()
+		case "update_todo_list":
+			return getLiteUpdateTodoListDescription()
+		case "write_to_file":
+			return getLiteWriteToFileDescription()
+		default:
+			return tool.function!.description!
+	}
 }
 
 /**
@@ -45,8 +110,7 @@ export interface NativeToolsOptions {
  * @returns Array of native tool definitions
  */
 export function getNativeTools(options: NativeToolsOptions = {}): OpenAI.Chat.ChatCompletionTool[] {
-	const { partialReadsEnabled = true, maxConcurrentFileReads = 5, supportsImages = false } = options
-
+	const { partialReadsEnabled = true, maxConcurrentFileReads = 5, supportsImages = false, liteMode = false } = options
 	const readFileOptions: ReadFileToolOptions = {
 		partialReadsEnabled,
 		maxConcurrentFileReads,
@@ -76,7 +140,18 @@ export function getNativeTools(options: NativeToolsOptions = {}): OpenAI.Chat.Ch
 		switchMode,
 		updateTodoList,
 		writeToFile,
-	] satisfies OpenAI.Chat.ChatCompletionTool[]
+	].map((item) => {
+		if (item.type === "function") {
+			return {
+				...item,
+				function: {
+					...item.function,
+					description: liteMode ? getLiteDescription(item) : item.function.description,
+				},
+			}
+		}
+		return item
+	}) satisfies OpenAI.Chat.ChatCompletionTool[]
 }
 
 // Backward compatibility: export default tools with line ranges enabled

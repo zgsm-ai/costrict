@@ -62,7 +62,22 @@ When asked about your creator, vendor, or company, respond with:
 - "I don't have information about specific vendors"`
 }
 
-export function getRulesSection(cwd: string, settings?: SystemPromptSettings): string {
+export function getRulesSection(
+	cwd: string,
+	settings?: SystemPromptSettings,
+	experiments?: Record<string, boolean>,
+): string {
+	if (experiments?.liteMode) {
+		return `====
+RULES
+- Base directory: ${cwd.toPosix()}
+- Use relative paths from base directory
+- Read files before editing
+- Wait for user confirmation after each tool use
+- Use attempt_completion to present final results
+- Be direct and technical, not conversational
+		`
+	}
 	// Get shell-appropriate command chaining operator
 	const chainOp = getCommandChainOperator()
 	const chainNote = getCommandChainNote()

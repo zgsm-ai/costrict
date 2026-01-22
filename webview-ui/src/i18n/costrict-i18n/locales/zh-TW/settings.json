@@ -94,6 +94,10 @@
 		"autoCondenseContextPercent": {
 			"description": "當上下文窗口達到此閾值時，CoStrict 將自動壓縮它。"
 		},
+		"LITE_MODE": {
+			"name": "Lite 模式",
+			"description": "啟用後，CoStrict 將使用 Lite 模式，這將減少上下文使用，從而減少 token 消耗。"
+		},
 		"INSERT_BLOCK": {
 			"description": "啟用實驗性的插入內容工具，允許 CoStrict 在特定行號插入內容，無需創建差異。"
 		},
