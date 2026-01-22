@@ -226,6 +226,9 @@ export const globalSettingsSchema = z.object({
 	hasClosedCodeReviewWelcomeTips: z.boolean().optional(),
 	lastModeExportPath: z.string().optional(),
 	lastModeImportPath: z.string().optional(),
+	lastSettingsExportPath: z.string().optional(),
+	lastTaskExportPath: z.string().optional(),
+	lastImageSavePath: z.string().optional(),
 
 	errorCode: z.record(z.string(), z.record(z.string(), z.string())).optional(),
 	/**
