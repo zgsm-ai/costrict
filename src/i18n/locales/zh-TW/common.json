@@ -290,6 +290,7 @@
 		"errorTypeDistribution": "- 錯誤類型分佈：\n",
 		"errorTypeItem": "  • {{type}}: {{count}} 次\n",
 		"severityDistribution": "- 嚴重程度分佈：\n",
-		"severityItem": "  • {{severity}}: {{count}} 次\n"
+		"severityItem": "  • {{severity}}: {{count}} 次\n",
+		"autoSwitchModelFailed": "自動切換模型失敗，請手動選擇其他模型"
 	}
 }

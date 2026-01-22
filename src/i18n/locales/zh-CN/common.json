@@ -295,6 +295,7 @@
 		"errorTypeDistribution": "- 错误类型分布：\n",
 		"errorTypeItem": "  • {{type}}: {{count}} 次\n",
 		"severityDistribution": "- 严重程度分布：\n",
-		"severityItem": "  • {{severity}}: {{count}} 次\n"
+		"severityItem": "  • {{severity}}: {{count}} 次\n",
+		"autoSwitchModelFailed": "自动切换模型失败，请手动选择其他模型"
 	}
 }

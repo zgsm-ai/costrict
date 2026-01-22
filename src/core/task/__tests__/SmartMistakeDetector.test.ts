@@ -59,8 +59,10 @@ describe("SmartMistakeDetector", () => {
 				expect(result.canAutoRecover).toBe(true)
 			})
 
-			it("should not trigger at exactly 40% threshold", () => {
-				for (let i = 0; i < 4; i++) {
+			it("should not trigger at exactly 50% threshold", () => {
+				// 5 个 NO_TOOL_USE (medium) = 5 × (1.0 × 1.0) = 5.0
+				// scoreRatio = 5.0 / 10 = 0.5 = 50%
+				for (let i = 0; i < 5; i++) {
 					detector.addMistake(MistakeType.NO_TOOL_USE)
 				}
 				const result = detector.checkLimit(10)
@@ -357,20 +359,29 @@ describe("SmartMistakeDetector", () => {
 		it("should calculate progressive warnings correctly", () => {
 			const baseLimit = 20
 
-			for (let i = 0; i < 8; i++) {
+			// 第一阶段：50% 阈值
+			// 10 个 NO_TOOL_USE (medium) = 10 × (1.0 × 1.0) = 10.0
+			// scoreRatio = 10.0 / 20 = 0.5 = 50%
+			for (let i = 0; i < 10; i++) {
 				detector.addMistake(MistakeType.NO_TOOL_USE)
 			}
 			let result = detector.checkLimit(baseLimit)
 			expect(result.shouldTrigger).toBe(false)
 			expect(result.warning).toBeDefined()
 
-			for (let i = 0; i < 7; i++) {
+			// 第二阶段：75% 阈值
+			// 总共 15 个 NO_TOOL_USE = 15 × (1.0 × 1.0) = 15.0
+			// scoreRatio = 15.0 / 20 = 0.75 = 75%
+			for (let i = 0; i < 5; i++) {
 				detector.addMistake(MistakeType.NO_TOOL_USE)
 			}
 			result = detector.checkLimit(baseLimit)
 			expect(result.shouldTrigger).toBe(false)
 			expect(result.warning).toBeDefined()
 
+			// 第三阶段：90% 阈值（触发限制）
+			// 总共 18 个 NO_TOOL_USE = 18 × (1.0 × 1.0) = 18.0
+			// scoreRatio = 18.0 / 20 = 0.9 = 90%
 			for (let i = 0; i < 3; i++) {
 				detector.addMistake(MistakeType.NO_TOOL_USE)
 			}

@@ -83,7 +83,7 @@ export class SmartMistakeDetector {
 	private readonly timeWindowMs: number
 
 	/** Default time window: 10 minutes */
-	private static readonly DEFAULT_TIME_WINDOW_MS = 10 * 60 * 1000
+	private static readonly DEFAULT_TIME_WINDOW_MS = 5 * 60 * 1000
 
 	/** Auto switch model enabled flag */
 	private readonly autoSwitchModelEnabled: boolean = false
@@ -126,7 +126,7 @@ export class SmartMistakeDetector {
 	 * Check if limit is reached
 	 *
 	 * Use weighted score instead of simple count for more intelligent mistake detection.
-	 * Progressive warning mechanism issues warnings when reaching 40%, 75%, 90% of the threshold.
+	 * Progressive warning mechanism issues warnings when reaching 50%, 75%, 90% of the threshold.
 	 *
 	 * @param baseLimit - Base limit count
 	 * @returns Check result, including whether to trigger, warning message, and whether auto recovery is possible
@@ -161,7 +161,7 @@ export class SmartMistakeDetector {
 				}),
 				canAutoRecover: this.canAutoRecover(),
 			}
-		} else if (scoreRatio >= 0.4) {
+		} else if (scoreRatio >= 0.5) {
 			return {
 				shouldTrigger: false,
 				warning: t("common:smartMistakeDetector.multipleErrorsDetected", {
@@ -319,18 +319,59 @@ export class SmartMistakeDetector {
 	}
 
 	/**
+	 * Get mistakes within the specified time period
+	 *
+	 * @param minutes - Time period (minutes)
+	 * @returns Array of mistake records within the time period
+	 */
+	getMistakesInLastMinutes(minutes: number): MistakeRecord[] {
+		this.cleanOldMistakes()
+		const now = Date.now()
+		const timeThreshold = now - minutes * 60 * 1000
+		return this.mistakes.filter((m) => m.timestamp >= timeThreshold)
+	}
+
+	/**
 	 * Check if should auto switch model
 	 *
-	 * Determine if model should be automatically switched based on consecutive mistake count.
-	 * This method should be called when consecutiveMistakeCount exceeds the configured threshold.
+	 * Determine if model should be automatically switched based on weighted score.
+	 * Uses internal weighted score calculation instead of simple consecutive count.
+	 * Also checks for high-severity error density in short time periods.
 	 *
-	 * @param consecutiveMistakeCount - Current consecutive mistake count from task
 	 * @returns Whether model should be switched
 	 */
-	shouldAutoSwitchModel(consecutiveMistakeCount: number): boolean {
+	shouldAutoSwitchModel(): boolean {
 		if (!this.autoSwitchModelEnabled) {
 			return false
 		}
-		return consecutiveMistakeCount >= this.autoSwitchModelThreshold
+
+		// Check error density in short time period (3 or more high-severity errors within 5 minutes)
+		const recentMistakes = this.getMistakesInLastMinutes(5)
+		const highSeverityCount = recentMistakes.filter((m) => m.severity === "high").length
+
+		if (highSeverityCount >= 3) {
+			return true // Frequent high-severity errors in short time, switch immediately
+		}
+
+		// Otherwise use weighted score judgment
+		const weightedScore = this.calculateWeightedScore()
+		return weightedScore >= this.autoSwitchModelThreshold
+	}
+
+	/**
+	 * Record successful operation
+	 *
+	 * Used to balance error records and avoid over-sensitivity
+	 */
+	recordSuccess(): void {
+		// If there are error records, consider reducing the severity of recent errors
+		// or subtracting a certain value from the weighted score
+		if (this.mistakes.length > 0) {
+			// Simple implementation: remove the earliest low-severity error
+			const lowSeverityIndex = this.mistakes.findIndex((m) => m.severity === "low")
+			if (lowSeverityIndex !== -1) {
+				this.mistakes.splice(lowSeverityIndex, 1)
+			}
+		}
 	}
 }

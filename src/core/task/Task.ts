@@ -361,6 +361,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 	// Tool Use
 	consecutiveMistakeCount: number = 0
+	consecutiveSuccessCount: number = 0
 	consecutiveMistakeLimit: number
 	consecutiveMistakeCountForApplyDiff: Map<string, number> = new Map()
 	consecutiveMistakeCountForEditFile: Map<string, number> = new Map()
@@ -4425,6 +4426,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.currentRequestAbortController = undefined
 			const isContextWindowExceededError = checkContextWindowExceededError(error)
 
+			// Record API error in SmartMistakeDetector
+			this.consecutiveMistakeCount++
+			this.smartMistakeDetector?.addMistake(MistakeType.TOOL_FAILURE, `API request failed: ${errorMsg}`, "high")
+
 			// If it's a context window error and we haven't exceeded max retries for this error type
 			if (isContextWindowExceededError && retryAttempt < MAX_CONTEXT_WINDOW_RETRIES) {
 				console.warn(
@@ -4556,7 +4561,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				}
 				if (
 					this.apiConfiguration.apiProvider === "zgsm" &&
-					this.smartMistakeDetector?.shouldAutoSwitchModel(retryAttempt)
+					this.smartMistakeDetector?.shouldAutoSwitchModel()
 				) {
 					try {
 						await this.switchModel()
@@ -4565,6 +4570,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						return
 					} catch (error) {
 						console.error("Failed to auto switch model:", error)
+						await this.say("error", t("common:smartMistakeDetector.autoSwitchModelFailed"))
 					}
 				}
 				await delay(1000)
@@ -4747,6 +4753,16 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		this.toolUsage[toolName].attempts++
+
+		// Tool executed successfully
+		this.consecutiveSuccessCount++
+
+		// After 3 consecutive successes, reduce error weight
+		if (this.consecutiveSuccessCount >= 3) {
+			this.consecutiveMistakeCount = Math.max(0, this.consecutiveMistakeCount - 1)
+			this.consecutiveSuccessCount = 0 // Reset success count
+			this.smartMistakeDetector?.recordSuccess()
+		}
 	}
 
 	public recordToolError(toolName: ToolName, error?: string) {
@@ -4760,6 +4776,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (error) {
 			this.emit(RooCodeEventName.TaskToolFailed, this.taskId, toolName, error)
 		}
+
+		// Record tool failure in SmartMistakeDetector
+		this.consecutiveMistakeCount++
+		this.consecutiveSuccessCount = 0 // Reset success count
+		this.smartMistakeDetector?.addMistake(
+			MistakeType.TOOL_FAILURE,
+			`Tool ${toolName} failed: ${error || "unknown error"}`,
+			"high",
+		)
 	}
 
 	// Getters
@@ -4940,7 +4965,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				"medium",
 			)
 
-			if (this.smartMistakeDetector.shouldAutoSwitchModel(this.consecutiveMistakeCount)) {
+			if (this.smartMistakeDetector.shouldAutoSwitchModel()) {
 				try {
 					await this.switchModel()
 					this.consecutiveMistakeCount = 0
@@ -4948,6 +4973,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					return
 				} catch (error) {
 					console.error("Failed to auto switch model:", error)
+					await this.say("error", t("common:smartMistakeDetector.autoSwitchModelFailed"))
 				}
 			}
 		}
