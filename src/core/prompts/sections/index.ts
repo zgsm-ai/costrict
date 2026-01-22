@@ -9,3 +9,6 @@ export { getCapabilitiesSection } from "./capabilities"
 export { getModesSection } from "./modes"
 export { markdownFormattingSection } from "./markdown-formatting"
 export { getSkillsSection } from "./skills"
+
+// Lite versions - simplified and concise prompts
+export { getLiteToolUseGuidelinesSection, getLiteCapabilitiesSection, getLiteObjectiveSection } from "./lite-sections"

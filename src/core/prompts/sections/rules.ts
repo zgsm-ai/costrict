@@ -67,7 +67,7 @@ export function getRulesSection(
 	settings?: SystemPromptSettings,
 	experiments?: Record<string, boolean>,
 ): string {
-	if (experiments?.liteMode) {
+	if (experiments?.useLitePrompts) {
 		return `====
 RULES
 - Base directory: ${cwd.toPosix()}

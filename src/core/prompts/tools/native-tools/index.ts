@@ -57,7 +57,7 @@ export interface NativeToolsOptions {
 	maxConcurrentFileReads?: number
 	/** Whether the model supports image processing (default: false) */
 	supportsImages?: boolean
-	liteMode?: boolean
+	useLitePrompts?: boolean
 }
 
 function getLiteDescription(tool: OpenAI.Chat.ChatCompletionFunctionTool): string {
@@ -110,7 +110,12 @@ function getLiteDescription(tool: OpenAI.Chat.ChatCompletionFunctionTool): strin
  * @returns Array of native tool definitions
  */
 export function getNativeTools(options: NativeToolsOptions = {}): OpenAI.Chat.ChatCompletionTool[] {
-	const { partialReadsEnabled = true, maxConcurrentFileReads = 5, supportsImages = false, liteMode = false } = options
+	const {
+		partialReadsEnabled = true,
+		maxConcurrentFileReads = 5,
+		supportsImages = false,
+		useLitePrompts = false,
+	} = options
 	const readFileOptions: ReadFileToolOptions = {
 		partialReadsEnabled,
 		maxConcurrentFileReads,
@@ -146,7 +151,7 @@ export function getNativeTools(options: NativeToolsOptions = {}): OpenAI.Chat.Ch
 				...item,
 				function: {
 					...item.function,
-					description: liteMode ? getLiteDescription(item) : item.function.description,
+					description: useLitePrompts ? getLiteDescription(item) : item.function.description,
 				},
 			}
 		}

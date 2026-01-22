@@ -390,15 +390,29 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			} else {
 				if (_mid?.includes("qwen")) {
 					const xmlToolGuide = `
-## Tool Call Guide (IMPORTANT):
-your answer response should be in xml format. like this:
-\`\`\`
-<tool_call>{
-"name":  {{tool_name}}, // the name of the tool
-"arguments":  {{tool_args}} // the arguments of the tool
-}</tool_call>
-\`\`\`
-`
+	## Tool Call Format (CRITICAL):
+	When calling a tool, you MUST wrap the tool call parameters in a <tool_call> XML tag containing a valid JSON object.
+	
+	Required format:
+	\`\`\`xml
+	<tool_call>
+	{
+			"name": "tool_name_here",
+			"arguments": {
+				 "param1": "value1",
+				 "param2": "value2"
+			}
+	}
+	</tool_call>
+	\`\`\`
+	
+	Requirements:
+	- The content inside <tool_call> tags MUST be valid JSON
+	- "name" field: string, the exact name of the tool to call
+	- "arguments" field: object, containing all required parameters for the tool
+	- Do NOT include comments in the JSON
+	- Ensure proper JSON syntax (double quotes, no trailing commas)
+	`
 					if (Array.isArray(systemMessage.content)) {
 						systemMessage.content[0].text = systemMessage.content[0].text + "\n" + xmlToolGuide
 					} else {
@@ -563,7 +577,8 @@ your answer response should be in xml format. like this:
 		if (isQwen) {
 			// mockToolId = "fake_tool_call"
 			matcher = new TagMatcher("tool_call", (chunk) => {
-				console.log("tool_call", chunk)
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+				isDev && this.logger.info(`[ResponseID ${this.options.zgsmModelId} fake tool call]:`, requestId, chunk)
 				return {
 					type: chunk.matched ? "fake_tool_call" : "text",
 					text: chunk.data,

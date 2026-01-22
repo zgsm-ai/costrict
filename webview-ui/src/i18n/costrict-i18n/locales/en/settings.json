@@ -94,7 +94,7 @@
 		"autoCondenseContextPercent": {
 			"description": "When the context window reaches this threshold, CoStrict will automatically condense it."
 		},
-		"LITE_MODE": {
+		"USE_LITE_PROMPTS": {
 			"name": "Lite Mode",
 			"description": "When enabled, CoStrict will use Lite mode, which will reduce context usage and reduce token consumption."
 		},

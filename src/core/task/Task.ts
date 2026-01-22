@@ -4305,7 +4305,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				maxConcurrentFileReads: state?.maxConcurrentFileReads ?? 5,
 				browserToolEnabled: state?.browserToolEnabled ?? true,
 				modelInfo,
-				liteMode: experiments?.liteMode ?? false,
+				useLitePrompts: experiments?.useLitePrompts ?? false,
 				diffEnabled: this.diffEnabled,
 				includeAllToolsWithRestrictions: supportsAllowedFunctionNames,
 			})

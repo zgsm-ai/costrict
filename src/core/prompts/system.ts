@@ -27,7 +27,11 @@ import {
 	addCustomInstructions,
 	markdownFormattingSection,
 	getSkillsSection,
+	getLiteToolUseGuidelinesSection,
+	getLiteCapabilitiesSection,
+	getLiteObjectiveSection,
 } from "./sections"
+import { experiments as experimentsUtil, EXPERIMENT_IDS } from "../../shared/experiments"
 import { defaultLang } from "../../utils/language"
 import { getShell } from "../../utils/shell"
 
@@ -125,17 +129,20 @@ async function generatePrompt(data: {
 	// Tools catalog is not included in the system prompt in native-only mode.
 	const toolsCatalog = ""
 
+	// Check if lite prompts experiment is enabled
+	const useLitePrompts = experimentsUtil.isEnabled(experiments ?? {}, EXPERIMENT_IDS.USE_LITE_PROMPTS)
+
 	const basePrompt = `${roleDefinition}
 
 ${markdownFormattingSection()}
 
 ${getSharedToolUseSection(effectiveProtocol, experiments)}${toolsCatalog}
 
- ${getToolUseGuidelinesSection(experiments)}
+	${useLitePrompts ? getLiteToolUseGuidelinesSection(experiments) : getToolUseGuidelinesSection(experiments)}
 
 ${mcpServersSection}
 
-${getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
+${useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
 
 ${modesSection}
 ${skillsSection ? `\n${skillsSection}` : ""}
@@ -143,7 +150,7 @@ ${getRulesSection(cwd, settings, experiments)}
 
 ${getSystemInfoSection(cwd, shell)}
 
-${getObjectiveSection()}
+${useLitePrompts ? getLiteObjectiveSection() : getObjectiveSection()}
 
 ${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
 	language: language ?? formatLanguage(await defaultLang()),
