@@ -251,6 +251,16 @@ export async function handleCreateWorktreeInclude(provider: ClineProvider, conte
 
 	try {
 		await worktreeIncludeService.createWorktreeInclude(cwd, content)
+
+		// Open the file in the editor for easy editing
+		try {
+			const filePath = path.join(cwd, ".worktreeinclude")
+			const document = await vscode.workspace.openTextDocument(filePath)
+			await vscode.window.showTextDocument(document)
+		} catch {
+			// Opening the file in editor is a convenience feature - don't fail the operation
+		}
+
 		return {
 			success: true,
 			message: ".worktreeinclude file created",
