@@ -38,6 +38,7 @@ import { getEditorType } from "../../utils/getEditorType"
 import { ChatCompletionChunk } from "openai/resources/index.mjs"
 import { convertToZAiFormat } from "../transform/zai-format"
 import { isDebug } from "../../utils/getDebugState"
+import { xmlLiteToolGuide } from "../../core/prompts/tools/native-tools/lite-descriptions"
 
 const autoModeModelId = "Auto"
 const isDev = process.env.NODE_ENV === "development"
@@ -389,34 +390,10 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				]
 			} else {
 				if (_mid?.includes("qwen")) {
-					const xmlToolGuide = `
-	## Tool Call Format (CRITICAL):
-	When calling a tool, you MUST wrap the tool call parameters in a <tool_call> XML tag containing a valid JSON object.
-	
-	Required format:
-	\`\`\`xml
-	<tool_call>
-	{
-			"name": "tool_name_here",
-			"arguments": {
-				 "param1": "value1",
-				 "param2": "value2"
-			}
-	}
-	</tool_call>
-	\`\`\`
-	
-	Requirements:
-	- The content inside <tool_call> tags MUST be valid JSON
-	- "name" field: string, the exact name of the tool to call
-	- "arguments" field: object, containing all required parameters for the tool
-	- Do NOT include comments in the JSON
-	- Ensure proper JSON syntax (double quotes, no trailing commas)
-	`
 					if (Array.isArray(systemMessage.content)) {
-						systemMessage.content[0].text = systemMessage.content[0].text + "\n" + xmlToolGuide
+						systemMessage.content[0].text = systemMessage.content[0].text + "\n" + xmlLiteToolGuide
 					} else {
-						systemMessage.content = systemMessage.content + "\n" + xmlToolGuide
+						systemMessage.content = systemMessage.content + "\n" + xmlLiteToolGuide
 					}
 				}
 				convertedMessages = [

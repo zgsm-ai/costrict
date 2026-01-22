@@ -120,3 +120,28 @@ Params: title (optional), questions (REQUIRED)
   - allow_multiple (optional): true for multi-select, false for single-select (default: false)
 CRITICAL: Every question and every option MUST have an id field - results cannot be matched without ids.`
 }
+
+export const xmlLiteToolGuide = `
+	## Tool Call Format (CRITICAL):
+	When calling a tool, you MUST wrap the tool call parameters in a <tool_call> XML tag containing a valid JSON object.
+	
+	Required format:
+	\`\`\`xml
+	<tool_call>
+	{
+			"name": "tool_name_here",
+			"arguments": {
+				 "param1": "value1",
+				 "param2": "value2"
+			}
+	}
+	</tool_call>
+	\`\`\`
+	
+	Requirements:
+	- The content inside <tool_call> tags MUST be valid JSON
+	- "name" field: string, the exact name of the tool to call
+	- "arguments" field: object, containing all required parameters for the tool
+	- Do NOT include comments in the JSON
+	- Ensure proper JSON syntax (double quotes, no trailing commas)
+	`
