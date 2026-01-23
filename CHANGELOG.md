@@ -1,5 +1,19 @@
 # CoStrict Change Log
 
+## [2.2.0]
+
+- Added worktree functionality, supporting switching between multiple branches
+- Added review history feature, supporting viewing and managing historical review records
+- Added concise prompt mode to reduce token consumption
+- Improved intelligent error detection and automatic model switching logic
+- Improved task mode processing and mode selection logic
+- Improved IPC authentication error handling and retry logic
+- Removed all XML protocol code
+- Provided lightweight XML compatibility for Costrict Provider
+- UI experience improvements
+- Fixed known issues
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/6eb3d5dd0ae33f61f69b62e400311f35459ca87b)
+
 ## [2.1.19]
 
 - Added GBK encoding support for Windows system commands, including tasklist, ping, netstat, etc.

@@ -85,33 +85,30 @@ export const CollapsibleMarkdownBlock = memo(({ markdown, collapseWithoutScroll 
 			</div>
 			{collapseWithoutScroll && showExpandButton && !isExpanded && (
 				<div
-					role="button"
-					tabIndex={0}
-					onClick={() => setIsExpanded(true)}
-					onKeyDown={(event) => {
-						if (event.key === "Enter" || event.key === " ") {
-							event.preventDefault()
-							setIsExpanded(true)
-						}
-					}}
 					style={{
-						// marginTop: "6px",
-						height: "40px",
 						position: "absolute",
-						bottom: "0",
-						width: "100%",
+						bottom: 0,
+						left: 0,
+						right: 0,
+						height: "80px",
+						background: "linear-gradient(to top, var(--vscode-editor-background), transparent)",
 						display: "flex",
 						alignItems: "center",
 						justifyContent: "center",
-						cursor: "pointer",
-						background:
-							"linear-gradient(to bottom, rgba(255, 255, 255, 0.3), var(--vscode-descriptionForeground))",
-						color: "var(--vscode-input-background)",
-						fontSize: "16px",
-						fontStyle: "italic",
-						fontWeight: "bold",
 					}}>
-					{t("chat:markdown.expandPrompt")}
+					<VSCodeButton
+						appearance="secondary"
+						style={{
+							borderRadius: "100px",
+							opacity: isHovering ? 1 : 0,
+							transition: "opacity 0.2s ease-in-out",
+							pointerEvents: isHovering ? "auto" : "none",
+						}}
+						onClick={() => {
+							setIsExpanded(true)
+						}}>
+						{t("chat:markdown.expandPrompt")}
+					</VSCodeButton>
 				</div>
 			)}
 		</div>
