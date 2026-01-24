@@ -1,5 +1,19 @@
 # CoStrict Change Log
 
+## [2.2.1]
+
+- Added custom condense prompt editing in Context Management settings.
+- Re-architected intelligent context condensation algorithm (V2).
+- Introduced `zgsmCodeMode` filtering for mode selection.
+- Updated Worktrees description for generality.
+- Optimized subtask display in chat history with count and expand/collapse.
+- Improved Token progress display text and labels.
+- Removed experimental "Power Steering" mode.
+- Removed experimental "Multi-File Apply Diff" feature.
+- Updated English, Simplified Chinese, and Traditional Chinese localization texts.
+- Fix gemini-cli response parsing.
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/c7910a99c7e88027a796d1877d3423e303955034)
+
 ## [2.2.0]
 
 - Added worktree functionality, supporting switching between multiple branches
