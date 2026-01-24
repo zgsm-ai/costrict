@@ -116,7 +116,8 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should trigger with TOOL_FAILURE weight", () => {
-				for (let i = 0; i < 5; i++) {
+				// TOOL_FAILURE weight is 1, need 9 to reach 90% of limit 10
+				for (let i = 0; i < 9; i++) {
 					detector.addMistake(MistakeType.TOOL_FAILURE)
 				}
 				const result = detector.checkLimit(10)
@@ -124,7 +125,8 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should trigger with REPEATED_ACTION weight", () => {
-				for (let i = 0; i < 7; i++) {
+				// REPEATED_ACTION weight is 0.5, need 18 to reach 90% of limit 10
+				for (let i = 0; i < 18; i++) {
 					detector.addMistake(MistakeType.REPEATED_ACTION)
 				}
 				const result = detector.checkLimit(10)
@@ -132,7 +134,8 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should trigger with TIMEOUT weight", () => {
-				for (let i = 0; i < 5; i++) {
+				// TIMEOUT weight is 1, need 9 to reach 90% of limit 10
+				for (let i = 0; i < 9; i++) {
 					detector.addMistake(MistakeType.TIMEOUT)
 				}
 				const result = detector.checkLimit(10)
@@ -142,16 +145,19 @@ describe("SmartMistakeDetector", () => {
 
 		describe("severity weight calculation", () => {
 			it("should use low severity weight", () => {
-				for (let i = 0; i < 10; i++) {
+				// TOOL_FAILURE weight is 1, low severity is 0.5
+				// 18 * (1 * 0.5) = 9, which reaches the 90% threshold
+				for (let i = 0; i < 18; i++) {
 					detector.addMistake(MistakeType.TOOL_FAILURE, `low${i}`, "low")
 				}
 				const result = detector.checkLimit(10)
-				// 10 * (2 * 0.5) = 10, which exceeds the 90% threshold of 9
 				expect(result.shouldTrigger).toBe(true)
 			})
 
 			it("should use medium severity weight", () => {
-				for (let i = 0; i < 5; i++) {
+				// TOOL_FAILURE weight is 1, medium severity is 1.0
+				// 9 * (1 * 1.0) = 9, which reaches the 90% threshold
+				for (let i = 0; i < 9; i++) {
 					detector.addMistake(MistakeType.TOOL_FAILURE, `med${i}`, "medium")
 				}
 				const result = detector.checkLimit(10)
@@ -159,7 +165,9 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should use high severity weight", () => {
-				for (let i = 0; i < 3; i++) {
+				// TOOL_FAILURE weight is 1, high severity is 2.0
+				// 5 * (1 * 2.0) = 10, which exceeds the 90% threshold of 9
+				for (let i = 0; i < 5; i++) {
 					detector.addMistake(MistakeType.TOOL_FAILURE, `high${i}`, "high")
 				}
 				const result = detector.checkLimit(10)
@@ -195,9 +203,13 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should not allow auto recovery when all mistakes are high severity", () => {
-				detector.addMistake(MistakeType.TOOL_FAILURE, "high1", "high")
-				detector.addMistake(MistakeType.TOOL_FAILURE, "high2", "high")
+				// Need at least 5 high severity errors to reach 50% threshold
+				// so canAutoRecover is called (5 * 1 * 2 = 10 >= 5)
+				for (let i = 0; i < 5; i++) {
+					detector.addMistake(MistakeType.TOOL_FAILURE, `high${i}`, "high")
+				}
 				const result = detector.checkLimit(10)
+				// 100% high severity, so canAutoRecover should be false
 				expect(result.canAutoRecover).toBe(false)
 			})
 		})

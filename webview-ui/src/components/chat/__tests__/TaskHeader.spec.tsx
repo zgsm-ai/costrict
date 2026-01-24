@@ -183,7 +183,7 @@ describe("TaskHeader", () => {
 		expect(handleCondenseContext).not.toHaveBeenCalled()
 	})
 
-	describe("DismissibleUpsell behavior", () => {
+	describe.skip("DismissibleUpsell behavior (currently disabled in TaskHeader.tsx)", () => {
 		beforeEach(() => {
 			vi.useFakeTimers()
 			// Reset the mock state before each test

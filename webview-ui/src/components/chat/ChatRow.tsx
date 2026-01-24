@@ -436,7 +436,7 @@ export const ChatRowContent = ({
 					) : (
 						<span style={{ color: successColor, fontWeight: "bold" }}>
 							{t("chat:taskCompleted")}{" "}
-							{reviewTask.status === ReviewTaskStatus.COMPLETED && (
+							{reviewTask?.status === ReviewTaskStatus.COMPLETED && (
 								<a
 									href="javascript:void(0)"
 									onClick={(e) => {
@@ -525,7 +525,7 @@ export const ChatRowContent = ({
 		isLast,
 		isStreaming,
 		language,
-		reviewTask.status,
+		reviewTask?.status,
 		apiReqCancelReason,
 		cost,
 		apiRequestFailedMessage,
@@ -1254,10 +1254,10 @@ export const ChatRowContent = ({
 										<ArrowRight className="size-3" />
 									</button>
 								)}
-								{"or"}
 								{(completedChildTaskId || message.subtaskId) &&
 									!(window as any).isJetbrainsPlatform && (
 										<>
+											{"or"}
 											<button
 												style={{ color: linkColor }}
 												className="cursor-pointer flex gap-1 items-center text-vscode-descriptionForeground hover:text-vscode-descriptionForeground hover:underline font-normal"
