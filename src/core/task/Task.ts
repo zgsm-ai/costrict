@@ -3909,6 +3909,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			apiConfiguration,
 			terminalShellIntegrationDisabled,
 			enableSubfolderRules,
+			zgsmCodeMode
 		} = state ?? {}
 
 		return await (async () => {
@@ -3957,6 +3958,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						.getConfiguration(Package.name)
 						.get<boolean>("newTaskRequireTodos", false),
 					isStealthModel: modelInfo?.isStealthModel,
+					zgsmCodeMode,
 				},
 				undefined, // todoList
 				this.api.getModel().id,

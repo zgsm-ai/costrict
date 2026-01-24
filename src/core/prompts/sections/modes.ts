@@ -8,6 +8,7 @@ import { ensureSettingsDirectoryExists } from "../../../utils/globalContext"
 export async function getModesSection(
 	context: vscode.ExtensionContext,
 	skipXmlExamples: boolean = false,
+	zgsmCodeMode?: string
 ): Promise<string> {
 	// Make sure path gets created
 	await ensureSettingsDirectoryExists(context)
@@ -21,6 +22,11 @@ MODES
 
 - These are the currently available modes:
 ${allModes
+	.filter((mode: ModeConfig) => {
+		if (!mode.zgsmCodeModeGroup || mode.slug === "review") return true
+		if (mode.zgsmCodeModeGroup) return mode.zgsmCodeModeGroup.split(",").includes(zgsmCodeMode ?? "vibe")
+		return true
+	})
 	.map((mode: ModeConfig) => {
 		let description: string
 		if (mode.whenToUse && mode.whenToUse.trim() !== "") {

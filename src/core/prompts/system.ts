@@ -68,6 +68,7 @@ async function generatePrompt(data: {
 	todoList?: TodoItem[]
 	modelId?: string
 	shell?: string
+	zgsmCodeMode?: string
 	skillsManager?: SkillsManager
 }): Promise<string> {
 	let {
@@ -91,6 +92,7 @@ async function generatePrompt(data: {
 		settings,
 		todoList,
 		modelId,
+		zgsmCodeMode,
 		shell,
 	} = data
 	if (!context) {
@@ -113,7 +115,7 @@ async function generatePrompt(data: {
 	const effectiveProtocol = "native"
 
 	const [modesSection, skillsSection] = await Promise.all([
-		getModesSection(context),
+		getModesSection(context, undefined, zgsmCodeMode),
 		getSkillsSection(skillsManager, mode as string),
 	])
 
@@ -245,5 +247,6 @@ ${customInstructions}`
 		modelId,
 		shell,
 		skillsManager,
+		zgsmCodeMode: settings?.zgsmCodeMode
 	})
 }

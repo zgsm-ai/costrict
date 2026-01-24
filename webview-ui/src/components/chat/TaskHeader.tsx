@@ -333,7 +333,7 @@ const TaskHeader = ({
 									</StandardTooltip>
 								</>
 							)}
-							{percentage > 70 && condenseButton}
+							{percentage >= 50 && condenseButton}
 						</div>
 						{showBrowserGlobe && (
 							<div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>

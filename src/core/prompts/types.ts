@@ -9,6 +9,7 @@ export interface SystemPromptSettings {
 	/** When true, recursively discover and load .roo/rules from subdirectories */
 	enableSubfolderRules?: boolean
 	newTaskRequireTodos: boolean
+	zgsmCodeMode?: string
 	terminalShellIntegrationDisabled?: boolean
 	/** When true, model should hide vendor/company identity in responses */
 	isStealthModel?: boolean
