@@ -30,6 +30,7 @@ import {
 	Users2,
 	Trash2,
 	ArrowLeft,
+	GitCommitVertical,
 } from "lucide-react"
 import { isEqual } from "lodash-es"
 import {
@@ -85,6 +86,7 @@ import { UISettings } from "./UISettings"
 import { AutoCleanupSettings } from "./AutoCleanupSettings"
 import ModesView from "../modes/ModesView"
 import McpView from "../mcp/McpView"
+import { WorktreesView } from "../worktrees/WorktreesView"
 import { SettingsSearch } from "./SettingsSearch"
 import { useSearchIndexRegistry, SearchIndexProvider } from "./useSettingsSearch"
 
@@ -111,6 +113,7 @@ export const sectionNames = [
 	"autoCleanup",
 	"modes",
 	"mcp",
+	"worktrees",
 	"prompts",
 	"ui",
 	"experimental",
@@ -175,9 +178,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		useZgsmCustomConfig,
 		zgsmCodebaseIndexEnabled,
 		checkpointTimeout,
-		diffEnabled,
 		experiments,
-		fuzzyMatchThreshold,
 		maxOpenTabsContext,
 		maxWorkspaceFiles,
 		mcpEnabled,
@@ -208,8 +209,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		maxTotalImageSize,
 		terminalCompressProgressBar,
 		maxConcurrentFileReads,
-		condensingApiConfigId,
-		customCondensingPrompt,
 		customSupportPrompts,
 		profileThresholds,
 		alwaysAllowFollowupQuestions,
@@ -419,13 +418,11 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					soundVolume: soundVolume ?? 0.5,
 					ttsEnabled,
 					ttsSpeed,
-					diffEnabled: diffEnabled ?? true,
 					enableCheckpoints: enableCheckpoints ?? false,
 					checkpointTimeout: checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 					browserViewportSize: browserViewportSize ?? "900x600",
 					remoteBrowserHost: remoteBrowserEnabled ? remoteBrowserHost : undefined,
 					remoteBrowserEnabled: remoteBrowserEnabled ?? false,
-					fuzzyMatchThreshold: fuzzyMatchThreshold ?? 1.0,
 					writeDelayMs,
 					screenshotQuality: screenshotQuality ?? 75,
 					terminalOutputLineLimit: terminalOutputLineLimit ?? 500,
@@ -454,7 +451,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					alwaysAllowSubtasks,
 					alwaysAllowFollowupQuestions: alwaysAllowFollowupQuestions ?? false,
 					followupAutoApproveTimeoutMs,
-					condensingApiConfigId: condensingApiConfigId || "",
 					includeTaskHistoryInEnhance: includeTaskHistoryInEnhance ?? true,
 					reasoningBlockCollapsed: reasoningBlockCollapsed ?? true,
 					showSpeedInfo: showSpeedInfo ?? false,
@@ -481,22 +477,15 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			})
 			// These have more complex logic so they aren't (yet) handled
 			// by the `updateSettings` message.
-			vscode.postMessage({ type: "updateCondensingPrompt", text: customCondensingPrompt || "" })
-			// vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
-			const finalApiConfig = { ...apiConfiguration, useZgsmCustomConfig, zgsmCodebaseIndexEnabled }
 
 			if (
-				finalApiConfig.useZgsmCustomConfig &&
-				finalApiConfig.includeMaxTokens === undefined &&
+				apiConfiguration.useZgsmCustomConfig &&
+				apiConfiguration.includeMaxTokens === undefined &&
 				!Object.hasOwn(apiConfiguration, "includeMaxTokens")
 			) {
-				finalApiConfig.includeMaxTokens = true
+				apiConfiguration.includeMaxTokens = true
 			}
-			vscode.postMessage({
-				type: "upsertApiConfiguration",
-				text: currentApiConfigName,
-				apiConfiguration: finalApiConfig,
-			})
+			vscode.postMessage({ type: "upsertApiConfiguration", text: currentApiConfigName, apiConfiguration })
 			vscode.postMessage({ type: "telemetrySetting", text: telemetrySetting })
 			vscode.postMessage({ type: "debugSetting", bool: cachedState.debug })
 
@@ -597,12 +586,13 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			{ id: "autoApprove", icon: CheckCheck },
 			{ id: "slashCommands", icon: SquareSlash },
 			{ id: "browser", icon: SquareMousePointer },
-			{ id: "checkpoints", icon: GitBranch },
+			{ id: "checkpoints", icon: GitCommitVertical },
 			{ id: "notifications", icon: Bell },
 			{ id: "contextManagement", icon: Database },
 			{ id: "terminal", icon: SquareTerminal },
 			{ id: "autoCleanup", icon: Trash2 },
 			{ id: "prompts", icon: MessageSquare },
+			{ id: "worktrees", icon: GitBranch },
 			{ id: "ui", icon: Glasses },
 			{ id: "experimental", icon: FlaskConical },
 			{ id: "language", icon: Globe },
@@ -705,9 +695,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						element.scrollIntoView({ behavior: "smooth", block: "center" })
 
 						// Add highlight animation
-						element.classList.add("settings-highlight")
+						element?.classList?.add("settings-highlight")
 						setTimeout(() => {
-							element.classList.remove("settings-highlight")
+							element?.classList?.remove("settings-highlight")
 						}, 1500)
 					}
 				}, 100) // Small delay to ensure tab content is rendered
@@ -950,6 +940,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								includeCurrentTime={includeCurrentTime}
 								includeCurrentCost={includeCurrentCost}
 								maxGitStatusFiles={maxGitStatusFiles}
+								customSupportPrompts={customSupportPrompts || {}}
+								setCustomSupportPrompts={setCustomSupportPromptsField}
 								setCachedStateField={setCachedStateField}
 							/>
 						)}
@@ -987,6 +979,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 						{/* MCP Section */}
 						{renderTab === "mcp" && <McpView />}
+
+						{/* Worktrees Section */}
+						{renderTab === "worktrees" && <WorktreesView />}
 
 						{/* Prompts Section */}
 						{renderTab === "prompts" && (

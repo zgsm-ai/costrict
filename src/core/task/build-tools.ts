@@ -26,7 +26,7 @@ interface BuildToolsOptions {
 	maxConcurrentFileReads: number
 	browserToolEnabled: boolean
 	modelInfo?: ModelInfo
-	diffEnabled: boolean
+	useLitePrompts?: boolean
 	/**
 	 * If true, returns all tools without mode filtering, but also includes
 	 * the list of allowed tool names for use with allowedFunctionNames.
@@ -94,7 +94,7 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 		maxConcurrentFileReads,
 		browserToolEnabled,
 		modelInfo,
-		diffEnabled,
+		useLitePrompts,
 		includeAllToolsWithRestrictions,
 	} = options
 
@@ -109,7 +109,6 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 		todoListEnabled: apiConfiguration?.todoListEnabled ?? true,
 		browserToolEnabled: browserToolEnabled ?? true,
 		modelInfo,
-		diffEnabled,
 	}
 
 	// Determine if partial reads are enabled based on maxReadFileLine setting.
@@ -123,6 +122,7 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 		partialReadsEnabled,
 		maxConcurrentFileReads,
 		supportsImages,
+		useLitePrompts,
 	})
 
 	// Filter native tools based on mode restrictions.

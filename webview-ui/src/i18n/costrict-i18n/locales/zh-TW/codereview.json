@@ -1,9 +1,16 @@
 {
 	"welcomePage": {
 		"title": "CoStrict",
-		"subtitle": "企業嚴肅開發的AI智慧夥伴",
-		"tips1": "1. 選擇函數、代碼塊、多文件",
-		"tips2": "2. 點擊鼠標右鍵，找到 CoStrict > Code Review 一鍵觸發"
+		"tips": "你也可以選中函數/代碼塊/多文件，右鍵 > CoStrict > Code Review ",
+		"dismiss": "不再提示",
+		"reviewCurrentChanges": "審查當前變更",
+		"noFiles": "沒有需要審查的文件"
+	},
+	"history": {
+		"title": "審查歷史",
+		"loading": "載入歷史記錄...",
+		"noData": "沒有找到審查歷史",
+		"done": "完成"
 	},
 	"codebase": {
 		"syncTips": "當前codebase索引同步功能被關閉，無法運行代碼審查，是否開啟codebase索引並繼續代碼審查？",
@@ -20,20 +27,12 @@
 			"low": "低"
 		},
 		"severityLabel": "嚴重程度",
-		"issueLable": "標籤",
-		"filterTooltip": "過濾問題",
-		"confidence": {
-			"low": "低",
-			"middle": "中",
-			"high": "高"
-		},
-		"confidenceLabel": "置信度",
-		"confidenceTooltip": "確信度越高問題的可信度越高，符合條件的問題越少，反之亦然，建議取適中"
+		"issueLabel": "標籤",
+		"filterTooltip": "過濾問題"
 	},
 	"taskStatusBar": {
 		"running": "正在進行 Code Review，{{progress}}%",
 		"cancel": "取消執行",
 		"completed": "代碼質量非常高，未檢查出任何問題"
-	},
-	"tips": "若代碼行數發生改變，問題行定位可能會不準確"
+	}
 }

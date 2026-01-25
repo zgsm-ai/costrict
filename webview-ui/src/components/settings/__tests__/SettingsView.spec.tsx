@@ -114,8 +114,13 @@ vi.mock("../../../components/common/Tab", () => ({
 	},
 }))
 
-vi.mock("@/components/ui", async (importOriginal) => ({
-	...(await importOriginal()),
+vi.mock("@/components/ui", () => ({
+	...vi.importActual("@/components/ui"),
+	ToggleSwitch: ({ checked, onChange, "aria-label": ariaLabel, "data-testid": dataTestId }: any) => (
+		<button role="switch" aria-checked={checked} aria-label={ariaLabel} data-testid={dataTestId} onClick={onChange}>
+			Toggle
+		</button>
+	),
 	Popover: ({ children }: any) => <div data-testid="popover">{children}</div>,
 	PopoverTrigger: ({ children }: any) => <div data-testid="popover-trigger">{children}</div>,
 	PopoverContent: ({ children }: any) => <div data-testid="popover-content">{children}</div>,
@@ -145,6 +150,10 @@ vi.mock("@/components/ui", async (importOriginal) => ({
 		</button>
 	),
 	StandardTooltip: ({ children, content }: any) => <div title={content}>{children}</div>,
+	Tooltip: ({ children }: any) => <div data-testid="tooltip">{children}</div>,
+	TooltipProvider: ({ children }: any) => <div data-testid="tooltip-provider">{children}</div>,
+	TooltipTrigger: ({ children }: any) => <div data-testid="tooltip-trigger">{children}</div>,
+	TooltipContent: ({ children }: any) => <div data-testid="tooltip-content">{children}</div>,
 	Input: ({ value, onChange, placeholder, "data-testid": dataTestId }: any) => (
 		<input type="text" value={value} onChange={onChange} placeholder={placeholder} data-testid={dataTestId} />
 	),

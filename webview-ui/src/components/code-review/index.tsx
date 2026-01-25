@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { ReviewTaskStatus } from "@roo/codeReview"
 import CodeReviewPanel from "./CodeReviewPanel"
@@ -8,15 +8,20 @@ interface CodeReviewPageProps {
 	isHidden?: boolean
 	onIssueClick: (issueId: string) => void
 	onTaskCancel: () => void
+	onNavigateToWelcome?: (navigateFn: () => void) => void
 }
 
 enum Page {
 	Welcome = "welcome",
-	CodebaseSync = "codebaseSync",
 	Review = "review",
 }
 
-const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ isHidden, onIssueClick, onTaskCancel }) => {
+const CodeReviewPage: React.FC<CodeReviewPageProps> = ({
+	isHidden,
+	onIssueClick,
+	onTaskCancel,
+	onNavigateToWelcome,
+}) => {
 	const { reviewTask } = useExtensionState()
 	const {
 		status,
@@ -29,22 +34,31 @@ const CodeReviewPage: React.FC<CodeReviewPageProps> = ({ isHidden, onIssueClick,
 		return Page.Review
 	})
 
+	const navigateToWelcome = useCallback(() => setPage(Page.Welcome), [])
+	const navigateToReview = useCallback(() => setPage(Page.Review), [])
+
+	// Sync page state with reviewTask status
 	useEffect(() => {
-		if (status === ReviewTaskStatus.INITIAL && issues.length === 0) {
-			setPage(Page.Welcome)
-		} else {
+		// When review task starts running, auto-navigate to review page
+		if (status === ReviewTaskStatus.RUNNING && page === Page.Welcome) {
 			setPage(Page.Review)
 		}
-	}, [status, issues.length])
+	}, [status, page])
+
+	// Expose navigateToWelcome to parent component
+	useEffect(() => {
+		onNavigateToWelcome?.(navigateToWelcome)
+	}, [navigateToWelcome, onNavigateToWelcome])
+
 	switch (page) {
 		case Page.Welcome:
-			return <WelcomePage />
+			return <WelcomePage onStartReview={navigateToReview} />
 		case Page.Review:
 			return (
 				<div
-					className={`fixed top-[28px] left-0 right-0 bottom-0 flex flex-col overflow-hidden ${isHidden ? "hidden" : ""}`}>
+					className={`fixed top-[28px] left-0 right-0 bottom-0 flex flex-col overflow-hidden px-5 ${isHidden ? "hidden" : ""}`}>
 					<CodeReviewPanel
-						issues={issues} // To be sourced from context
+						issues={issues}
 						taskStatus={status}
 						progress={progress} // To be sourced from context
 						message={message}

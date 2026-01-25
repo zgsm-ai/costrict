@@ -3,7 +3,7 @@
 	"displayName": "%extension.displayName.long%",
 	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
-	"version": "2.1.19",
+	"version": "2.2.2",
 	"icon": "assets/images/shenma_robot_logo_big.png",
 	"galleryBanner": {
 		"color": "#617A91",
@@ -212,7 +212,7 @@
 			{
 				"command": "zgsm.reviewCommit",
 				"title": "%command.reviewCommit.title%",
-				"icon": "$(shield)"
+				"icon": "assets/images/reviewLogo.png"
 			},
 			{
 				"command": "zgsm.coworkflow.runTaskJetbrains",
@@ -318,7 +318,7 @@
 				"command": "zgsm.generateCommitMessage",
 				"title": "%command.generateCommitMessage.title%",
 				"category": "%configuration.title%",
-				"icon": "assets/images/shenma_robot_logo_big.png"
+				"icon": "assets/images/commitLogo.png"
 			},
 			{
 				"command": "zgsm.coworkflow.updateSection",
@@ -502,7 +502,7 @@
 				},
 				{
 					"command": "zgsm.popoutButtonClicked",
-					"group": "overflow@2",
+					"group": "overflow@3",
 					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
 				},
 				{
@@ -933,6 +933,7 @@
 		"ignore": "^7.0.3",
 		"isbinaryfile": "^5.0.7",
 		"jschardet": "^3.1.4",
+		"json-stream-stringify": "^3.1.6",
 		"jwt-decode": "^4.0.0",
 		"lodash.debounce": "^4.0.8",
 		"lru-cache": "^11.1.0",

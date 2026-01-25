@@ -596,7 +596,7 @@ export const CodeIndexPopover: React.FC<CodeIndexPopoverProps> = ({
 		},
 	)
 
-	const portalContainer = useRooPortal("roo-portal")
+	const portalContainer = useRooPortal("costrict-portal")
 
 	return (
 		<>

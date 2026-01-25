@@ -6,8 +6,9 @@
 			"aiFailed": "AI failed to generate commit message",
 			"notInitialized": "Commit service not initialized",
 			"noWorkspace": "No workspace folder found",
-			"notGitRepo": "Current workspace is not a git repository",
-			"failedToGetGitDiff": "Failed to get git diff: {{0}}"
+			"notGitRepo": "Not in a Git repository",
+			"failedToGetGitDiff": "Failed to get git diff: {{0}}",
+			"failedToGetUntrackedFiles": "Failed to get untracked files: {{0}}"
 		},
 		"progress": {
 			"generating": "Generating commit message..."
@@ -34,6 +35,9 @@
 			"modified": "Modified files:",
 			"deleted": "Deleted files:",
 			"renamed": "Renamed files:"
+		},
+		"info": {
+			"newRepoWithUntracked": "Detected new repository, found {{0}} untracked file(s)"
 		},
 		"prompt": {
 			"prefix": "Generate a commit message based on the following git changes:\n\n",

@@ -9,7 +9,6 @@ import delay from "delay"
 import type { ExperimentId } from "@roo-code/types"
 import { DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT, MAX_WORKSPACE_FILES } from "@roo-code/types"
 
-import { resolveToolProtocol } from "../../utils/resolveToolProtocol"
 import { EXPERIMENT_IDS, experiments as Experiments } from "../../shared/experiments"
 import { formatLanguage } from "../../shared/language"
 import { defaultModeSlug, getFullModeDetails } from "../../shared/modes"
@@ -284,27 +283,14 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 			details += `\n\n## Shell Support Syntax\n${formatUnsupport(features)}`
 		}
 	}
-	// Resolve and add tool protocol information
-	// Use the task's locked tool protocol for consistent environment details.
-	// This ensures the model sees the same tool format it was started with,
-	// even if user settings have changed. Fall back to resolving fresh if
-	// the task hasn't been fully initialized yet (shouldn't happen in practice).
-	const modelInfo = cline.api.getModel().info
-	const toolProtocol = resolveToolProtocol(state?.apiConfiguration ?? {}, modelInfo, cline.taskToolProtocol)
+	// Tool calling is native-only.
+	const toolFormat = "native"
 
 	details += `\n\n# Current Mode\n`
 	details += `<slug>${currentMode}</slug>\n`
 	details += `<name>${modeDetails.name}</name>\n`
 	details += `<model>${modelId}</model>\n`
-	details += `<tool_format>${toolProtocol}</tool_format>\n`
-
-	if (Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.POWER_STEERING)) {
-		details += `<role>${modeDetails.roleDefinition}</role>\n`
-
-		if (modeDetails.customInstructions) {
-			details += `<custom_instructions>${modeDetails.customInstructions}</custom_instructions>\n`
-		}
-	}
+	details += `<tool_format>${toolFormat}</tool_format>\n`
 
 	// Add browser session status - Only show when active to prevent cluttering context
 	const isBrowserActive = cline.browserSession.isSessionActive()

@@ -161,3 +161,10 @@ export interface ReviewTarget {
 		line_range?: [number, number]
 	}[]
 }
+
+export interface ReviewHistoryEntry {
+	review_task_id: string
+	title: string
+	timestamp: string
+	conclusion?: string
+}

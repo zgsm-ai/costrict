@@ -59,8 +59,10 @@ describe("SmartMistakeDetector", () => {
 				expect(result.canAutoRecover).toBe(true)
 			})
 
-			it("should not trigger at exactly 40% threshold", () => {
-				for (let i = 0; i < 4; i++) {
+			it("should not trigger at exactly 50% threshold", () => {
+				// 5 个 NO_TOOL_USE (medium) = 5 × (1.0 × 1.0) = 5.0
+				// scoreRatio = 5.0 / 10 = 0.5 = 50%
+				for (let i = 0; i < 5; i++) {
 					detector.addMistake(MistakeType.NO_TOOL_USE)
 				}
 				const result = detector.checkLimit(10)
@@ -114,7 +116,8 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should trigger with TOOL_FAILURE weight", () => {
-				for (let i = 0; i < 5; i++) {
+				// TOOL_FAILURE weight is 1, need 9 to reach 90% of limit 10
+				for (let i = 0; i < 9; i++) {
 					detector.addMistake(MistakeType.TOOL_FAILURE)
 				}
 				const result = detector.checkLimit(10)
@@ -122,7 +125,8 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should trigger with REPEATED_ACTION weight", () => {
-				for (let i = 0; i < 7; i++) {
+				// REPEATED_ACTION weight is 0.5, need 18 to reach 90% of limit 10
+				for (let i = 0; i < 18; i++) {
 					detector.addMistake(MistakeType.REPEATED_ACTION)
 				}
 				const result = detector.checkLimit(10)
@@ -130,7 +134,8 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should trigger with TIMEOUT weight", () => {
-				for (let i = 0; i < 5; i++) {
+				// TIMEOUT weight is 1, need 9 to reach 90% of limit 10
+				for (let i = 0; i < 9; i++) {
 					detector.addMistake(MistakeType.TIMEOUT)
 				}
 				const result = detector.checkLimit(10)
@@ -140,16 +145,19 @@ describe("SmartMistakeDetector", () => {
 
 		describe("severity weight calculation", () => {
 			it("should use low severity weight", () => {
-				for (let i = 0; i < 10; i++) {
+				// TOOL_FAILURE weight is 1, low severity is 0.5
+				// 18 * (1 * 0.5) = 9, which reaches the 90% threshold
+				for (let i = 0; i < 18; i++) {
 					detector.addMistake(MistakeType.TOOL_FAILURE, `low${i}`, "low")
 				}
 				const result = detector.checkLimit(10)
-				// 10 * (2 * 0.5) = 10, which exceeds the 90% threshold of 9
 				expect(result.shouldTrigger).toBe(true)
 			})
 
 			it("should use medium severity weight", () => {
-				for (let i = 0; i < 5; i++) {
+				// TOOL_FAILURE weight is 1, medium severity is 1.0
+				// 9 * (1 * 1.0) = 9, which reaches the 90% threshold
+				for (let i = 0; i < 9; i++) {
 					detector.addMistake(MistakeType.TOOL_FAILURE, `med${i}`, "medium")
 				}
 				const result = detector.checkLimit(10)
@@ -157,7 +165,9 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should use high severity weight", () => {
-				for (let i = 0; i < 3; i++) {
+				// TOOL_FAILURE weight is 1, high severity is 2.0
+				// 5 * (1 * 2.0) = 10, which exceeds the 90% threshold of 9
+				for (let i = 0; i < 5; i++) {
 					detector.addMistake(MistakeType.TOOL_FAILURE, `high${i}`, "high")
 				}
 				const result = detector.checkLimit(10)
@@ -193,9 +203,13 @@ describe("SmartMistakeDetector", () => {
 			})
 
 			it("should not allow auto recovery when all mistakes are high severity", () => {
-				detector.addMistake(MistakeType.TOOL_FAILURE, "high1", "high")
-				detector.addMistake(MistakeType.TOOL_FAILURE, "high2", "high")
+				// Need at least 5 high severity errors to reach 50% threshold
+				// so canAutoRecover is called (5 * 1 * 2 = 10 >= 5)
+				for (let i = 0; i < 5; i++) {
+					detector.addMistake(MistakeType.TOOL_FAILURE, `high${i}`, "high")
+				}
 				const result = detector.checkLimit(10)
+				// 100% high severity, so canAutoRecover should be false
 				expect(result.canAutoRecover).toBe(false)
 			})
 		})
@@ -357,20 +371,29 @@ describe("SmartMistakeDetector", () => {
 		it("should calculate progressive warnings correctly", () => {
 			const baseLimit = 20
 
-			for (let i = 0; i < 8; i++) {
+			// 第一阶段：50% 阈值
+			// 10 个 NO_TOOL_USE (medium) = 10 × (1.0 × 1.0) = 10.0
+			// scoreRatio = 10.0 / 20 = 0.5 = 50%
+			for (let i = 0; i < 10; i++) {
 				detector.addMistake(MistakeType.NO_TOOL_USE)
 			}
 			let result = detector.checkLimit(baseLimit)
 			expect(result.shouldTrigger).toBe(false)
 			expect(result.warning).toBeDefined()
 
-			for (let i = 0; i < 7; i++) {
+			// 第二阶段：75% 阈值
+			// 总共 15 个 NO_TOOL_USE = 15 × (1.0 × 1.0) = 15.0
+			// scoreRatio = 15.0 / 20 = 0.75 = 75%
+			for (let i = 0; i < 5; i++) {
 				detector.addMistake(MistakeType.NO_TOOL_USE)
 			}
 			result = detector.checkLimit(baseLimit)
 			expect(result.shouldTrigger).toBe(false)
 			expect(result.warning).toBeDefined()
 
+			// 第三阶段：90% 阈值（触发限制）
+			// 总共 18 个 NO_TOOL_USE = 18 × (1.0 × 1.0) = 18.0
+			// scoreRatio = 18.0 / 20 = 0.9 = 90%
 			for (let i = 0; i < 3; i++) {
 				detector.addMistake(MistakeType.NO_TOOL_USE)
 			}

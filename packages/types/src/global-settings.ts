@@ -80,7 +80,6 @@ export const globalSettingsSchema = z.object({
 	openRouterImageApiKey: z.string().optional(),
 	openRouterImageGenerationSelectedModel: z.string().optional(),
 
-	condensingApiConfigId: z.string().optional(),
 	customCondensingPrompt: z.string().optional(),
 	// zgsm
 	useZgsmCustomConfig: z.boolean().optional(),
@@ -185,8 +184,6 @@ export const globalSettingsSchema = z.object({
 	diagnosticsEnabled: z.boolean().optional(),
 
 	rateLimitSeconds: z.number().optional(),
-	diffEnabled: z.boolean().optional(),
-	fuzzyMatchThreshold: z.number().optional(),
 	experiments: experimentsSchema.optional(),
 	experimentSettings: experimentSettingsSchema.optional(),
 
@@ -224,10 +221,24 @@ export const globalSettingsSchema = z.object({
 	enterBehavior: z.enum(["send", "newline"]).optional(),
 	profileThresholds: z.record(z.string(), z.number()).optional(),
 	hasOpenedModeSelector: z.boolean().optional(),
+	hasClosedCodeReviewWelcomeTips: z.boolean().optional(),
 	lastModeExportPath: z.string().optional(),
 	lastModeImportPath: z.string().optional(),
+	lastSettingsExportPath: z.string().optional(),
+	lastTaskExportPath: z.string().optional(),
+	lastImageSavePath: z.string().optional(),
 
 	errorCode: z.record(z.string(), z.record(z.string(), z.string())).optional(),
+	/**
+	 * Path to worktree to auto-open after switching workspaces.
+	 * Used by the worktree feature to open the Roo Code sidebar in a new window.
+	 */
+	worktreeAutoOpenPath: z.string().optional(),
+	/**
+	 * Whether to show the worktree selector in the home screen.
+	 * @default true
+	 */
+	showWorktreesInHomeScreen: z.boolean().optional(),
 })
 
 export type GlobalSettings = z.infer<typeof globalSettingsSchema>
@@ -377,9 +388,6 @@ export const EVALS_SETTINGS: RooCodeSettings = {
 	terminalShellIntegrationDisabled: true,
 
 	diagnosticsEnabled: true,
-
-	diffEnabled: true,
-	fuzzyMatchThreshold: 1,
 
 	enableCheckpoints: false,
 

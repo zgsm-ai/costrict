@@ -1,6 +1,5 @@
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
-import { parseXml } from "../../utils/xml"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
 import type { MultipleChoiceData, MultipleChoiceQuestion, MultipleChoiceOption } from "@roo-code/types"
@@ -25,99 +24,6 @@ interface ParsedQuestion {
 
 export class AskMultipleChoiceTool extends BaseTool<"ask_multiple_choice"> {
 	readonly name = "ask_multiple_choice" as const
-
-	parseLegacy(params: Partial<Record<string, string>>): AskMultipleChoiceParams {
-		const title = params.title
-		const questionsXml = params.questions
-
-		if (!questionsXml) {
-			throw new Error("Missing required parameter: questions")
-		}
-
-		let parsedData: { question?: ParsedQuestion | ParsedQuestion[] }
-
-		try {
-			// Don't use stopNodes - we need full parsing to get all fields including IDs
-			parsedData = parseXml(questionsXml, []) as { question?: ParsedQuestion | ParsedQuestion[] }
-		} catch (error) {
-			throw new Error(`Invalid questions XML format: ${error instanceof Error ? error.message : String(error)}`)
-		}
-
-		// Normalize to array
-		const rawQuestions = Array.isArray(parsedData?.question)
-			? parsedData.question
-			: parsedData?.question
-				? [parsedData.question]
-				: []
-
-		if (rawQuestions.length === 0) {
-			throw new Error("At least one question is required")
-		}
-
-		// Transform parsed XML to MultipleChoiceQuestion format
-		const questions: MultipleChoiceQuestion[] = []
-
-		for (let i = 0; i < rawQuestions.length; i++) {
-			const q = rawQuestions[i]
-			const questionIndex = i + 1
-
-			// Validate required fields: id and prompt
-			if (!q.id) {
-				throw new Error(
-					`Question #${questionIndex} must have a valid id following this exact format: <question>\n<id>question_slug</id>\n<prompt>Question text</prompt></question>`,
-				)
-			}
-
-			if (!q.prompt) {
-				throw new Error(`Question "${q.id}" must have a prompt`)
-			}
-
-			// Normalize options to array
-			const rawOptions = Array.isArray(q.options?.option)
-				? q.options.option
-				: q.options?.option
-					? [q.options.option]
-					: []
-
-			if (rawOptions.length < 2) {
-				throw new Error(`Question "${q.id}" must have at least 2 options`)
-			}
-
-			// Parse options - validate id and label
-			const options: MultipleChoiceOption[] = []
-			for (let j = 0; j < rawOptions.length; j++) {
-				const opt = rawOptions[j]
-				const optionIndex = j + 1
-
-				if (!opt.id) {
-					throw new Error(
-						`Question "${q.id}", option #${optionIndex} must have a valid id following this exact format: <option>\n<id>option_slug_1</id>\n<label>Option 1 Label</label></option>`,
-					)
-				}
-
-				if (!opt.label) {
-					throw new Error(
-						`Question "${q.id}", option "${opt.id}" must have a valid id following this exact format: <option>\n<id>option_slug_1</id>\n<label>Option 1 Label</label></option>`,
-					)
-				}
-
-				options.push({
-					id: opt.id,
-					label: opt.label,
-				})
-			}
-
-			questions.push({
-				id: q.id,
-				prompt: q.prompt,
-				options,
-				allow_multiple:
-					typeof q.allow_multiple === "string" ? q.allow_multiple === "true" : q.allow_multiple || false,
-			})
-		}
-
-		return { title, questions }
-	}
 
 	async execute(params: AskMultipleChoiceParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { title, questions } = params
@@ -176,12 +82,10 @@ export class AskMultipleChoiceTool extends BaseTool<"ask_multiple_choice"> {
 
 	override async handlePartial(task: Task, block: ToolUse<"ask_multiple_choice">): Promise<void> {
 		// Get questions from params (for XML protocol)
-		const questionsXml: string | undefined = block.params.questions
+		const questions: string | undefined = block.params.questions
 
 		// During partial streaming, show partial progress
-		await task
-			.ask("multiple_choice", this.removeClosingTag("questions", questionsXml, block.partial), block.partial)
-			.catch(() => {})
+		await task.ask("multiple_choice", questions ?? "", block.partial).catch(() => {})
 	}
 }
 

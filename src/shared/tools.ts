@@ -23,11 +23,7 @@ export type HandleError = (action: string, error: Error) => Promise<void>
 
 export type PushToolResult = (content: ToolResponse) => void
 
-export type RemoveClosingTag = (tag: ToolParamName, content?: string) => string
-
 export type AskFinishSubTaskApproval = () => Promise<boolean>
-
-export type ToolDescription = () => string
 
 export interface TextContent {
 	type: "text"
@@ -83,8 +79,6 @@ export const toolParamNames = [
 
 export type ToolParamName = (typeof toolParamNames)[number]
 
-export type ToolProtocol = "xml" | "native"
-
 /**
  * Type map defining the native (typed) argument structure for each tool.
  * Tools not listed here will fall back to `any` for backward compatibility.
@@ -99,6 +93,8 @@ export type NativeToolArgs = {
 	search_replace: { file_path: string; old_string: string; new_string: string }
 	edit_file: { file_path: string; old_string: string; new_string: string; expected_replacements?: number }
 	apply_patch: { patch: string }
+	list_files: { path: string; recursive?: boolean }
+	new_task: { mode: string; message: string; todos?: string }
 	ask_followup_question: {
 		question: string
 		follow_up: Array<{ text: string; mode?: string }>
@@ -122,7 +118,6 @@ export type NativeToolArgs = {
 	update_todo_list: { todos: string }
 	use_mcp_tool: { server_name: string; tool_name: string; arguments?: Record<string, unknown> }
 	write_to_file: { path: string; content: string }
-	list_files: { path: string; recursive?: boolean }
 	// Add more tools as they are migrated to native protocol
 }
 
@@ -286,6 +281,7 @@ export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
 	run_slash_command: "run slash command",
 	generate_image: "generate images",
 	custom_tool: "use custom tools",
+	fake_tool_call: "use tool calls",
 } as const
 
 // Define available tool groups.
@@ -373,13 +369,6 @@ export interface DiffStrategy {
 	 * @returns The name of the diff strategy
 	 */
 	getName(): string
-
-	/**
-	 * Get the tool description for this diff strategy
-	 * @param args The tool arguments including cwd and toolOptions
-	 * @returns The complete tool description including format requirements and examples
-	 */
-	getToolDescription(args: { cwd: string; toolOptions?: { [key: string]: string } }): string
 
 	/**
 	 * Apply a diff to the original content

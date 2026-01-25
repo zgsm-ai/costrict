@@ -65,6 +65,7 @@ import ChatSearch from "./ChatSearch"
 // import { useCloudUpsell } from "@src/hooks/useCloudUpsell"
 // import { Cloud } from "lucide-react"
 // import CloudAgents from "../cloud/CloudAgents"
+import { WorktreeSelector } from "./WorktreeSelector"
 
 export interface ChatViewProps {
 	isHidden: boolean
@@ -114,6 +115,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		messageQueue = [],
 		experiments,
 		isBrowserSessionActive,
+		showWorktreesInHomeScreen,
 	} = useExtensionState()
 
 	const messagesRef = useRef(messages)
@@ -459,6 +461,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						case "api_req_retry_delayed":
 						case "api_req_rate_limit_wait":
 							setSendingDisabled(true)
+							setEnableButtons(false)
 							break
 						case "api_req_started":
 							// Clear button state when a new API request starts
@@ -1657,6 +1660,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 								aggregatedCostsMap.get(currentTaskItem.id)!.childrenCost > 0
 							)
 						}
+						parentTaskId={currentTaskItem?.parentTaskId}
 						costBreakdown={
 							currentTaskItem?.id && aggregatedCostsMap.has(currentTaskItem.id)
 								? getCostBreakdownIfNeeded(aggregatedCostsMap.get(currentTaskItem.id)!, {
@@ -1696,7 +1700,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							onClick={() => setShowAnnouncementModal(false)}
 							className="absolute top-2 right-3 z-10"
 						/> */}
-						<VersionIndicator onClick={() => {}} className="absolute top-2 right-3 z-10" />
+						<VersionIndicator onClick={() => {}} className="fixed top-10 right-6 z-10" />
 
 						<RooHero />
 						{/* {telemetrySetting === "unset" && <TelemetryBanner />} */}
@@ -1738,7 +1742,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 								icon={<Cloud className="size-5 shrink-0" />}
 								onClick={() => openUpsell()}
 								dismissOnClick={false}
-								className="bg-none mt-6 border-border rounded-xl p-0 py-3 !text-base">
+								className="bg-none mt-6 border-border rounded-xl p-3 !text-base">
 								<Trans
 									i18nKey="cloud:upsell.taskList"
 									components={{
@@ -1750,6 +1754,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					</div>
 				</div>
 			)}
+
+			{!task && showWorktreesInHomeScreen && <WorktreeSelector />}
 
 			{task && (
 				<>
@@ -1924,7 +1930,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				</div>
 			)}
 
-			<div id="roo-portal" />
+			<div id="costrict-portal" />
 			{/* <CloudUpsellDialog open={isUpsellOpen} onOpenChange={closeUpsell} onConnect={handleConnect} /> */}
 		</div>
 	)

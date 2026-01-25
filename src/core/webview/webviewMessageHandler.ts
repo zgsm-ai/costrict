@@ -16,6 +16,8 @@ import {
 	type ModelRecord,
 	type WebviewMessage,
 	type EditQueuedMessagePayload,
+	type CodeReviewWelcomeTipsPayload,
+	type CreateReviewTaskPayload,
 	TelemetryEventName,
 	ModelInfo,
 	RooCodeSettings,
@@ -50,7 +52,7 @@ import { discoverChromeHostUrl, tryChromeHostUrl } from "../../services/browser/
 import { searchWorkspaceFiles } from "../../services/search/file-search"
 import { fileExistsAtPath } from "../../utils/fs"
 import { playTts, setTtsEnabled, setTtsSpeed, stopTts } from "../../utils/tts"
-import { searchCommits } from "../../utils/git"
+import { searchCommits, getUncommittedFiles, addFilesIntent, restoreFilesFromStaged } from "../../utils/git"
 import { exportSettings, importSettingsWithFeedback } from "../config/importExport"
 import { getOpenAiModels } from "../../api/providers/openai"
 import { getVsCodeLmModels } from "../../api/providers/vscode-lm"
@@ -62,6 +64,7 @@ import { Mode, defaultModeSlug, ZgsmCodeMode } from "../../shared/modes"
 import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
 import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
+import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
 import { getCommand } from "../../utils/commands"
 
 const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
@@ -83,6 +86,21 @@ import delay from "delay"
 import { setPendingTodoList } from "../tools/UpdateTodoListTool"
 import { getEditorType } from "../../utils/getEditorType"
 import { updateDefaultDebug } from "../../utils/getDebugState"
+import {
+	handleListWorktrees,
+	handleCreateWorktree,
+	handleDeleteWorktree,
+	handleSwitchWorktree,
+	handleGetAvailableBranches,
+	handleGetWorktreeDefaults,
+	handleGetWorktreeIncludeStatus,
+	handleCheckBranchWorktreeInclude,
+	handleCreateWorktreeInclude,
+	handleCheckoutBranch,
+} from "./worktree"
+import { isJetbrainsPlatform } from "../../utils/platform"
+import { showFileDiffFromGitStatus } from "../../utils/zgsmUtils"
+import { ReviewTargetType } from "../../shared/codeReview"
 
 export const webviewMessageHandler = async (
 	provider: ClineProvider,
@@ -1246,7 +1264,32 @@ export const webviewMessageHandler = async (
 			openImage(message.text!, { values: message.values })
 			break
 		case "saveImage":
-			saveImage(message.dataUri!)
+			if (message.dataUri) {
+				const matches = message.dataUri.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/)
+				if (!matches) {
+					// Let saveImage handle invalid URI error
+					saveImage(message.dataUri, vscode.Uri.file(""))
+					break
+				}
+				const format = matches[1]
+				const defaultFileName = `img_${Date.now()}.${format}`
+
+				const defaultUri = await resolveDefaultSaveUri(
+					provider.contextProxy,
+					"lastImageSavePath",
+					defaultFileName,
+					{
+						useWorkspace: false,
+						fallbackDir: path.join(os.homedir(), "Downloads"),
+					},
+				)
+
+				const savedUri = await saveImage(message.dataUri, defaultUri)
+
+				if (savedUri) {
+					await saveLastExportPath(provider.contextProxy, "lastImageSavePath", savedUri)
+				}
+			}
 			break
 		case "openFile":
 			let filePath: string = message.text!
@@ -1448,7 +1491,7 @@ export const webviewMessageHandler = async (
 				const exists = await fileExistsAtPath(mcpPath)
 
 				if (!exists) {
-					await safeWriteJson(mcpPath, { mcpServers: {} })
+					await safeWriteJson(mcpPath, { mcpServers: {} }, { prettyPrint: true })
 				}
 
 				await openFile(mcpPath)
@@ -1750,6 +1793,14 @@ export const webviewMessageHandler = async (
 			await updateGlobalState("hasOpenedModeSelector", message.bool ?? true)
 			await provider.postStateToWebview()
 			break
+		case "setCodeReviewWelcomeTips": {
+			const payload = message.payload as CodeReviewWelcomeTipsPayload
+			if (payload?.value !== undefined) {
+				await updateGlobalState("hasClosedCodeReviewWelcomeTips", payload.value)
+				await provider.postStateToWebview()
+			}
+			break
+		}
 		case "toggleApiConfigPin":
 			if (message.text) {
 				const currentPinned = getGlobalState("pinnedApiConfigs") ?? {}
@@ -1770,16 +1821,6 @@ export const webviewMessageHandler = async (
 			await provider.postStateToWebview()
 			break
 
-		case "updateCondensingPrompt":
-			// Store the condensing prompt in customSupportPrompts["CONDENSE"]
-			// instead of customCondensingPrompt.
-			const currentSupportPrompts = getGlobalState("customSupportPrompts") ?? {}
-			const updatedSupportPrompts = { ...currentSupportPrompts, CONDENSE: message.text }
-			await updateGlobalState("customSupportPrompts", updatedSupportPrompts)
-			// Also update the old field for backward compatibility during migration.
-			await updateGlobalState("customCondensingPrompt", message.text)
-			await provider.postStateToWebview()
-			break
 		case "autoApprovalEnabled":
 			await updateGlobalState("autoApprovalEnabled", message.bool ?? false)
 			await provider.postStateToWebview()
@@ -2270,25 +2311,15 @@ export const webviewMessageHandler = async (
 					const result = await provider.customModesManager.exportModeWithRules(message.slug, customPrompt)
 
 					if (result.success && result.yaml) {
-						// Get last used directory for export
-						const lastExportPath = getGlobalState("lastModeExportPath")
-						let defaultUri: vscode.Uri
-
-						if (lastExportPath) {
-							// Use the directory from the last export
-							const lastDir = path.dirname(lastExportPath)
-							defaultUri = vscode.Uri.file(path.join(lastDir, `${message.slug}-export.yaml`))
-						} else {
-							// Default to workspace or home directory
-							const workspaceFolders = vscode.workspace.workspaceFolders
-							if (workspaceFolders && workspaceFolders.length > 0) {
-								defaultUri = vscode.Uri.file(
-									path.join(workspaceFolders[0].uri.fsPath, `${message.slug}-export.yaml`),
-								)
-							} else {
-								defaultUri = vscode.Uri.file(`${message.slug}-export.yaml`)
-							}
-						}
+						const defaultUri = await resolveDefaultSaveUri(
+							provider.contextProxy,
+							"lastModeExportPath",
+							`${message.slug}-export.yaml`,
+							{
+								useWorkspace: true,
+								fallbackDir: path.join(os.homedir(), "Downloads"),
+							},
+						)
 
 						// Show save dialog
 						const saveUri = await vscode.window.showSaveDialog({
@@ -2301,7 +2332,7 @@ export const webviewMessageHandler = async (
 
 						if (saveUri && result.yaml) {
 							// Save the directory for next time
-							await updateGlobalState("lastModeExportPath", saveUri.fsPath)
+							await saveLastExportPath(provider.contextProxy, "lastModeExportPath", saveUri)
 
 							// Write the file to the selected location
 							await fs.writeFile(saveUri.fsPath, result.yaml, "utf-8")
@@ -3534,6 +3565,72 @@ export const webviewMessageHandler = async (
 			} catch (err) {}
 			break
 		}
+		case "getReviewFiles": {
+			try {
+				const cwd = getCurrentCwd()
+				const files = await getUncommittedFiles(cwd)
+				await provider.postMessageToWebview({
+					type: "reviewFilesResponse",
+					payload: { files },
+				})
+			} catch (error) {
+				console.error("Error getting review files:", error)
+				await provider.postMessageToWebview({
+					type: "reviewFilesResponse",
+					payload: { files: [] },
+				})
+			}
+			break
+		}
+		case "createReviewTask": {
+			const reviewInstance = CodeReviewService.getInstance()
+			const { files } = message.payload! as CreateReviewTaskPayload
+			const cwd = getCurrentCwd()
+
+			const untrackedFiles =
+				files?.filter((item) => item.status === "??" || item.status === "U").map((item) => item.path) || []
+			let intentAddedFiles: string[] = []
+
+			if (untrackedFiles.length > 0) {
+				intentAddedFiles = await addFilesIntent(cwd, untrackedFiles)
+			}
+
+			await reviewInstance.createReviewTask(
+				"@git-changes",
+				{
+					type: ReviewTargetType.FILE,
+					data: files?.map((item) => ({
+						file_path: item.path,
+					})),
+				},
+				{
+					onTaskComplete: async () => {
+						if (intentAddedFiles.length > 0) {
+							await restoreFilesFromStaged(cwd, intentAddedFiles)
+						}
+					},
+				},
+			)
+			break
+		}
+		case "showFileDiff": {
+			const { filePath, status, oldFilePath } = message.values || {}
+			if (isJetbrainsPlatform()) {
+				return
+			}
+			if (!filePath || !status) {
+				console.error("Missing required parameters for showFileDiff")
+				break
+			}
+
+			await showFileDiffFromGitStatus({
+				cwd: getCurrentCwd(),
+				filePath,
+				status,
+				oldFilePath,
+			})
+			break
+		}
 		case "settingsButtonclicked": {
 			provider.postMessageToWebview({
 				type: "action",
@@ -3575,7 +3672,6 @@ export const webviewMessageHandler = async (
 					editorType: ${editorType}
 					httpProxy: ${httpProxy}
 					httpsProxy: ${httpsProxy}
-					toolProtocol: ${currentTaskItem?.toolProtocol || apiConfiguration?.toolProtocol}
 					${rawErrorMessage ? `${rawErrorMessage}` : ""}
 				`)
 				vscode.window.showInformationMessage(t("common:window.success.copy_success"))
@@ -3832,6 +3928,341 @@ export const webviewMessageHandler = async (
 				values: message.values,
 				log: (msg) => provider.log(msg),
 			})
+			break
+		}
+
+		case "getReviewHistory": {
+			try {
+				const reviewInstance = CodeReviewService.getInstance()
+				const history = await reviewInstance.getReviewHistory()
+				await provider.postMessageToWebview({
+					type: "reviewHistoryResponse",
+					values: { history },
+				})
+			} catch (error) {
+				provider.log(`Error getting review history: ${error}`, "error")
+				await provider.postMessageToWebview({
+					type: "reviewHistoryResponse",
+					values: { history: [], error: error instanceof Error ? error.message : String(error) },
+				})
+			}
+			break
+		}
+
+		case "getReviewIssueById": {
+			try {
+				const { reviewTaskId } = message.values || {}
+				if (!reviewTaskId) {
+					await provider.postMessageToWebview({
+						type: "reviewIssueByIdLoaded",
+						values: { reviewTaskId: "", issues: [] },
+					})
+					break
+				}
+				const reviewInstance = CodeReviewService.getInstance()
+				const result = await reviewInstance.getReviewHistoryById(reviewTaskId)
+				await provider.postMessageToWebview({
+					type: "reviewIssueByIdLoaded",
+					values: {
+						reviewTaskId,
+						issues: result?.issues || [],
+					},
+				})
+			} catch (error) {
+				provider.log(`Error getting review history entry: ${error}`, "error")
+				await provider.postMessageToWebview({
+					type: "reviewIssueByIdLoaded",
+					values: { reviewTaskId: "", issues: [] },
+				})
+			}
+			break
+		}
+
+		case "deleteReviewHistoryItem": {
+			try {
+				const { reviewTaskId } = message.values || {}
+				if (!reviewTaskId) {
+					vscode.window.showErrorMessage("Missing review task ID")
+					break
+				}
+				const reviewInstance = CodeReviewService.getInstance()
+				await reviewInstance.deleteReviewHistoryItem(reviewTaskId)
+				await provider.postMessageToWebview({
+					type: "reviewHistoryEntryDeleted",
+					values: { reviewTaskId },
+				})
+			} catch (error) {
+				provider.log(`Error deleting review history entry: ${error}`, "error")
+				vscode.window.showErrorMessage(
+					error instanceof Error ? error.message : "Failed to delete review history entry",
+				)
+			}
+			break
+		}
+
+		case "showReviewComment": {
+			try {
+				if (isJetbrainsPlatform()) {
+					return
+				}
+				const { issue, reviewTaskId } = message.values || {}
+				if (!issue) {
+					vscode.window.showErrorMessage("Missing issue")
+					break
+				}
+				const reviewInstance = CodeReviewService.getInstance()
+				await reviewInstance.showReviewComment(issue, reviewTaskId)
+			} catch (error) {
+				provider.log(`Error showing review comment: ${error}`, "error")
+				vscode.window.showErrorMessage(error instanceof Error ? error.message : "Failed to show review comment")
+			}
+			break
+		}
+
+		/**
+		 * Git Worktree Management
+		 */
+
+		case "listWorktrees": {
+			try {
+				const { worktrees, isGitRepo, isMultiRoot, isSubfolder, gitRootPath, error } =
+					await handleListWorktrees(provider)
+
+				await provider.postMessageToWebview({
+					type: "worktreeList",
+					worktrees,
+					isGitRepo,
+					isMultiRoot,
+					isSubfolder,
+					gitRootPath,
+					error,
+				})
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+
+				await provider.postMessageToWebview({
+					type: "worktreeList",
+					worktrees: [],
+					isGitRepo: false,
+					isMultiRoot: false,
+					isSubfolder: false,
+					gitRootPath: "",
+					error: errorMessage,
+				})
+			}
+
+			break
+		}
+
+		case "createWorktree": {
+			try {
+				const { success, message: text } = await handleCreateWorktree(
+					provider,
+					{
+						path: message.worktreePath!,
+						branch: message.worktreeBranch,
+						baseBranch: message.worktreeBaseBranch,
+						createNewBranch: message.worktreeCreateNewBranch,
+					},
+					(progress) => {
+						provider.postMessageToWebview({
+							type: "worktreeCopyProgress",
+							copyProgressBytesCopied: progress.bytesCopied,
+							copyProgressItemName: progress.itemName,
+						})
+					},
+				)
+
+				await provider.postMessageToWebview({ type: "worktreeResult", success, text })
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				await provider.postMessageToWebview({ type: "worktreeResult", success: false, text: errorMessage })
+			}
+
+			break
+		}
+
+		case "deleteWorktree": {
+			try {
+				const { success, message: text } = await handleDeleteWorktree(
+					provider,
+					message.worktreePath!,
+					message.worktreeForce ?? false,
+				)
+
+				await provider.postMessageToWebview({ type: "worktreeResult", success, text })
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				await provider.postMessageToWebview({ type: "worktreeResult", success: false, text: errorMessage })
+			}
+
+			break
+		}
+
+		case "switchWorktree": {
+			try {
+				const { success, message: text } = await handleSwitchWorktree(
+					provider,
+					message.worktreePath!,
+					message.worktreeNewWindow ?? true,
+				)
+
+				await provider.postMessageToWebview({ type: "worktreeResult", success, text })
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				await provider.postMessageToWebview({ type: "worktreeResult", success: false, text: errorMessage })
+			}
+
+			break
+		}
+
+		case "getAvailableBranches": {
+			try {
+				const { localBranches, remoteBranches, currentBranch } = await handleGetAvailableBranches(provider)
+
+				await provider.postMessageToWebview({
+					type: "branchList",
+					localBranches,
+					remoteBranches,
+					currentBranch,
+				})
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+
+				await provider.postMessageToWebview({
+					type: "branchList",
+					localBranches: [],
+					remoteBranches: [],
+					currentBranch: "",
+					error: errorMessage,
+				})
+			}
+
+			break
+		}
+
+		case "getWorktreeDefaults": {
+			try {
+				const { suggestedBranch, suggestedPath } = await handleGetWorktreeDefaults(provider)
+				await provider.postMessageToWebview({ type: "worktreeDefaults", suggestedBranch, suggestedPath })
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+
+				await provider.postMessageToWebview({
+					type: "worktreeDefaults",
+					suggestedBranch: "",
+					suggestedPath: "",
+					error: errorMessage,
+				})
+			}
+
+			break
+		}
+
+		case "getWorktreeIncludeStatus": {
+			try {
+				const worktreeIncludeStatus = await handleGetWorktreeIncludeStatus(provider)
+				await provider.postMessageToWebview({ type: "worktreeIncludeStatus", worktreeIncludeStatus })
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+
+				await provider.postMessageToWebview({
+					type: "worktreeIncludeStatus",
+					worktreeIncludeStatus: {
+						exists: false,
+						hasGitignore: false,
+						gitignoreContent: undefined,
+					},
+					error: errorMessage,
+				})
+			}
+
+			break
+		}
+
+		case "checkBranchWorktreeInclude": {
+			try {
+				const branch = message.worktreeBranch
+				if (!branch) {
+					await provider.postMessageToWebview({
+						type: "branchWorktreeIncludeResult",
+						hasWorktreeInclude: false,
+						error: "No branch specified",
+					})
+					break
+				}
+				const hasWorktreeInclude = await handleCheckBranchWorktreeInclude(provider, branch)
+				await provider.postMessageToWebview({
+					type: "branchWorktreeIncludeResult",
+					branch,
+					hasWorktreeInclude,
+				})
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				await provider.postMessageToWebview({
+					type: "branchWorktreeIncludeResult",
+					hasWorktreeInclude: false,
+					error: errorMessage,
+				})
+			}
+
+			break
+		}
+
+		case "createWorktreeInclude": {
+			try {
+				const { success, message: text } = await handleCreateWorktreeInclude(
+					provider,
+					message.worktreeIncludeContent ?? "",
+				)
+
+				await provider.postMessageToWebview({ type: "worktreeResult", success, text })
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				provider.log(`Error creating worktree include: ${errorMessage}`)
+				await provider.postMessageToWebview({ type: "worktreeResult", success: false, text: errorMessage })
+			}
+
+			break
+		}
+
+		case "checkoutBranch": {
+			try {
+				const { success, message: text } = await handleCheckoutBranch(provider, message.worktreeBranch!)
+				await provider.postMessageToWebview({ type: "worktreeResult", success, text })
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				await provider.postMessageToWebview({ type: "worktreeResult", success: false, text: errorMessage })
+			}
+
+			break
+		}
+
+		case "browseForWorktreePath": {
+			try {
+				const options: vscode.OpenDialogOptions = {
+					canSelectFiles: false,
+					canSelectFolders: true,
+					canSelectMany: false,
+					openLabel: t("worktrees:selectWorktreeLocation"),
+					title: t("worktrees:selectFolderForWorktree"),
+					defaultUri: vscode.workspace.workspaceFolders?.[0]?.uri
+						? vscode.Uri.joinPath(vscode.workspace.workspaceFolders[0].uri, "..")
+						: undefined,
+				}
+
+				const result = await vscode.window.showOpenDialog(options)
+				if (result && result[0]) {
+					await provider.postMessageToWebview({
+						type: "folderSelected",
+						path: result[0].fsPath,
+					})
+				}
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				provider.log(`Error opening folder picker: ${errorMessage}`)
+			}
+
 			break
 		}
 

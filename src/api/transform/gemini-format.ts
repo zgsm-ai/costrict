@@ -25,7 +25,7 @@ function isThoughtSignatureContentBlock(block: ExtendedContentBlockParam): block
 
 export function convertAnthropicContentToGemini(
 	content: ExtendedAnthropicContent,
-	options?: { includeThoughtSignatures?: boolean; toolIdToName?: Map<string, string> },
+	options?: { includeThoughtSignatures?: boolean; toolIdToName?: Map<string, string>; isGeminiCli?: boolean },
 ): Part[] {
 	const includeThoughtSignatures = options?.includeThoughtSignatures ?? true
 	const toolIdToName = options?.toolIdToName
@@ -103,6 +103,11 @@ export function convertAnthropicContentToGemini(
 				}
 
 				if (typeof block.content === "string") {
+					if (options?.isGeminiCli) {
+						return {
+							text: block.content,
+						}
+					}
 					return {
 						functionResponse: { name: toolName, response: { name: toolName, content: block.content } },
 					}
@@ -130,7 +135,9 @@ export function convertAnthropicContentToGemini(
 
 				// Return function response followed by any images
 				return [
-					{ functionResponse: { name: toolName, response: { name: toolName, content: contentText } } },
+					options?.isGeminiCli
+						? { text: contentText }
+						: { functionResponse: { name: toolName, response: { name: toolName, content: contentText } } },
 					...imageParts,
 				]
 			}
@@ -182,7 +189,7 @@ export function convertAnthropicContentToGemini(
 
 export function convertAnthropicMessageToGemini(
 	message: Anthropic.Messages.MessageParam,
-	options?: { includeThoughtSignatures?: boolean; toolIdToName?: Map<string, string> },
+	options?: { includeThoughtSignatures?: boolean; toolIdToName?: Map<string, string>; isGeminiCli?: boolean },
 ): Content[] {
 	const parts = convertAnthropicContentToGemini(message.content, options)
 

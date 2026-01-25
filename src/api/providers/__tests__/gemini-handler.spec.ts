@@ -1,33 +1,44 @@
 import { t } from "i18next"
 import { vi } from "vitest"
-import { TelemetryService } from "@roo-code/telemetry"
 import { FunctionCallingConfigMode } from "@google/genai"
 
-import { GeminiHandler } from "../gemini"
+// Mock TelemetryService
+vi.mock("@roo-code/telemetry", () => ({
+	TelemetryService: {
+		instance: {
+			captureException: vi.fn(),
+		},
+	},
+}))
+
+// Mock modules that might trigger circular dependencies
+vi.mock("../vertex", () => ({}))
+vi.mock("../index", () => ({}))
+vi.mock("../../index", () => ({}))
+
+// import { GeminiHandler } from "../gemini"
 import type { ApiHandlerOptions } from "../../../shared/api"
 
 describe("GeminiHandler backend support", () => {
-	beforeEach(() => {
-		// Mock TelemetryService
-		vi.spyOn(TelemetryService, "hasInstance").mockReturnValue(true)
-		vi.spyOn(TelemetryService, "instance", "get").mockReturnValue({
-			captureException: vi.fn(),
-			captureEvent: vi.fn(),
-		} as any)
-	})
-	it("passes tools for URL context and grounding in config", async () => {
+	it("createMessage uses function declarations (URL context and grounding are only for completePrompt)", async () => {
+		// URL context and grounding are mutually exclusive with function declarations
+		// in Gemini API, so createMessage only uses function declarations.
+		// URL context/grounding are only added in completePrompt.
 		const options = {
 			apiProvider: "gemini",
 			enableUrlContext: true,
 			enableGrounding: true,
 		} as ApiHandlerOptions
+		const { GeminiHandler } = await import("../gemini")
 		const handler = new GeminiHandler(options)
 		const stub = vi.fn().mockReturnValue((async function* () {})())
 		// @ts-ignore access private client
 		handler["client"].models.generateContentStream = stub
 		await handler.createMessage("instr", [] as any).next()
 		const config = stub.mock.calls[0][0].config
-		expect(config.tools).toEqual([{ urlContext: {} }, { googleSearch: {} }])
+		// createMessage always uses function declarations only
+		// (tools are always present from ALWAYS_AVAILABLE_TOOLS)
+		expect(config.tools).toEqual([{ functionDeclarations: expect.any(Array) }])
 	})
 
 	it("completePrompt passes config overrides without tools when URL context and grounding disabled", async () => {
@@ -36,6 +47,7 @@ describe("GeminiHandler backend support", () => {
 			enableUrlContext: false,
 			enableGrounding: false,
 		} as ApiHandlerOptions
+		const { GeminiHandler } = await import("../gemini")
 		const handler = new GeminiHandler(options)
 		const stub = vi.fn().mockResolvedValue({ text: "ok" })
 		// @ts-ignore access private client
@@ -52,6 +64,7 @@ describe("GeminiHandler backend support", () => {
 				apiProvider: "gemini",
 				enableGrounding: true,
 			} as ApiHandlerOptions
+			const { GeminiHandler } = await import("../gemini")
 			const handler = new GeminiHandler(options)
 
 			const mockStream = async function* () {
@@ -87,6 +100,7 @@ describe("GeminiHandler backend support", () => {
 				apiProvider: "gemini",
 				enableGrounding: true,
 			} as ApiHandlerOptions
+			const { GeminiHandler } = await import("../gemini")
 			const handler = new GeminiHandler(options)
 
 			const mockStream = async function* () {
@@ -139,6 +153,7 @@ describe("GeminiHandler backend support", () => {
 				enableUrlContext: true,
 				enableGrounding: true,
 			} as ApiHandlerOptions
+			const { GeminiHandler } = await import("../gemini")
 			const handler = new GeminiHandler(options)
 
 			const mockError = new Error("API rate limit exceeded")
@@ -185,6 +200,7 @@ describe("GeminiHandler backend support", () => {
 			const options = {
 				apiProvider: "gemini",
 			} as ApiHandlerOptions
+			const { GeminiHandler } = await import("../gemini")
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
 			// @ts-ignore access private client
@@ -211,6 +227,7 @@ describe("GeminiHandler backend support", () => {
 			const options = {
 				apiProvider: "gemini",
 			} as ApiHandlerOptions
+			const { GeminiHandler } = await import("../gemini")
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
 			// @ts-ignore access private client
@@ -235,6 +252,7 @@ describe("GeminiHandler backend support", () => {
 			const options = {
 				apiProvider: "gemini",
 			} as ApiHandlerOptions
+			const { GeminiHandler } = await import("../gemini")
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
 			// @ts-ignore access private client
@@ -259,6 +277,7 @@ describe("GeminiHandler backend support", () => {
 			const options = {
 				apiProvider: "gemini",
 			} as ApiHandlerOptions
+			const { GeminiHandler } = await import("../gemini")
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
 			// @ts-ignore access private client
@@ -283,6 +302,7 @@ describe("GeminiHandler backend support", () => {
 			const options = {
 				apiProvider: "gemini",
 			} as ApiHandlerOptions
+			const { GeminiHandler } = await import("../gemini")
 			const handler = new GeminiHandler(options)
 			const stub = vi.fn().mockReturnValue((async function* () {})())
 			// @ts-ignore access private client

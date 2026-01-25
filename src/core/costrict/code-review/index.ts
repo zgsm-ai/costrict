@@ -9,6 +9,7 @@ import { IssueStatus, ReviewTarget, ReviewTargetType } from "../../../shared/cod
 import { getVisibleProviderOrLog } from "../../../activate/registerCommands"
 
 import { CodeReviewService } from "./codeReviewService"
+import { HistoryManager } from "./HistoryManager"
 import { CommentService } from "../../../integrations/comment"
 import type { ReviewComment } from "./reviewComment"
 import { supportPrompt } from "../../../shared/support-prompt"
@@ -112,6 +113,10 @@ export function initCodeReview(
 			reviewInstance.setProvider(visibleProvider)
 			const comments = thread.comments as ReviewComment[]
 			comments.forEach(async (comment) => {
+				if (comment.contextValue !== "Intial") {
+					await reviewInstance.updateHistoryIssueStatus(comment.id, comment.contextValue!, IssueStatus.ACCEPT)
+					return
+				}
 				reviewInstance.updateIssueStatus(comment.id, IssueStatus.ACCEPT)
 			})
 		},
@@ -123,6 +128,10 @@ export function initCodeReview(
 			reviewInstance.setProvider(visibleProvider)
 			const comments = thread.comments as ReviewComment[]
 			comments.forEach(async (comment) => {
+				if (comment.contextValue !== "Intial") {
+					await reviewInstance.updateHistoryIssueStatus(comment.id, comment.contextValue!, IssueStatus.REJECT)
+					return
+				}
 				reviewInstance.updateIssueStatus(comment.id, IssueStatus.REJECT)
 			})
 		},
@@ -134,7 +143,10 @@ export function initCodeReview(
 			reviewInstance.setProvider(visibleProvider)
 			const comment = thread.comments[0] as ReviewComment
 			if (comment) {
-				reviewInstance.askWithAI(comment.id)
+				reviewInstance.askWithAI(
+					comment.id,
+					comment.contextValue === "intial" ? undefined : comment.contextValue,
+				)
 			}
 		},
 		reviewCommit: async () => {
@@ -292,4 +304,5 @@ export function initCodeReview(
 	}
 }
 
-export { CodeReviewService, ReviewTargetType }
+export { CodeReviewService, ReviewTargetType, HistoryManager }
+export type { ReviewHistoryEntry } from "../../../shared/codeReview"

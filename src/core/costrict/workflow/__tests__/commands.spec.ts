@@ -65,7 +65,14 @@ vi.mock("vscode", () => ({
 // Mock supportPrompt
 vi.mock("../../../../shared/support-prompt", () => ({
 	supportPrompt: {
+		default: {
+			CONDENSE: "Mock CONDENSE prompt",
+			EXPLAIN: "Mock EXPLAIN prompt",
+			FIX: "Mock FIX prompt",
+		},
 		create: vi.fn((type: string, params: any) => `Mock prompt for ${type} with params: ${JSON.stringify(params)}`),
+		get: vi.fn(),
+		getPathWithSelectedText: vi.fn(),
 	},
 }))
 

@@ -172,9 +172,7 @@ export type ProviderSettingsEntry = z.infer<typeof providerSettingsEntrySchema>
 const baseProviderSettingsSchema = z.object({
 	//
 	includeMaxTokens: z.boolean().optional(),
-	diffEnabled: z.boolean().optional(),
 	todoListEnabled: z.boolean().optional(),
-	fuzzyMatchThreshold: z.number().optional(),
 	modelTemperature: z.number().nullish(),
 	rateLimitSeconds: z.number().optional(),
 	consecutiveMistakeLimit: z.number().min(0).optional(),
@@ -187,9 +185,6 @@ const baseProviderSettingsSchema = z.object({
 
 	// Model verbosity.
 	verbosity: verbosityLevelsSchema.optional(),
-
-	// Tool protocol override for this profile.
-	toolProtocol: z.enum(["xml", "native"]).optional(),
 })
 
 // Several of the providers share common model config properties.

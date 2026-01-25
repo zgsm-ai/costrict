@@ -38,7 +38,8 @@
 		"openInCloud": "Open task in Roo Code Cloud",
 		"openInCloudIntro": "Keep monitoring or interacting with Roo from anywhere. Scan, click or copy to open.",
 		"openApiHistory": "Open API History",
-		"openUiHistory": "Open UI History"
+		"openUiHistory": "Open UI History",
+		"backToParentTask": "Parent task"
 	},
 	"unpin": "Unpin",
 	"pin": "Pin",
@@ -61,14 +62,17 @@
 	"tokenProgress": {
 		"availableSpace": "Available space: {{amount}} tokens",
 		"tokensUsed": "Tokens used: {{used}} of {{total}}",
-		"reservedForResponse": "Reserved for model response: {{amount}} tokens"
+		"reservedForResponse": "Reserved for model response: {{amount}} tokens",
+		"tokensUsedLabel": "Tokens used",
+		"reservedForResponseLabel": "Reserved for response",
+		"availableSpaceLabel": "Available space"
 	},
 	"reject": {
 		"title": "Deny",
 		"tooltip": "Prevent this action from occurring",
 		"askNextStep": "Please immediately terminate the '{{action}}' operation, and wait for me to provide a new plan before proceeding to the next step."
 	},
-	"completeSubtaskAndReturn": "Complete Subtask and Return",
+	"completeSubtaskAndReturn": "Complete subtask and keep going",
 	"approve": {
 		"title": "Approve",
 		"tooltip": "Allow this action to happen"
@@ -294,13 +298,14 @@
 	},
 	"subtasks": {
 		"wantsToCreate": "Roo wants to create a new subtask in {{mode}} mode",
-		"wantsToFinish": "Roo wants to finish this subtask",
+		"wantsToFinish": "Roo wants to mark this as completed",
 		"newTaskContent": "Subtask Instructions",
 		"completionContent": "Subtask Completed",
-		"resultContent": "Subtask Results",
 		"viewSubtask": "View Subtask",
+		"resultContent": "Subtask completed",
 		"defaultResult": "Please continue to the next task.",
-		"completionInstructions": "Subtask completed! You can review the results and suggest any corrections or next steps. If everything looks good, confirm to return the result to the parent task."
+		"completionInstructions": "You can review the results and suggest any corrections or next steps. If everything looks good, confirm to return the result to the parent task.",
+		"goToSubtask": "View Subtask"
 	},
 	"questions": {
 		"hasQuestion": "Roo has a question"
@@ -358,9 +363,7 @@
 		},
 		"release": {
 			"heading": "What's New:",
-			"openaiCodexProvider": "Added OpenAI - ChatGPT Plus/Pro Provider that gives subscription-based access to Codex models without per-token costs.",
-			"gpt52codexModel": "Added the new gpt-5.2-codex model to Roo Code Router, the standard OpenAI provider, and more.",
-			"bugFixes": "Fixed memory leaks causing gray screens, Gemini thought signature issues, and more stability improvements."
+			"intelligentContextCondensation": "Intelligent Context Condensing v2: A complete rework of the algorithm used to manage the context window. Now you can run tasks for longer without CoStrict getting dumber."
 		},
 		"cloudAgents": {
 			"heading": "New in the Cloud:",

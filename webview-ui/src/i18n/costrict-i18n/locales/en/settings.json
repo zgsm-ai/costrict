@@ -94,11 +94,12 @@
 		"autoCondenseContextPercent": {
 			"description": "When the context window reaches this threshold, CoStrict will automatically condense it."
 		},
+		"USE_LITE_PROMPTS": {
+			"name": "Lite Mode",
+			"description": "When enabled, CoStrict will use Lite mode, which will reduce context usage and reduce token consumption."
+		},
 		"INSERT_BLOCK": {
 			"description": "Enable the experimental insert content tool, allowing CoStrict to insert content at specific line numbers without needing to create a diff."
-		},
-		"POWER_STEERING": {
-			"description": "When enabled, CoStrict will remind the model about the details of its current mode definition more frequently. This will lead to stronger adherence to role definitions and custom instructions, but will use more tokens per message."
 		},
 		"MULTI_SEARCH_AND_REPLACE": {
 			"description": "When enabled, CoStrict will use multi block diff tool. This will try to update multiple code blocks in the file in one request."

@@ -36,7 +36,7 @@ export const ApiConfigSelector = ({
 	const { t } = useAppTranslation()
 	const [open, setOpen] = useState(false)
 	const [searchValue, setSearchValue] = useState("")
-	const portalContainer = useRooPortal("roo-portal")
+	const portalContainer = useRooPortal("costrict-portal")
 
 	// Create searchable items for fuzzy search.
 	const searchableItems = useMemo(

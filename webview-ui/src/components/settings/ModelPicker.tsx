@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect, useRef, useLayoutEffect } from "react"
 import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { Trans } from "react-i18next"
-import { Check, X, Brain, Info } from "lucide-react"
+import { ChevronsUpDown, Check, X, Brain, Info } from "lucide-react"
 
 import type { ProviderSettings, ModelInfo, OrganizationAllowList } from "@roo-code/types"
 
@@ -43,6 +43,10 @@ type ModelIdKey = keyof Pick<
 	| "ioIntelligenceModelId"
 	| "vercelAiGatewayModelId"
 	| "apiModelId"
+	| "ollamaModelId"
+	| "lmStudioModelId"
+	| "lmStudioDraftModelId"
+	| "vsCodeLmModelSelector"
 >
 
 interface ModelPickerProps {
@@ -70,11 +74,18 @@ interface ModelPickerProps {
 	tooltip?: string
 	simplifySettings?: boolean
 	hidePricing?: boolean
+	/** Label for the model picker field - defaults to "Model" */
+	label?: string
+	/** Transform model ID string to the value stored in configuration (for compound types like VSCodeLM selector) */
+	valueTransform?: (modelId: string) => unknown
+	/** Transform stored configuration value back to display string */
+	displayTransform?: (value: unknown) => string
+	/** Callback when model changes - useful for side effects like clearing related fields */
+	onModelChange?: (modelId: string) => void
 }
 
 export const ModelPicker = ({
-	isChatBox = false,
-	modelPickerId = "",
+	// modelPickerId = "",
 	defaultModelId,
 	models,
 	modelIdKey,
@@ -91,9 +102,12 @@ export const ModelPicker = ({
 	popoverContentClassName = "",
 	PopoverTriggerContentClassName = "",
 	tooltip,
-	// simplifySettings,
 	simplifySettings,
 	hidePricing,
+	label,
+	valueTransform,
+	displayTransform,
+	onModelChange,
 }: ModelPickerProps) => {
 	const { t } = useAppTranslation()
 
@@ -104,15 +118,17 @@ export const ModelPicker = ({
 	const selectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 	const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-	const { id: selectedModelId, info: selectedModelInfoFromHook } = useSelectedModel(apiConfiguration)
+	const { id: selectedModelId, info: selectedModelInfo } = useSelectedModel(apiConfiguration)
 
-	// If the `models` prop has a value, the `modelInfo` from the prop will be used preferentially over the one returned by the hook.
-	const selectedModelInfo = useMemo(() => {
-		if (apiConfiguration?.apiProvider === "zgsm" && models && selectedModelId && models[selectedModelId]) {
-			return models[selectedModelId]
+	// Get the display value for the current selection
+	// If displayTransform is provided, use it to convert the stored value to a display string
+	const displayValue = useMemo(() => {
+		if (displayTransform) {
+			const storedValue = apiConfiguration[modelIdKey]
+			return storedValue ? displayTransform(storedValue) : undefined
 		}
-		return selectedModelInfoFromHook
-	}, [apiConfiguration?.apiProvider, models, selectedModelId, selectedModelInfoFromHook])
+		return selectedModelId
+	}, [displayTransform, apiConfiguration, modelIdKey, selectedModelId])
 
 	const modelIds = useMemo(() => {
 		const filteredModels = filterModels(models, apiConfiguration.apiProvider, organizationAllowList)
@@ -137,9 +153,7 @@ export const ModelPicker = ({
 		return Object.keys(availableModels).sort((a, b) => a.localeCompare(b))
 	}, [models, apiConfiguration.apiProvider, organizationAllowList, selectedModelId])
 
-	const [searchValue, setSearchValue] = useState(
-		(apiConfiguration.apiProvider === "zgsm" ? "" : selectedModelId) || "",
-	)
+	const [searchValue, setSearchValue] = useState("")
 
 	const onSelect = useCallback(
 		(modelId: string) => {
@@ -148,7 +162,13 @@ export const ModelPicker = ({
 			}
 
 			setOpen(false)
-			setApiConfigurationField(modelIdKey, modelId)
+
+			// Apply value transform if provided (e.g., for VSCodeLM selector)
+			const valueToStore = valueTransform ? valueTransform(modelId) : modelId
+			setApiConfigurationField(modelIdKey, valueToStore as ProviderSettings[ModelIdKey])
+
+			// Call the optional change callback
+			onModelChange?.(modelId)
 
 			// Clear any existing timeout
 			if (selectTimeoutRef.current) {
@@ -156,39 +176,36 @@ export const ModelPicker = ({
 			}
 
 			// Delay to ensure the popover is closed before setting the search value.
-			selectTimeoutRef.current = setTimeout(
-				() => setSearchValue(apiConfiguration.apiProvider === "zgsm" ? "" : modelId),
-				100,
-			)
+			selectTimeoutRef.current = setTimeout(() => setSearchValue(""), 100)
 		},
-		[apiConfiguration.apiProvider, modelIdKey, setApiConfigurationField],
+		[modelIdKey, setApiConfigurationField, valueTransform, onModelChange],
 	)
 
-	const onOpenChange = useCallback(
-		(open: boolean) => {
-			setOpen(open)
+	const onOpenChange = useCallback((open: boolean) => {
+		setOpen(open)
 
-			// Abandon the current search if the popover is closed.
-			if (!open) {
-				// Clear any existing timeout
-				if (closeTimeoutRef.current) {
-					clearTimeout(closeTimeoutRef.current)
-				}
-
-				// Clear the search value when closing instead of prefilling it
-				closeTimeoutRef.current = setTimeout(
-					() => () => setSearchValue(apiConfiguration.apiProvider === "zgsm" ? "" : selectedModelId),
-					100,
-				)
+		// Abandon the current search if the popover is closed.
+		if (!open) {
+			// Clear any existing timeout
+			if (closeTimeoutRef.current) {
+				clearTimeout(closeTimeoutRef.current)
 			}
-		},
-		[apiConfiguration.apiProvider, selectedModelId],
-	)
+
+			// Clear the search value when closing instead of prefilling it
+			closeTimeoutRef.current = setTimeout(() => setSearchValue(""), 100)
+		}
+	}, [])
 
 	const onClearSearch = useCallback(() => {
 		setSearchValue("")
 		searchInputRef.current?.focus()
 	}, [])
+
+	useEffect(() => {
+		if (showLabel) {
+			setOpen(false)
+		}
+	}, [showLabel])
 
 	useEffect(() => {
 		if (!selectedModelId && !isInitialized.current) {
@@ -218,9 +235,9 @@ export const ModelPicker = ({
 				return
 			}
 
-			const popoverElement = document.querySelector(`[data-testid="model-picker-content${modelPickerId}"]`)
+			const popoverElement = document.querySelector(`[data-testid="model-picker-content${displayValue}"]`)
 			if (popoverElement && !popoverElement.contains(event.target as Node)) {
-				const triggerButton = document.querySelector(`[data-testid="model-picker-button${modelPickerId}"]`)
+				const triggerButton = document.querySelector(`[data-testid="model-picker-button${displayValue}"]`)
 				if (triggerButton && !triggerButton.contains(event.target as Node)) {
 					setOpen(false)
 				}
@@ -243,48 +260,36 @@ export const ModelPicker = ({
 			document.removeEventListener("click", handleClickAnywhere)
 			window.removeEventListener("message", handlePageChange)
 		}
-	}, [modelPickerId, open])
+	}, [displayValue, open])
 
 	// Use the shared ESC key handler hook
 	useEscapeKey(open, () => setOpen(false))
 
 	return (
 		<>
-			<div
-				className={`opacity-90 hover:opacity-100 ${isChatBox ? "bg-vscode-input-background" : ""} hover:border-[rgba(255,255,255,0.15)] cursor-pointer`}>
-				{showLabel && <label className="block font-medium mb-1">{t("settings:modelPicker.label")}</label>}
+			<div>
+				{showLabel && (
+					<label className="block font-medium mb-1">{label ?? t("settings:modelPicker.label")}</label>
+				)}
 				<Popover open={open} onOpenChange={onOpenChange}>
-					{tooltip ? (
-						<StandardTooltip content={tooltip}>
-							<PopoverTrigger asChild>
-								<Button
-									variant="combobox"
-									role="combobox"
-									aria-expanded={open}
-									disabled={isStreaming}
-									className={cn("w-full", "justify-between", triggerClassName)}
-									data-testid={`model-picker-button${modelPickerId}`}>
-									<div className={`truncate ${PopoverTriggerContentClassName}`}>
-										<Brain className="inline-block mr-1" />
-										{selectedModelId ?? t("settings:common.select")}
-									</div>
-								</Button>
-							</PopoverTrigger>
-						</StandardTooltip>
-					) : (
+					<StandardTooltip content={tooltip ?? ""}>
 						<PopoverTrigger asChild>
 							<Button
 								variant="combobox"
 								role="combobox"
 								aria-expanded={open}
+								disabled={isStreaming}
 								className={cn("w-full", "justify-between", triggerClassName)}
-								data-testid={`model-picker-button${modelPickerId}`}>
-								<div className={PopoverTriggerContentClassName}>
-									{selectedModelId ?? t("settings:common.select")}
+								data-testid={`model-picker-button${displayValue}`}>
+								<div className={`truncate ${PopoverTriggerContentClassName}`}>
+									{!showLabel && <Brain className="inline-block mr-1" />}
+									{displayValue ?? t("settings:common.select")}
 								</div>
+								{showLabel && <ChevronsUpDown className="opacity-50" />}
 							</Button>
 						</PopoverTrigger>
-					)}
+					</StandardTooltip>
+
 					<PopoverContent
 						className={cn(
 							"p-0",
@@ -293,7 +298,7 @@ export const ModelPicker = ({
 							popoverContentClassName,
 						)}
 						align="start"
-						data-testid={`model-picker-content${modelPickerId}`}>
+						data-testid={`model-picker-content${displayValue}`}>
 						<Command>
 							<div className="relative">
 								<CommandInput
@@ -339,7 +344,7 @@ export const ModelPicker = ({
 												<Check
 													className={cn(
 														"size-4 p-0.5",
-														model === selectedModelId ? "opacity-100" : "opacity-0",
+														model === displayValue ? "opacity-100" : "opacity-0",
 													)}
 												/>
 												<span className="truncate" title={model}>

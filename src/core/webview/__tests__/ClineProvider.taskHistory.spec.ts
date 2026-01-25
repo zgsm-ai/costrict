@@ -1,4 +1,4 @@
-// pnpm --filter roo-cline test core/webview/__tests__/ClineProvider.taskHistory.spec.ts
+// pnpm --filter zgsm test core/webview/__tests__/ClineProvider.taskHistory.spec.ts
 
 import * as vscode from "vscode"
 import type { HistoryItem, ExtensionMessage } from "@roo-code/types"
@@ -232,7 +232,6 @@ vi.mock("../../../shared/modes", () => ({
 
 vi.mock("../diff/strategies/multi-search-replace", () => ({
 	MultiSearchReplaceDiffStrategy: vi.fn().mockImplementation(() => ({
-		getToolDescription: () => "test",
 		getName: () => "test-strategy",
 		applyDiff: vi.fn(),
 	})),

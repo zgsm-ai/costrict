@@ -71,7 +71,7 @@ describe("ModelPicker", () => {
 
 		await act(async () => {
 			// Open the popover by clicking the button.
-			const button = screen.getByTestId("model-picker-button")
+			const button = screen.getByTestId("model-picker-buttonAuto")
 			fireEvent.click(button)
 		})
 
@@ -107,7 +107,7 @@ describe("ModelPicker", () => {
 
 		await act(async () => {
 			// Open the popover by clicking the button.
-			const button = screen.getByTestId("model-picker-button")
+			const button = screen.getByTestId("model-picker-buttonAuto")
 			fireEvent.click(button)
 		})
 
@@ -189,7 +189,7 @@ describe("ModelPicker", () => {
 			})
 
 			// Check that both the model selector and error message are present
-			const modelSelector = screen.getByTestId("model-picker-button")
+			const modelSelector = screen.getByTestId("model-picker-buttonAuto")
 			const errorContainer = screen.getByTestId("api-error-message")
 			const errorElement = screen.getByText(errorMessage)
 

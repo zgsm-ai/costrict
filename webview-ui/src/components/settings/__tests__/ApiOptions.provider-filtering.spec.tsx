@@ -70,6 +70,7 @@ vi.mock("@src/components/ui", () => ({
 			</div>
 		)
 	},
+	StandardTooltip: ({ children }: any) => <>{children}</>,
 	Select: ({ children }: any) => <div>{children}</div>,
 	SelectTrigger: ({ children }: any) => <div>{children}</div>,
 	SelectValue: ({ placeholder }: any) => <div>{placeholder}</div>,
@@ -89,6 +90,17 @@ vi.mock("@src/components/ui", () => ({
 	AlertDialogFooter: ({ children, ...props }: any) => <div {...props}>{children}</div>,
 	AlertDialogHeader: ({ children, ...props }: any) => <div {...props}>{children}</div>,
 	AlertDialogTitle: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+	// Add Popover components for ModelPicker
+	Popover: ({ children }: any) => <div>{children}</div>,
+	PopoverTrigger: ({ children }: any) => <div>{children}</div>,
+	PopoverContent: ({ children }: any) => <div>{children}</div>,
+	// Add Command components for ModelPicker
+	Command: ({ children }: any) => <div>{children}</div>,
+	CommandInput: ({ ...props }: any) => <input {...props} />,
+	CommandList: ({ children }: any) => <div>{children}</div>,
+	CommandEmpty: ({ children }: any) => <div>{children}</div>,
+	CommandGroup: ({ children }: any) => <div>{children}</div>,
+	CommandItem: ({ children, ...props }: any) => <div {...props}>{children}</div>,
 }))
 
 describe("ApiOptions Provider Filtering", () => {

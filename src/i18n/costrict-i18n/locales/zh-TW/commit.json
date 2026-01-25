@@ -6,8 +6,9 @@
 			"aiFailed": "AI 生成提交訊息失敗",
 			"notInitialized": "提交服務未初始化",
 			"noWorkspace": "未找到工作空間資料夾",
-			"notGitRepo": "當前工作空間不是 git 倉庫",
-			"failedToGetGitDiff": "獲取 git 差異失敗：{{0}}"
+			"notGitRepo": "當前目錄不是 Git 倉庫",
+			"failedToGetGitDiff": "獲取 git 差異失敗：{{0}}",
+			"failedToGetUntrackedFiles": "獲取未追蹤文件失敗：{{0}}"
 		},
 		"progress": {
 			"generating": "正在生成提交訊息..."
@@ -34,6 +35,9 @@
 			"modified": "修改的檔案：",
 			"deleted": "刪除的檔案：",
 			"renamed": "重新命名的檔案："
+		},
+		"info": {
+			"newRepoWithUntracked": "檢測到新倉庫，發現 {{0}} 個未追蹤的文件"
 		},
 		"prompt": {
 			"prefix": "根據以下 git 變更生成提交訊息：\n\n",

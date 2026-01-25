@@ -16,6 +16,16 @@ export const geminiCliModels = {
 		maxThinkingTokens: 24_576,
 		supportsReasoningBudget: true,
 	},
+	"gemini-2.5-flash-lite": {
+		maxTokens: 64_000,
+		contextWindow: 1_048_576,
+		supportsImages: false,
+		supportsPromptCache: false,
+		inputPrice: 0,
+		outputPrice: 0,
+		maxThinkingTokens: 24_576,
+		supportsReasoningBudget: true,
+	},
 	"gemini-2.5-pro": {
 		maxTokens: 64_000,
 		contextWindow: 1_048_576,

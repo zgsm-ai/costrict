@@ -5,7 +5,20 @@ import type { ApiHandlerOptions } from "../../shared/api"
 import { getModelParams } from "../transform/model-params"
 
 import { GeminiHandler } from "./gemini"
-import { SingleCompletionHandler } from "../index"
+
+// Importing SingleCompletionHandler from "../index" creates a circular dependency:
+// - vertex.ts imports GeminiHandler from "./gemini"
+// - gemini.ts imports SingleCompletionHandler from "../index"
+// - index.ts exports VertexHandler from "./vertex"
+//
+// To break this cycle, we define the interface locally here. This is safe because
+// VertexHandler only implements this interface for type checking, and the actual
+// implementation (completePrompt method) is inherited from GeminiHandler which
+// already implements SingleCompletionHandler properly.
+
+export interface SingleCompletionHandler {
+	completePrompt(prompt: string, systemPrompt?: string, metadata?: any): Promise<string>
+}
 
 export class VertexHandler extends GeminiHandler implements SingleCompletionHandler {
 	constructor(options: ApiHandlerOptions) {

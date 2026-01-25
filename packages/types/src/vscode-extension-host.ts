@@ -21,6 +21,7 @@ import type { McpServer } from "./mcp.js"
 import type { IZgsmModelResponseData, ModelRecord, RouterModels } from "./model.js"
 import type { INotice } from "./notification.js"
 import type { OpenAiCodexRateLimitInfo } from "./providers/openai-codex-rate-limits.js"
+import type { WorktreeIncludeStatus } from "./worktree.js"
 
 /**
  * ExtensionMessage
@@ -105,6 +106,10 @@ export interface ExtensionMessage {
 		| "showZgsmCodebaseDisableConfirmDialog"
 		| "reviewTaskUpdate"
 		| "issueStatusUpdated"
+		| "reviewHistoryResponse"
+		| "reviewHistoryEntryDeleted"
+		| "reviewIssueByIdLoaded"
+		| "getReviewIssueById"
 		| "commands"
 		| "insertTextIntoTextarea"
 		| "dismissedUpsells"
@@ -112,11 +117,21 @@ export interface ExtensionMessage {
 		| "interactionRequired"
 		| "browserSessionUpdate"
 		| "browserSessionNavigate"
+		| "reviewFilesResponse"
 		| "claudeCodeRateLimits"
 		| "customToolsResult"
 		| "modes"
 		| "taskWithAggregatedCosts"
 		| "openAiCodexRateLimits"
+		// Worktree response types
+		| "worktreeList"
+		| "worktreeResult"
+		| "worktreeCopyProgress"
+		| "branchList"
+		| "worktreeDefaults"
+		| "worktreeIncludeStatus"
+		| "branchWorktreeIncludeResult"
+		| "folderSelected"
 	text?: string
 	payload?: any // eslint-disable-line @typescript-eslint/no-explicit-any
 	checkpointWarning?: {
@@ -229,6 +244,53 @@ export interface ExtensionMessage {
 	taskHistory?: HistoryItem[] // For taskHistoryUpdated: full sorted task history
 	/** For taskHistoryItemUpdated: single updated/added history item */
 	taskHistoryItem?: HistoryItem
+	// Worktree response properties
+	worktrees?: Array<{
+		path: string
+		branch: string
+		commitHash: string
+		isCurrent: boolean
+		isBare: boolean
+		isDetached: boolean
+		isLocked: boolean
+		lockReason?: string
+	}>
+	isGitRepo?: boolean
+	isMultiRoot?: boolean
+	isSubfolder?: boolean
+	gitRootPath?: string
+	worktreeResult?: {
+		success: boolean
+		message: string
+		worktree?: {
+			path: string
+			branch: string
+			commitHash: string
+			isCurrent: boolean
+			isBare: boolean
+			isDetached: boolean
+			isLocked: boolean
+			lockReason?: string
+		}
+	}
+	localBranches?: string[]
+	remoteBranches?: string[]
+	currentBranch?: string
+	suggestedBranch?: string
+	suggestedPath?: string
+	worktreeIncludeExists?: boolean
+	worktreeIncludeStatus?: WorktreeIncludeStatus
+	hasGitignore?: boolean
+	gitignoreContent?: string
+	// branchWorktreeIncludeResult
+	branch?: string
+	hasWorktreeInclude?: boolean
+	// worktreeCopyProgress (size-based)
+	copyProgressBytesCopied?: number
+	copyProgressTotalBytes?: number
+	copyProgressItemName?: string
+	// folderSelected
+	path?: string
 }
 
 export interface OpenAiCodexRateLimitsMessage {
@@ -289,14 +351,11 @@ export type ExtensionState = Pick<
 	| "terminalZdotdir"
 	| "terminalCompressProgressBar"
 	| "diagnosticsEnabled"
-	| "diffEnabled"
-	| "fuzzyMatchThreshold"
 	| "language"
 	| "modeApiConfigs"
 	| "customModePrompts"
 	| "customSupportPrompts"
 	| "enhancementApiConfigId"
-	| "condensingApiConfigId"
 	| "customCondensingPrompt"
 	| "codebaseIndexConfig"
 	| "codebaseIndexModels"
@@ -318,6 +377,7 @@ export type ExtensionState = Pick<
 	| "maxGitStatusFiles"
 	| "requestDelaySeconds"
 	| "experimentSettings"
+	| "showWorktreesInHomeScreen"
 > & {
 	version: string
 	clineMessages: ClineMessage[]
@@ -350,7 +410,7 @@ export type ExtensionState = Pick<
 	zgsmCodeMode?: "vibe" | "strict" | "raw" | "plan"
 	mode: string
 	customModes: ModeConfig[]
-	toolRequirements?: Record<string, boolean> // Map of tool names to their requirements (e.g. {"apply_diff": true} if diffEnabled)
+	toolRequirements?: Record<string, boolean> // Map of tool names to their requirements (e.g. {"apply_diff": true})
 
 	cwd?: string // Current working directory
 	telemetrySetting: TelemetrySetting
@@ -380,6 +440,7 @@ export type ExtensionState = Pick<
 	marketplaceInstalledMetadata?: { project: Record<string, any>; global: Record<string, any> }
 	profileThresholds: Record<string, number>
 	hasOpenedModeSelector: boolean
+	hasClosedCodeReviewWelcomeTips: boolean
 	openRouterImageApiKey?: string
 	messageQueue?: QueuedMessage[]
 	lastShownAnnouncementId?: string
@@ -441,6 +502,14 @@ export interface WebviewMessage {
 		| "checkReviewSuggestion"
 		| "cancelReviewTask"
 		| "startCodereview"
+		| "getReviewFiles"
+		| "createReviewTask"
+		| "setCodeReviewWelcomeTips"
+		| "showFileDiff"
+		| "getReviewHistory"
+		| "getReviewIssueById"
+		| "deleteReviewHistoryItem"
+		| "showReviewComment"
 		// costrict-end
 		| "humanRelayResponse"
 		| "settingsButtonclicked"
@@ -605,13 +674,25 @@ export interface WebviewMessage {
 		| "requestModes"
 		| "switchMode"
 		| "debugSetting"
+		// Worktree messages
+		| "listWorktrees"
+		| "createWorktree"
+		| "deleteWorktree"
+		| "switchWorktree"
+		| "getAvailableBranches"
+		| "getWorktreeDefaults"
+		| "getWorktreeIncludeStatus"
+		| "checkBranchWorktreeInclude"
+		| "createWorktreeInclude"
+		| "checkoutBranch"
+		| "browseForWorktreePath"
+	text?: string
 	// costrict-start
 	issueId?: string
 	terminalPid?: number
 	executionId?: string
 	terminalCommand?: string
 	// costrict-end
-	text?: string
 	editedMessageContent?: string
 	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "cloud" | "zgsm-account" | "codeReview"
 	disabled?: boolean
@@ -700,6 +781,14 @@ export interface WebviewMessage {
 		codebaseIndexOpenRouterApiKey?: string
 	}
 	updatedSettings?: RooCodeSettings
+	// Worktree properties
+	worktreePath?: string
+	worktreeBranch?: string
+	worktreeBaseBranch?: string
+	worktreeCreateNewBranch?: boolean
+	worktreeForce?: boolean
+	worktreeNewWindow?: boolean
+	worktreeIncludeContent?: string
 }
 
 export interface RequestOpenAiCodexRateLimitsMessage {
@@ -742,6 +831,18 @@ export type InstallMarketplaceItemWithParametersPayload = z.infer<
 	typeof installMarketplaceItemWithParametersPayloadSchema
 >
 
+export interface ReviewFilesPayload {
+	reviewType: "uncommitted" | "committed"
+}
+
+export interface CreateReviewTaskPayload {
+	files?: Array<{ path: string; status: string }>
+}
+
+export interface CodeReviewWelcomeTipsPayload {
+	value: boolean
+}
+
 export type WebViewMessagePayload =
 	| CheckpointDiffPayload
 	| CheckpointRestorePayload
@@ -750,6 +851,9 @@ export type WebViewMessagePayload =
 	| InstallMarketplaceItemWithParametersPayload
 	| UpdateTodoListPayload
 	| EditQueuedMessagePayload
+	| ReviewFilesPayload
+	| CreateReviewTaskPayload
+	| CodeReviewWelcomeTipsPayload
 
 export interface IndexingStatus {
 	systemStatus: string

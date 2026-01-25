@@ -22,7 +22,7 @@ const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
 }) => {
 	return (
 		<div className="flex flex-col h-full">
-			<div className="flex-shrink-0 px-5">
+			<div>
 				<TaskStatusBar
 					taskStatus={taskStatus}
 					progress={progress}

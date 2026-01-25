@@ -178,6 +178,14 @@ describe("App", () => {
 			experiments: {},
 			language: "en",
 			telemetrySetting: "enabled",
+			reviewTask: {
+				status: "initial",
+				data: {
+					issues: [],
+					progress: 0,
+				},
+			},
+			setReviewTask: vi.fn(),
 		})
 	})
 

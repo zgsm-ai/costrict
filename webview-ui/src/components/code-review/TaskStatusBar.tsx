@@ -22,7 +22,7 @@ const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
 }) => {
 	const { t } = useAppTranslation()
 	return (
-		<div className="flex items-center mt-5">
+		<div className="flex flex-shrink-0 items-center mt-5">
 			{taskStatus === ReviewTaskStatus.RUNNING && (
 				<div className="mb-4">
 					<div>
@@ -45,9 +45,6 @@ const TaskStatusBar: React.FC<TaskStatusBarProps> = ({
 							)}
 							{message && <span className="ml-2">{message}</span>}
 						</div>
-						{progress !== null && (
-							<div className="text-neutral-500 italic text-sm mt-2">{t("codereview:tips")}</div>
-						)}
 					</div>
 				</div>
 			)}

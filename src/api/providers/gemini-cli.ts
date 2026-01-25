@@ -11,11 +11,13 @@ import type { ApiHandlerOptions } from "../../shared/api"
 import { t } from "../../i18n"
 
 import { convertAnthropicContentToGemini, convertAnthropicMessageToGemini } from "../transform/gemini-format"
-import type { ApiStream } from "../transform/stream"
+import type { ApiStream, ApiStreamChunk } from "../transform/stream"
 import { getModelParams } from "../transform/model-params"
 
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 import { BaseProvider } from "./base-provider"
+import { getGeminiCliLiteToolGuide } from "../../core/prompts/tools/native-tools/lite-descriptions"
+import { TagMatcher } from "../../utils/tag-matcher"
 
 // OAuth2 Configuration (from Cline implementation)
 const OAUTH_CLIENT_ID = "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com"
@@ -260,9 +262,23 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 
 		const { id: model, info, reasoning: thinkingConfig, maxTokens } = this.getModel()
 
+		const toolIdToName = new Map<string, string>()
+		for (const message of messages) {
+			if (Array.isArray(message.content)) {
+				for (const block of message.content) {
+					if (block.type === "tool_use") {
+						toolIdToName.set(block.id, block.name)
+					}
+				}
+			}
+		}
 		// Convert messages to Gemini format
 		const contents = messages.map((message) =>
-			convertAnthropicMessageToGemini(message, { includeThoughtSignatures: false }),
+			convertAnthropicMessageToGemini(message, {
+				includeThoughtSignatures: false,
+				toolIdToName,
+				isGeminiCli: true,
+			}),
 		)
 
 		// Prepare request body for Code Assist API - matching Cline's structure
@@ -273,9 +289,13 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 				contents: [
 					{
 						role: "user",
-						parts: [{ text: systemInstruction }],
+						parts: [{ text: systemInstruction + "\n\n" + getGeminiCliLiteToolGuide() }],
 					},
 					...contents,
+					{
+						role: "user",
+						parts: [{ text: getGeminiCliLiteToolGuide() }],
+					},
 				],
 				generationConfig: {
 					temperature: this.options.modelTemperature ?? 0.7,
@@ -304,7 +324,16 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 
 			// Process the SSE stream
 			let lastUsageMetadata: any = undefined
-
+			const toolCallMatcher = new TagMatcher(
+				"tool_call",
+				(chunk) => {
+					return {
+						type: chunk.matched ? "fake_tool_call" : "text",
+						text: chunk.data,
+					}
+				},
+				Infinity,
+			)
 			for await (const jsonData of this.parseSSEStream(response.data as NodeJS.ReadableStream)) {
 				// Extract content from the response
 				const responseData = jsonData.response || jsonData
@@ -320,10 +349,18 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 									text: part.text,
 								}
 							} else {
-								yield {
-									type: "text",
-									text: part.text,
+								for (const chunk of toolCallMatcher.update(part.text)) {
+									yield chunk as ApiStreamChunk
 								}
+							}
+						} else if (part.functionCall) {
+							const toolCallInfo = {
+								name: part.functionCall.name,
+								arguments: part.functionCall.arguments || part.functionCall.args || {},
+							}
+							yield {
+								type: "fake_tool_call",
+								text: JSON.stringify(toolCallInfo),
 							}
 						}
 					}
@@ -336,6 +373,9 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 
 				// Check if this is the final chunk
 				if (candidate?.finishReason) {
+					for (const chunk of toolCallMatcher.final()) {
+						yield chunk as ApiStreamChunk
+					}
 					break
 				}
 			}

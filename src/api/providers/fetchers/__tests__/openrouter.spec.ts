@@ -29,9 +29,7 @@ describe.skip("OpenRouter API", () => {
 				description: expect.any(String),
 				supportsReasoningBudget: false,
 				supportsReasoningEffort: false,
-				supportsNativeTools: true,
 				supportedParameters: ["max_tokens", "temperature", "reasoning", "include_reasoning"],
-				defaultToolProtocol: "native",
 			})
 
 			expect(models["anthropic/claude-3.7-sonnet:thinking"]).toEqual({
@@ -47,9 +45,7 @@ describe.skip("OpenRouter API", () => {
 				supportsReasoningBudget: true,
 				requiredReasoningBudget: true,
 				supportsReasoningEffort: true,
-				supportsNativeTools: true,
 				supportedParameters: ["max_tokens", "temperature", "reasoning", "include_reasoning"],
-				defaultToolProtocol: "native",
 			})
 
 			expect(models["google/gemini-2.5-flash-preview-05-20"].maxTokens).toEqual(65535)
@@ -137,7 +133,7 @@ describe.skip("OpenRouter API", () => {
 					cacheWritesPrice: 1.625,
 					cacheReadsPrice: 0.31,
 					supportsReasoningEffort: true,
-					supportsNativeTools: false, // Gemini doesn't support native tools via "tools" parameter
+					// Tool support is handled via metadata/tools at request time.
 					supportedParameters: ["max_tokens", "temperature", "reasoning"],
 				},
 			} as Record<string, any>
@@ -151,7 +147,6 @@ describe.skip("OpenRouter API", () => {
 			const parentModel = mockCachedModels["google/gemini-2.5-pro-preview"]
 			if (parentModel) {
 				for (const key of Object.keys(endpoints)) {
-					endpoints[key].supportsNativeTools = parentModel.supportsNativeTools
 					endpoints[key].supportsReasoningEffort = parentModel.supportsReasoningEffort
 					endpoints[key].supportedParameters = parentModel.supportedParameters
 				}
@@ -170,7 +165,6 @@ describe.skip("OpenRouter API", () => {
 					cacheReadsPrice: 0.31,
 					description: undefined,
 					supportsReasoningEffort: true,
-					supportsNativeTools: false, // Copied from parent model
 					supportedParameters: ["max_tokens", "temperature", "reasoning"],
 				},
 				"google-ai-studio": {
@@ -185,7 +179,6 @@ describe.skip("OpenRouter API", () => {
 					cacheReadsPrice: 0.31,
 					description: undefined,
 					supportsReasoningEffort: true,
-					supportsNativeTools: false, // Copied from parent model
 					supportedParameters: ["max_tokens", "temperature", "reasoning"],
 				},
 			})
@@ -222,7 +215,7 @@ describe.skip("OpenRouter API", () => {
 				},
 			}
 
-			// Mock cached parent model with native tools support
+			// Mock cached parent model capabilities
 			const mockCachedModels = {
 				"anthropic/claude-sonnet-4": {
 					maxTokens: 8192,
@@ -235,7 +228,7 @@ describe.skip("OpenRouter API", () => {
 					cacheWritesPrice: 3.75,
 					cacheReadsPrice: 0.3,
 					supportsReasoningEffort: true,
-					supportsNativeTools: true, // Anthropic supports native tools
+					// Tool support is handled via metadata/tools at request time.
 					supportedParameters: ["max_tokens", "temperature", "reasoning"],
 				},
 			} as Record<string, any>
@@ -249,7 +242,6 @@ describe.skip("OpenRouter API", () => {
 			const parentModel = mockCachedModels["anthropic/claude-sonnet-4"]
 			if (parentModel) {
 				for (const key of Object.keys(endpoints)) {
-					endpoints[key].supportsNativeTools = parentModel.supportsNativeTools
 					endpoints[key].supportsReasoningEffort = parentModel.supportsReasoningEffort
 					endpoints[key].supportedParameters = parentModel.supportedParameters
 				}
@@ -267,7 +259,6 @@ describe.skip("OpenRouter API", () => {
 				description: undefined,
 				supportsReasoningBudget: true,
 				supportsReasoningEffort: true,
-				supportsNativeTools: true, // Copied from parent model
 				supportedParameters: ["max_tokens", "temperature", "reasoning"],
 			})
 
@@ -394,7 +385,7 @@ describe.skip("OpenRouter API", () => {
 			expect(imageResult.maxTokens).toBe(64000)
 		})
 
-		it("sets defaultToolProtocol to native when model supports native tools", () => {
+		it("treats supportedParameters containing tools as allowed", () => {
 			const mockModel = {
 				name: "Tools Model",
 				description: "Model with native tool support",
@@ -415,11 +406,10 @@ describe.skip("OpenRouter API", () => {
 				supportedParameters: ["tools", "max_tokens", "temperature"],
 			})
 
-			expect(resultWithTools.supportsNativeTools).toBe(true)
-			expect(resultWithTools.defaultToolProtocol).toBe("native")
+			expect(resultWithTools.supportedParameters).toContain("max_tokens")
 		})
 
-		it("does not set defaultToolProtocol when model does not support native tools", () => {
+		it("treats supportedParameters without tools as allowed", () => {
 			const mockModel = {
 				name: "No Tools Model",
 				description: "Model without native tool support",
@@ -440,8 +430,7 @@ describe.skip("OpenRouter API", () => {
 				supportedParameters: ["max_tokens", "temperature"],
 			})
 
-			expect(resultWithoutTools.supportsNativeTools).toBe(false)
-			expect(resultWithoutTools.defaultToolProtocol).toBeUndefined()
+			expect(resultWithoutTools.supportedParameters).toContain("max_tokens")
 		})
 	})
 })

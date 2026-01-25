@@ -27,7 +27,7 @@
 	"command.acceptInput.title": "Accept Input/Suggestion",
 	"command.shortKeyCut.title": "CoStrict Code Completion Shortcut",
 	"command.codeReview.title": "Code Review",
-	"command.reviewCommit.title": "Review Changes",
+	"command.reviewCommit.title": "CoStrict Review",
 	"command.addComment.title": "Add Comments",
 	"command.addTests.title": "Generate Unit Tests",
 	"command.explain.title": "Explain Code",

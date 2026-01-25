@@ -30,35 +30,88 @@ export class CommitMessageGenerator {
 	 */
 	async getGitDiff(): Promise<GitDiffInfo> {
 		try {
-			// Get staged changes
-			const { stdout: stagedDiff } = await execAsync("git diff --cached --name-status", {
-				cwd: this.workspaceRoot,
-				maxBuffer: 1024 * 1024 * 2, // 2MB buffer for file names
-			})
-
-			// Get unstaged changes
-			const { stdout: unstagedDiff } = await execAsync("git diff --name-status", {
-				cwd: this.workspaceRoot,
-				maxBuffer: 1024 * 1024 * 2, // 2MB buffer for file names
-			})
-
-			// Get full diff content for analysis using streaming approach
-			const fullDiff = await this.getGitDiffStreaming()
-
+			// 1. Initialize diffInfo object
 			const diffInfo: GitDiffInfo = {
 				added: [],
 				modified: [],
 				deleted: [],
 				renamed: [],
-				diffContent: fullDiff,
+				diffContent: "",
 			}
 
-			// Parse staged changes
-			this.parseDiffOutput(stagedDiff, diffInfo)
+			// 2. Verify Git repository
+			await execAsync("git rev-parse --git-dir", {
+				cwd: this.workspaceRoot,
+			})
 
-			// Parse unstaged changes
-			this.parseDiffOutput(unstagedDiff, diffInfo)
+			// 3. Check repository status
+			const hasCommits = await this.hasCommits()
 
+			// 4. Get untracked files
+			const untrackedFiles = await this.getUntrackedFiles()
+
+			// 5. Get changes based on repository status
+			if (hasCommits) {
+				// Repository with commits: use staged and unstaged changes
+				const { stdout: stagedDiff } = await execAsync("git diff --cached --name-status", {
+					cwd: this.workspaceRoot,
+					maxBuffer: 1024 * 1024 * 2, // 2MB buffer for file names
+				})
+
+				const { stdout: unstagedDiff } = await execAsync("git diff --name-status", {
+					cwd: this.workspaceRoot,
+					maxBuffer: 1024 * 1024 * 2, // 2MB buffer for file names
+				})
+
+				// Get full diff content
+				diffInfo.diffContent = await this.getGitDiffStreaming()
+
+				// Parse staged and unstaged changes
+				this.parseDiffOutput(stagedDiff, diffInfo)
+				this.parseDiffOutput(unstagedDiff, diffInfo)
+			} else {
+				// New repository: use git status --short to get working tree changes
+				const { stdout: statusOutput } = await execAsync("git status --short", {
+					cwd: this.workspaceRoot,
+					maxBuffer: 1024 * 1024 * 2, // 2MB buffer for file names
+				})
+
+				// Get full diff content (getGitDiffStreaming will automatically use git diff)
+				diffInfo.diffContent = await this.getGitDiffStreaming()
+
+				// Parse status --short output
+				const lines = statusOutput.trim().split("\n")
+				for (const line of lines) {
+					if (!line.trim()) continue
+
+					const status = line.charAt(0)
+					const filePath = line.substring(3) // Skip status characters and spaces
+
+					// git status --short status codes:
+					// ? Untracked, A Added, M Modified, D Deleted, R Renamed
+					// First column is staged status, second column is working tree status
+					switch (status) {
+						case "?": // Untracked
+						case "A": // Added to staging
+							diffInfo.added.push(filePath)
+							break
+						case "M": // Modified
+							diffInfo.modified.push(filePath)
+							break
+						case "D": // Deleted
+							diffInfo.deleted.push(filePath)
+							break
+						case "R": // Renamed
+							// git status --short doesn't show rename info, ignore for now
+							break
+					}
+				}
+			}
+
+			// 6. Merge untracked files
+			untrackedFiles.forEach((file) => diffInfo.added.push(file))
+
+			// 7. Return result
 			return diffInfo
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error)
@@ -71,14 +124,14 @@ export class CommitMessageGenerator {
 	 */
 	private async getGitDiffStreaming(): Promise<string> {
 		return new Promise((resolve, reject) => {
-			// 首先检查是否有任何提交
+			// First check if there are any commits
 			execAsync("git rev-parse --verify HEAD", { cwd: this.workspaceRoot })
 				.then(() => {
-					// 有提交，使用 git diff HEAD
+					// Has commits, use git diff HEAD
 					this.runGitDiff(["diff", "HEAD"], resolve, reject)
 				})
 				.catch(() => {
-					// 没有提交，使用 git diff 获取所有更改
+					// No commits, use git diff to get all changes
 					this.runGitDiff(["diff"], resolve, reject)
 				})
 		})
@@ -125,6 +178,46 @@ export class CommitMessageGenerator {
 	}
 
 	/**
+	 * Check if repository has any commits
+	 * @returns true if repository has commits, false if it's a new repository (no commits)
+	 */
+	private async hasCommits(): Promise<boolean> {
+		try {
+			const { stdout } = await execAsync("git rev-parse HEAD", {
+				cwd: this.workspaceRoot,
+			})
+			// If command succeeds and returns non-empty string, there are commits
+			return stdout.trim().length > 0
+		} catch (error) {
+			// Command failed (no HEAD), indicates new repository
+			return false
+		}
+	}
+
+	/**
+	 * Get list of untracked files
+	 * @returns Array of untracked file paths
+	 */
+	private async getUntrackedFiles(): Promise<string[]> {
+		try {
+			const { stdout } = await execAsync("git ls-files --others --exclude-standard", {
+				cwd: this.workspaceRoot,
+				maxBuffer: 1024 * 1024 * 2, // 2MB buffer
+			})
+			// Split output by lines and filter empty lines
+			return stdout
+				.trim()
+				.split("\n")
+				.filter((line) => line.trim().length > 0)
+		} catch (error) {
+			// If command fails, return empty array instead of throwing exception
+			const errorMessage = error instanceof Error ? error.message : String(error)
+			console.error(t("commit:commit.error.failedToGetUntrackedFiles", { 0: errorMessage }))
+			return []
+		}
+	}
+
+	/**
 	 * Parse git diff output and populate diff info
 	 */
 	private parseDiffOutput(diffOutput: string, diffInfo: GitDiffInfo): void {
@@ -166,6 +259,12 @@ export class CommitMessageGenerator {
 
 		if (!this.hasChanges(diffInfo)) {
 			throw new Error(t("commit:commit.error.noChanges"))
+		}
+
+		// Provide friendly message for new repository with only untracked files
+		const hasCommits = await this.hasCommits()
+		if (!hasCommits && diffInfo.added.length > 0 && diffInfo.modified.length === 0) {
+			console.log(t("commit:commit.info.newRepoWithUntracked", { 0: diffInfo.added.length }))
 		}
 
 		const aiSuggestion = await this.generateCommitMessageWithAI(diffInfo, options)

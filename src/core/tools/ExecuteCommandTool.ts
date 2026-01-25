@@ -30,16 +30,9 @@ interface ExecuteCommandParams {
 export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 	readonly name = "execute_command" as const
 
-	parseLegacy(params: Partial<Record<string, string>>): ExecuteCommandParams {
-		return {
-			command: params.command || "",
-			cwd: params.cwd,
-		}
-	}
-
 	async execute(params: ExecuteCommandParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { command, cwd: customCwd } = params
-		const { handleError, pushToolResult, askApproval, removeClosingTag, toolProtocol } = callbacks
+		const { handleError, pushToolResult, askApproval } = callbacks
 
 		try {
 			if (!command) {
@@ -53,7 +46,7 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 
 			if (ignoredFileAttemptedToAccess) {
 				await task.say("rooignore_error", ignoredFileAttemptedToAccess)
-				pushToolResult(formatResponse.rooIgnoreError(ignoredFileAttemptedToAccess, toolProtocol))
+				pushToolResult(formatResponse.rooIgnoreError(ignoredFileAttemptedToAccess))
 				return
 			}
 
@@ -147,9 +140,7 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 
 	override async handlePartial(task: Task, block: ToolUse<"execute_command">): Promise<void> {
 		const command = block.params.command
-		await task
-			.ask("command", this.removeClosingTag("command", command, block.partial), block.partial)
-			.catch(() => {})
+		await task.ask("command", command ?? "", block.partial).catch(() => {})
 	}
 }
 

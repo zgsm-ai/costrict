@@ -26,7 +26,7 @@ export const CheckpointMenu = ({ ts, commitHash, checkpoint, onOpenChange }: Che
 	const [internalRestoreOpen, setInternalRestoreOpen] = useState(false)
 	const [restoreConfirming, setRestoreConfirming] = useState(false)
 	const [internalMoreOpen, setInternalMoreOpen] = useState(false)
-	const portalContainer = useRooPortal("roo-portal")
+	const portalContainer = useRooPortal("costrict-portal")
 
 	const previousCommitHash = checkpoint?.from
 

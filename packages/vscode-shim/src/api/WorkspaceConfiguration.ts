@@ -20,7 +20,7 @@ const runtimeConfig: Map<string, unknown> = new Map()
 
 /**
  * Set a runtime configuration value.
- * @param section The configuration section (e.g., "roo-cline")
+ * @param section The configuration section (e.g., "zgsm")
  * @param key The configuration key (e.g., "commandExecutionTimeout")
  * @param value The value to set
  */
@@ -32,7 +32,7 @@ export function setRuntimeConfig(section: string, key: string, value: unknown): 
 
 /**
  * Set multiple runtime configuration values at once.
- * @param section The configuration section (e.g., "roo-cline")
+ * @param section The configuration section (e.g., "zgsm")
  * @param values Object containing key-value pairs to set
  */
 export function setRuntimeConfigValues(section: string, values: Record<string, unknown>): void {
@@ -53,7 +53,7 @@ export function clearRuntimeConfig(): void {
 
 /**
  * Get a runtime configuration value.
- * @param fullKey The full configuration key (e.g., "roo-cline.commandExecutionTimeout")
+ * @param fullKey The full configuration key (e.g., "zgsm.commandExecutionTimeout")
  * @returns The value or undefined if not set
  */
 export function getRuntimeConfig(fullKey: string): unknown {

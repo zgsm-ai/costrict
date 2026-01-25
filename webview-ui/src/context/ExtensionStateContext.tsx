@@ -55,6 +55,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	maxConcurrentFileReads?: number
 	mdmCompliant?: boolean
 	hasOpenedModeSelector: boolean // New property to track if user has opened mode selector
+	hasClosedCodeReviewWelcomeTips: boolean // Track if user has dismissed code review welcome tips
 	reviewTask: ReviewTaskPayload
 	setReviewTask: (value: ReviewTaskPayload) => void
 	setHasOpenedModeSelector: (value: boolean) => void // Setter for the new property
@@ -62,10 +63,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setAlwaysAllowFollowupQuestions: (value: boolean) => void // Setter for the new property
 	followupAutoApproveTimeoutMs: number | undefined // Timeout in ms for auto-approving follow-up questions
 	setFollowupAutoApproveTimeoutMs: (value: number) => void // Setter for the timeout
-	condensingApiConfigId?: string
-	setCondensingApiConfigId: (value: string) => void
-	customCondensingPrompt?: string
-	setCustomCondensingPrompt: (value: string) => void
 	marketplaceItems?: any[]
 	marketplaceInstalledMetadata?: MarketplaceInstalledMetadata
 	profileThresholds: Record<string, number>
@@ -99,14 +96,12 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setTerminalZdotdir: (value: boolean) => void
 	setTtsEnabled: (value: boolean) => void
 	setTtsSpeed: (value: number) => void
-	setDiffEnabled: (value: boolean) => void
 	setEnableCheckpoints: (value: boolean) => void
 	setUseZgsmCustomConfig: (value: boolean) => void
 	setZgsmCodebaseIndexEnabled: (value: boolean) => void
 	checkpointTimeout: number
 	setCheckpointTimeout: (value: number) => void
 	setBrowserViewportSize: (value: string) => void
-	setFuzzyMatchThreshold: (value: number) => void
 	setWriteDelayMs: (value: number) => void
 	screenshotQuality?: number
 	setScreenshotQuality: (value: number) => void
@@ -191,6 +186,8 @@ export interface ExtensionStateContextType extends ExtensionState {
 	notices?: Array<{ title: string; type: "always" | "once"; content: string; timestamp: number; expired: number }>
 	noticesEnabled: boolean
 	setNoticesEnabled: (value: boolean) => void
+	showWorktreesInHomeScreen: boolean
+	setShowWorktreesInHomeScreen: (value: boolean) => void
 }
 
 export const ExtensionStateContext = createContext<ExtensionStateContextType | undefined>(undefined)
@@ -245,14 +242,12 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		isBrowserSessionActive: false,
 		ttsEnabled: false,
 		ttsSpeed: 1.0,
-		diffEnabled: false,
 		enableCheckpoints: true,
 		useZgsmCustomConfig: false,
 		zgsmCodebaseIndexEnabled: true,
 		zgsmCodeMode: "vibe",
 		checkpointTimeout: DEFAULT_CHECKPOINT_TIMEOUT_SECONDS, // Default to 15 seconds
-		fuzzyMatchThreshold: 1.0,
-		language: "en", // Default fallback language (will be updated from extension)
+		language: "en", // Default language code
 		writeDelayMs: 1000,
 		browserViewportSize: "900x600",
 		screenshotQuality: 75,
@@ -273,9 +268,8 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		experiments: experimentDefault,
 		experimentSettings: {},
 		enhancementApiConfigId: "",
-		condensingApiConfigId: "", // Default empty string for condensing API config ID
-		customCondensingPrompt: "", // Default empty string for custom condensing prompt
 		hasOpenedModeSelector: false, // Default to false (not opened yet)
+		hasClosedCodeReviewWelcomeTips: false, // Default to false (tips not dismissed yet)
 		autoApprovalEnabled: false,
 		customModes: [],
 		maxOpenTabsContext: 20,
@@ -605,7 +599,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		commands,
 		soundVolume: state.soundVolume,
 		ttsSpeed: state.ttsSpeed,
-		fuzzyMatchThreshold: state.fuzzyMatchThreshold,
 		writeDelayMs: state.writeDelayMs,
 		screenshotQuality: state.screenshotQuality,
 		routerModels: extensionRouterModels,
@@ -649,7 +642,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setSoundVolume: (value) => setState((prevState) => ({ ...prevState, soundVolume: value })),
 		setTtsEnabled: (value) => setState((prevState) => ({ ...prevState, ttsEnabled: value })),
 		setTtsSpeed: (value) => setState((prevState) => ({ ...prevState, ttsSpeed: value })),
-		setDiffEnabled: (value) => setState((prevState) => ({ ...prevState, diffEnabled: value })),
 		setEnableCheckpoints: (value) => setState((prevState) => ({ ...prevState, enableCheckpoints: value })),
 		setUseZgsmCustomConfig: (value) => setState((prevState) => ({ ...prevState, useZgsmCustomConfig: value })),
 		setZgsmCodebaseIndexEnabled: (value) =>
@@ -657,7 +649,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setCheckpointTimeout: (value) => setState((prevState) => ({ ...prevState, checkpointTimeout: value })),
 		setBrowserViewportSize: (value: string) =>
 			setState((prevState) => ({ ...prevState, browserViewportSize: value })),
-		setFuzzyMatchThreshold: (value) => setState((prevState) => ({ ...prevState, fuzzyMatchThreshold: value })),
 		setWriteDelayMs: (value) => setState((prevState) => ({ ...prevState, writeDelayMs: value })),
 		setScreenshotQuality: (value) => setState((prevState) => ({ ...prevState, screenshotQuality: value })),
 		setTerminalOutputLineLimit: (value) =>
@@ -728,13 +719,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setAutoCondenseContext: (value) => setState((prevState) => ({ ...prevState, autoCondenseContext: value })),
 		setAutoCondenseContextPercent: (value) =>
 			setState((prevState) => ({ ...prevState, autoCondenseContextPercent: value })),
-		setCondensingApiConfigId: (value) => setState((prevState) => ({ ...prevState, condensingApiConfigId: value })),
 		autoCleanup: state.autoCleanup ?? DEFAULT_AUTO_CLEANUP_SETTINGS,
 		setAutoCleanup: (value) => setState((prevState) => ({ ...prevState, autoCleanup: value })),
 		debug: state.debug ?? false,
 		setDebug: (value) => setState((prevState) => ({ ...prevState, debug: value })),
-		setCustomCondensingPrompt: (value) =>
-			setState((prevState) => ({ ...prevState, customCondensingPrompt: value })),
 		setProfileThresholds: (value) => setState((prevState) => ({ ...prevState, profileThresholds: value })),
 		includeDiagnosticMessages: state.includeDiagnosticMessages,
 		setIncludeDiagnosticMessages: (value) => {
@@ -753,6 +741,9 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		notices,
 		noticesEnabled,
 		setNoticesEnabled,
+		showWorktreesInHomeScreen: state.showWorktreesInHomeScreen ?? true,
+		setShowWorktreesInHomeScreen: (value) =>
+			setState((prevState) => ({ ...prevState, showWorktreesInHomeScreen: value })),
 	}
 
 	return <ExtensionStateContext.Provider value={contextValue}>{children}</ExtensionStateContext.Provider>

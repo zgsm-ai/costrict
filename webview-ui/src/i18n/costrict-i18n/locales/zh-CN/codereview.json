@@ -1,9 +1,16 @@
 {
 	"welcomePage": {
 		"title": "CoStrict",
-		"subtitle": "企业严肃开发的AI智能伙伴",
-		"tips1": "1. 选择函数、代码块、多文件",
-		"tips2": "2. 点击鼠标右键，找到 CoStrict > Code Review 一键触发"
+		"tips": "你也可以选中函数/代码块/多文件，右键 > CoStrict > Code Review ",
+		"dismiss": "不再提示",
+		"reviewCurrentChanges": "审查当前变更",
+		"noFiles": "没有需要审查的文件"
+	},
+	"history": {
+		"title": "审查历史",
+		"loading": "加载历史记录...",
+		"noData": "没有找到审查历史",
+		"done": "完成"
 	},
 	"codebase": {
 		"syncTips": "当前codebase索引同步功能被关闭，无法运行代码审查，是否开启codebase索引并继续代码审查？",
@@ -20,20 +27,12 @@
 			"low": "低"
 		},
 		"severityLabel": "严重程度",
-		"issueLable": "标签",
-		"filterTooltip": "过滤问题",
-		"confidence": {
-			"low": "较低",
-			"middle": "适中",
-			"high": "较高"
-		},
-		"confidenceLabel": "置信度",
-		"confidenceTooltip": "确信度越高问题的可信度越高，符合条件的问题越少，反之亦然，建议取适中"
+		"issueLabel": "标签",
+		"filterTooltip": "过滤问题"
 	},
 	"taskStatusBar": {
 		"running": "正在进行 Code Review，{{progress}}%",
 		"cancel": "取消执行",
 		"completed": "代码质量非常高，未检查出任何问题"
-	},
-	"tips": "若代码行数发生修改，问题行定位可能会不准确"
+	}
 }

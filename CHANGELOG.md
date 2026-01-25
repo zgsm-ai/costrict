@@ -1,5 +1,42 @@
 # CoStrict Change Log
 
+## [2.2.2]
+
+- Updated Worktrees UI
+- Updated suggestedBranch
+- Updated MCP configuration
+- Fix missing translations
+- Fix test cases
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/c28478eda768433ebc121a8f57952549207bd9ce)
+
+## [2.2.1]
+
+- Added custom condense prompt editing in Context Management settings.
+- Re-architected intelligent context condensation algorithm (V2).
+- Introduced `zgsmCodeMode` filtering for mode selection.
+- Updated Worktrees description for generality.
+- Optimized subtask display in chat history with count and expand/collapse.
+- Improved Token progress display text and labels.
+- Removed experimental "Power Steering" mode.
+- Removed experimental "Multi-File Apply Diff" feature.
+- Updated English, Simplified Chinese, and Traditional Chinese localization texts.
+- Fix gemini-cli response parsing.
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/c7910a99c7e88027a796d1877d3423e303955034)
+
+## [2.2.0]
+
+- Added worktree functionality, supporting switching between multiple branches
+- Added review history feature, supporting viewing and managing historical review records
+- Added concise prompt mode to reduce token consumption
+- Improved intelligent error detection and automatic model switching logic
+- Improved task mode processing and mode selection logic
+- Improved IPC authentication error handling and retry logic
+- Removed all XML protocol code
+- Provided lightweight XML compatibility for Costrict Provider
+- UI experience improvements
+- Fixed known issues
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/6eb3d5dd0ae33f61f69b62e400311f35459ca87b)
+
 ## [2.1.19]
 
 - Added GBK encoding support for Windows system commands, including tasklist, ping, netstat, etc.

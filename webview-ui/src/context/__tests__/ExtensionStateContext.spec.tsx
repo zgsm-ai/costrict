@@ -219,6 +219,7 @@ describe("mergeExtensionState", () => {
 			taskSyncEnabled: false,
 			featureRoomoteControlEnabled: false,
 			isBrowserSessionActive: false,
+			hasClosedCodeReviewWelcomeTips: true,
 			checkpointTimeout: DEFAULT_CHECKPOINT_TIMEOUT_SECONDS, // Add the checkpoint timeout property
 		}
 
@@ -233,14 +234,20 @@ describe("mergeExtensionState", () => {
 			...baseState,
 			apiConfiguration: { modelMaxThinkingTokens: 456, modelTemperature: 0.3 },
 			experiments: {
-				powerSteering: true,
-				multiFileApplyDiff: true,
+				chatSearch: false,
+				marketplace: false,
+				disableCompletionCommand: false,
+				concurrentFileReads: true,
+				powerSteering: false,
 				preventFocusDisruption: false,
 				imageGeneration: false,
 				runSlashCommand: false,
-				chatSearch: false,
 				multipleNativeToolCalls: false,
 				customTools: false,
+				alwaysIncludeFileDetails: false,
+				commitReview: false,
+				useLitePrompts: false,
+				smartMistakeDetection: false,
 			} as Record<ExperimentId, boolean>,
 			checkpointTimeout: DEFAULT_CHECKPOINT_TIMEOUT_SECONDS + 5,
 		}
@@ -253,14 +260,20 @@ describe("mergeExtensionState", () => {
 		})
 
 		expect(result.experiments).toEqual({
-			powerSteering: true,
-			multiFileApplyDiff: true,
+			chatSearch: false,
+			marketplace: false,
+			disableCompletionCommand: false,
+			concurrentFileReads: true,
+			powerSteering: false,
 			preventFocusDisruption: false,
 			imageGeneration: false,
 			runSlashCommand: false,
-			chatSearch: false,
 			multipleNativeToolCalls: false,
 			customTools: false,
+			alwaysIncludeFileDetails: false,
+			commitReview: false,
+			useLitePrompts: false,
+			smartMistakeDetection: false,
 		})
 	})
 })
