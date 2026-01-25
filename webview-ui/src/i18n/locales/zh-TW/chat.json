@@ -522,5 +522,13 @@
 		"serversPart_other": "{{count}} 個 MCP 伺服器",
 		"messageTemplate": "您已啟用 {{tools}}（透過 {{servers}}）。這麼多的工具可能會混淆模型並導致錯誤。請嘗試保持在 {{threshold}} 以下。",
 		"openMcpSettings": "開啟 MCP 設定"
+	},
+	"geminiCliDiffChangesDialog": {
+		"title": "Gemini CLI 未儲存變更",
+		"description": "是否儲存變更並繼續？",
+		"cancelButton": "拒絕",
+		"confirmButton": "儲存",
+		"diffPath": "檔案路徑",
+		"alwaysAcceptButton": "總是接受當前 Session"
 	}
 }

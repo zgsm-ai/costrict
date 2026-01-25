@@ -11,6 +11,7 @@ import { DiffContentProvider, DiffManager } from "./diff-manager.js"
 import { createLogger } from "./utils/logger.js"
 import { detectIdeFromEnv, IDE_DEFINITIONS, type IdeInfo } from "./utils/detect-ide.js"
 import { IdeCompanionStatusBar } from "./IdeCompanionStatusBar.js"
+import type { ClineProvider } from "../../webview/ClineProvider.js"
 
 // const CLI_IDE_COMPANION_IDENTIFIER = 'Google.gemini-cli-vscode-ide-companion';
 const INFO_MESSAGE_SHOWN_KEY = "geminiCliInfoMessageShown"
@@ -100,7 +101,7 @@ let log: (message: string) => void = () => {}
 //   }
 // }
 
-export async function costrictCliActivate(context: vscode.ExtensionContext) {
+export async function costrictCliActivate(context: vscode.ExtensionContext, clineProvider?: ClineProvider) {
 	logger = vscode.window.createOutputChannel("Gemini CLI IDE Companion")
 	log = createLogger(context, logger)
 	log("Extension activated")
@@ -113,6 +114,21 @@ export async function costrictCliActivate(context: vscode.ExtensionContext) {
 	const diffContentProvider = new DiffContentProvider()
 	const diffManager = new DiffManager(log, diffContentProvider)
 
+	// 监听 diff 显示事件，通知 webview
+	if (clineProvider) {
+		const diffShowSubscription = diffManager.onDidShowDiff((diffInfo) => {
+			clineProvider.postMessageToWebview({
+				type: "showDiffActionDialog",
+				payload: {
+					filePath: diffInfo.originalFilePath,
+					rightDocUri: diffInfo.rightDocUri.toString(),
+					sessionId: diffInfo.sessionId,
+				},
+			})
+		})
+		context.subscriptions.push(diffShowSubscription)
+	}
+
 	context.subscriptions.push(
 		vscode.workspace.onDidCloseTextDocument((doc) => {
 			if (doc.uri.scheme === DIFF_SCHEME) {
@@ -120,13 +136,13 @@ export async function costrictCliActivate(context: vscode.ExtensionContext) {
 			}
 		}),
 		vscode.workspace.registerTextDocumentContentProvider(DIFF_SCHEME, diffContentProvider),
-		(vscode.commands.registerCommand("costrict.diff.accept", (uri?: vscode.Uri) => {
+		(vscode.commands.registerCommand("geminiCli.diff.accept", (uri?: vscode.Uri) => {
 			const docUri = uri ?? vscode.window.activeTextEditor?.document.uri
 			if (docUri && docUri.scheme === DIFF_SCHEME) {
 				diffManager.acceptDiff(docUri)
 			}
 		}),
-		vscode.commands.registerCommand("costrict.diff.cancel", (uri?: vscode.Uri) => {
+		vscode.commands.registerCommand("geminiCli.diff.cancel", (uri?: vscode.Uri) => {
 			const docUri = uri ?? vscode.window.activeTextEditor?.document.uri
 			if (docUri && docUri.scheme === DIFF_SCHEME) {
 				diffManager.cancelDiff(docUri)
@@ -156,7 +172,7 @@ export async function costrictCliActivate(context: vscode.ExtensionContext) {
 		vscode.workspace.onDidGrantWorkspaceTrust(() => {
 			ideServer.syncEnvVars()
 		})),
-		vscode.commands.registerCommand("costrict.runGeminiCLI", async () => {
+		vscode.commands.registerCommand("geminiCli.runGeminiCLI", async () => {
 			const workspaceFolders = vscode.workspace.workspaceFolders
 			if (!workspaceFolders || workspaceFolders.length === 0) {
 				vscode.window.showInformationMessage("No folder open. Please open a folder to run Gemini CLI.")
@@ -182,7 +198,7 @@ export async function costrictCliActivate(context: vscode.ExtensionContext) {
 				terminal.sendText(geminiCmd)
 			}
 		}),
-		vscode.commands.registerCommand("costrict.showNotices", async () => {
+		vscode.commands.registerCommand("geminiCli.showNotices", async () => {
 			const noticePath = vscode.Uri.joinPath(context.extensionUri, "NOTICES.txt")
 			await vscode.window.showTextDocument(noticePath)
 		}),

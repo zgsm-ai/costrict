@@ -94,15 +94,15 @@ export class IdeCompanionStatusBar {
 
 	// 	// 执行对应的命令
 	// 	if (selected.label.includes("Start")) {
-	// 		await vscode.commands.executeCommand("costrict.ideCompanion.start")
+	// 		await vscode.commands.executeCommand("geminiCli.ideCompanion.start")
 	// 	} else if (selected.label.includes("Stop")) {
-	// 		await vscode.commands.executeCommand("costrict.ideCompanion.stop")
+	// 		await vscode.commands.executeCommand("geminiCli.ideCompanion.stop")
 	// 	} else if (selected.label.includes("Restart")) {
-	// 		await vscode.commands.executeCommand("costrict.ideCompanion.restart")
+	// 		await vscode.commands.executeCommand("geminiCli.ideCompanion.restart")
 	// 	} else if (selected.label.includes("Status")) {
-	// 		await vscode.commands.executeCommand("costrict.ideCompanion.showStatus")
+	// 		await vscode.commands.executeCommand("geminiCli.ideCompanion.showStatus")
 	// 	} else if (selected.label.includes("Settings")) {
-	// 		await vscode.commands.executeCommand("workbench.action.openSettings", "costrict.ideCompanion")
+	// 		await vscode.commands.executeCommand("workbench.action.openSettings", "geminiCli.ideCompanion")
 	// 	}
 	// }
 

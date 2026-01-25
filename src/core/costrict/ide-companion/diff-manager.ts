@@ -41,6 +41,7 @@ interface DiffInfo {
 	originalFilePath: string
 	newContent: string
 	rightDocUri: vscode.Uri
+	sessionId?: string
 }
 
 /**
@@ -49,6 +50,8 @@ interface DiffInfo {
 export class DiffManager {
 	private readonly onDidChangeEmitter = new vscode.EventEmitter<JSONRPCNotification>()
 	readonly onDidChange = this.onDidChangeEmitter.event
+	private readonly onDidShowDiffEmitter = new vscode.EventEmitter<DiffInfo>()
+	readonly onDidShowDiff = this.onDidShowDiffEmitter.event
 	private diffDocuments = new Map<string, DiffInfo>()
 	private readonly subscriptions: vscode.Disposable[] = []
 
@@ -69,12 +72,14 @@ export class DiffManager {
 		for (const subscription of this.subscriptions) {
 			subscription.dispose()
 		}
+		this.onDidChangeEmitter.dispose()
+		this.onDidShowDiffEmitter.dispose()
 	}
 
 	/**
 	 * Creates and shows a new diff view.
 	 */
-	async showDiff(filePath: string, newContent: string) {
+	async showDiff(filePath: string, newContent: string, sessionId?: string) {
 		const fileUri = vscode.Uri.file(filePath)
 
 		const rightDocUri = vscode.Uri.from({
@@ -89,10 +94,11 @@ export class DiffManager {
 			originalFilePath: filePath,
 			newContent,
 			rightDocUri,
+			sessionId,
 		})
 
 		const diffTitle = `${path.basename(filePath)} ↔ Modified`
-		await vscode.commands.executeCommand("setContext", "costrict.diff.isVisible", true)
+		await vscode.commands.executeCommand("setContext", "geminiCli.diff.isVisible", true)
 
 		let leftDocUri
 		try {
@@ -112,6 +118,12 @@ export class DiffManager {
 			preserveFocus: true,
 		})
 		await vscode.commands.executeCommand("workbench.action.files.setActiveEditorWriteableInSession")
+
+		// 触发事件通知 webview 显示操作栏
+		const diffInfo = this.diffDocuments.get(rightDocUri.toString())
+		if (diffInfo) {
+			this.onDidShowDiffEmitter.fire(diffInfo)
+		}
 	}
 
 	/**
@@ -199,7 +211,7 @@ export class DiffManager {
 				}
 			}
 		}
-		await vscode.commands.executeCommand("setContext", "costrict.diff.isVisible", isVisible)
+		await vscode.commands.executeCommand("setContext", "geminiCli.diff.isVisible", isVisible)
 	}
 
 	private addDiffDocument(uri: vscode.Uri, diffInfo: DiffInfo) {
@@ -208,7 +220,7 @@ export class DiffManager {
 
 	private async closeDiffEditor(rightDocUri: vscode.Uri) {
 		const diffInfo = this.diffDocuments.get(rightDocUri.toString())
-		await vscode.commands.executeCommand("setContext", "costrict.diff.isVisible", false)
+		await vscode.commands.executeCommand("setContext", "geminiCli.diff.isVisible", false)
 
 		if (diffInfo) {
 			this.diffDocuments.delete(rightDocUri.toString())

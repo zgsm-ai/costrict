@@ -112,6 +112,7 @@ export class IDEServer {
 	private statusChangeEmitter = new vscode.EventEmitter<IdeCompanionStatus>()
 	diffManager: DiffManager
 	readonly onStatusChange = this.statusChangeEmitter.event
+	private lastActiveSessionId: string | undefined
 
 	constructor(log: (message: string) => void, diffManager: DiffManager) {
 		this.log = log
@@ -170,7 +171,7 @@ export class IDEServer {
 				next()
 			})
 
-			const mcpServer = createMcpServer(this.diffManager, this.log)
+			const mcpServer = createMcpServer(this)
 
 			this.openFilesManager = new OpenFilesManager(context)
 			const onDidChangeSubscription = this.openFilesManager.onDidChange(() => {
@@ -243,6 +244,11 @@ export class IDEServer {
 						id: null,
 					})
 					return
+				}
+
+				// 更新最后活动的 sessionId
+				if (transport.sessionId) {
+					this.lastActiveSessionId = transport.sessionId
 				}
 
 				try {
@@ -415,7 +421,7 @@ export class IDEServer {
 	}
 }
 
-const createMcpServer = (diffManager: DiffManager, log: (message: string) => void) => {
+const createMcpServer = (ideServer: IDEServer) => {
 	const server = new McpServer(
 		{
 			name: "gemini-cli-companion-mcp-server",
@@ -431,8 +437,8 @@ const createMcpServer = (diffManager: DiffManager, log: (message: string) => voi
 			inputSchema: OpenDiffRequestSchema.shape,
 		},
 		async ({ filePath, newContent }: z.infer<typeof OpenDiffRequestSchema>) => {
-			log(`Received openDiff request for filePath: ${filePath}`)
-			await diffManager.showDiff(filePath, newContent)
+			ideServer["log"](`Received openDiff request for filePath: ${filePath}`)
+			await ideServer.diffManager.showDiff(filePath, newContent, ideServer["lastActiveSessionId"])
 			return { content: [] }
 		},
 	)
@@ -443,8 +449,8 @@ const createMcpServer = (diffManager: DiffManager, log: (message: string) => voi
 			inputSchema: CloseDiffRequestSchema.shape,
 		},
 		async ({ filePath }: z.infer<typeof CloseDiffRequestSchema>) => {
-			log(`Received closeDiff request for filePath: ${filePath}`)
-			const content = await diffManager.closeDiff(filePath)
+			ideServer["log"](`Received closeDiff request for filePath: ${filePath}`)
+			const content = await ideServer.diffManager.closeDiff(filePath)
 			const response = { content: content ?? undefined }
 			return {
 				content: [

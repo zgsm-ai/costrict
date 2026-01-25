@@ -482,6 +482,32 @@ export const webviewMessageHandler = async (
 	}
 
 	switch (message.type) {
+		case "diffAction": {
+			// 处理来自 webview 的差异操作消息
+			const { diffAction, rightDocUri } = message
+			if (!diffAction || !rightDocUri) {
+				console.error("[diffAction] Missing required parameters:", { diffAction, rightDocUri })
+				break
+			}
+
+			try {
+				const uri = vscode.Uri.parse(rightDocUri as string)
+
+				if (diffAction === "accept") {
+					await vscode.commands.executeCommand("geminiCli.diff.accept", uri)
+				} else if (diffAction === "reject") {
+					await vscode.commands.executeCommand("geminiCli.diff.cancel", uri)
+				}
+			} catch (error) {
+				console.error("[diffAction] Error executing command:", error)
+				vscode.window.showErrorMessage(
+					`差异操作失败: ${error instanceof Error ? error.message : String(error)}`,
+				)
+			}
+
+			break
+		}
+
 		case "zgsmProviderTip": {
 			const { tipType = "", msg = "" } = message.values || {}
 

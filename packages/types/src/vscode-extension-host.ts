@@ -132,6 +132,8 @@ export interface ExtensionMessage {
 		| "worktreeIncludeStatus"
 		| "branchWorktreeIncludeResult"
 		| "folderSelected"
+		// IDE Companion diff action dialog
+		| "showDiffActionDialog"
 	text?: string
 	payload?: any // eslint-disable-line @typescript-eslint/no-explicit-any
 	checkpointWarning?: {
@@ -686,6 +688,8 @@ export interface WebviewMessage {
 		| "createWorktreeInclude"
 		| "checkoutBranch"
 		| "browseForWorktreePath"
+		// IDE Companion diff action
+		| "diffAction"
 	text?: string
 	// costrict-start
 	issueId?: string
@@ -781,6 +785,11 @@ export interface WebviewMessage {
 		codebaseIndexOpenRouterApiKey?: string
 	}
 	updatedSettings?: RooCodeSettings
+	// IDE Companion diff action properties
+	diffAction?: "accept" | "reject"
+	rightDocUri?: string
+	sessionId?: string
+	autoAcceptSessionId?: string
 	// Worktree properties
 	worktreePath?: string
 	worktreeBranch?: string

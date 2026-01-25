@@ -21,6 +21,7 @@ import WelcomeView from "./components/welcome/WelcomeViewProvider"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
 import { CheckpointRestoreDialog } from "./components/chat/CheckpointRestoreDialog"
 import { DeleteMessageDialog, EditMessageDialog } from "./components/chat/MessageModificationConfirmationDialog"
+import { DiffActionDialog } from "./components/chat/DiffActionDialog"
 import ErrorBoundary from "./components/ErrorBoundary"
 // import { WorktreesView } from "./components/worktrees"
 // import { CloudView } from "./components/cloud/CloudView"
@@ -74,6 +75,13 @@ interface ZgsmCodebaseDisableConfirmDialogState {
 	isOpen: boolean
 }
 
+interface DiffActionDialogState {
+	isOpen: boolean
+	filePath: string
+	rightDocUri: string
+	sessionId?: string
+}
+
 // Memoize dialog components to prevent unnecessary re-renders
 const MemoizedDeleteMessageDialog = React.memo(DeleteMessageDialog)
 const MemoizedEditMessageDialog = React.memo(EditMessageDialog)
@@ -81,6 +89,7 @@ const MemoizedReauthConfirmationDialog = React.memo(ReauthConfirmationDialog)
 const MemoizedCheckpointRestoreDialog = React.memo(CheckpointRestoreDialog)
 const MemoizedHumanRelayDialog = React.memo(HumanRelayDialog)
 const MemoizedZgsmCodebaseDisableConfirmDialog = React.memo(ZgsmCodebaseDisableConfirmDialog)
+const MemoizedDiffActionDialog = React.memo(DiffActionDialog)
 
 const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]>, Tab>> = {
 	chatButtonClicked: "chat",
@@ -150,6 +159,22 @@ const App = () => {
 		useState<ZgsmCodebaseDisableConfirmDialogState>({
 			isOpen: false,
 		})
+
+	const [diffActionDialogState, setDiffActionDialogState] = useState<DiffActionDialogState>({
+		isOpen: false,
+		filePath: "",
+		rightDocUri: "",
+		sessionId: undefined,
+	})
+
+	// 保存 auto-accept 的 sessionId，使用 localStorage 持久化
+	const [autoAcceptSessionId, setAutoAcceptSessionId] = useState<string | undefined>(() => {
+		try {
+			return localStorage.getItem("diffAutoAcceptSessionId") || undefined
+		} catch {
+			return undefined
+		}
+	})
 
 	const settingsRef = useRef<SettingsViewRef>(null)
 	const chatViewRef = useRef<ChatViewRef>(null)
@@ -249,11 +274,30 @@ const App = () => {
 				setZgsmCodebaseDisableConfirmDialogState({ isOpen: true })
 			}
 
+			if (message.type === "showDiffActionDialog" && message.payload) {
+				const { filePath, rightDocUri, sessionId } = message.payload
+				if (filePath && rightDocUri) {
+					// 检查是否匹配 auto-accept sessionId
+					if (sessionId && sessionId === autoAcceptSessionId) {
+						// 自动接受
+						vscode.postMessage({ type: "diffAction", diffAction: "accept", rightDocUri })
+					} else {
+						// 显示对话框
+						setDiffActionDialogState({
+							isOpen: true,
+							filePath,
+							rightDocUri,
+							sessionId,
+						})
+					}
+				}
+			}
+
 			if (message.type === "acceptInput") {
 				chatViewRef.current?.acceptInput()
 			}
 		},
-		[switchTab],
+		[autoAcceptSessionId, switchTab],
 	)
 
 	useEvent("message", onMessage)
@@ -549,6 +593,33 @@ const App = () => {
 				onConfirm={() => {
 					vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: false })
 					setZgsmCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: false }))
+				}}
+			/>
+			<MemoizedDiffActionDialog
+				isOpen={diffActionDialogState.isOpen}
+				filePath={diffActionDialogState.filePath}
+				rightDocUri={diffActionDialogState.rightDocUri}
+				sessionId={diffActionDialogState.sessionId}
+				onClose={() => setDiffActionDialogState((prev) => ({ ...prev, isOpen: false }))}
+				onAccept={(rightDocUri) => {
+					vscode.postMessage({ type: "diffAction", diffAction: "accept", rightDocUri })
+					setDiffActionDialogState((prev) => ({ ...prev, isOpen: false }))
+				}}
+				onReject={(rightDocUri) => {
+					vscode.postMessage({ type: "diffAction", diffAction: "reject", rightDocUri })
+					setDiffActionDialogState((prev) => ({ ...prev, isOpen: false }))
+				}}
+				onAlwaysAccept={(rightDocUri, sessionId) => {
+					// 保存 sessionId 到 localStorage
+					try {
+						localStorage.setItem("diffAutoAcceptSessionId", sessionId)
+						setAutoAcceptSessionId(sessionId)
+					} catch (error) {
+						console.error("Failed to save auto-accept sessionId:", error)
+					}
+					// 接受当前 diff
+					vscode.postMessage({ type: "diffAction", diffAction: "accept", rightDocUri })
+					setDiffActionDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>
 		</>

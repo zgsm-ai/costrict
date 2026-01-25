@@ -531,5 +531,13 @@
 		"serversPart_other": "{{count}} 个 MCP 服务",
 		"messageTemplate": "你通过 {{servers}} 启用了 {{tools}}。这么多数量会混淆模型并导致错误。建议将其保持在 {{threshold}} 以下。",
 		"openMcpSettings": "打开 MCP 设置"
+	},
+	"geminiCliDiffChangesDialog": {
+		"title": "Gemini Cli 未保存更改",
+		"description": "是否保存更改并继续？",
+		"cancelButton": "拒绝",
+		"confirmButton": "保存",
+		"diffPath": "文件路径",
+		"alwaysAcceptButton": "总是接受当前 Session"
 	}
 }

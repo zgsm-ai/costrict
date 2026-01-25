@@ -99,21 +99,21 @@
 		},
 		"commands": [
 			{
-				"command": "costrict.diff.accept",
+				"command": "geminiCli.diff.accept",
 				"title": "Gemini CLI: Accept Diff",
 				"icon": "$(check)"
 			},
 			{
-				"command": "costrict.diff.cancel",
+				"command": "geminiCli.diff.cancel",
 				"title": "Gemini CLI: Close Diff Editor",
 				"icon": "$(close)"
 			},
 			{
-				"command": "costrict.runGeminiCLI",
+				"command": "geminiCli.runGeminiCLI",
 				"title": "Gemini CLI: Run"
 			},
 			{
-				"command": "costrict.showNotices",
+				"command": "geminiCli.showNotices",
 				"title": "Gemini CLI: View Third-Party Notices"
 			},
 			{
@@ -354,12 +354,12 @@
 		"menus": {
 			"commandPalette": [
 				{
-					"command": "costrict.diff.accept",
-					"when": "costrict.diff.isVisible"
+					"command": "geminiCli.diff.accept",
+					"when": "geminiCli.diff.isVisible"
 				},
 				{
-					"command": "costrict.diff.cancel",
-					"when": "costrict.diff.isVisible"
+					"command": "geminiCli.diff.cancel",
+					"when": "geminiCli.diff.isVisible"
 				}
 			],
 			"editor/context": [
@@ -434,13 +434,13 @@
 			],
 			"view/title": [
 				{
-					"command": "costrict.diff.accept",
-					"when": "costrict.diff.isVisible",
+					"command": "geminiCli.diff.accept",
+					"when": "geminiCli.diff.isVisible",
 					"group": "navigation"
 				},
 				{
-					"command": "costrict.diff.cancel",
-					"when": "costrict.diff.isVisible",
+					"command": "geminiCli.diff.cancel",
+					"when": "geminiCli.diff.isVisible",
 					"group": "navigation"
 				},
 				{
@@ -548,14 +548,14 @@
 		},
 		"keybindings": [
 			{
-				"command": "costrict.diff.accept",
+				"command": "geminiCli.diff.accept",
 				"key": "ctrl+s",
-				"when": "costrict.diff.isVisible"
+				"when": "geminiCli.diff.isVisible"
 			},
 			{
-				"command": "costrict.diff.accept",
+				"command": "geminiCli.diff.accept",
 				"key": "cmd+s",
-				"when": "costrict.diff.isVisible"
+				"when": "geminiCli.diff.isVisible"
 			},
 			{
 				"command": "zgsm.addToContext",
