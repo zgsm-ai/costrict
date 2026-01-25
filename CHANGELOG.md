@@ -1,5 +1,13 @@
 # CoStrict Change Log
 
+## [2.2.2]
+
+- Updated Worktrees UI
+- Updated MCP configuration
+- Fix missing translations
+- Fix test cases
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/c28478eda768433ebc121a8f57952549207bd9ce)
+
 ## [2.2.1]
 
 - Added custom condense prompt editing in Context Management settings.
