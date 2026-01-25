@@ -3,6 +3,7 @@
 ## [2.2.2]
 
 - Updated Worktrees UI
+- Updated suggestedBranch
 - Updated MCP configuration
 - Fix missing translations
 - Fix test cases

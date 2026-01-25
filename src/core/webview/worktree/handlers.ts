@@ -230,7 +230,7 @@ export async function handleGetWorktreeDefaults(provider: ClineProvider): Promis
 	const suggestedPath = path.join(dotRooPath, "worktrees", `${projectName}-${suffix}`)
 
 	return {
-		suggestedBranch: `worktree/roo-${suffix}`,
+		suggestedBranch: `worktree/costrict-${suffix}`,
 		suggestedPath,
 	}
 }
