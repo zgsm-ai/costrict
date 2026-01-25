@@ -816,6 +816,30 @@
 					"default": false,
 					"description": "%settings.debugProxy.tlsInsecure.description%",
 					"markdownDescription": "%settings.debugProxy.tlsInsecure.description%"
+				},
+				"zgsm.opencode.enabled": {
+					"type": "boolean",
+					"default": false,
+					"description": "Enable OpenCode CLI integration mode. When enabled, CoStrict will connect to a locally running OpenCode service instead of using the built-in backend.",
+					"markdownDescription": "Enable **OpenCode CLI** integration mode. When enabled, CoStrict will connect to a locally running OpenCode service instead of using the built-in backend."
+				},
+				"zgsm.opencode.port": {
+					"type": "number",
+					"default": null,
+					"description": "OpenCode service port. Leave empty to auto-discover the service.",
+					"markdownDescription": "OpenCode service port. Leave empty to auto-discover the service."
+				},
+				"zgsm.opencode.baseUrl": {
+					"type": "string",
+					"default": "",
+					"description": "OpenCode service base URL. Use this for connecting to remote OpenCode instances. Leave empty for local service.",
+					"markdownDescription": "OpenCode service base URL. Use this for connecting to remote OpenCode instances. Leave empty for local service."
+				},
+				"zgsm.opencode.autoStart": {
+					"type": "boolean",
+					"default": false,
+					"description": "Automatically start OpenCode service if not found.",
+					"markdownDescription": "Automatically start OpenCode service if not found."
 				}
 			}
 		}
