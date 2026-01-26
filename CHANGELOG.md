@@ -1,5 +1,11 @@
 # CoStrict Change Log
 
+## [2.2.3]
+
+- Compatible with zgsm function call parameter parsing
+- Update internationalization
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/953c7773c066a5fa8632e2ac36b32e8073a893b8)
+
 ## [2.2.2]
 
 - Updated Worktrees UI
