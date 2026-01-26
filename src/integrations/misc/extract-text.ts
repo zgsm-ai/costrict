@@ -164,7 +164,7 @@ export function addLineNumbers(content: string, startLine: number = 1): string {
 // Line numbers must be followed by a single pipe character (not double pipes)
 export function everyLineHasLineNumbers(content: string): boolean {
 	const lines = content.split(/\r?\n/) // Handles both CRLF (carriage return (\r) + line feed (\n)) and LF (line feed (\n)) line endings
-	return lines.length > 0 && lines.every((line) => /^\s*\d+\s+\|(?!\|)/.test(line))
+	return lines.length > 0 && lines?.every?.((line) => /^\s*\d+\s+\|(?!\|)/.test(line))
 }
 
 /**

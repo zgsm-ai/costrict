@@ -256,7 +256,7 @@ export class WorktreeIncludeService {
 		try {
 			const entries = await fs.readdir(dirPath, { withFileTypes: true })
 			const sizes = await Promise.all(
-				entries.map(async (entry) => {
+				entries?.map(async (entry) => {
 					const entryPath = path.join(dirPath, entry.name)
 					try {
 						if (entry.isFile()) {

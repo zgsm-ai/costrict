@@ -76,11 +76,12 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 
 		const supportsImages = modelInfo.supportsImages ?? false
 
-		const fileResults: FileResult[] = fileEntries.map((entry) => ({
-			path: entry.path,
-			status: "pending",
-			lineRanges: entry.lineRanges,
-		}))
+		const fileResults: FileResult[] =
+			fileEntries?.map((entry) => ({
+				path: entry.path,
+				status: "pending",
+				lineRanges: entry.lineRanges,
+			})) || []
 
 		const updateFileResult = (filePath: string, updates: Partial<FileResult>) => {
 			const index = fileResults.findIndex((result) => result.path === filePath)

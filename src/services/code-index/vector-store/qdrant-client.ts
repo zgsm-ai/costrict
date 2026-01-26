@@ -385,7 +385,7 @@ export class QdrantVectorStore implements IVectorStore {
 			return false
 		}
 		const validKeys = ["filePath", "codeChunk", "startLine", "endLine"]
-		const hasValidKeys = validKeys.every((key) => key in payload)
+		const hasValidKeys = validKeys?.every?.((key) => key in payload)
 		return hasValidKeys
 	}
 

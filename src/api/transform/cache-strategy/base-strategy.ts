@@ -58,11 +58,11 @@ export abstract class CacheStrategy {
 	 * Convert messages to content blocks
 	 */
 	protected messagesToContentBlocks(messages: Anthropic.Messages.MessageParam[]): Message[] {
-		return messages.map((message) => {
+		return messages?.map((message) => {
 			const role: ConversationRole = message.role === "assistant" ? "assistant" : "user"
 
 			const content: ContentBlock[] = Array.isArray(message.content)
-				? message.content.map((block) => {
+				? message?.content?.map((block) => {
 						if (typeof block === "string") {
 							return { text: block } as unknown as ContentBlock
 						}

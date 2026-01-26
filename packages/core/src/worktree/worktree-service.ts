@@ -193,7 +193,7 @@ export class WorktreeService {
 				this.getCurrentBranch(cwd),
 			])
 
-			const branchesInWorktrees = new Set(worktrees.map((wt) => wt.branch).filter(Boolean))
+			const branchesInWorktrees = new Set(worktrees?.map((wt) => wt.branch).filter(Boolean))
 
 			// Filter local branches
 			const localBranches = localResult.stdout

@@ -214,10 +214,12 @@ export class ContextProxy {
 		]
 
 		// Check that all v1 required phrases are present
-		const hasAllV1Phrases = v1RequiredPhrases.every((phrase) => prompt.toLowerCase().includes(phrase.toLowerCase()))
+		const hasAllV1Phrases = v1RequiredPhrases?.every?.((phrase) =>
+			prompt.toLowerCase().includes(phrase.toLowerCase()),
+		)
 
 		// Check that no v2 features are present
-		const hasNoV2Features = v2Features.every((feature) => !prompt.toLowerCase().includes(feature.toLowerCase()))
+		const hasNoV2Features = v2Features?.every?.((feature) => !prompt.toLowerCase().includes(feature.toLowerCase()))
 
 		return hasAllV1Phrases && hasNoV2Features
 	}

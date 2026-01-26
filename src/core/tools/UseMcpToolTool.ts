@@ -238,7 +238,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 			}
 
 			// Tool exists and is enabled - return the original tool name for use with the MCP server
-			return { isValid: true, availableTools: server.tools.map((t) => t.name), resolvedToolName: tool.name }
+			return { isValid: true, availableTools: server?.tools?.map((t) => t.name), resolvedToolName: tool.name }
 		} catch (error) {
 			// If there's an error during validation, log it but don't block the tool execution
 			// The actual tool call might still fail with a proper error
@@ -260,8 +260,8 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 			return ""
 		}
 
-		return toolResult.content
-			.map((item: any) => {
+		return toolResult?.content
+			?.map((item: any) => {
 				if (item.type === "text") {
 					return item.text
 				}

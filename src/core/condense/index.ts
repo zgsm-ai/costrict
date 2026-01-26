@@ -64,7 +64,7 @@ export function injectSyntheticToolResults(messages: ApiMessage[]): ApiMessage[]
 	}
 
 	// Inject synthetic tool_results as a new user message
-	const syntheticResults: Anthropic.Messages.ToolResultBlockParam[] = orphanIds.map((id) => ({
+	const syntheticResults: Anthropic.Messages.ToolResultBlockParam[] = orphanIds?.map((id) => ({
 		type: "tool_result" as const,
 		tool_use_id: id,
 		content: "Context condensation triggered. Tool execution deferred.",
@@ -200,7 +200,7 @@ export async function summarizeConversation(
 	// (e.g., when user triggers condense after receiving attempt_completion but before responding)
 	const messagesWithToolResults = injectSyntheticToolResults(messagesToSummarize)
 
-	const requestMessages = maybeRemoveImageBlocks([...messagesWithToolResults, finalRequestMessage], apiHandler).map(
+	const requestMessages = maybeRemoveImageBlocks([...messagesWithToolResults, finalRequestMessage], apiHandler)?.map(
 		({ role, content }) => ({ role, content }),
 	)
 
@@ -338,7 +338,7 @@ ${commandBlocks}
 	// [summary]  ← Fresh start!
 
 	// Tag ALL messages with condenseParent
-	const newMessages = messages.map((msg) => {
+	const newMessages = messages?.map((msg) => {
 		// If message already has a condenseParent, we leave it - nested condense is handled by filtering
 		if (!msg.condenseParent) {
 			return { ...msg, condenseParent: condenseId }
@@ -447,7 +447,7 @@ export function getEffectiveApiHistory(messages: ApiMessage[]): ApiMessage[] {
 
 		// Filter out orphan tool_result blocks from user messages
 		messagesFromSummary = messagesFromSummary
-			.map((msg) => {
+			?.map((msg) => {
 				if (msg.role === "user" && Array.isArray(msg.content)) {
 					const filteredContent = msg.content.filter((block) => {
 						if (block.type === "tool_result") {
@@ -545,7 +545,7 @@ export function cleanupAfterTruncation(messages: ApiMessage[]): ApiMessage[] {
 	}
 
 	// Clear orphaned parent references for messages whose summary or truncation marker was deleted
-	return messages.map((msg) => {
+	return messages?.map((msg) => {
 		let needsUpdate = false
 
 		// Check for orphaned condenseParent

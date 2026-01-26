@@ -45,7 +45,7 @@ export function convertOpenAIToolToAnthropic(tool: OpenAI.Chat.ChatCompletionToo
  * @returns Array of Anthropic Tool definitions
  */
 export function convertOpenAIToolsToAnthropic(tools: OpenAI.Chat.ChatCompletionTool[]): Anthropic.Tool[] {
-	return tools.map(convertOpenAIToolToAnthropic)
+	return tools?.map(convertOpenAIToolToAnthropic)
 }
 
 /**

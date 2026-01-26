@@ -10,7 +10,7 @@ export function addCacheBreakpoints(messages: Anthropic.Messages.MessageParam[])
 	const lastIndex = indices[indices.length - 1] ?? -1
 	const secondLastIndex = indices[indices.length - 2] ?? -1
 
-	return messages.map((message, index) =>
+	return messages?.map((message, index) =>
 		message.role !== "assistant" && (index === lastIndex || index === secondLastIndex)
 			? cachedMessage(message)
 			: message,
@@ -36,7 +36,7 @@ function cachedMessage(message: Anthropic.Messages.MessageParam): Anthropic.Mess
 	// Then use this pre-calculated index in the map function.
 	return {
 		...message,
-		content: message.content.map((content, index) =>
+		content: message?.content?.map((content, index) =>
 			content.type === "text"
 				? {
 						...content,

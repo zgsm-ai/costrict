@@ -49,7 +49,7 @@ export async function processUserContentMentions({
 	// so it can effectively be used as a marker for when we should parse mentions.
 	const content = (
 		await Promise.all(
-			userContent.map(async (block) => {
+			userContent?.map(async (block) => {
 				const shouldProcessMentions = (text: string) => text.includes("<user_message>")
 
 				if (block.type === "text") {
@@ -129,7 +129,7 @@ export async function processUserContentMentions({
 					} else if (Array.isArray(block.content)) {
 						const parsedContent = (
 							await Promise.all(
-								block.content.map(async (contentBlock) => {
+								block?.content?.map(async (contentBlock) => {
 									if (contentBlock.type === "text" && shouldProcessMentions(contentBlock.text)) {
 										const result = await parseMentions(
 											contentBlock.text,

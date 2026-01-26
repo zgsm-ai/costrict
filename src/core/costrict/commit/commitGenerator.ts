@@ -684,7 +684,7 @@ export class CommitMessageGenerator {
 
 		// Check if all files are style-related
 		const stylePattern = /\.(css|scss|sass|less|styl|stylus)(\.(d\.ts|map))?$|tailwind\.config\.(js|ts)$/i
-		return allFiles.length > 0 && allFiles.every((file) => stylePattern.test(file))
+		return allFiles.length > 0 && allFiles?.every?.((file) => stylePattern.test(file))
 	}
 	/**
 	 * Check if any files match the given pattern

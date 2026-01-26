@@ -54,7 +54,7 @@ export class AccessMcpResourceTool extends BaseTool<"access_mcp_resource"> {
 
 			const resourceResultPretty =
 				resourceResult?.contents
-					.map((item) => {
+					?.map((item) => {
 						if (item.text) {
 							return item.text
 						}

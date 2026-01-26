@@ -505,7 +505,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 							...prevTask,
 							data: {
 								...prevTask.data,
-								issues: prevTask.data.issues.map((issue) =>
+								issues: prevTask?.data?.issues?.map((issue) =>
 									issue.id === issueId ? { ...issue, status } : issue,
 								),
 							},

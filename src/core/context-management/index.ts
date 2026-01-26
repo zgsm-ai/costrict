@@ -95,7 +95,7 @@ export function truncateConversation(messages: ApiMessage[], fracToRemove: numbe
 	const indicesToTruncate = new Set(visibleIndices.slice(1, messagesToRemove + 1))
 
 	// Tag messages that are being "truncated" (hidden from API calls)
-	const taggedMessages = messages.map((msg, index) => {
+	const taggedMessages = messages?.map((msg, index) => {
 		if (indicesToTruncate.has(index)) {
 			return { ...msg, truncationParent: truncationId }
 		}

@@ -118,7 +118,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 		}
 
 		// Wait for terminals to cool down.
-		await pWaitFor(() => busyTerminals.every((t) => !TerminalRegistry.isProcessHot(t.id)), {
+		await pWaitFor(() => busyTerminals?.every?.((t) => !TerminalRegistry.isProcessHot(t.id)), {
 			interval: 100,
 			timeout: 5_000,
 		}).catch(() => {})

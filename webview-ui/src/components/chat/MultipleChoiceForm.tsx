@@ -64,7 +64,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 	}, [])
 
 	// Validate that all questions have at least one selection
-	const isFormValid = data.questions.every((question) => {
+	const isFormValid = data?.questions?.every?.((question) => {
 		const questionSelections = selections[question.id] || []
 		return questionSelections.length > 0
 	})

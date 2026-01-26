@@ -144,7 +144,7 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 	let nativeCustomTools: OpenAI.Chat.ChatCompletionFunctionTool[] = []
 
 	if (experiments?.customTools) {
-		const toolDirs = getRooDirectoriesForCwd(cwd, true).map((dir) => path.join(dir, "tools"))
+		const toolDirs = getRooDirectoriesForCwd(cwd, true)?.map((dir) => path.join(dir, "tools"))
 		await customToolRegistry.loadFromDirectoriesIfStale(toolDirs)
 		const customTools = customToolRegistry.getAllSerialized()
 

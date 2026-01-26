@@ -1073,7 +1073,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			if (lastEffective?.role !== "assistant" && Array.isArray(message.content)) {
 				messageToAdd = {
 					...message,
-					content: message.content.map((block) =>
+					content: message?.content?.map((block) =>
 						block.type === "tool_result"
 							? {
 									type: "text" as const,
@@ -2986,7 +2986,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 										}
 									} else if (event.type === "tool_call_end") {
 										// Finalize the streaming tool call
-										const finalToolUse = NativeToolCallParser.finalizeStreamingToolCall(event.id)
+										const finalToolUse = NativeToolCallParser.finalizeStreamingToolCall(
+											event.id,
+											this?.apiConfiguration?.apiProvider === "zgsm",
+										)
 
 										// Get the index for this tool call
 										const toolUseIndex = this.streamingToolCallIndices.get(event.id)
@@ -3036,11 +3039,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							case "tool_call": {
 								// Legacy: Handle complete tool calls (for backward compatibility)
 								// Convert native tool call to ToolUse format
-								const toolUse = NativeToolCallParser.parseToolCall({
-									id: chunk.id,
-									name: chunk.name as ToolName,
-									arguments: chunk.arguments,
-								})
+								const toolUse = NativeToolCallParser.parseToolCall(
+									{
+										id: chunk.id,
+										name: chunk.name as ToolName,
+										arguments: chunk.arguments,
+									},
+									this?.apiConfiguration?.apiProvider === "zgsm",
+								)
 
 								if (!toolUse) {
 									console.error(`Failed to parse tool call for task ${this.taskId}:`, chunk)
@@ -3175,7 +3181,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								NativeToolCallParser.processStreamingChunk(assistantXmlToolCallId, argumentsStr)
 
 								// Finalize tool call and get ToolUse object
-								const toolUse = NativeToolCallParser.finalizeStreamingToolCall(assistantXmlToolCallId)
+								const toolUse = NativeToolCallParser.finalizeStreamingToolCall(
+									assistantXmlToolCallId,
+									this?.apiConfiguration?.apiProvider === "zgsm",
+								)
 
 								if (toolUse) {
 									// Add ToolUse to assistantMessageContent
@@ -3214,7 +3223,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					for (const event of finalizeEvents) {
 						if (event.type === "tool_call_end") {
 							// Finalize the streaming tool call
-							const finalToolUse = NativeToolCallParser.finalizeStreamingToolCall(event.id)
+							const finalToolUse = NativeToolCallParser.finalizeStreamingToolCall(
+								event.id,
+								this?.apiConfiguration?.apiProvider === "zgsm",
+							)
 
 							// Get the index for this tool call
 							const toolUseIndex = this.streamingToolCallIndices.get(event.id)

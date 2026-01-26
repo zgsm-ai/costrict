@@ -33,7 +33,7 @@ export class AskFollowupQuestionTool extends BaseTool<"ask_followup_question"> {
 			// Transform follow_up suggestions to the format expected by task.ask
 			const follow_up_json = {
 				question,
-				suggest: follow_up.map((s) => ({ answer: s.text, mode: s.mode })),
+				suggest: follow_up?.map((s) => ({ answer: s.text, mode: s.mode })),
 			}
 
 			task.consecutiveMistakeCount = 0

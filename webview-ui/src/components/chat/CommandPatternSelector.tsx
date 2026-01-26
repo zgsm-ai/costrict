@@ -87,7 +87,7 @@ export const CommandPatternSelector: React.FC<CommandPatternSelectorProps> = ({
 
 			{isExpanded && (
 				<div className="pl-6 pr-2 pt-1 pb-2 space-y-2">
-					{allPatterns.map((item) => {
+					{allPatterns?.map((item) => {
 						const editState = getEditState(item.pattern)
 						const status = getPatternStatus(editState.value)
 

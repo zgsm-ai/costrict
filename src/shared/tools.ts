@@ -341,6 +341,7 @@ export const TOOL_ALIASES: Record<string, ToolName> = {
 	read: "read_file",
 	apply: "apply_diff",
 	search: "search_files",
+	list: "list_files",
 } as const
 
 export type DiffResult =

@@ -46,7 +46,7 @@ const groupEntryArraySchema = z.array(groupEntrySchema).refine(
 	(groups) => {
 		const seen = new Set()
 
-		return groups.every((group) => {
+		return groups?.every?.((group) => {
 			// For tuples, check the group name (first element).
 			const groupName = Array.isArray(group) ? group[0] : group
 
@@ -85,7 +85,7 @@ export const customModesSettingsSchema = z.object({
 		(modes) => {
 			const slugs = new Set()
 
-			return modes.every((mode) => {
+			return modes?.every?.((mode) => {
 				if (slugs.has(mode.slug)) {
 					return false
 				}

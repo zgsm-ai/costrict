@@ -400,7 +400,7 @@ export function convertToOpenAiMessages(
 					// Check if we should merge text into the last tool message
 					// This is critical for reasoning/thinking models where a user message
 					// after tool results causes the model to drop all previous reasoning_content
-					const hasOnlyTextContent = filteredNonToolMessages.every((part) => part.type === "text")
+					const hasOnlyTextContent = filteredNonToolMessages?.every?.((part) => part.type === "text")
 					const hasToolMessages = toolMessages.length > 0
 					const shouldMergeIntoToolMessage =
 						options?.mergeToolResultText && hasToolMessages && hasOnlyTextContent
@@ -412,7 +412,7 @@ export function convertToOpenAiMessages(
 						] as OpenAI.Chat.ChatCompletionToolMessageParam
 						if (lastToolMessage?.role === "tool") {
 							const additionalText = filteredNonToolMessages
-								.map((part) => (part as Anthropic.TextBlockParam).text)
+								?.map((part) => (part as Anthropic.TextBlockParam).text)
 								.join("\n")
 							lastToolMessage.content = `${lastToolMessage.content}\n\n${additionalText}`
 						}

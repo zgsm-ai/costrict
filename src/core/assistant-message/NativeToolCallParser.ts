@@ -1,3 +1,4 @@
+import { fixNativeToolArgKey } from "./../../utils/fixNativeToolname"
 import { parseJSON } from "partial-json"
 
 import { type ToolName, toolNames, type FileEntry } from "@roo-code/types"
@@ -294,7 +295,7 @@ export class NativeToolCallParser {
 	 * Finalize a streaming tool call.
 	 * Parses the complete JSON and returns the final ToolUse or McpToolUse.
 	 */
-	public static finalizeStreamingToolCall(id: string): ToolUse | McpToolUse | null {
+	public static finalizeStreamingToolCall(id: string, isZgsm?: boolean): ToolUse | McpToolUse | null {
 		const toolCall = this.streamingToolCalls.get(id)
 		if (!toolCall) {
 			console.warn(`[NativeToolCallParser] Attempting to finalize unknown tool call: ${id}`)
@@ -303,11 +304,14 @@ export class NativeToolCallParser {
 
 		// Parse the complete accumulated JSON
 		// Cast to any for the name since parseToolCall handles both ToolName and dynamic MCP tools
-		const finalToolUse = this.parseToolCall({
-			id: toolCall.id,
-			name: toolCall.name as ToolName,
-			arguments: toolCall.argumentsAccumulator,
-		})
+		const finalToolUse = this.parseToolCall(
+			{
+				id: toolCall.id,
+				name: toolCall.name as ToolName,
+				arguments: toolCall.argumentsAccumulator,
+			},
+			isZgsm,
+		)
 
 		// Clean up streaming state
 		this.streamingToolCalls.delete(id)
@@ -326,11 +330,11 @@ export class NativeToolCallParser {
 	 * Returns: { path: string, lineRanges: [{ start: 1, end: 50 }] }
 	 */
 	private static convertFileEntries(files: any[]): FileEntry[] {
-		return files.map((file: any) => {
+		return files?.map((file: any) => {
 			const entry: FileEntry = { path: file.path }
 			if (file.line_ranges && Array.isArray(file.line_ranges)) {
 				entry.lineRanges = file.line_ranges
-					.map((range: any) => {
+					?.map((range: any) => {
 						// Handle tuple format: [start, end]
 						if (Array.isArray(range) && range.length >= 2) {
 							return { start: Number(range[0]), end: Number(range[1]) }
@@ -622,11 +626,17 @@ export class NativeToolCallParser {
 	 * @param toolCall - The native tool call from the API stream
 	 * @returns A properly typed ToolUse object
 	 */
-	public static parseToolCall<TName extends ToolName>(toolCall: {
-		id: string
-		name: TName
-		arguments: string
-	}): ToolUse<TName> | McpToolUse | null {
+	public static parseToolCall<TName extends ToolName>(
+		toolCall: {
+			id: string
+			name: TName
+			arguments: string
+		},
+		isZgsm?: boolean,
+	): ToolUse<TName> | McpToolUse | null {
+		if (isZgsm) {
+			toolCall.arguments = fixNativeToolArgKey(toolCall)
+		}
 		// Check if this is a dynamic MCP tool (mcp--serverName--toolName)
 		// Also handle models that output underscores instead of hyphens (mcp__serverName__toolName)
 		const mcpPrefix = MCP_TOOL_PREFIX + MCP_TOOL_SEPARATOR
@@ -654,7 +664,9 @@ export class NativeToolCallParser {
 		const _resolvedName = matchBuiltinToolName || matchCustomToolName
 
 		if (!_resolvedName) {
-			console.error(`Invalid tool name: ${toolCall.name} (resolved: ${resolvedName})`)
+			console.error(
+				`Invalid tool name: ${toolCall.name} (resolved: ${resolvedName}) | toolCall arguments: ${toolCall.arguments}`,
+			)
 			console.error(`Valid tool names:`, toolNames)
 			return null
 		} else {

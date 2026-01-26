@@ -306,7 +306,7 @@ The user may ask to add tools or resources that may make sense to add to an exis
 		if (!mcpHub) return "(None running currently)"
 		const servers = mcpHub
 			.getServers()
-			.map((server) => server.name)
+			?.map((server) => server.name)
 			.join(", ")
 		return servers || "(None running currently)"
 	})()}, e.g. if it would use the same API. This would be possible if you can locate the MCP server repository on the user's system by looking at the server arguments for a filepath. You might then use list_files and read_file to explore the files in the repository, and use write_to_file${diffStrategy ? " or apply_diff" : ""} to make changes to the files.

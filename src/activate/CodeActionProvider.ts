@@ -80,7 +80,7 @@ export class CodeActionProvider implements vscode.CodeActionProvider {
 							effectiveRange.text,
 							effectiveRange.range.start.line + 1,
 							effectiveRange.range.end.line + 1,
-							relevantDiagnostics.map(EditorUtils.createDiagnosticData),
+							relevantDiagnostics?.map(EditorUtils.createDiagnosticData),
 						]),
 					)
 				}

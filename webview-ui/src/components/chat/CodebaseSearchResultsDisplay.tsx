@@ -32,7 +32,7 @@ const CodebaseSearchResultsDisplay: React.FC<CodebaseSearchResultsDisplayProps> 
 
 			{codebaseSearchResultsExpanded && (
 				<div className="flex flex-col gap-1">
-					{results.map((result, idx) => (
+					{results?.map((result, idx) => (
 						<CodebaseSearchResult
 							key={idx}
 							filePath={result.filePath}
