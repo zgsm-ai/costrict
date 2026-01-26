@@ -324,7 +324,7 @@ export async function presentAssistantMessage(cline: Task) {
 
 				// Tool calling is native-only. If the model emits XML-style tool tags in a text block,
 				// fail fast with a clear error.
-				if (containsXmlToolMarkup(content)) {
+				if (containsXmlToolMarkup(content) && cline?.apiConfiguration?.apiProvider !== "zgsm") {
 					const errorMessage =
 						"XML tool calls are no longer supported. Remove any XML tool markup (e.g. <read_file>...</read_file>) and use native tool calling instead."
 					cline.consecutiveMistakeCount++
