@@ -1,5 +1,16 @@
 # CoStrict Change Log
 
+## [2.2.4]
+
+- Added Smart Code Folding
+- Enabled Smart Mistake Detection by default with auto-switch model enabled
+- Enhanced Zgsm streaming response parsing with improved format handling
+- Fixed file scanner to use relative paths for ignore directory checks
+- Removed deprecated POWER_STEERING experimental feature
+- Updated test cases and improved code coverage
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/b9cf163b87cd7a39d9c893daebf7ce44235164a8)
+- Fix known issues
+
 ## [2.2.3]
 
 - Compatible with zgsm function call parameter parsing
