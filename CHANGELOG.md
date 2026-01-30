@@ -1,5 +1,14 @@
 # CoStrict Change Log
 
+## [2.2.5]
+
+- Support Kimi 2.5
+- Add Skills Management UI
+- Disable send button when no input and not streaming for better UX
+- Fix error when switching between reasoning and non-reasoning models in conversation
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/40b2bdc4d02509bda7585fc6d1809e63c7cabf36)
+- Fix known issues
+
 ## [2.2.4]
 
 - Added Smart Code Folding
