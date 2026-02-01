@@ -36,9 +36,12 @@ vi.mock("fs/promises", () => ({
 	mkdir: vi.fn().mockResolvedValue(undefined),
 }))
 
-// Import safeWriteJson to use in mocks
-import { safeWriteJson } from "../../../utils/safeWriteJson"
-
+vi.mock("../../../utils/platform", () => ({
+	isJetbrainsPlatform: vi.fn(() => true),
+}))
+vi.mock("../../utils/ideaShellEnvLoader", () => ({
+	getIdeaShellEnvWithUpdatePath: vi.fn(() => true),
+}))
 // Mock safeWriteJson
 vi.mock("../../../utils/safeWriteJson", () => ({
 	safeWriteJson: vi.fn(async (filePath, data) => {

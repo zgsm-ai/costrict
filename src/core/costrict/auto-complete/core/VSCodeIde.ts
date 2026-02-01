@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import * as URI from "uri-js"
 import { FileStatsMap, IDE, IdeInfo, Range } from "../types/ide"
+import { getClientId } from "../../../../utils/getClientId"
 
 async function stat(uri: vscode.Uri): Promise<vscode.FileStat | null> {
 	try {
@@ -58,7 +59,7 @@ export class VsCodeIde implements IDE {
 	}
 
 	getUniqueId(): Promise<string> {
-		return Promise.resolve(vscode.env.machineId)
+		return Promise.resolve(getClientId())
 	}
 
 	private _workspaceDirectories: vscode.Uri[] | undefined = undefined

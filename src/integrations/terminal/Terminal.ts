@@ -7,6 +7,8 @@ import { TerminalProcess } from "./TerminalProcess"
 import { ShellIntegrationManager } from "./ShellIntegrationManager"
 import { mergePromise } from "./mergePromise"
 import { getExtensionUri } from "../theme/getTheme"
+import { isJetbrainsPlatform } from "../../utils/platform"
+import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
 export class Terminal extends BaseTerminal {
 	public terminal: vscode.Terminal
 
@@ -158,6 +160,7 @@ export class Terminal extends BaseTerminal {
 			// VTE must be disabled because it prevents the prompt command from executing
 			// See https://wiki.gnome.org/Apps/Terminal/VTE
 			VTE_VERSION: "0",
+			...(isJetbrainsPlatform() ? getIdeaShellEnvWithUpdatePath(process.env) : undefined),
 		}
 
 		// On Windows, set the console output code page to UTF-8

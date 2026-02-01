@@ -3659,7 +3659,7 @@ export const webviewMessageHandler = async (
 		}
 		case "copyApiError": {
 			const { message: errorMessage, originModelId, selectedLLM } = message.values ?? {}
-			const { apiConfiguration, currentTaskItem } = await provider.getState()
+			const { apiConfiguration } = await provider.getState()
 			const httpProxy = process.env.http_proxy || process.env.HTTP_PROXY
 			const httpsProxy = process.env.https_proxy || process.env.HTTPS_PROXY
 
