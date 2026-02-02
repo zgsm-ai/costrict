@@ -117,7 +117,11 @@ export class NativeToolCallParser {
 			(trimmed.startsWith('"') && trimmed.endsWith('"'))
 		) {
 			try {
-				return JSON.parse(trimmed)
+				const rst = JSON.parse(trimmed)
+				if (typeof rst === "string") {
+					return rst
+				}
+				return value
 			} catch {
 				// If parsing fails, return original string
 				return value

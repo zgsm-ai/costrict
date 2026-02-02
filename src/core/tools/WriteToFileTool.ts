@@ -30,8 +30,8 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 
 	async execute(params: WriteToFileParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { pushToolResult, handleError, askApproval } = callbacks
-		const relPath = params.path
-		let newContent = params.content
+		const relPath = params?.path || ""
+		let newContent = params?.content || ""
 
 		if (newContent && newContent === "object") {
 			newContent = JSON.stringify(newContent)
