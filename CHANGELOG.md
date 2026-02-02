@@ -1,5 +1,9 @@
 # CoStrict Change Log
 
+## [2.3.2]
+
+- Improve string parsing logic and add parameter safety
+
 ## [2.3.1]
 
 - Optimize message text handling in ChatRow
