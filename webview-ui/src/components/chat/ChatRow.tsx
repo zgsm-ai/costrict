@@ -1483,7 +1483,7 @@ export const ChatRowContent = ({
 					let retryInfo, rawError, code, docsURL
 					docsURL = "costrict://settings?provider=claude-code"
 
-					if (message.text !== undefined) {
+					if (message.text != undefined) {
 						// Check for Claude Code authentication error first
 						if (message.text.includes("Not authenticated with Claude Code")) {
 							body = t("chat:apiRequest.errorMessage.claudeCodeNotAuthenticated")
@@ -1599,8 +1599,9 @@ export const ChatRowContent = ({
 				}
 				case "api_req_finished":
 					return null // we should never see this message type
-				case "text":
-					const loadingMessage = !message?.text?.trim() && isLast && isStreaming
+				case "text": {
+					const resultText = `${message?.text ?? ""}`
+					const loadingMessage = !resultText?.trim() && isLast && isStreaming
 
 					if (loadingMessage) {
 						return (
@@ -1612,7 +1613,7 @@ export const ChatRowContent = ({
 							</div>
 						)
 					}
-					if (!message?.text?.trim()) {
+					if (!resultText?.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -1644,6 +1645,7 @@ export const ChatRowContent = ({
 							</div>
 						</div>
 					)
+				}
 				case "user_feedback":
 					return (
 						<div className="group">
@@ -1808,7 +1810,8 @@ export const ChatRowContent = ({
 						/>
 					)
 				case "completion_result":
-					if (!message?.text?.trim()) {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -1817,7 +1820,7 @@ export const ChatRowContent = ({
 								{icon}
 								{title}
 								<div style={{ flexGrow: 1 }} />
-								<OpenMarkdownPreviewButton markdown={message.text} />
+								<OpenMarkdownPreviewButton markdown={resultText} />
 							</div>
 							<div className="border-l border-green-600/30 ml-2 pl-4 pb-1">
 								<Markdown
@@ -2072,8 +2075,9 @@ export const ChatRowContent = ({
 						/>
 					)
 				}
-				default:
-					if (!message?.text?.trim()) {
+				default: {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -2097,6 +2101,7 @@ export const ChatRowContent = ({
 							</div>
 						</>
 					)
+				}
 			}
 		case "ask":
 			switch (message.ask) {
@@ -2182,17 +2187,18 @@ export const ChatRowContent = ({
 						</>
 					)
 				case "completion_result":
-					if (!message?.text?.trim()) {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
-					if (message.text) {
+					if (resultText) {
 						return (
 							<div className="group">
 								<div style={headerStyle}>
 									{icon}
 									{title}
 									<div style={{ flexGrow: 1 }} />
-									<OpenMarkdownPreviewButton markdown={message.text} />
+									<OpenMarkdownPreviewButton markdown={resultText} />
 								</div>
 								<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
 									<Markdown
@@ -2209,8 +2215,9 @@ export const ChatRowContent = ({
 					} else {
 						return null // Don't render anything when we get a completion_result ask without text
 					}
-				case "followup":
-					if (!message?.text?.trim()) {
+				case "followup": {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -2222,9 +2229,7 @@ export const ChatRowContent = ({
 								</div>
 							)}
 							<div className="flex flex-col gap-2 ml-6">
-								<Markdown
-									markdown={message.partial === true ? message?.text : followUpData?.question}
-								/>
+								<Markdown markdown={message.partial === true ? resultText : followUpData?.question} />
 								<FollowUpSuggest
 									suggestions={followUpData?.suggest}
 									onSuggestionClick={onSuggestionClick}
@@ -2236,8 +2241,10 @@ export const ChatRowContent = ({
 							</div>
 						</>
 					)
-				case "multiple_choice":
-					if (!message?.text?.trim()) {
+				}
+				case "multiple_choice": {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -2267,6 +2274,7 @@ export const ChatRowContent = ({
 							</div>
 						</>
 					)
+				}
 				case "auto_approval_max_req_reached": {
 					return <AutoApprovedRequestLimitWarning message={message} />
 				}
