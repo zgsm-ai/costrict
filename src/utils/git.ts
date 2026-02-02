@@ -8,6 +8,7 @@ import { promisify } from "util"
 import type { GitRepositoryInfo, GitCommit } from "@roo-code/types"
 
 import { truncateOutput } from "../integrations/misc/extract-text"
+import { excludedFileExtensions } from "./zgsmUtils"
 
 const execAsync = promisify(exec)
 
@@ -578,7 +579,14 @@ export async function getUncommittedFiles(cwd: string): Promise<FileChangeItem[]
 
 			filesMap.set(pathA, { path: pathA, status: rawStatus })
 		}
-		return Array.from(filesMap.values())
+
+		// Filter out files with excluded extensions
+		const result = Array.from(filesMap.values()).filter((file) => {
+			const fileName = path.basename(file.path).toLowerCase()
+			return !excludedFileExtensions.some((ext) => fileName.endsWith(ext.toLowerCase()))
+		})
+
+		return result
 	} catch (error) {
 		console.error("Error getting uncommitted files:", error)
 		return []

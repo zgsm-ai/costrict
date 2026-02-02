@@ -9,6 +9,7 @@ import type { ClineProvider } from "../../webview/ClineProvider"
 import { t } from "../../../i18n"
 import { singleCompletionHandler } from "../../../utils/single-completion-handler"
 import { truncateOutput } from "../../../integrations/misc/extract-text"
+import { excludedFileExtensions } from "../../../utils/zgsmUtils"
 
 const execAsync = promisify(exec)
 
@@ -329,94 +330,9 @@ export class CommitMessageGenerator {
 	 * Check if a file should only show filename without content in the prompt
 	 */
 	private shouldFilterFileContent(filePath: string): boolean {
-		const fileExtensions = [
-			// Image files
-			".png",
-			".jpg",
-			".jpeg",
-			".gif",
-			".bmp",
-			".svg",
-			".webp",
-			".ico",
-			// Lock files
-			".lock",
-			".lock.json",
-			"package-lock.json",
-			"yarn.lock",
-			"pnpm-lock.yaml",
-			// Binary files
-			".bin",
-			".exe",
-			".dll",
-			".so",
-			".dylib",
-			".a",
-			".lib",
-			".o",
-			// Archive files
-			".zip",
-			".tar",
-			".gz",
-			".bz2",
-			".xz",
-			".7z",
-			".rar",
-			".deb",
-			".rpm",
-			// Font files
-			".ttf",
-			".otf",
-			".woff",
-			".woff2",
-			".eot",
-			// Video files
-			".mp4",
-			".avi",
-			".mov",
-			".wmv",
-			".flv",
-			".webm",
-			".mkv",
-			// Audio files
-			".mp3",
-			".wav",
-			".flac",
-			".aac",
-			".ogg",
-			".wma",
-			// Database files
-			".db",
-			".sqlite",
-			".sqlite3",
-			".mdb",
-			".accdb",
-			// Certificate files
-			".pem",
-			".crt",
-			".cer",
-			".key",
-			".p12",
-			".pfx",
-			// Compiled files
-			".class",
-			".pyc",
-			".pyo",
-			".pyd",
-			".dll",
-			".exe",
-			".so",
-			// Large data files
-			".dat",
-			".data",
-			".log",
-			".tmp",
-			".temp",
-		]
-
 		const fileName = filePath.toLowerCase()
 		return (
-			fileExtensions.some((ext) => fileName.endsWith(ext)) ||
+			excludedFileExtensions.some((ext) => fileName.endsWith(ext)) ||
 			fileName.includes("package-lock.json") ||
 			fileName.includes("yarn.lock") ||
 			fileName.includes("pnpm-lock.yaml") ||
