@@ -32,7 +32,7 @@ export const MAX_FOLDER_FILES_TO_READ = 10
  * Maximum total content size (in characters) to read from a folder mention.
  * This is approximately 100KB which should be safe for most context windows.
  */
-export const MAX_FOLDER_CONTENT_SIZE = 128_000
+export const MAX_FOLDER_CONTENT_SIZE = 100_000
 
 function getUrlErrorMessage(error: unknown): string {
 	const errorMessage = error instanceof Error ? error.message : String(error)

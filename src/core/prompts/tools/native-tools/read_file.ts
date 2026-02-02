@@ -3,10 +3,10 @@ import type OpenAI from "openai"
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /** Default maximum lines to return per file (Codex-inspired predictable limit) */
-export const DEFAULT_LINE_LIMIT = 2000
+export const DEFAULT_LINE_LIMIT = 1500
 
 /** Maximum characters per line before truncation */
-export const MAX_LINE_LENGTH = 2000
+export const MAX_LINE_LENGTH = 1500
 
 /** Default indentation levels to include above anchor (0 = unlimited) */
 export const DEFAULT_MAX_LEVELS = 0

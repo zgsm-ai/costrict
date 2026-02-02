@@ -298,16 +298,15 @@ describe("extension.ts", () => {
 		vi.resetModules()
 		vi.clearAllMocks()
 
-		// Re-import modules after resetModules to get fresh references
+		// Re-import and reconfigure mocks after resetModules
 		const fs = await import("fs")
 		const dotenvx = await import("@dotenvx/dotenvx")
 
-		// Set mocks after module reset
+		// Configure mocks BEFORE importing extension
 		vi.mocked(fs.existsSync).mockReturnValue(false)
-
-		// Clear any previous calls on dotenvx.config
 		vi.mocked(dotenvx.config).mockClear()
 
+		// Now import extension - this will execute the top-level code
 		const { activate } = await import("../extension")
 		await activate(mockContext)
 
@@ -318,19 +317,19 @@ describe("extension.ts", () => {
 		vi.resetModules()
 		vi.clearAllMocks()
 
-		// Re-import modules after resetModules to get fresh references
+		// Re-import and reconfigure mocks after resetModules
 		const fs = await import("fs")
 		const dotenvx = await import("@dotenvx/dotenvx")
 
-		// Set mocks after module reset
+		// Configure mocks BEFORE importing extension
 		vi.mocked(fs.existsSync).mockReturnValue(true)
-
-		// Clear any previous calls on dotenvx.config to ensure we count only this test's call
 		vi.mocked(dotenvx.config).mockClear()
 
+		// Now import extension - this will execute the top-level code which calls dotenvx.config
 		const { activate } = await import("../extension")
 		await activate(mockContext)
 
+		// The module-level code calls dotenvx.config once when .env exists
 		expect(dotenvx.config).toHaveBeenCalledTimes(1)
 	})
 
