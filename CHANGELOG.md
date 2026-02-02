@@ -1,5 +1,9 @@
 # CoStrict Change Log
 
+## [2.3.1]
+
+- Optimize message text handling in ChatRow
+
 ## [2.3.0]
 
 - Enhanced JetBrains platform support with updated environment configuration
