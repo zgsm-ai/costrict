@@ -1,5 +1,29 @@
 # CoStrict Change Log
 
+## [2.3.0]
+
+- Enhanced JetBrains platform support with updated environment configuration
+- Optimized IPC connection handling and reduced content limits for better performance
+- Centralized excluded file extensions management for improved maintainability
+- Added comprehensive mock configurations for vscode and child_process testing
+- Migrated multiple AI providers to AI SDK (DeepSeek, Cerebras, Groq, Fireworks)
+- Added OpenAI Codex provider with OAuth subscription authentication
+- Refactored read_file tool with Codex-inspired improvements
+- Added Skills system with built-in skills support (replacing fetch_instructions)
+- Enhanced Kimi 2.5 reasoning detection and empty reasoning handling
+- Improved terminal output buffer management to prevent memory leaks
+- Fixed Gemini thought signature validation errors
+- Fixed tool result ID sanitization to prevent API 400 errors
+- Added support for image content in MCP tool responses
+- Added settings tab titles to search index
+- Enhanced parallel tool calls support (enabled by default)
+- Added React Compiler integration to webview-ui
+- Fixed empty text blocks filtering for Gemini compatibility
+- Improved MCP tool schema handling with anyOf/oneOf/allOf flattening
+- Updated test cases and improved code coverage
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/ede1d292993e21e98a4de9d44f54090f8e6f9b3e)
+- Fix known issues
+
 ## [2.2.5]
 
 - Support Kimi 2.5
