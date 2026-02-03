@@ -61,7 +61,7 @@ export function StandardTooltip({
 	delay = STANDARD_TOOLTIP_DELAY,
 }: StandardTooltipProps) {
 	// Don't render tooltip if content is empty or only whitespace.
-	if (!content || (typeof content === "string" && !content.trim())) {
+	if (!content || (typeof content === "string" && !content?.trim())) {
 		return <>{children}</>
 	}
 

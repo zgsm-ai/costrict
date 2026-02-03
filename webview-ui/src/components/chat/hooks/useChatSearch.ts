@@ -22,7 +22,7 @@ export function useChatSearch(messages: ClineMessage[]) {
 	)
 
 	const searchResults = useMemo(() => {
-		if (!debouncedSearchQuery.trim()) {
+		if (!debouncedSearchQuery?.trim()) {
 			return []
 		}
 

@@ -98,15 +98,15 @@ export const CloudView = ({ userInfo, isAuthenticated, cloudApiUrl, organization
 
 		// Auto-trigger authentication when a complete URL is pasted (with slight delay to ensure full paste is processed)
 		setTimeout(() => {
-			if (url.trim() && url.includes("://") && url.includes("/auth/clerk/callback")) {
-				vscode.postMessage({ type: "rooCloudManualUrl", text: url.trim() })
+			if (url?.trim() && url.includes("://") && url.includes("/auth/clerk/callback")) {
+				vscode.postMessage({ type: "rooCloudManualUrl", text: url?.trim() })
 			}
 		}, 100)
 	}
 
 	const handleKeyDown = (e: any) => {
 		if (e.key === "Enter") {
-			const url = manualUrl.trim()
+			const url = manualUrl?.trim()
 			if (url && url.includes("://") && url.includes("/auth/clerk/callback")) {
 				vscode.postMessage({ type: "rooCloudManualUrl", text: url })
 			}

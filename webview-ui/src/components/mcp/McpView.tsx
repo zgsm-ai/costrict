@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { Trans } from "react-i18next"
-import {
-	VSCodeCheckbox,
-	// VSCodeLink,
-	VSCodePanels,
-	VSCodePanelTab,
-	VSCodePanelView,
-} from "@vscode/webview-ui-toolkit/react"
+import { VSCodePanels, VSCodePanelTab, VSCodePanelView } from "@vscode/webview-ui-toolkit/react"
 
 import type { McpServer } from "@roo-code/types"
 
@@ -36,13 +30,7 @@ import McpEnabledToggle from "./McpEnabledToggle"
 import { McpErrorRow } from "./McpErrorRow"
 
 const McpView = () => {
-	const {
-		mcpServers: servers,
-		alwaysAllowMcp,
-		mcpEnabled,
-		enableMcpServerCreation,
-		setEnableMcpServerCreation,
-	} = useExtensionState()
+	const { mcpServers: servers, alwaysAllowMcp, mcpEnabled } = useExtensionState()
 
 	const { t } = useAppTranslation()
 	const { isOverThreshold, title, message } = useTooManyTools()
@@ -54,8 +42,8 @@ const McpView = () => {
 			<Section>
 				<div
 					style={{
-						color: "var(--vscode-foreground)",
-						fontSize: "13px",
+						color: "var(--vscode-descriptionForeground)",
+						fontSize: "12px",
 						marginBottom: "10px",
 						marginTop: "5px",
 					}}>
@@ -78,38 +66,6 @@ const McpView = () => {
 
 				{mcpEnabled && (
 					<>
-						<div style={{ marginBottom: 15 }}>
-							<VSCodeCheckbox
-								checked={enableMcpServerCreation}
-								onChange={(e: any) => {
-									setEnableMcpServerCreation(e.target.checked)
-									vscode.postMessage({ type: "enableMcpServerCreation", bool: e.target.checked })
-								}}>
-								<span style={{ fontWeight: "500" }}>{t("mcp:enableServerCreation.title")}</span>
-							</VSCodeCheckbox>
-							<div
-								style={{
-									fontSize: "12px",
-									marginTop: "5px",
-									color: "var(--vscode-descriptionForeground)",
-								}}>
-								<Trans
-									i18nKey="mcp:enableServerCreation.description"
-									components={{
-										DocsLink: (
-											<a
-												href="https://docs.costrict.ai/product-features/mcp"
-												target="_blank"
-												rel="noopener noreferrer"
-												className="text-vscode-textLink-foreground hover:underline">
-												{t("common:docsLink.label")}
-											</a>
-										),
-									}}></Trans>
-								<p style={{ marginTop: "8px" }}>{t("mcp:enableServerCreation.hint")}</p>
-							</div>
-						</div>
-
 						{/* Too Many Tools Warning */}
 						{isOverThreshold && (
 							<div style={{ marginBottom: 15 }}>
@@ -204,21 +160,19 @@ const McpView = () => {
 								</Button>
 							</StandardTooltip> */}
 						</div>
-						<div
+						{/* <div
 							style={{
 								marginTop: "15px",
 								fontSize: "12px",
 								color: "var(--vscode-descriptionForeground)",
 							}}>
-							{/* <VSCodeLink
-								href={buildDocLink(
-									"features/mcp/using-mcp-in-roo#editing-mcp-settings-files",
-									"mcp_edit_settings",
-								)}
+							<VSCodeLink
+								href="https://docs.costrict.ai/product-features/mcp"
+								target="_blank"
 								style={{ display: "inline" }}>
 								{t("mcp:learnMoreEditingSettings")}
-							</VSCodeLink> */}
-						</div>
+							</VSCodeLink>
+						</div> */}
 					</>
 				)}
 			</Section>

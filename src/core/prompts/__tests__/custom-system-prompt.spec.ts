@@ -138,7 +138,6 @@ describe("File-Based Custom System Prompt", () => {
 				undefined, // customModes
 				undefined, // globalCustomInstructions
 				undefined, // experiments
-				true, // enableMcpServerCreation
 				undefined, // language
 				undefined, // rooIgnoreInstructions
 				undefined, // partialReadsEnabled
@@ -175,7 +174,6 @@ describe("File-Based Custom System Prompt", () => {
 			undefined, // customModes
 			undefined, // globalCustomInstructions
 			undefined, // experiments
-			true, // enableMcpServerCreation
 			undefined, // language
 			undefined, // rooIgnoreInstructions
 			undefined, // partialReadsEnabled
@@ -220,7 +218,6 @@ describe("File-Based Custom System Prompt", () => {
 			undefined, // customModes
 			undefined, // globalCustomInstructions
 			undefined, // experiments
-			true, // enableMcpServerCreation
 			undefined, // language
 			undefined, // rooIgnoreInstructions
 			undefined, // partialReadsEnabled

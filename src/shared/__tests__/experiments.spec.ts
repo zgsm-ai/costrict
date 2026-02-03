@@ -5,19 +5,18 @@ import type { ExperimentId } from "@roo-code/types"
 import { EXPERIMENT_IDS, experimentConfigsMap, experiments as Experiments } from "../experiments"
 
 describe("experiments", () => {
-	describe("POWER_STEERING", () => {
+	describe("PREVENT_FOCUS_DISRUPTION", () => {
 		it("is configured correctly", () => {
-			expect(EXPERIMENT_IDS.POWER_STEERING).toBe("powerSteering")
-			expect(experimentConfigsMap.POWER_STEERING).toMatchObject({
+			expect(EXPERIMENT_IDS.PREVENT_FOCUS_DISRUPTION).toBe("preventFocusDisruption")
+			expect(experimentConfigsMap.PREVENT_FOCUS_DISRUPTION).toMatchObject({
 				enabled: false,
 			})
 		})
 	})
 
 	describe("isEnabled", () => {
-		it("returns false when POWER_STEERING experiment is not enabled", () => {
+		it("returns false when experiment is not enabled", () => {
 			const experiments: Record<ExperimentId, boolean> = {
-				powerSteering: false,
 				commitReview: false,
 				preventFocusDisruption: false,
 				imageGeneration: false,
@@ -25,33 +24,29 @@ describe("experiments", () => {
 				alwaysIncludeFileDetails: false,
 				useLitePrompts: false,
 				runSlashCommand: false,
-				multipleNativeToolCalls: false,
 				customTools: false,
 				smartMistakeDetection: false,
 			}
-			expect(Experiments.isEnabled(experiments, EXPERIMENT_IDS.POWER_STEERING)).toBe(false)
+			expect(Experiments.isEnabled(experiments, EXPERIMENT_IDS.PREVENT_FOCUS_DISRUPTION)).toBe(false)
 		})
 
-		it("returns true when experiment POWER_STEERING is enabled", () => {
+		it("returns true when experiment is enabled", () => {
 			const experiments: Record<ExperimentId, boolean> = {
-				powerSteering: true,
 				chatSearch: false,
 				alwaysIncludeFileDetails: false,
 				commitReview: false,
 				useLitePrompts: false,
-				preventFocusDisruption: false,
+				preventFocusDisruption: true,
 				imageGeneration: false,
 				runSlashCommand: false,
-				multipleNativeToolCalls: false,
 				customTools: false,
 				smartMistakeDetection: false,
 			}
-			expect(Experiments.isEnabled(experiments, EXPERIMENT_IDS.POWER_STEERING)).toBe(true)
+			expect(Experiments.isEnabled(experiments, EXPERIMENT_IDS.PREVENT_FOCUS_DISRUPTION)).toBe(true)
 		})
 
 		it("returns false when experiment is not present", () => {
 			const experiments: Record<ExperimentId, boolean> = {
-				powerSteering: false,
 				chatSearch: false,
 				alwaysIncludeFileDetails: false,
 				commitReview: false,
@@ -59,11 +54,10 @@ describe("experiments", () => {
 				preventFocusDisruption: false,
 				imageGeneration: false,
 				runSlashCommand: false,
-				multipleNativeToolCalls: false,
 				customTools: false,
 				smartMistakeDetection: false,
 			}
-			expect(Experiments.isEnabled(experiments, EXPERIMENT_IDS.POWER_STEERING)).toBe(false)
+			expect(Experiments.isEnabled(experiments, EXPERIMENT_IDS.PREVENT_FOCUS_DISRUPTION)).toBe(false)
 		})
 	})
 })

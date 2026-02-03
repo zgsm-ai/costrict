@@ -217,6 +217,10 @@
 			"description": "為保持在上下文視窗限制內，已從對話中移除較舊的訊息。與壓縮相比，這是一種快速但上下文保留較少的方法。"
 		}
 	},
+	"skill": {
+		"wantsToLoad": "CoStrict 想要載入技能",
+		"didLoad": "CoStrict 載入了技能"
+	},
 	"instructions": {
 		"wantsToFetch": "Roo 想要取得詳細指示以協助目前工作"
 	},
@@ -363,7 +367,9 @@
 		},
 		"release": {
 			"heading": "新增功能：",
-			"intelligentContextCondensation": "智慧上下文壓縮 v2：完全重寫管理上下文視窗的演算法。現在您可以更長時間地執行任務，而不會讓 CoStrict 失去品質。"
+			"parallelTools": "平行工具呼叫：工具現在預設會平行執行，大幅加快多檔案作業和複雜工作的速度。",
+			"readFileIndentation": "更聰慧的檔案讀取：新的縮排模式可提取完整的語義程式碼區塊（函數、類別），無需中斷函數——適合從搜尋結果中特定行為目標。",
+			"readCommandOutput": "無損終端輸出：新的 read_command_output 工具可從截斷的執行中擷取完整的指令輸出，並支援分頁和規則運算式過濾。"
 		},
 		"cloudAgents": {
 			"heading": "雲端的新功能：",
@@ -522,5 +528,8 @@
 		"serversPart_other": "{{count}} 個 MCP 伺服器",
 		"messageTemplate": "您已啟用 {{tools}}（透過 {{servers}}）。這麼多的工具可能會混淆模型並導致錯誤。請嘗試保持在 {{threshold}} 以下。",
 		"openMcpSettings": "開啟 MCP 設定"
+	},
+	"readCommandOutput": {
+		"title": "Roo read command output"
 	}
 }

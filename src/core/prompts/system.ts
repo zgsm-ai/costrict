@@ -62,8 +62,8 @@ async function generatePrompt(data: {
 	enableMcpServerCreation?: boolean
 	language?: string
 	rooIgnoreInstructions?: string
-	partialReadsEnabled?: boolean
-	parallelToolCallsEnabled?: boolean
+	// partialReadsEnabled?: boolean
+	// parallelToolCallsEnabled?: boolean
 	settings?: SystemPromptSettings
 	todoList?: TodoItem[]
 	modelId?: string
@@ -86,8 +86,8 @@ async function generatePrompt(data: {
 		enableMcpServerCreation,
 		language,
 		rooIgnoreInstructions,
-		partialReadsEnabled,
-		parallelToolCallsEnabled,
+		// partialReadsEnabled,
+		// parallelToolCallsEnabled,
 		skillsManager,
 		settings,
 		todoList,
@@ -115,7 +115,7 @@ async function generatePrompt(data: {
 	const effectiveProtocol = "native"
 
 	const [modesSection, skillsSection] = await Promise.all([
-		getModesSection(context, undefined, zgsmCodeMode),
+		getModesSection(context, zgsmCodeMode),
 		getSkillsSection(skillsManager, mode as string),
 	])
 
@@ -129,9 +129,9 @@ async function generatePrompt(data: {
 
 ${markdownFormattingSection()}
 
-${getSharedToolUseSection(experiments)}${toolsCatalog}
+${getSharedToolUseSection()}${toolsCatalog}
 
-${useLitePrompts ? getLiteToolUseGuidelinesSection(experiments) : getToolUseGuidelinesSection(experiments)}
+${useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
 
 ${useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
 
@@ -165,10 +165,8 @@ export const SYSTEM_PROMPT = async (
 	customModes?: ModeConfig[],
 	globalCustomInstructions?: string,
 	experiments?: Record<string, boolean>,
-	enableMcpServerCreation?: boolean,
 	language?: string,
 	rooIgnoreInstructions?: string,
-	partialReadsEnabled?: boolean,
 	settings?: SystemPromptSettings,
 	todoList?: TodoItem[],
 	modelId?: string,
@@ -237,11 +235,8 @@ ${customInstructions}`
 		customModeConfigs: customModes,
 		globalCustomInstructions,
 		experiments,
-		enableMcpServerCreation,
 		language,
 		rooIgnoreInstructions,
-		partialReadsEnabled,
-		parallelToolCallsEnabled,
 		settings,
 		todoList,
 		modelId,

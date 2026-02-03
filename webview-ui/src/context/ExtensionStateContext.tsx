@@ -15,6 +15,7 @@ import {
 	type MarketplaceInstalledMetadata,
 	type Command,
 	type McpServer,
+	type SkillMetadata,
 	RouterModels,
 	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
@@ -46,13 +47,13 @@ export interface ExtensionStateContextType extends ExtensionState {
 	filePaths: string[]
 	openedTabs: Array<{ label: string; isActive: boolean; path?: string }>
 	commands: Command[]
+	skills: SkillMetadata[]
 	organizationAllowList: OrganizationAllowList
 	organizationSettingsVersion: number
 	cloudIsAuthenticated: boolean
 	cloudOrganizations?: CloudOrganizationMembership[]
 	sharingEnabled: boolean
 	publicSharingEnabled: boolean
-	maxConcurrentFileReads?: number
 	mdmCompliant?: boolean
 	hasOpenedModeSelector: boolean // New property to track if user has opened mode selector
 	hasClosedCodeReviewWelcomeTips: boolean // Track if user has dismissed code review welcome tips
@@ -105,16 +106,10 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setWriteDelayMs: (value: number) => void
 	screenshotQuality?: number
 	setScreenshotQuality: (value: number) => void
-	terminalOutputLineLimit?: number
-	setTerminalOutputLineLimit: (value: number) => void
-	terminalOutputCharacterLimit?: number
-	setTerminalOutputCharacterLimit: (value: number) => void
-	maxReadCharacterLimit?: number
-	setMaxReadCharacterLimit: (value: number) => void
+	terminalOutputPreviewSize?: "small" | "medium" | "large"
+	setTerminalOutputPreviewSize: (value: "small" | "medium" | "large") => void
 	mcpEnabled: boolean
 	setMcpEnabled: (value: boolean) => void
-	enableMcpServerCreation: boolean
-	setEnableMcpServerCreation: (value: boolean) => void
 	remoteControlEnabled: boolean
 	setRemoteControlEnabled: (value: boolean) => void
 	taskSyncEnabled: boolean
@@ -142,8 +137,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setRemoteBrowserEnabled: (value: boolean) => void
 	awsUsePromptCache?: boolean
 	setAwsUsePromptCache: (value: boolean) => void
-	maxReadFileLine: number
-	setMaxReadFileLine: (value: number) => void
 	maxImageFileSize: number
 	setMaxImageFileSize: (value: number) => void
 	maxTotalImageSize: number
@@ -152,8 +145,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	pinnedApiConfigs?: Record<string, boolean>
 	setPinnedApiConfigs: (value: Record<string, boolean>) => void
 	togglePinnedApiConfig: (configName: string) => void
-	terminalCompressProgressBar?: boolean
-	setTerminalCompressProgressBar: (value: boolean) => void
 	setHistoryPreviewCollapsed: (value: boolean) => void
 	setReasoningBlockCollapsed: (value: boolean) => void
 	setShowSpeedInfo: (value: boolean) => void
@@ -247,16 +238,12 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		zgsmCodebaseIndexEnabled: true,
 		zgsmCodeMode: "vibe",
 		checkpointTimeout: DEFAULT_CHECKPOINT_TIMEOUT_SECONDS, // Default to 15 seconds
-		language: "en", // Default language code
+		language: (window as any).defaultLanguage || "en", // Default language code
 		writeDelayMs: 1000,
 		browserViewportSize: "900x600",
 		screenshotQuality: 75,
-		terminalOutputLineLimit: 500,
-		terminalOutputCharacterLimit: 50000,
-		maxReadCharacterLimit: 40000,
 		terminalShellIntegrationTimeout: 4000,
 		mcpEnabled: true,
-		enableMcpServerCreation: false,
 		remoteControlEnabled: false,
 		taskSyncEnabled: false,
 		featureRoomoteControlEnabled: false,
@@ -280,15 +267,12 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		showRooIgnoredFiles: true, // Default to showing .rooignore'd files with lock symbol (current behavior).
 		enableSubfolderRules: false, // Default to disabled - must be enabled to load rules from subdirectories
 		renderContext: "sidebar",
-		maxReadFileLine: 500, // Default max read file line limit
 		maxImageFileSize: 5, // Default max image file size in MB
 		maxTotalImageSize: 20, // Default max total image size in MB
 		pinnedApiConfigs: {}, // Empty object for pinned API configs
 		terminalZshOhMy: false, // Default Oh My Zsh integration setting
-		maxConcurrentFileReads: 5, // Default concurrent file reads
 		terminalZshP10k: false, // Default Powerlevel10k integration setting
 		terminalZdotdir: false, // Default ZDOTDIR handling setting
-		terminalCompressProgressBar: true, // Default to compress progress bar output
 		historyPreviewCollapsed: false, // Initialize the new state (default to expanded)
 		reasoningBlockCollapsed: true, // Default to collapsed
 		showSpeedInfo: false, // Default to not showing speed info
@@ -331,6 +315,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 	const [filePaths, setFilePaths] = useState<string[]>([])
 	const [openedTabs, setOpenedTabs] = useState<Array<{ label: string; isActive: boolean; path?: string }>>([])
 	const [commands, setCommands] = useState<Command[]>([])
+	const [skills, setSkills] = useState<SkillMetadata[]>([])
 	const [mcpServers, setMcpServers] = useState<McpServer[]>([])
 	const [currentCheckpoint, setCurrentCheckpoint] = useState<string>()
 	const [extensionRouterModels, setExtensionRouterModels] = useState<RouterModels | undefined>(undefined)
@@ -457,6 +442,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					setCommands(message.commands ?? [])
 					break
 				}
+				case "skills": {
+					setSkills(message.skills ?? [])
+					break
+				}
 				case "messageUpdated": {
 					const clineMessage = message.clineMessage!
 					setState((prevState) => {
@@ -507,7 +496,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 							...prevTask,
 							data: {
 								...prevTask.data,
-								issues: prevTask.data.issues.map((issue) =>
+								issues: prevTask?.data?.issues?.map((issue) =>
 									issue.id === issueId ? { ...issue, status } : issue,
 								),
 							},
@@ -597,6 +586,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		filePaths,
 		openedTabs,
 		commands,
+		skills,
 		soundVolume: state.soundVolume,
 		ttsSpeed: state.ttsSpeed,
 		writeDelayMs: state.writeDelayMs,
@@ -651,19 +641,14 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			setState((prevState) => ({ ...prevState, browserViewportSize: value })),
 		setWriteDelayMs: (value) => setState((prevState) => ({ ...prevState, writeDelayMs: value })),
 		setScreenshotQuality: (value) => setState((prevState) => ({ ...prevState, screenshotQuality: value })),
-		setTerminalOutputLineLimit: (value) =>
-			setState((prevState) => ({ ...prevState, terminalOutputLineLimit: value })),
-		setTerminalOutputCharacterLimit: (value) =>
-			setState((prevState) => ({ ...prevState, terminalOutputCharacterLimit: value })),
-		setMaxReadCharacterLimit: (value) => setState((prevState) => ({ ...prevState, maxReadCharacterLimit: value })),
+		setTerminalOutputPreviewSize: (value) =>
+			setState((prevState) => ({ ...prevState, terminalOutputPreviewSize: value })),
 		setTerminalShellIntegrationTimeout: (value) =>
 			setState((prevState) => ({ ...prevState, terminalShellIntegrationTimeout: value })),
 		setTerminalShellIntegrationDisabled: (value) =>
 			setState((prevState) => ({ ...prevState, terminalShellIntegrationDisabled: value })),
 		setTerminalZdotdir: (value) => setState((prevState) => ({ ...prevState, terminalZdotdir: value })),
 		setMcpEnabled: (value) => setState((prevState) => ({ ...prevState, mcpEnabled: value })),
-		setEnableMcpServerCreation: (value) =>
-			setState((prevState) => ({ ...prevState, enableMcpServerCreation: value })),
 		setRemoteControlEnabled: (value) => setState((prevState) => ({ ...prevState, remoteControlEnabled: value })),
 		setTaskSyncEnabled: (value) => setState((prevState) => ({ ...prevState, taskSyncEnabled: value }) as any),
 		setFeatureRoomoteControlEnabled: (value) =>
@@ -686,12 +671,9 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setEnableSubfolderRules: (value) => setState((prevState) => ({ ...prevState, enableSubfolderRules: value })),
 		setRemoteBrowserEnabled: (value) => setState((prevState) => ({ ...prevState, remoteBrowserEnabled: value })),
 		setAwsUsePromptCache: (value) => setState((prevState) => ({ ...prevState, awsUsePromptCache: value })),
-		setMaxReadFileLine: (value) => setState((prevState) => ({ ...prevState, maxReadFileLine: value })),
 		setMaxImageFileSize: (value) => setState((prevState) => ({ ...prevState, maxImageFileSize: value })),
 		setMaxTotalImageSize: (value) => setState((prevState) => ({ ...prevState, maxTotalImageSize: value })),
 		setPinnedApiConfigs: (value) => setState((prevState) => ({ ...prevState, pinnedApiConfigs: value })),
-		setTerminalCompressProgressBar: (value) =>
-			setState((prevState) => ({ ...prevState, terminalCompressProgressBar: value })),
 		togglePinnedApiConfig: (configId) =>
 			setState((prevState) => {
 				const currentPinned = prevState.pinnedApiConfigs || {}

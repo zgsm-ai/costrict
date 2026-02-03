@@ -70,10 +70,10 @@ export const SlashCommandsSettings: React.FC = () => {
 	}
 
 	const handleCreateCommand = (source: "global" | "project", name: string) => {
-		if (!name.trim()) return
+		if (!name?.trim()) return
 
 		// Append .md if not already present
-		const fileName = name.trim().endsWith(".md") ? name.trim() : `${name.trim()}.md`
+		const fileName = name?.trim().endsWith(".md") ? name?.trim() : `${name?.trim()}.md`
 
 		vscode.postMessage({
 			type: "createCommand",
@@ -167,7 +167,7 @@ export const SlashCommandsSettings: React.FC = () => {
 								variant="ghost"
 								size="icon"
 								onClick={() => handleCreateCommand("global", globalNewName)}
-								disabled={!globalNewName.trim()}
+								disabled={!globalNewName?.trim()}
 								className="size-6 flex items-center justify-center opacity-60 hover:opacity-100">
 								<Plus className="w-4 h-4" />
 							</Button>
@@ -213,7 +213,7 @@ export const SlashCommandsSettings: React.FC = () => {
 									variant="ghost"
 									size="icon"
 									onClick={() => handleCreateCommand("project", workspaceNewName)}
-									disabled={!workspaceNewName.trim()}
+									disabled={!workspaceNewName?.trim()}
 									className="size-6 flex items-center justify-center opacity-60 hover:opacity-100">
 									<Plus className="w-4 h-4" />
 								</Button>

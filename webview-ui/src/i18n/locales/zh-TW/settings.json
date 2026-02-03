@@ -43,7 +43,8 @@
 		"experimental": "實驗性",
 		"language": "語言",
 		"about": "關於 Roo Code",
-		"autoCleanup": "自動清理"
+		"autoCleanup": "自動清理",
+		"skills": "Skills"
 	},
 	"about": {
 		"bugReport": {
@@ -747,6 +748,15 @@
 			"label": "終端機字元限制",
 			"description": "透過強制限制輸出大小來覆寫行限制以防止記憶體問題。如果超出，保留開頭和結尾並向 CoStrict 顯示內容被跳過的佔位符。"
 		},
+		"outputPreviewSize": {
+			"label": "命令輸出預覽大小",
+			"description": "控制 CoStrict 直接看到的命令輸出量。完整輸出始終會被儲存，需要時可以存取。",
+			"options": {
+				"small": "小 (5KB)",
+				"medium": "中 (10KB)",
+				"large": "大 (20KB)"
+			}
+		},
 		"shellIntegrationTimeout": {
 			"label": "終端機 shell 整合逾時",
 			"description": "執行命令前等待 VS Code shell 整合的時間。如果 shell 啟動緩慢或看到 'Shell Integration Unavailable' 錯誤，請提高此值。"
@@ -758,10 +768,6 @@
 		"commandDelay": {
 			"label": "終端機命令延遲",
 			"description": "在每個命令後新增短暫暫停，以便 VS Code 終端機刷新所有輸出（bash/zsh: PROMPT_COMMAND sleep; PowerShell: start-sleep）。僅在看到缺少尾部輸出時使用；否則保持為 0。"
-		},
-		"compressProgressBar": {
-			"label": "壓縮進度條輸出",
-			"description": "折疊進度條/旋轉器，僅保留最終狀態（節省 Token）。"
 		},
 		"powershellCounter": {
 			"label": "啟用 PowerShell 計數器解決方案",
@@ -863,10 +869,6 @@
 		"RUN_SLASH_COMMAND": {
 			"name": "啟用模型啟動的斜線命令",
 			"description": "啟用時，Roo 可以執行您的斜線命令來執行工作流程。"
-		},
-		"MULTIPLE_NATIVE_TOOL_CALLS": {
-			"name": "並行工具呼叫",
-			"description": "啟用後，原生協定可在單個助理訊息輪次中執行多個工具。"
 		},
 		"CUSTOM_TOOLS": {
 			"name": "啟用自訂工具",
@@ -1057,6 +1059,53 @@
 		"cleanupOnStartup": {
 			"label": "啟動時清理",
 			"description": "擴充程式啟動時執行自動清理"
+		}
+	},
+	"skills": {
+		"description": "管理為代理提供上下文指令的技能。技能會在與您的任務相關時自動套用。<DocsLink>深入了解</DocsLink>",
+		"projectSkills": "專案技能",
+		"globalSkills": "全域技能",
+		"noProjectSkills": "未設定專案技能。建立一個以新增專案特定的代理功能。",
+		"noGlobalSkills": "未設定全域技能。建立一個以新增在所有專案中可用的代理功能。",
+		"addSkill": "新增技能",
+		"editSkill": "編輯技能",
+		"deleteSkill": "刪除技能",
+		"changeMode": "變更模式",
+		"modeAny": "任意模式",
+		"deleteDialog": {
+			"title": "刪除技能",
+			"description": "您確定要刪除技能「{{name}}」嗎？此動作無法復原。",
+			"confirm": "刪除",
+			"cancel": "取消"
+		},
+		"createDialog": {
+			"title": "建立新技能",
+			"description": "定義新的技能範本，為代理提供上下文指令。",
+			"nameLabel": "名稱",
+			"namePlaceholder": "my-skill-name",
+			"nameHint": "僅限小寫字母、數字和連字號（1-64個字元）",
+			"descriptionLabel": "說明",
+			"descriptionPlaceholder": "描述何時應使用此技能...",
+			"descriptionHint": "說明此技能的作用以及代理應何時套用它（1-1024個字元）",
+			"sourceLabel": "位置",
+			"sourceHint": "選擇此技能是全域可用還是僅在此專案中可用",
+			"modeLabel": "模式（選填）",
+			"modePlaceholder": "任何模式",
+			"modeHint": "將此技能限制為特定模式",
+			"modeAny": "任何模式",
+			"create": "建立",
+			"cancel": "取消"
+		},
+		"source": {
+			"global": "全域（在所有專案中可用）",
+			"project": "專案（僅此工作區）"
+		},
+		"validation": {
+			"nameRequired": "名稱為必填",
+			"nameTooLong": "名稱不得超過64個字元",
+			"nameInvalid": "名稱必須為1-64個小寫字母、數字或連字號",
+			"descriptionRequired": "說明為必填",
+			"descriptionTooLong": "說明不得超過1024個字元"
 		}
 	}
 }

@@ -278,7 +278,7 @@ print_success() {
     echo ""
     echo "  ${BOLD}Example:${NC}"
     echo "    export OPENROUTER_API_KEY=sk-or-v1-..."
-    echo "    cos ~/my-project -P \"What is this project?\""
+    echo "    cd ~/my-project && cos \"What is this project?\""
     echo ""
 }
 

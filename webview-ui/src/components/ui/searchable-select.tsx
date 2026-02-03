@@ -64,7 +64,7 @@ export function SearchableSelect({
 	// Filter options based on search, always limit for performance.
 	// Ensure the selected option remains visible even when truncating.
 	const filteredOptions = React.useMemo(() => {
-		const normalizedSearch = searchValue.trim().toLowerCase()
+		const normalizedSearch = searchValue?.trim().toLowerCase()
 		const matchingOptions =
 			normalizedSearch.length === 0
 				? options

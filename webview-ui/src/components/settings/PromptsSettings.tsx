@@ -92,7 +92,7 @@ const PromptsSettings = ({
 	}
 
 	const handleTestEnhancement = () => {
-		if (!testPrompt.trim()) return
+		if (!testPrompt?.trim()) return
 
 		setIsEnhancing(true)
 		vscode.postMessage({

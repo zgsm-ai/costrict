@@ -90,7 +90,7 @@ export const ChatSearch: React.FC<ChatSearchProps> = ({
 					ref={searchInputRef as any}
 					value={searchQuery}
 					placeholder={t("settings:experimental.CHAT_SEARCH.placeholder")}
-					onInput={(e: any) => setSearchQuery((e.target.value || "").trim())}
+					onInput={(e: any) => setSearchQuery((e.target.value || "")?.trim())}
 					onKeyDown={handleKeyDown}
 					className="flex-1 min-w-0"
 					style={{ marginBottom: 0 }}

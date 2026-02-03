@@ -846,7 +846,7 @@ export const CodeIndexPopover: React.FC<CodeIndexPopoverProps> = ({
 													}
 													onBlur={(e: any) => {
 														// Set default Ollama URL if field is empty
-														if (!e.target.value.trim()) {
+														if (!e.target.value?.trim()) {
 															e.target.value = DEFAULT_OLLAMA_URL
 															updateSetting(
 																"codebaseIndexEmbedderBaseUrl",
@@ -1444,7 +1444,7 @@ export const CodeIndexPopover: React.FC<CodeIndexPopoverProps> = ({
 											}
 											onBlur={(e: any) => {
 												// Set default Qdrant URL if field is empty
-												if (!e.target.value.trim()) {
+												if (!e.target.value?.trim()) {
 													currentSettings.codebaseIndexQdrantUrl = DEFAULT_QDRANT_URL
 													updateSetting("codebaseIndexQdrantUrl", DEFAULT_QDRANT_URL)
 												}

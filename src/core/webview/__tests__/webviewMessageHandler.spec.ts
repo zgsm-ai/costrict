@@ -435,7 +435,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 		expect(mockGetModels).toHaveBeenCalledWith({
 			provider: "zgsm",
 			apiKey: undefined,
-			baseUrl: undefined,
+			baseUrl: "https://zgsm.sangfor.com",
 			openAiHeaders: {},
 		})
 		expect(mockGetModels).not.toHaveBeenCalledWith(

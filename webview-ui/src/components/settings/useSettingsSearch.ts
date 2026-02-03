@@ -123,7 +123,7 @@ export function useSettingsSearch({ index }: UseSettingsSearchOptions) {
 
 	// Search results
 	const results = useMemo((): SearchResult[] => {
-		if (!searchQuery.trim()) {
+		if (!searchQuery?.trim()) {
 			return []
 		}
 

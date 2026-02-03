@@ -38,8 +38,8 @@ const mergedTranslations = mergeLanguageResources(translations, zgsmTranslations
 // Initialize i18next for React
 // This will be initialized with the VSCode language in TranslationProvider
 i18next.use(initReactI18next).init({
-	lng: "en", // Default language (will be overridden)
-	fallbackLng: "en",
+	lng: (window as any).defaultLanguage || "en", // Default language (will be overridden)
+	fallbackLng: (window as any).defaultLanguage || "en",
 	debug: false,
 	resources: mergedTranslations,
 	interpolation: {

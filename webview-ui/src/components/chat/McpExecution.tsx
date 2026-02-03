@@ -98,7 +98,7 @@ export const McpExecution = ({
 		}
 
 		// For arguments, we don't have a streaming status, so we check if it looks like complete JSON
-		const trimmed = argumentsText.trim()
+		const trimmed = argumentsText?.trim()
 
 		// Basic check for complete JSON structure
 		if (

@@ -16,6 +16,12 @@ vi.mock("vscode", async (importOriginal) => ({
 			show: vi.fn(),
 		}),
 	},
+	extensions: {
+		getExtension: vi.fn().mockReturnValue({
+			extensionUri: { fsPath: "/test/extension/path" },
+		}),
+		all: [],
+	},
 }))
 
 // Mock i18n

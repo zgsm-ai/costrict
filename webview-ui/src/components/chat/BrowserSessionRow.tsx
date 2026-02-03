@@ -344,7 +344,7 @@ const BrowserSessionRow = memo((props: BrowserSessionRowProps) => {
 		}
 		const raw = displayState.consoleLogs || ""
 		raw.split(/\r?\n/).forEach((line) => {
-			const trimmed = line.trim()
+			const trimmed = line?.trim()
 			if (!trimmed) return
 			const m = /^\[([^\]]+)\]\s*/i.exec(trimmed)
 			let type = (m?.[1] || "").toLowerCase()

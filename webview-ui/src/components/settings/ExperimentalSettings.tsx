@@ -55,7 +55,7 @@ export const ExperimentalSettings = ({
 	const { t } = useAppTranslation()
 
 	const smartMistakeDetectionConfig = experimentSettings?.smartMistakeDetectionConfig || {
-		autoSwitchModel: false,
+		autoSwitchModel: true,
 		autoSwitchModelThreshold: 3,
 	}
 
@@ -66,8 +66,6 @@ export const ExperimentalSettings = ({
 			<Section>
 				{Object.entries(experimentConfigsMap)
 					.filter(([key]) => key in EXPERIMENT_IDS)
-					// Hide MULTIPLE_NATIVE_TOOL_CALLS - feature is on hold
-					.filter(([key]) => key !== "MULTIPLE_NATIVE_TOOL_CALLS")
 					// Hide CHAT_SEARCH - moved to UI settings
 					.filter(([key]) => key !== "CHAT_SEARCH")
 					.filter(([key]) => key !== "POWER_STEERING")
@@ -148,7 +146,7 @@ export const ExperimentalSettings = ({
 												<div className="pl-6 flex flex-col gap-2">
 													<ExperimentalFeature
 														experimentKey="AUTO_SWITCH_MODEL"
-														enabled={smartMistakeDetectionConfig.autoSwitchModel ?? false}
+														enabled={smartMistakeDetectionConfig.autoSwitchModel ?? true}
 														onChange={(enabled) => {
 															setSmartMistakeDetectionConfig?.({
 																autoSwitchModel: enabled,
@@ -180,7 +178,7 @@ export const ExperimentalSettings = ({
 																		setSmartMistakeDetectionConfig?.({
 																			autoSwitchModel:
 																				smartMistakeDetectionConfig.autoSwitchModel ??
-																				false,
+																				true,
 																			autoSwitchModelThreshold: value,
 																		})
 																	}

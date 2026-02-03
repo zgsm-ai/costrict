@@ -66,7 +66,7 @@ const ApiConfigManager = ({
 	}
 
 	const validateName = (name: string, isNewProfile: boolean): string | null => {
-		const trimmed = name.trim()
+		const trimmed = name?.trim()
 		if (!trimmed) return t("settings:providers.nameEmpty")
 
 		const nameExists = listApiConfigMeta?.some((config) => config.name.toLowerCase() === trimmed.toLowerCase())
@@ -139,7 +139,7 @@ const ApiConfigManager = ({
 	}
 
 	const handleSave = () => {
-		const trimmedValue = inputValue.trim()
+		const trimmedValue = inputValue?.trim()
 		const error = validateName(trimmedValue, false)
 
 		if (error) {
@@ -159,7 +159,7 @@ const ApiConfigManager = ({
 	}
 
 	const handleNewProfileSave = () => {
-		const trimmedValue = newProfileName.trim()
+		const trimmedValue = newProfileName?.trim()
 		const error = validateName(trimmedValue, true)
 
 		if (error) {
@@ -197,7 +197,7 @@ const ApiConfigManager = ({
 							}}
 							placeholder={t("settings:providers.enterNewName")}
 							onKeyDown={({ key }) => {
-								if (key === "Enter" && inputValue.trim()) {
+								if (key === "Enter" && inputValue?.trim()) {
 									handleSave()
 								} else if (key === "Escape") {
 									handleCancel()
@@ -209,7 +209,7 @@ const ApiConfigManager = ({
 							<Button
 								variant="ghost"
 								size="icon"
-								disabled={!inputValue.trim()}
+								disabled={!inputValue?.trim()}
 								onClick={handleSave}
 								data-testid="save-rename-button">
 								<span className="codicon codicon-check" />
@@ -325,7 +325,7 @@ const ApiConfigManager = ({
 						style={{ width: "100%" }}
 						onKeyDown={(e: unknown) => {
 							const event = e as { key: string }
-							if (event.key === "Enter" && newProfileName.trim()) {
+							if (event.key === "Enter" && newProfileName?.trim()) {
 								handleNewProfileSave()
 							} else if (event.key === "Escape") {
 								resetCreateState()
@@ -343,7 +343,7 @@ const ApiConfigManager = ({
 						</Button>
 						<Button
 							variant="primary"
-							disabled={!newProfileName.trim()}
+							disabled={!newProfileName?.trim()}
 							onClick={handleNewProfileSave}
 							data-testid="create-profile-button">
 							{t("settings:providers.createProfile")}

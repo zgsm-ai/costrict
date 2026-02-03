@@ -34,7 +34,7 @@ export function extractPatternsFromCommand(command: string): string[] {
 	} catch (error) {
 		console.warn("Failed to parse command:", error)
 		// Fallback: just extract the first word
-		const firstWord = command.trim().split(/\s+/)[0]
+		const firstWord = command?.trim()?.split(/\s+/)[0]
 		if (firstWord) patterns.add(firstWord)
 	}
 
@@ -63,6 +63,6 @@ function extractFromTokens(tokens: string[], patterns: Set<string>): void {
 		if (typeof arg !== "string" || breakingExps.some((re) => re.test(arg))) break
 
 		const pattern = tokens.slice(0, i + 1).join(" ")
-		patterns.add(pattern.trim())
+		patterns.add(pattern?.trim())
 	}
 }

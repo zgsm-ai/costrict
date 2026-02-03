@@ -189,7 +189,7 @@ export function applyModelToolCustomization(
 
 		// Get the list of allowed groups for this mode
 		const allowedGroups = new Set(
-			modeConfig.groups.map((groupEntry) => (Array.isArray(groupEntry) ? groupEntry[0] : groupEntry)),
+			modeConfig?.groups?.map((groupEntry) => (Array.isArray(groupEntry) ? groupEntry[0] : groupEntry)),
 		)
 
 		// Add included tools only if they belong to an allowed group

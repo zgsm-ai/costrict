@@ -80,7 +80,7 @@ const WelcomeViewProvider = () => {
 		setErrorMessage(undefined)
 		// Send telemetry for account connect action
 		telemetryClient.capture(TelemetryEventName.ACCOUNT_CONNECT_CLICKED)
-		const zgsmBaseUrl = costrictBaseurl.trim().replace(/\/$/, "")
+		const zgsmBaseUrl = costrictBaseurl?.trim()?.replace(/\/$/, "")
 		setApiConfigurationFieldForApiOptions("zgsmBaseUrl", zgsmBaseUrl)
 
 		vscode.postMessage({

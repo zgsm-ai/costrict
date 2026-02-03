@@ -23,7 +23,7 @@ export async function highlightHunks(
 		const highlightAndExtractLines = (text: string): ReactNode[] => {
 			const textLines = text.split("\n")
 
-			if (!text.trim()) {
+			if (!text?.trim()) {
 				return textLines.map((line) => line || "")
 			}
 
@@ -75,7 +75,7 @@ export async function highlightHunks(
 				if (highlightedLines.length !== textLines.length) {
 					// For each line, highlight it individually (fallback)
 					return textLines.map((line) => {
-						if (!line.trim()) return line
+						if (!line?.trim()) return line
 
 						try {
 							const lineHast: any = highlighter.codeToHast(line, {

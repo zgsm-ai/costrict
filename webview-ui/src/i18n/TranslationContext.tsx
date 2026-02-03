@@ -29,15 +29,17 @@ export const TranslationProvider: React.FC<{ children: ReactNode }> = ({ childre
 	}, [])
 
 	useEffect(() => {
-		i18n.changeLanguage(extensionState.language)
-	}, [i18n, extensionState.language])
+		i18n.changeLanguage(extensionState.language || i18n.language)
+	}, [i18n, extensionState.language, i18n.language])
 
 	// Memoize the translation function to prevent unnecessary re-renders
+	// Include language in dependencies to ensure re-renders when language changes
 	const translate = useCallback(
 		(key: string, options?: Record<string, any>) => {
 			return i18n.t(key, options)
 		},
-		[i18n],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[i18n, i18n.language],
 	)
 
 	return (

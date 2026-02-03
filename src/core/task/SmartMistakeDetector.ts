@@ -60,11 +60,11 @@ export interface MistakeCheckResult {
  * Mistake type weight configuration
  */
 const MISTAKE_WEIGHTS: Record<MistakeType, number> = {
-	[MistakeType.NO_TOOL_USE]: 1,
-	[MistakeType.TOOL_FAILURE]: 1,
+	[MistakeType.NO_TOOL_USE]: 0.5,
+	[MistakeType.TOOL_FAILURE]: 0.5,
 	[MistakeType.REPEATED_ACTION]: 0.5,
 	[MistakeType.INVALID_INPUT]: 1,
-	[MistakeType.TIMEOUT]: 1,
+	[MistakeType.TIMEOUT]: 0.5,
 }
 
 /**
@@ -90,19 +90,19 @@ export class SmartMistakeDetector {
 	private readonly timeWindowMs: number
 
 	/** Default time window: 5 minutes */
-	private static readonly DEFAULT_TIME_WINDOW_MS = 5 * 60 * 1000
+	private static readonly DEFAULT_TIME_WINDOW_MS = 3 * 60 * 1000
 
 	/** Auto switch model enabled flag */
 	private readonly autoSwitchModelEnabled: boolean = false
 
 	/** Auto switch model threshold - increased from 3 to 6 to reduce false positives */
-	private readonly autoSwitchModelThreshold: number = 6
+	private readonly autoSwitchModelThreshold: number = 3
 
 	/** Last model switch timestamp - used for cooldown period */
 	private lastSwitchTime?: number
 
 	/** Model switch cooldown period (milliseconds) - default 10 minutes */
-	private readonly switchCooldownMs: number = 10 * 60 * 1000
+	private readonly switchCooldownMs: number = 5 * 60 * 1000
 
 	/** Minimum high-severity errors required in short period - increased from 3 to 5 */
 	private readonly highSeverityThreshold: number = 5
@@ -116,8 +116,8 @@ export class SmartMistakeDetector {
 	 */
 	constructor(timeWindowMs?: number, autoSwitchModelEnabled?: boolean, autoSwitchModelThreshold?: number) {
 		this.timeWindowMs = timeWindowMs ?? SmartMistakeDetector.DEFAULT_TIME_WINDOW_MS
-		this.autoSwitchModelEnabled = autoSwitchModelEnabled ?? false
-		this.autoSwitchModelThreshold = autoSwitchModelThreshold ?? 6
+		this.autoSwitchModelEnabled = autoSwitchModelEnabled ?? true
+		this.autoSwitchModelThreshold = autoSwitchModelThreshold ?? 3
 	}
 
 	/**

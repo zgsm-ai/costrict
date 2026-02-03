@@ -217,8 +217,9 @@
 			"description": "Older messages were removed from the conversation to stay within the context window limit. This is a fast but less context-preserving approach compared to condensation."
 		}
 	},
-	"instructions": {
-		"wantsToFetch": "Roo wants to fetch detailed instructions to assist with the current task"
+	"skill": {
+		"wantsToLoad": "CoStrict wants to load a skill",
+		"didLoad": "CoStrict loaded a skill"
 	},
 	"fileOperations": {
 		"wantsToRead": "Roo wants to read this file",
@@ -363,7 +364,9 @@
 		},
 		"release": {
 			"heading": "What's New:",
-			"intelligentContextCondensation": "Intelligent Context Condensing v2: A complete rework of the algorithm used to manage the context window. Now you can run tasks for longer without CoStrict getting dumber."
+			"parallelTools": "Parallel Tool Calls: Tools now execute in parallel by default, significantly speeding up multi-file operations and complex tasks.",
+			"readFileIndentation": "Smarter File Reading: New indentation mode extracts complete semantic code blocks (functions, classes) without mid-function truncation—ideal when targeting specific lines from search results.",
+			"readCommandOutput": "Lossless Terminal Output: New read_command_output tool retrieves full command output from truncated executions with pagination and regex filtering."
 		},
 		"cloudAgents": {
 			"heading": "New in the Cloud:",
@@ -522,5 +525,8 @@
 		"serversPart_other": "{{count}} MCP servers",
 		"messageTemplate": "You have {{tools}} enabled via {{servers}}. Such a high number can confuse the model and lead to errors. Try to keep it below {{threshold}}.",
 		"openMcpSettings": "Open MCP Settings"
+	},
+	"readCommandOutput": {
+		"title": "Roo read command output"
 	}
 }

@@ -262,7 +262,7 @@ export class CustomToolRegistry {
 	 * Get all registered tools in the serialized format.
 	 */
 	getAllSerialized(): SerializedCustomToolDefinition[] {
-		return this.getAll().map(serializeCustomTool)
+		return this.getAll()?.map(serializeCustomTool)
 	}
 
 	/**

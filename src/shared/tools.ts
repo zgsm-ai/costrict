@@ -5,7 +5,6 @@ import type {
 	ToolProgressStatus,
 	ToolGroup,
 	ToolName,
-	FileEntry,
 	BrowserActionParams,
 	GenerateImageParams,
 } from "@roo-code/types"
@@ -60,13 +59,13 @@ export const toolParamNames = [
 	"size",
 	"query",
 	"args",
+	"skill", // skill tool parameter
 	"start_line",
 	"end_line",
 	"todos",
 	"prompt",
 	"image",
-	"line_ranges",
-	"files", // Native protocol parameter for read_file
+	// read_file parameters (native protocol)
 	"operations", // search_and_replace parameter for multiple operations
 	"patch", // apply_patch parameter
 	"title", // ask_multiple_choice parameter
@@ -75,6 +74,20 @@ export const toolParamNames = [
 	"old_string", // search_replace and edit_file parameter
 	"new_string", // search_replace and edit_file parameter
 	"expected_replacements", // edit_file parameter for multiple occurrences
+	"artifact_id", // read_command_output parameter
+	"search", // read_command_output parameter for grep-like search
+	"offset", // read_command_output and read_file parameter
+	"limit", // read_command_output and read_file parameter
+	// read_file indentation mode parameters
+	"indentation",
+	"anchor_line",
+	"max_levels",
+	"include_siblings",
+	"include_header",
+	"max_lines",
+	// read_file legacy format parameter (backward compatibility)
+	"files",
+	"line_ranges",
 ] as const
 
 export type ToolParamName = (typeof toolParamNames)[number]
@@ -85,7 +98,8 @@ export type ToolParamName = (typeof toolParamNames)[number]
  */
 export type NativeToolArgs = {
 	access_mcp_resource: { server_name: string; uri: string }
-	read_file: { files: FileEntry[] }
+	read_file: import("@roo-code/types").ReadFileToolParams
+	read_command_output: { artifact_id: string; search?: string; offset?: number; limit?: number }
 	attempt_completion: { result: string }
 	execute_command: { command: string; cwd?: string }
 	apply_diff: { path: string; diff: string }
@@ -110,9 +124,9 @@ export type NativeToolArgs = {
 	}
 	browser_action: BrowserActionParams
 	codebase_search: { query: string; path?: string }
-	fetch_instructions: { task: string }
 	generate_image: GenerateImageParams
 	run_slash_command: { command: string; args?: string }
+	skill: { skill: string; args?: string | null }
 	search_files: { path: string; regex: string; file_pattern?: string | null }
 	switch_mode: { mode_slug: string; reason: string }
 	update_todo_list: { todos: string }
@@ -141,6 +155,11 @@ export interface ToolUse<TName extends ToolName = ToolName> {
 	partial: boolean
 	// nativeArgs is properly typed based on TName if it's in NativeToolArgs, otherwise never
 	nativeArgs?: TName extends keyof NativeToolArgs ? NativeToolArgs[TName] : never
+	/**
+	 * Flag indicating whether the tool call used a legacy/deprecated format.
+	 * Used for telemetry tracking to monitor migration from old formats.
+	 */
+	usedLegacyFormat?: boolean
 }
 
 /**
@@ -171,12 +190,23 @@ export interface ExecuteCommandToolUse extends ToolUse<"execute_command"> {
 
 export interface ReadFileToolUse extends ToolUse<"read_file"> {
 	name: "read_file"
-	params: Partial<Pick<Record<ToolParamName, string>, "args" | "path" | "start_line" | "end_line" | "files">>
-}
-
-export interface FetchInstructionsToolUse extends ToolUse<"fetch_instructions"> {
-	name: "fetch_instructions"
-	params: Partial<Pick<Record<ToolParamName, string>, "task">>
+	params: Partial<
+		Pick<
+			Record<ToolParamName, string>,
+			| "args"
+			| "path"
+			| "start_line"
+			| "end_line"
+			| "mode"
+			| "offset"
+			| "limit"
+			| "indentation"
+			| "anchor_line"
+			| "max_levels"
+			| "include_siblings"
+			| "include_header"
+		>
+	>
 }
 
 export interface WriteToFileToolUse extends ToolUse<"write_to_file"> {
@@ -244,6 +274,11 @@ export interface RunSlashCommandToolUse extends ToolUse<"run_slash_command"> {
 	params: Partial<Pick<Record<ToolParamName, string>, "command" | "args">>
 }
 
+export interface SkillToolUse extends ToolUse<"skill"> {
+	name: "skill"
+	params: Partial<Pick<Record<ToolParamName, string>, "skill" | "args">>
+}
+
 export interface GenerateImageToolUse extends ToolUse<"generate_image"> {
 	name: "generate_image"
 	params: Partial<Pick<Record<ToolParamName, string>, "prompt" | "path" | "image">>
@@ -259,7 +294,7 @@ export type ToolGroupConfig = {
 export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
 	execute_command: "run commands",
 	read_file: "read files",
-	fetch_instructions: "fetch instructions",
+	read_command_output: "read command output",
 	write_to_file: "write files",
 	apply_diff: "apply changes",
 	search_and_replace: "apply changes using search and replace",
@@ -279,6 +314,7 @@ export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
 	codebase_search: "codebase search",
 	update_todo_list: "update todo list",
 	run_slash_command: "run slash command",
+	skill: "load skill",
 	generate_image: "generate images",
 	custom_tool: "use custom tools",
 	fake_tool_call: "use tool calls",
@@ -287,14 +323,7 @@ export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
 // Define available tool groups.
 export const TOOL_GROUPS: Record<ToolGroup, ToolGroupConfig> = {
 	read: {
-		tools: [
-			"ask_multiple_choice",
-			"read_file",
-			"fetch_instructions",
-			"search_files",
-			"list_files",
-			"codebase_search",
-		],
+		tools: ["ask_multiple_choice", "read_file", "search_files", "list_files", "codebase_search"],
 	},
 	edit: {
 		tools: ["apply_diff", "write_to_file", "generate_image"],
@@ -304,7 +333,7 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupConfig> = {
 		tools: ["browser_action"],
 	},
 	command: {
-		tools: ["execute_command"],
+		tools: ["execute_command", "read_command_output"],
 	},
 	mcp: {
 		tools: ["use_mcp_tool", "access_mcp_resource"],
@@ -324,6 +353,7 @@ export const ALWAYS_AVAILABLE_TOOLS: ToolName[] = [
 	"new_task",
 	"update_todo_list",
 	"run_slash_command",
+	"skill",
 ] as const
 
 /**
@@ -341,6 +371,7 @@ export const TOOL_ALIASES: Record<string, ToolName> = {
 	read: "read_file",
 	apply: "apply_diff",
 	search: "search_files",
+	list: "list_files",
 } as const
 
 export type DiffResult =

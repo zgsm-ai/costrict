@@ -9,7 +9,7 @@ export const convertHeadersToObject = (headers: [string, string][]): Record<stri
 
 	// Process each header tuple.
 	for (const [key, value] of headers) {
-		const trimmedKey = key.trim()
+		const trimmedKey = key?.trim()
 
 		// Skip empty keys.
 		if (!trimmedKey) {
@@ -18,7 +18,7 @@ export const convertHeadersToObject = (headers: [string, string][]): Record<stri
 
 		// For duplicates, the last one in the array wins.
 		// This matches how HTTP headers work in general.
-		result[trimmedKey] = value.trim()
+		result[trimmedKey] = value?.trim()
 	}
 
 	return result

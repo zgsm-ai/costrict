@@ -13,7 +13,7 @@ export function maybeRemoveImageBlocks(messages: ApiMessage[], apiHandler: ApiHa
 		if (Array.isArray(content)) {
 			if (!supportsImages) {
 				// Convert image blocks to text descriptions.
-				content = content.map((block) => {
+				content = content?.map((block) => {
 					if (block.type === "image") {
 						// Convert image blocks to text descriptions.
 						// Note: We can't access the actual image content/url due to API limitations,

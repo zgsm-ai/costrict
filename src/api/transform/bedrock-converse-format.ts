@@ -28,7 +28,7 @@ interface BedrockMessageContent {
  * @param anthropicMessages Messages in Anthropic format
  */
 export function convertToBedrockConverseMessages(anthropicMessages: Anthropic.Messages.MessageParam[]): Message[] {
-	return anthropicMessages.map((anthropicMessage) => {
+	return anthropicMessages?.map((anthropicMessage) => {
 		// Map Anthropic roles to Bedrock roles
 		const role: ConversationRole = anthropicMessage.role === "assistant" ? "assistant" : "user"
 
@@ -44,7 +44,7 @@ export function convertToBedrockConverseMessages(anthropicMessages: Anthropic.Me
 		}
 
 		// Process complex content types
-		const content = anthropicMessage.content.map((block) => {
+		const content = anthropicMessage?.content?.map((block) => {
 			const messageBlock = block as BedrockMessageContent & {
 				id?: string
 				tool_use_id?: string
@@ -120,7 +120,7 @@ export function convertToBedrockConverseMessages(anthropicMessages: Anthropic.Me
 						return {
 							toolResult: {
 								toolUseId: sanitizeOpenAiCallId(messageBlock.tool_use_id || ""),
-								content: messageBlock.content.map((item) => ({
+								content: messageBlock?.content?.map((item) => ({
 									text: typeof item === "string" ? item : item.text || String(item),
 								})),
 								status: "success",
@@ -148,7 +148,7 @@ export function convertToBedrockConverseMessages(anthropicMessages: Anthropic.Me
 					return {
 						toolResult: {
 							toolUseId: sanitizeOpenAiCallId(messageBlock.tool_use_id || ""),
-							content: messageBlock.output.map((part) => {
+							content: messageBlock?.output?.map((part) => {
 								if (typeof part === "object" && "text" in part) {
 									return { text: part.text }
 								}

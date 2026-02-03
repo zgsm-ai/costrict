@@ -1,5 +1,63 @@
 # CoStrict Change Log
 
+## [2.3.2]
+
+- Improve string parsing logic and add parameter safety
+
+## [2.3.1]
+
+- Optimize message text handling in ChatRow
+
+## [2.3.0]
+
+- Enhanced JetBrains platform support with updated environment configuration
+- Optimized IPC connection handling and reduced content limits for better performance
+- Centralized excluded file extensions management for improved maintainability
+- Added comprehensive mock configurations for vscode and child_process testing
+- Migrated multiple AI providers to AI SDK (DeepSeek, Cerebras, Groq, Fireworks)
+- Added OpenAI Codex provider with OAuth subscription authentication
+- Refactored read_file tool with Codex-inspired improvements
+- Added Skills system with built-in skills support (replacing fetch_instructions)
+- Enhanced Kimi 2.5 reasoning detection and empty reasoning handling
+- Improved terminal output buffer management to prevent memory leaks
+- Fixed Gemini thought signature validation errors
+- Fixed tool result ID sanitization to prevent API 400 errors
+- Added support for image content in MCP tool responses
+- Added settings tab titles to search index
+- Enhanced parallel tool calls support (enabled by default)
+- Added React Compiler integration to webview-ui
+- Fixed empty text blocks filtering for Gemini compatibility
+- Improved MCP tool schema handling with anyOf/oneOf/allOf flattening
+- Updated test cases and improved code coverage
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/ede1d292993e21e98a4de9d44f54090f8e6f9b3e)
+- Fix known issues
+
+## [2.2.5]
+
+- Support Kimi 2.5
+- Add Skills Management UI
+- Disable send button when no input and not streaming for better UX
+- Fix error when switching between reasoning and non-reasoning models in conversation
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/40b2bdc4d02509bda7585fc6d1809e63c7cabf36)
+- Fix known issues
+
+## [2.2.4]
+
+- Added Smart Code Folding
+- Enabled Smart Mistake Detection by default with auto-switch model enabled
+- Enhanced Zgsm streaming response parsing with improved format handling
+- Fixed file scanner to use relative paths for ignore directory checks
+- Removed deprecated POWER_STEERING experimental feature
+- Updated test cases and improved code coverage
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/b9cf163b87cd7a39d9c893daebf7ce44235164a8)
+- Fix known issues
+
+## [2.2.3]
+
+- Compatible with zgsm function call parameter parsing
+- Update internationalization
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/953c7773c066a5fa8632e2ac36b32e8073a893b8)
+
 ## [2.2.2]
 
 - Updated Worktrees UI

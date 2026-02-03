@@ -40,6 +40,8 @@ import { injectVariables } from "../../utils/config"
 import { NotificationService } from "./costrict/NotificationService"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
+import { isJetbrainsPlatform } from "../../utils/platform"
+import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
 
 // Discriminated union for connection states
 export type ConnectedMcpConnection = {
@@ -717,6 +719,7 @@ export class McpHub {
 					cwd: configInjected.cwd,
 					env: {
 						...getDefaultEnvironment(),
+						...(isJetbrainsPlatform() ? getIdeaShellEnvWithUpdatePath(process.env) : {}),
 						...(configInjected.env || {}),
 					},
 					stderr: "pipe",

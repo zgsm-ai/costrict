@@ -71,22 +71,17 @@ export class NotificationService {
 	 * @returns Promise<INoticesResponse> Remote notices data
 	 */
 	public async fetchNotices(): Promise<INoticesResponse> {
-		try {
-			if (!this.provider) {
-				throw new Error("NotificationService not initialized")
-			}
-			const { language, apiConfiguration } = await this.provider.getState()
-			const baseUrl = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
-			const response = await axios.get(`${baseUrl}/costrict/announcement/announcement_${language}.json`, {
-				headers: {
-					"zgsm-request-id": getClientId(),
-				},
-			})
-			return response.data
-		} catch (error) {
-			console.error("Failed to fetch remote notices:", error)
-			throw error
+		if (!this.provider) {
+			throw new Error("NotificationService not initialized")
 		}
+		const { language, apiConfiguration } = await this.provider.getState()
+		const baseUrl = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+		const response = await axios.get(`${baseUrl}/costrict/announcement/announcement_${language}.json`, {
+			headers: {
+				"zgsm-request-id": getClientId(),
+			},
+		})
+		return response.data
 	}
 
 	/**

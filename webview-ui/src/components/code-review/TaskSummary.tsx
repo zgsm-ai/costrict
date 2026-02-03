@@ -7,7 +7,7 @@ interface TaskSummaryProps {
 
 const TaskSummary: React.FC<TaskSummaryProps> = ({ issues }) => {
 	const statistics = useMemo(() => {
-		const filesCount = new Set(issues.map((issue) => issue.file_path)).size
+		const filesCount = new Set((issues || []).map((issue) => issue.file_path)).size
 
 		const bugsCount = issues.length
 

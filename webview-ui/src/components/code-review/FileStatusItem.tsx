@@ -13,7 +13,7 @@ interface FileStatusItemProps {
 const FileStatusItem = ({ path, status, oldPath }: FileStatusItemProps) => {
 	// Determine status color based on Git status
 	const getStatusColor = (status: string): string => {
-		const normalizedStatus = status.trim()
+		const normalizedStatus = status?.trim()
 
 		// Added files (green)
 		if (normalizedStatus === "A" || normalizedStatus.includes("A")) {
@@ -65,7 +65,7 @@ const FileStatusItem = ({ path, status, oldPath }: FileStatusItemProps) => {
 				<span className="truncate text-vscode-foreground">{path}</span>
 			</div>
 			<span className={`ml-2 font-mono text-lg font-semibold ${getStatusColor(status)} shrink-0`}>
-				{status.trim()}
+				{status?.trim()}
 			</span>
 		</div>
 	)

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Trans, useTranslation } from "react-i18next"
+import { useTranslation } from "react-i18next"
 
 const RooHero = () => {
 	const [imagesBaseUri] = useState(() => {
@@ -16,16 +16,7 @@ const RooHero = () => {
 				{t("codereview:welcomePage.title")}
 			</div>
 			<p className="text-lg font-bold text-vscode-editor-foreground leading-tight font-vscode-font-family text-center text-balance max-w-[380px] mx-auto my-0">
-				<Trans
-					i18nKey="chat:about"
-					components={{
-						DocsLink: (
-							<a href="https://costrict.ai/" target="_blank" rel="noopener noreferrer">
-								the docs
-							</a>
-						),
-					}}
-				/>
+				{t("chat:about")}
 			</p>
 		</div>
 	)

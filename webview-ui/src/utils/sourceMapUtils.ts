@@ -71,7 +71,7 @@ export async function applySourceMapsToComponentStack(componentStack: string): P
 		const mappedLines = await Promise.all(
 			lines.map(async (line) => {
 				// Skip empty lines
-				if (!line.trim()) return line
+				if (!line?.trim()) return line
 
 				// Extract file path, line and column numbers
 				const match = line.match(/at\s+(.+?)\s+\((.+?):(\d+):(\d+)\)/)

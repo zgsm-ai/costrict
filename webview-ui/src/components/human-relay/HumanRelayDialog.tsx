@@ -52,7 +52,7 @@ export const HumanRelayDialog: React.FC<HumanRelayDialogProps> = ({
 	// Submit response
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
-		if (response.trim()) {
+		if (response?.trim()) {
 			onSubmit(requestId, response)
 			onClose()
 		}
@@ -104,7 +104,7 @@ export const HumanRelayDialog: React.FC<HumanRelayDialogProps> = ({
 						<X className="h-4 w-4" />
 						{t("humanRelay:actions.cancel")}
 					</Button>
-					<Button onClick={handleSubmit} disabled={!response.trim()} className="gap-1">
+					<Button onClick={handleSubmit} disabled={!response?.trim()} className="gap-1">
 						<Check className="h-4 w-4" />
 						{t("humanRelay:actions.submit")}
 					</Button>

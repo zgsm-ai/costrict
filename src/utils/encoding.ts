@@ -4,6 +4,7 @@ import { isBinaryFile } from "isbinaryfile"
 import fs from "fs/promises"
 import path from "path"
 import { createLogger } from "./logger"
+import { getSupportedBinaryFormats } from "../integrations/misc/extract-text"
 
 // Common binary file extension list
 export const BINARY_EXTENSIONS = new Set([
@@ -154,7 +155,7 @@ export async function detectEncoding(fileBuffer: Buffer, fileExtension?: string,
 		}
 	} else {
 		// 3. Only check if it's a binary file when encoding detection fails
-		if (fileExtension) {
+		if (fileExtension && !getSupportedBinaryFormats().includes(fileExtension)) {
 			const isBinary = await isBinaryFile(fileBuffer).catch(() => false)
 			if (isBinary) {
 				throw new Error(`Cannot read text for file type: ${fileExtension}`)
@@ -216,6 +217,7 @@ export async function detectFileEncoding(filePath: string): Promise<string> {
 export async function isBinaryFileWithEncodingDetection(filePath: string, size?: number): Promise<boolean> {
 	try {
 		const fileExtension = path.extname(filePath).toLowerCase()
+		if (getSupportedBinaryFormats().includes(fileExtension)) return false
 		// 1. First check file extension
 		if (BINARY_EXTENSIONS.has(fileExtension)) {
 			return true

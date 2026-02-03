@@ -30,10 +30,18 @@ export class AskFollowupQuestionTool extends BaseTool<"ask_followup_question"> {
 				return
 			}
 
+			if (!follow_up?.length) {
+				task.consecutiveMistakeCount++
+				task.recordToolError("ask_followup_question")
+				task.didToolFailInCurrentTurn = true
+				pushToolResult(await task.sayAndCreateMissingParamError("ask_followup_question", "follow_up"))
+				return
+			}
+
 			// Transform follow_up suggestions to the format expected by task.ask
 			const follow_up_json = {
 				question,
-				suggest: follow_up.map((s) => ({ answer: s.text, mode: s.mode })),
+				suggest: follow_up?.map((s) => ({ answer: s.text, mode: s.mode })),
 			}
 
 			task.consecutiveMistakeCount = 0

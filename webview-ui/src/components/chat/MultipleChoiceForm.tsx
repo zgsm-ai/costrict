@@ -64,7 +64,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 	}, [])
 
 	// Validate that all questions have at least one selection
-	const isFormValid = data.questions.every((question) => {
+	const isFormValid = data?.questions?.every?.((question) => {
 		const questionSelections = selections[question.id] || []
 		return questionSelections.length > 0
 	})
@@ -147,7 +147,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 				<>
 					{/* Questions - scrollable area */}
 					<div className="flex flex-col gap-2.5 p-4 max-h-[400px] overflow-y-auto">
-						{data.questions.map((question, qIndex) => {
+						{(data?.questions || []).map((question, qIndex) => {
 							const currentSelections = selections[question.id] || []
 							const selectionTypeLabel = question.allow_multiple
 								? t("chat:multipleChoice.multiSelect")
@@ -172,7 +172,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 
 									{/* Options - Compact card style */}
 									<div className="flex flex-col gap-1.5">
-										{question.options.map((option, optIndex) => {
+										{question?.options?.map((option, optIndex) => {
 											const isSelected = currentSelections.includes(option.id)
 											const optionLetter = String.fromCharCode(65 + optIndex) // A, B, C...
 

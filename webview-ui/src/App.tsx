@@ -427,7 +427,7 @@ const App = () => {
 								<StandardTooltip content={t("chat:startNewTask.title")}>
 									<i
 										className={`codicon codicon-arrow-left mr-1 p-0.5 ${
-											reviewTask.status !== ReviewTaskStatus.RUNNING
+											reviewTask?.status !== ReviewTaskStatus.RUNNING
 												? "cursor-pointer"
 												: "cursor-not-allowed opacity-50"
 										}`}

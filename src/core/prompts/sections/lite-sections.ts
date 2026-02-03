@@ -4,22 +4,13 @@ import { McpHub } from "../../../services/mcp/McpHub"
 /**
  * Lite version of tool use guidelines - simplified and concise
  */
-export function getLiteToolUseGuidelinesSection(experimentFlags?: Record<string, boolean>): string {
-	const isMultipleNativeToolCallsEnabled = experiments.isEnabled(
-		experimentFlags ?? {},
-		EXPERIMENT_IDS.MULTIPLE_NATIVE_TOOL_CALLS,
-	)
-
-	const toolUsageNote = isMultipleNativeToolCallsEnabled
-		? "Use tools as needed - you may use multiple tools in one message or iteratively across messages."
-		: "Use one tool at a time, waiting for results before proceeding."
-
+export function getLiteToolUseGuidelinesSection(): string {
 	return `# Tool Use Guidelines
 
-1. Assess what information you have and what you need
-2. Choose the most appropriate tool for the task
-3. ${toolUsageNote}
-4. Verify required parameters before calling tools`
+1. Assess what information you have and what you need to proceed
+2. Choose the most appropriate tool based on the task
+3. Use tools as needed - you may use multiple tools in one message or iteratively across messages
+4. Each tool use should be informed by previous results - do not assume outcomes`
 }
 
 /**

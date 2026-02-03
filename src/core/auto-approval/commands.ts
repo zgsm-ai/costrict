@@ -307,7 +307,7 @@ export function getCommandDecision(
 	}
 
 	// If all sub-commands are approved, approve the whole command
-	if (decisions.every((decision) => decision === "auto_approve")) {
+	if (decisions?.every?.((decision) => decision === "auto_approve")) {
 		return "auto_approve"
 	}
 

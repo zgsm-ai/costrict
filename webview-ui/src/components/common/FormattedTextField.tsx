@@ -82,7 +82,7 @@ export const FormattedTextField = forwardRef(FormattedTextFieldInner as any) as 
 // Common formatters for reuse
 export const unlimitedIntegerFormatter: InputFormatter<number> = {
 	parse: (input: string) => {
-		if (input.trim() === "") return undefined
+		if (input?.trim() === "") return undefined
 		const value = parseInt(input)
 		return !isNaN(value) && value > 0 ? value : undefined
 	},
@@ -94,7 +94,7 @@ export const unlimitedIntegerFormatter: InputFormatter<number> = {
 
 export const unlimitedDecimalFormatter: InputFormatter<number> = {
 	parse: (input: string) => {
-		if (input.trim() === "") return undefined
+		if (input?.trim() === "") return undefined
 		const value = parseFloat(input)
 		return !isNaN(value) && value >= 0 ? value : undefined
 	},

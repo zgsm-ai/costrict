@@ -9,8 +9,9 @@ import { mentionRegexGlobal, commandRegexGlobal, unescapeSpaces } from "../../sh
 import { getCommitInfo, getWorkingState } from "../../utils/git"
 
 import { openFile } from "../../integrations/misc/open-file"
-import { extractTextFromFile } from "../../integrations/misc/extract-text"
+import { extractTextFromFileWithMetadata, type ExtractTextResult } from "../../integrations/misc/extract-text"
 import { diagnosticsToProblemsString } from "../../integrations/diagnostics"
+import { DEFAULT_LINE_LIMIT } from "../prompts/tools/native-tools/read_file"
 
 import { UrlContentFetcher } from "../../services/browser/UrlContentFetcher"
 
@@ -20,7 +21,18 @@ import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { getCommand, type Command } from "../../services/command/commands"
 
 import { t } from "../../i18n"
-import { Task } from "../task/Task"
+
+/**
+ * Maximum number of files to read from a folder mention.
+ * This prevents context window explosion when mentioning large directories.
+ */
+export const MAX_FOLDER_FILES_TO_READ = 10
+
+/**
+ * Maximum total content size (in characters) to read from a folder mention.
+ * This is approximately 100KB which should be safe for most context windows.
+ */
+export const MAX_FOLDER_CONTENT_SIZE = 100_000
 
 function getUrlErrorMessage(error: unknown): string {
 	const errorMessage = error instanceof Error ? error.message : String(error)
@@ -72,10 +84,57 @@ export async function openMention(cwd: string, mention?: string): Promise<void> 
 	}
 }
 
+/**
+ * Represents a content block generated from an @ mention.
+ * These are returned separately from the user's text to enable
+ * proper formatting as distinct message blocks.
+ */
+export interface MentionContentBlock {
+	type: "file" | "folder" | "url" | "diagnostics" | "git_changes" | "git_commit" | "terminal" | "command"
+	/** Path for file/folder mentions */
+	path?: string
+	/** The content to display */
+	content: string
+	/** Metadata about truncation (for files) */
+	metadata?: {
+		totalLines: number
+		returnedLines: number
+		wasTruncated: boolean
+		linesShown?: [number, number]
+	}
+}
+
 export interface ParseMentionsResult {
+	/** User's text with @ mentions replaced by clean path references */
 	text: string
+	/** Separate content blocks for each mention (file content, URLs, etc.) */
+	contentBlocks: MentionContentBlock[]
 	slashCommandHelp?: string
 	mode?: string // Mode from the first slash command that has one
+}
+
+/**
+ * Formats file content to look like a read_file tool result.
+ * Includes Gemini-style truncation warning when content is truncated.
+ */
+function formatFileReadResult(filePath: string, result: ExtractTextResult): string {
+	const header = `[read_file for '${filePath}']`
+
+	if (result.wasTruncated && result.linesShown) {
+		const [start, end] = result.linesShown
+		const nextOffset = end + 1
+		return `${header}
+IMPORTANT: File content truncated.
+Status: Showing lines ${start}-${end} of ${result.totalLines} total lines.
+To read more: Use the read_file tool with offset=${nextOffset} and limit=${DEFAULT_LINE_LIMIT}.
+
+File: ${filePath}
+${result.content}`
+	}
+
+	return `${header}
+File: ${filePath}
+${result.content}`
 }
 
 export async function parseMentions(
@@ -87,11 +146,10 @@ export async function parseMentions(
 	showRooIgnoredFiles: boolean = false,
 	includeDiagnosticMessages: boolean = true,
 	maxDiagnosticMessages: number = 50,
-	maxReadFileLine?: number,
-	maxReadCharacterLimit?: number,
 ): Promise<ParseMentionsResult> {
 	const mentions: Set<string> = new Set()
 	const validCommands: Map<string, Command> = new Map()
+	const contentBlocks: MentionContentBlock[] = []
 	let commandMode: string | undefined // Track mode from the first slash command that has one
 
 	// First pass: check which command mentions exist and cache the results
@@ -121,7 +179,7 @@ export async function parseMentions(
 		}
 	}
 
-	// Only replace text for commands that actually exist
+	// Only replace text for commands that actually exist (keep "see below" for commands)
 	let parsedText = text
 	for (const [match, commandName] of commandMatches) {
 		if (validCommands.has(commandName)) {
@@ -129,16 +187,17 @@ export async function parseMentions(
 		}
 	}
 
-	// Second pass: handle regular mentions
+	// Second pass: handle regular mentions - replace with clean references
+	// Content will be provided as separate blocks that look like read_file results
 	parsedText = parsedText.replace(mentionRegexGlobal, (match, mention) => {
 		mentions.add(mention)
 		if (mention.startsWith("http")) {
+			// Keep old style for URLs (still XML-based)
 			return `'${mention}' (see below for site content)`
 		} else if (mention.startsWith("/")) {
+			// Clean path reference - no "see below" since we format like tool results
 			const mentionPath = mention.slice(1)
-			return mentionPath.endsWith("/")
-				? `'${mentionPath}' (see below for folder content)`
-				: `'${mentionPath}' (see below for file content)`
+			return mentionPath.endsWith("/") ? `'${mentionPath}'` : `'${mentionPath}'`
 		} else if (mention === "problems") {
 			return `Workspace Problems (see below for diagnostics)`
 		} else if (mention === "git-changes") {
@@ -191,32 +250,26 @@ export async function parseMentions(
 					result = `Error fetching content: ${rawErrorMessage}`
 				}
 			}
+			// URLs still use XML format (appended to text for backwards compat)
 			parsedText += `\n\n<url_content url="${mention}">\n${result}\n</url_content>`
 		} else if (mention.startsWith("/")) {
 			const mentionPath = mention.slice(1)
 			try {
-				const content = await getFileOrFolderContent(
+				const fileResult = await getFileOrFolderContentWithMetadata(
 					mentionPath,
 					cwd,
 					rooIgnoreController,
 					showRooIgnoredFiles,
-					maxReadFileLine,
-					maxReadCharacterLimit,
+					fileContextTracker,
 				)
-				if (mention.endsWith("/")) {
-					parsedText += `\n\n<folder_content path="${mentionPath}">\n${content}\n</folder_content>`
-				} else {
-					parsedText += `\n\n<file_content path="${mentionPath}">\n${content}\n</file_content>`
-					if (fileContextTracker) {
-						await fileContextTracker.trackFileContext(mentionPath, "file_mentioned")
-					}
-				}
+				contentBlocks.push(fileResult)
 			} catch (error) {
-				if (mention.endsWith("/")) {
-					parsedText += `\n\n<folder_content path="${mentionPath}">\nError fetching content: ${error.message}\n</folder_content>`
-				} else {
-					parsedText += `\n\n<file_content path="${mentionPath}">\nError fetching content: ${error.message}\n</file_content>`
-				}
+				const errorMsg = error instanceof Error ? error.message : String(error)
+				contentBlocks.push({
+					type: mention.endsWith("/") ? "folder" : "file",
+					path: mentionPath,
+					content: `[read_file for '${mentionPath}']\nError: ${errorMsg}`,
+				})
 			}
 		} else if (mention === "problems") {
 			try {
@@ -272,19 +325,28 @@ export async function parseMentions(
 		}
 	}
 
-	return { text: parsedText, mode: commandMode, slashCommandHelp: slashCommandHelp.trim() || undefined }
+	return {
+		text: parsedText,
+		contentBlocks,
+		mode: commandMode,
+		slashCommandHelp: slashCommandHelp.trim() || undefined,
+	}
 }
 
-async function getFileOrFolderContent(
+/**
+ * Gets file or folder content and returns it as a MentionContentBlock
+ * formatted to look like a read_file tool result.
+ */
+async function getFileOrFolderContentWithMetadata(
 	mentionPath: string,
 	cwd: string,
 	rooIgnoreController?: any,
 	showRooIgnoredFiles: boolean = false,
-	maxReadFileLine?: number,
-	maxReadCharacterLimit?: number,
-): Promise<string> {
+	fileContextTracker?: FileContextTracker,
+): Promise<MentionContentBlock> {
 	const unescapedPath = unescapeSpaces(mentionPath)
 	const absPath = path.resolve(cwd, unescapedPath)
+	const isFolder = mentionPath.endsWith("/")
 
 	try {
 		const stats = await fs.stat(absPath)
@@ -294,25 +356,56 @@ async function getFileOrFolderContent(
 			// Image mentions are handled separately via image attachment flow.
 			const isBinary = await isBinaryFileWithEncodingDetection(absPath).catch(() => false)
 			if (isBinary) {
-				return `(Binary file ${mentionPath} omitted)`
+				return {
+					type: "file",
+					path: mentionPath,
+					content: `[read_file for '${mentionPath}']\nNote: Binary file omitted from context.`,
+				}
 			}
 			if (rooIgnoreController && !rooIgnoreController.validateAccess(unescapedPath)) {
-				return `(File ${mentionPath} is ignored by .rooignore)`
+				return {
+					type: "file",
+					path: mentionPath,
+					content: `[read_file for '${mentionPath}']\nNote: File is ignored by .rooignore.`,
+				}
 			}
 			try {
-				const content = await extractTextFromFile(absPath, maxReadFileLine, maxReadCharacterLimit)
-				return content
+				const result = await extractTextFromFileWithMetadata(absPath)
+
+				// Track file context
+				if (fileContextTracker) {
+					await fileContextTracker.trackFileContext(mentionPath, "file_mentioned")
+				}
+
+				return {
+					type: "file",
+					path: mentionPath,
+					content: formatFileReadResult(mentionPath, result),
+					metadata: {
+						totalLines: result.totalLines,
+						returnedLines: result.returnedLines,
+						wasTruncated: result.wasTruncated,
+						linesShown: result.linesShown,
+					},
+				}
 			} catch (error) {
-				return `(Failed to read contents of ${mentionPath}): ${error.message}`
+				const errorMsg = error instanceof Error ? error.message : String(error)
+				return {
+					type: "file",
+					path: mentionPath,
+					content: `[read_file for '${mentionPath}']\nError: ${errorMsg}`,
+				}
 			}
 		} else if (stats.isDirectory()) {
 			const entries = await fs.readdir(absPath, { withFileTypes: true })
-			let folderContent = ""
-			const fileContentPromises: Array<
-				(maxReadFileLine?: number, maxReadCharacterLimit?: number) => Promise<string | undefined>
-			> = []
+			let folderListing = ""
+			const fileReadResults: string[] = []
 			const LOCK_SYMBOL = "🔒"
-
+			// Track limits to prevent context window explosion
+			let filesRead = 0
+			let totalContentSize = 0
+			let limitReached: "files" | "size" | null = null
+			let skippedFilesCount = 0
 			for (let index = 0; index < entries.length; index++) {
 				const entry = entries[index]
 				const isLast = index === entries.length - 1
@@ -331,51 +424,87 @@ async function getFileOrFolderContent(
 				const displayName = isIgnored ? `${LOCK_SYMBOL} ${entry.name}` : entry.name
 
 				if (entry.isFile()) {
-					folderContent += `${linePrefix}${displayName}\n`
+					folderListing += `${linePrefix}${displayName}\n`
 					if (!isIgnored) {
+						// Check if we've hit the file limit
+						if (filesRead >= MAX_FOLDER_FILES_TO_READ) {
+							if (!limitReached) {
+								limitReached = "files"
+							}
+							skippedFilesCount++
+							continue
+						}
+
+						// Check if we've hit the content size limit
+						if (totalContentSize >= MAX_FOLDER_CONTENT_SIZE) {
+							if (!limitReached) {
+								limitReached = "size"
+							}
+							skippedFilesCount++
+							continue
+						}
 						const filePath = path.join(mentionPath, entry.name)
 						const absoluteFilePath = path.resolve(absPath, entry.name)
-						fileContentPromises.push(async (maxReadFileLine?: number, maxReadCharacterLimit?: number) => {
-							try {
-								const isBinary = await isBinaryFileWithEncodingDetection(absoluteFilePath)
-								if (isBinary) {
-									return undefined
+						try {
+							const isBinary = await isBinaryFileWithEncodingDetection(absoluteFilePath).catch(
+								() => false,
+							)
+							if (!isBinary) {
+								const result = await extractTextFromFileWithMetadata(absoluteFilePath)
+								const fileContent = formatFileReadResult(filePath.toPosix(), result)
+
+								// Check if adding this file would exceed the size limit
+								if (totalContentSize + fileContent.length > MAX_FOLDER_CONTENT_SIZE) {
+									if (!limitReached) {
+										limitReached = "size"
+									}
+									skippedFilesCount++
+									continue
 								}
-								const content = await extractTextFromFile(
-									absoluteFilePath,
-									maxReadFileLine,
-									maxReadCharacterLimit,
-								)
-								return `<file_content path="${filePath.toPosix()}">\n${content}\n</file_content>`
-							} catch (error) {
-								return undefined
+
+								fileReadResults.push(fileContent)
+								filesRead++
+								totalContentSize += fileContent.length
 							}
-						})
+						} catch (error) {
+							// Skip files that can't be read
+						}
 					}
 				} else if (entry.isDirectory()) {
-					folderContent += `${linePrefix}${displayName}/\n`
+					folderListing += `${linePrefix}${displayName}/\n`
 				} else {
-					folderContent += `${linePrefix}${displayName}\n`
+					folderListing += `${linePrefix}${displayName}\n`
 				}
 			}
-			const fileContentPromisesCount = fileContentPromises.length
-			const [_maxReadFileLine, _maxReadCharacterLimit] = [
-				maxReadFileLine != null && maxReadFileLine > 0 && fileContentPromisesCount > 0
-					? Math.max(250, Math.ceil(maxReadFileLine / fileContentPromisesCount))
-					: maxReadFileLine,
-				maxReadCharacterLimit != null && maxReadCharacterLimit > 0 && fileContentPromisesCount > 0
-					? Math.max(20_000, Math.ceil(maxReadCharacterLimit / fileContentPromisesCount))
-					: maxReadCharacterLimit,
-			]
-			const fileContents = (
-				await Promise.all(fileContentPromises.map((cb) => cb(_maxReadFileLine, _maxReadCharacterLimit)))
-			).filter((content) => content)
-			return `${folderContent}\n${fileContents.join("\n\n")}`.trim()
+
+			// Format folder content similar to read_file output
+			let content = `[read_file for folder '${mentionPath}']\nFolder listing:\n${folderListing}`
+			if (fileReadResults.length > 0) {
+				content += `\n\n--- File Contents ---\n\n${fileReadResults.join("\n\n")}`
+			}
+			// Add truncation notice if limits were hit
+			if (limitReached) {
+				const limitMessage =
+					limitReached === "files"
+						? `\n\n--- Content Truncated ---\nNote: Only ${MAX_FOLDER_FILES_TO_READ} files were read to prevent context window overflow. ${skippedFilesCount} additional file(s) were skipped.\nTo read specific files, use individual @file mentions instead of @folder.`
+						: `\n\n--- Content Truncated ---\nNote: Content was limited to approximately ${Math.round(MAX_FOLDER_CONTENT_SIZE / 1000)}KB to prevent context window overflow. ${skippedFilesCount} additional file(s) were skipped.\nTo read specific files, use individual @file mentions instead of @folder.`
+				content += limitMessage
+			}
+			return {
+				type: "folder",
+				path: mentionPath,
+				content,
+			}
 		} else {
-			return `(Failed to read contents of ${mentionPath})`
+			return {
+				type: isFolder ? "folder" : "file",
+				path: mentionPath,
+				content: `[read_file for '${mentionPath}']\nError: Unable to read (not a file or directory)`,
+			}
 		}
 	} catch (error) {
-		throw new Error(`Failed to access path "${mentionPath}": ${error.message}`)
+		const errorMsg = error instanceof Error ? error.message : String(error)
+		throw new Error(`Failed to access path "${mentionPath}": ${errorMsg}`)
 	}
 }
 

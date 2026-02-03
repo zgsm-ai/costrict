@@ -76,24 +76,36 @@ export const claudeCodeModels = {
 // Claude Code - Only models that work with Claude Code OAuth tokens
 export type ClaudeCodeModelId = keyof typeof claudeCodeModels
 export const claudeCodeDefaultModelId: ClaudeCodeModelId = "claude-sonnet-4-5"
-export function getClaudeCodeModels(localDefaultModelId?: string): Record<string, ModelInfo> {
-	let local_anthropic_model = localDefaultModelId || process.env.ANTHROPIC_MODEL || ""
+export function getClaudeCodeModels(localDefaultModelIds?: string): Record<string, ModelInfo> {
+	let local_anthropic_models = (localDefaultModelIds || process.env.ANTHROPIC_MODEL || "").split(",")
 
-	if (!local_anthropic_model) {
+	if (!local_anthropic_models.length) {
 		try {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			local_anthropic_model = ((window as any) || {})?.ANTHROPIC_MODEL
+			local_anthropic_models = (((window as any) || {})?.ANTHROPIC_MODEL || "").split(",")
 		} catch (error) {
 			console.log(error)
 		}
 	}
 
-	// If already a valid model ID, return as-is
-	if (local_anthropic_model && !Object.hasOwn(claudeCodeModels, local_anthropic_model)) {
-		Object.assign(claudeCodeModels, {
-			[local_anthropic_model]:
-				claudeCodeModels[normalizeClaudeCodeModelId(local_anthropic_model) || claudeCodeDefaultModelId],
-		})
+	// Support multiple models separated by comma, semicolon, or pipe
+	// e.g., "claude-sonnet-4-5,claude-opus-4-5" or "claude-3-5-sonnet-20241022|claude-opus-4-1-20250805"
+	if (local_anthropic_models.length > 0) {
+		const modelIds = local_anthropic_models
+			.map((id) => id.trim()) // Trim whitespace
+			.filter((id) => id.length > 0) // Remove empty strings
+
+		for (const modelId of modelIds) {
+			// Skip if model already exists in claudeCodeModels
+			if (Object.hasOwn(claudeCodeModels, modelId)) {
+				continue
+			}
+
+			// Add the model with normalized configuration
+			Object.assign(claudeCodeModels, {
+				[modelId]: claudeCodeModels[normalizeClaudeCodeModelId(modelId) || claudeCodeDefaultModelId],
+			})
+		}
 	}
 
 	return claudeCodeModels

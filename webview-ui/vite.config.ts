@@ -84,7 +84,17 @@ export default defineConfig(({ mode }) => {
 		define["process.env.COSTRICT_PKG_OUTPUT_CHANNEL"] = JSON.stringify("Costrict-Nightly")
 	}
 
-	const plugins: PluginOption[] = [react(), tailwindcss(), persistPortPlugin(), wasmPlugin(), sourcemapPlugin()]
+	const plugins: PluginOption[] = [
+		react({
+			babel: {
+				plugins: [["babel-plugin-react-compiler", { target: "18" }]],
+			},
+		}),
+		tailwindcss(),
+		persistPortPlugin(),
+		wasmPlugin(),
+		sourcemapPlugin(),
+	]
 
 	return {
 		plugins,

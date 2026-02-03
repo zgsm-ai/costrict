@@ -252,3 +252,89 @@ export async function showFileDiffFromGitStatus(params: ShowFileDiffParams): Pro
 		vscode.window.showErrorMessage(`Failed to show diff: ${error instanceof Error ? error.message : String(error)}`)
 	}
 }
+
+export const excludedFileExtensions = [
+	// Image files
+	".png",
+	".jpg",
+	".jpeg",
+	".gif",
+	".bmp",
+	".svg",
+	".webp",
+	".ico",
+	// Lock files
+	".lock",
+	".lock.json",
+	"package-lock.json",
+	"yarn.lock",
+	"pnpm-lock.yaml",
+	// Binary files
+	".bin",
+	".exe",
+	".dll",
+	".so",
+	".dylib",
+	".a",
+	".lib",
+	".o",
+	// Archive files
+	".zip",
+	".tar",
+	".gz",
+	".bz2",
+	".xz",
+	".7z",
+	".rar",
+	".deb",
+	".rpm",
+	// Font files
+	".ttf",
+	".otf",
+	".woff",
+	".woff2",
+	".eot",
+	// Video files
+	".mp4",
+	".avi",
+	".mov",
+	".wmv",
+	".flv",
+	".webm",
+	".mkv",
+	// Audio files
+	".mp3",
+	".wav",
+	".flac",
+	".aac",
+	".ogg",
+	".wma",
+	// Database files
+	".db",
+	".sqlite",
+	".sqlite3",
+	".mdb",
+	".accdb",
+	// Certificate files
+	".pem",
+	".crt",
+	".cer",
+	".key",
+	".p12",
+	".pfx",
+	// Compiled files
+	".class",
+	".pyc",
+	".pyo",
+	".pyd",
+	".dll",
+	".exe",
+	".so",
+	// Large data files
+	".dat",
+	".data",
+	".log",
+	".tmp",
+	".temp",
+	".vsix",
+]

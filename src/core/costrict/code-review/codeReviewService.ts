@@ -260,7 +260,7 @@ export class CodeReviewService {
 		const resetMode = async () => {
 			const preMode = this.prevMode === "review" ? "code" : this.prevMode
 			await provider.handleModeSwitch(preMode)
-			task.updateModel(preMode)
+			task.updateMode(preMode)
 			this.prevMode = ""
 		}
 

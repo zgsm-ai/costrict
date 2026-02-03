@@ -49,6 +49,7 @@ describe("presentAssistantMessage - Image Handling in Native Tool Calling", () =
 				closeBrowser: vi.fn().mockResolvedValue(undefined),
 			},
 			recordToolUsage: vi.fn(),
+			recordToolError: vi.fn(),
 			toolRepetitionDetector: {
 				check: vi.fn().mockReturnValue({ allowExecution: true }),
 			},
@@ -61,6 +62,7 @@ describe("presentAssistantMessage - Image Handling in Native Tool Calling", () =
 				}),
 			},
 			say: vi.fn().mockResolvedValue(undefined),
+			sayAndCreateMissingParamError: vi.fn().mockResolvedValue("Missing required parameter"),
 			ask: vi.fn().mockResolvedValue({ response: "yesButtonClicked" }),
 		}
 
@@ -85,21 +87,18 @@ describe("presentAssistantMessage - Image Handling in Native Tool Calling", () =
 				type: "tool_use",
 				id: toolCallId, // ID indicates native tool calling
 				name: "ask_followup_question",
-				params: { question: "What do you see?" },
-				nativeArgs: { question: "What do you see?", follow_up: [] },
+				params: {
+					question: "What do you see?",
+					follow_up: [{ text: "Option 1" }, { text: "Option 2" }],
+				},
+				nativeArgs: {
+					question: "What do you see?",
+					follow_up: [{ text: "Option 1" }, { text: "Option 2" }],
+				},
 			},
 		]
 
-		// Create a mock askApproval that includes images in the response
-		const imageBlock: Anthropic.ImageBlockParam = {
-			type: "image",
-			source: {
-				type: "base64",
-				media_type: "image/png",
-				data: "base64ImageData",
-			},
-		}
-
+		// Mock the ask method to return images
 		mockTask.ask = vi.fn().mockResolvedValue({
 			response: "yesButtonClicked",
 			text: "I see a cat",
@@ -260,51 +259,6 @@ describe("presentAssistantMessage - Image Handling in Native Tool Calling", () =
 			// Ensure no text blocks were added for this rejection
 			const textBlocks = mockTask.userMessageContent.filter(
 				(item: any) => item.type === "text" && item.text.includes("due to user rejecting"),
-			)
-			expect(textBlocks.length).toBe(0)
-		})
-
-		it("should send tool_result with is_error for skipped tools in native tool calling when didAlreadyUseTool is true", async () => {
-			// Simulate multiple tool calls with native protocol
-			const toolCallId1 = "tool_call_003"
-			const toolCallId2 = "tool_call_004"
-
-			mockTask.assistantMessageContent = [
-				{
-					type: "tool_use",
-					id: toolCallId1,
-					name: "read_file",
-					params: { path: "test.txt" },
-				},
-				{
-					type: "tool_use",
-					id: toolCallId2,
-					name: "write_to_file",
-					params: { path: "output.txt", content: "test" },
-				},
-			]
-
-			// First tool was already used
-			mockTask.didAlreadyUseTool = true
-
-			// Process the second tool (should be skipped)
-			mockTask.currentStreamingContentIndex = 1
-			await presentAssistantMessage(mockTask)
-
-			// Find the tool_result for the second tool
-			const toolResult = mockTask.userMessageContent.find(
-				(item: any) => item.type === "tool_result" && item.tool_use_id === toolCallId2,
-			)
-
-			// Verify that a tool_result block was created (not a text block)
-			expect(toolResult).toBeDefined()
-			expect(toolResult.tool_use_id).toBe(toolCallId2)
-			expect(toolResult.is_error).toBe(true)
-			expect(toolResult.content).toContain("was not executed because a tool has already been used")
-
-			// Ensure no text blocks were added for this rejection
-			const textBlocks = mockTask.userMessageContent.filter(
-				(item: any) => item.type === "text" && item.text.includes("was not executed because"),
 			)
 			expect(textBlocks.length).toBe(0)
 		})

@@ -31,6 +31,7 @@ import {
 	Trash2,
 	ArrowLeft,
 	GitCommitVertical,
+	Zap,
 } from "lucide-react"
 import { isEqual } from "lodash-es"
 import {
@@ -82,6 +83,7 @@ import { About } from "./About"
 import { Section } from "./Section"
 import PromptsSettings from "./PromptsSettings"
 import { SlashCommandsSettings } from "./SlashCommandsSettings"
+import { SkillsSettings } from "./SkillsSettings"
 import { UISettings } from "./UISettings"
 import { AutoCleanupSettings } from "./AutoCleanupSettings"
 import ModesView from "../modes/ModesView"
@@ -105,6 +107,7 @@ export const sectionNames = [
 	"providers",
 	"autoApprove",
 	"slashCommands",
+	"skills",
 	"browser",
 	"checkpoints",
 	"notifications",
@@ -189,9 +192,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		ttsSpeed,
 		soundVolume,
 		telemetrySetting,
-		terminalOutputLineLimit,
-		terminalOutputCharacterLimit,
-		maxReadCharacterLimit,
+		terminalOutputPreviewSize,
 		terminalShellIntegrationTimeout,
 		terminalShellIntegrationDisabled, // Added from upstream
 		terminalCommandDelay,
@@ -204,11 +205,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		showRooIgnoredFiles,
 		enableSubfolderRules,
 		remoteBrowserEnabled,
-		maxReadFileLine,
 		maxImageFileSize,
 		maxTotalImageSize,
-		terminalCompressProgressBar,
-		maxConcurrentFileReads,
 		customSupportPrompts,
 		profileThresholds,
 		alwaysAllowFollowupQuestions,
@@ -425,8 +423,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					remoteBrowserEnabled: remoteBrowserEnabled ?? false,
 					writeDelayMs,
 					screenshotQuality: screenshotQuality ?? 75,
-					terminalOutputLineLimit: terminalOutputLineLimit ?? 500,
-					terminalOutputCharacterLimit: terminalOutputCharacterLimit ?? 50_000,
 					terminalShellIntegrationTimeout: terminalShellIntegrationTimeout ?? 30_000,
 					terminalShellIntegrationDisabled,
 					terminalCommandDelay,
@@ -435,16 +431,14 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					terminalZshOhMy,
 					terminalZshP10k,
 					terminalZdotdir,
-					terminalCompressProgressBar,
+					terminalOutputPreviewSize: terminalOutputPreviewSize ?? "medium",
 					mcpEnabled,
 					maxOpenTabsContext: Math.min(Math.max(0, maxOpenTabsContext ?? 20), 500),
 					maxWorkspaceFiles: Math.min(Math.max(0, maxWorkspaceFiles ?? 200), 500),
 					showRooIgnoredFiles: showRooIgnoredFiles ?? true,
 					enableSubfolderRules: enableSubfolderRules ?? false,
-					maxReadFileLine: maxReadFileLine ?? -1,
 					maxImageFileSize: maxImageFileSize ?? 5,
 					maxTotalImageSize: maxTotalImageSize ?? 20,
-					maxConcurrentFileReads: cachedState.maxConcurrentFileReads ?? 5,
 					includeDiagnosticMessages:
 						includeDiagnosticMessages !== undefined ? includeDiagnosticMessages : true,
 					maxDiagnosticMessages: maxDiagnosticMessages ?? 50,
@@ -470,7 +464,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					customSupportPrompts,
 					useZgsmCustomConfig: useZgsmCustomConfig ?? false,
 					zgsmCodebaseIndexEnabled: zgsmCodebaseIndexEnabled ?? true,
-					maxReadCharacterLimit: maxReadCharacterLimit ?? 40000,
 					autoCleanup,
 					debug,
 				},
@@ -585,6 +578,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			{ id: "mcp", icon: Server },
 			{ id: "autoApprove", icon: CheckCheck },
 			{ id: "slashCommands", icon: SquareSlash },
+			{ id: "skills", icon: Zap },
 			{ id: "browser", icon: SquareMousePointer },
 			{ id: "checkpoints", icon: GitCommitVertical },
 			{ id: "notifications", icon: Bell },
@@ -885,6 +879,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						{/* Slash Commands Section */}
 						{renderTab === "slashCommands" && <SlashCommandsSettings />}
 
+						{/* Skills Section */}
+						{renderTab === "skills" && <SkillsSettings />}
+
 						{/* Browser Section */}
 						{renderTab === "browser" && (
 							<BrowserSettings
@@ -927,12 +924,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								maxWorkspaceFiles={maxWorkspaceFiles ?? 300}
 								showRooIgnoredFiles={showRooIgnoredFiles}
 								enableSubfolderRules={enableSubfolderRules}
-								maxReadFileLine={maxReadFileLine}
-								maxReadCharacterLimit={maxReadCharacterLimit}
 								zgsmCodebaseIndexEnabled={zgsmCodebaseIndexEnabled ?? true}
 								maxImageFileSize={maxImageFileSize}
 								maxTotalImageSize={maxTotalImageSize}
-								maxConcurrentFileReads={maxConcurrentFileReads}
 								profileThresholds={profileThresholds}
 								includeDiagnosticMessages={includeDiagnosticMessages}
 								maxDiagnosticMessages={maxDiagnosticMessages}
@@ -956,8 +950,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						{/* Terminal Section */}
 						{renderTab === "terminal" && (
 							<TerminalSettings
-								terminalOutputLineLimit={terminalOutputLineLimit}
-								terminalOutputCharacterLimit={terminalOutputCharacterLimit}
+								terminalOutputPreviewSize={terminalOutputPreviewSize}
 								terminalShellIntegrationTimeout={terminalShellIntegrationTimeout}
 								terminalShellIntegrationDisabled={terminalShellIntegrationDisabled}
 								terminalCommandDelay={terminalCommandDelay}
@@ -966,7 +959,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								terminalZshOhMy={terminalZshOhMy}
 								terminalZshP10k={terminalZshP10k}
 								terminalZdotdir={terminalZdotdir}
-								terminalCompressProgressBar={terminalCompressProgressBar}
 								setCachedStateField={setCachedStateField}
 							/>
 						)}
@@ -1030,7 +1022,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								experimentSettings={
 									cachedState.experimentSettings || {
 										smartMistakeDetectionConfig: {
-											autoSwitchModel: false,
+											autoSwitchModel: true,
 											autoSwitchModelThreshold: 3,
 										},
 									}

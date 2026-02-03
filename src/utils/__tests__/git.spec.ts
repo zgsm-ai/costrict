@@ -27,6 +27,7 @@ type PromisifiedExec = (command: string, options?: { cwd?: string }) => Promise<
 // Mock child_process.exec
 vitest.mock("child_process", () => ({
 	exec: vitest.fn(),
+	execFile: vitest.fn(),
 }))
 
 // Mock fs.promises
@@ -39,11 +40,28 @@ vitest.mock("fs", () => ({
 
 // Create a mock for vscode
 const mockWorkspaceFolders = vitest.fn()
-vitest.mock("vscode", () => ({
+vitest.mock("vscode", async (importOriginal) => ({
+	...(await importOriginal()),
 	workspace: {
 		get workspaceFolders() {
 			return mockWorkspaceFolders()
 		},
+		getConfiguration: vitest.fn(),
+	},
+	extensions: {
+		getExtension: vitest.fn().mockReturnValue({
+			extensionUri: { fsPath: "/test/extension/path" },
+		}),
+		all: [],
+	},
+	env: {
+		uriScheme: "vscode",
+		appName: "Visual Studio Code",
+		machineId: "test-machine-id",
+	},
+	window: {
+		createTextEditorDecorationType: vitest.fn(),
+		createOutputChannel: vitest.fn(),
 	},
 }))
 

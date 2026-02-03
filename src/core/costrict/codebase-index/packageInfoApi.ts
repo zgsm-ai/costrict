@@ -28,7 +28,7 @@ export class PackageInfoApi {
 			})
 
 			if (!response.ok) {
-				const errorData = await await response.text()
+				const errorData = await response.text()
 				throw new Error(`Failed to get package information (${url}): ${errorData}`)
 			}
 

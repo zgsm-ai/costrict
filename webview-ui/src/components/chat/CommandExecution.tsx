@@ -65,8 +65,8 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 
 		// Add all individual commands first
 		allCommands.forEach((cmd) => {
-			if (cmd.trim()) {
-				allPatterns.add(cmd.trim())
+			if (cmd?.trim()) {
+				allPatterns.add(cmd?.trim())
 			}
 		})
 
@@ -212,7 +212,7 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 					<CodeBlock source={command} language="shell" />
 					<OutputContainer isExpanded={isExpanded} output={output} />
 				</div>
-				{command && command.trim() && (
+				{command && command?.trim() && (
 					<CommandPatternSelector
 						patterns={commandPatterns}
 						allowedCommands={allowedCommands}

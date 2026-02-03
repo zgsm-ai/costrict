@@ -16,8 +16,14 @@ import { getModelParams } from "../transform/model-params"
 
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 import { BaseProvider } from "./base-provider"
-import { getGeminiCliLiteToolGuide } from "../../core/prompts/tools/native-tools/lite-descriptions"
+import {
+	getGeminiCliLiteToolGuide,
+	liteRetryPrompt,
+	liteToolContractPrompt,
+	liteToolJudgePrompt,
+} from "../../core/prompts/tools/lite-descriptions"
 import { TagMatcher } from "../../utils/tag-matcher"
+import { findLastIndex } from "../../shared/array"
 
 // OAuth2 Configuration (from Cline implementation)
 const OAUTH_CLIENT_ID = "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com"
@@ -272,7 +278,31 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 				}
 			}
 		}
+		const toolCallTag = "tool_call"
 		// Convert messages to Gemini format
+		// const lastUserMsg = ((msg) => msg.role === "user")
+		const lastUserMsgIndex = findLastIndex(messages, (msg) => msg.role === "user")
+		const lastUserMsg = lastUserMsgIndex > -1 ? messages[lastUserMsgIndex] : undefined
+		if (lastUserMsg) {
+			if (Array.isArray(lastUserMsg.content)) {
+				// const  = lastUserMsg.content.find()
+				const noToolsUsed = lastUserMsg.content.find(
+					(block) =>
+						block.type === "text" &&
+						block.text.includes("You did not use a tool in your previous response"),
+				)
+				if (noToolsUsed && noToolsUsed.type === "text") {
+					noToolsUsed.text = `${liteRetryPrompt(toolCallTag)}\n${liteToolJudgePrompt(metadata?.allToolNames)}\n${liteToolContractPrompt(toolCallTag)}`
+				}
+			} else {
+				// if (lastUserMsg.content.includes('You did not use a tool in your previous response')) {
+				// 	// messages.splice(lastUserMsgIndex, 1, {
+				// 	// })
+				// }
+				// You did not use a tool in your previous response
+			}
+		}
+
 		const contents = messages.map((message) =>
 			convertAnthropicMessageToGemini(message, {
 				includeThoughtSignatures: false,
@@ -280,7 +310,6 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 				isGeminiCli: true,
 			}),
 		)
-
 		// Prepare request body for Code Assist API - matching Cline's structure
 		const requestBody: any = {
 			model: model,
@@ -289,12 +318,27 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 				contents: [
 					{
 						role: "user",
-						parts: [{ text: systemInstruction + "\n\n" + getGeminiCliLiteToolGuide() }],
+						parts: [{ text: systemInstruction }],
+					},
+					{
+						role: "user",
+						parts: [
+							{
+								text:
+									liteToolJudgePrompt(metadata?.allToolNames) +
+									"\n" +
+									liteToolContractPrompt(toolCallTag),
+							},
+						],
 					},
 					...contents,
 					{
 						role: "user",
-						parts: [{ text: getGeminiCliLiteToolGuide() }],
+						parts: [
+							{
+								text: getGeminiCliLiteToolGuide(metadata?.allToolNames),
+							},
+						],
 					},
 				],
 				generationConfig: {
@@ -312,7 +356,7 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 		try {
 			// Call Code Assist streaming endpoint using OAuth2Client
 			const response = await this.authClient.request({
-				url: `${CODE_ASSIST_ENDPOINT}/${CODE_ASSIST_API_VERSION}:streamGenerateContent`,
+				url: `https://cloudcode-pa.googleapis.com/v1internal:streamGenerateContent`,
 				method: "POST",
 				params: { alt: "sse" },
 				headers: {
@@ -325,7 +369,7 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 			// Process the SSE stream
 			let lastUsageMetadata: any = undefined
 			const toolCallMatcher = new TagMatcher(
-				"tool_call",
+				toolCallTag,
 				(chunk) => {
 					return {
 						type: chunk.matched ? "fake_tool_call" : "text",

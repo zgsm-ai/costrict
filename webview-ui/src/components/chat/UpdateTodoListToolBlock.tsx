@@ -121,10 +121,10 @@ const UpdateTodoListToolBlock: React.FC<UpdateTodoListToolBlockProps> = ({
 
 	// Add
 	const handleAdd = () => {
-		if (!newContent.trim()) return
+		if (!newContent?.trim()) return
 		const newTodo: TodoItem = {
 			id: genId(),
-			content: newContent.trim(),
+			content: newContent?.trim(),
 			status: "",
 		}
 		const newTodos = [...editTodos, newTodo]
@@ -285,7 +285,7 @@ const UpdateTodoListToolBlock: React.FC<UpdateTodoListToolBlockProps> = ({
 													borderBottom: "1px solid var(--vscode-input-border)",
 												}}
 												onBlur={(e) => {
-													if (!e.target.value.trim()) {
+													if (!e.target.value?.trim()) {
 														handleDelete(todo.id!)
 													}
 												}}
@@ -376,14 +376,14 @@ const UpdateTodoListToolBlock: React.FC<UpdateTodoListToolBlockProps> = ({
 									/>
 									<button
 										onClick={handleAdd}
-										disabled={!newContent.trim()}
+										disabled={!newContent?.trim()}
 										style={{
 											border: "1px solid var(--vscode-button-border)",
 											background: "var(--vscode-button-background)",
 											color: "var(--vscode-button-foreground)",
 											borderRadius: 4,
 											padding: "1px 7px",
-											cursor: newContent.trim() ? "pointer" : "not-allowed",
+											cursor: newContent?.trim() ? "pointer" : "not-allowed",
 											fontSize: 12,
 											marginRight: 4,
 										}}>

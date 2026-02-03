@@ -2,7 +2,7 @@ import { serializeError } from "serialize-error"
 import { Anthropic } from "@anthropic-ai/sdk"
 
 import type { ToolName, ClineAsk, ToolProgressStatus } from "@roo-code/types"
-import { ConsecutiveMistakeError } from "@roo-code/types"
+import { ConsecutiveMistakeError, TelemetryEventName } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
 import { customToolRegistry } from "@roo-code/core"
 
@@ -14,9 +14,9 @@ import type { ToolResponse, ToolUse, McpToolUse } from "../../shared/tools"
 import { AskIgnoredError } from "../task/AskIgnoredError"
 import { Task } from "../task/Task"
 
-import { fetchInstructionsTool } from "../tools/FetchInstructionsTool"
 import { listFilesTool } from "../tools/ListFilesTool"
 import { readFileTool } from "../tools/ReadFileTool"
+import { readCommandOutputTool } from "../tools/ReadCommandOutputTool"
 import { writeToFileTool } from "../tools/WriteToFileTool"
 import { searchAndReplaceTool } from "../tools/SearchAndReplaceTool"
 import { searchReplaceTool } from "../tools/SearchReplaceTool"
@@ -34,6 +34,7 @@ import { attemptCompletionTool, AttemptCompletionCallbacks } from "../tools/Atte
 import { newTaskTool } from "../tools/NewTaskTool"
 import { updateTodoListTool } from "../tools/UpdateTodoListTool"
 import { runSlashCommandTool } from "../tools/RunSlashCommandTool"
+import { skillTool } from "../tools/SkillTool"
 import { generateImageTool } from "../tools/GenerateImageTool"
 import { applyDiffTool as applyDiffToolClass } from "../tools/ApplyDiffTool"
 import { isValidToolName, validateToolUse } from "../tools/validateToolUse"
@@ -43,8 +44,10 @@ import { formatResponse } from "../prompts/responses"
 // import { codebaseSearchTool } from "../tools/CodebaseSearchTool"
 import { updateCospecMetadata } from "../checkpoints"
 import { fixBrowserLaunchAction } from "../../utils/fixbrowserLaunchAction"
+import { fixNativeToolname } from "../../utils/fixNativeToolname"
 // import { isNativeProtocol } from "@roo-code/types"
 // import { resolveToolProtocol } from "../../utils/resolveToolProtocol"
+import { sanitizeToolUseId } from "../../utils/tool-id"
 
 /**
  * Processes and presents assistant message content to the user interface.
@@ -123,22 +126,7 @@ export async function presentAssistantMessage(cline: Task) {
 				if (toolCallId) {
 					cline.pushToolResultToUserContent({
 						type: "tool_result",
-						tool_use_id: toolCallId,
-						content: errorMessage,
-						is_error: true,
-					})
-				}
-				break
-			}
-
-			if (cline.didAlreadyUseTool) {
-				const toolCallId = mcpBlock.id
-				const errorMessage = `MCP tool [${mcpBlock.name}] was not executed because a tool has already been used in this message. Only one tool may be used per message.`
-
-				if (toolCallId) {
-					cline.pushToolResultToUserContent({
-						type: "tool_result",
-						tool_use_id: toolCallId,
+						tool_use_id: sanitizeToolUseId(toolCallId),
 						content: errorMessage,
 						is_error: true,
 					})
@@ -196,7 +184,7 @@ export async function presentAssistantMessage(cline: Task) {
 				if (toolCallId) {
 					cline.pushToolResultToUserContent({
 						type: "tool_result",
-						tool_use_id: toolCallId,
+						tool_use_id: sanitizeToolUseId(toolCallId),
 						content: resultContent,
 					})
 
@@ -206,10 +194,8 @@ export async function presentAssistantMessage(cline: Task) {
 				}
 
 				hasToolResult = true
-				cline.didAlreadyUseTool = true
-				if (editTools.includes(block.name) && block.partial === false) {
+				if (editTools.includes(block.name) && block.partial === false)
 					updateCospecMetadata(cline, block?.params?.path)
-				}
 			}
 
 			// const toolDescription = () => `[mcp_tool: ${mcpBlock.serverName}/${mcpBlock.toolName}]`
@@ -281,6 +267,7 @@ export async function presentAssistantMessage(cline: Task) {
 				}
 			}
 
+			const toolName = fixNativeToolname(mcpBlock.toolName)
 			// Execute the MCP tool using the same handler as use_mcp_tool
 			// Create a synthetic ToolUse block that the useMcpToolTool can handle
 			const syntheticToolUse: ToolUse<"use_mcp_tool"> = {
@@ -289,13 +276,13 @@ export async function presentAssistantMessage(cline: Task) {
 				name: "use_mcp_tool",
 				params: {
 					server_name: resolvedServerName,
-					tool_name: mcpBlock.toolName,
+					tool_name: toolName,
 					arguments: JSON.stringify(mcpBlock.arguments),
 				},
 				partial: mcpBlock.partial,
 				nativeArgs: {
 					server_name: resolvedServerName,
-					tool_name: mcpBlock.toolName,
+					tool_name: toolName,
 					arguments: mcpBlock.arguments,
 				},
 			}
@@ -324,7 +311,7 @@ export async function presentAssistantMessage(cline: Task) {
 
 				// Tool calling is native-only. If the model emits XML-style tool tags in a text block,
 				// fail fast with a clear error.
-				if (containsXmlToolMarkup(content)) {
+				if (containsXmlToolMarkup(content) && cline?.apiConfiguration?.apiProvider !== "zgsm") {
 					const errorMessage =
 						"XML tool calls are no longer supported. Remove any XML tool markup (e.g. <read_file>...</read_file>) and use native tool calling instead."
 					cline.consecutiveMistakeCount++
@@ -378,8 +365,6 @@ export async function presentAssistantMessage(cline: Task) {
 							return readFileTool.getReadFileToolDescription(block.name, block.nativeArgs)
 						}
 						return readFileTool.getReadFileToolDescription(block.name, block.params)
-					case "fetch_instructions":
-						return `[${block.name} for '${block.params.task}']`
 					case "write_to_file":
 						return `[${block.name} for '${block.params.path}']`
 					case "apply_diff":
@@ -413,8 +398,10 @@ export async function presentAssistantMessage(cline: Task) {
 						return `[${block.name}]`
 					case "switch_mode":
 						return `[${block.name} to '${block.params.mode_slug}'${block.params.reason ? ` because: ${block.params.reason}` : ""}]`
-					case "codebase_search": // Add case for the new tool
+					case "codebase_search":
 						return `[${block.name} for '${block.params.query}']`
+					case "read_command_output":
+						return `[${block.name} for '${block.params.artifact_id}']`
 					case "update_todo_list":
 						return `[${block.name}]`
 					case "new_task": {
@@ -425,6 +412,8 @@ export async function presentAssistantMessage(cline: Task) {
 					}
 					case "run_slash_command":
 						return `[${block.name} for '${block.params.command}'${block.params.args ? ` with args: ${block.params.args}` : ""}]`
+					case "skill":
+						return `[${block.name} for '${block.params.skill}'${block.params.args ? ` with args: ${block.params.args}` : ""}]`
 					case "generate_image":
 						return `[${block.name} for '${block.params.path}']`
 					default:
@@ -441,22 +430,7 @@ export async function presentAssistantMessage(cline: Task) {
 
 				cline.pushToolResultToUserContent({
 					type: "tool_result",
-					tool_use_id: toolCallId,
-					content: errorMessage,
-					is_error: true,
-				})
-
-				break
-			}
-
-			if (cline.didAlreadyUseTool) {
-				// Ignore any content after a tool has already been used.
-				// For native tool calling, we must send a tool_result for every tool_use to avoid API errors
-				const errorMessage = `Tool [${block.name}] was not executed because a tool has already been used in this message. Only one tool may be used per message. You must assess the first tool's result before proceeding to use the next tool.`
-
-				cline.pushToolResultToUserContent({
-					type: "tool_result",
-					tool_use_id: toolCallId,
+					tool_use_id: sanitizeToolUseId(toolCallId),
 					content: errorMessage,
 					is_error: true,
 				})
@@ -493,7 +467,7 @@ export async function presentAssistantMessage(cline: Task) {
 					// continue gracefully.
 					cline.pushToolResultToUserContent({
 						type: "tool_result",
-						tool_use_id: toolCallId,
+						tool_use_id: sanitizeToolUseId(toolCallId),
 						content: formatResponse.toolError(errorMessage),
 						is_error: true,
 					})
@@ -550,7 +524,7 @@ export async function presentAssistantMessage(cline: Task) {
 
 				cline.pushToolResultToUserContent({
 					type: "tool_result",
-					tool_use_id: toolCallId,
+					tool_use_id: sanitizeToolUseId(toolCallId),
 					content: resultContent,
 				})
 
@@ -559,10 +533,8 @@ export async function presentAssistantMessage(cline: Task) {
 				}
 
 				hasToolResult = true
-				cline.didAlreadyUseTool = true
-				if (editTools.includes(block.name) && block.partial === false) {
+				if (editTools.includes(block.name) && block.partial === false)
 					updateCospecMetadata(cline, block?.params?.path)
-				}
 			}
 
 			const askApproval = async (
@@ -661,6 +633,15 @@ export async function presentAssistantMessage(cline: Task) {
 				const recordName = isCustomTool ? "custom_tool" : block.name
 				cline.recordToolUsage(recordName)
 				TelemetryService.instance.captureToolUsage(cline.taskId, recordName)
+
+				// Track legacy format usage for read_file tool (for migration monitoring)
+				if (block.name === "read_file" && block.usedLegacyFormat) {
+					const modelInfo = cline.api.getModel()
+					TelemetryService.instance.captureEvent(TelemetryEventName.READ_FILE_LEGACY_FORMAT_USED, {
+						taskId: cline.taskId,
+						model: modelInfo?.id,
+					})
+				}
 			}
 
 			// Validate tool use before execution - ONLY for complete (non-partial) blocks.
@@ -696,7 +677,7 @@ export async function presentAssistantMessage(cline: Task) {
 					// Push tool_result directly without setting didAlreadyUseTool
 					cline.pushToolResultToUserContent({
 						type: "tool_result",
-						tool_use_id: toolCallId,
+						tool_use_id: sanitizeToolUseId(toolCallId),
 						content: typeof errorContent === "string" ? errorContent : "(validation error)",
 						is_error: true,
 					})
@@ -821,13 +802,6 @@ export async function presentAssistantMessage(cline: Task) {
 						pushToolResult,
 					})
 					break
-				case "fetch_instructions":
-					await fetchInstructionsTool.handle(cline, block as ToolUse<"fetch_instructions">, {
-						askApproval,
-						handleError,
-						pushToolResult,
-					})
-					break
 				case "list_files":
 					await listFilesTool.handle(cline, block as ToolUse<"list_files">, {
 						askApproval,
@@ -860,6 +834,13 @@ export async function presentAssistantMessage(cline: Task) {
 					break
 				case "execute_command":
 					await executeCommandTool.handle(cline, block as ToolUse<"execute_command">, {
+						askApproval,
+						handleError,
+						pushToolResult,
+					})
+					break
+				case "read_command_output":
+					await readCommandOutputTool.handle(cline, block as ToolUse<"read_command_output">, {
 						askApproval,
 						handleError,
 						pushToolResult,
@@ -901,6 +882,7 @@ export async function presentAssistantMessage(cline: Task) {
 					})
 					break
 				case "new_task":
+					await checkpointSaveAndMark(cline)
 					await newTaskTool.handle(cline, block as ToolUse<"new_task">, {
 						askApproval,
 						handleError,
@@ -925,6 +907,13 @@ export async function presentAssistantMessage(cline: Task) {
 				}
 				case "run_slash_command":
 					await runSlashCommandTool.handle(cline, block as ToolUse<"run_slash_command">, {
+						askApproval,
+						handleError,
+						pushToolResult,
+					})
+					break
+				case "skill":
+					await skillTool.handle(cline, block as ToolUse<"skill">, {
 						askApproval,
 						handleError,
 						pushToolResult,
@@ -998,7 +987,7 @@ export async function presentAssistantMessage(cline: Task) {
 					// This prevents the stream from being interrupted with "Response interrupted by tool use result"
 					cline.pushToolResultToUserContent({
 						type: "tool_result",
-						tool_use_id: toolCallId,
+						tool_use_id: sanitizeToolUseId(toolCallId),
 						content: formatResponse.toolError(errorMessage),
 						is_error: true,
 					})
@@ -1110,10 +1099,10 @@ function containsXmlToolMarkup(text: string): boolean {
 		"codebase_search",
 		"edit_file",
 		"execute_command",
-		"fetch_instructions",
 		"generate_image",
 		"list_files",
 		"new_task",
+		"read_command_output",
 		"read_file",
 		"search_and_replace",
 		"search_files",

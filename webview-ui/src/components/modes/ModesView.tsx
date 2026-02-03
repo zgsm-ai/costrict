@@ -267,7 +267,7 @@ const ModesView = () => {
 
 	const handleSaveRenameMode = useCallback(() => {
 		const customMode = findModeBySlug(visualMode, customModes)
-		const trimmed = renameInputValue.trim()
+		const trimmed = renameInputValue?.trim()
 		if (!customMode || !trimmed) {
 			setIsRenamingMode(false)
 			return
@@ -392,10 +392,10 @@ const ModesView = () => {
 		const newMode: ModeConfig = {
 			slug: newModeSlug,
 			name: newModeName,
-			description: newModeDescription.trim() || undefined,
-			roleDefinition: newModeRoleDefinition.trim(),
-			whenToUse: newModeWhenToUse.trim() || undefined,
-			customInstructions: newModeCustomInstructions.trim() || undefined,
+			description: newModeDescription?.trim() || undefined,
+			roleDefinition: newModeRoleDefinition?.trim(),
+			whenToUse: newModeWhenToUse?.trim() || undefined,
+			customInstructions: newModeCustomInstructions?.trim() || undefined,
 			groups: newModeGroups,
 			source,
 		}
@@ -728,7 +728,7 @@ const ModesView = () => {
 									<Button
 										variant="ghost"
 										size="icon"
-										disabled={!renameInputValue.trim()}
+										disabled={!renameInputValue?.trim()}
 										onClick={handleSaveRenameMode}
 										data-testid="save-mode-rename-button">
 										<span className="codicon codicon-check" />
@@ -987,13 +987,13 @@ const ModesView = () => {
 								// For custom modes, update the JSON file
 								updateCustomMode(visualMode, {
 									...customMode,
-									roleDefinition: value.trim() || "",
+									roleDefinition: value?.trim() || "",
 									source: customMode.source || "global",
 								})
 							} else {
 								// For built-in modes, update the prompts
 								updateAgentPrompt(visualMode, {
-									roleDefinition: value.trim() || undefined,
+									roleDefinition: value?.trim() || undefined,
 								})
 							}
 						}}
@@ -1042,13 +1042,13 @@ const ModesView = () => {
 								// For custom modes, update the JSON file
 								updateCustomMode(visualMode, {
 									...customMode,
-									description: value.trim() || undefined,
+									description: value?.trim() || undefined,
 									source: customMode.source || "global",
 								})
 							} else {
 								// For built-in modes, update the prompts
 								updateAgentPrompt(visualMode, {
-									description: value.trim() || undefined,
+									description: value?.trim() || undefined,
 								})
 							}
 						}}
@@ -1097,13 +1097,13 @@ const ModesView = () => {
 								// For custom modes, update the JSON file
 								updateCustomMode(visualMode, {
 									...customMode,
-									whenToUse: value.trim() || undefined,
+									whenToUse: value?.trim() || undefined,
 									source: customMode.source || "global",
 								})
 							} else {
 								// For built-in modes, update the prompts
 								updateAgentPrompt(visualMode, {
-									whenToUse: value.trim() || undefined,
+									whenToUse: value?.trim() || undefined,
 								})
 							}
 						}}
@@ -1257,7 +1257,7 @@ const ModesView = () => {
 								const existingPrompt = customModePrompts?.[visualMode] as PromptComponent
 								updateAgentPrompt(visualMode, {
 									...existingPrompt,
-									customInstructions: value.trim() || undefined,
+									customInstructions: value?.trim() || undefined,
 								})
 							}
 						}}

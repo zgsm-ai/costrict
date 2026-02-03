@@ -13,7 +13,7 @@ import type { DisplayHistoryItem, TaskGroup, GroupedTasksResult } from "./types"
 export function useGroupedTasks(tasks: HistoryItem[], searchQuery: string): GroupedTasksResult {
 	const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
-	const isSearchMode = searchQuery.trim().length > 0
+	const isSearchMode = searchQuery?.trim().length > 0
 
 	// Build a map of taskId -> HistoryItem for quick lookup
 	const taskMap = useMemo(() => {

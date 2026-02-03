@@ -7,7 +7,7 @@ import pWaitFor from "p-wait-for"
 import delay from "delay"
 
 import type { ExperimentId } from "@roo-code/types"
-import { DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT, MAX_WORKSPACE_FILES } from "@roo-code/types"
+import { MAX_WORKSPACE_FILES } from "@roo-code/types"
 
 import { EXPERIMENT_IDS, experiments as Experiments } from "../../shared/experiments"
 import { formatLanguage } from "../../shared/language"
@@ -30,13 +30,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 	let details = ""
 	const clineProvider = cline.providerRef.deref()
 	const state = await clineProvider?.getState()
-	const {
-		terminalOutputLineLimit = 500,
-		terminalOutputCharacterLimit = DEFAULT_TERMINAL_OUTPUT_CHARACTER_LIMIT,
-		maxWorkspaceFiles = MAX_WORKSPACE_FILES,
-		terminalShellIntegrationDisabled,
-		maxOpenTabsContext,
-	} = state ?? {}
+	const { maxWorkspaceFiles = 200, terminalShellIntegrationDisabled, maxOpenTabsContext } = state ?? {}
 	const shell = getShell(terminalShellIntegrationDisabled)
 	const maxTabs = maxOpenTabsContext ?? 20
 
@@ -118,7 +112,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 		}
 
 		// Wait for terminals to cool down.
-		await pWaitFor(() => busyTerminals.every((t) => !TerminalRegistry.isProcessHot(t.id)), {
+		await pWaitFor(() => busyTerminals?.every?.((t) => !TerminalRegistry.isProcessHot(t.id)), {
 			interval: 100,
 			timeout: 5_000,
 		}).catch(() => {})
@@ -143,11 +137,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 			let newOutput = TerminalRegistry.getUnretrievedOutput(busyTerminal.id)
 
 			if (newOutput) {
-				newOutput = Terminal.compressTerminalOutput(
-					newOutput,
-					terminalOutputLineLimit,
-					terminalOutputCharacterLimit,
-				)
+				newOutput = Terminal.compressTerminalOutput(newOutput)
 				terminalDetails += `\n### New Output\n${newOutput}`
 			}
 		}
@@ -175,11 +165,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 				let output = process.getUnretrievedOutput()
 
 				if (output) {
-					output = Terminal.compressTerminalOutput(
-						output,
-						terminalOutputLineLimit,
-						terminalOutputCharacterLimit,
-					)
+					output = Terminal.compressTerminalOutput(output)
 					terminalOutputs.push(`Command: \`${process.command}\`\n${output}`)
 				}
 			}

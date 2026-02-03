@@ -21,11 +21,11 @@ const HighlightedPlainText = ({ message, query = "", flag = "" }: HighlightedPla
 		const line = lines[i]
 
 		// Check if it's the start of a code block (exact match with ``` prefix, may include language identifier)
-		if (line.trim().startsWith("```")) {
+		if (line?.trim().startsWith("```")) {
 			// Find the end of the code block
 			let codeBlockEnd = -1
 			for (let j = i + 1; j < lines.length; j++) {
-				if (lines[j].trim() === "```") {
+				if (lines[j]?.trim() === "```") {
 					codeBlockEnd = j
 					break
 				}

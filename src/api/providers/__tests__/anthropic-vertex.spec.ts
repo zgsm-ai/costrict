@@ -195,7 +195,7 @@ describe("VertexHandler", () => {
 					tools: [],
 					tool_choice: {
 						type: "auto",
-						disable_parallel_tool_use: true,
+						disable_parallel_tool_use: false,
 					},
 				}),
 				expect.objectContaining({
@@ -1205,7 +1205,7 @@ describe("VertexHandler", () => {
 							}),
 						}),
 					]),
-					tool_choice: { type: "auto", disable_parallel_tool_use: true },
+					tool_choice: { type: "auto", disable_parallel_tool_use: false },
 				}),
 				expect.any(Object),
 			)
@@ -1266,7 +1266,7 @@ describe("VertexHandler", () => {
 							}),
 						}),
 					]),
-					tool_choice: { type: "auto", disable_parallel_tool_use: true },
+					tool_choice: { type: "auto", disable_parallel_tool_use: false },
 				}),
 				{ signal: undefined },
 			)

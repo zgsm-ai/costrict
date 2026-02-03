@@ -9,17 +9,28 @@ vi.mock("vscode", async (importOriginal) => ({
 		createOutputChannel: vi.fn().mockReturnValue({
 			appendLine: vi.fn(),
 		}),
+		createTextEditorDecorationType: vi.fn(),
+		createStatusBarItem: vi.fn().mockReturnValue({
+			text: "",
+			tooltip: "",
+			show: vi.fn(),
+			hide: vi.fn(),
+			dispose: vi.fn(),
+		}),
 		registerWebviewViewProvider: vi.fn(),
 		registerUriHandler: vi.fn(),
 		tabGroups: {
 			onDidChangeTabs: vi.fn(),
 		},
 		onDidChangeActiveTextEditor: vi.fn(),
+		onDidChangeVisibleTextEditors: vi.fn(),
+		onDidChangeTextEditorSelection: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 	},
 	workspace: {
 		registerTextDocumentContentProvider: vi.fn(),
 		getConfiguration: vi.fn().mockReturnValue({
 			get: vi.fn().mockReturnValue([]),
+			update: vi.fn().mockResolvedValue(undefined),
 		}),
 		createFileSystemWatcher: vi.fn().mockReturnValue({
 			onDidCreate: vi.fn(),
@@ -28,19 +39,36 @@ vi.mock("vscode", async (importOriginal) => ({
 			dispose: vi.fn(),
 		}),
 		onDidChangeWorkspaceFolders: vi.fn(),
+		onDidChangeConfiguration: vi.fn(),
+		onDidChangeTextDocument: vi.fn(),
+		onDidOpenTextDocument: vi.fn(),
+		onDidCloseTextDocument: vi.fn(),
 	},
 	languages: {
 		registerCodeActionsProvider: vi.fn(),
+		registerCodeLensProvider: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+		registerInlineCompletionItemProvider: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 	},
 	commands: {
 		executeCommand: vi.fn(),
 		registerCommand: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+		registerTextEditorCommand: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 	},
 	env: {
 		language: "en",
+		appName: "roo-code",
 	},
 	ExtensionMode: {
 		Production: 1,
+	},
+	ConfigurationTarget: {
+		Global: 1,
+		Workspace: 2,
+		WorkspaceFolder: 3,
+	},
+	StatusBarAlignment: {
+		Left: 1,
+		Right: 2,
 	},
 	version: "1.80.0",
 	RelativePattern: vi.fn().mockImplementation((base, pattern) => ({
@@ -52,6 +80,17 @@ vi.mock("vscode", async (importOriginal) => ({
 vi.mock("@dotenvx/dotenvx", () => ({
 	config: vi.fn(),
 }))
+
+// Mock fs so the extension module can safely check for optional .env.
+vi.mock("fs", () => {
+	const mockFs = {
+		existsSync: vi.fn().mockReturnValue(false),
+	}
+	return {
+		default: mockFs,
+		existsSync: mockFs.existsSync,
+	}
+})
 
 const mockBridgeOrchestratorDisconnect = vi.fn().mockResolvedValue(undefined)
 
@@ -190,7 +229,17 @@ vi.mock("../core/webview/ClineProvider", async () => {
 		resolveWebviewView: vi.fn(),
 		postMessageToWebview: vi.fn(),
 		postStateToWebview: vi.fn(),
-		getState: vi.fn().mockResolvedValue({}),
+		getState: vi.fn().mockResolvedValue({
+			apiConfiguration: {
+				zgsmAccessToken: undefined,
+				zgsmRefreshToken: undefined,
+				zgsmState: undefined,
+			},
+		}),
+		getValue: vi.fn().mockReturnValue(undefined),
+		setValue: vi.fn().mockResolvedValue(undefined),
+		setZgsmAuthCommands: vi.fn(),
+		log: vi.fn(),
 		remoteControlEnabled: vi.fn().mockImplementation(async (enabled: boolean) => {
 			if (!enabled) {
 				await BridgeOrchestrator.disconnect()
@@ -243,6 +292,52 @@ describe("extension.ts", () => {
 		} as unknown as vscode.ExtensionContext
 
 		authStateChangedHandler = undefined
+	})
+
+	test("does not call dotenvx.config when optional .env does not exist", async () => {
+		// Reset modules to test module-level initialization code
+		vi.resetModules()
+		
+		// Re-mock the modules BEFORE importing extension
+		vi.doMock("fs", () => ({
+			default: { existsSync: vi.fn().mockReturnValue(false) },
+			existsSync: vi.fn().mockReturnValue(false),
+		}))
+		
+		const dotenvxConfigMock = vi.fn()
+		vi.doMock("@dotenvx/dotenvx", () => ({
+			config: dotenvxConfigMock,
+		}))
+
+		// Import extension - this will execute the top-level code
+		// which should NOT call dotenvx.config when .env doesn't exist
+		await import("../extension")
+		
+		// Verify dotenvx.config was not called
+		expect(dotenvxConfigMock).not.toHaveBeenCalled()
+	})
+
+	test("calls dotenvx.config when optional .env exists", async () => {
+		// Reset modules to test module-level initialization code
+		vi.resetModules()
+		
+		// Re-mock the modules BEFORE importing extension
+		vi.doMock("fs", () => ({
+			default: { existsSync: vi.fn().mockReturnValue(true) },
+			existsSync: vi.fn().mockReturnValue(true),
+		}))
+		
+		const dotenvxConfigMock = vi.fn()
+		vi.doMock("@dotenvx/dotenvx", () => ({
+			config: dotenvxConfigMock,
+		}))
+
+		// Import extension - this will execute the top-level code
+		// which should call dotenvx.config when .env exists
+		await import("../extension")
+		
+		// Verify dotenvx.config was called exactly once
+		expect(dotenvxConfigMock).toHaveBeenCalledTimes(1)
 	})
 
 	test("authStateChangedHandler calls BridgeOrchestrator.disconnect when logged-out event fires", async () => {

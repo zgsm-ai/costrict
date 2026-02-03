@@ -247,7 +247,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			return
 		}
 
-		const processedResourcePromises = sources.map(async (source): Promise<ProcessedResource | null> => {
+		const processedResourcePromises = sources?.map(async (source): Promise<ProcessedResource | null> => {
 			if (!(source as UriSource).path && !(source as EditorContext).filePath) {
 				return null
 			}
@@ -382,11 +382,11 @@ export const openClineInNewTab = async ({
 	}
 
 	const tabProvider = new ClineProvider(context, outputChannel, "editor", contextProxy, mdmService)
-	const lastCol = Math.max(...vscode.window.visibleTextEditors.map((editor) => editor.viewColumn || 0))
+	const lastCol = Math.max(...(vscode.window.visibleTextEditors || []).map((editor) => editor.viewColumn || 0))
 
 	// Check if there are any visible text editors, otherwise open a new group
 	// to the right.
-	const hasVisibleEditors = vscode.window.visibleTextEditors.length > 0
+	const hasVisibleEditors = (vscode.window.visibleTextEditors || []).length > 0
 
 	if (!hasVisibleEditors) {
 		await vscode.commands.executeCommand("workbench.action.newGroupRight")

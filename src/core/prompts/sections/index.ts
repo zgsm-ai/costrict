@@ -11,3 +11,4 @@ export { getSkillsSection } from "./skills"
 
 // Lite versions - simplified and concise prompts
 export { getLiteToolUseGuidelinesSection, getLiteCapabilitiesSection, getLiteObjectiveSection } from "./lite-sections"
+// export { getLiteCapabilitiesSection, getLiteObjectiveSection } from "./lite-sections"

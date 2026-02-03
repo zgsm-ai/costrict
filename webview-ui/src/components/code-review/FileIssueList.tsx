@@ -16,7 +16,7 @@ const FileIssueList: React.FC<FileIssueListProps> = ({ fileName, issues, onIssue
 	const allIssuesProcessed = useMemo(() => {
 		return (
 			issues.length > 0 &&
-			issues.every((issue) => issue.status !== IssueStatus.INITIAL && issue.status !== IssueStatus.IGNORE)
+			issues?.every?.((issue) => issue.status !== IssueStatus.INITIAL && issue.status !== IssueStatus.IGNORE)
 		)
 	}, [issues])
 

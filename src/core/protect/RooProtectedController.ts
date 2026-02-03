@@ -77,7 +77,7 @@ export class RooProtectedController {
 	 * @returns Array of objects with path and protection status
 	 */
 	annotatePathsWithProtection(paths: string[]): Array<{ path: string; isProtected: boolean }> {
-		return paths.map((filePath) => ({
+		return paths?.map((filePath) => ({
 			path: filePath,
 			isProtected: this.isWriteProtected(filePath),
 		}))

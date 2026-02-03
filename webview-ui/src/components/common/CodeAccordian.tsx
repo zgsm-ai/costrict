@@ -40,7 +40,7 @@ const CodeAccordian = ({
 	diffStats,
 }: CodeAccordianProps) => {
 	const inferredLanguage = useMemo(() => language ?? (path ? getLanguageFromPath(path) : "txt"), [path, language])
-	const source = useMemo(() => code.trim(), [code])
+	const source = useMemo(() => code?.trim(), [code])
 
 	if (!allowEmptyBlock && !code) {
 		return null

@@ -27,7 +27,7 @@ export function filterNonAnthropicBlocks(
 	messages: Anthropic.Messages.MessageParam[],
 ): Anthropic.Messages.MessageParam[] {
 	return messages
-		.map((message) => {
+		?.map((message) => {
 			if (typeof message.content === "string") {
 				return message
 			}

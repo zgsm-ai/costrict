@@ -124,7 +124,7 @@ export const CreateWorktreeModal = ({
 		})
 	}, [worktreePath, branchName, baseBranch])
 
-	const isValid = branchName.trim() && worktreePath.trim() && baseBranch.trim()
+	const isValid = branchName?.trim() && worktreePath?.trim() && baseBranch?.trim()
 
 	// Convert branches to SearchableSelect options format
 	const branchOptions = useMemo((): SearchableSelectOption[] => {

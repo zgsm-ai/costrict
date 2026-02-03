@@ -38,7 +38,7 @@ import { getEditorType } from "../../utils/getEditorType"
 import { ChatCompletionChunk } from "openai/resources/index.mjs"
 import { convertToZAiFormat } from "../transform/zai-format"
 import { isDebug } from "../../utils/getDebugState"
-import { xmlLiteToolGuide } from "../../core/prompts/tools/native-tools/lite-descriptions"
+import { liteToolContractPrompt } from "../../core/prompts/tools/lite-descriptions"
 
 const autoModeModelId = "Auto"
 const isDev = process.env.NODE_ENV === "development"
@@ -383,7 +383,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 						],
 					}
 				: { role: "system" as const, content: systemPrompt }
-			if (_mid?.includes("glm") || isMiniMax || _mid?.includes("claude")) {
+			if (_mid?.includes("kimi") || _mid?.includes("glm") || isMiniMax || _mid?.includes("claude")) {
 				convertedMessages = [
 					{ role: "system", content: systemPrompt },
 					...convertToZAiFormat(messages, { mergeToolResultText: true }),
@@ -391,9 +391,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			} else {
 				if (_mid?.includes("qwen")) {
 					if (Array.isArray(systemMessage.content)) {
-						systemMessage.content[0].text = systemMessage.content[0].text + "\n" + xmlLiteToolGuide
+						systemMessage.content[0].text = systemMessage.content[0].text + "\n" + liteToolContractPrompt()
 					} else {
-						systemMessage.content = systemMessage.content + "\n" + xmlLiteToolGuide
+						systemMessage.content = systemMessage.content + "\n" + liteToolContractPrompt()
 					}
 				}
 				convertedMessages = [
@@ -469,7 +469,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				...requestOptions,
 				...(metadata?.tools && { tools: this.convertToolsForOpenAI(metadata.tools) }),
 				...(metadata?.tool_choice && { tool_choice: metadata.tool_choice }),
-				...(metadata?.parallelToolCalls === true && { parallel_tool_calls: true }),
+				...{ parallel_tool_calls: metadata?.parallelToolCalls ?? true },
 			}
 		}
 
@@ -506,7 +506,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				? {
 						...(metadata?.tools && { tools: this.convertToolsForOpenAI(metadata.tools) }),
 						...(metadata?.tool_choice && { tool_choice: metadata.tool_choice }),
-						...(metadata?.parallelToolCalls === true && { parallel_tool_calls: true }),
+						...{ parallel_tool_calls: metadata?.parallelToolCalls ?? true },
 					}
 				: undefined),
 			extra_body: {
@@ -553,22 +553,30 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		// let mockToolId = ""
 		if (isQwen) {
 			// mockToolId = "fake_tool_call"
-			matcher = new TagMatcher("tool_call", (chunk) => {
-				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-				isDev && this.logger.info(`[ResponseID ${this.options.zgsmModelId} fake tool call]:`, requestId, chunk)
-				return {
-					type: chunk.matched ? "fake_tool_call" : "text",
-					text: chunk.data,
-				}
-			})
+			matcher = new TagMatcher(
+				"tool_call",
+				(chunk) => {
+					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+					isDev &&
+						this.logger.info(`[ResponseID ${this.options.zgsmModelId} fake tool call]:`, requestId, chunk)
+					return {
+						type: chunk.matched ? "fake_tool_call" : "text",
+						text: chunk.data,
+					}
+				},
+				Infinity,
+			)
 		} else {
+			// hasReasoning = true
 			matcher = new TagMatcher(
 				"think",
-				(chunk) =>
-					({
+				(chunk) => {
+					if (chunk.matched) hasReasoning = true
+					return {
 						type: chunk.matched ? "reasoning" : "text",
 						text: chunk.data,
-					}) as const,
+					} as const
+				},
 				isMiniMax ? Infinity : 0, // Only use Infinity for MiniMax models
 			)
 		}
@@ -587,6 +595,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		let toolCallTime = Date.now()
 		let isPrinted = false
 		let shouldAbort = false
+		let hasReasoning = false
 
 		// Yield selected LLM info if available (for Auto model mode)
 		if (isAuto) {
@@ -716,6 +725,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 										requestId,
 										reasoning_content,
 									)
+								hasReasoning = true
 								yield { type: "reasoning", text: reasoning_content }
 							}
 							break
@@ -761,6 +771,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				}
 			}
 		} finally {
+			if (!hasReasoning) {
+				yield { type: "reasoning", text: "[thinking (empty)]" }
+			}
 			// Always flush remaining content, even on abort
 			// This ensures no content is lost in the buffer
 			if (contentBuffer.length > 0) {
@@ -904,6 +917,14 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		if (!info.id) {
 			info.id = id
 		}
+		if (
+			(id.toLowerCase().includes("kimi") ||
+				id.toLowerCase().includes("minimax") ||
+				id.toLowerCase().includes("glm")) &&
+			info.preserveReasoning == null
+		) {
+			info.preserveReasoning = true
+		}
 		return { id, info, ...params }
 	}
 
@@ -919,14 +940,16 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		if (systemPrompt) {
 			messages.unshift({ role: "system", content: systemPrompt })
 		}
+		const _mid = (metadata?.modelId || model.id)?.toLowerCase()
 		const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming & {
 			extra_body: any
 			thinking: any
 		} = {
 			model: metadata?.modelId || model.id,
 			messages: messages,
-			temperature: 0.9,
+			temperature: _mid.includes("kimi") ? 0.6 : 0.9,
 			max_tokens: metadata?.maxLength ?? 300,
+			max_completion_tokens: metadata?.maxLength ?? 300,
 			thinking: {
 				type: "disabled",
 			},
@@ -992,7 +1015,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					? {
 							...(metadata?.tools && { tools: this.convertToolsForOpenAI(metadata.tools) }),
 							...(metadata?.tool_choice && { tool_choice: metadata.tool_choice }),
-							...(metadata?.parallelToolCalls === true && { parallel_tool_calls: true }),
+							...{ parallel_tool_calls: metadata?.parallelToolCalls ?? true },
 						}
 					: undefined),
 			}
@@ -1030,7 +1053,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					? {
 							...(metadata?.tools && { tools: this.convertToolsForOpenAI(metadata.tools) }),
 							...(metadata?.tool_choice && { tool_choice: metadata.tool_choice }),
-							...(metadata?.parallelToolCalls === true && { parallel_tool_calls: true }),
+							...{ parallel_tool_calls: metadata?.parallelToolCalls ?? true },
 						}
 					: undefined),
 			}

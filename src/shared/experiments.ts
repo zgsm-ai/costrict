@@ -7,11 +7,9 @@ export const EXPERIMENT_IDS = {
 	ALWAYS_INCLUDE_FILE_DETAILS: "alwaysIncludeFileDetails",
 	COMMIT_REVIEW: "commitReview",
 	USE_LITE_PROMPTS: "useLitePrompts",
-	POWER_STEERING: "powerSteering",
 	PREVENT_FOCUS_DISRUPTION: "preventFocusDisruption",
 	IMAGE_GENERATION: "imageGeneration",
 	RUN_SLASH_COMMAND: "runSlashCommand",
-	MULTIPLE_NATIVE_TOOL_CALLS: "multipleNativeToolCalls",
 	CUSTOM_TOOLS: "customTools",
 	SMART_MISTAKE_DETECTION: "smartMistakeDetection",
 } as const satisfies Record<string, ExperimentId>
@@ -26,15 +24,13 @@ interface ExperimentConfig {
 
 export const experimentConfigsMap: Record<ExperimentKey, ExperimentConfig> = {
 	CHAT_SEARCH: { enabled: false },
-	SMART_MISTAKE_DETECTION: { enabled: false },
+	SMART_MISTAKE_DETECTION: { enabled: true },
 	ALWAYS_INCLUDE_FILE_DETAILS: { enabled: undefined },
 	COMMIT_REVIEW: { enabled: undefined },
 	USE_LITE_PROMPTS: { enabled: false },
-	POWER_STEERING: { enabled: false },
 	PREVENT_FOCUS_DISRUPTION: { enabled: false },
 	IMAGE_GENERATION: { enabled: false },
 	RUN_SLASH_COMMAND: { enabled: false },
-	MULTIPLE_NATIVE_TOOL_CALLS: { enabled: false },
 	CUSTOM_TOOLS: { enabled: false },
 }
 

@@ -851,13 +851,15 @@ export const ChatRowContent = ({
 							<ToolUseBlock>
 								<ToolUseBlockHeader
 									className="group"
-									onClick={() => {
+									onClick={() =>
 										vscode.postMessage({
 											type: "openFile",
 											text: tool.content,
-											values: { line: getJumpLine(tool)[0] || 0 },
+											values: {
+												line: tool.startLine ? tool.startLine : getJumpLine(tool)[0] || 0,
+											},
 										})
-									}}>
+									}>
 									{tool.path?.startsWith(".") && <span>.</span>}
 									<PathTooltip content={formatPathTooltip(tool.path, tool.reason)}>
 										<span className="whitespace-nowrap overflow-hidden text-ellipsis text-left mr-2 rtl">
@@ -874,24 +876,75 @@ export const ChatRowContent = ({
 						</div>
 					</>
 				)
-			case "fetchInstructions":
+			case "skill": {
+				const skillInfo = tool
 				return (
 					<>
 						<div style={headerStyle}>
-							{toolIcon("file-code")}
-							<span style={{ fontWeight: "bold" }}>{t("chat:instructions.wantsToFetch")}</span>
+							{toolIcon("book")}
+							<span style={{ fontWeight: "bold" }}>
+								{message.type === "ask" ? t("chat:skill.wantsToLoad") : t("chat:skill.didLoad")}
+							</span>
 						</div>
-						<div className="pl-6">
-							<CodeAccordian
-								code={tool.content}
-								language="markdown"
-								isLoading={message.partial && isLast}
-								isExpanded={isExpanded}
-								onToggleExpand={handleToggleExpand}
-							/>
+						<div
+							style={{
+								marginTop: "4px",
+								backgroundColor: "var(--vscode-editor-background)",
+								border: "1px solid var(--vscode-editorGroup-border)",
+								borderRadius: "4px",
+								overflow: "hidden",
+								cursor: "pointer",
+							}}
+							onClick={handleToggleExpand}>
+							<ToolUseBlockHeader
+								className="group"
+								style={{
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "space-between",
+									padding: "10px 12px",
+								}}>
+								<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+									<span style={{ fontWeight: "500", fontSize: "var(--vscode-font-size)" }}>
+										{skillInfo.skill}
+									</span>
+									{skillInfo.source && (
+										<VSCodeBadge style={{ fontSize: "calc(var(--vscode-font-size) - 2px)" }}>
+											{skillInfo.source}
+										</VSCodeBadge>
+									)}
+								</div>
+								<span
+									className={`codicon codicon-chevron-${isExpanded ? "up" : "down"} opacity-0 group-hover:opacity-100 transition-opacity duration-200`}></span>
+							</ToolUseBlockHeader>
+							{isExpanded && (skillInfo.args || skillInfo.description) && (
+								<div
+									style={{
+										padding: "12px 16px",
+										borderTop: "1px solid var(--vscode-editorGroup-border)",
+										display: "flex",
+										flexDirection: "column",
+										gap: "8px",
+									}}>
+									{skillInfo.description && (
+										<div style={{ color: "var(--vscode-descriptionForeground)" }}>
+											{skillInfo.description}
+										</div>
+									)}
+									{skillInfo.args && (
+										<div>
+											<span style={{ fontWeight: "500" }}>Arguments: </span>
+											<span style={{ color: "var(--vscode-descriptionForeground)" }}>
+												{skillInfo.args}
+											</span>
+										</div>
+									)}
+								</div>
+							)}
 						</div>
 					</>
 				)
+			}
 			case "listFilesTopLevel":
 				return (
 					<>
@@ -1281,9 +1334,11 @@ export const ChatRowContent = ({
 						</div>
 					)
 				case "reasoning":
+					const reasoningText = message?.text?.split?.("[thinking (empty)]").join("") || ""
+					if (!reasoningText) return null
 					return (
 						<ReasoningBlock
-							content={message.text || ""}
+							content={reasoningText}
 							ts={message.ts}
 							isStreaming={isStreaming}
 							isLast={isLast}
@@ -1381,7 +1436,7 @@ export const ChatRowContent = ({
 									{showSpeedInfo && tokensPerSecond !== undefined && (
 										<div
 											className="text-xs text-vscode-descriptionForeground border-vscode-dropdown-border/50 border px-1.5 py-0.5 rounded-lg"
-											title={t("chat:performance.tokensPerSecond")}>
+											title={t("chat:performance.tokensPerSecond", { time: tokensPerSecond })}>
 											{t("chat:performance.tokensPerSecond", { time: tokensPerSecond })}
 										</div>
 									)}
@@ -1428,7 +1483,7 @@ export const ChatRowContent = ({
 					let retryInfo, rawError, code, docsURL
 					docsURL = "costrict://settings?provider=claude-code"
 
-					if (message.text !== undefined) {
+					if (message.text != undefined) {
 						// Check for Claude Code authentication error first
 						if (message.text.includes("Not authenticated with Claude Code")) {
 							body = t("chat:apiRequest.errorMessage.claudeCodeNotAuthenticated")
@@ -1468,7 +1523,7 @@ export const ChatRowContent = ({
 						// retry information using this "tag" as a convention
 						const retryTimerMatch = message.text.match(/<retry_timer>(.*?)<\/retry_timer>/)
 						const retryTimer = retryTimerMatch && retryTimerMatch[1] ? parseInt(retryTimerMatch[1], 10) : 0
-						rawError = message.text.replace(/<retry_timer>(.*?)<\/retry_timer>/, "").trim()
+						rawError = message.text.replace(/<retry_timer>(.*?)<\/retry_timer>/, "")?.trim()
 						retryInfo = retryTimer > 0 && (
 							<p
 								className={cn(
@@ -1544,8 +1599,9 @@ export const ChatRowContent = ({
 				}
 				case "api_req_finished":
 					return null // we should never see this message type
-				case "text":
-					const loadingMessage = !message?.text?.trim() && isLast && isStreaming
+				case "text": {
+					const resultText = `${message?.text ?? ""}`
+					const loadingMessage = !resultText?.trim() && isLast && isStreaming
 
 					if (loadingMessage) {
 						return (
@@ -1557,7 +1613,7 @@ export const ChatRowContent = ({
 							</div>
 						)
 					}
-					if (!message?.text?.trim()) {
+					if (!resultText?.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -1589,6 +1645,7 @@ export const ChatRowContent = ({
 							</div>
 						</div>
 					)
+				}
 				case "user_feedback":
 					return (
 						<div className="group">
@@ -1753,7 +1810,8 @@ export const ChatRowContent = ({
 						/>
 					)
 				case "completion_result":
-					if (!message?.text?.trim()) {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -1762,7 +1820,7 @@ export const ChatRowContent = ({
 								{icon}
 								{title}
 								<div style={{ flexGrow: 1 }} />
-								<OpenMarkdownPreviewButton markdown={message.text} />
+								<OpenMarkdownPreviewButton markdown={resultText} />
 							</div>
 							<div className="border-l border-green-600/30 ml-2 pl-4 pb-1">
 								<Markdown
@@ -1927,6 +1985,51 @@ export const ChatRowContent = ({
 								</>
 							)
 						}
+						case "readCommandOutput": {
+							const formatBytes = (bytes: number) => {
+								if (bytes < 1024) return `${bytes} B`
+								if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+								return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+							}
+
+							// Determine if this is a search operation
+							const isSearch = sayTool.searchPattern !== undefined
+
+							let infoText = ""
+							if (isSearch) {
+								// Search mode: show pattern and match count
+								const matchText =
+									sayTool.matchCount !== undefined
+										? sayTool.matchCount === 1
+											? "1 match"
+											: `${sayTool.matchCount} matches`
+										: ""
+								infoText = `search: "${sayTool.searchPattern}"${matchText ? ` • ${matchText}` : ""}`
+							} else if (
+								sayTool.readStart !== undefined &&
+								sayTool.readEnd !== undefined &&
+								sayTool.totalBytes !== undefined
+							) {
+								// Read mode: show byte range
+								infoText = `${formatBytes(sayTool.readStart)} - ${formatBytes(sayTool.readEnd)} of ${formatBytes(sayTool.totalBytes)}`
+							} else if (sayTool.totalBytes !== undefined) {
+								infoText = formatBytes(sayTool.totalBytes)
+							}
+
+							return (
+								<div style={headerStyle}>
+									<FileCode2 className="w-4 shrink-0" aria-label="Read command output icon" />
+									<span style={{ fontWeight: "bold" }}>{t("chat:readCommandOutput.title")}</span>
+									{infoText && (
+										<span
+											className="text-xs ml-1"
+											style={{ color: "var(--vscode-descriptionForeground)" }}>
+											({infoText})
+										</span>
+									)}
+								</div>
+							)
+						}
 						default:
 							return null
 					}
@@ -1972,8 +2075,9 @@ export const ChatRowContent = ({
 						/>
 					)
 				}
-				default:
-					if (!message?.text?.trim()) {
+				default: {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -1997,6 +2101,7 @@ export const ChatRowContent = ({
 							</div>
 						</>
 					)
+				}
 			}
 		case "ask":
 			switch (message.ask) {
@@ -2082,17 +2187,18 @@ export const ChatRowContent = ({
 						</>
 					)
 				case "completion_result":
-					if (!message?.text?.trim()) {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
-					if (message.text) {
+					if (resultText) {
 						return (
 							<div className="group">
 								<div style={headerStyle}>
 									{icon}
 									{title}
 									<div style={{ flexGrow: 1 }} />
-									<OpenMarkdownPreviewButton markdown={message.text} />
+									<OpenMarkdownPreviewButton markdown={resultText} />
 								</div>
 								<div style={{ color: "var(--vscode-charts-green)", paddingTop: 10 }}>
 									<Markdown
@@ -2109,8 +2215,9 @@ export const ChatRowContent = ({
 					} else {
 						return null // Don't render anything when we get a completion_result ask without text
 					}
-				case "followup":
-					if (!message?.text?.trim()) {
+				case "followup": {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -2122,9 +2229,7 @@ export const ChatRowContent = ({
 								</div>
 							)}
 							<div className="flex flex-col gap-2 ml-6">
-								<Markdown
-									markdown={message.partial === true ? message?.text : followUpData?.question}
-								/>
+								<Markdown markdown={message.partial === true ? resultText : followUpData?.question} />
 								<FollowUpSuggest
 									suggestions={followUpData?.suggest}
 									onSuggestionClick={onSuggestionClick}
@@ -2136,8 +2241,10 @@ export const ChatRowContent = ({
 							</div>
 						</>
 					)
-				case "multiple_choice":
-					if (!message?.text?.trim()) {
+				}
+				case "multiple_choice": {
+					const resultText = `${message?.text ?? ""}`
+					if (!resultText.trim()) {
 						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
 					return (
@@ -2167,6 +2274,7 @@ export const ChatRowContent = ({
 							</div>
 						</>
 					)
+				}
 				case "auto_approval_max_req_reached": {
 					return <AutoApprovedRequestLimitWarning message={message} />
 				}
