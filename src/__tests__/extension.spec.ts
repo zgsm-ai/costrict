@@ -295,41 +295,44 @@ describe("extension.ts", () => {
 	})
 
 	test("does not call dotenvx.config when optional .env does not exist", async () => {
+		// Reset modules to test module-level initialization code
 		vi.resetModules()
-		vi.clearAllMocks()
-
-		// Re-import and reconfigure mocks after resetModules
+		
+		// Re-import and configure mocks after resetModules
 		const fs = await import("fs")
 		const dotenvx = await import("@dotenvx/dotenvx")
-
-		// Configure mocks BEFORE importing extension
+		
+		// Mock fs.existsSync to return false (no .env file exists)
 		vi.mocked(fs.existsSync).mockReturnValue(false)
 		vi.mocked(dotenvx.config).mockClear()
 
-		// Now import extension - this will execute the top-level code
-		const { activate } = await import("../extension")
-		await activate(mockContext)
-
+		// Import extension - this will execute the top-level code
+		// which should NOT call dotenvx.config when .env doesn't exist
+		// Note: We do NOT call activate() here - we're only testing module initialization
+		await import("../extension")
+		
+		// Verify dotenvx.config was not called
 		expect(dotenvx.config).not.toHaveBeenCalled()
 	})
 
 	test("calls dotenvx.config when optional .env exists", async () => {
+		// Reset modules to test module-level initialization code
 		vi.resetModules()
-		vi.clearAllMocks()
-
-		// Re-import and reconfigure mocks after resetModules
+		
+		// Re-import and configure mocks after resetModules
 		const fs = await import("fs")
 		const dotenvx = await import("@dotenvx/dotenvx")
-
-		// Configure mocks BEFORE importing extension
+		
+		// Mock fs.existsSync to return true (.env file exists)
 		vi.mocked(fs.existsSync).mockReturnValue(true)
 		vi.mocked(dotenvx.config).mockClear()
 
-		// Now import extension - this will execute the top-level code which calls dotenvx.config
-		const { activate } = await import("../extension")
-		await activate(mockContext)
-
-		// The module-level code calls dotenvx.config once when .env exists
+		// Import extension - this will execute the top-level code
+		// which should call dotenvx.config when .env exists
+		// Note: We do NOT call activate() here - we're only testing module initialization
+		await import("../extension")
+		
+		// Verify dotenvx.config was called exactly once
 		expect(dotenvx.config).toHaveBeenCalledTimes(1)
 	})
 
