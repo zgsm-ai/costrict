@@ -45,7 +45,7 @@ import {
 	DEFAULT_WRITE_DELAY_MS,
 	ORGANIZATION_ALLOW_ALL,
 	DEFAULT_MODES,
-	DEFAULT_FILE_READ_CHARACTER_LIMIT,
+	// DEFAULT_FILE_READ_CHARACTER_LIMIT,
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	getModelId,
 	MAX_WORKSPACE_FILES,
@@ -402,24 +402,24 @@ export class ClineProvider
 		return super.off(event, listener as any)
 	}
 
-	/**
-	 * Initialize cloud profile synchronization
-	 */
-	private async initializeCloudProfileSync() {
-		try {
-			// Check if authenticated and sync profiles
-			if (CloudService.hasInstance() && CloudService.instance.isAuthenticated()) {
-				await this.syncCloudProfiles()
-			}
+	// /**
+	//  * Initialize cloud profile synchronization
+	//  */
+	// private async initializeCloudProfileSync() {
+	// 	try {
+	// 		// Check if authenticated and sync profiles
+	// 		if (CloudService.hasInstance() && CloudService.instance.isAuthenticated()) {
+	// 			await this.syncCloudProfiles()
+	// 		}
 
-			// Set up listener for future updates
-			if (CloudService.hasInstance()) {
-				CloudService.instance.on("settings-updated", this.handleCloudSettingsUpdate)
-			}
-		} catch (error) {
-			this.log(`Error in initializeCloudProfileSync: ${error}`)
-		}
-	}
+	// 		// Set up listener for future updates
+	// 		if (CloudService.hasInstance()) {
+	// 			CloudService.instance.on("settings-updated", this.handleCloudSettingsUpdate)
+	// 		}
+	// 	} catch (error) {
+	// 		this.log(`Error in initializeCloudProfileSync: ${error}`)
+	// 	}
+	// }
 
 	/**
 	 * Handle cloud settings updates
@@ -633,7 +633,7 @@ export class ClineProvider
 	 * Clears all pending edit operations
 	 */
 	private clearAllPendingEditOperations(): void {
-		for (const [operationId, operation] of this.pendingOperations) {
+		for (const [_, operation] of this.pendingOperations) {
 			clearTimeout(operation.timeoutId)
 		}
 		this.pendingOperations.clear()
@@ -1937,7 +1937,7 @@ export class ClineProvider
 	async deleteTaskWithId(id: string, cascadeSubtasks: boolean = true) {
 		try {
 			// get the task directory full path and history item
-			const { taskDirPath, historyItem } = await this.getTaskWithId(id)
+			// const { taskDirPath, historyItem } = await this.getTaskWithId(id)
 
 			// Collect all task IDs to delete (parent + all subtasks)
 			const allIdsToDelete: string[] = [id]
@@ -3221,7 +3221,7 @@ export class ClineProvider
 
 		console.log(`[cancelTask] cancelling task ${task.taskId}.${task.instanceId}`)
 
-		const { historyItem, uiMessagesFilePath } = await this.getTaskWithId(task.taskId)
+		const { historyItem } = await this.getTaskWithId(task.taskId)
 
 		// Preserve parent and root task information for history item.
 		const rootTask = task.rootTask
