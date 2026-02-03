@@ -88,8 +88,8 @@ export function getClaudeCodeModels(localDefaultModelIds?: string): Record<strin
 		}
 	}
 
-	// Support multiple models separated by comma, semicolon, or pipe
-	// e.g., "claude-sonnet-4-5,claude-opus-4-5" or "claude-3-5-sonnet-20241022|claude-opus-4-1-20250805"
+	// Support multiple models separated
+	// e.g., "claude-sonnet-4-5,claude-opus-4-5"
 	if (local_anthropic_models.length > 0) {
 		const modelIds = local_anthropic_models
 			.map((id) => id.trim()) // Trim whitespace

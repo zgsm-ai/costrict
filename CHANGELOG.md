@@ -1,5 +1,23 @@
 # CoStrict Change Log
 
+## [2.3.3]
+
+- Enhanced gemini-cli prompt
+- Enhanced getClaudeCodeModels function to support multiple model IDs separated (`ANTHROPIC_MODEL`)
+- Simplified task command parameters: CancelTask and CloseTask commands no longer require data parameter
+- Improve Skills and Slash Commands settings
+- Fix worktree detection for Git repositories (Windows)
+- Refactored lite tool prompt system with improved text format and structure
+- Added QueuedMessagesUpdated event for better message queue tracking
+- Fixed type definitions in IPC.ts by removing incorrect type exports
+- Removed taskMap from API to simplify task management
+- Added @ai-sdk/mistral dependency to src/package.json
+- Cleaned up unused imports and variables in Task.ts, ClineProvider, and webviewMessageHandler
+- Improved error clipboard copy format with bracket labels
+- Updated extension tests to correctly handle .env file detection logic
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/7f6272afb96d1e692e4cc484ffb07fcadb6b9d0f)
+- Fix known issues
+
 ## [2.3.2]
 
 - Improve string parsing logic and add parameter safety
