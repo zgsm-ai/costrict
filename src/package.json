@@ -434,16 +434,6 @@
 			],
 			"view/title": [
 				{
-					"command": "costrict.diff.accept",
-					"when": "costrict.diff.isVisible",
-					"group": "navigation"
-				},
-				{
-					"command": "costrict.diff.cancel",
-					"when": "costrict.diff.isVisible",
-					"group": "navigation"
-				},
-				{
 					"command": "zgsm.marketplaceButtonClicked",
 					"group": "navigation@1",
 					"when": "false"
@@ -547,16 +537,6 @@
 			]
 		},
 		"keybindings": [
-			{
-				"command": "costrict.diff.accept",
-				"key": "ctrl+s",
-				"when": "costrict.diff.isVisible"
-			},
-			{
-				"command": "costrict.diff.accept",
-				"key": "cmd+s",
-				"when": "costrict.diff.isVisible"
-			},
 			{
 				"command": "zgsm.addToContext",
 				"key": "cmd+l",

@@ -51,6 +51,10 @@ export class DiffManager {
 	readonly onDidChange = this.onDidChangeEmitter.event
 	private diffDocuments = new Map<string, DiffInfo>()
 	private readonly subscriptions: vscode.Disposable[] = []
+	// 会话期间的"总是允许"缓存
+	private alwaysAllowedPaths: Set<string> = new Set()
+	// ClineProvider 弱引用,用于 webview 通信
+	private clineProviderRef?: WeakRef<any>
 
 	constructor(
 		private readonly log: (message: string) => void,
@@ -63,6 +67,17 @@ export class DiffManager {
 		)
 
 		this.onActiveEditorChange(vscode.window.activeTextEditor)
+	}
+
+	/**
+	 * Set ClineProvider reference for webview communication
+	 */
+	setClineProvider(provider: any) {
+		if (provider && typeof provider === "object") {
+			this.clineProviderRef = new WeakRef(provider)
+		} else {
+			this.log(`[DiffManager] Invalid provider for WeakRef: ${typeof provider}`)
+		}
 	}
 
 	dispose() {
@@ -112,6 +127,52 @@ export class DiffManager {
 			preserveFocus: true,
 		})
 		await vscode.commands.executeCommand("workbench.action.files.setActiveEditorWriteableInSession")
+
+		// 检查是否已经在"总是允许"列表中
+		if (this.alwaysAllowedPaths.has(filePath)) {
+			// 自动接受
+			await this.acceptDiff(rightDocUri)
+			return
+		}
+
+		// 尝试通过 webview 显示确认对话框
+		const provider = this.clineProviderRef?.deref()
+		if (provider && typeof provider.postMessageToWebview === "function") {
+			try {
+				await provider.postMessageToWebview({
+					type: "showIdeDiffConfirmDialog",
+					ideDiffConfirm: {
+						filePath,
+						fileName: path.basename(filePath),
+					},
+				})
+				// 消息已发送到 webview,等待用户响应
+				return
+			} catch (error) {
+				this.log(`Failed to send message to webview: ${error}`)
+				// 降级到原生对话框
+			}
+		}
+
+		// Fallback: 使用 VSCode 原生对话框
+		const choice = await vscode.window.showInformationMessage(
+			`Gemini CLI 请求修改文件: ${path.basename(filePath)}\n是否允许此操作?`,
+			{ modal: true },
+			"接受",
+			"拒绝",
+			"总是允许",
+		)
+
+		if (choice === "接受") {
+			await this.acceptDiff(rightDocUri)
+		} else if (choice === "拒绝") {
+			await this.cancelDiff(rightDocUri)
+		} else if (choice === "总是允许") {
+			this.alwaysAllowedPaths.add(filePath)
+			await this.acceptDiff(rightDocUri)
+		} else {
+			await this.cancelDiff(rightDocUri)
+		}
 	}
 
 	/**
@@ -228,5 +289,39 @@ export class DiffManager {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Accept diff by file path (called from webview response handler)
+	 */
+	async acceptDiffByPath(filePath: string) {
+		const diffInfo = Array.from(this.diffDocuments.values()).find((info) => info.originalFilePath === filePath)
+		if (diffInfo) {
+			await this.acceptDiff(diffInfo.rightDocUri)
+		}
+	}
+
+	/**
+	 * Cancel diff by file path (called from webview response handler)
+	 */
+	async cancelDiffByPath(filePath: string) {
+		const diffInfo = Array.from(this.diffDocuments.values()).find((info) => info.originalFilePath === filePath)
+		if (diffInfo) {
+			await this.cancelDiff(diffInfo.rightDocUri)
+		}
+	}
+
+	/**
+	 * Add path to always-allowed list
+	 */
+	addAlwaysAllowPath(filePath: string) {
+		this.alwaysAllowedPaths.add(filePath)
+	}
+
+	/**
+	 * 清除所有"总是允许"的授权
+	 */
+	clearAlwaysAllowedPaths() {
+		this.alwaysAllowedPaths.clear()
 	}
 }

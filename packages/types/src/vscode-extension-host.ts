@@ -133,6 +133,7 @@ export interface ExtensionMessage {
 		| "branchWorktreeIncludeResult"
 		| "folderSelected"
 		| "skills"
+		| "showIdeDiffConfirmDialog"
 	text?: string
 	payload?: any // eslint-disable-line @typescript-eslint/no-explicit-any
 	checkpointWarning?: {
@@ -293,6 +294,11 @@ export interface ExtensionMessage {
 	copyProgressItemName?: string
 	// folderSelected
 	path?: string
+	// showIdeDiffConfirmDialog
+	ideDiffConfirm?: {
+		filePath: string
+		fileName: string
+	}
 }
 
 export interface OpenAiCodexRateLimitsMessage {
@@ -687,6 +693,7 @@ export interface WebviewMessage {
 		| "deleteSkill"
 		| "moveSkill"
 		| "openSkillFile"
+		| "ideDiffConfirmResponse"
 	text?: string
 	// costrict-start
 	issueId?: string
@@ -794,6 +801,11 @@ export interface WebviewMessage {
 	worktreeForce?: boolean
 	worktreeNewWindow?: boolean
 	worktreeIncludeContent?: string
+	// ideDiffConfirmResponse
+	ideDiffConfirm?: {
+		filePath: string
+		action: "accept" | "reject" | "always-allow"
+	}
 }
 
 export interface RequestOpenAiCodexRateLimitsMessage {

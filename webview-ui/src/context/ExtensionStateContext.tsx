@@ -35,6 +35,18 @@ import { convertTextMateToHljs } from "@src/utils/textMateToHljs"
 import { defaultCodebaseIndexEnabled } from "../../../src/services/code-index/constants"
 import { ReviewTaskPayload, ReviewTaskStatus } from "@roo/codeReview"
 
+interface IdeDiffConfirm {
+	id: string // 唯一标识符
+	filePath: string
+	fileName: string
+	timestamp: number // 时间戳用于排序
+}
+
+interface IdeDiffConfirmQueue {
+	pending: IdeDiffConfirm[] // 等待处理的请求队列
+	current: IdeDiffConfirm | null // 当前正在显示的请求
+}
+
 export interface ExtensionStateContextType extends ExtensionState {
 	historyPreviewCollapsed?: boolean // Add the new state property
 	didHydrateState: boolean
@@ -179,6 +191,10 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setNoticesEnabled: (value: boolean) => void
 	showWorktreesInHomeScreen: boolean
 	setShowWorktreesInHomeScreen: (value: boolean) => void
+	ideDiffConfirm?: IdeDiffConfirm
+	showIdeDiffConfirmDialog: boolean
+	diffConfirmQueueLength: number // 队列长度
+	completeDiffConfirm: () => void // 处理完当前请求,显示下一个
 }
 
 export const ExtensionStateContext = createContext<ExtensionStateContextType | undefined>(undefined)
@@ -341,6 +357,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		Array<{ title: string; type: "always" | "once"; content: string; timestamp: number; expired: number }>
 	>([])
 	const [noticesEnabled, setNoticesEnabled] = useState(true)
+	const [diffConfirmQueue, setDiffConfirmQueue] = useState<IdeDiffConfirmQueue>({
+		pending: [],
+		current: null,
+	})
 
 	const setListApiConfigMeta = useCallback(
 		(value: ProviderSettingsEntry[]) => setState((prevState) => ({ ...prevState, listApiConfigMeta: value })),
@@ -360,6 +380,57 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			return newState
 		})
 	}, [])
+
+	/**
+	 * 处理下一个待确认的 diff 请求
+	 */
+	const processNextDiffConfirm = useCallback(() => {
+		setDiffConfirmQueue((prev) => {
+			if (prev.pending.length === 0) {
+				return { pending: [], current: null }
+			}
+
+			const [next, ...rest] = prev.pending
+			return {
+				pending: rest,
+				current: next,
+			}
+		})
+	}, [])
+
+	/**
+	 * 添加新的 diff 确认请求到队列
+	 */
+	const enqueueDiffConfirm = useCallback((confirm: Omit<IdeDiffConfirm, "id" | "timestamp">) => {
+		const newConfirm: IdeDiffConfirm = {
+			...confirm,
+			id: `${confirm.filePath}-${Date.now()}`, // 生成唯一 ID
+			timestamp: Date.now(),
+		}
+
+		setDiffConfirmQueue((prev) => {
+			// 如果当前没有显示对话框,直接设置为 current
+			if (!prev.current) {
+				return {
+					pending: prev.pending,
+					current: newConfirm,
+				}
+			}
+
+			// 否则加入队列
+			return {
+				pending: [...prev.pending, newConfirm],
+				current: prev.current,
+			}
+		})
+	}, [])
+
+	/**
+	 * 移除当前请求并处理下一个
+	 */
+	const completeDiffConfirm = useCallback(() => {
+		processNextDiffConfirm()
+	}, [processNextDiffConfirm])
 
 	const handleMessage = useCallback(
 		(event: MessageEvent) => {
@@ -546,9 +617,15 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					})
 					break
 				}
+				case "showIdeDiffConfirmDialog": {
+					if (message.ideDiffConfirm) {
+						enqueueDiffConfirm(message.ideDiffConfirm)
+					}
+					break
+				}
 			}
 		},
-		[setListApiConfigMeta],
+		[enqueueDiffConfirm, setListApiConfigMeta],
 	)
 
 	useEffect(() => {
@@ -726,6 +803,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		showWorktreesInHomeScreen: state.showWorktreesInHomeScreen ?? true,
 		setShowWorktreesInHomeScreen: (value) =>
 			setState((prevState) => ({ ...prevState, showWorktreesInHomeScreen: value })),
+		ideDiffConfirm: diffConfirmQueue.current || undefined,
+		showIdeDiffConfirmDialog: diffConfirmQueue.current !== null,
+		diffConfirmQueueLength: diffConfirmQueue.pending.length,
+		completeDiffConfirm,
 	}
 
 	return <ExtensionStateContext.Provider value={contextValue}>{children}</ExtensionStateContext.Provider>

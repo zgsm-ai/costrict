@@ -21,6 +21,7 @@ import WelcomeView from "./components/welcome/WelcomeViewProvider"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
 import { CheckpointRestoreDialog } from "./components/chat/CheckpointRestoreDialog"
 import { DeleteMessageDialog, EditMessageDialog } from "./components/chat/MessageModificationConfirmationDialog"
+import IdeDiffConfirmDialog from "./components/ide/IdeDiffConfirmDialog"
 import ErrorBoundary from "./components/ErrorBoundary"
 // import { WorktreesView } from "./components/worktrees"
 // import { CloudView } from "./components/cloud/CloudView"
@@ -81,6 +82,7 @@ const MemoizedReauthConfirmationDialog = React.memo(ReauthConfirmationDialog)
 const MemoizedCheckpointRestoreDialog = React.memo(CheckpointRestoreDialog)
 const MemoizedHumanRelayDialog = React.memo(HumanRelayDialog)
 const MemoizedZgsmCodebaseDisableConfirmDialog = React.memo(ZgsmCodebaseDisableConfirmDialog)
+const MemoizedIdeDiffConfirmDialog = React.memo(IdeDiffConfirmDialog)
 
 const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]>, Tab>> = {
 	chatButtonClicked: "chat",
@@ -111,6 +113,10 @@ const App = () => {
 		hasClosedCodeReviewWelcomeTips,
 		reviewTask,
 		setReviewTask,
+		showIdeDiffConfirmDialog,
+		ideDiffConfirm,
+		diffConfirmQueueLength,
+		completeDiffConfirm,
 	} = useExtensionState()
 	const { t } = useTranslation()
 
@@ -350,6 +356,48 @@ const App = () => {
 		}
 	}, [reviewTask.status, setReviewTask])
 
+	const handleIdeDiffAccept = useCallback(() => {
+		if (ideDiffConfirm) {
+			vscode.postMessage({
+				type: "ideDiffConfirmResponse",
+				ideDiffConfirm: {
+					filePath: ideDiffConfirm.filePath,
+					action: "accept",
+				},
+			})
+			// 处理下一个请求
+			completeDiffConfirm()
+		}
+	}, [ideDiffConfirm, completeDiffConfirm])
+
+	const handleIdeDiffReject = useCallback(() => {
+		if (ideDiffConfirm) {
+			vscode.postMessage({
+				type: "ideDiffConfirmResponse",
+				ideDiffConfirm: {
+					filePath: ideDiffConfirm.filePath,
+					action: "reject",
+				},
+			})
+			// 处理下一个请求
+			completeDiffConfirm()
+		}
+	}, [ideDiffConfirm, completeDiffConfirm])
+
+	const handleIdeDiffAlwaysAllow = useCallback(() => {
+		if (ideDiffConfirm) {
+			vscode.postMessage({
+				type: "ideDiffConfirmResponse",
+				ideDiffConfirm: {
+					filePath: ideDiffConfirm.filePath,
+					action: "always-allow",
+				},
+			})
+			// 处理下一个请求
+			completeDiffConfirm()
+		}
+	}, [ideDiffConfirm, completeDiffConfirm])
+
 	if (!didHydrateState) {
 		return null
 	}
@@ -551,6 +599,18 @@ const App = () => {
 					setZgsmCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>
+			{/* IDE Diff Confirm Dialog */}
+			{showIdeDiffConfirmDialog && ideDiffConfirm && (
+				<MemoizedIdeDiffConfirmDialog
+					isOpen={showIdeDiffConfirmDialog}
+					filePath={ideDiffConfirm.filePath}
+					fileName={ideDiffConfirm.fileName}
+					queueLength={diffConfirmQueueLength}
+					onAccept={handleIdeDiffAccept}
+					onReject={handleIdeDiffReject}
+					onAlwaysAllow={handleIdeDiffAlwaysAllow}
+				/>
+			)}
 		</>
 	)
 }

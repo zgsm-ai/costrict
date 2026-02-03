@@ -66,7 +66,7 @@ async function initialize(context: vscode.ExtensionContext, provider: ClineProvi
 	}
 	if (oldAutoStartCli) {
 		// auto start
-		costrictCliActivate(context)
+		costrictCliActivate(context, provider)
 	}
 	updateDefaultDebug(oldDebug ?? false)
 	//

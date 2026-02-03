@@ -100,7 +100,7 @@ let log: (message: string) => void = () => {}
 //   }
 // }
 
-export async function costrictCliActivate(context: vscode.ExtensionContext) {
+export async function costrictCliActivate(context: vscode.ExtensionContext, clineProvider?: any) {
 	logger = vscode.window.createOutputChannel("Gemini CLI IDE Companion")
 	log = createLogger(context, logger)
 	log("Extension activated")
@@ -134,7 +134,20 @@ export async function costrictCliActivate(context: vscode.ExtensionContext) {
 		})),
 	)
 
+	// 先创建 ideServer,然后再建立双向连接
 	ideServer = new IDEServer(log, diffManager)
+
+	// 建立双向连接
+	if (clineProvider) {
+		try {
+			clineProvider.setIdeServer(ideServer)
+			diffManager.setClineProvider(clineProvider)
+			log("IDE Companion connection established with ClineProvider")
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error)
+			log(`Failed to establish IDE Companion connection: ${message}`)
+		}
+	}
 	const ideCompanionStatusBar = new IdeCompanionStatusBar(ideServer, context)
 	context.subscriptions.push(ideCompanionStatusBar)
 	try {

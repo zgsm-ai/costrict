@@ -212,14 +212,22 @@ export class IDEServer {
 								this.log(
 									`Failed to send keep-alive ping for session ${sessionId}. Missed pings: ${missedPings}. Error: ${error.message}`,
 								)
-								if (missedPings >= 3) {
+								if (missedPings >= 2) {
 									this.log(
-										`Session ${sessionId} missed ${missedPings} pings. Closing connection and cleaning up interval.`,
+										`Session ${sessionId} missed ${missedPings} pings. Closing connection and cleaning up.`,
 									)
 									clearInterval(keepAlive)
+
+									// 清理会话并更新状态栏
+									if (transport.sessionId) {
+										this.log(`Removing stale session: ${transport.sessionId}`)
+										sessionsWithInitialNotification.delete(transport.sessionId)
+										delete this.transports[transport.sessionId]
+										this.fireStatusChange()
+									}
 								}
 							})
-					}, 60000) // 60 sec
+					}, 30000) // 30 sec - 更快的心跳检测
 
 					transport.onclose = () => {
 						clearInterval(keepAlive)
@@ -386,6 +394,13 @@ export class IDEServer {
 			}
 		}
 		this.fireStatusChange()
+	}
+
+	/**
+	 * Get DiffManager instance for external access
+	 */
+	getDiffManager(): DiffManager {
+		return this.diffManager
 	}
 
 	/**

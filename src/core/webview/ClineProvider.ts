@@ -163,6 +163,8 @@ export class ClineProvider
 	private zgsmAuthCommands?: ZgsmAuthCommands
 	private autoCleanupService?: AutoCleanupService
 	private taskCreationCallback: (task: Task) => void
+	// IDE Server 弱引用,用于 IDE Companion 集成
+	private ideServerRef?: WeakRef<any>
 	private taskEventListeners: WeakMap<Task, Array<() => void>> = new WeakMap()
 	private currentWorkspacePath: string | undefined
 
@@ -1238,6 +1240,25 @@ export class ClineProvider
 
 	public async postMessageToWebview(message: ExtensionMessage) {
 		await this.view?.webview.postMessage(message)
+	}
+
+	/**
+	 * Set IDE Server reference for IDE Companion integration
+	 */
+	setIdeServer(server: any) {
+		if (server && typeof server === "object") {
+			this.ideServerRef = new WeakRef(server)
+		} else {
+			this.log(`[ClineProvider] Invalid server for WeakRef: ${typeof server}`)
+		}
+	}
+
+	/**
+	 * Get DiffManager from IDE Server
+	 */
+	getIdeDiffManager(): any | undefined {
+		const server = this.ideServerRef?.deref()
+		return server?.getDiffManager?.()
 	}
 
 	private async getHMRHtmlContent(webview: vscode.Webview): Promise<string> {

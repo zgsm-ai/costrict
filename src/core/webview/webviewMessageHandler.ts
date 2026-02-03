@@ -4043,6 +4043,27 @@ export const webviewMessageHandler = async (
 			break
 		}
 
+		case "ideDiffConfirmResponse": {
+			try {
+				const diffManager = provider.getIdeDiffManager?.()
+				if (diffManager && message.ideDiffConfirm) {
+					const { filePath, action } = message.ideDiffConfirm
+
+					if (action === "always-allow") {
+						diffManager.addAlwaysAllowPath(filePath)
+						await diffManager.acceptDiffByPath(filePath)
+					} else if (action === "accept") {
+						await diffManager.acceptDiffByPath(filePath)
+					} else if (action === "reject") {
+						await diffManager.cancelDiffByPath(filePath)
+					}
+				}
+			} catch (error) {
+				provider.log(`Error handling ideDiffConfirmResponse: ${error}`, "error")
+			}
+			break
+		}
+
 		/**
 		 * Git Worktree Management
 		 */
