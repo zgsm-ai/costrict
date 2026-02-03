@@ -10,5 +10,13 @@ export { markdownFormattingSection } from "./markdown-formatting"
 export { getSkillsSection } from "./skills"
 
 // Lite versions - simplified and concise prompts
-export { getLiteToolUseGuidelinesSection, getLiteCapabilitiesSection, getLiteObjectiveSection } from "./lite-sections"
-// export { getLiteCapabilitiesSection, getLiteObjectiveSection } from "./lite-sections"
+export {
+	getLiteToolUseGuidelinesSection,
+	getLiteCapabilitiesSection,
+	getLiteObjectiveSection,
+	getLiteSharedToolUseSection,
+	getLiteRulesSection,
+} from "./lite-sections"
+
+// MUST_FOLLOW_RULES
+export { getMustFollowRules, getLiteMustFollowRules } from "./must-follow-rules"

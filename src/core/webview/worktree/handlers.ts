@@ -42,8 +42,14 @@ async function isWorkspaceSubfolder(cwd: string): Promise<boolean> {
 	}
 
 	// Normalize paths for comparison.
-	const normalizedCwd = path.normalize(cwd)
-	const normalizedGitRoot = path.normalize(gitRoot)
+	let normalizedCwd = path.normalize(cwd)
+	let normalizedGitRoot = path.normalize(gitRoot)
+
+	// On Windows, paths are case-insensitive, so convert to lowercase for consistent comparison
+	if (process.platform === "win32") {
+		normalizedCwd = normalizedCwd.toLowerCase()
+		normalizedGitRoot = normalizedGitRoot.toLowerCase()
+	}
 
 	// If cwd is deeper than git root, it's a subfolder.
 	return normalizedCwd !== normalizedGitRoot && normalizedCwd.startsWith(normalizedGitRoot)
@@ -54,6 +60,7 @@ export async function handleListWorktrees(provider: ClineProvider): Promise<Work
 	const isMultiRoot = workspaceFolders ? workspaceFolders.length > 1 : false
 
 	if (!workspaceFolders || workspaceFolders.length === 0) {
+		provider.log("[Worktree] No workspace folder open")
 		return {
 			worktrees: [],
 			isGitRepo: false,
@@ -66,6 +73,7 @@ export async function handleListWorktrees(provider: ClineProvider): Promise<Work
 
 	// Multi-root workspaces not supported for worktrees.
 	if (isMultiRoot) {
+		provider.log("[Worktree] Multi-root workspace not supported")
 		return {
 			worktrees: [],
 			isGitRepo: false,
@@ -77,7 +85,10 @@ export async function handleListWorktrees(provider: ClineProvider): Promise<Work
 	}
 
 	const cwd = provider.cwd
+	provider.log(`[Worktree] cwd: ${cwd}`)
+
 	const isGitRepo = await worktreeService.checkGitRepo(cwd)
+	provider.log(`[Worktree] isGitRepo: ${isGitRepo}`)
 
 	if (!isGitRepo) {
 		return {
@@ -92,6 +103,7 @@ export async function handleListWorktrees(provider: ClineProvider): Promise<Work
 
 	const isSubfolder = await isWorkspaceSubfolder(cwd)
 	const gitRootPath = (await worktreeService.getGitRootPath(cwd)) || ""
+	provider.log(`[Worktree] isSubfolder: ${isSubfolder}, gitRootPath: ${gitRootPath}`)
 
 	if (isSubfolder) {
 		return {

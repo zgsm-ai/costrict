@@ -29,7 +29,7 @@ import { findLastIndex } from "../../shared/array"
 const OAUTH_CLIENT_ID = "681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com"
 const OAUTH_CLIENT_SECRET = "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"
 const OAUTH_REDIRECT_URI = "http://localhost:45289"
-
+const GEMINI_CLI_VERSION = "0.28.0-nightly.20260128.adc8e11bb"
 // Code Assist API Configuration
 const CODE_ASSIST_ENDPOINT = "https://cloudcode-pa.googleapis.com"
 const CODE_ASSIST_API_VERSION = "v1internal"
@@ -110,6 +110,7 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 				url: `${CODE_ASSIST_ENDPOINT}/${CODE_ASSIST_API_VERSION}:${method}`,
 				method: "POST",
 				headers: {
+					// "User-Agent": `GeminiCLI/${GEMINI_CLI_VERSION}/${model} (${process.platform}; ${process.arch})`,
 					"Content-Type": "application/json",
 				},
 				responseType: "json",
@@ -356,10 +357,11 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 		try {
 			// Call Code Assist streaming endpoint using OAuth2Client
 			const response = await this.authClient.request({
-				url: `https://cloudcode-pa.googleapis.com/v1internal:streamGenerateContent`,
+				url: `${CODE_ASSIST_ENDPOINT}/${CODE_ASSIST_API_VERSION}:streamGenerateContent`,
 				method: "POST",
 				params: { alt: "sse" },
 				headers: {
+					"User-Agent": `GeminiCLI/${GEMINI_CLI_VERSION}/${model} (${process.platform}; ${process.arch})`,
 					"Content-Type": "application/json",
 				},
 				responseType: "stream",
@@ -493,6 +495,7 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 				url: `${CODE_ASSIST_ENDPOINT}/${CODE_ASSIST_API_VERSION}:generateContent`,
 				method: "POST",
 				headers: {
+					"User-Agent": `GeminiCLI/${GEMINI_CLI_VERSION}/${model} (${process.platform}; ${process.arch})`,
 					"Content-Type": "application/json",
 				},
 				data: JSON.stringify(requestBody),

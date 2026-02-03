@@ -1,8 +1,9 @@
 import { addCustomInstructions } from "../sections/custom-instructions"
 import { getCapabilitiesSection } from "../sections/capabilities"
-import { getRulesSection, getCommandChainOperator } from "../sections/rules"
+import { getRulesSection } from "../sections/rules"
 import { McpHub } from "../../../services/mcp/McpHub"
 import * as shellUtils from "../../../utils/shell"
+import { getCommandChainOperator } from "../sections/shell"
 
 describe("addCustomInstructions", () => {
 	it("adds vscode language to custom instructions", async () => {

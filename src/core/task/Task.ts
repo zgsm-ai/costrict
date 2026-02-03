@@ -3653,7 +3653,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				// the assistant message is already in history. Otherwise, tool_result blocks would appear
 				// BEFORE their corresponding tool_use blocks, causing API errors.
 				if (!assistantMessage?.length) {
-					await pWaitFor(() => assistantMessage.length > 0, { timeout: 1_000 }).catch(() => {
+					await pWaitFor(() => assistantMessage.length > 0, { timeout: 3_000 }).catch(() => {
 						console.error("assistantMessage was empty after 3 seconds")
 					})
 				}
@@ -4102,6 +4102,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				this.api.getModel().id,
 				undefined,
 				provider.getSkillsManager(),
+				experiments?.useLitePrompts ?? false,
 			)
 		})()
 	}
