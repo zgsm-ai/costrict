@@ -1,5 +1,5 @@
 {
-	"greeting": "歡迎使用 Roo Code！",
+	"greeting": "歡迎使用 CoStrict！",
 	"performance": {
 		"firstToken": "首token達到時間",
 		"totalDuration": "傳送總耗時",
@@ -31,12 +31,12 @@
 		"sharePublicly": "公開分享",
 		"sharePubliclyDescription": "任何擁有連結的人都可存取",
 		"connectToCloud": "連線至雲端",
-		"connectToCloudDescription": "登入 Roo Code Cloud 以分享工作",
+		"connectToCloudDescription": "登入 CoStrict Cloud 以分享工作",
 		"sharingDisabledByOrganization": "組織已停用分享功能",
 		"shareSuccessOrganization": "組織連結已複製到剪貼簿",
 		"shareSuccessPublic": "公開連結已複製到剪貼簿",
-		"openInCloud": "在 Roo Code Cloud 中開啟工作",
-		"openInCloudIntro": "從任何地方繼續監控或與 Roo 互動。掃描、點選或複製即可開啟。",
+		"openInCloud": "在 CoStrict Cloud 中開啟工作",
+		"openInCloudIntro": "從任何地方繼續監控或與 CoStrict 互動。掃描、點選或複製即可開啟。",
 		"openApiHistory": "開啟 API 歷史紀錄",
 		"openUiHistory": "開啟 UI 歷史紀錄",
 		"backToParentTask": "上層工作"
@@ -118,7 +118,7 @@
 		"placeholder": "編輯訊息..."
 	},
 	"scrollToBottom": "捲動至對話底部",
-	"about": "Roo 是編輯器中的完整 AI 開發團隊。",
+	"about": "CoStrict 是編輯器中的完整 AI 開發團隊。",
 	"docs": "請參閱 <DocsLink>說明文件</DocsLink> 開始使用。",
 	"onboarding": "想要做什麼呢？",
 	"rooTips": {
@@ -128,7 +128,7 @@
 		},
 		"modelAgnostic": {
 			"title": "自備模型，無加價無鎖定",
-			"description": "使用自己的供應商金鑰，甚至可執行本機推論 - Roo 不額外收費"
+			"description": "使用自己的供應商金鑰，甚至可執行本機推論 - CoStrict 不額外收費"
 		}
 	},
 	"selectMode": "選擇互動模式",
@@ -139,7 +139,7 @@
 		"title": "模式",
 		"marketplace": "模式市集",
 		"settings": "模式設定",
-		"description": "專門量身打造 Roo 行為的角色。",
+		"description": "專門量身打造 CoStrict 行為的角色。",
 		"searchPlaceholder": "搜尋模式...",
 		"noResults": "找不到結果"
 	},
@@ -222,44 +222,44 @@
 		"didLoad": "CoStrict 載入了技能"
 	},
 	"instructions": {
-		"wantsToFetch": "Roo 想要取得詳細指示以協助目前工作"
+		"wantsToFetch": "CoStrict 想要取得詳細指示以協助目前工作"
 	},
 	"fileOperations": {
-		"wantsToRead": "Roo 想要讀取此檔案",
-		"wantsToReadMultiple": "Roo 想要讀取多個檔案",
-		"wantsToReadAndXMore": "Roo 想要讀取此檔案以及另外 {{count}} 個檔案",
-		"wantsToReadOutsideWorkspace": "Roo 想要讀取此工作區外的檔案",
-		"didRead": "Roo 已讀取此檔案",
-		"wantsToEdit": "Roo 想要編輯此檔案",
-		"wantsToEditOutsideWorkspace": "Roo 想要編輯此工作區外的檔案",
-		"wantsToEditProtected": "Roo 想要編輯受保護的設定檔案",
-		"wantsToApplyBatchChanges": "Roo 想要對多個檔案套用變更",
-		"wantsToGenerateImage": "Roo 想要產生圖片",
-		"wantsToGenerateImageOutsideWorkspace": "Roo 想要在工作區外產生圖片",
-		"wantsToGenerateImageProtected": "Roo 想要在受保護位置產生圖片",
-		"didGenerateImage": "Roo 已產生圖片",
-		"wantsToCreate": "Roo 想要建立新檔案",
-		"wantsToInsert": "Roo 想要在此檔案中插入內容",
-		"wantsToInsertWithLineNumber": "Roo 想要在此檔案第 {{lineNumber}} 行插入內容",
-		"wantsToInsertAtEnd": "Roo 想要在此檔案尾端新增內容"
+		"wantsToRead": "CoStrict 想要讀取此檔案",
+		"wantsToReadMultiple": "CoStrict 想要讀取多個檔案",
+		"wantsToReadAndXMore": "CoStrict 想要讀取此檔案以及另外 {{count}} 個檔案",
+		"wantsToReadOutsideWorkspace": "CoStrict 想要讀取此工作區外的檔案",
+		"didRead": "CoStrict 已讀取此檔案",
+		"wantsToEdit": "CoStrict 想要編輯此檔案",
+		"wantsToEditOutsideWorkspace": "CoStrict 想要編輯此工作區外的檔案",
+		"wantsToEditProtected": "CoStrict 想要編輯受保護的設定檔案",
+		"wantsToApplyBatchChanges": "CoStrict 想要對多個檔案套用變更",
+		"wantsToGenerateImage": "CoStrict 想要產生圖片",
+		"wantsToGenerateImageOutsideWorkspace": "CoStrict 想要在工作區外產生圖片",
+		"wantsToGenerateImageProtected": "CoStrict 想要在受保護位置產生圖片",
+		"didGenerateImage": "CoStrict 已產生圖片",
+		"wantsToCreate": "CoStrict 想要建立新檔案",
+		"wantsToInsert": "CoStrict 想要在此檔案中插入內容",
+		"wantsToInsertWithLineNumber": "CoStrict 想要在此檔案第 {{lineNumber}} 行插入內容",
+		"wantsToInsertAtEnd": "CoStrict 想要在此檔案尾端新增內容"
 	},
 	"directoryOperations": {
-		"wantsToViewTopLevel": "Roo 想要檢視此目錄中最上層的檔案",
-		"didViewTopLevel": "Roo 已檢視此目錄中最上層的檔案",
-		"wantsToViewTopLevelOutsideWorkspace": "Roo 想要檢視此目錄（工作區外）中最上層的檔案",
-		"didViewTopLevelOutsideWorkspace": "Roo 已檢視此目錄（工作區外）中最上層的檔案",
-		"wantsToViewRecursive": "Roo 想要遞迴檢視此目錄中的所有檔案",
-		"didViewRecursive": "Roo 已遞迴檢視此目錄中的所有檔案",
-		"wantsToViewRecursiveOutsideWorkspace": "Roo 想要遞迴檢視此目錄（工作區外）中的所有檔案",
-		"didViewRecursiveOutsideWorkspace": "Roo 已遞迴檢視此目錄（工作區外）中的所有檔案",
-		"wantsToSearch": "Roo 想要在此目錄中搜尋 <code>{{regex}}</code>",
-		"didSearch": "Roo 已在此目錄中搜尋 <code>{{regex}}</code>",
-		"wantsToSearchOutsideWorkspace": "Roo 想要在此目錄（工作區外）中搜尋 <code>{{regex}}</code>",
-		"didSearchOutsideWorkspace": "Roo 已在此目錄（工作區外）中搜尋 <code>{{regex}}</code>"
+		"wantsToViewTopLevel": "CoStrict 想要檢視此目錄中最上層的檔案",
+		"didViewTopLevel": "CoStrict 已檢視此目錄中最上層的檔案",
+		"wantsToViewTopLevelOutsideWorkspace": "CoStrict 想要檢視此目錄（工作區外）中最上層的檔案",
+		"didViewTopLevelOutsideWorkspace": "CoStrict 已檢視此目錄（工作區外）中最上層的檔案",
+		"wantsToViewRecursive": "CoStrict 想要遞迴檢視此目錄中的所有檔案",
+		"didViewRecursive": "CoStrict 已遞迴檢視此目錄中的所有檔案",
+		"wantsToViewRecursiveOutsideWorkspace": "CoStrict 想要遞迴檢視此目錄（工作區外）中的所有檔案",
+		"didViewRecursiveOutsideWorkspace": "CoStrict 已遞迴檢視此目錄（工作區外）中的所有檔案",
+		"wantsToSearch": "CoStrict 想要在此目錄中搜尋 <code>{{regex}}</code>",
+		"didSearch": "CoStrict 已在此目錄中搜尋 <code>{{regex}}</code>",
+		"wantsToSearchOutsideWorkspace": "CoStrict 想要在此目錄（工作區外）中搜尋 <code>{{regex}}</code>",
+		"didSearchOutsideWorkspace": "CoStrict 已在此目錄（工作區外）中搜尋 <code>{{regex}}</code>"
 	},
 	"codebaseSearch": {
-		"wantsToSearch": "Roo 想要在程式碼庫中搜尋 <code>{{query}}</code>",
-		"wantsToSearchWithPath": "Roo 想要在 <code>{{path}}</code> 中搜尋程式碼庫 <code>{{query}}</code>",
+		"wantsToSearch": "CoStrict 想要在程式碼庫中搜尋 <code>{{query}}</code>",
+		"wantsToSearchWithPath": "CoStrict 想要在 <code>{{path}}</code> 中搜尋程式碼庫 <code>{{query}}</code>",
 		"didSearch_one": "找到 1 個結果",
 		"didSearch_other": "找到 {{count}} 個結果",
 		"resultTooltip": "相似度評分：{{score}}（點選以開啟檔案）"
@@ -284,25 +284,25 @@
 	"response": "回應",
 	"arguments": "參數",
 	"text": {
-		"rooSaid": "Roo 說"
+		"rooSaid": "CoStrict 說"
 	},
 	"feedback": {
 		"youSaid": "{{username}}說",
 		"defaultUserName": "您"
 	},
 	"mcp": {
-		"wantsToUseTool": "Roo 想要在 {{serverName}} MCP 伺服器上使用工具",
-		"wantsToAccessResource": "Roo 想要存取 {{serverName}} MCP 伺服器上的資源"
+		"wantsToUseTool": "CoStrict 想要在 {{serverName}} MCP 伺服器上使用工具",
+		"wantsToAccessResource": "CoStrict 想要存取 {{serverName}} MCP 伺服器上的資源"
 	},
 	"modes": {
-		"wantsToSwitch": "Roo 想要切換至 {{mode}} 模式",
-		"wantsToSwitchWithReason": "Roo 想要切換至 {{mode}} 模式，原因：{{reason}}",
-		"didSwitch": "Roo 已切換至 {{mode}} 模式",
-		"didSwitchWithReason": "Roo 已切換至 {{mode}} 模式，原因：{{reason}}"
+		"wantsToSwitch": "CoStrict 想要切換至 {{mode}} 模式",
+		"wantsToSwitchWithReason": "CoStrict 想要切換至 {{mode}} 模式，原因：{{reason}}",
+		"didSwitch": "CoStrict 已切換至 {{mode}} 模式",
+		"didSwitchWithReason": "CoStrict 已切換至 {{mode}} 模式，原因：{{reason}}"
 	},
 	"subtasks": {
-		"wantsToCreate": "Roo 想要在 {{mode}} 模式下建立新的子任務",
-		"wantsToFinish": "Roo 想要完成此子任務",
+		"wantsToCreate": "CoStrict 想要在 {{mode}} 模式下建立新的子任務",
+		"wantsToFinish": "CoStrict 想要完成此子任務",
 		"newTaskContent": "子任務指示",
 		"completionContent": "子工作已完成",
 		"resultContent": "子任務結果",
@@ -312,7 +312,7 @@
 		"goToSubtask": "查看工作"
 	},
 	"questions": {
-		"hasQuestion": "Roo 有一個問題"
+		"hasQuestion": "CoStrict 有一個問題"
 	},
 	"taskCompleted": "工作完成",
 	"error": "錯誤",
@@ -326,7 +326,7 @@
 	"diffError": {
 		"title": "編輯失敗"
 	},
-	"troubleMessage": "Roo 遇到問題...",
+	"troubleMessage": "CoStrict 遇到問題...",
 	"errorDetails": {
 		"link": "詳細內容",
 		"title": "錯誤詳細資訊",
@@ -356,13 +356,13 @@
 		"triggerLabelAll": "BRRR"
 	},
 	"announcement": {
-		"title": "Roo Code {{version}} 已發布",
-		"support": "請在 <githubLink>GitHub</githubLink> 上給 Roo Code 星星支持我們。",
+		"title": "CoStrict {{version}} 已發布",
+		"support": "請在 <githubLink>GitHub</githubLink> 上給 CoStrict 星星支持我們。",
 		"stealthModel": {
-			"feature": "<bold>限時免費隱形模型</bold> - Code Supernova：現已升級為 <bold>1M Token 上下文視窗</bold>！一個支援影像輸入的多功能代理程式設計模型，透過 Roo Code Cloud 提供。",
+			"feature": "<bold>限時免費隱形模型</bold> - Code Supernova：現已升級為 <bold>1M Token 上下文視窗</bold>！一個支援影像輸入的多功能代理程式設計模型，透過 CoStrict Cloud 提供。",
 			"note": "（注意：提示詞和回應會被模型建立者記錄並用於改進模型）",
-			"connectButton": "連線到 Roo Code Cloud",
-			"selectModel": "在設定中從 Roo Code Cloud 供應商選擇 <code>roo/code-supernova</code> 開始使用。",
+			"connectButton": "連線到 CoStrict Cloud",
+			"selectModel": "在設定中從 CoStrict Cloud 供應商選擇 <code>roo/code-supernova</code> 開始使用。",
 			"goToSettingsButton": "前往設定"
 		},
 		"release": {
@@ -395,7 +395,7 @@
 	"browser": {
 		"session": "瀏覽器工作階段",
 		"active": "使用中",
-		"rooWantsToUse": "Roo 想要使用瀏覽器",
+		"rooWantsToUse": "CoStrict 想要使用瀏覽器",
 		"consoleLogs": "主控台記錄",
 		"noNewLogs": "（沒有新記錄）",
 		"screenshot": "瀏覽器螢幕擷圖",
@@ -441,7 +441,7 @@
 	"profileViolationWarning": "目前設定檔與您的組織設定不相容",
 	"shellIntegration": {
 		"title": "命令執行警告",
-		"description": "命令正在沒有 VS Code 終端機 Shell 整合的情況下執行。若要隱藏此警告，可在 <settingsLink>Roo Code 設定</settingsLink> 的 <strong>終端機</strong> 區塊中停用 Shell 整合，或使用下方連結排解 VS Code 終端機整合問題。",
+		"description": "命令正在沒有 VS Code 終端機 Shell 整合的情況下執行。若要隱藏此警告，可在 <settingsLink>CoStrict 設定</settingsLink> 的 <strong>終端機</strong> 區塊中停用 Shell 整合，或使用下方連結排解 VS Code 終端機整合問題。",
 		"troubleshooting": "點選此處查看 Shell 整合說明文件。"
 	},
 	"indexingStatus": {
@@ -491,18 +491,18 @@
 		"clickToEdit": "點選以編輯訊息"
 	},
 	"slashCommand": {
-		"wantsToRun": "Roo 想要執行斜線指令",
-		"didRun": "Roo 執行了斜線指令"
+		"wantsToRun": "CoStrict 想要執行斜線指令",
+		"didRun": "CoStrict 執行了斜線指令"
 	},
 	"ask": {
 		"autoApprovedRequestLimitReached": {
 			"title": "已達自動核准請求上限",
-			"description": "Roo 已達到 {{count}} 次 API 請求的自動核准上限。您想重設計數並繼續工作嗎？",
+			"description": "CoStrict 已達到 {{count}} 次 API 請求的自動核准上限。您想重設計數並繼續工作嗎？",
 			"button": "重設並繼續"
 		},
 		"autoApprovedCostLimitReached": {
 			"title": "已達自動核准費用上限",
-			"description": "Roo 已達到 ${{count}} 的自動核准費用上限。您想重設費用並繼續工作嗎？",
+			"description": "CoStrict 已達到 ${{count}} 的自動核准費用上限。您想重設費用並繼續工作嗎？",
 			"button": "重設並繼續"
 		}
 	},
@@ -530,6 +530,6 @@
 		"openMcpSettings": "開啟 MCP 設定"
 	},
 	"readCommandOutput": {
-		"title": "Roo read command output"
+		"title": "CoStrict read command output"
 	}
 }

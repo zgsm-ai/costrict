@@ -1822,7 +1822,6 @@ export const ChatRowContent = ({
 								<div style={{ flexGrow: 1 }} />
 								<OpenMarkdownPreviewButton markdown={resultText} />
 							</div>
-							{message.ts}
 							<div className="border-l border-green-600/30 ml-2 pl-4 pb-1">
 								<Markdown
 									collapseWithoutScroll={collapseWithoutScrollEnabled}

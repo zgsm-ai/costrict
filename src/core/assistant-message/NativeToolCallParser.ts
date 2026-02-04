@@ -215,6 +215,12 @@ export class NativeToolCallParser {
 
 		if (finishReason === "tool_calls" && this.rawChunkTracker.size > 0) {
 			for (const [, tracked] of this.rawChunkTracker.entries()) {
+				if (!tracked.hasStarted) {
+					console.warn(
+						`[NativeToolCallParser] Skipping tool_call_end for unstarted tool call: ${tracked.id} (no name received)`,
+					)
+					continue
+				}
 				events.push({
 					type: "tool_call_end",
 					id: tracked.id,

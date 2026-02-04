@@ -3126,8 +3126,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								})
 
 								for (const event of events) {
-									console.log(event.type, event.id);
-
 									this.handleToolCallEvent(event)
 								}
 								break
@@ -3138,12 +3136,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							case "tool_call_start":
 							case "tool_call_delta":
 							case "tool_call_end":
-								console.log(chunk.type, chunk.id);
 								this.handleToolCallEvent(chunk)
 								break
 
 							case "tool_call": {
-								console.log(chunk.type, chunk.id);
 								// Legacy: Handle complete tool calls (for backward compatibility)
 								// Convert native tool call to ToolUse format
 								const toolUse = NativeToolCallParser.parseToolCall(
