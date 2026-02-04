@@ -62,19 +62,19 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 			}
 		})
 	}, [])
-
+	const questions = data?.questions || []
 	// Validate that all questions have at least one selection
-	const isFormValid = data?.questions?.every?.((question) => {
+	const isFormValid = questions.every((question) => {
 		const questionSelections = selections[question.id] || []
 		return questionSelections.length > 0
 	})
 
 	// Calculate answered questions count
-	const answeredCount = data.questions.filter((question) => {
+	const answeredCount = questions.filter((question) => {
 		const questionSelections = selections[question.id] || []
 		return questionSelections.length > 0
 	}).length
-	const totalCount = data.questions.length
+	const totalCount = questions.length
 
 	const handleSubmit = useCallback(() => {
 		// Allow submission even if no options are selected
@@ -147,7 +147,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 				<>
 					{/* Questions - scrollable area */}
 					<div className="flex flex-col gap-2.5 p-4 max-h-[400px] overflow-y-auto">
-						{(data?.questions || []).map((question, qIndex) => {
+						{questions.map((question, qIndex) => {
 							const currentSelections = selections[question.id] || []
 							const selectionTypeLabel = question.allow_multiple
 								? t("chat:multipleChoice.multiSelect")

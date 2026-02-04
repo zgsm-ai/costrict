@@ -383,13 +383,13 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 						],
 					}
 				: { role: "system" as const, content: systemPrompt }
-			if (_mid?.includes("kimi") || _mid?.includes("glm") || isMiniMax || _mid?.includes("claude")) {
+			if (!_mid?.includes("qwen-2.5-vl")) {
 				convertedMessages = [
 					{ role: "system", content: systemPrompt },
 					...convertToZAiFormat(messages, { mergeToolResultText: true }),
 				]
 			} else {
-				if (_mid?.includes("qwen")) {
+				if (_mid?.includes("qwen-2.5-vl")) {
 					if (Array.isArray(systemMessage.content)) {
 						systemMessage.content[0].text = systemMessage.content[0].text + "\n" + liteToolContractPrompt()
 					} else {
@@ -545,13 +545,13 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		// For MiniMax models, allow matching <think> tags anywhere in the stream
 		// because MiniMax may include newlines before the <think> tag
 		const isMiniMax = modelInfo?.id?.toLowerCase().includes("minimax")
-		const isQwen = modelInfo?.id?.toLowerCase().includes("qwen") // Qwen model understands <tool_call> tags
+		const isToolsLessQwen = modelInfo?.id?.toLowerCase().includes("qwen-2.5-vl") // Qwen model understands <tool_call> tags
 		let matcher: TagMatcher<{
 			readonly type: "reasoning" | "text" | "fake_tool_call"
 			readonly text: string
 		}>
 		// let mockToolId = ""
-		if (isQwen) {
+		if (isToolsLessQwen) {
 			// mockToolId = "fake_tool_call"
 			matcher = new TagMatcher(
 				"tool_call",
@@ -772,7 +772,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			}
 		} finally {
 			if (!hasReasoning) {
-				yield { type: "reasoning", text: "[thinking (empty)]" }
+				yield { type: "reasoning", text: " " }
 			}
 			// Always flush remaining content, even on abort
 			// This ensures no content is lost in the buffer
@@ -917,12 +917,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		if (!info.id) {
 			info.id = id
 		}
-		if (
-			(id.toLowerCase().includes("kimi") ||
-				id.toLowerCase().includes("minimax") ||
-				id.toLowerCase().includes("glm")) &&
-			info.preserveReasoning == null
-		) {
+		if (info.preserveReasoning == null) {
 			info.preserveReasoning = true
 		}
 		return { id, info, ...params }

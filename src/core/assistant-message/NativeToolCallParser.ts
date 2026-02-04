@@ -220,6 +220,8 @@ export class NativeToolCallParser {
 					id: tracked.id,
 				})
 			}
+			// Clear the tracker to prevent duplicate finalization in finalizeRawChunks()
+			this.rawChunkTracker.clear()
 		}
 
 		return events
@@ -234,7 +236,9 @@ export class NativeToolCallParser {
 
 		if (this.rawChunkTracker.size > 0) {
 			for (const [, tracked] of this.rawChunkTracker.entries()) {
-				if (tracked.hasStarted) {
+				// Only generate tool_call_end if the tool call hasn't been finalized yet
+				// This prevents duplicate finalization when tool_call_end was already received
+				if (tracked.hasStarted && this.streamingToolCalls.has(tracked.id)) {
 					events.push({
 						type: "tool_call_end",
 						id: tracked.id,

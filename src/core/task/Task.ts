@@ -3126,6 +3126,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								})
 
 								for (const event of events) {
+									console.log(event.type, event.id);
+
 									this.handleToolCallEvent(event)
 								}
 								break
@@ -3136,10 +3138,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							case "tool_call_start":
 							case "tool_call_delta":
 							case "tool_call_end":
+								console.log(chunk.type, chunk.id);
 								this.handleToolCallEvent(chunk)
 								break
 
 							case "tool_call": {
+								console.log(chunk.type, chunk.id);
 								// Legacy: Handle complete tool calls (for backward compatibility)
 								// Convert native tool call to ToolUse format
 								const toolUse = NativeToolCallParser.parseToolCall(
@@ -3652,11 +3656,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				// This ensures that when new_task triggers delegation and calls flushPendingToolResultsToHistory(),
 				// the assistant message is already in history. Otherwise, tool_result blocks would appear
 				// BEFORE their corresponding tool_use blocks, causing API errors.
-				if (!assistantMessage?.length) {
-					await pWaitFor(() => assistantMessage.length > 0, { timeout: 3_000 }).catch(() => {
-						console.error("assistantMessage was empty after 3 seconds")
-					})
-				}
+				// if (!assistantMessage?.length) {
+				// 	await pWaitFor(() => assistantMessage.length > 0, { timeout: 3_000 }).catch(() => {
+				// 		console.error("assistantMessage was empty after 3 seconds")
+				// 	})
+				// }
 				// Check if we have any content to process (text or tool uses)
 				const hasTextContent = assistantMessage.length > 0
 

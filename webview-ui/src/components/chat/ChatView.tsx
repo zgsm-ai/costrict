@@ -867,20 +867,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					if (isCompletedSubtaskForClick) {
 						startNewTask()
 					} else {
-						// Only send text/images if they exist
-						if (trimmedInput || (images && images.length > 0)) {
-							vscode.postMessage({
-								type: "askResponse",
-								askResponse: "yesButtonClicked",
-								text: trimmedInput,
-								images: images,
-							})
-							// Clear input state after sending
-							setInputValue("")
-							setSelectedImages([])
-						} else {
-							vscode.postMessage({ type: "askResponse", askResponse: "yesButtonClicked" })
-						}
+						// Send confirmation signal. Note: backend only processes text when response === "messageResponse",
+						// so text/images are not used. Input is preserved for user convenience.
+						vscode.postMessage({ type: "askResponse", askResponse: "yesButtonClicked" })
 					}
 					break
 				case "completion_result":
