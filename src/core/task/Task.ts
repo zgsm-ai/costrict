@@ -1351,6 +1351,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// 	}
 	}
 
+	private async addToClineMessagesAt(message: ClineMessage, index: number) {
+		this.clineMessages.splice(index, 0, message)
+		const provider = this.providerRef.deref()
+		await provider?.postStateToWebviewWithoutTaskHistory()
+		this.emit(RooCodeEventName.Message, { action: "created", message })
+		await this.saveClineMessages()
+	}
+
 	public async overwriteClineMessages(newMessages: ClineMessage[]) {
 		this.clineMessages = newMessages
 		restoreTodoListForTask(this)
@@ -3171,6 +3179,34 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								presentAssistantMessage(this)
 								break
 							}
+							case "fake_reasoning": {
+								reasoningMessage += chunk.text
+								if (this.apiConfiguration?.apiProvider === "zgsm" && lastApiReqIndex >= 0) {
+									const lastApiReq = this.clineMessages[lastApiReqIndex]
+									if (lastApiReq === this.clineMessages[this.clineMessages.length - 1]) {
+										await this.addToClineMessages({
+											ts: lastApiReq.ts,
+											type: "say",
+											say: "reasoning",
+											text: chunk.text,
+											partial: true,
+										})
+									} else {
+										// Check if the last message is a partial message.
+										await this.addToClineMessagesAt(
+											{
+												ts: lastApiReq?.ts,
+												type: "say",
+												say: "reasoning",
+												text: chunk.text,
+												partial: true,
+											},
+											lastApiReqIndex + 1,
+										)
+									}
+								}
+								break
+							}
 							case "automodel": {
 								// Check if it is Selected LLM information (only in Auto model mode).
 								if (
@@ -3652,11 +3688,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				// This ensures that when new_task triggers delegation and calls flushPendingToolResultsToHistory(),
 				// the assistant message is already in history. Otherwise, tool_result blocks would appear
 				// BEFORE their corresponding tool_use blocks, causing API errors.
-				if (!assistantMessage?.length) {
-					await pWaitFor(() => assistantMessage.length > 0, { timeout: 3_000 }).catch(() => {
-						console.error("assistantMessage was empty after 3 seconds")
-					})
-				}
 				// Check if we have any content to process (text or tool uses)
 				const hasTextContent = assistantMessage.length > 0
 
@@ -4919,14 +4950,28 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 					continue
 				} else if (hasPlainTextReasoning) {
-					// Check if the model's preserveReasoning flag is set
-					// If true, include the reasoning block in API requests
-					// If false/undefined, strip it out (stored for history only, not sent back to API)
-					const shouldPreserveForApi = this.api.getModel().info.preserveReasoning === true
+					// Preserve plain-text reasoning blocks for:
+					// - models explicitly opting in via preserveReasoning
+					// - AI SDK providers (provider packages decide what to include in the native request)
+					const aiSdkProviders = new Set([
+						"deepseek",
+						"fireworks",
+						"moonshot",
+						"mistral",
+						"groq",
+						"xai",
+						"cerebras",
+						"sambanova",
+						"huggingface",
+					])
+
+					const shouldPreserveForApi =
+						this.api.getModel().info.preserveReasoning === true ||
+						aiSdkProviders.has(this.apiConfiguration.apiProvider ?? "")
+
 					let assistantContent: Anthropic.Messages.MessageParam["content"]
 
 					if (shouldPreserveForApi) {
-						// Include reasoning block in the content sent to API
 						assistantContent = contentArray
 					} else {
 						// Strip reasoning out - stored for history only, not sent back to API

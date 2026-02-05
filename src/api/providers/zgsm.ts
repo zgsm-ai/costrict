@@ -567,7 +567,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				Infinity,
 			)
 		} else {
-			// hasReasoning = true
 			matcher = new TagMatcher(
 				"think",
 				(chunk) => {
@@ -760,7 +759,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 
 				// Check if request was aborted after processing current chunk
 				if (this.abortController?.signal.aborted) {
-					shouldAbort = true
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 					isDev &&
 						this.logger.warn(
@@ -770,10 +768,11 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					break
 				}
 			}
-		} finally {
 			if (!hasReasoning) {
-				yield { type: "reasoning", text: "[thinking (empty)]" }
+				// Add a fake reasoning event to ensure the frontend processes the response
+				yield { type: "fake_reasoning", text: " " }
 			}
+		} finally {
 			// Always flush remaining content, even on abort
 			// This ensures no content is lost in the buffer
 			if (contentBuffer.length > 0) {

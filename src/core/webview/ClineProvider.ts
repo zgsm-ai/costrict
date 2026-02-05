@@ -2052,10 +2052,10 @@ export class ClineProvider
 		const { taskHistory: _omit, ...rest } = state
 		this.postMessageToWebview({ type: "state", state: rest })
 
-		// Preserve existing MDM redirect behavior
-		if (this.mdmService?.requiresCloudAuth() && !this.checkMdmCompliance()) {
-			await this.postMessageToWebview({ type: "action", action: "cloudButtonClicked" })
-		}
+		// // Preserve existing MDM redirect behavior
+		// if (this.mdmService?.requiresCloudAuth() && !this.checkMdmCompliance()) {
+		// 	await this.postMessageToWebview({ type: "action", action: "cloudButtonClicked" })
+		// }
 	}
 
 	/**

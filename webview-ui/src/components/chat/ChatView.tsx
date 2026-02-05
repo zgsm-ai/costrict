@@ -1284,8 +1284,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				}
 
 				// Filter empty reasoning messages
-				if (msg.type === "say" && msg.say === "reasoning" && !msg?.text?.trim()) {
-					return false
+				if (msg.type === "say" && msg.say === "reasoning") {
+					const text = msg?.text?.trim()
+					// Filter empty or placeholder reasoning messages
+					if (!text) {
+						return false
+					}
 				}
 			}
 
