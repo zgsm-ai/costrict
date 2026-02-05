@@ -4,6 +4,9 @@
 
 - Refactored Gemini provider with improved error handling and streaming
 - Enhanced Vertex provider with comprehensive model support
+- Support Qwen3-Coder-Next model for Zgsm provider
+- Optimize the behavior of the "resumeTask"
+- add fake reasoning chunk handling for response processing
 - Refactored custom instructions system for better mode customization
 - Update internationalization
 - Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/aa49871a5d01ddb2325f2c42d61a187cf36ddbc5)
