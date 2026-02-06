@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { createCerebras } from "@ai-sdk/cerebras"
-import { streamText, generateText, ToolSet } from "ai"
+import { streamText, generateText, ToolSet, LanguageModel } from "ai"
 
 import { cerebrasModels, cerebrasDefaultModelId, type CerebrasModelId, type ModelInfo } from "@roo-code/types"
 
@@ -56,7 +56,7 @@ export class CerebrasHandler extends BaseProvider implements SingleCompletionHan
 	/**
 	 * Get the language model for the configured model ID.
 	 */
-	protected getLanguageModel() {
+	protected getLanguageModel(): LanguageModel {
 		const { id } = this.getModel()
 		return this.provider(id)
 	}

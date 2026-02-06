@@ -141,7 +141,7 @@ export interface ApiHandler {
 	 *
 	 * @returns true if the provider uses AI SDK, false otherwise
 	 */
-	isAiSdkProvider(): boolean
+	isAiSdkProvider?(): boolean
 }
 
 export function buildApiHandler(configuration: ProviderSettings): ApiHandler {

@@ -4952,7 +4952,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					// - models explicitly opting in via preserveReasoning
 					// - AI SDK providers (provider packages decide what to include in the native request)
 					const shouldPreserveForApi =
-						this.api.getModel().info.preserveReasoning === true || this.api.isAiSdkProvider()
+						this.api.getModel().info.preserveReasoning === true || this.api?.isAiSdkProvider?.()
 
 					let assistantContent: Anthropic.Messages.MessageParam["content"]
 

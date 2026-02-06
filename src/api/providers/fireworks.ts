@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { createFireworks } from "@ai-sdk/fireworks"
-import { streamText, generateText, ToolSet } from "ai"
+import { streamText, generateText, ToolSet, LanguageModel } from "ai"
 
 import { fireworksModels, fireworksDefaultModelId, type ModelInfo } from "@roo-code/types"
 
@@ -58,7 +58,7 @@ export class FireworksHandler extends BaseProvider implements SingleCompletionHa
 	/**
 	 * Get the language model for the configured model ID.
 	 */
-	protected getLanguageModel() {
+	protected getLanguageModel(): LanguageModel {
 		const { id } = this.getModel()
 		return this.provider(id)
 	}

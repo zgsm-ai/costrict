@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { createXai } from "@ai-sdk/xai"
-import { streamText, generateText, ToolSet } from "ai"
+import { streamText, generateText, ToolSet, LanguageModel } from "ai"
 
 import { type XAIModelId, xaiDefaultModelId, xaiModels, type ModelInfo } from "@roo-code/types"
 
@@ -68,7 +68,7 @@ export class XAIHandler extends BaseProvider implements SingleCompletionHandler 
 	/**
 	 * Get the language model for the configured model ID.
 	 */
-	protected getLanguageModel() {
+	protected getLanguageModel(): LanguageModel {
 		const { id } = this.getModel()
 		return this.provider(id)
 	}

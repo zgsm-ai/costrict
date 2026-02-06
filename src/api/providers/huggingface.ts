@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible"
-import { streamText, generateText, ToolSet } from "ai"
+import { streamText, generateText, ToolSet, LanguageModel } from "ai"
 
 import type { ModelRecord, ModelInfo } from "@roo-code/types"
 
@@ -93,7 +93,7 @@ export class HuggingFaceHandler extends BaseProvider implements SingleCompletion
 	/**
 	 * Get the language model for the configured model ID.
 	 */
-	protected getLanguageModel() {
+	protected getLanguageModel(): LanguageModel {
 		const { id } = this.getModel()
 		return this.provider(id)
 	}
