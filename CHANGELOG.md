@@ -1,5 +1,12 @@
 # CoStrict Change Log
 
+## [2.3.5]
+
+- Fix empty-string baseURL in provider
+- Add support for .agents/skills directory
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/5b0897beb96f462c0611c4ef5c468f39b7bc4316)
+- Fix known issues
+
 ## [2.3.4]
 
 - Refactored Gemini provider with improved error handling and streaming
