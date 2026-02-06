@@ -196,4 +196,8 @@ export class MistralHandler extends BaseProvider implements SingleCompletionHand
 
 		return text
 	}
+
+	override isAiSdkProvider(): boolean {
+		return true
+	}
 }

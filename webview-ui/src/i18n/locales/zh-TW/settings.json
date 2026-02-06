@@ -42,7 +42,7 @@
 		"ui": "UI",
 		"experimental": "實驗性",
 		"language": "語言",
-		"about": "關於 Roo Code",
+		"about": "關於 CoStrict",
 		"autoCleanup": "自動清理",
 		"skills": "Skills"
 	},
@@ -71,10 +71,43 @@
 		}
 	},
 	"slashCommands": {
-		"description": "管理您的斜線命令，以便快速執行自訂工作流程和動作。 <DocsLink>了解更多</DocsLink>"
+		"description": "管理您的斜線命令，以便快速執行自訂工作流程和動作。 <DocsLink>了解更多</DocsLink>",
+		"workspaceCommands": "工作區命令",
+		"globalCommands": "全域命令",
+		"builtInCommands": "內建命令",
+		"noWorkspaceCommands": "此專案中還沒有命令。",
+		"noGlobalCommands": "還沒有全域命令。",
+		"addCommand": "新增斜線命令",
+		"editCommand": "編輯命令",
+		"deleteCommand": "刪除命令",
+		"deleteDialog": {
+			"title": "刪除命令",
+			"description": "您確定要刪除命令 \"{{name}}\" 嗎？此動作無法復原。",
+			"confirm": "刪除",
+			"cancel": "取消"
+		},
+		"createDialog": {
+			"title": "建立新斜線命令",
+			"nameLabel": "名稱",
+			"namePlaceholder": "my-command-name",
+			"nameHint": "僅限小寫字母、數字、連字號和底線",
+			"sourceLabel": "位置",
+			"create": "建立",
+			"cancel": "取消"
+		},
+		"source": {
+			"global": "全域（可在所有工作區中使用）",
+			"project": "工作區"
+		},
+		"validation": {
+			"nameRequired": "名稱為必填項",
+			"nameTooLong": "名稱必須為 64 個字元或更少",
+			"nameInvalid": "名稱只能包含字母、數字、連字號和底線"
+		},
+		"footer": "使用斜線命令快速存取經常使用的提示詞和工作流程。"
 	},
 	"prompts": {
-		"description": "設定用於快速操作的支援提示詞，如增強提示詞、解釋程式碼和修復問題。這些提示詞幫助 Roo 為常見開發工作提供更好的支援。"
+		"description": "設定用於快速操作的支援提示詞，如增強提示詞、解釋程式碼和修復問題。這些提示詞幫助 CoStrict 為常見開發工作提供更好的支援。"
 	},
 	"codeIndex": {
 		"title": "程式碼庫索引",
@@ -192,10 +225,10 @@
 		"disabledAriaLabel": "自動核准已停用 - 請先選取下方選項",
 		"readOnly": {
 			"label": "讀取",
-			"description": "啟用後，Roo 將自動檢視目錄內容並讀取檔案，無需等待您的核准。",
+			"description": "啟用後，CoStrict 將自動檢視目錄內容並讀取檔案，無需等待您的核准。",
 			"outsideWorkspace": {
 				"label": "包含工作區外的檔案",
-				"description": "允許 Roo 讀取目前工作區外的檔案且無需核准。"
+				"description": "允許 CoStrict 讀取目前工作區外的檔案且無需核准。"
 			}
 		},
 		"write": {
@@ -204,11 +237,11 @@
 			"delayLabel": "寫入後延遲一小段時間，以便診斷工具偵測潛在問題",
 			"outsideWorkspace": {
 				"label": "包含工作區外的檔案",
-				"description": "允許 Roo 在目前工作區外建立與編輯檔案且無需核准。"
+				"description": "允許 CoStrict 在目前工作區外建立與編輯檔案且無需核准。"
 			},
 			"protected": {
 				"label": "包含受保護的檔案",
-				"description": "允許 Roo 建立與編輯受保護的檔案（如 .rooignore 和 .roo/ 設定檔）且無需核准。"
+				"description": "允許 CoStrict 建立與編輯受保護的檔案（如 .rooignore 和 .roo/ 設定檔）且無需核准。"
 			}
 		},
 		"browser": {
@@ -340,11 +373,11 @@
 		"getAnthropicApiKey": "取得 Anthropic API 金鑰",
 		"anthropicUseAuthToken": "將 Anthropic API 金鑰作為 Authorization 標頭傳遞，而非使用 X-Api-Key",
 		"anthropic1MContextBetaLabel": "啟用 1M 上下文視窗 (Beta)",
-		"anthropic1MContextBetaDescription": "為 Claude Sonnet 4 將上下文視窗擴展至 100 萬個 token",
+		"anthropic1MContextBetaDescription": "為 Claude Sonnet 4 / 4.5 / Claude Opus 4.6 將上下文視窗擴展至 100 萬個 token",
 		"awsBedrock1MContextBetaLabel": "啟用 1M 上下文視窗 (Beta)",
-		"awsBedrock1MContextBetaDescription": "為 Claude Sonnet 4 將上下文視窗擴展至 100 萬個 token",
+		"awsBedrock1MContextBetaDescription": "為 Claude Sonnet 4 / 4.5 / Claude Opus 4.6 將上下文視窗擴展至 100 萬個 token",
 		"vertex1MContextBetaLabel": "啟用 1M 上下文視窗 (Beta)",
-		"vertex1MContextBetaDescription": "為 Claude Sonnet 4 將上下文視窗擴展至 100 萬個 token",
+		"vertex1MContextBetaDescription": "為 Claude Sonnet 4 / 4.5 / Claude Opus 4.6 將上下文視窗擴展至 100 萬個 token",
 		"basetenApiKey": "Baseten API 金鑰",
 		"getBasetenApiKey": "取得 Baseten API 金鑰",
 		"cerebrasApiKey": "Cerebras API 金鑰",
@@ -459,7 +492,7 @@
 			"draftModelDesc": "草稿模型必須來自相同模型系列才能正確運作。",
 			"selectDraftModel": "選擇草稿模型",
 			"noModelsFound": "未找到草稿模型。請確保 LM Studio 以伺服器模式執行。",
-			"description": "LM Studio 允許您在本機電腦執行模型。詳細資訊請參閱快速入門指南。您需要啟動 LM Studio 的本機伺服器功能才能與此擴充功能搭配使用。<span>注意：</span> Roo Code 使用複雜提示詞，與 Claude 模型搭配最佳。功能較弱的模型可能無法正常運作。"
+			"description": "LM Studio 允許您在本機電腦執行模型。詳細資訊請參閱快速入門指南。您需要啟動 LM Studio 的本機伺服器功能才能與此擴充功能搭配使用。<span>注意：</span> CoStrict 使用複雜提示詞，與 Claude 模型搭配最佳。功能較弱的模型可能無法正常運作。"
 		},
 		"ollama": {
 			"baseUrl": "基礎 URL（選用）",
@@ -469,7 +502,7 @@
 			"numCtx": "上下文視窗大小（num_ctx）",
 			"numCtxHelp": "覆寫模型的預設上下文視窗大小。留空以使用模型的 Modelfile 設定。最小值為 128。",
 			"description": "Ollama 允許您在本機電腦執行模型。請參閱快速入門指南。",
-			"warning": "注意：Roo Code 使用複雜提示詞，與 Claude 模型搭配最佳。功能較弱的模型可能無法正常運作。"
+			"warning": "注意：CoStrict 使用複雜提示詞，與 Claude 模型搭配最佳。功能較弱的模型可能無法正常運作。"
 		},
 		"unboundApiKey": "Unbound API 金鑰",
 		"getUnboundApiKey": "取得 Unbound API 金鑰",
@@ -480,8 +513,8 @@
 			"instructions": "使用期間會彈出對話框，並自動將目前訊息複製到剪貼簿。您需要將這些內容貼上到網頁版 AI（如 ChatGPT 或 Claude），然後將 AI 的回覆複製回對話框並點選確認按鈕。"
 		},
 		"roo": {
-			"authenticatedMessage": "已透過 Roo Code Cloud 帳戶安全認證。",
-			"connectButton": "連線到 Roo Code Cloud"
+			"authenticatedMessage": "已透過 CoStrict Cloud 帳戶安全認證。",
+			"connectButton": "連線到 CoStrict Cloud"
 		},
 		"openRouter": {
 			"providerRouting": {
@@ -491,7 +524,7 @@
 			}
 		},
 		"customModel": {
-			"capabilities": "設定自訂 OpenAI 相容模型的功能和定價。請謹慎設定模型功能，因為這會影響 Roo Code 的運作方式。",
+			"capabilities": "設定自訂 OpenAI 相容模型的功能和定價。請謹慎設定模型功能，因為這會影響 CoStrict 的運作方式。",
 			"maxTokens": {
 				"label": "最大輸出 Token",
 				"description": "模型能在一則回應中產生的最大 Token 數量。"
@@ -538,7 +571,7 @@
 		},
 		"consecutiveMistakeLimit": {
 			"label": "錯誤和重複限制",
-			"description": "在顯示「Roo 遇到問題」對話方塊前允許的連續錯誤或重複操作次數。設定為 0 可停用此安全機制（永不觸發）。",
+			"description": "在顯示「CoStrict 遇到問題」對話方塊前允許的連續錯誤或重複操作次數。設定為 0 可停用此安全機制（永不觸發）。",
 			"unlimitedDescription": "已啟用無限重試（自動繼續）。對話方塊將永遠不會出現。",
 			"warning": "⚠️ 設定為 0 允許無限重試，這可能會消耗大量 API 使用量"
 		},
@@ -588,7 +621,7 @@
 	"browser": {
 		"enable": {
 			"label": "啟用瀏覽器工具",
-			"description": "啟用後，Roo 可在使用支援電腦使用的模型時使用瀏覽器與網站互動。 <0>了解更多</0>"
+			"description": "啟用後，CoStrict 可在使用支援電腦使用的模型時使用瀏覽器與網站互動。 <0>了解更多</0>"
 		},
 		"viewport": {
 			"label": "視窗大小",
@@ -620,18 +653,18 @@
 		},
 		"enable": {
 			"label": "啟用自動檢查點",
-			"description": "啟用後，Roo 將在工作執行期間自動建立檢查點，方便檢視變更或回到較早的狀態。 <0>了解更多</0>"
+			"description": "啟用後，CoStrict 將在工作執行期間自動建立檢查點，方便檢視變更或回到較早的狀態。 <0>了解更多</0>"
 		}
 	},
 	"notifications": {
 		"sound": {
 			"label": "啟用音效",
-			"description": "啟用後，Roo 將為通知和事件播放音效。",
+			"description": "啟用後，CoStrict 將為通知和事件播放音效。",
 			"volumeLabel": "音量"
 		},
 		"tts": {
 			"label": "啟用文字轉語音",
-			"description": "啟用後，Roo 將使用文字轉語音功能朗讀其回應。",
+			"description": "啟用後，CoStrict 將使用文字轉語音功能朗讀其回應。",
 			"speedLabel": "速度"
 		}
 	},
@@ -639,7 +672,7 @@
 		"description": "控制 AI 上下文視窗中要包含哪些資訊，會影響 Token 用量和回應品質",
 		"autoCondenseContextPercent": {
 			"label": "觸發智慧上下文壓縮的閾值",
-			"description": "當上下文視窗達到此閾值時，Roo 將自動壓縮它。"
+			"description": "當上下文視窗達到此閾值時，CoStrict 將自動壓縮它。"
 		},
 		"condensingApiConfiguration": {
 			"label": "上下文壓縮的 API 設定",
@@ -655,7 +688,7 @@
 		},
 		"autoCondenseContext": {
 			"name": "自動觸發智慧上下文壓縮",
-			"description": "啟用時，Roo 會在達到閾值時自動壓縮上下文。停用時，您仍可手動觸發上下文壓縮。"
+			"description": "啟用時，CoStrict 會在達到閾值時自動壓縮上下文。停用時，您仍可手動觸發上下文壓縮。"
 		},
 		"openTabs": {
 			"label": "開啟分頁的上下文限制",
@@ -671,7 +704,7 @@
 		},
 		"maxReadFile": {
 			"label": "檔案讀取自動截斷閾值",
-			"description": "當模型未指定起始/結束值時，Roo 讀取的行數。如果此數值小於檔案總行數，Roo 將產生程式碼定義的行號索引。特殊情況：-1 指示 Roo 讀取整個檔案（不建立索引），0 指示不讀取任何行並僅提供行索引以取得最小上下文。較低的值可最小化初始上下文使用，允許後續精確的行範圍讀取。明確指定起始/結束的請求不受此設定限制。 <0>了解更多</0>",
+			"description": "當模型未指定起始/結束值時，CoStrict 讀取的行數。如果此數值小於檔案總行數，CoStrict 將產生程式碼定義的行號索引。特殊情況：-1 指示 CoStrict 讀取整個檔案（不建立索引），0 指示不讀取任何行並僅提供行索引以取得最小上下文。較低的值可最小化初始上下文使用，允許後續精確的行範圍讀取。明確指定起始/結束的請求不受此設定限制。 <0>了解更多</0>",
 			"lines": "行",
 			"always_full_read": "始終讀取整個檔案"
 		},
@@ -800,7 +833,7 @@
 	"advanced": {
 		"diff": {
 			"label": "透過差異比對編輯",
-			"description": "啟用後，Roo 可更快速地編輯檔案，並自動拒絕不完整的整檔覆寫",
+			"description": "啟用後，CoStrict 可更快速地編輯檔案，並自動拒絕不完整的整檔覆寫",
 			"strategy": {
 				"label": "差異比對策略",
 				"options": {
@@ -843,7 +876,7 @@
 		},
 		"PREVENT_FOCUS_DISRUPTION": {
 			"name": "背景編輯",
-			"description": "啟用後可防止編輯器焦點中斷。檔案編輯會在背景進行，不會開啟 diff 檢視或搶奪焦點。您可以在 Roo 進行變更時繼續不受干擾地工作。檔案可能會在不獲得焦點的情況下開啟以捕獲診斷，或保持完全關閉。"
+			"description": "啟用後可防止編輯器焦點中斷。檔案編輯會在背景進行，不會開啟 diff 檢視或搶奪焦點。您可以在 CoStrict 進行變更時繼續不受干擾地工作。檔案可能會在不獲得焦點的情況下開啟以捕獲診斷，或保持完全關閉。"
 		},
 		"ASSISTANT_MESSAGE_PARSER": {
 			"name": "使用全新訊息解析器",
@@ -868,7 +901,7 @@
 		},
 		"RUN_SLASH_COMMAND": {
 			"name": "啟用模型啟動的斜線命令",
-			"description": "啟用時，Roo 可以執行您的斜線命令來執行工作流程。"
+			"description": "啟用時，CoStrict 可以執行您的斜線命令來執行工作流程。"
 		},
 		"CUSTOM_TOOLS": {
 			"name": "啟用自訂工具",
@@ -884,7 +917,7 @@
 	},
 	"promptCaching": {
 		"label": "停用提示詞快取",
-		"description": "勾選後，Roo 將不會為此模型使用提示詞快取。"
+		"description": "勾選後，CoStrict 將不會為此模型使用提示詞快取。"
 	},
 	"temperature": {
 		"useCustom": "使用自訂溫度",
@@ -914,7 +947,7 @@
 		}
 	},
 	"modelPicker": {
-		"automaticFetch": "此擴充功能會自動從 <serviceLink>{{serviceName}}</serviceLink> 取得最新的可用模型清單。如果不確定要選哪個模型，建議使用 <defaultModelLink>{{defaultModelId}}</defaultModelLink>，這是與 Roo Code 最佳搭配的模型。您也可以搜尋「free」來檢視目前可用的免費選項。",
+		"automaticFetch": "此擴充功能會自動從 <serviceLink>{{serviceName}}</serviceLink> 取得最新的可用模型清單。如果不確定要選哪個模型，建議使用 <defaultModelLink>{{defaultModelId}}</defaultModelLink>，這是與 CoStrict 最佳搭配的模型。您也可以搜尋「free」來檢視目前可用的免費選項。",
 		"label": "模型",
 		"searchPlaceholder": "搜尋",
 		"noMatchFound": "找不到符合的結果",
@@ -922,10 +955,10 @@
 		"simplifiedExplanation": "你可以稍後調整詳細的模型設定。"
 	},
 	"footer": {
-		"feedback": "若您有任何問題或建議，歡迎至 <githubLink>github.com/zgsm-ai/costrict</githubLink> 提出 issue，或加入 <redditLink>reddit.com/r/RooCode</redditLink> 或 <discordLink>discord.gg/roocode</discordLink> 討論。",
+		"feedback": "若您有任何問題或建議，歡迎至 <githubLink>github.com/zgsm-ai/costrict</githubLink> 提出 issue，或加入 <redditLink>reddit.com/r/CoStrict</redditLink> 或 <discordLink>discord.gg/roocode</discordLink> 討論。",
 		"telemetry": {
 			"label": "允許匿名錯誤與使用情況回報",
-			"description": "透過發送匿名使用資料和錯誤回報來協助改善 Roo Code。此遙測不會收集程式碼、提示詞或個人資訊。查看我們的 <privacyLink>隱私權政策</privacyLink> 以了解更多資訊。"
+			"description": "透過發送匿名使用資料和錯誤回報來協助改善 CoStrict。此遙測不會收集程式碼、提示詞或個人資訊。查看我們的 <privacyLink>隱私權政策</privacyLink> 以了解更多資訊。"
 		},
 		"settings": {
 			"import": "匯入",
@@ -1063,32 +1096,37 @@
 	},
 	"skills": {
 		"description": "管理為代理提供上下文指令的技能。技能會在與您的任務相關時自動套用。<DocsLink>深入了解</DocsLink>",
-		"projectSkills": "專案技能",
+		"workspaceSkills": "工作區技能",
 		"globalSkills": "全域技能",
-		"noProjectSkills": "未設定專案技能。建立一個以新增專案特定的代理功能。",
+		"noWorkspaceSkills": "此專案中還沒有技能。",
 		"noGlobalSkills": "未設定全域技能。建立一個以新增在所有專案中可用的代理功能。",
 		"addSkill": "新增技能",
 		"editSkill": "編輯技能",
 		"deleteSkill": "刪除技能",
-		"changeMode": "變更模式",
+		"configureModes": "模式可用性",
 		"modeAny": "任意模式",
+		"modeCount": "{{count}} 種模式",
 		"deleteDialog": {
 			"title": "刪除技能",
 			"description": "您確定要刪除技能「{{name}}」嗎？此動作無法復原。",
 			"confirm": "刪除",
 			"cancel": "取消"
 		},
+		"modeDialog": {
+			"title": "設定技能模式",
+			"description": "選擇哪些模式可以使用此技能",
+			"intro": "為了保持您的上下文簡潔，我們建議只在需要的模式中提供技能。",
+			"anyMode": "任何模式（隨處可用）",
+			"save": "儲存",
+			"cancel": "取消"
+		},
 		"createDialog": {
 			"title": "建立新技能",
-			"description": "定義新的技能範本，為代理提供上下文指令。",
 			"nameLabel": "名稱",
 			"namePlaceholder": "my-skill-name",
-			"nameHint": "僅限小寫字母、數字和連字號（1-64個字元）",
 			"descriptionLabel": "說明",
 			"descriptionPlaceholder": "描述何時應使用此技能...",
-			"descriptionHint": "說明此技能的作用以及代理應何時套用它（1-1024個字元）",
 			"sourceLabel": "位置",
-			"sourceHint": "選擇此技能是全域可用還是僅在此專案中可用",
 			"modeLabel": "模式（選填）",
 			"modePlaceholder": "任何模式",
 			"modeHint": "將此技能限制為特定模式",
@@ -1106,6 +1144,8 @@
 			"nameInvalid": "名稱必須為1-64個小寫字母、數字或連字號",
 			"descriptionRequired": "說明為必填",
 			"descriptionTooLong": "說明不得超過1024個字元"
-		}
+		},
+		"footer": "使用技能編寫器模式建立您自己的技能。",
+		"footer_bak": "使用技能編寫器模式建立您自己的技能，可在 <MarketplaceLink>模式市集</MarketplaceLink> 中取得。"
 	}
 }

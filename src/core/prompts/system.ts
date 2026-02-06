@@ -29,6 +29,8 @@ import {
 	getLiteToolUseGuidelinesSection,
 	getLiteCapabilitiesSection,
 	getLiteObjectiveSection,
+	getLiteSharedToolUseSection,
+	getLiteRulesSection,
 } from "./sections"
 import { experiments as experimentsUtil, EXPERIMENT_IDS } from "../../shared/experiments"
 import { defaultLang } from "../../utils/language"
@@ -129,7 +131,7 @@ async function generatePrompt(data: {
 
 ${markdownFormattingSection()}
 
-${getSharedToolUseSection()}${toolsCatalog}
+${useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}${toolsCatalog}
 
 ${useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
 
@@ -137,7 +139,7 @@ ${useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : u
 
 ${modesSection}
 ${skillsSection ? `\n${skillsSection}` : ""}
-${getRulesSection(cwd, settings, experiments)}
+${useLitePrompts ? getLiteRulesSection(cwd, settings, experiments) : getRulesSection(cwd, settings, experiments)}
 
 ${getSystemInfoSection(cwd, shell)}
 
@@ -172,6 +174,7 @@ export const SYSTEM_PROMPT = async (
 	modelId?: string,
 	parallelToolCallsEnabled?: boolean,
 	skillsManager?: SkillsManager,
+	useLitePrompts?: boolean,
 ): Promise<string> => {
 	if (!context) {
 		throw new Error("Extension context is required for generating system prompt")
@@ -212,6 +215,7 @@ export const SYSTEM_PROMPT = async (
 				rooIgnoreInstructions,
 				settings,
 				shell,
+				useLitePrompts,
 			},
 		)
 

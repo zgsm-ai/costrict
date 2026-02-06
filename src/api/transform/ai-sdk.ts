@@ -126,30 +126,101 @@ export function convertToAiSdkMessages(
 				}
 			} else if (message.role === "assistant") {
 				const textParts: string[] = []
+				const reasoningParts: string[] = []
+				const reasoningContent = (() => {
+					const maybe = (message as unknown as { reasoning_content?: unknown }).reasoning_content
+					return typeof maybe === "string" && maybe.length > 0 ? maybe : undefined
+				})()
 				const toolCalls: Array<{
 					type: "tool-call"
 					toolCallId: string
 					toolName: string
 					input: unknown
+					providerOptions?: Record<string, Record<string, unknown>>
 				}> = []
+
+				// Extract thoughtSignature from content blocks (Gemini 3 thought signature round-tripping).
+				// Task.ts stores these as { type: "thoughtSignature", thoughtSignature: "..." } blocks.
+				let thoughtSignature: string | undefined
+				for (const part of message.content) {
+					const partAny = part as unknown as { type?: string; thoughtSignature?: string }
+					if (partAny.type === "thoughtSignature" && partAny.thoughtSignature) {
+						thoughtSignature = partAny.thoughtSignature
+					}
+				}
 
 				for (const part of message.content) {
 					if (part.type === "text") {
 						textParts.push(part.text)
-					} else if (part.type === "tool_use") {
-						toolCalls.push({
+						continue
+					}
+
+					if (part.type === "tool_use") {
+						const toolCall: (typeof toolCalls)[number] = {
 							type: "tool-call",
 							toolCallId: part.id,
 							toolName: part.name,
 							input: part.input,
-						})
+						}
+
+						// Attach thoughtSignature as providerOptions on tool-call parts.
+						// The AI SDK's @ai-sdk/google provider reads providerOptions.google.thoughtSignature
+						// and attaches it to the Gemini functionCall part.
+						// Per Gemini 3 rules: only the FIRST functionCall in a parallel batch gets the signature.
+						if (thoughtSignature && toolCalls.length === 0) {
+							toolCall.providerOptions = {
+								google: { thoughtSignature },
+								vertex: { thoughtSignature },
+							}
+						}
+
+						toolCalls.push(toolCall)
+						continue
+					}
+
+					// Some providers (DeepSeek, Gemini, etc.) require reasoning to be round-tripped.
+					// Task stores reasoning as a content block (type: "reasoning") and Anthropic extended
+					// thinking as (type: "thinking"). Convert both to AI SDK's reasoning part.
+					if ((part as unknown as { type?: string }).type === "reasoning") {
+						// If message-level reasoning_content is present, treat it as canonical and
+						// avoid mixing it with content-block reasoning (which can cause duplication).
+						if (reasoningContent) continue
+
+						const text = (part as unknown as { text?: string }).text
+						if (typeof text === "string" && text.length > 0) {
+							reasoningParts.push(text)
+						}
+						continue
+					}
+
+					if ((part as unknown as { type?: string }).type === "thinking") {
+						if (reasoningContent) continue
+
+						const thinking = (part as unknown as { thinking?: string }).thinking
+						if (typeof thinking === "string" && thinking.length > 0) {
+							reasoningParts.push(thinking)
+						}
+						continue
 					}
 				}
 
 				const content: Array<
+					| { type: "reasoning"; text: string }
 					| { type: "text"; text: string }
-					| { type: "tool-call"; toolCallId: string; toolName: string; input: unknown }
+					| {
+							type: "tool-call"
+							toolCallId: string
+							toolName: string
+							input: unknown
+							providerOptions?: Record<string, Record<string, unknown>>
+					  }
 				> = []
+
+				if (reasoningContent) {
+					content.push({ type: "reasoning", text: reasoningContent })
+				} else if (reasoningParts.length > 0) {
+					content.push({ type: "reasoning", text: reasoningParts.join("") })
+				}
 
 				if (textParts.length > 0) {
 					content.push({ type: "text", text: textParts.join("\n") })
@@ -226,10 +297,13 @@ export function flattenAiSdkMessagesToStringContent(
 		// Handle assistant messages
 		if (message.role === "assistant" && flattenAssistantMessages && Array.isArray(message.content)) {
 			const parts = message.content as Array<{ type: string; text?: string }>
-			// Only flatten if all parts are text (no tool calls)
-			const allText = parts.every((part) => part.type === "text")
-			if (allText && parts.length > 0) {
-				const textContent = parts.map((part) => part.text || "").join("\n")
+			// Only flatten if all parts are text or reasoning (no tool calls)
+			// Reasoning parts are included in text to avoid sending multipart content to string-only models
+			const allTextOrReasoning = parts.every((part) => part.type === "text" || part.type === "reasoning")
+			if (allTextOrReasoning && parts.length > 0) {
+				// Extract only text parts for the flattened content (reasoning is stripped for string-only models)
+				const textParts = parts.filter((part) => part.type === "text")
+				const textContent = textParts.map((part) => part.text || "").join("\n")
 				return {
 					...message,
 					content: textContent,

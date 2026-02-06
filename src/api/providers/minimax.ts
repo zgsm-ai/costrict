@@ -258,7 +258,7 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 					content:
 						typeof message.content === "string"
 							? [{ type: "text", text: message.content, cache_control: cacheControl }]
-							: message.content.map((content, contentIndex) =>
+							: (message?.content || []).map((content, contentIndex) =>
 									contentIndex === message.content.length - 1
 										? { ...content, cache_control: cacheControl }
 										: content,

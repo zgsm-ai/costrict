@@ -75,7 +75,7 @@ export function convertToolBlocksToText(
 		return content
 	}
 
-	return content.map((block) => {
+	return (content ?? []).map((block) => {
 		if (block.type === "tool_use") {
 			return {
 				type: "text" as const,

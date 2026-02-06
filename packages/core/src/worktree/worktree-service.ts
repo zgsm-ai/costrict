@@ -298,6 +298,7 @@ export class WorktreeService {
 
 	/**
 	 * Normalize a path for comparison (handle trailing slashes, etc.)
+	 * On Windows, also converts to lowercase since Windows paths are case-insensitive.
 	 */
 	private normalizePath(p: string): string {
 		// normalize resolves ./.. segments, removes duplicate slashes, and standardizes path separators
@@ -306,6 +307,11 @@ export class WorktreeService {
 		// remove trailing slash, except for root paths (handles both / and \)
 		if (normalized.length > 1 && (normalized.endsWith("/") || normalized.endsWith("\\"))) {
 			normalized = normalized.slice(0, -1)
+		}
+		// On Windows, paths are case-insensitive, so convert to lowercase for consistent comparison
+		// This handles cases where git might return "C:/Users/..." but VSCode gives "c:\Users\..."
+		if (process.platform === "win32") {
+			normalized = normalized.toLowerCase()
 		}
 		return normalized
 	}

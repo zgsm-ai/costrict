@@ -1,5 +1,4 @@
 import { ToolName } from "@roo-code/types"
-import { parseJSON } from "partial-json"
 
 export const fixNativeToolname = (toolname: string | ToolName) => {
 	if (

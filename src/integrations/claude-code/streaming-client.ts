@@ -122,7 +122,7 @@ function addMessageCacheBreakpoints(messages: Anthropic.Messages.MessageParam[])
 		}
 
 		// Handle array content - add cache_control to the last text block
-		const contentWithCache = message.content.map((block, blockIndex) => {
+		const contentWithCache = (message?.content || []).map((block, blockIndex) => {
 			// Find the last text block index
 			let lastTextIndex = -1
 			for (let i = message.content.length - 1; i >= 0; i--) {
@@ -222,7 +222,7 @@ function prefixToolNamesInMessages(messages: Anthropic.Messages.MessageParam[]):
 			return message
 		}
 
-		const processedContent = message.content.map((block) => {
+		const processedContent = (message?.content || []).map((block) => {
 			// Prefix tool_use block names
 			if ((block as { type: string }).type === "tool_use") {
 				const toolUseBlock = block as { type: "tool_use"; id: string; name: string; input: unknown }

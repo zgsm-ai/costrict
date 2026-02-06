@@ -41,6 +41,7 @@ import {
 	handleCreateSkill,
 	handleDeleteSkill,
 	handleMoveSkill,
+	handleUpdateSkillModes,
 	handleOpenSkillFile,
 } from "./skillsMessageHandler"
 import { changeLanguage, t } from "../../i18n"
@@ -80,7 +81,7 @@ const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 // const pendingIndexStatusRequests = new Map<string, Promise<any>>()
 
 import { MarketplaceManager, MarketplaceItemType } from "../../services/marketplace"
-import { ZgsmAuthConfig, ZgsmAuthStorage } from "../costrict/auth"
+import { ZgsmAuthConfig, ZgsmAuthService, ZgsmAuthStorage } from "../costrict/auth"
 import { CodeReviewService } from "../costrict/code-review"
 import { ZgsmCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
 import { ErrorCodeManager } from "../costrict/error-code"
@@ -581,12 +582,18 @@ export const webviewMessageHandler = async (
 						if (!checkExistKey(listApiConfig[0])) {
 							const { apiConfiguration } = await provider.getState()
 
-							await provider.providerSettingsManager.saveConfig(
-								listApiConfig[0].name ?? "default",
-								apiConfiguration,
-							)
+							// Only save if the current configuration has meaningful settings
+							// (e.g., API keys). This prevents saving a default "anthropic"
+							// fallback when no real config exists, which can happen during
+							// CLI initialization before provider settings are applied.
+							if (checkExistKey(apiConfiguration)) {
+								await provider.providerSettingsManager.saveConfig(
+									listApiConfig[0].name ?? "default",
+									apiConfiguration,
+								)
 
-							listApiConfig[0].apiProvider = apiConfiguration.apiProvider
+								listApiConfig[0].apiProvider = apiConfiguration.apiProvider
+							}
 						}
 					}
 
@@ -3276,6 +3283,10 @@ export const webviewMessageHandler = async (
 			await handleMoveSkill(provider, message)
 			break
 		}
+		case "updateSkillModes": {
+			await handleUpdateSkillModes(provider, message)
+			break
+		}
 		case "openSkillFile": {
 			await handleOpenSkillFile(provider, message)
 			break
@@ -3685,17 +3696,22 @@ export const webviewMessageHandler = async (
 				}
 			}
 
+			// Get costrict user ID
+			const userInfo = ZgsmAuthService?.getInstance()?.getUserInfo()
+			const zgsmUserId = userInfo?.id || ""
+
 			try {
 				await vscode.env.clipboard.writeText(dedent`
-					message: ${errorMessage}
-					provider: ${apiConfiguration.apiProvider}
-					Model: ${apiConfiguration.apiProvider === "zgsm" ? selectedLLM || originModelId || apiConfiguration.zgsmModelId : apiConfiguration.apiModelId}
-					${apiConfiguration.apiProvider === "zgsm" ? `BaseUrl: ${apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}` : ""}
-					vscodeVersion: ${vscode.version}
-					pluginVersion: ${Package.version}
-					editorType: ${editorType}
-					httpProxy: ${httpProxy}
-					httpsProxy: ${httpsProxy}
+					[Message]: ${errorMessage}
+					[Provider]: ${apiConfiguration.apiProvider}
+					[UserId]: ${zgsmUserId}
+					[Model]: ${apiConfiguration.apiProvider === "zgsm" ? selectedLLM || originModelId || apiConfiguration.zgsmModelId : apiConfiguration.apiModelId}
+					${apiConfiguration.apiProvider === "zgsm" ? `[BaseUrl]: ${apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}` : ""}
+					[EditorType]: ${editorType}
+					[EditorVersion]: ${vscode.version}
+					[PluginVersion]: ${Package.version}
+					[HttpProxy]: ${httpProxy}
+					[HttpsProxy]: ${httpsProxy}
 					${rawErrorMessage ? `${rawErrorMessage}` : ""}
 				`)
 				vscode.window.showInformationMessage(t("common:window.success.copy_success"))

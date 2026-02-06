@@ -19,6 +19,10 @@ CoStrict 是一款免费开源的AI辅助编程工具，支持企业私有化部
 
 </div>
 
+### CoStrict Cli (<a href="https://docs.costrict.ai/cli/guide/installation" target="_blank">Cli docs</a> | <a href="https://costrict.ai/download" target="_blank">download</a>)
+
+<img width="400" src="./assets/images/readme/cli.png" alt="CoStrict Cli">
+
 ### <img width="30" src="./assets/images/readme/idea.webp" alt="Jetbrains plugin"> Jetbrains 插件 (<a href="https://github.com/zgsm-ai/costrict-jetbrains-agent" target="_blank">仓库</a> | <a href="https://costrict.ai/download" target="_blank">下载</a>)
 
 ### 社区交流&意见反馈

@@ -269,14 +269,11 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 			details += `\n\n## Shell Support Syntax\n${formatUnsupport(features)}`
 		}
 	}
-	// Tool calling is native-only.
-	const toolFormat = "native"
 
 	details += `\n\n# Current Mode\n`
 	details += `<slug>${currentMode}</slug>\n`
 	details += `<name>${modeDetails.name}</name>\n`
 	details += `<model>${modelId}</model>\n`
-	details += `<tool_format>${toolFormat}</tool_format>\n`
 
 	// Add browser session status - Only show when active to prevent cluttering context
 	const isBrowserActive = cline.browserSession.isSessionActive()

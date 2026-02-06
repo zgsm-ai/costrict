@@ -84,6 +84,7 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 		message?.values?.modelId, // modelId
 		parallelToolCallsEnabled,
 		provider.getSkillsManager(),
+		experiments?.useLitePrompts ?? false,
 	)
 
 	return systemPrompt

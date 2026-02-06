@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { createDeepSeek } from "@ai-sdk/deepseek"
-import { streamText, generateText, ToolSet } from "ai"
+import { streamText, generateText, ToolSet, LanguageModel } from "ai"
 
 import { deepSeekModels, deepSeekDefaultModelId, DEEP_SEEK_DEFAULT_TEMPERATURE, type ModelInfo } from "@roo-code/types"
 
@@ -34,7 +34,7 @@ export class DeepSeekHandler extends BaseProvider implements SingleCompletionHan
 
 		// Create the DeepSeek provider using AI SDK
 		this.provider = createDeepSeek({
-			baseURL: options.deepSeekBaseUrl ?? "https://api.deepseek.com/v1",
+			baseURL: options.deepSeekBaseUrl || "https://api.deepseek.com/v1",
 			apiKey: options.deepSeekApiKey ?? "not-provided",
 			headers: DEFAULT_HEADERS,
 		})
@@ -50,7 +50,7 @@ export class DeepSeekHandler extends BaseProvider implements SingleCompletionHan
 	/**
 	 * Get the language model for the configured model ID.
 	 */
-	protected getLanguageModel() {
+	protected getLanguageModel(): LanguageModel {
 		const { id } = this.getModel()
 		return this.provider(id)
 	}
@@ -165,5 +165,9 @@ export class DeepSeekHandler extends BaseProvider implements SingleCompletionHan
 		})
 
 		return text
+	}
+
+	override isAiSdkProvider(): boolean {
+		return true
 	}
 }

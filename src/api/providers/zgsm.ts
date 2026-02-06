@@ -389,7 +389,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					...convertToZAiFormat(messages, { mergeToolResultText: true }),
 				]
 			} else {
-				if (_mid?.includes("qwen")) {
+				if (_mid?.includes("qwen-2.5-vl")) {
 					if (Array.isArray(systemMessage.content)) {
 						systemMessage.content[0].text = systemMessage.content[0].text + "\n" + liteToolContractPrompt()
 					} else {
@@ -545,13 +545,13 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		// For MiniMax models, allow matching <think> tags anywhere in the stream
 		// because MiniMax may include newlines before the <think> tag
 		const isMiniMax = modelInfo?.id?.toLowerCase().includes("minimax")
-		const isQwen = modelInfo?.id?.toLowerCase().includes("qwen") // Qwen model understands <tool_call> tags
+		const isNoToolsQwen = modelInfo?.id?.toLowerCase().includes("qwen-2.5-vl") // Qwen model understands <tool_call> tags
 		let matcher: TagMatcher<{
 			readonly type: "reasoning" | "text" | "fake_tool_call"
 			readonly text: string
 		}>
 		// let mockToolId = ""
-		if (isQwen) {
+		if (isNoToolsQwen) {
 			// mockToolId = "fake_tool_call"
 			matcher = new TagMatcher(
 				"tool_call",
@@ -567,7 +567,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				Infinity,
 			)
 		} else {
-			// hasReasoning = true
 			matcher = new TagMatcher(
 				"think",
 				(chunk) => {
@@ -760,7 +759,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 
 				// Check if request was aborted after processing current chunk
 				if (this.abortController?.signal.aborted) {
-					shouldAbort = true
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 					isDev &&
 						this.logger.warn(
@@ -770,10 +768,11 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					break
 				}
 			}
-		} finally {
 			if (!hasReasoning) {
-				yield { type: "reasoning", text: "[thinking (empty)]" }
+				// Add a fake reasoning event to ensure the frontend processes the response
+				yield { type: "fake_reasoning", text: " " }
 			}
+		} finally {
 			// Always flush remaining content, even on abort
 			// This ensures no content is lost in the buffer
 			if (contentBuffer.length > 0) {

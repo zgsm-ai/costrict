@@ -27,6 +27,7 @@ export type FlagOptions = {
 	debug: boolean
 	yes: boolean
 	dangerouslySkipPermissions: boolean
+	exitOnError: boolean
 	apiKey?: string
 	provider?: SupportedProvider
 	model?: string

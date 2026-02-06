@@ -71,7 +71,7 @@ By default, the CLI prompts for approval before executing actions:
 ```bash
 export OPENROUTER_API_KEY=sk-or-v1-...
 
-cos "What is this project?"  -w ~/Documents/my-project
+cos "What is this project?" -w ~/Documents/my-project
 ```
 
 You can also run without a prompt and enter it interactively in TUI mode:
@@ -177,14 +177,14 @@ Tokens are valid for 90 days. The CLI will prompt you to re-authenticate when yo
 
 The CLI will look for API keys in environment variables if not provided via `--api-key`:
 
-| Provider      | Environment Variable |
-| ------------- | -------------------- |
-| zgsm          | `COSTRICT_API_KEY`   |
-| anthropic     | `ANTHROPIC_API_KEY`  |
-| openai        | `OPENAI_API_KEY`     |
-| openrouter    | `OPENROUTER_API_KEY` |
-| google/gemini | `GOOGLE_API_KEY`     |
-| ...           | ...                  |
+| Provider          | Environment Variable        |
+| ----------------- | --------------------------- |
+| zgsm              | `ROO_API_KEY`               |
+| anthropic         | `ANTHROPIC_API_KEY`         |
+| openai-native     | `OPENAI_API_KEY`            |
+| openrouter        | `OPENROUTER_API_KEY`        |
+| gemini            | `GOOGLE_API_KEY`            |
+| vercel-ai-gateway | `VERCEL_AI_GATEWAY_API_KEY` |
 
 **Authentication Environment Variables:**
 
@@ -233,8 +233,8 @@ The CLI will look for API keys in environment variables if not provided via `--a
 ## Development
 
 ```bash
-# Watch mode for development
-pnpm dev
+# Run directly from source (no build required)
+pnpm dev --provider roo --api-key $ROO_API_KEY --print "Hello"
 
 # Run tests
 pnpm test
@@ -244,6 +244,12 @@ pnpm check-types
 
 # Linting
 pnpm lint
+```
+
+By default the `start` script points `ROO_CODE_PROVIDER_URL` at `http://localhost:8080/proxy` for local development. To point at the production API instead, override the environment variable:
+
+```bash
+ROO_CODE_PROVIDER_URL=https://api.roocode.com/proxy pnpm dev --provider roo --api-key $ROO_API_KEY --print "Hello"
 ```
 
 ## Releasing

@@ -1,6 +1,6 @@
 {
 	"extension": {
-		"name": "Roo Code",
+		"name": "CoStrict",
 		"description": "您编辑器中的完整AI开发团队。"
 	},
 	"number_format": {
@@ -140,7 +140,7 @@
 			"completionError": "Cerebras 完成错误：{{error}}"
 		},
 		"roo": {
-			"authenticationRequired": "Roo 提供商需要云认证。请登录 Roo Code Cloud。"
+			"authenticationRequired": "CoStrict 提供商需要云认证。请登录 CoStrict Cloud。"
 		},
 		"api": {
 			"invalidKeyInvalidChars": "API 密钥包含无效字符.",
@@ -174,7 +174,7 @@
 	"warnings": {
 		"no_terminal_content": "没有选择终端内容",
 		"missing_task_files": "此任务的文件丢失。您想从任务列表中删除它吗？",
-		"auto_import_failed": "自动导入 RooCode 设置失败：{{error}}"
+		"auto_import_failed": "自动导入 CoStrict 设置失败：{{error}}"
 	},
 	"info": {
 		"no_changes": "未找到更改。",
@@ -183,7 +183,7 @@
 		"custom_storage_path_set": "自定义存储路径已设置：{{path}}",
 		"default_storage_path": "已恢复使用默认存储路径",
 		"settings_imported": "设置已成功导入。",
-		"auto_import_success": "已自动导入 RooCode 设置：{{filename}}",
+		"auto_import_success": "已自动导入 CoStrict 设置：{{filename}}",
 		"share_link_copied": "分享链接已复制到剪贴板",
 		"image_copied_to_clipboard": "图片数据 URI 已复制到剪贴板",
 		"image_saved": "图片已保存到 {{path}}",
@@ -254,8 +254,8 @@
 	},
 	"mdm": {
 		"errors": {
-			"cloud_auth_required": "您的组织需要 Roo Code Cloud 身份验证。请登录以继续。",
-			"organization_mismatch": "您必须使用组织的 Roo Code Cloud 账户进行身份验证。",
+			"cloud_auth_required": "您的组织需要 CoStrict Cloud 身份验证。请登录以继续。",
+			"organization_mismatch": "您必须使用组织的 CoStrict Cloud 账户进行身份验证。",
 			"manual_url_empty": "请输入有效的回调 URL",
 			"manual_url_no_query": "无效的回调 URL：缺少查询参数",
 			"manual_url_missing_params": "无效的回调 URL：缺少必需参数（code 和 state）",

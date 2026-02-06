@@ -55,6 +55,34 @@ describe("WorktreeService", () => {
 			// On Unix, this stays as-is; on Windows it would normalize
 			expect(result).toBeTruthy()
 		})
+
+		it("should handle Windows path case insensitivity", () => {
+			// On Windows, paths should be normalized to lowercase for comparison
+			// Git returns: C:/Users/mini/demo
+			// VSCode gives: C:\Users\mini\demo (or c:\Users\mini\demo)
+			const gitStylePath = "C:/Users/mini/demo"
+			const vscodeStylePath = "C:\\Users\\mini\\demo"
+			const vscodeStyleLowerPath = "c:\\users\\mini\\demo"
+
+			const normalizedGit = callNormalizePath(service, gitStylePath)
+			const normalizedVsCode = callNormalizePath(service, vscodeStylePath)
+			const normalizedVsCodeLower = callNormalizePath(service, vscodeStyleLowerPath)
+
+			// On Windows (win32), all should be lowercase after normalization
+			// On Unix, they remain as-is
+			if (process.platform === "win32") {
+				expect(normalizedGit).toBe("c:\\users\\mini\\demo")
+				expect(normalizedVsCode).toBe("c:\\users\\mini\\demo")
+				expect(normalizedVsCodeLower).toBe("c:\\users\\mini\\demo")
+				// All three should be equal on Windows
+				expect(normalizedGit).toBe(normalizedVsCode)
+				expect(normalizedVsCode).toBe(normalizedVsCodeLower)
+			} else {
+				// On Unix, paths are case-sensitive
+				expect(normalizedGit).toBe("C:/Users/mini/demo")
+				expect(normalizedVsCode).toBe("C:\\Users\\mini\\demo")
+			}
+		})
 	})
 
 	describe("parseWorktreeOutput", () => {
