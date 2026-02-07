@@ -1,5 +1,10 @@
 # CoStrict Change Log
 
+## [2.3.6]
+
+- Add button to open annual summary with icon
+- Translate Chinese prompts to English
+
 ## [2.3.5]
 
 - Fix empty-string baseURL in provider
