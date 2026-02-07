@@ -137,8 +137,8 @@ describe("Built-in Commands", () => {
 			const command = await getBuiltInCommand("vibeplus-propsal")
 			const content = command!.content
 
-			expect(command!.description).toBe("构建新的VibePlus变更。")
-			expect(command!.argumentHint).toBe("功能描述或请求")
+			expect(command!.description).toBe("Build new VibePlus changes.")
+			expect(command!.argumentHint).toBe("Feature description or request")
 			expect(content).toContain("VIBEPLUS:START")
 			expect(content).toContain("VIBEPLUS:END")
 			expect(content).toContain("%command-vibeplus-propsal%")
@@ -148,7 +148,7 @@ describe("Built-in Commands", () => {
 			const command = await getBuiltInCommand("vibeplus-apply")
 			const content = command!.content
 
-			expect(command!.description).toBe("实施已批准的VibePlus变更并保持任务同步。")
+			expect(command!.description).toBe("Implement approved VibePlus changes and keep tasks synchronized.")
 			expect(command!.argumentHint).toBe("change-id")
 			expect(content).toContain("VIBEPLUS:START")
 			expect(content).toContain("VIBEPLUS:END")
@@ -159,7 +159,7 @@ describe("Built-in Commands", () => {
 			const command = await getBuiltInCommand("vibeplus-archive")
 			const content = command!.content
 
-			expect(command!.description).toBe("归档已部署的VibePlus变更并更新规格。")
+			expect(command!.description).toBe("Archive deployed VibePlus changes and update specs.")
 			expect(command!.argumentHint).toBe("change-id")
 			expect(content).toContain("VIBEPLUS:START")
 			expect(content).toContain("VIBEPLUS:END")
