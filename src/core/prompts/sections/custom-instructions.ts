@@ -503,10 +503,8 @@ export async function addCustomInstructions(
 	}
 	sections.push(...mustRules)
 
-	if (options.language) {
-		const languageName = isLanguage(options.language) ? LANGUAGES[options.language] : options.language
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		languageName !== "zh-CN" &&
+	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+	options?.language !== "zh-CN" &&
 			sections.push(`
 # Core Rule: English-Only Output — This Is a Non-Negotiable Mandatory Requirement
 
@@ -545,9 +543,7 @@ If it is necessary to reference proper nouns (such as the personal name "张三"
 
 ## Part Five: Verification Method
 Now, please confirm in pure English that you have fully understood all the rules above, and begin responding to all subsequent questions in English.
-			
 	`)
-	}
 	const joinedSections = sections.join("\n\n")
 
 	return joinedSections

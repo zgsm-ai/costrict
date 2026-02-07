@@ -187,102 +187,102 @@ When you are using compact - please focus on test output and code changes. Inclu
 `,
 	},
 	WORKFLOW_TASK_RUN_TESTS: {
-		template: `基于 \`\${scope}\` 目录下已创建的需求文档(requirements.md)、架构设计文档(design.md)和任务规划文档(tasks.md),生成配套测试用例。
+		template: `Generate accompanying test cases based on the requirements document (requirements.md), architecture design document (design.md), and task planning document (tasks.md) that have been created in the \`\${scope}\` directory.
 
-### 进度跟踪
+### Progress Tracking
 
-- **任务开始时的第一步**: 必须使用\`update_todo_list\`工具列出任务清单，此操作必须在其它任何动作之前
-- 通过任务清单的勾选状态跟踪实现进度
+- **First step at task start**: You must use the \`update_todo_list\` tool to list the task checklist, this operation must be performed before any other actions
+- Track progress through the checklist status
 
-### 任务执行约束
+### Task Execution Constraints
 
-todo list 中必须包含以下操作，**请勿遗漏任何一个步骤**:
+The todo list must include the following operations, **do not omit any step**:
 
-- 在执行任何更新任务前，请仔细阅读\`\${scope}\`下的requirements.md、design.md和tasks.md文件
-- 结合需求文档，分析架构设计文档、任务规划文档对现有测试用例的影响范围
-- 为关键任务生成测试用例，并更新测试位置信息到tasks.md
-- 完成后使用attempt_completion工具提供简洁但全面的总结
+- Before executing any update task, carefully read the requirements.md, design.md, and tasks.md files under \`\${scope}\`
+- Combine with the requirements document to analyze the impact scope of the architecture design document and task planning document on existing test cases
+- Generate test cases for key tasks and update test location information to tasks.md
+- After completion, use the attempt_completion tool to provide a concise but comprehensive summary
 
-### 测试生成要求：
+### Test Generation Requirements:
 
-- 只执行测试生成阶段的工作，不要涉及需求分析、架构设计或任务规划
-- 不包含具体测试要求
-- 不包含与部署相关的测试
-- 不包含与监控和日志相关的测试
-- 不包含与性能相关的测试
-- 不包含与安全相关的测试
-- 不包含与集成相关的测试
-- 不包含非功能测试点（边界测试、异常测试、容错测试等）
-- 让test mode来决策，不给任何内容生成上的要求
-- 不应要求所有任务都生成测试
+- Only perform work in the test generation phase, do not involve requirements analysis, architecture design, or task planning
+- Do not include specific test requirements
+- Do not include deployment-related tests
+- Do not include monitoring and logging related tests
+- Do not include performance related tests
+- Do not include security related tests
+- Do not include integration related tests
+- Do not include non-functional test points (boundary tests, exception tests, fault tolerance tests, etc.)
+- Let the test mode make decisions, do not provide any content generation requirements
+- Do not require all tasks to generate tests
 
-完成后使用attempt_completion工具提供变更总结，包括更新的功能点、受影响模块和验证要点。这些具体指令优先于\${mode}的常规指令。
-`,
+After completion, use the attempt_completion tool to provide a summary of changes, including updated functionality, affected modules, and verification points. These specific instructions take precedence over the regular instructions of \${mode}.
+	`,
 	},
 
 	WORKFLOW_RQS_UPDATE: {
-		template: `用户更新了需求文档请更新相应的设计文档。基于 \`\${scope}\` 目录下已创建的需求文档(requirements.md)、架构设计文档(design.md)实施设计变更，如果没有则跳过。
+		template: `The user has updated the requirements document, please update the corresponding design document. Implement design changes based on the requirements document (requirements.md) and architecture design document (design.md) that have been created in the \`\${scope}\` directory. Skip if it does not exist.
 
-### 进度跟踪
+### Progress Tracking
 
-- **任务开始时的第一步**: 必须使用\`update_todo_list\`工具列出任务清单，此操作必须在其它任何动作之前
-- 通过任务清单的勾选状态跟踪实现进度
+- **First step at task start**: You must use the \`update_todo_list\` tool to list the task checklist, this operation must be performed before any other actions
+- Track progress through the checklist status
 
-### 任务执行约束
+### Task Execution Constraints
 
-todo list 中必须包含以下操作，**请勿遗漏任何一个步骤**:
+The todo list must include the following operations, **do not omit any step**:
 
-- 在执行任何更新任务前，请仔细阅读\`\${scope}\`下的requirements.md、design.md
-- 理解用户需求变更，如果没有用户变更需求，则充分理解需求文档
-- 分析需求变更对现有设计的影响范围
-- 确认变更涉及的模块和需要调整的现有功能
-- 在没有充分理解变更影响的情况下执行任务将导致不准确的实现
-- 任务开始前把 \`\${scope}\`下的requirements.md末尾加入文档更新时间，**\`requirements.md\`文档内容仅用于更新设计文档，不允许其它用途**
+- Before executing any update task, carefully read the requirements.md and design.md under \`\${scope}\`
+- Understand the user's requirement changes, if there are no user requirement changes, then fully understand the requirements document
+- Analyze the impact scope of requirement changes on existing design
+- Confirm the modules involved in the changes and the existing features that need to be adjusted
+- Executing tasks without fully understanding the impact of changes will lead to inaccurate implementation
+- Before starting the task, add the document update time at the end of requirements.md under \`\${scope}\`, **\`requirements.md\` document content is only for updating the design document, no other uses are allowed**
 
-### 用户需求变更 (包含添加或删除，变更为空时则整体理解requirements.md文档)
+### User Requirement Changes (including additions or deletions, if the change is empty, understand the requirements.md document as a whole)
 
 \${selectedText}
 
-### 变更实施要求：
+### Change Implementation Requirements:
 
-1. 评估设计文档需要调整的部分，更新相应的架构设计
-2. 确保向后兼容性，或制定适当的迁移方案
+1. Evaluate the parts of the design document that need adjustment, update the corresponding architecture design
+2. Ensure backward compatibility or develop an appropriate migration plan
 
-完成后使用attempt_completion工具提供变更总结，包括更新的功能点、受影响模块和验证要点。这些具体指令优先于\${mode}模式的常规指令。
-`,
+After completion, use the attempt_completion tool to provide a summary of changes, including updated functionality, affected modules, and verification points. These specific instructions take precedence over the regular instructions of the \${mode} mode.
+	`,
 	},
 	WORKFLOW_DESIGN_UPDATE: {
-		template: `用户更新了架构设计文档请更新相应的任务规划文档。基于 \`\${scope}\` 目录下已创建的需求文档(requirements.md)、架构设计文档(design.md)和任务规划文档(tasks.md),请更新任务规划文档(tasks.md)，如果没有则跳过。
+		template: `The user has updated the architecture design document, please update the corresponding task planning document. Based on the requirements document (requirements.md), architecture design document (design.md), and task planning document (tasks.md) that have been created in the \`\${scope}\` directory, please update the task planning document (tasks.md). Skip if it does not exist.
 
-### 进度跟踪
+### Progress Tracking
 
-- **任务开始时的第一步**: 必须使用\`update_todo_list\`工具列出任务清单，此操作必须在其它任何动作之前
-- 通过任务清单的勾选状态跟踪实现进度
+- **First step at task start**: You must use the \`update_todo_list\` tool to list the task checklist, this operation must be performed before any other actions
+- Track progress through the checklist status
 
-### 任务执行约束
+### Task Execution Constraints
 
-todo list 中必须包含以下操作，**请勿遗漏任何一个步骤**:
+The todo list must include the following operations, **do not omit any step**:
 
-- 在执行任何更新任务前，请仔细阅读\`\${scope}\`下的requirements.md、design.md和tasks.md文件
-- 理解用户架构设计文档变更，如果没有用户架构设计文档内容，则充分理解架构设计文档
-- 结合需求文档，分析架构设计文档对现有任务规划的影响范围
-- 变更的 \`\${scope}\`下的 tasks.md需要和requirements.md中的功能清单能对应，删除tasks.md多余任务和补充功能清单中没有的任务
-- 任务开始前把 \`\${scope}\`下的design.md末尾加入文档更新时间，**\`design.md\`文档内容仅用于更新任务规划文档，不允许其它用途**
+- Before executing any update task, carefully read the requirements.md, design.md, and tasks.md files under \`\${scope}\`
+- Understand the user's architecture design document changes, if there is no user architecture design document content, then fully understand the architecture design document
+- Combine with the requirements document to analyze the impact scope of the architecture design document on existing task planning
+- The updated tasks.md under \`\${scope}\` needs to correspond with the function list in requirements.md, delete redundant tasks in tasks.md and supplement tasks not in the function list
+- Before starting the task, add the document update time at the end of design.md under \`\${scope}\`, **\`design.md\` document content is only for updating the task planning document, no other uses are allowed**
 
-### 用户需求变更 (包含添加或删除，变更为空时则整体理解design.md文档)
+### User Design Changes (including additions or deletions, if the change is empty, understand the design.md document as a whole)
 
 \${selectedText}
 
-### 变更实施要求：
+### Change Implementation Requirements:
 
-1. 评估任务规划文档需要调整的部分，更新相应的任务规划设计
-2. 重新规划受影响的任务，调整任务优先级和依赖关系
-3. 变更的 \`\${scope}\`下的 tasks.md的任务需要和requirements.md中的功能清单能对应，按需删除tasks.md多余任务或补充功能清单中没有的任务
-4. 按照更新后的任务规划逐步实现变更功能
-5. 确保向后兼容性，或制定适当的迁移方案
+1. Evaluate the parts of the task planning document that need adjustment, update the corresponding task planning design
+2. Replan affected tasks, adjust task priorities and dependencies
+3. The tasks in the updated tasks.md under \`\${scope}\` need to correspond with the function list in requirements.md, delete redundant tasks in tasks.md or supplement tasks not in the function list as needed
+4. Gradually implement changed functions according to the updated task planning
+5. Ensure backward compatibility or develop an appropriate migration plan
 
-完成后使用attempt_completion工具提供变更总结，包括更新的功能点、受影响模块和验证要点。这些具体指令优先于\${mode}的常规指令。
-`,
+After completion, use the attempt_completion tool to provide a summary of changes, including updated functionality, affected modules, and verification points. These specific instructions take precedence over the regular instructions of \${mode}.
+	`,
 	},
 	EXPLAIN: {
 		template: `Explain the following code from file path \${filePath}:\${startLine}-\${endLine}
