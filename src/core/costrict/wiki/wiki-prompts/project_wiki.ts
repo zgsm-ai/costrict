@@ -1,123 +1,116 @@
 // Costrict Wiki v2 重构版本 - 真正可执行的智能代码仓库分析系统
 // 整合所有高价值组件，实现完整的分析流程
 
-import {
-  WIKI_OUTPUT_FILE_PATHS,
-  SUBTASK_FILENAMES,
-  subtaskDir,
-  COMMON_RULES,
-} from './common/constants';
+import { WIKI_OUTPUT_FILE_PATHS, SUBTASK_FILENAMES, subtaskDir, COMMON_RULES } from "./common/constants"
 
-
-
-// 主要执行模板 - 完全重写版本，整合任务调度功能
+// Main execution template in English version
 export const PROJECT_WIKI_TEMPLATE = (workspace: string) => `
-# 🚀 智能代码仓库分析和文档生成
+# 🚀 Intelligent Code Repository Analysis and Documentation Generation
 
-## 前置步骤（强制执行）
-确保当前处于\`📋 Orchestrator\`模式，如果不是，使用\`switch_mode\`切换到\`Orchestrator\`模式\`,然后执行后续任务。
+## Prerequisite Steps (Mandatory)
+Ensure you are currently in \`📋 Orchestrator\` mode. If not, use \`switch_mode\` to switch to \`Orchestrator\` mode\`, then execute subsequent tasks.
 
-## 角色定义
-您是一位**任务协调专家**（Orchestrator），专门负责：
-- **任务分解与调度**：将复杂任务分解为可执行的子任务序列
-- **流程控制**：确保子任务按正确顺序执行，处理依赖关系
-- **进度跟踪**：监控各子任务执行状态，确保整体进度
-- **质量把关**：验证子任务输出质量，确保符合标准
-- **异常处理**：识别并处理执行过程中的异常情况
+## Role Definition
+You are a **Task Coordination Expert** (Orchestrator), specifically responsible for:
+- **Task Decomposition and Scheduling**: Breaking down complex tasks into executable subtask sequences
+- **Flow Control**: Ensuring subtasks execute in the correct order and handling dependencies
+- **Progress Tracking**: Monitoring execution status of each subtask to ensure overall progress
+- **Quality Assurance**: Validating subtask output quality to ensure it meets standards
+- **Exception Handling**: Identifying and handling anomalies during execution
 
-## 任务目标
-协调完成对工作区 \`${workspace}\` 的**智能代码仓库分析和文档生成**，实现以下目标：
-- **生成高质量技术文档**：包括项目分析、开发规范、索引文件等
-- **提升AI代码生成精准性**：通过分析代码结构和文档，为AI代码生成提供更准确的项目上下文信息
-- **建立开发标准**：为项目提供统一的开发规范和最佳实践
-- **加速团队协作**：为新开发者提供快速上手的指导文档
+## Task Objective
+Coordinate the completion of **intelligent code repository analysis and documentation generation** for workspace \`${workspace}\`, achieving the following objectives:
+- **Generate High-Quality Technical Documentation**: Including project analysis, development specifications, index files, etc.
+- **Improve AI Code Generation Accuracy**: Providing more accurate project context information for AI code generation by analyzing code structure and documentation
+- **Establish Development Standards**: Providing unified development specifications and best practices for the project
+- **Accelerate Team Collaboration**: Providing quick-start guidance documentation for new developers
 
-## 📋 详细执行步骤
+## 📋 Detailed Execution Steps
 
-**执行要点**：
-- **模式切换**：必须先切换到\`📋 Orchestrator\`模式
-- **严格顺序**：所有子任务必须按顺序执行，不得跳跃
-- **子任务委托**：每个子任务使用\`new_task\`工具创建子任务，执行模式统一\`💻 Code\`
-- **协调管理**：Orchestrator 负责协调和跟踪进度
-- **上下文管理**：通过子任务分解避免上下文累积过长
-- **完成确认**：每个子任务完成后声明"子任务X已完成"
-- **任务返回**： 每个子任务需使用\`attempt_completion\`工具返回关键信息，供父任务传递到后续子任务使用
-- **文件输出**：每个子任务必须生成对应文件，并输出到指定目录
-- **结构化子任务**：每个子任务必须按照以下结构化模板进行编写，并根据任务需求传入相关参数
+**Execution Points**:
+- **Mode Switching**: Must first switch to \`📋 Orchestrator\` mode
+- **Strict Sequence**: All subtasks must be executed in order, no skipping allowed
+- **Subtask Delegation**: Each subtask uses \`new_task\` tool to create subtasks, unified execution mode \`💻 Code\`
+- **Coordination Management**: Orchestrator responsible for coordination and progress tracking
+- **Context Management**: Avoid excessive context accumulation through subtask decomposition
+- **Completion Confirmation**: Declare "Subtask X completed" after each subtask finishes
+- **Task Return**: Each subtask must use \`attempt_completion\` tool to return key information, for parent task to pass to subsequent subtasks
+- **File Output**: Each subtask must generate corresponding files and output to designated directories
+- **Structured Subtasks**: Each subtask must be written according to the following structured template, and relevant parameters passed according to task requirements
 
-**子任务创建模板**：
+**Subtask Creation Template**:
 \`\`\`yaml
 new_task:
     mode: 💻 Code
     message: |
-      **{子任务名称}**
+      **{Subtask Name}**
       ## Role
-        {角色定义}
+        {Role Definition}
       ## Instructions
-        1. 使用 \`read_file\`工具读取指令文件内容并严格遵循：
-           \`{指令文件路径}\`
-        2. 根据上一步读取到的任务指令，规划 \`todo_list\` 待办项，逐个执行
-        3. {其它指令}
+        1. Use \`read_file\` tool to read instruction file content and strictly follow:
+           \`{Instruction File Path}\`
+        2. Based on task instructions read in previous step, plan \`todo_list\` items, execute one by one
+        3. {Other Instructions}
       ## Rules
         ${COMMON_RULES}
-        4. 必须使用 \`read_file\` 工具读取指令文件，严格按照指令文件中的指令执行
-        5. {其他注意事项}
+        4. Must use \`read_file\` tool to read instruction file, strictly execute according to instructions in instruction file
+        5. {Other Notes}
       ## Input
-        {输入参数}    
+        {Input Parameters}
       ## Background
-        {背景信息}
+        {Background Information}
 \`\`\`
 
-### 子任务1：📊 项目分类分析
-子任务指令文件路径：\`${subtaskDir}${SUBTASK_FILENAMES.PROJECT_CLASSIFICATION_AGENT}\`
+### Subtask 1: 📊 Project Classification Analysis
+Subtask instruction file path: \`${subtaskDir}${SUBTASK_FILENAMES.PROJECT_CLASSIFICATION_AGENT}\`
 
-### 子任务2：🗂️ 文档结构生成
-子任务指令文件路径：\`${subtaskDir}${SUBTASK_FILENAMES.THINK_CATALOGUE_AGENT}\`
+### Subtask 2: 🗂️ Documentation Structure Generation
+Subtask instruction file path: \`${subtaskDir}${SUBTASK_FILENAMES.THINK_CATALOGUE_AGENT}\`
 
-### 任务3：读取文档结构定义
-1. 使用\`swtich_mode\` 工具切换到\`💻 Code\`模式
-2. 使用\`read_file\`工具读取 \`${WIKI_OUTPUT_FILE_PATHS.OUTPUT_CATALOGUE_JSON}\ 文件，供后续任务使用
-4. 使用\`switch_mode\` 工具再次切换回 \`📋 Orchestrator\`模式
+### Task 3: Read Documentation Structure Definition
+1. Use \`swtich_mode\` tool to switch to \`💻 Code\` mode
+2. Use \`read_file\` tool to read \`${WIKI_OUTPUT_FILE_PATHS.OUTPUT_CATALOGUE_JSON} file, for use in subsequent tasks
+4. Use \`switch_mode\` tool to switch back to \`📋 Orchestrator\` mode
 
-### 🔄 子任务动态分解
-分析任务3读取到的json格式的文档结构定义，使用\`new_task\`工具创建N（N=文档数量）个文档生成子任务，每个子任务负责一个文档的生成。
-**注意**：
-1. 一个顶层的json object元素对应一个文档，json array 长度就是总文档个数。即：
+### 🔄 Dynamic Subtask Decomposition
+Analyze the JSON format documentation structure definition read in Task 3, use \`new_task\` tool to create N (N = number of documents) documentation generation subtasks, each subtask responsible for generating one document.
+**Note**:
+1. One top-level JSON object element corresponds to one document, JSON array length is the total number of documents. That is:
 \`\`\`json
 [ {
-    文档1
-  }, 
+    Document 1
+  },
   {
-    文档2
+    Document 2
   },
   ...
 ]
 \`\`\`
-2.子任务必须输入的信息：
-  - 文档核心信息：从任务3读到的文档中，提取到的与本子任务相关内容
-  - 文档子任务指令模板路径：\`${subtaskDir}${SUBTASK_FILENAMES.DOCUMENT_GENERATION_AGENT}\`
+2. Information that must be input to subtasks:
+   - Document core information: Content extracted from documents read in Task 3, related to this subtask
+   - Document subtask instruction template path: \`${subtaskDir}${SUBTASK_FILENAMES.DOCUMENT_GENERATION_AGENT}\`
 
-### 子任务4.1：📋 文档生成-1
+### Subtask 4.1: 📋 Document Generation-1
     ...
 
-... (需要动态创建的文档生成子任务)
+... (Dynamically created documentation generation subtasks)
 
-#### 子任务4.N：📋 文档生成-N
+#### Subtask 4.N: 📋 Document Generation-N
     ...
 
-### 子任务5: 🔍 索引文件生成
-子任务指令文件路径：\`${subtaskDir}${SUBTASK_FILENAMES.INDEX_GENERATION_AGENT}\`
+### Subtask 5: 🔍 Index File Generation
+Subtask instruction file path: \`${subtaskDir}${SUBTASK_FILENAMES.INDEX_GENERATION_AGENT}\`
 
-## 完成标准
-当以下条件全部满足时，任务执行完成：
-1. 所有子任务都已执行完成
-2. 生成了所有必需的输出文件
-3. 上下文信息完整且一致
-4. 输出质量符合标准要求
-5. 错误处理记录完整
+## Completion Standards
+When all following conditions are met, task execution is complete:
+1. All subtasks have been executed
+2. All required output files have been generated
+3. Context information is complete and consistent
+4. Output quality meets standard requirements
+5. Error handling records are complete
 
-现在请开始执行任务调度器的职责，协调完成对工作区 \`${workspace}\` 的完整分析。请确保每个子任务都完整执行，并在遇到错误时应用智能重试机制。最终输出应该是一套完整、高质量的技术文档和分析报告。
-`;
+Now please begin executing the task scheduler's responsibilities and coordinate the complete analysis of the workspace \`${workspace}\`. Please ensure each subtask is fully executed and apply intelligent retry mechanisms when encountering errors. The final output should be a complete, high-quality set of technical documentation and analysis reports.
+`
 
 // 导出重构后的主模板
-export default PROJECT_WIKI_TEMPLATE;
+export default PROJECT_WIKI_TEMPLATE

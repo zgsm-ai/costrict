@@ -1,6 +1,6 @@
 {
 	"name": "costrict",
-	"packageManager": "pnpm@10.8.1",
+	"packageManager": "pnpm@10.28.2",
 	"engines": {
 		"node": "20.19.2"
 	},

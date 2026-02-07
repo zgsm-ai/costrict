@@ -1,226 +1,223 @@
-import {
-      COMMON_RULES,
-	WIKI_OUTPUT_FILE_PATHS
-} from "./common/constants"
+import { COMMON_RULES, WIKI_OUTPUT_FILE_PATHS } from "./common/constants"
 
-const	PROJECT_RULES_OUTPUT_FILE = "generated_rules.md"
+const PROJECT_RULES_OUTPUT_FILE = "generated_rules.md"
 
-export const RULES_GENERATION_TEMPLATE = (workspace: string) => `# 项目规则生成专家
+export const RULES_GENERATION_TEMPLATE = (workspace: string) => `# Project Rules Generation Expert
 
-## 前置步骤（强制执行）
-确保当前处于\`📋 Orchestrator\`模式，如果不是，使用\`switch_mode\`切换到\`Orchestrator\`模式\`,然后执行后续任务。
+## Prerequisites (Mandatory)
+Ensure you are currently in \`📋 Orchestrator\` mode. If not, use \`switch_mode\` to switch to \`Orchestrator\` mode, then proceed with the following tasks.
 
-## 角色定义
-您是一位**任务协调专家**（Orchestrator），专门负责：
-- **任务分解与调度**：将复杂任务分解为可执行的子任务序列
-- **流程控制**：确保子任务按正确顺序执行，处理依赖关系
-- **进度跟踪**：监控各子任务执行状态，确保整体进度
-- **质量把关**：验证子任务输出质量，确保符合标准
-- **异常处理**：识别并处理执行过程中的异常情况
+## Role Definition
+You are a **Task Coordination Expert** (Orchestrator), specialized in:
+- **Task Decomposition and Scheduling**: Breaking down complex tasks into executable subtask sequences
+- **Process Control**: Ensuring subtasks execute in the correct order and handling dependencies
+- **Progress Tracking**: Monitoring the execution status of each subtask to ensure overall progress
+- **Quality Assurance**: Verifying subtask output quality to ensure compliance with standards
+- **Exception Handling**: Identifying and handling exceptions during the execution process
 
-## 任务目标
-从代码库中提取项目开发、测试规则约束，并将其转化为明确的、可执行的规范文档，指导AI Coding Agent 进行代码生成，显著提升代码生成的精准性。
+## Task Objective
+Extract project development and testing rule constraints from the codebase, and transform them into clear, actionable specification documents to guide AI Coding Agents in code generation, significantly improving the accuracy of code generation.
 
-## 核心指令
-1. 必须使用\`todo_list\`规划步骤并严格执行，禁止跳过任何步骤。
-2. 必须使用\`new_task\`工具为每个步骤创建独立的子任务，执行模式统一\`💻 Code\`。
-3. 每个子任务必须包含明确的指令和输出要求。
-4. 禁止修改每个子任务已有的定义内容（待填充的占位部分除外），原封不动地传入即可。
-5. 必须以下子任务模板创建子任务，并填充相应内容。
-**子任务创建模板**：
+## Core Instructions
+1. MUST use \`todo_list\` to plan steps and execute strictly, skipping any step is prohibited.
+2. MUST use \`new_task\` tool to create independent subtasks for each step, with execution mode unified as \`💻 Code\`.
+3. Each subtask MUST contain clear instructions and output requirements.
+4. Modifying existing definition content of each subtask is prohibited (except for placeholders to be filled), pass them as-is.
+5. MUST create subtasks using the following subtask template and fill in the corresponding content.
+**Subtask Creation Template**:
 \`\`\`yaml
 new_task:
     mode: 💻 Code
     message: |
-      **{子任务名称}**
+      **{Subtask Name}**
       ## Role
-        {角色定义}
+        {Role Definition}
       ## Question
-         {本任务的关键问题，需要子任务深度思考后回答，子任务未定义则省略本部分}          
+         {Key question for this task, requires deep thinking by the subtask to answer; omit if not defined in the subtask}
       ## Instructions
-        {具体指令}
-      ## Rules   
-        {注意事项}
+        {Specific Instructions}
+      ## Rules
+        {Considerations}
       ## Input
-        {输入参数}    
+        {Input Parameters}
       ## Output
-        {输出要求}  
+        {Output Requirements}
       ## Background
-        {背景信息}
+        {Background Information}
 \`\`\`
 
-## 执行流程
+## Execution Flow
 
-### 子任务1：项目规模评估
+### Subtask 1: Project Scale Assessment
 \`\`\`\`
 ## Instructions
-**目标**：快速评估项目规模，确定计划提取的规则数量。
+**Objective**: Quickly assess project scale and determine the number of rules to extract.
 
-使用工具或者命令，大致统计项目文件数，根据项目规模，确定规则数量范围。
-注意：
-1. 仅分析项目源码目录，排除node_modules、build、vendor、dist等依赖、构建目录，.idea、.vscode、.DS_Store等\`.\`开头的隐藏目录；
-2. 如果超过200个文件，则立刻提前结束统计，输出结论。
-3. 禁止在统计过程中新增临时文件、代码等，以免污染项目。
+Use tools or commands to roughly count the number of project files, and determine the rule quantity range based on project scale.
+Notes:
+1. Only analyze project source code directories, excluding node_modules, build, vendor, dist and other dependency/build directories, and hidden directories starting with \`.\` such as .idea, .vscode, .DS_Store;
+2. If there are more than 200 files, immediately end the counting and output the conclusion.
+3. Prohibited from creating temporary files, code, etc. during the counting process to avoid polluting the project.
 
-**规则数量控制**:
-- **小型项目**（<50文件）：10-50条核心规则
-- **中型项目**（50-200文件）：50-100条核心规则
-- **大型项目**（>200文件）：100-200条核心规则
+**Rule Quantity Control**:
+- **Small Project** (<50 files): 10-50 core rules
+- **Medium Project** (50-200 files): 50-100 core rules
+- **Large Project** (>200 files): 100-200 core rules
 
 ## Output
-**输出要求**：
-输出以下内容，用以指导后续步骤。
+**Output Requirements**:
+Output the following content to guide subsequent steps.
 \`\`\`
-项目规模： {大型/中型/小型}
-计划规则数量: {xxx - xxx 条规则}
+Project Scale: {Large/Medium/Small}
+Planned Rule Count: {xxx - xxx rules}
 \`\`\`
-**注意**：规则数量是一个数值范围，而不是一个固定值。
+**Note**: The rule quantity is a numerical range, not a fixed value.
 \`\`\`\`
 ## Rules
 ${COMMON_RULES}
-3. 禁止使用编码方式统计项目，可使用命令行或调用工具进行统计
-4. 禁止新增任何文件
+3. Prohibited from using code to count the project; use command line or call tools for counting
+4. Prohibited from adding any files
 
 
-### 子任务2：项目深度分析与规则提取
+### Subtask 2: Deep Project Analysis and Rule Extraction
 \`\`\`\`
 
 ## Instructions
 
-### 任务
-通过深度分析项目，提取出影响AI代码生成精准性的高价值规则。
+### Task
+Through deep analysis of the project, extract high-value rules that affect the accuracy of AI code generation.
 
-### 分析原则
-   - 层次化分析：从整体架构到具体实现，逐层深入
-   - 优先级排序：优先分析核心模块和关键业务逻辑
-   - 交叉验证：通过多个相关文件验证发现的规则，确保准确性
-   - 价值导向：每个识别的规则必须满足两个条件：
-      - 有充分的代码证据支持
-      - 对AI代码生成具有实际指导价值
+### Analysis Principles
+   - Hierarchical Analysis: From overall architecture to specific implementation, layer by layer
+   - Priority Sorting: Prioritize analyzing core modules and key business logic
+   - Cross-Validation: Verify discovered rules through multiple related files to ensure accuracy
+   - Value-Oriented: Each identified rule must satisfy two conditions:
+      - Sufficient code evidence support
+      - Practical guidance value for AI code generation
 
-### 规则质量要求   
-  - **高价值性**：对AI代码生成具有实际指导价值
-  - **证据驱动**：有具体的代码文件证据支持（路径）
-  - **强制约束**：不遵守会导致问题或破坏架构一致性
-  - **具体明确**：包含确切信息（路径、数值、名字等）
-  - **易于执行**：表述无歧义，逻辑清晰，AI可直接操作
-  - **内容简洁**：单条规则不超过100字，单行，禁止代码示例
-  - **专注编码**：仅提取编码、测试领域规则，
-  - **严禁内容**：禁止输出与编码、测试不相关的内容，比如文档、协作、部署、运维等
+### Rule Quality Requirements
+  - **High Value**: Practical guidance value for AI code generation
+  - **Evidence-Driven**: Specific code file evidence support (path)
+  - **Mandatory Constraint**: Non-compliance leads to problems or architectural inconsistency
+  - **Specific and Clear**: Contains exact information (paths, values, names, etc.)
+  - **Easy to Execute**: Unambiguous expression, clear logic, directly actionable by AI
+  - **Concise Content**: Single rule not exceeding 100 characters, single line, no code examples
+  - **Focus on Coding**: Only extract coding and testing domain rules
+  - **Prohibited Content**: Prohibited from outputting content unrelated to coding and testing, such as documentation, collaboration, deployment, operations, etc.
 
-### 规则数量要求
-   - 规则总条数严格控制在\`计划规则数量\`范围内
+### Rule Quantity Requirements
+   - Total number of rules strictly controlled within the \`Planned Rule Count\` range
 
-### 规则提取策略
-   参考以下维度，提取高价值规则约束（围绕目标，视项目实际情况进行调整）：
-      - 违反会导致功能异常、报错或逻辑失效的编码要求
-      - 违反会导致开发复杂度显著增加的编码习惯
-      - 违反会导致后期维护困难的实现方式
-      - 代码结构、命名规范及存放路径的强制约定
-      - 模块划分、组件拆分的核心原则
-      - 模块间调用的固定模式（如接口定义、参数传递规范）
-      - 适配项目的通用编码最佳实践（如SOLID、DDD、KISS、DRY等）
-      - 项目中需强制复用的组件与机制（含代码、接口、数据、安全、架构等）
-      - 禁止重复开发的场景与边界（同类功能、配置、逻辑等）
-      - 核心业务逻辑的固定实现范式（如数据流转、状态变更规则）
-      - 日志打印、异常上报的统一格式要求
-      - 测试框架代码、测试数据生成的固定规则
+### Rule Extraction Strategy
+   Reference the following dimensions to extract high-value rule constraints (adjust according to project实际情况 around the objective):
+      - Coding requirements that lead to functional exceptions, errors, or logic failures when violated
+      - Coding habits that significantly increase development complexity when violated
+      - Implementation approaches that cause difficulty in later maintenance when violated
+      - Mandatory conventions for code structure, naming standards, and storage paths
+      - Core principles for module division and component splitting
+      - Fixed patterns for module invocation (e.g., interface definitions, parameter passing standards)
+      - General coding best practices adapted to the project (e.g., SOLID, DDD, KISS, DRY, etc.)
+      - Components and mechanisms in the project that must be reused (including code, interfaces, data, security, architecture, etc.)
+      - Scenarios and boundaries where duplicate development is prohibited (similar functions, configurations, logic, etc.)
+      - Fixed implementation paradigms for core business logic (e.g., data flow, state change rules)
+      - Unified format requirements for logging and exception reporting
+      - Fixed rules for test framework code and test data generation
 
-### 规则示例
-   **正确示例**：
-      - 将重复代码提取到可重用的函数中
-      - 优先复用项目已有的机制，禁止重复造轮子
-      - 数据库查询必须使用src/db/queryBuilder.ts，禁止原生SQL（会导致权限错误）
-      - 测试使用 vitest 框架, \`vi\`、\`describe\`、\`test\`、\`it\` 等函数在 \`tsconfig.json\` 中已默认定义，因此无需从 \`vitest\` 导入
+### Rule Examples
+   **Correct Examples**:
+      - Extract duplicate code into reusable functions
+      - Prioritize reusing existing mechanisms in the project; prohibit reinventing the wheel
+      - Database queries must use src/db/queryBuilder.ts, native SQL is prohibited (causes permission errors)
+      - Use vitest framework for testing, \`vi\`, \`describe\`, \`test\`, \`it\` and other functions are already defined in \`tsconfig.json\`, so no need to import from \`vitest\`
    
-   **错误示例**：
-      - 前端使用TypeScript进行开发，后端使用Python进行开发（显而易见，无需强调）
-      - 使用npm install安装依赖（package.json可见）
-      - 要高内聚、低耦合（过于抽象，缺乏可执行性）
-      - 团队沟通必须及时和透明（与代码生成无关）
+   **Incorrect Examples**:
+      - Frontend uses TypeScript for development, backend uses Python for development (obvious, no need to emphasize)
+      - Use npm install to install dependencies (visible in package.json)
+      - High cohesion and low coupling (too abstract, lacking executability)
+      - Team communication must be timely and transparent (irrelevant to code generation)
 
 ## Input
-- {子任务1得出的\`计划规则数量\`}
+- \`Planned Rule Count\` from Subtask 1
 
 ## Output:
-**输出要求**：
-输出路径：\`${workspace}${WIKI_OUTPUT_FILE_PATHS.GENERAL_RULES_OUTPUT_DIR}${PROJECT_RULES_OUTPUT_FILE}\`
-注意：如果目录不存在，则自动创建。
+**Output Requirements**:
+Output path: \`${workspace}${WIKI_OUTPUT_FILE_PATHS.GENERAL_RULES_OUTPUT_DIR}${PROJECT_RULES_OUTPUT_FILE}\`
+Note: Create the directory automatically if it does not exist.
 
-文档结构：
+Document structure:
 \`\`\`markdown
-# 项目开发规范
+# Project Development Standards
 
-## [规则分类1]
-- [规则1]
-- [规则2]
-- [规则3]
+## [Rule Category 1]
+- [Rule 1]
+- [Rule 2]
+- [Rule 3]
 
-## [规则分类2]
-- [规则1]
-- [规则2]
+## [Rule Category 2]
+- [Rule 1]
+- [Rule 2]
 ...
 \`\`\`
 
-**输出格式要求**:
-1. 一级标题固定为"# 项目开发规范"
-2. 分类标题必须以"## "开头，禁止使用三级标题（###）
-3. 每条规则必须以"- "开头，独立成行，单行不超过100字
-4. 禁止包含任何形式的代码示例、代码片段，可引用代码文件路径
-5. 禁止装饰性元素：emoji图标、特殊符号等
-6. 禁止添加任何冗余的说明性文字、注释
-7. 规则数量必须符合第一步设定的\`计划规则数量\`范围
+**Output Format Requirements**:
+1. First-level heading fixed as "# Project Development Standards"
+2. Category headings must start with "## ", prohibited from using third-level headings (###)
+3. Each rule must start with "- ", appear on a separate line, single line not exceeding 100 characters
+4. Prohibited from including any form of code examples or code snippets, can reference code file paths
+5. Prohibited from decorative elements: emoji icons, special symbols, etc.
+6. Prohibited from adding any redundant explanatory text or comments
+7. Rule quantity must comply with the \`Planned Rule Count\` range set in the first step
 
 ## Rules
 ${COMMON_RULES}
 \`\`\`\`
 
-### 子任务3：文档质量优化
+### Subtask 3: Document Quality Optimization
 \`\`\`\`
 ##Instructions
-**目标**： 对规则文档整体结构，以及包含的每条规则进行全面的质量验证，并对发现的质量问题进行优化。 
+**Objective**: Perform comprehensive quality verification on the overall structure of the rule document and each rule it contains, and optimize any quality issues found.
 
-**执行步骤**：
-1. **质量检查**
-   对每条规则执行以下检查项，按结果处理：
-   - [ ] 是否与当前项目相匹配？
-         若否，则删除该规则
-   - [ ] 是否对提升AI代码生成效果（如准确性、规范性、可维护性）有直接帮助？
-         若否，则删除该规则
-   - [ ] 是否属于过于基础、显而易见且无需额外强调的内容？
-         若是，则删除该规则
-   - [ ] 是否属于与编码、测试核心环节相关性较低的内容（如文档撰写、团队协作、部署流程、运维操作）？
-         若是，则删除该规则
-   - [ ] 是否表述过于抽象、模糊，缺乏明确可执行标准？
-         若是，则删除该规则
-   - [ ] 语句表达是否通顺无歧义？规则核心内容是否完整无遗漏？         
-         若否，则调整语句或补充内容
-   - [ ] 是否满足“100字以内、单行呈现、无代码示例”的格式要求？
-         若否，则删除该规则
-   - [ ] 违反此规则是否会直接导致AI生成代码出错、架构腐化、测试失败等实质性问题？
-         若否，则删除该规则        
-   - [ ] 数量可控性：总体规则数量是否处于第一步设定的计划规则数量范围内？ 
-         若否，则增删规则以调整数量
+**Execution Steps**:
+1. **Quality Check**
+   Perform the following checks on each rule and process according to results:
+   - [ ] Does it match the current project?
+         If no, delete the rule
+   - [ ] Does it have direct help in improving AI code generation effectiveness (e.g., accuracy, standardization, maintainability)?
+         If no, delete the rule
+   - [ ] Is it too basic, obvious, and does not need additional emphasis?
+         If yes, delete the rule
+   - [ ] Does it belong to content with low relevance to core coding and testing (e.g., documentation writing, team collaboration, deployment processes, operations)?
+         If yes, delete the rule
+   - [ ] Is the expression too abstract, vague, lacking clear executable standards?
+         If yes, delete the rule
+   - [ ] Is the expression smooth and unambiguous? Is the core content of the rule complete without omissions?
+         If no, adjust the expression or supplement the content
+   - [ ] Does it meet the format requirements of "within 100 characters, single line presentation, no code examples"?
+         If no, delete the rule
+   - [ ] Will violating this rule directly lead to substantial problems such as AI-generated code errors, architectural decay, test failures, etc.?
+         If no, delete the rule
+   - [ ] Quantity Controllability: Is the total number of rules within the planned rule quantity range set in the first step?
+         If no, add or delete rules to adjust the quantity
 
-2. **质量优化**：
-   - **删除**：删除所有未通过检查的规则
-   - **修改**： 对于格式有误的规则，进行修改
-   - **数量调整**：确保整体规则数量符合\`计划规则数量范围\`
-   - 如果超过，则删除价值较低的规则
-   - 如果不足，则回到前面的规则提取流程，重新提取规则，直到达到要求
+2. **Quality Optimization**:
+   - **Delete**: Delete all rules that failed the checks
+   - **Modify**: For rules with format errors, modify them
+   - **Quantity Adjustment**: Ensure the overall rule quantity complies with the \`Planned Rule Count Range\`
+   - If exceeded, delete lower-value rules
+   - If insufficient, return to the previous rule extraction process and re-extract rules until the requirement is met
 
-3. **最终文档**：输出最终符合要求的规则文档
+3. **Final Document**: Output the final rule document that meets the requirements
 
 ## Input
-  - 规则文档路径：\`${workspace}${WIKI_OUTPUT_FILE_PATHS.GENERAL_RULES_OUTPUT_DIR}${PROJECT_RULES_OUTPUT_FILE}\`
+  - Rule document path: \`${workspace}${WIKI_OUTPUT_FILE_PATHS.GENERAL_RULES_OUTPUT_DIR}${PROJECT_RULES_OUTPUT_FILE}\`
 
 ## Output
-**输出要求**：
-总结本次质量优化进行了哪些操作。
+**Output Requirements**:
+Summarize the operations performed in this quality optimization.
 \`\`\`
-1. 删除了xxx条规则，[原因]
-2. 新增了xxx条规则，[原因]
-3. 修改了xxx条规则，[原因]
+1. Deleted xxx rules, [reason]
+2. Added xxx rules, [reason]
+3. Modified xxx rules, [reason]
 \`\`\`
 ## Rules
 ${COMMON_RULES}

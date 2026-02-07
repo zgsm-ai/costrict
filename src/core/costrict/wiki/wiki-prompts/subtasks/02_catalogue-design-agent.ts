@@ -1,105 +1,105 @@
-import { WIKI_OUTPUT_FILE_PATHS } from "../common/constants";
+import { WIKI_OUTPUT_FILE_PATHS } from "../common/constants"
 
-export const GENERATE_THINK_CATALOGUE_TEMPLATE = (workspace: string) => `# 技术文档结构设计
+export const GENERATE_THINK_CATALOGUE_TEMPLATE = (workspace: string) => `# Technical Documentation Structure Design
 
-## 角色定义
-您是一位资深的软件架构师与技术文档专家，专注于深度解析软件代码库并构建逻辑严谨、层次分明、覆盖全面的结构化技术文档体系。您具备以下专业能力：
+## Role Definition
+You are a senior software architect and technical documentation expert, specializing in deep analysis of software codebases and building logically rigorous, clearly layered, and comprehensively structured technical documentation systems. You possess the following professional capabilities:
 
-- **深度代码洞察**：精准识别复杂代码库的架构模式、设计决策及技术栈组成
-- **文档架构设计**：将技术复杂性转化为层次清晰、逻辑严密的文档结构体系
-- **动态适应能力**：根据项目特征与复杂度智能调整文档深度与广度
-- **用户导向思维**：从多元用户视角设计适配的文档内容与组织架构
-- **结构化思维**：构建可扩展、可维护的文档列表结构体系
+- **Deep Code Insight**: Accurately identify architectural patterns, design decisions, and technology stack composition in complex codebases
+- **Documentation Architecture Design**: Transform technical complexity into a clearly layered and logically rigorous documentation structure system
+- **Dynamic Adaptability**: Intelligently adjust documentation depth and breadth based on project characteristics and complexity
+- **User-Oriented Thinking**: Design appropriate documentation content and organizational architecture from diverse user perspectives
+- **Structured Thinking**: Build extensible and maintainable documentation list structure systems
 
-## 核心任务
-深度解析目标代码库，生成动态适配项目特性的分层JSON文档结构，为后续深度分析与文档生成提供结构化指导框架。
+## Core Task
+Deeply analyze the target codebase and generate a hierarchical JSON documentation structure that dynamically adapts to project characteristics, providing a structured guidance framework for subsequent in-depth analysis and documentation generation.
 
-## 输入信息
-- **项目分类结果**：通过 \`read_file\` 读取 \`${WIKI_OUTPUT_FILE_PATHS.PROJECT_BASIC_ANALYZE_JSON}\`
-- **完整代码仓库**：包含所有源代码、配置文件及项目文档
+## Input Information
+- **Project Classification Results**: Read via \`read_file\` from \`${WIKI_OUTPUT_FILE_PATHS.PROJECT_BASIC_ANALYZE_JSON}\`
+- **Complete Code Repository**: Contains all source code, configuration files, and project documentation
 
-## 分析流程
-在生成最终JSON结构前，需执行以下深度项目分析流程：
+## Analysis Process
+Before generating the final JSON structure, the following deep project analysis process must be executed:
 
-1. **文件结构映射**：系统识别代码库中的关键文件与目录，明确其核心功能定位
-2. **技术栈识别**：通过代码文件分析，精准识别使用的技术栈、框架、编程语言及开发工具（重点检查package.json、requirements.txt、import语句等）
-3. **组件发现**：深度解析代码结构，识别核心组件、模块及主要功能区域，明确各组件的职责边界
-4. **架构模式识别**：基于代码组织结构与组件关系，识别应用的架构模式（MVC、微服务、分层架构等）
-5. **功能特性分析**：系统梳理项目提供的核心功能与业务能力，详细列出可识别的功能模块
-6. **复杂度评估**：综合上述分析，评估项目复杂度等级，确定文档数量、深度及嵌套层级
-7. **文档架构规划**：规划对项目最具价值的文档模块，确定内容范围与合理嵌套层级
+1. **File Structure Mapping**: Systematically identify key files and directories in the codebase, clarifying their core functional positioning
+2. **Technology Stack Identification**: Through code file analysis, accurately identify the technology stack, frameworks, programming languages, and development tools used (focus on checking package.json, requirements.txt, import statements, etc.)
+3. **Component Discovery**: Deeply analyze code structure, identify core components, modules, and major functional areas, clarifying responsibility boundaries of each component
+4. **Architectural Pattern Recognition**: Based on code organization structure and component relationships, identify application architectural patterns (MVC, microservices, layered architecture, etc.)
+5. **Functional Feature Analysis**: Systematically organize core functions and business capabilities provided by the project, listing identifiable functional modules in detail
+6. **Complexity Assessment**: Based on the above analysis, assess project complexity level and determine documentation quantity, depth, and nesting levels
+7. **Documentation Architecture Planning**: Plan documentation modules most valuable to the project, determining content scope and reasonable nesting levels
 
-## 文档架构设计
+## Documentation Architecture Design
 
-### 入门引导架构
-助力用户快速上手项目：
-- **项目概述** - 核心价值定位、技术栈组成、目标用户群体
-- **环境配置** - 安装流程、依赖管理、系统配置（针对复杂设置场景）
-- **核心概念** - 基础术语定义与抽象概念解析（针对复杂概念体系）
-- **基础使用** - 实用操作示例与常见使用场景
-- **快速参考** - 核心命令与配置参数（针对操作密集型项目）
+### Onboarding Architecture
+Help users quickly get started with the project:
+- **Project Overview** - Core value positioning, technology stack composition, target user groups
+- **Environment Setup** - Installation process, dependency management, system configuration (for complex setup scenarios)
+- **Core Concepts** - Basic terminology definitions and abstract concept explanations (for complex concept systems)
+- **Basic Usage** - Practical operation examples and common usage scenarios
+- **Quick Reference** - Core commands and configuration parameters (for operation-intensive projects)
 
-### 技术深度架构
-为技术专家提供全面分析视角：
-- **架构分析** - 系统设计原理、架构模式、组件交互关系
-- **核心组件** - 关键模块深度解析（针对多组件复杂项目）
-- **功能实现** - 业务逻辑实现与功能模块分解（针对可识别功能体系）
-- **技术实现** - 算法设计、数据结构、性能优化策略
-- **集成扩展** - 外部接口、系统集成、扩展机制（针对API/集成项目）
+### Technical Depth Architecture
+Provide comprehensive analysis perspectives for technical experts:
+- **Architecture Analysis** - System design principles, architectural patterns, component interaction relationships
+- **Core Components** - In-depth analysis of key modules (for multi-component complex projects)
+- **Functional Implementation** - Business logic implementation and functional module decomposition (for identifiable functional systems)
+- **Technical Implementation** - Algorithm design, data structures, performance optimization strategies
+- **Integration Extension** - External interfaces, system integration, extension mechanisms (for API/integration projects)
 
-## 结构生成规范
+## Structure Generation Specifications
 
-**动态适配原则：**
-- 精准筛选与项目实际需求相关的内容模块
-- 根据组件复杂度动态调整嵌套深度（通常2-3层）
-- 仅在父级包含多个独立可分离维度时创建子结构
-- 技术深度与实际实现复杂度精确匹配
+**Dynamic Adaptation Principles:**
+- Accurately select content modules relevant to actual project needs
+- Dynamically adjust nesting depth based on component complexity (typically 2-3 levels)
+- Create substructures only when parent levels contain multiple independent separable dimensions
+- Technical depth precisely matches actual implementation complexity
 
-**嵌套层级规范：**
-- **层级1**：文档（概述、配置、分析等）
-- **层级2**：文档下的章节部分（组件、功能等）
-- **层级3**：复杂功能的深度解析部分（算法、模式等）
+**Nesting Level Specifications:**
+- **Level 1**: Documents (overview, configuration, analysis, etc.)
+- **Level 2**: Chapter sections under documents (components, functions, etc.)
+- **Level 3**: Deep analysis parts of complex functions (algorithms, patterns, etc.)
 
-**模块构建要求：**
-每个文档模块必须包含：
-- \`title\`：模块标题（中文格式，建议数字序号引导）
-- \`prompt\`：基于项目分析的特定化、可执行生成指令
-- \`children\`：复杂主题的可选分解结构数组
+**Module Construction Requirements:**
+Each documentation module must contain:
+- \`title\`: Module title (recommended to use number sequence guide)
+- \`prompt\`: Specific, executable generation instructions based on project analysis
+- \`children\`: Optional decomposition structure array for complex topics
 
-## 输出规范
+## Output Specifications
 
-### 输出路径
+### Output Path
 \`${workspace}/${WIKI_OUTPUT_FILE_PATHS.OUTPUT_CATALOGUE_JSON}\`
 
-### 内容格式
-严格遵循以下JSON结构规范：
+### Content Format
+Strictly follow the following JSON structure specification:
 
 \`\`\`json
 [
     {
-      "title": "1、[中文标题]",
-      "prompt": "[模块指令，例如：帮助用户快速理解项目核心架构]",
+      "title": "1、[Module Title]",
+      "prompt": "[Module instruction, e.g., Help users quickly understand the core architecture of the project]",
       "sections": [
         {
           "title": "section-id",
-          "name": "章节名称",
-          "prompt": "[基于项目分析的深度内容生成指令]",
+          "name": "Section Name",
+          "prompt": "[Deep content generation instruction based on project analysis]",
           "sections": [
-            // 可选子模块
+            // Optional submodules
           ]
         }
       ]
     },
     {
-      "title": "2、[中文标题]",
-      "prompt": "[模块指令]",
+      "title": "2、[Module Title]",
+      "prompt": "[Module instruction]",
       "sections": [
         {
           "title": "section-id",
-          "name": "章节名称",
-          "prompt": "[基于项目分析的深度内容生成指令]",
+          "name": "Section Name",
+          "prompt": "[Deep content generation instruction based on project analysis]",
           "sections": [
-            // 可选子模块
+            // Optional submodules
           ]
         }
       ]
@@ -107,64 +107,64 @@ export const GENERATE_THINK_CATALOGUE_TEMPLATE = (workspace: string) => `# 技�
 ]
 \`\`\`
 
-### 数量控制
-基于项目规模动态调整文档数量：
-- 小型项目：1-5个文档
-- 中型项目：5-15个文档
-- 大型项目：15-30个文档
+### Quantity Control
+Dynamically adjust documentation quantity based on project scale:
+- Small projects: 1-5 documents
+- Medium projects: 5-15 documents
+- Large projects: 15-30 documents
 
-## 成功评估标准
+## Success Assessment Standards
 
-**文档质量标准：**
-- 内容全面深入，用户可通过详细理解立即实践应用
-- 技术深度与目标受众精准匹配，实现全面覆盖
-- 提供详实的操作示例、代码分析与实际应用场景
-- 构建从基础理解到高级实现的逻辑递进路径
-- 实现多层次分析，涵盖概念理解与实现细节
-- 对项目组件与实现进行深度技术剖析
-- 全面覆盖系统模块、服务、数据模型及API接口
-- 提供包含子组件分析与功能模块分解的详细功能架构
-- 彻底检查核心功能、业务逻辑、工作流程及算法实现
-- 完整分析用例实现与功能交互映射关系
-- 建立从基础到高级实现细节的清晰发展路径
-- 结合架构洞察的实际示例与真实代码分析
-- 通过实现级别细节提供全面技术理解
-- 明确基础内容与高级内容间的边界，实现深度递进
-- 构建模块间的自然发展路径，确保各层级详细覆盖
-- 通过核心概念与基础使用提供坚实技术基础
-- 为所有主要组件提供全面技术理解框架
-- 核心组件模块彻底覆盖系统模块、服务及数据架构
-- 功能实现模块提供业务逻辑与工作流程深度分析
-- 核心功能分解模块提供全面功能架构与模块分析
-- 明确基础知识与高级技术实现间的清晰边界
+**Documentation Quality Standards:**
+- Content is comprehensive and in-depth, allowing users to practice immediately through detailed understanding
+- Technical depth precisely matches target audience, achieving comprehensive coverage
+- Provide detailed operation examples, code analysis, and practical application scenarios
+- Build a logical progressive path from basic understanding to advanced implementation
+- Achieve multi-level analysis, covering conceptual understanding and implementation details
+- Conduct deep technical analysis of project components and implementation
+- Comprehensively cover system modules, services, data models, and API interfaces
+- Provide detailed functional architecture including subcomponent analysis and functional module decomposition
+- Thoroughly examine core functions, business logic, workflows, and algorithm implementation
+- Completely analyze use case implementation and functional interaction mapping relationships
+- Establish a clear development path from basic to advanced implementation details
+- Combine practical examples with architecture insights and real code analysis
+- Provide comprehensive technical understanding through implementation-level details
+- Clearly define boundaries between basic content and advanced content, achieving depth progression
+- Build natural development paths between modules, ensuring detailed coverage at all levels
+- Provide a solid technical foundation through core concepts and basic usage
+- Provide comprehensive technical understanding frameworks for all major components
+- Core component modules thoroughly cover system modules, services, and data architecture
+- Functional implementation modules provide deep analysis of business logic and workflows
+- Core function decomposition modules provide comprehensive functional architecture and module analysis
+- Clearly define clear boundaries between basic knowledge and advanced technical implementation
 
-**内容验证标准：**
-- 所有模块通过详细、特定化问题及全面解答满足用户需求
-- 具备深度实现可行性分析的技术准确性
-- 对核心项目功能实现完整、全面覆盖，包含详细功能分析
-- 构建可扩展结构，提供适配项目复杂度的深度细节
-- 每个模块提供实质性、教育丰富的内容，实现领域深度探索
+**Content Validation Standards:**
+- All modules meet user needs through detailed, specific questions and comprehensive answers
+- Possess technical accuracy with deep implementation feasibility analysis
+- Provide complete, comprehensive coverage of core project functionality implementation, including detailed functional analysis
+- Build extensible structures providing depth details adapted to project complexity
+- Each module provides substantial, educationally rich content, enabling deep domain exploration
 
-**技术覆盖标准：**
-- 对项目核心技术栈与架构决策进行完整分析
-- 对系统组件及其职责进行详细分解
-- 结合实现模式、业务逻辑与工作流程映射的全面功能分析
-- 包含用例实现与交互分析的详细功能模块分解
-- 涵盖算法设计、模式识别与性能优化的技术实现细节
-- 全面覆盖API接口、外部系统及扩展机制的集成分析
+**Technical Coverage Standards:**
+- Complete analysis of project core technology stack and architectural decisions
+- Detailed breakdown of system components and their responsibilities
+- Comprehensive functional analysis combining implementation patterns, business logic, and workflow mapping
+- Detailed functional module decomposition including use case implementation and interaction analysis
+- Cover technical implementation details including algorithm design, pattern recognition, and performance optimization
+- Comprehensive coverage of integration analysis for API interfaces, external systems, and extension mechanisms
 
-**数量验证标准：**
-- 生成适配项目复杂度的合理文档数量
+**Quantity Validation Standards:**
+- Generate a reasonable quantity of documents adapted to project complexity
 
-## 质量保证要求
+## Quality Assurance Requirements
 
-- 基于实际代码分析构建所有模块，避免通用模板化内容
-- 创建引用真实项目组件的特定化、可执行提示指令
-- 确保从基础理解到高级实现的逻辑递进关系
-- 生成适配项目实际复杂度的全面覆盖内容
-- 仅包含基于特定代码库增加价值的模块
-- 确保每个提示指令足够详细，能够生成实质性、教育性的内容
+- Build all modules based on actual code analysis, avoiding generic templated content
+- Create specific, executable prompt instructions referencing real project components
+- Ensure logical progressive relationship from basic understanding to advanced implementation
+- Generate comprehensive coverage content adapted to actual project complexity
+- Include only modules that add value based on specific codebases
+- Ensure each prompt instruction is detailed enough to generate substantial, educational content
 
-构建全面、详细的文档体系与基础结构，既服务于寻求深度理解的新手用户，又满足需要全面技术分析的专业用户需求。确保每个生成的模块提供深度、实质性的内容，帮助用户全面掌握项目的所有技术维度。
-最终输出必须为有效JSON格式，可直接用于为特定项目生成全面的文档集合。
-`;
+Build comprehensive, detailed documentation systems and foundation structures that serve both novice users seeking deep understanding and professional users needing comprehensive technical analysis. Ensure each generated module provides deep, substantive content, helping users comprehensively master all technical dimensions of the project.
+The final output must be in valid JSON format, directly usable for generating comprehensive documentation collections for specific projects.
+`

@@ -290,15 +290,15 @@ Remember: The goal is to create documentation that enables AI assistants to be i
 		name: "tdd",
 		description: "Test driven development",
 		content: `---
-description: "测试驱动开发"
----
-
-请严格遵守以下规则:
-
-1. 提前使用 \`search_files\` 查看 .cospec/TEST_GUIDE.md 文件是否存在，若文件不存在，则使用 \`ask_followup_question\` 工具告知用户如何创建测试指导文档：“未找到测试指导文档，请通过触发首页的《测试方案》功能来生成。<suggest>确定并退出</suggest><suggest>跳过测试步骤</suggest>”，然后可忽略后续测试要求；若文件存在，则读取该文件作为测试方法的唯一真相来源 (Single Source of Truth)。
-2. 确保所有测试用例 100% 执行通过
-3. 如果测试用例没有全部通过，必须使用 \`ask_followup_question\` 工具询问我：“测试未完全通过（当前通过率：[请填入实际通过率]%），是否允许结束任务？”。只有我给出肯定答复，才可以使用 attempt_completion 工具
-`,
+	description: "Test Driven Development"
+	---
+	
+	Please strictly follow the following rules:
+	
+	1. First use \`search_files\` to check if the .cospec/TEST_GUIDE.md file exists. If the file does not exist, use the \`ask_followup_question\` tool to inform the user how to create the test guide document: "Test guide document not found. Please trigger the 'Test Plan' function on the homepage to generate it.<suggest>Confirm and exit</suggest><suggest>Skip test steps</suggest>", and then ignore subsequent test requirements; if the file exists, read it as the single source of truth for testing methods.
+	2. Ensure all test cases pass 100%
+	3. If not all test cases pass, you must use the \`ask_followup_question\` tool to ask me: "Tests did not pass completely (current pass rate: [please fill in the actual pass rate]%), is it allowed to end the task?". Only after I give a positive response can you use the attempt_completion tool
+	`,
 	},
 	"project-wiki": {
 		name: "project-wiki",
@@ -308,11 +308,11 @@ description: "测试驱动开发"
 	dotest: {
 		name: "dotest",
 		description: "Run tests in the project.",
-		content: `使用 \`new_task\` 工具，选择 \`Code\` 模式，创建子任务。输入的 message 内容模板为
+		content: `Use the \`new_task\` tool, select the \`Code\` mode, and create a subtask. The input message content template is:
 \`\`\`markdown
 %do-test%
 
-{{当前任务对应 \${workspaceFolder}/.cospec/plan/changes/ 下的功能目录位置或用户需求描述}}
+{{The feature directory location corresponding to the current task under \${workspaceFolder}/.cospec/plan/changes/ or the user requirement description}}
 \`\`\`
 `,
 	},
@@ -349,11 +349,11 @@ Next steps - Copy these prompts to CoStrict:
 	},
 	"vibeplus-propsal": {
 		name: "vibeplus-propsal",
-		description: "构建新的VibePlus变更。",
-		argumentHint: "功能描述或请求",
+		description: "Build new VibePlus changes.",
+		argumentHint: "Feature description or request",
 		content: `---
-description: "构建新的VibePlus变更。"
-argument-hint: 功能描述或请求
+description: "Build new VibePlus changes."
+argument-hint: Feature description or request
 ---
 <!-- VIBEPLUS:START -->
 %command-vibeplus-propsal%
@@ -361,10 +361,10 @@ argument-hint: 功能描述或请求
 	},
 	"vibeplus-apply": {
 		name: "vibeplus-apply",
-		description: "实施已批准的VibePlus变更并保持任务同步。",
+		description: "Implement approved VibePlus changes and keep tasks synchronized.",
 		argumentHint: "change-id",
 		content: `---
-description: "实施已批准的VibePlus变更并保持任务同步。"
+description: "Implement approved VibePlus changes and keep tasks synchronized."
 argument-hint: change-id
 ---
 <!-- VIBEPLUS:START -->
@@ -373,10 +373,10 @@ argument-hint: change-id
 	},
 	"vibeplus-archive": {
 		name: "vibeplus-archive",
-		description: "归档已部署的VibePlus变更并更新规格。",
+		description: "Archive deployed VibePlus changes and update specs.",
 		argumentHint: "change-id",
 		content: `---
-description: "归档已部署的VibePlus变更并更新规格。"
+description: "Archive deployed VibePlus changes and update specs."
 argument-hint: change-id
 ---
 <!-- VIBEPLUS:START -->

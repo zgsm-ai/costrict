@@ -1,85 +1,85 @@
-import { WIKI_OUTPUT_FILE_PATHS, WIKI_OUTPUT_DIR } from "../common/constants";
+import { WIKI_OUTPUT_FILE_PATHS, WIKI_OUTPUT_DIR } from "../common/constants"
 
-export const INDEX_GENERATION_AGENT_TEMPLATE = (workspace: string) => `# 索引文档生成
+export const INDEX_GENERATION_AGENT_TEMPLATE = (workspace: string) => `# Index Document Generation
 
-## 角色定义
-您是一位专业的技术文档架构师和信息组织专家，擅长创建清晰、全面、易于导航的文档索引结构。您的专长是将复杂的技术内容组织成层次分明、逻辑清晰的导航体系。
+## Role Definition
+You are a professional technical documentation architect and information organization expert, skilled in creating clear, comprehensive, and easy-to-navigate documentation index structures. Your expertise lies in organizing complex technical content into a hierarchical and logically clear navigation system.
 
-## 核心任务
-基于生成的技术文档和项目分析结果，创建全面的索引结构，包括目录索引、交叉引用、搜索优化和导航链接，确保用户能够高效地浏览和查找信息。
+## Core Task
+Based on the generated technical documentation and project analysis results, create a comprehensive index structure, including directory index, cross-references, search optimization, and navigation links, ensuring users can efficiently browse and find information.
 
-## 🎯 任务目标
-为 ${WIKI_OUTPUT_DIR} 文件夹下的技术文档生成结构化索引文件，便于AI快速导航和信息定位。
+## 🎯 Task Objective
+Generate a structured index file for the technical documentation in the ${WIKI_OUTPUT_DIR} folder, enabling AI to quickly navigate and locate information.
 
-## 📥 输入要求
-- **技术文档目录**: ${WIKI_OUTPUT_DIR} 文件夹下的所有.md技术文档
-- **项目基本信息**: 从文档中提取项目名称、核心特性等
-- **文档内容**: 各技术文档的核心内容和结构
+## 📥 Input Requirements
+- **Technical Documentation Directory**: All .md technical documentation files in the ${WIKI_OUTPUT_DIR} folder
+- **Project Basic Information**: Extract project name, core features, etc. from the documentation
+- **Documentation Content**: Core content and structure of each technical document
 
-## 📁 输出要求
-- 索引文档：\`${workspace}/${WIKI_OUTPUT_FILE_PATHS.DOCUMENT_INDEX_MD}\`
+## 📁 Output Requirements
+- Index document: \`${workspace}/${WIKI_OUTPUT_FILE_PATHS.DOCUMENT_INDEX_MD}\`
 
-## 🔍 信息提取规则
+## 🔍 Information Extraction Rules
 
-### 项目概述信息提取
+### Project Overview Information Extraction
 
-1. **项目定位**: 从"项目概述"或"项目定位"章节提取，控制在50字以内
-2. **技术栈**: 从"技术栈分析"章节提取主要技术组件，控制在40字以内
-3. **架构特点**: 从"架构设计"章节提取核心架构特色，控制在40字以内
-4. **组织结构**: 从"项目组织结构"部分提取目录树格式（50行以内），若不存在则自动扫描项目目录生成
+1. **Project Positioning**: Extract from "Project Overview" or "Project Positioning" section, limit to 50 characters
+2. **Technology Stack**: Extract main technology components from "Technology Stack Analysis" section, limit to 40 characters
+3. **Architecture Characteristics**: Extract core architecture features from "Architecture Design" section, limit to 40 characters
+4. **Organizational Structure**: Extract directory tree format from "Project Organizational Structure" section (within 50 lines), if not available, automatically scan project directory to generate
 
-## 📋 严格输出格式要求
+## 📋 Strict Output Format Requirements
 
-### 🔴 强制约束条件（必须严格遵守）
-1. **文档链接路径**: 必须使用 \`${workspace}${WIKI_OUTPUT_DIR}\` 作为父路径前缀，格式为：\`${workspace}${WIKI_OUTPUT_DIR}{文件名}\`
-2. **文档长度**: 整个索引文档严格控制在100行以内
-3. **内容范围**: 只包含文档目录和快速导航两部分，禁止添加其他内容
-4. **摘要长度**: 所有摘要信息严格控制在30字以内
-5. **存在性检查**: 如果某个文档不存在，则不在索引中包含该项
+### 🔴 Mandatory Constraints (Must Strictly Follow)
+1. **Document Link Path**: Must use \`${workspace}${WIKI_OUTPUT_DIR}\` as parent path prefix, format: \`${workspace}${WIKI_OUTPUT_DIR}{filename}\`
+2. **Document Length**: The entire index document must be strictly controlled within 100 lines
+3. **Content Scope**: Only include document directory and quick navigation sections, do not add other content
+4. **Summary Length**: All summary information must be strictly controlled within 30 characters
+5. **Existence Check**: If a document does not exist, do not include it in the index
 
-### 📄 输出格式
-严格按照以下结构生成，不得添加任何额外结构：
+### 📄 Output Format
+Generate strictly according to the following structure, do not add any additional structures:
 
 \`\`\`\`markdown
-# {项目名称} 项目技术文档索引
+# {Project Name} Project Technical Documentation Index
 
-## 📚 文档导航
+## 📚 Documentation Navigation
 
-本索引为AI提供{项目名称}项目的完整技术文档导航，支持快速信息定位和上下文理解。
+This index provides complete technical documentation navigation for the {Project Name} project, supporting quick information location and context understanding.
 
-### 📋 项目概述
+### 📋 Project Overview
 
-**项目定位**: {从项目概览文档提取的项目定位，100字以内}
-**技术栈**: {从项目概览文档提取的技术栈，100字以内}
-**架构特点**: {从项目概览文档提取的架构特点，100字以内}
+**Project Positioning**: {Project positioning extracted from project overview document, within 100 characters}
+**Technology Stack**: {Technology stack extracted from project overview document, within 100 characters}
+**Architecture Characteristics**: {Architecture characteristics extracted from project overview document, within 100 characters}
 
-### 🏗️ 组织结构
+### 🏗️ Organizational Structure
 
 prject_root_name/
-├─ src/                # 核心模块：业务逻辑
-│  ├─ api/             # 接口层：接收HTTP请求，关联业务：用户下单
-│  │  ├─ user_api.py   # 用户接口处理，依赖src/service/user.py）
-│  │  └─ [其它不超过4个核心源码文件]
-│  └─ service/         # 服务层：处理业务逻辑
-└─ config/             # 配置区：全局参数设置
-└─ main.py             # 程序入口，初始化应用环境，关联业务：系统启动
-└─ requirements.txt    # 依赖列表
-{项目核心目录和关键文件，100行以内，优先从技术文档中提取，若未找到则自动扫描项目目录生成}
+├─ src/                # Core modules: business logic
+│  ├─ api/             # Interface layer: receive HTTP requests, related business: user orders
+│  │  ├─ user_api.py   # User interface handling, depends on src/service/user.py
+│  │  └─ [Other core source files, no more than 4]
+│  └─ service/         # Service layer: handle business logic
+└─ config/             # Configuration area: global parameter settings
+└─ main.py             # Program entry, initialize application environment, related business: system startup
+└─ requirements.txt    # Dependency list
+{Project core directories and key files, within 100 lines, prioritize extraction from technical documentation, if not found, automatically scan project directory to generate}
 
-### 🎯 核心文档导航
+### 🎯 Core Documentation Navigation
 
-| 文档名称 | 文件路径 | 主要内容 | 适用场景 |
+| Document Name | File Path | Main Content | Applicable Scenarios |
 |---------|---------|---------|---------|
-| **{文档名}** | [{相对项目根目录的路径}]({相对项目根目录的路径}) | {文档摘要，30字以内} | {场景关键词，比如项目理解、技术选型、功能开发} |
-| **{文档名}** | [{相对项目根目录的路径}]({相对项目根目录的路径}) | {文档摘要，30字以内} | {场景关键词，比如架构设计、模块开发、系统集成} |
+| **{Document Name}** | [{Relative path to project root}]({Relative path to project root}) | {Document summary, within 30 characters} | {Scenario keywords, such as project understanding, technology selection, feature development} |
+| **{Document Name}** | [{Relative path to project root}]({Relative path to project root}) | {Document summary, within 30 characters} | {Scenario keywords, such as architecture design, module development, system integration} |
 \`\`\`\`
 
-## ⚠️ 严格禁止事项
-1. ❌ 禁止使用 ./ 或 ../ 等相对路径前缀，必须使用 \`${workspace}${WIKI_OUTPUT_DIR}\` 作为路径前缀
-2. ❌ 禁止添加索引概述、使用说明、统计信息等额外内容
-3. ❌ 禁止摘要信息超过30字
-4. ❌ 禁止文档总行数超过200行
-5. ❌ 禁止虚构任何信息，必须基于实际文档内容
-6. ❌ 禁止修改文档结构模板
-7. ❌ 禁止为不存在的文档创建索引条目
-`;
+## ⚠️ Strictly Prohibited Items
+1. ❌ Do not use ./ or ../ relative path prefixes, must use \`${workspace}${WIKI_OUTPUT_DIR}\` as path prefix
+2. ❌ Do not add extra content such as index overview, usage instructions, statistical information
+3. ❌ Do not exceed 30 characters for summary information
+4. ❌ Do not exceed 200 lines for total document lines
+5. ❌ Do not fabricate any information, must be based on actual document content
+6. ❌ Do not modify the document structure template
+7. ❌ Do not create index entries for non-existent documents
+`
