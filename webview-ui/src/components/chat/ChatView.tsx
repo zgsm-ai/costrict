@@ -159,6 +159,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		experiments,
 		isBrowserSessionActive,
 		showWorktreesInHomeScreen,
+		language,
 	} = useExtensionState()
 
 	const messagesRef = useRef(messages)
@@ -1510,6 +1511,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const placeholderText = `${task ? t("chat:typeMessage") : t("chat:typeTask")}${placeholderTip}`
 
+	const summaryIconUri = useMemo(() => (window as any).COSTRICT_BASE_URI + "/summary_icon.webp", [])
+
+	const handleOpenAnnualSummary = useCallback(() => {
+		const baseUrl = apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL
+		const summaryUrl = `${baseUrl}/credit/manager/annual-summary`
+		vscode.postMessage({ type: "openExternal", url: summaryUrl })
+	}, [apiConfiguration?.zgsmBaseUrl])
+
 	const switchToMode = useCallback(
 		(modeSlug: string): void => {
 			// Update local state and notify extension to sync mode change.
@@ -1858,6 +1867,15 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							className="absolute top-2 right-3 z-10"
 						/> */}
 						<VersionIndicator onClick={() => {}} className="fixed top-10 right-6 z-10" />
+
+						{language === "zh-CN" && apiConfiguration?.zgsmAccessToken && (
+							<button
+								onClick={handleOpenAnnualSummary}
+								className="fixed top-18 right-6 z-10 cursor-pointer hover:opacity-80 transition-opacity"
+								aria-label="annual-summary">
+								<img src={summaryIconUri} alt="annual-summary" className="w-25.5" />
+							</button>
+						)}
 
 						<RooHero />
 						{/* {telemetrySetting === "unset" && <TelemetryBanner />} */}
