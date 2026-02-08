@@ -1,5 +1,11 @@
 # CoStrict Change Log
 
+## [2.3.8]
+
+- UI experience improvements
+- Fix prevent parent task state loss during orchestrator delegation
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/6826e20da29db4ec2e1f41196ad01b0f7755be72)
+
 ## [2.3.7]
 
 - UI experience improvements
