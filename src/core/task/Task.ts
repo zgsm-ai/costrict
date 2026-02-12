@@ -5051,7 +5051,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// Metrics
 
 	public combineMessages(messages: ClineMessage[]) {
-		return combineApiRequests(combineCommandSequences(messages))
+		// Filter out partial messages to prevent incomplete content from being
+		// included in API conversation history (e.g., when a stream is interrupted)
+		const nonPartialMessages = messages.filter((m) => !m.partial)
+		return combineApiRequests(combineCommandSequences(nonPartialMessages))
 	}
 
 	public getTokenUsage(): TokenUsage {

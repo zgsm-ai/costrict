@@ -55,7 +55,7 @@ export const ExperimentalSettings = ({
 	const { t } = useAppTranslation()
 
 	const smartMistakeDetectionConfig = experimentSettings?.smartMistakeDetectionConfig || {
-		autoSwitchModel: true,
+		autoSwitchModel: false,
 		autoSwitchModelThreshold: 3,
 	}
 
@@ -146,7 +146,7 @@ export const ExperimentalSettings = ({
 												<div className="pl-6 flex flex-col gap-2">
 													<ExperimentalFeature
 														experimentKey="AUTO_SWITCH_MODEL"
-														enabled={smartMistakeDetectionConfig.autoSwitchModel ?? true}
+														enabled={smartMistakeDetectionConfig.autoSwitchModel ?? false}
 														onChange={(enabled) => {
 															setSmartMistakeDetectionConfig?.({
 																autoSwitchModel: enabled,
@@ -178,7 +178,7 @@ export const ExperimentalSettings = ({
 																		setSmartMistakeDetectionConfig?.({
 																			autoSwitchModel:
 																				smartMistakeDetectionConfig.autoSwitchModel ??
-																				true,
+																				false,
 																			autoSwitchModelThreshold: value,
 																		})
 																	}

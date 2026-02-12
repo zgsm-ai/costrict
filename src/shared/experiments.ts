@@ -24,9 +24,9 @@ interface ExperimentConfig {
 
 export const experimentConfigsMap: Record<ExperimentKey, ExperimentConfig> = {
 	CHAT_SEARCH: { enabled: false },
-	SMART_MISTAKE_DETECTION: { enabled: true },
+	SMART_MISTAKE_DETECTION: { enabled: false },
 	ALWAYS_INCLUDE_FILE_DETAILS: { enabled: undefined },
-	COMMIT_REVIEW: { enabled: undefined },
+	COMMIT_REVIEW: { enabled: false },
 	USE_LITE_PROMPTS: { enabled: false },
 	PREVENT_FOCUS_DISRUPTION: { enabled: false },
 	IMAGE_GENERATION: { enabled: false },
