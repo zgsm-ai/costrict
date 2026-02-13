@@ -189,6 +189,7 @@ export class CodeReviewService {
 				"X-Request-ID": uuidv7(),
 				...COSTRICT_DEFAULT_HEADERS,
 			},
+			timeout: 10 * 60 * 1000,
 		}
 	}
 
