@@ -5,6 +5,7 @@
 - Disable experimental features by default and adjust thresholds
 - Optimize the detection of dangerous commands
 - Optimize the selection of multi window models
+- Update CodeReview request timeout configuration (300s -> 600s)
 - Fix cancel backend auto-approval timeout when auto-approve is toggled off mid-countdown
 
 ## [2.3.8]
