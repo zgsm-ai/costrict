@@ -1,5 +1,12 @@
 # CoStrict Change Log
 
+## [2.3.9]
+
+- Disable experimental features by default and adjust thresholds
+- Optimize the detection of dangerous commands
+- Optimize the selection of multi window models
+- Fix cancel backend auto-approval timeout when auto-approve is toggled off mid-countdown
+
 ## [2.3.8]
 
 - UI experience improvements
