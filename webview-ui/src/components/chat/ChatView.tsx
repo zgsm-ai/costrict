@@ -1514,10 +1514,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const summaryIconUri = useMemo(() => (window as any).COSTRICT_BASE_URI + "/summary_icon.webp", [])
 	const { hash } = useZgsmUserInfo(apiConfiguration?.zgsmAccessToken)
-	
+
 	const handleOpenAnnualSummary = useCallback(() => {
 		const baseUrl = apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL
-		const summaryUrl = `${baseUrl}/credit/manager/annual-summary${hash ? `?state=${hash}` :  ""}`
+		const summaryUrl = `${baseUrl}/credit/manager/annual-summary${hash ? `?state=${hash}` : ""}`
 		vscode.postMessage({ type: "openExternal", url: summaryUrl })
 	}, [apiConfiguration?.zgsmBaseUrl, hash])
 
@@ -1602,6 +1602,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		},
 		[searchQuery],
 	)
+	// Cancel backend auto-approval timeout when FollowUpSuggest's countdown effect cleans up.
+	// This is called when auto-approve is toggled off, a suggestion is clicked, or the component unmounts.
+	const handleFollowUpUnmount = useCallback(() => {
+		vscode.postMessage({ type: "cancelAutoApproval" })
+	}, [])
+
 	const itemContent = useCallback(
 		(index: number, messageOrGroup: ClineMessage) => {
 			const hasCheckpoint = modifiedMessages.some((message) => message.say === "checkpoint_saved")
@@ -1648,6 +1654,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					onSuggestionClick={handleSuggestionClickInRow} // This was already stabilized
 					onMultipleChoiceSubmit={handleMultipleChoiceSubmit}
 					onBatchFileResponse={handleBatchFileResponse}
+					onFollowUpUnmount={handleFollowUpUnmount}
 					isFollowUpAutoApprovalPaused={isFollowUpAutoApprovalPaused}
 					isFollowUpAnswered={messageOrGroup.isAnswered === true || messageOrGroup.ts <= currentFollowUpTs}
 					// Costrict: ask_multiple_choice answered
@@ -1677,23 +1684,24 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			)
 		},
 		[
+			modifiedMessages,
 			expandedRows,
 			toggleRowExpansion,
-			modifiedMessages,
 			groupedMessages.length,
 			handleRowHeightChange,
 			isStreaming,
 			handleSuggestionClickInRow,
-			handleBatchFileResponse,
 			handleMultipleChoiceSubmit,
-			primaryButtonText,
+			handleBatchFileResponse,
+			handleFollowUpUnmount,
+			isFollowUpAutoApprovalPaused,
 			currentFollowUpTs,
 			shouldHighlight,
 			searchResults,
 			showSearch,
 			searchQuery,
-			isFollowUpAutoApprovalPaused,
 			enableButtons,
+			primaryButtonText,
 		],
 	)
 
@@ -1875,7 +1883,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 								onClick={handleOpenAnnualSummary}
 								className="fixed top-20 right-6 z-10 cursor-pointer hover:opacity-80 transition-opacity animate-pulse"
 								aria-label="annual-summary">
-								<img src={summaryIconUri} alt="annual-summary" className="w-22 transition-transform hover:scale-110 hover:rotate-3 active:scale-95 duration-300 ease-in-out" />
+								<img
+									src={summaryIconUri}
+									alt="annual-summary"
+									className="w-22 transition-transform hover:scale-110 hover:rotate-3 active:scale-95 duration-300 ease-in-out"
+								/>
 							</button>
 						)}
 

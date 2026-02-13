@@ -780,14 +780,48 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (startTask) {
 			if (task || images) {
 				this.api?.setChatType?.("user")
-				this.startTask(task, images)
+				this.runLifecycleTaskInBackground(this.startTask(task, images), "startTask")
 			} else if (historyItem) {
 				this.smartMistakeDetector?.clear()
-				this.resumeTaskFromHistory()
+				this.runLifecycleTaskInBackground(this.resumeTaskFromHistory(), "resumeTaskFromHistory")
 			} else {
 				throw new Error("Either historyItem or task/images must be provided")
 			}
 		}
+	}
+
+	private runLifecycleTaskInBackground(taskPromise: Promise<void>, operation: "startTask" | "resumeTaskFromHistory") {
+		void taskPromise.catch((error) => {
+			if (this.shouldIgnoreBackgroundLifecycleError(error)) {
+				return
+			}
+
+			console.error(
+				`[Task#${operation}] task ${this.taskId}.${this.instanceId} failed: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			)
+		})
+	}
+
+	private shouldIgnoreBackgroundLifecycleError(error: unknown): boolean {
+		if (error instanceof AskIgnoredError) {
+			return true
+		}
+
+		if (this.abandoned === true || this.abort === true || this.abortReason === "user_cancelled") {
+			return true
+		}
+
+		if (!(error instanceof Error)) {
+			return false
+		}
+
+		const abortedByCurrentTask =
+			error.message.includes(`[RooCode#ask] task ${this.taskId}.${this.instanceId} aborted`) ||
+			error.message.includes(`[RooCode#say] task ${this.taskId}.${this.instanceId} aborted`)
+
+		return abortedByCurrentTask
 	}
 
 	/**
@@ -5051,10 +5085,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// Metrics
 
 	public combineMessages(messages: ClineMessage[]) {
-		// Filter out partial messages to prevent incomplete content from being
-		// included in API conversation history (e.g., when a stream is interrupted)
-		const nonPartialMessages = messages.filter((m) => !m.partial)
-		return combineApiRequests(combineCommandSequences(nonPartialMessages))
+		return combineApiRequests(combineCommandSequences(messages))
 	}
 
 	public getTokenUsage(): TokenUsage {

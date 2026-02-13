@@ -33,7 +33,7 @@ export class NotificationService {
 			const response = await this.fetchNotices()
 			await this.processAndSendNotices(response.notices || [])
 		} catch (error) {
-			console.error("Failed to fetch notices during initialization:", error)
+			console.warn("Failed to fetch notices during initialization:", error)
 		}
 		// Start periodic fetching
 		this.startPeriodicFetch()
