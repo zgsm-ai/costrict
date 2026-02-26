@@ -1,6 +1,6 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import { createBaseten } from "@ai-sdk/baseten"
-import { streamText, generateText, ToolSet } from "ai"
+import { streamText, generateText, ToolSet, LanguageModel } from "ai"
 
 import { basetenModels, basetenDefaultModelId, type ModelInfo } from "@roo-code/types"
 
@@ -57,7 +57,7 @@ export class BasetenHandler extends BaseProvider implements SingleCompletionHand
 	/**
 	 * Get the language model for the configured model ID.
 	 */
-	protected getLanguageModel() {
+	protected getLanguageModel(): LanguageModel {
 		const { id } = this.getModel()
 		return this.provider(id)
 	}

@@ -21,14 +21,14 @@ CoStrict is a **free, open-source AI-assisted programming tool** that supports p
 
 ### CoStrict Cli (<a href="https://docs.costrict.ai/cli/guide/installation" target="_blank">Cli docs</a> | <a href="https://costrict.ai/download" target="_blank">download</a>)
 
-<img width="400" src="./assets/images/readme/cli.png" alt="CoStrict Cli">
+<img width="400" src="./assets/images/readme/cli.webp" alt="CoStrict Cli">
 
 ### <img width="30" src="./assets/images/readme/idea.webp" alt="Jetbrains plugin"> Jetbrains plugin (<a href="https://github.com/zgsm-ai/costrict-jetbrains-agent" target="_blank">repo</a> | <a href="https://costrict.ai/download" target="_blank">download</a>)
 
 ### Community Communication & Feedback
 
 <img width="100" src="./assets/images/readme/wechat.png" alt="Communication Group">&nbsp;
-<img width="100" src="./assets/images/readme/communication_group.png" alt="Communication Group">
+<img width="100" src="./assets/images/readme/communication_group.webp" alt="Communication Group">
 
 ## Features
 
@@ -36,9 +36,9 @@ CoStrict is a **free, open-source AI-assisted programming tool** that supports p
 
 Strict Mode standardizes the process of AI-generated code, making it more aligned with enterprise development scenarios. It systematically breaks down a single requirement into steps such as：Requirements Analysis, Architecture Design, Task Planning and Test Generation etc. acting as a standardized procedure for AI to ensure high-quality and highly controllable output.
 
-<a href="https://docs.costrict.ai/en/tutorial-videos/video/#strict-mode" target="_blank"><img src="./assets/images/readme/strict_mode_en_buffer.png" alt="Docs Center"></a>
+<a href="https://docs.costrict.ai/en/tutorial-videos/video/#strict-mode" target="_blank"><img src="./assets/images/readme/strict_mode_en_buffer.webp" alt="Docs Center"></a>
 
-![Strict Mode](./assets/images/readme/strict_mode_en.png)
+![Strict Mode](./assets/images/readme/strict_mode_en.webp)
 
 - **Code Review:**
 
@@ -48,9 +48,9 @@ It supports users in conducting code checks on functions, selected code lines, c
 
 <br>
 
-<a href="https://docs.costrict.ai/en/tutorial-videos/video/#ai-codereview" target="_blank"><img src="./assets/images/readme/codereview_buffer.png" alt="Docs Center"></a>
+<a href="https://docs.costrict.ai/en/tutorial-videos/video/#ai-codereview" target="_blank"><img src="./assets/images/readme/codereview_buffer.webp" alt="Docs Center"></a>
 
-![morefeature](./assets/images/readme/codereview_en.png)
+![morefeature](./assets/images/readme/codereview_en.webp)
 
 - **More features:**
     - **Code Completion:** Automatically generates subsequent code based on the cursor's context code, quickly outputs code in seconds
@@ -63,7 +63,7 @@ It supports users in conducting code checks on functions, selected code lines, c
     - **Multi-language Support:** Supports mainstream programming languages: Python, Go, Java, JavaScript, TypeScript, C/C++ and all other programming languages
     - **Privacy & Security:** To ensure data security and provide better service at a lower cost, we offer a professional and comprehensive private deployment solution, ensuring code security through physical isolation and end-to-end encryption.
 
-    ![morefeature](./assets/images/readme/more-feature_en.png)
+    ![morefeature](./assets/images/readme/more-feature_en.webp)
 
 <br>
 
