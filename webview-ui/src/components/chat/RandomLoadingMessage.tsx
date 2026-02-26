@@ -156,46 +156,6 @@ export const WITTY_LOADING_PHRASES: Record<RandomLoadingMessageLanguage, string[
 	],
 }
 
-export const CHINESE_NEW_YEAR_PHRASES: Record<RandomLoadingMessageLanguage, string[]> = {
-	en: [
-		"🎊 Chinese New Year 2026: May you have a year filled with prosperity and joy...",
-		"🐴 Year of the Horse: Wishing you success and good fortune...",
-		"🧧 May the Spring Festival bring you happiness and peace...",
-		"🏮 Gong Xi Fa Cai: Wishing you wealth and prosperity...",
-		"🌸 May the new year bring new opportunities and achievements...",
-		"🎊 Xin Nian Kuai Le: Happy Chinese New Year 2026...",
-		"🐎 May you soar high and achieve your goals in the Year of the Horse...",
-		"🧧 Wishing you good health and happiness throughout the year...",
-		"🏮 May the Year of the Horse be filled with good luck and blessings...",
-		"🎋 Wishing you a prosperous and harmonious new year...",
-	],
-	"zh-CN": [
-		"🎊 2026新年佳节,阖家欢乐,万事如意...",
-		"🐴 马年吉祥,龙马精神,前程似锦...",
-		"🧧 春节将至,心想事成,大吉大利...",
-		"🏮 恭喜发财,财源广进,事业兴旺...",
-		"🌸 辞旧迎新,万象更新,前程万里...",
-		"🎊 新年快乐,马到成功,大展宏图...",
-		"🐎 一马当先,马不停蹄,奋发向前...",
-		"🧧 新春大吉,身体健康,平安喜乐...",
-		"🏮 马年大吉,吉星高照,福满人间...",
-		"🎋 新春如意,福星高照,万事亨通...",
-	],
-}
-
-const isChineseNewYearPeriod = (): boolean => {
-	const now = new Date()
-	const year = now.getFullYear()
-	const month = now.getMonth() + 1
-	const day = now.getDate()
-
-	if (year === 2026 && month === 2 && day >= 14 && day <= 24) {
-		return true
-	}
-
-	return false
-}
-
 export const RandomLoadingMessage = ({
 	language,
 	interval = 5000,
@@ -205,15 +165,9 @@ export const RandomLoadingMessage = ({
 	language?: RandomLoadingMessageLanguage
 	interval?: number
 	staticDisplay?: boolean | string
-	type?: "general" | "editing" | "chinese-new-year"
+	type?: "general" | "editing"
 }) => {
-	const effectiveType = isChineseNewYearPeriod() ? "chinese-new-year" : type
-	const phrases =
-		effectiveType === "editing"
-			? EDITING_PHRASES
-			: effectiveType === "chinese-new-year"
-				? CHINESE_NEW_YEAR_PHRASES
-				: WITTY_LOADING_PHRASES
+	const phrases = type === "editing" ? EDITING_PHRASES : WITTY_LOADING_PHRASES
 	const messages = phrases[language || "en"] ?? phrases["en"]
 	const [text, setText] = useState(messages[Math.floor(Math.random() * messages.length)])
 
