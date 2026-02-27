@@ -113,7 +113,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 				EXPERIMENT_IDS.PREVENT_FOCUS_DISRUPTION,
 			)
 			let language = relPath
-			let changedLines = 0
+			let changedLines = newContent.split("\n").length
 			if (isPreventFocusDisruptionEnabled) {
 				task.diffViewProvider.editType = fileExists ? "modify" : "create"
 				if (fileExists) {
@@ -137,7 +137,6 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 
 				if (!didApprove) {
 					language = await getLanguage(absolutePath)
-					changedLines = newContent.split("\n").length
 					TelemetryService.instance.captureCodeReject(language, changedLines)
 					return
 				}
@@ -173,7 +172,6 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 				if (!didApprove) {
 					await task.diffViewProvider.revertChanges()
 					language = await getLanguage(absolutePath)
-					changedLines = newContent.split("\n").length
 					TelemetryService.instance.captureCodeReject(language, changedLines)
 					return
 				}
