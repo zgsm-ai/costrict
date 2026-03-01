@@ -69,6 +69,7 @@ export const modeConfigSchema = z.object({
 	description: z.string().optional(),
 	customInstructions: z.string().optional(),
 	groups: groupEntryArraySchema,
+	overrideSystemPrompt: z.boolean().optional(),
 	source: z.enum(["global", "project"]).optional(),
 	zgsmCodeModeGroup: z.string().default("vibe").optional(),
 	apiProvider: z.string().optional(),

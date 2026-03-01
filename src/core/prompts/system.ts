@@ -9,7 +9,7 @@ import { formatLanguage } from "../../shared/language"
 import { isEmpty } from "../../utils/object"
 
 import { McpHub } from "../../services/mcp/McpHub"
-import { CodeIndexManager } from "../../services/code-index/manager"
+// import { CodeIndexManager } from "../../services/code-index/manager"
 import { SkillsManager } from "../../services/skills/SkillsManager"
 
 import { PromptVariables, loadSystemPromptFile } from "./sections/custom-system-prompt"
@@ -102,19 +102,39 @@ async function generatePrompt(data: {
 	}
 	shell = shell || getShell(settings?.terminalShellIntegrationDisabled)
 
+	// Check if lite prompts experiment is enabled
+	const useLitePrompts = experimentsUtil.isEnabled(experiments ?? {}, EXPERIMENT_IDS.USE_LITE_PROMPTS)
 	// Get the full mode config to ensure we have the role definition (used for groups, etc.)
 	const modeConfig = getModeBySlug(mode, customModeConfigs) || modes.find((m) => m.slug === mode) || modes[0]
 	const { roleDefinition, baseInstructions } = getModeSelection(mode, promptComponent, customModeConfigs)
 
+	// When overrideSystemPrompt is true, use roleDefinition as the entire system prompt
+	// body, only appending custom instructions. All standard sections are skipped.
+	if (modeConfig.overrideSystemPrompt) {
+		const customInstructionsSection = await addCustomInstructions(
+			baseInstructions,
+			globalCustomInstructions || "",
+			cwd,
+			mode,
+			{
+				language: language ?? formatLanguage(await defaultLang()),
+				rooIgnoreInstructions,
+				settings,
+				shell,
+				useLitePrompts,
+			},
+		)
+		return `${roleDefinition}${customInstructionsSection}`
+	}
 	// Check if MCP functionality should be included
 	const hasMcpGroup = modeConfig.groups.some((groupEntry) => getGroupName(groupEntry) === "mcp")
 	const hasMcpServers = mcpHub && mcpHub.getServers().length > 0
 	const shouldIncludeMcp = hasMcpGroup && hasMcpServers
 
-	const codeIndexManager = CodeIndexManager.getInstance(context, cwd)
+	// const codeIndexManager = CodeIndexManager.getInstance(context, cwd)
 
-	// Tool calling is native-only.
-	const effectiveProtocol = "native"
+	// // Tool calling is native-only.
+	// const effectiveProtocol = "native"
 
 	const [modesSection, skillsSection] = await Promise.all([
 		getModesSection(context, zgsmCodeMode),
@@ -123,9 +143,6 @@ async function generatePrompt(data: {
 
 	// Tools catalog is not included in the system prompt.
 	const toolsCatalog = ""
-
-	// Check if lite prompts experiment is enabled
-	const useLitePrompts = experimentsUtil.isEnabled(experiments ?? {}, EXPERIMENT_IDS.USE_LITE_PROMPTS)
 
 	const basePrompt = `${roleDefinition}
 

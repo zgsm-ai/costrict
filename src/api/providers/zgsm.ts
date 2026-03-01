@@ -591,9 +591,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			| { type: "tool_call_end"; id: string }
 		> = []
 		let time = Date.now()
-		let toolCallTime = Date.now()
 		let isPrinted = false
-		let shouldAbort = false
 		let hasReasoning = false
 
 		// Yield selected LLM info if available (for Auto model mode)
@@ -737,18 +735,13 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					bufferToolCalls(delta, finishReason)
 
 					// Flush tool call buffer periodically based on time interval
-					const now = Date.now()
-					const shouldFlushToolCalls =
-						toolCallTime + this.apiResponseRenderModeInfo.interval <= now ||
-						toolCallBuffer.length >= this.apiResponseRenderModeInfo.limit || // Prevent buffer from growing too large
-						this.abortController?.signal.aborted // Flush immediately on abort signal
+					const shouldFlushToolCalls = contentBuffer.length === 0 || this.abortController?.signal.aborted // Flush immediately on abort signal
 
 					if (shouldFlushToolCalls && toolCallBuffer.length > 0) {
 						const events = flushToolCallBuffer()
 						for (const event of events) {
 							yield event
 						}
-						toolCallTime = now
 					}
 				}
 
