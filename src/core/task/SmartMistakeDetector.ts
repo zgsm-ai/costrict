@@ -90,7 +90,7 @@ export class SmartMistakeDetector {
 	private readonly timeWindowMs: number
 
 	/** Default time window: 5 minutes */
-	private static readonly DEFAULT_TIME_WINDOW_MS = 5 * 60 * 1000
+	private static readonly DEFAULT_TIME_WINDOW_MS = 2 * 60 * 1000
 
 	/** Auto switch model enabled flag */
 	private readonly autoSwitchModelEnabled: boolean = false
@@ -420,12 +420,6 @@ export class SmartMistakeDetector {
 	recordSuccess(): void {
 		// If there are error records, consider reducing the severity of recent errors
 		// or subtracting a certain value from the weighted score
-		if (this.mistakes.length > 0) {
-			// Simple implementation: remove the earliest low-severity error
-			const lowSeverityIndex = this.mistakes.findIndex((m) => m.severity === "low")
-			if (lowSeverityIndex !== -1) {
-				this.mistakes.splice(lowSeverityIndex, 1)
-			}
-		}
+		this.mistakes = this.mistakes.filter((m) => m.severity !== "high")
 	}
 }

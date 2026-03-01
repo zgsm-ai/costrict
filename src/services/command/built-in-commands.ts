@@ -327,10 +327,13 @@ Remember: The goal is to create documentation that enables AI assistants to be i
 2.If \`openspec\` is not installed, prompt the user with a message asking if they want to install it. Provide the install command:
  \`npm install -g @fission-ai/openspec@latest\`
 
-3.If \`openspec\` is already installed, run the following command to initialize or overwrite the current setup:
+3.If \`openspec\` is already installed. Check if there is an update version. If there is, prompt the user with a message asking if they want to update it. Provide the update command:
+ \`npm install -g @fission-ai/openspec@latest\`
+
+4.If \`openspec\` is already installed, run the following command to initialize or overwrite the current setup:
 \`openspec init --tools costrict\`
 
-4.After all above steps finish successfully, print the following usage guide:
+5.After all above steps finish successfully, print the following usage guide:
 \`\`\`
 Next steps - Copy these prompts to CoStrict:
 ────────────────────────────────────────────────────────────

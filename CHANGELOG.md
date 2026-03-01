@@ -1,5 +1,12 @@
 # CoStrict Change Log
 
+## [2.3.10]
+
+- Update docs
+- Update `openspec-init` slash command
+- Optimize tools msg render
+- Fix known issues
+
 ## [2.3.9]
 
 - Disable experimental features by default and adjust thresholds
