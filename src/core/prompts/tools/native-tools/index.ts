@@ -7,7 +7,7 @@ import askMultipleChoice from "./ask_multiple_choice"
 import sequentialThinking from "./sequential_thinking"
 import attemptCompletion from "./attempt_completion"
 // import codebaseSearch from "./codebase_search"
-import costrictCheckpoint from "./costrict_checkpoint"
+// import costrictCheckpoint from "./costrict_checkpoint"
 import editTool from "./edit"
 import executeCommand from "./execute_command"
 import fileOutline from "./file_outline"
@@ -83,8 +83,8 @@ function getLiteDescription(tool: OpenAI.Chat.ChatCompletionFunctionTool): strin
 			return getLiteAttemptCompletionDescription()
 		case "browser_action":
 			return getLiteBrowserActionDescription()
-		case "costrict_checkpoint":
-			return getLiteCostrictCheckpointDescription()
+		// case "costrict_checkpoint": // todo: implement 
+		// 	return getLiteCostrictCheckpointDescription()
 		// case "codebase_search":
 		// 	return getLiteCodebaseSearchDescription()
 		case "execute_command":
@@ -148,7 +148,7 @@ export function getNativeTools(options: NativeToolsOptions = {}): OpenAI.Chat.Ch
 		sequentialThinking,
 		attemptCompletion,
 		// codebaseSearch,
-		costrictCheckpoint,
+		// costrictCheckpoint,
 		executeCommand,
 		fileOutline,
 		generateImage,

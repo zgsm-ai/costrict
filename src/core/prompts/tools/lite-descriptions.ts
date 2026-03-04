@@ -312,7 +312,7 @@ const liteTools = [
 	getLiteSearchReplaceDescription,
 	getLiteFileOutlineDescription,
 	getLiteAttemptCompletionDescription,
-	getLiteCostrictCheckpointDescription,
+	// getLiteCostrictCheckpointDescription,
 ]
 
 export const liteRetryPrompt = (tag = "tool_call") => `
