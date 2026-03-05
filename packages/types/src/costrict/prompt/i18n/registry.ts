@@ -37,6 +37,17 @@ const registry: PromptRegistry = {
 		strict: zhCNSpec,
 		design: zhCNDesign,
 	},
+	"zh-TW": {
+		plan: zhCNPlan,
+		subcoding: zhCNSubcoding,
+		"plan-apply": zhCNPlanApply,
+		"quick-explore": zhCNQuickExplore,
+		requirements: zhCNRequirements,
+		"task-check": zhCNTaskCheck,
+		task: zhCNTask,
+		strict: zhCNSpec,
+		design: zhCNDesign,
+	},
 	en: {
 		plan: enPlan,
 		subcoding: enSubcoding,
