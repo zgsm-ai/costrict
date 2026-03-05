@@ -7,12 +7,12 @@ import {
 	type ToolGroup,
 	type PromptComponent,
 	DEFAULT_MODES,
+	resolveI18nPrompt,
 } from "@roo-code/types"
 
 import { addCustomInstructions } from "../core/prompts/sections/custom-instructions"
 
 import { TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS } from "./tools"
-import { resolveI18nPrompt } from "@roo-code/types"
 
 export type Mode = string
 export type ZgsmCodeMode = "vibe" | "strict" | "plan" | "raw"
@@ -247,41 +247,73 @@ export async function getFullModeDetails(
 }
 
 // Helper function to safely get role definition
-export function getRoleDefinition(modeSlug: string, customModes?: ModeConfig[]): string {
+export function getRoleDefinition(modeSlug: string, customModes?: ModeConfig[], language?: string): string {
 	const mode = getModeBySlug(modeSlug, customModes)
 	if (!mode) {
 		console.warn(`No mode found for slug: ${modeSlug}`)
 		return ""
 	}
-	return mode.roleDefinition
+
+	// Do not apply i18n overrides for custom modes (including built-in overrides)
+	const customMode = findModeBySlug(modeSlug, customModes)
+	if (customMode) {
+		return mode.roleDefinition
+	}
+
+	const i18nPrompt = resolveI18nPrompt(modeSlug, language)
+	return i18nPrompt?.roleDefinition ?? mode.roleDefinition
 }
 
 // Helper function to safely get description
-export function getDescription(modeSlug: string, customModes?: ModeConfig[]): string {
+export function getDescription(modeSlug: string, customModes?: ModeConfig[], language?: string): string {
 	const mode = getModeBySlug(modeSlug, customModes)
 	if (!mode) {
 		console.warn(`No mode found for slug: ${modeSlug}`)
 		return ""
 	}
-	return mode.description ?? ""
+
+	// Do not apply i18n overrides for custom modes (including built-in overrides)
+	const customMode = findModeBySlug(modeSlug, customModes)
+	if (customMode) {
+		return mode.description ?? ""
+	}
+
+	const i18nPrompt = resolveI18nPrompt(modeSlug, language)
+	return i18nPrompt?.description ?? mode.description ?? ""
 }
 
 // Helper function to safely get whenToUse
-export function getWhenToUse(modeSlug: string, customModes?: ModeConfig[]): string {
+export function getWhenToUse(modeSlug: string, customModes?: ModeConfig[], language?: string): string {
 	const mode = getModeBySlug(modeSlug, customModes)
 	if (!mode) {
 		console.warn(`No mode found for slug: ${modeSlug}`)
 		return ""
 	}
-	return mode.whenToUse ?? ""
+
+	// Do not apply i18n overrides for custom modes (including built-in overrides)
+	const customMode = findModeBySlug(modeSlug, customModes)
+	if (customMode) {
+		return mode.whenToUse ?? ""
+	}
+
+	const i18nPrompt = resolveI18nPrompt(modeSlug, language)
+	return i18nPrompt?.whenToUse ?? mode.whenToUse ?? ""
 }
 
 // Helper function to safely get custom instructions
-export function getCustomInstructions(modeSlug: string, customModes?: ModeConfig[]): string {
+export function getCustomInstructions(modeSlug: string, customModes?: ModeConfig[], language?: string): string {
 	const mode = getModeBySlug(modeSlug, customModes)
 	if (!mode) {
 		console.warn(`No mode found for slug: ${modeSlug}`)
 		return ""
 	}
-	return mode.customInstructions ?? ""
+
+	// Do not apply i18n overrides for custom modes (including built-in overrides)
+	const customMode = findModeBySlug(modeSlug, customModes)
+	if (customMode) {
+		return mode.customInstructions ?? ""
+	}
+
+	const i18nPrompt = resolveI18nPrompt(modeSlug, language)
+	return i18nPrompt?.customInstructions ?? mode.customInstructions ?? ""
 }

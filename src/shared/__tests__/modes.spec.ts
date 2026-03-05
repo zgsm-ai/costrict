@@ -1,6 +1,6 @@
 // npx vitest run shared/__tests__/modes.spec.ts
 
-import type { ModeConfig, PromptComponent } from "@roo-code/types"
+import { resolveI18nPrompt, type ModeConfig, type PromptComponent } from "@roo-code/types"
 
 // Mock setup must come before imports
 vi.mock("vscode")
@@ -9,7 +9,16 @@ vi.mock("../../core/prompts/sections/custom-instructions", () => ({
 	addCustomInstructions: vi.fn().mockResolvedValue("Combined instructions"),
 }))
 
-import { FileRestrictionError, getFullModeDetails, modes, getModeSelection } from "../modes"
+import {
+	FileRestrictionError,
+	getCustomInstructions,
+	getDescription,
+	getFullModeDetails,
+	getModeSelection,
+	getRoleDefinition,
+	getWhenToUse,
+	modes,
+} from "../modes"
 import { isToolAllowedForMode } from "../../core/tools/validateToolUse"
 import { addCustomInstructions } from "../../core/prompts/sections/custom-instructions"
 
@@ -693,6 +702,36 @@ describe("FileRestrictionError", () => {
 				...modes[0],
 				// The first mode (architect) has its own customInstructions
 			})
+		})
+	})
+
+	describe("localized mode getters", () => {
+		it("returns localized roleDefinition for built-in modes when language is provided", () => {
+			const zhPlanPrompt = resolveI18nPrompt("plan", "zh-CN")
+			expect(zhPlanPrompt?.roleDefinition).toBeTruthy()
+			expect(getRoleDefinition("plan", undefined, "zh-CN")).toBe(zhPlanPrompt?.roleDefinition)
+		})
+
+		it("keeps custom mode overrides higher priority than localized built-in prompts", () => {
+			const customModes: ModeConfig[] = [
+				{
+					slug: "plan",
+					name: "Custom Plan",
+					roleDefinition: "Custom plan role",
+					groups: ["read"],
+				},
+			]
+
+			expect(getRoleDefinition("plan", customModes, "zh-CN")).toBe("Custom plan role")
+		})
+
+		it("falls back to built-in fields when localized prompt field is not defined", () => {
+			const planMode = modes.find((mode) => mode.slug === "plan")
+			expect(planMode).toBeDefined()
+
+			expect(getDescription("plan", undefined, "zh-CN")).toBe(planMode?.description ?? "")
+			expect(getWhenToUse("plan", undefined, "zh-CN")).toBe(planMode?.whenToUse ?? "")
+			expect(getCustomInstructions("plan", undefined, "zh-CN")).toBe(planMode?.customInstructions ?? "")
 		})
 	})
 

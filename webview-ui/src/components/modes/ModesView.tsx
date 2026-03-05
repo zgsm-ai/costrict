@@ -64,7 +64,8 @@ function getGroupName(group: GroupEntry): ToolGroup {
 }
 
 const ModesView = () => {
-	const { t } = useAppTranslation()
+	const { t, i18n } = useAppTranslation()
+	const currentLanguage = i18n.language
 
 	const {
 		apiConfiguration,
@@ -138,13 +139,13 @@ const ModesView = () => {
 			const updatedPrompt = { ...existingPrompt, ...promptData }
 
 			// Only include properties that differ from defaults
-			if (updatedPrompt.roleDefinition === getRoleDefinition(mode)) {
+			if (updatedPrompt.roleDefinition === getRoleDefinition(mode, undefined, currentLanguage)) {
 				delete updatedPrompt.roleDefinition
 			}
-			if (updatedPrompt.description === getDescription(mode)) {
+			if (updatedPrompt.description === getDescription(mode, undefined, currentLanguage)) {
 				delete updatedPrompt.description
 			}
-			if (updatedPrompt.whenToUse === getWhenToUse(mode)) {
+			if (updatedPrompt.whenToUse === getWhenToUse(mode, undefined, currentLanguage)) {
 				delete updatedPrompt.whenToUse
 			}
 
@@ -154,7 +155,7 @@ const ModesView = () => {
 				customPrompt: updatedPrompt,
 			})
 		},
-		[customModePrompts],
+		[customModePrompts, currentLanguage],
 	)
 
 	const updateCustomMode = useCallback((slug: string, modeConfig: ModeConfig) => {
@@ -986,7 +987,11 @@ const ModesView = () => {
 						value={(() => {
 							const customMode = findModeBySlug(visualMode, customModes)
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
-							return customMode?.roleDefinition ?? prompt?.roleDefinition ?? getRoleDefinition(visualMode)
+							return (
+								customMode?.roleDefinition ??
+								prompt?.roleDefinition ??
+								getRoleDefinition(visualMode, customModes, currentLanguage)
+							)
 						})()}
 						onChange={(e) => {
 							const value =
@@ -1043,7 +1048,11 @@ const ModesView = () => {
 						value={(() => {
 							const customMode = findModeBySlug(visualMode, customModes)
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
-							return customMode?.description ?? prompt?.description ?? getDescription(visualMode)
+							return (
+								customMode?.description ??
+								prompt?.description ??
+								getDescription(visualMode, customModes, currentLanguage)
+							)
 						})()}
 						onChange={(e) => {
 							const value =
@@ -1103,7 +1112,11 @@ const ModesView = () => {
 						value={(() => {
 							const customMode = findModeBySlug(visualMode, customModes)
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
-							return customMode?.whenToUse ?? prompt?.whenToUse ?? getWhenToUse(visualMode)
+							return (
+								customMode?.whenToUse ??
+								prompt?.whenToUse ??
+								getWhenToUse(visualMode, customModes, currentLanguage)
+							)
 						})()}
 						onChange={(e) => {
 							const value =
@@ -1259,7 +1272,7 @@ const ModesView = () => {
 							return (
 								customMode?.customInstructions ??
 								prompt?.customInstructions ??
-								getCustomInstructions(visualMode, customModes)
+								getCustomInstructions(visualMode, customModes, currentLanguage)
 							)
 						})()}
 						onChange={(e) => {
