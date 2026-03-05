@@ -45,6 +45,7 @@ export async function processUserContentMentions({
 	maxDiagnosticMessages = 50,
 	skillsManager,
 	currentMode = "code",
+	language,
 }: {
 	userContent: Anthropic.Messages.ContentBlockParam[]
 	cwd: string
@@ -56,9 +57,35 @@ export async function processUserContentMentions({
 	maxDiagnosticMessages?: number
 	skillsManager?: SkillLookup
 	currentMode?: string
+	language?: string
 }): Promise<ProcessUserContentMentionsResult> {
 	// Track the first mode found from slash commands
 	let commandMode: string | undefined
+	const parseMentionsWithContext = (text: string) =>
+		language
+			? parseMentions(
+					text,
+					cwd,
+					fileContextTracker,
+					rooIgnoreController,
+					showRooIgnoredFiles,
+					includeDiagnosticMessages,
+					maxDiagnosticMessages,
+					skillsManager,
+					currentMode,
+					language,
+				)
+			: parseMentions(
+					text,
+					cwd,
+					fileContextTracker,
+					rooIgnoreController,
+					showRooIgnoredFiles,
+					includeDiagnosticMessages,
+					maxDiagnosticMessages,
+					skillsManager,
+					currentMode,
+				)
 
 	// Process userContent array, which contains text and image parts.
 	// We need to apply parseMentions() to TextPart's text that contains "<user_message>".
@@ -69,17 +96,7 @@ export async function processUserContentMentions({
 
 				if (block.type === "text") {
 					if (shouldProcessMentions(block.text)) {
-						const result = await parseMentions(
-							block.text,
-							cwd,
-							fileContextTracker,
-							rooIgnoreController,
-							showRooIgnoredFiles,
-							includeDiagnosticMessages,
-							maxDiagnosticMessages,
-							skillsManager,
-							currentMode,
-						)
+						const result = await parseMentionsWithContext(block.text)
 						// Capture the first mode found
 						if (!commandMode && result.mode) {
 							commandMode = result.mode
@@ -114,17 +131,7 @@ export async function processUserContentMentions({
 				} else if (block.type === "tool_result") {
 					if (typeof block.content === "string") {
 						if (shouldProcessMentions(block.content)) {
-							const result = await parseMentions(
-								block.content,
-								cwd,
-								fileContextTracker,
-								rooIgnoreController,
-								showRooIgnoredFiles,
-								includeDiagnosticMessages,
-								maxDiagnosticMessages,
-								skillsManager,
-								currentMode,
-							)
+							const result = await parseMentionsWithContext(block.content)
 							// Capture the first mode found
 							if (!commandMode && result.mode) {
 								commandMode = result.mode
@@ -165,17 +172,7 @@ export async function processUserContentMentions({
 							await Promise.all(
 								block?.content?.map(async (contentBlock) => {
 									if (contentBlock.type === "text" && shouldProcessMentions(contentBlock.text)) {
-										const result = await parseMentions(
-											contentBlock.text,
-											cwd,
-											fileContextTracker,
-											rooIgnoreController,
-											showRooIgnoredFiles,
-											includeDiagnosticMessages,
-											maxDiagnosticMessages,
-											skillsManager,
-											currentMode,
-										)
+										const result = await parseMentionsWithContext(contentBlock.text)
 										// Capture the first mode found
 										if (!commandMode && result.mode) {
 											commandMode = result.mode

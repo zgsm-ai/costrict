@@ -229,10 +229,11 @@ export async function activate(
 				})
 		}
 	})
-	setTimeout(() => {
+	setTimeout(async () => {
 		loginTip()
-		// init project-wiki subtasks.
-		ensureProjectWikiSubtasksExists()
+		// init project-wiki subtasks with current language.
+		const state = await provider.getState()
+		await ensureProjectWikiSubtasksExists(state.language ?? "en")
 		flushModels(
 			{
 				provider: "zgsm",

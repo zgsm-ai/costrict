@@ -1,0 +1,118 @@
+import type { CommandContentFactory } from "../commandRegistry.js"
+import { getSubtaskDir, resolveI18nWikiPromptConstants } from "../wikiConstants.js"
+
+// 主执行模板（简体中文版本）
+export const PROJECT_WIKI_TEMPLATE: CommandContentFactory = (params: { workspace: string; language?: string }) => {
+	const { workspace, language = "zh-CN" } = params
+	const { SUBTASK_FILENAMES, WIKI_OUTPUT_FILE_PATHS, COMMON_RULES } = resolveI18nWikiPromptConstants(language)
+	const subtaskDir = getSubtaskDir(language)
+	return `
+# 🚀 智能代码仓库分析和文档生成
+
+## 前置步骤（强制执行）
+确保当前处于\`📋 Orchestrator\`模式，如果不是，使用\`switch_mode\`切换到\`Orchestrator\`模式\`,然后执行后续任务。
+
+## 角色定义
+您是一位**任务协调专家**（Orchestrator），专门负责：
+- **任务分解与调度**：将复杂任务分解为可执行的子任务序列
+- **流程控制**：确保子任务按正确顺序执行，处理依赖关系
+- **进度跟踪**：监控各子任务执行状态，确保整体进度
+- **质量把关**：验证子任务输出质量，确保符合标准
+- **异常处理**：识别并处理执行过程中的异常情况
+
+## 任务目标
+协调完成对工作区 \`${workspace}\` 的**智能代码仓库分析和文档生成**，实现以下目标：
+- **生成高质量技术文档**：包括项目分析、开发规范、索引文件等
+- **提升AI代码生成精准性**：通过分析代码结构和文档，为AI代码生成提供更准确的项目上下文信息
+- **建立开发标准**：为项目提供统一的开发规范和最佳实践
+- **加速团队协作**：为新开发者提供快速上手的指导文档
+
+## 📋 详细执行步骤
+
+**执行要点**：
+- **模式切换**：必须先切换到\`📋 Orchestrator\`模式
+- **严格顺序**：所有子任务必须按顺序执行，不得跳跃
+- **子任务委托**：每个子任务使用\`new_task\`工具创建子任务，执行模式统一\`💻 Code\`
+- **协调管理**：Orchestrator 负责协调和跟踪进度
+- **上下文管理**：通过子任务分解避免上下文累积过长
+- **完成确认**：每个子任务完成后声明"子任务X已完成"
+- **任务返回**： 每个子任务需使用\`attempt_completion\`工具返回关键信息，供父任务传递到后续子任务使用
+- **文件输出**：每个子任务必须生成对应文件，并输出到指定目录
+- **结构化子任务**：每个子任务必须按照以下结构化模板进行编写，并根据任务需求传入相关参数
+
+**子任务创建模板**：
+\`\`\`yaml
+new_task:
+    mode: 💻 Code
+    message: |
+      **{子任务名称}**
+      ## Role
+        {角色定义}
+      ## Instructions
+        1. 使用 \`read_file\`工具读取指令文件内容并严格遵循：
+           \`{指令文件路径}\`
+        2. 根据上一步读取到的任务指令，规划 \`todo_list\` 待办项，逐个执行
+        3. {其它指令}
+      ## Rules
+        ${COMMON_RULES}
+        4. 必须使用 \`read_file\` 工具读取指令文件，严格按照指令文件中的指令执行
+        5. {其他注意事项}
+      ## Input
+        {输入参数}    
+      ## Background
+        {背景信息}
+\`\`\`
+
+### 子任务1：📊 项目分类分析
+子任务指令文件路径：\`${subtaskDir}${SUBTASK_FILENAMES.PROJECT_CLASSIFICATION_AGENT}\`
+
+### 子任务2：🗂️ 文档结构生成
+子任务指令文件路径：\`${subtaskDir}${SUBTASK_FILENAMES.THINK_CATALOGUE_AGENT}\`
+
+### 任务3：读取文档结构定义
+1. 使用\`swtich_mode\` 工具切换到\`💻 Code\`模式
+2. 使用\`read_file\`工具读取 \`${WIKI_OUTPUT_FILE_PATHS.OUTPUT_CATALOGUE_JSON} 文件，供后续任务使用
+4. 使用\`switch_mode\` 工具再次切换回 \`📋 Orchestrator\`模式
+
+### 🔄 子任务动态分解
+分析任务3读取到的json格式的文档结构定义，使用\`new_task\`工具创建N（N=文档数量）个文档生成子任务，每个子任务负责一个文档的生成。
+**注意**：
+1. 一个顶层的json object元素对应一个文档，json array 长度就是总文档个数。即：
+\`\`\`json
+[ {
+    文档1
+  }, 
+  {
+    文档2
+  },
+  ...
+]
+\`\`\`
+2.子任务必须输入的信息：
+  - 文档核心信息：从任务3读到的文档中，提取到的与本子任务相关内容
+  - 文档子任务指令模板路径：\`${subtaskDir}${SUBTASK_FILENAMES.DOCUMENT_GENERATION_AGENT}\`
+
+### 子任务4.1：📋 文档生成-1
+    ...
+
+... (需要动态创建的文档生成子任务)
+
+#### 子任务4.N：📋 文档生成-N
+    ...
+
+### 子任务5: 🔍 索引文件生成
+子任务指令文件路径：\`${subtaskDir}${SUBTASK_FILENAMES.INDEX_GENERATION_AGENT}\`
+
+## 完成标准
+当以下条件全部满足时，任务执行完成：
+1. 所有子任务都已执行完成
+2. 生成了所有必需的输出文件
+3. 上下文信息完整且一致
+4. 输出质量符合标准要求
+5. 错误处理记录完整
+
+现在请开始执行任务调度器的职责，协调完成对工作区 \`${workspace}\` 的完整分析。请确保每个子任务都完整执行，并在遇到错误时应用智能重试机制。最终输出应该是一套完整、高质量的技术文档和分析报告。
+`
+}
+
+export default PROJECT_WIKI_TEMPLATE

@@ -91,7 +91,7 @@ import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-even
 import { fetchZgsmQuotaInfo, fetchZgsmInviteCode } from "../../api/providers/fetchers/zgsm"
 import { initNotificationService } from "../costrict/notification"
 import delay from "delay"
-// import { ensureProjectWikiSubtasksExists } from "../costrict/wiki/projectWikiHelpers"
+import { ensureProjectWikiSubtasksExists } from "../costrict/wiki/projectWikiHelpers"
 import { setPendingTodoList } from "../tools/UpdateTodoListTool"
 import { getEditorType } from "../../utils/getEditorType"
 import { updateDefaultDebug } from "../../utils/getDebugState"
@@ -153,8 +153,9 @@ export const webviewMessageHandler = async (
 	}
 
 	const getDiscoveredCommands = async (): Promise<SlashCommand[]> => {
+		const state = await provider.getState()
 		const { getCommands } = await import("../../services/command/commands")
-		const commands = await getCommands(getCurrentCwd())
+		const commands = await getCommands(getCurrentCwd(), state.language)
 
 		const commandList: SlashCommand[] = commands.map((command) => ({
 			name: command.name,
@@ -750,6 +751,8 @@ export const webviewMessageHandler = async (
 					if (key === "language") {
 						newValue = value ?? "en"
 						changeLanguage(newValue as Language)
+						// Initialize subtask files for the new language.
+						await ensureProjectWikiSubtasksExists(newValue as string)
 					} else if (key === "allowedCommands") {
 						const commands = value ?? []
 
@@ -3326,8 +3329,9 @@ export const webviewMessageHandler = async (
 		case "openCommandFile": {
 			try {
 				if (message.text) {
+					const state = await provider.getState()
 					const { getCommand } = await import("../../services/command/commands")
-					const command = await getCommand(getCurrentCwd(), message.text)
+					const command = await getCommand(getCurrentCwd(), message.text, state.language)
 
 					if (command && command.filePath) {
 						openFile(command.filePath)
@@ -3346,8 +3350,9 @@ export const webviewMessageHandler = async (
 		case "deleteCommand": {
 			try {
 				if (message.text && message.values?.source) {
+					const state = await provider.getState()
 					const { getCommand } = await import("../../services/command/commands")
-					const command = await getCommand(getCurrentCwd(), message.text)
+					const command = await getCommand(getCurrentCwd(), message.text, state.language)
 
 					if (command && command.filePath) {
 						// Delete the command file
@@ -3463,8 +3468,9 @@ export const webviewMessageHandler = async (
 				openFile(filePath)
 
 				// Refresh commands list
+				const state = await provider.getState()
 				const { getCommands } = await import("../../services/command/commands")
-				const commands = await getCommands(getCurrentCwd() || "")
+				const commands = await getCommands(getCurrentCwd() || "", state.language)
 				const commandList = commands.map((command) => ({
 					name: command.name,
 					source: command.source,

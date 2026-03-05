@@ -1,6 +1,9 @@
-import { WIKI_OUTPUT_FILE_PATHS } from "../common/constants"
+import type { SubtaskTemplateFactory } from "../../commandRegistry.js"
+import { WIKI_OUTPUT_FILE_PATHS } from "../../wikiConstants.js"
 
-export const GENERATE_THINK_CATALOGUE_TEMPLATE = (workspace: string) => `# Technical Documentation Structure Design
+export const GENERATE_THINK_CATALOGUE_TEMPLATE: SubtaskTemplateFactory = (
+	workspace: string,
+) => `# Technical Documentation Structure Design
 
 ## Role Definition
 You are a senior software architect and technical documentation expert, specializing in deep analysis of software codebases and building logically rigorous, clearly layered, and comprehensively structured technical documentation systems. You possess the following professional capabilities:
@@ -168,3 +171,5 @@ Dynamically adjust documentation quantity based on project scale:
 Build comprehensive, detailed documentation systems and foundation structures that serve both novice users seeking deep understanding and professional users needing comprehensive technical analysis. Ensure each generated module provides deep, substantive content, helping users comprehensively master all technical dimensions of the project.
 The final output must be in valid JSON format, directly usable for generating comprehensive documentation collections for specific projects.
 `
+
+export default GENERATE_THINK_CATALOGUE_TEMPLATE

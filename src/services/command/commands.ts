@@ -128,11 +128,11 @@ async function tryResolveSymlinkedCommand(filePath: string): Promise<string | un
  * Get all available commands from built-in, global, and project directories
  * Priority order: project > global > built-in (later sources override earlier ones)
  */
-export async function getCommands(cwd: string): Promise<Command[]> {
+export async function getCommands(cwd: string, language?: string): Promise<Command[]> {
 	const commands = new Map<string, Command>()
 
 	// Add built-in commands first (lowest priority)
-	const builtInCommands = await getBuiltInCommands()
+	const builtInCommands = await getBuiltInCommands(language)
 	for (const command of builtInCommands) {
 		commands.set(command.name, command)
 	}
@@ -155,7 +155,7 @@ export async function getCommands(cwd: string): Promise<Command[]> {
  * Get a specific command by name (optimized to avoid scanning all commands)
  * Priority order: project > global > built-in
  */
-export async function getCommand(cwd: string, name: string): Promise<Command | undefined> {
+export async function getCommand(cwd: string, name: string, language?: string): Promise<Command | undefined> {
 	// Try to find the command directly without scanning all commands
 	const projectSpecCommandsDir = path.join(getProjectCostrictSpecDirectoryForCwd(cwd), "openspec", "commands")
 	const projectDir = path.join(getProjectRooDirectoryForCwd(cwd), "commands")
@@ -180,7 +180,7 @@ export async function getCommand(cwd: string, name: string): Promise<Command | u
 	}
 
 	// Check built-in commands if not found in project or global (lowest priority)
-	return await getBuiltInCommand(name)
+	return await getBuiltInCommand(name, language)
 }
 
 /**
@@ -272,8 +272,8 @@ async function tryLoadCommand(
 /**
  * Get command names for autocomplete
  */
-export async function getCommandNames(cwd: string): Promise<string[]> {
-	const commands = await getCommands(cwd)
+export async function getCommandNames(cwd: string, language?: string): Promise<string[]> {
+	const commands = await getCommands(cwd, language)
 	return commands.map((cmd) => cmd.name)
 }
 

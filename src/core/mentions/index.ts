@@ -117,6 +117,7 @@ export async function parseMentions(
 	maxDiagnosticMessages: number = 50,
 	skillsManager?: SkillLookup,
 	currentMode: string = "code",
+	language?: string,
 ): Promise<ParseMentionsResult> {
 	const mentions: Set<string> = new Set()
 	const validCommands: Map<string, Command> = new Map()
@@ -131,7 +132,9 @@ export async function parseMentions(
 	const commandExistenceChecks = await Promise.all(
 		Array.from(uniqueCommandNames).map(async (commandName) => {
 			try {
-				const command = await getCommand(cwd, commandName)
+				const command = language
+					? await getCommand(cwd, commandName, language)
+					: await getCommand(cwd, commandName)
 				if (command) {
 					return { commandName, command, skillContent: null }
 				}

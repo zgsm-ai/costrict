@@ -2784,6 +2784,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				maxDiagnosticMessages,
 				skillsManager: provider?.getSkillsManager(),
 				currentMode,
+				language: state?.language,
 			})
 
 			// Switch mode if specified in a slash command's frontmatter
