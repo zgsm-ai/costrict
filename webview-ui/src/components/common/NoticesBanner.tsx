@@ -41,10 +41,10 @@ const NoticesBanner = () => {
 	const currentNotice = validNotices[currentIndex]
 
 	return (
-		<div className="relative px-4 py-2.5 bg-vscode-banner-background border-b border-vscode-panel-border text-sm leading-normal text-vscode-foreground">
+		<div className="relative px-4 py-2.5 bg-vscode-banner-background border-b border-vscode-panel-border text-sm leading-normal text-white">
 			<button
 				onClick={handleClose}
-				className="absolute top-1.5 right-2 bg-transparent border-none text-vscode-foreground cursor-pointer text-2xl p-1 opacity-70 hover:opacity-100 transition-opacity duration-200 leading-none"
+				className="absolute top-1.5 right-2 bg-transparent border-none text-white cursor-pointer text-2xl p-1 opacity-70 hover:opacity-100 transition-opacity duration-200 leading-none"
 				aria-label="Close">
 				×
 			</button>

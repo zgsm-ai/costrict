@@ -1,5 +1,27 @@
 # CoStrict Change Log
 
+## [2.4.0]
+
+- Add new Plan Agent integration (new agents added: quick-explore, task-check, subcoding)
+- Agent Prompts i18n Support
+- Prevent parent task state loss during orchestrator delegation
+- Fix race condition in new_task delegation that loses parent task history
+- Serialize taskHistory writes and fix delegation state race condition
+- Optimize compression summary during task recovery
+- Optimize command-line output performance \ diagnostic cache \ UI interaction
+- Remove built-in deprecated browser integration features
+- Add batch tool calling
+- Support nested subtask tree navigation
+- Add file change summary logging
+- Fix AskFollowupQuestionTool parameter validation
+- Package size optimization
+- Documentation image updates
+- Update Gemini cli models
+- Render nested subtasks as recursive tree
+- Handling test case errors
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/52ce796e4272f3cf3f3ea4369d5e6a6bfc066396)
+- Fix known issues
+
 ## [2.3.10]
 
 - Update docs
