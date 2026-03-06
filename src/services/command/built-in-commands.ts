@@ -1,12 +1,26 @@
 import { Command } from "./commands"
-import { PROJECT_WIKI_TEMPLATE } from "../../core/costrict/wiki/wiki-prompts/project_wiki"
-import { RULES_GENERATION_TEMPLATE } from "../../core/costrict/wiki/wiki-prompts/generate_rules"
+import { resolveI18nCommandContent } from "@roo-code/types"
 
 interface BuiltInCommandDefinition {
 	name: string
 	description: string
 	argumentHint?: string
 	content: string
+}
+
+type I18nCommandName = "tdd" | "project-wiki" | "generate-rules"
+
+const I18N_COMMAND_NAMES: ReadonlySet<I18nCommandName> = new Set(["tdd", "project-wiki", "generate-rules"])
+
+function isI18nCommand(name: string): name is I18nCommandName {
+	return I18N_COMMAND_NAMES.has(name as I18nCommandName)
+}
+
+function resolveI18nWorkspace(name: I18nCommandName): string {
+	if (name === "generate-rules") {
+		return "${workspaceFolder}"
+	}
+	return "${workspaceFolder}/.cospec"
 }
 
 const BUILT_IN_COMMANDS: Record<string, BuiltInCommandDefinition> = {
@@ -289,21 +303,14 @@ Remember: The goal is to create documentation that enables AI assistants to be i
 	tdd: {
 		name: "tdd",
 		description: "Test driven development",
-		content: `---
-	description: "Test Driven Development"
-	---
-	
-	Please strictly follow the following rules:
-	
-	1. First use \`search_files\` to check if the .cospec/TEST_GUIDE.md file exists. If the file does not exist, use the \`ask_followup_question\` tool to inform the user how to create the test guide document: "Test guide document not found. Please trigger the 'Test Plan' function on the homepage to generate it.<suggest>Confirm and exit</suggest><suggest>Skip test steps</suggest>", and then ignore subsequent test requirements; if the file exists, read it as the single source of truth for testing methods.
-	2. Ensure all test cases pass 100%
-	3. If not all test cases pass, you must use the \`ask_followup_question\` tool to ask me: "Tests did not pass completely (current pass rate: [please fill in the actual pass rate]%), is it allowed to end the task?". Only after I give a positive response can you use the attempt_completion tool
-	`,
+		// Content is now loaded from i18n registry
+		content: "",
 	},
 	"project-wiki": {
 		name: "project-wiki",
 		description: "Perform an in-depth analysis of the project and create a comprehensive project wiki.",
-		content: PROJECT_WIKI_TEMPLATE("${workspaceFolder}/.cospec"),
+		// Content is now loaded from i18n registry
+		content: "",
 	},
 	dotest: {
 		name: "dotest",
@@ -389,34 +396,61 @@ argument-hint: change-id
 	"generate-rules": {
 		name: "generate-rules",
 		description: "Extract project-specific coding rules to improve code generation accuracy",
-		content: RULES_GENERATION_TEMPLATE("${workspaceFolder}"),
+		// Content is now loaded from i18n registry
+		content: "",
 	},
 }
 
 /**
  * Get all built-in commands as Command objects
  */
-export async function getBuiltInCommands(): Promise<Command[]> {
-	return Object.values(BUILT_IN_COMMANDS).map((cmd) => ({
-		name: cmd.name,
-		content: cmd.content,
-		source: "built-in" as const,
-		filePath: `<built-in:${cmd.name}>`,
-		description: cmd.description,
-		argumentHint: cmd.argumentHint,
-	}))
+export async function getBuiltInCommands(language?: string): Promise<Command[]> {
+	return Promise.all(
+		Object.values(BUILT_IN_COMMANDS).map(async (cmd) => {
+			let content = cmd.content
+
+			// For i18n commands, resolve content from registry
+			if (!content && isI18nCommand(cmd.name)) {
+				const i18nContent = resolveI18nCommandContent(cmd.name, language, {
+					workspace: resolveI18nWorkspace(cmd.name),
+				})
+				if (i18nContent) {
+					content = i18nContent
+				}
+			}
+
+			return {
+				name: cmd.name,
+				content,
+				source: "built-in" as const,
+				filePath: `<built-in:${cmd.name}>`,
+				description: cmd.description,
+				argumentHint: cmd.argumentHint,
+			}
+		}),
+	)
 }
 
 /**
  * Get a specific built-in command by name
  */
-export async function getBuiltInCommand(name: string): Promise<Command | undefined> {
+export async function getBuiltInCommand(name: string, language?: string): Promise<Command | undefined> {
 	const cmd = BUILT_IN_COMMANDS[name]
 	if (!cmd) return undefined
 
+	let content = cmd.content
+
+	// For i18n commands, resolve content from registry
+	if (!content && isI18nCommand(name)) {
+		const i18nContent = resolveI18nCommandContent(name, language, { workspace: resolveI18nWorkspace(name) })
+		if (i18nContent) {
+			content = i18nContent
+		}
+	}
+
 	return {
 		name: cmd.name,
-		content: cmd.content,
+		content,
 		source: "built-in" as const,
 		filePath: `<built-in:${name}>`,
 		description: cmd.description,

@@ -52,7 +52,7 @@ export class RunSlashCommandTool extends BaseTool<"run_slash_command"> {
 			task.consecutiveMistakeCount = 0
 
 			// Get the command from the commands service
-			const command = await getCommand(task.cwd, commandName)
+			const command = await getCommand(task.cwd, commandName, state?.language)
 
 			if (!command) {
 				const currentMode = state?.mode ?? "code"
@@ -72,7 +72,7 @@ export class RunSlashCommandTool extends BaseTool<"run_slash_command"> {
 				}
 
 				// Get available commands for error message
-				const availableCommands = await getCommandNames(task.cwd)
+				const availableCommands = await getCommandNames(task.cwd, state?.language)
 				task.recordToolError("run_slash_command")
 				task.didToolFailInCurrentTurn = true
 				pushToolResult(

@@ -82,6 +82,7 @@ async function generatePrompt(data: {
 		settings,
 		zgsmCodeMode,
 		shell,
+		modelId,
 	} = data
 
 	if (!context) {
@@ -93,7 +94,13 @@ async function generatePrompt(data: {
 	const useLitePrompts = experimentsUtil.isEnabled(experiments ?? {}, EXPERIMENT_IDS.USE_LITE_PROMPTS)
 	// Get the full mode config to ensure we have the role definition (used for groups, etc.)
 	const modeConfig = getModeBySlug(mode, customModeConfigs) || modes.find((m) => m.slug === mode) || modes[0]
-	const { roleDefinition, baseInstructions } = getModeSelection(mode, promptComponent, customModeConfigs)
+	const { roleDefinition, baseInstructions } = getModeSelection(
+		mode,
+		promptComponent,
+		customModeConfigs,
+		language,
+		modelId,
+	)
 
 	// When overrideSystemPrompt is true, use roleDefinition as the entire system prompt
 	// body, only appending custom instructions. All standard sections are skipped.
@@ -123,39 +130,48 @@ async function generatePrompt(data: {
 	// // Tool calling is native-only.
 	// const effectiveProtocol = "native"
 
+	// Get modes section, and skills section only if enabled for this mode
 	const [modesSection, skillsSection] = await Promise.all([
-		getModesSection(context, zgsmCodeMode),
+		getModesSection(context, zgsmCodeMode, mode as string),
 		getSkillsSection(skillsManager, mode as string),
 	])
 
 	// Tools catalog is not included in the system prompt.
 	const toolsCatalog = ""
 
+	const usePurePrompts = modeConfig.pure === true
+
+	const disableSwitchMode = modeConfig.disableSwitchMode === true
+
 	const basePrompt = `${roleDefinition}
 
-${markdownFormattingSection()}
+${usePurePrompts ? "" : markdownFormattingSection()}
 
-${useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}${toolsCatalog}
+${usePurePrompts ? "" : useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}${toolsCatalog}
 
-${useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
+${usePurePrompts ? "" : useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
 
-${useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
+${usePurePrompts ? "" : useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
 
-${modesSection}
-${skillsSection ? `\n${skillsSection}` : ""}
-${useLitePrompts ? getLiteRulesSection(cwd, settings, experiments) : getRulesSection(cwd, settings, experiments)}
+${disableSwitchMode ? "" : modesSection}
+${usePurePrompts ? "" : skillsSection ? `\n${skillsSection}` : ""}
+${usePurePrompts ? "" : useLitePrompts ? getLiteRulesSection(cwd, settings, experiments) : getRulesSection(cwd, settings, experiments)}
 
-${getSystemInfoSection(cwd, shell)}
+${usePurePrompts ? "" : getSystemInfoSection(cwd, shell)}
 
-${useLitePrompts ? getLiteObjectiveSection() : getObjectiveSection()}
+${usePurePrompts ? "" : useLitePrompts ? getLiteObjectiveSection() : getObjectiveSection()}
 
-${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
-	language: language ?? formatLanguage(await defaultLang()),
-	rooIgnoreInstructions,
-	settings,
-	shell,
-	useLitePrompts,
-})}`
+${
+	usePurePrompts
+		? ""
+		: await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
+				language: language ?? formatLanguage(await defaultLang()),
+				rooIgnoreInstructions,
+				settings,
+				shell,
+				useLitePrompts,
+			})
+}`
 
 	return basePrompt
 }

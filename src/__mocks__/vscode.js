@@ -113,14 +113,16 @@ export const languages = {
 }
 
 export const extensions = {
-  getExtension: () => ({
-    extensionUri: mockUri.file("/home/test"),
-  }),
+	getExtension: () => ({
+		extensionUri: mockUri.file("/home/test"),
+	}),
 }
 
 export const env = {
 	openExternal: () => Promise.resolve(),
 	uriScheme: "vscode",
+	appName: "Visual Studio Code",
+	machineId: "test-machine-id",
 }
 
 export const Uri = mockUri

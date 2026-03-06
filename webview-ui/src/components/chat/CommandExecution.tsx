@@ -19,6 +19,7 @@ import CodeBlock from "@src/components/common/CodeBlock"
 
 import { CommandPatternSelector } from "./CommandPatternSelector"
 import { TerminalOutput } from "./TerminalOutput"
+import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 
 interface CommandPattern {
 	pattern: string
@@ -34,7 +35,7 @@ interface CommandExecutionProps {
 
 export const CommandExecution = ({ executionId, text, icon, title }: CommandExecutionProps) => {
 	const {
-		terminalShellIntegrationDisabled = false,
+		// terminalShellIntegrationDisabled = false,
 		allowedCommands = [],
 		deniedCommands = [],
 		setAllowedCommands,
@@ -45,7 +46,9 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 
 	// If we aren't opening the VSCode terminal for this command then we default
 	// to expanding the command execution output.
-	const [isExpanded, setIsExpanded] = useState(terminalShellIntegrationDisabled)
+	const [isExpanded, setIsExpanded] = useState(false)
+	const [isHovering, setIsHovering] = useState(false)
+
 	const [streamingOutput, setStreamingOutput] = useState("")
 	const [status, setStatus] = useState<CommandExecutionStatus | null>(null)
 	// Persist pid separately to ensure it's available even after process exits
@@ -209,9 +212,40 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 			</div>
 
 			<div className="bg-vscode-editor-background border border-vscode-border rounded-xs ml-6 mt-2">
-				<div className="p-2">
+				<div
+					className="p-2 relative"
+					onMouseEnter={() => setIsHovering(true)}
+					onMouseLeave={() => setIsHovering(false)}>
 					<CodeBlock source={command} language="shell" />
 					<OutputContainer isExpanded={isExpanded} output={output} />
+					{!isExpanded && output.length > 0 && (
+						<div
+							style={{
+								position: "absolute",
+								bottom: 0,
+								left: 0,
+								right: 0,
+								height: "50px",
+								background: "linear-gradient(to top, var(--vscode-editor-background), transparent)",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+							}}>
+							<VSCodeButton
+								appearance="secondary"
+								style={{
+									borderRadius: "100px",
+									opacity: isHovering ? 1 : 0,
+									transition: "opacity 0.2s ease-in-out",
+									pointerEvents: isHovering ? "auto" : "none",
+								}}
+								onClick={() => {
+									setIsExpanded(true)
+								}}>
+								{t("chat:markdown.expandPrompt")}
+							</VSCodeButton>
+						</div>
+					)}
 				</div>
 				{command && command?.trim() && (
 					<CommandPatternSelector
@@ -231,8 +265,8 @@ CommandExecution.displayName = "CommandExecution"
 
 const OutputContainerInternal = ({ isExpanded, output }: { isExpanded: boolean; output: string }) => (
 	<div
-		className={cn("overflow-hidden", {
-			"max-h-0": !isExpanded,
+		className={cn("overflow-auto", {
+			"max-h-60": !isExpanded,
 			"max-h-full mt-1 pt-1 border-t border-border/25": isExpanded,
 		})}>
 		{output.length > 0 && <TerminalOutput content={output} />}

@@ -115,7 +115,7 @@ export const useHoverEvent = (
 	const handleHighlightMouseEnter = useCallback(
 		(event: Event) => {
 			const target = event.target as HTMLElement
-			if (target?.classList?.contains("file-path-highlight") && target.textContent) {
+			if (target?.classList?.contains?.("file-path-highlight") && target.textContent) {
 				const rect = target.getBoundingClientRect()
 				const pathKey = target.textContent
 				const content = hoverPreviewMap?.get(pathKey) || target.textContent
@@ -186,7 +186,7 @@ export const useHoverEvent = (
 			if (
 				relatedTarget &&
 				(relatedTarget.closest('[class*="hover-preview-container"]') ||
-					relatedTarget?.classList?.contains("file-path-highlight"))
+					relatedTarget?.classList?.contains?.("file-path-highlight"))
 			) {
 				return
 			}

@@ -53,6 +53,15 @@ export const toolParamNames = [
 	"query",
 	"args",
 	"skill", // skill tool parameter
+	"thought", // sequential_thinking parameter
+	"thoughtNumber", // sequential_thinking parameter
+	"totalThoughts", // sequential_thinking parameter
+	"nextThoughtNeeded", // sequential_thinking parameter
+	"isRevision", // sequential_thinking parameter
+	"revisesThought", // sequential_thinking parameter
+	"branchFromThought", // sequential_thinking parameter
+	"branchId", // sequential_thinking parameter
+	"needsMoreThoughts", // sequential_thinking parameter
 	"start_line",
 	"end_line",
 	"todos",
@@ -83,6 +92,8 @@ export const toolParamNames = [
 	// read_file legacy format parameter (backward compatibility)
 	"files",
 	"line_ranges",
+	// checkpoint tool parameters
+	"commit_hash",
 ] as const
 
 export type ToolParamName = (typeof toolParamNames)[number]
@@ -95,6 +106,17 @@ export type NativeToolArgs = {
 	access_mcp_resource: { server_name: string; uri: string }
 	read_file: import("@roo-code/types").ReadFileToolParams
 	read_command_output: { artifact_id: string; search?: string; offset?: number; limit?: number }
+	sequential_thinking: {
+		thought: string
+		nextThoughtNeeded: boolean
+		thoughtNumber: number
+		totalThoughts: number
+		isRevision?: boolean
+		revisesThought?: number
+		branchFromThought?: number
+		branchId?: string
+		needsMoreThoughts?: boolean
+	}
 	attempt_completion: { result: string }
 	execute_command: { command: string; cwd?: string; timeout?: number | null }
 	apply_diff: { path: string; diff: string }
@@ -118,6 +140,10 @@ export type NativeToolArgs = {
 			allow_multiple?: boolean
 		}>
 	}
+	file_outline: {
+		file_path: string
+		include_docstrings?: boolean
+	}
 	codebase_search: { query: string; path?: string }
 	generate_image: GenerateImageParams
 	run_slash_command: { command: string; args?: string }
@@ -127,6 +153,12 @@ export type NativeToolArgs = {
 	update_todo_list: { todos: string }
 	use_mcp_tool: { server_name: string; tool_name: string; arguments?: Record<string, unknown> }
 	write_to_file: { path: string; content: string }
+	costrict_checkpoint: {
+		action: "commit" | "list" | "show_diff" | "restore" | "revert"
+		message?: string
+		commit_hash?: string
+		files?: string[]
+	}
 	// Add more tools as they are migrated to native protocol
 }
 
@@ -244,6 +276,11 @@ export interface AskMultipleChoiceToolUse extends ToolUse<"ask_multiple_choice">
 	params: Partial<Pick<Record<ToolParamName, string>, "title" | "questions">>
 }
 
+export interface CostrictCheckpointToolUse extends ToolUse<"costrict_checkpoint"> {
+	name: "costrict_checkpoint"
+	params: Partial<Pick<Record<ToolParamName, string>, "action" | "message" | "commit_hash" | "files">>
+}
+
 export interface AttemptCompletionToolUse extends ToolUse<"attempt_completion"> {
 	name: "attempt_completion"
 	params: Partial<Pick<Record<ToolParamName, string>, "result">>
@@ -285,6 +322,7 @@ export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
 	execute_command: "run commands",
 	read_file: "read files",
 	read_command_output: "read command output",
+	sequential_thinking: "sequential thinking",
 	write_to_file: "write files",
 	apply_diff: "apply changes",
 	edit: "edit files",
@@ -308,12 +346,14 @@ export const TOOL_DISPLAY_NAMES: Record<ToolName, string> = {
 	generate_image: "generate images",
 	custom_tool: "use custom tools",
 	fake_tool_call: "use tool calls",
+	file_outline: "file outline",
+	costrict_checkpoint: "manage costrict checkpoints",
 } as const
 
 // Define available tool groups.
 export const TOOL_GROUPS: Record<ToolGroup, ToolGroupConfig> = {
 	read: {
-		tools: ["ask_multiple_choice", "read_file", "search_files", "list_files", "codebase_search"],
+		tools: ["read_file", "search_files", "list_files", "codebase_search"],
 	},
 	edit: {
 		tools: ["apply_diff", "write_to_file", "generate_image"],
@@ -329,6 +369,15 @@ export const TOOL_GROUPS: Record<ToolGroup, ToolGroupConfig> = {
 		tools: ["switch_mode", "new_task"],
 		alwaysAvailable: true,
 	},
+	question: {
+		tools: ["ask_multiple_choice"],
+	},
+	sequential_thinking: {
+		tools: ["sequential_thinking"],
+	},
+	file_outline: {
+		tools: ["file_outline"],
+	},
 }
 
 // Tools that are always available to all modes.
@@ -341,6 +390,7 @@ export const ALWAYS_AVAILABLE_TOOLS: ToolName[] = [
 	"update_todo_list",
 	"run_slash_command",
 	"skill",
+	"costrict_checkpoint",
 ] as const
 
 /**

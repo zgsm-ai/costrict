@@ -25,7 +25,7 @@ function createKey(overrides: Partial<Key> = {}): Key {
 		capsLock: false,
 		numLock: false,
 		...overrides,
-	}
+	} as Key
 }
 
 describe("globalInputSequences", () => {

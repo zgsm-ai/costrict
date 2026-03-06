@@ -70,7 +70,7 @@ interface ChatTextAreaProps {
 export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 	(
 		{
-			inputValue = '',
+			inputValue = "",
 			setInputValue,
 			// selectApiConfigDisabled,
 			placeholderText,
@@ -1475,6 +1475,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							onChange={handleModeChange}
 							triggerClassName="min-w-[28px] text-ellipsis overflow-hidden flex-shrink"
 							modeShortcutText={modeShortcutText}
+							isStreaming={isStreaming}
 							isReviewing={mode === "review" && reviewTask.status === ReviewTaskStatus.RUNNING}
 							customModes={customModes}
 							customModePrompts={customModePrompts}

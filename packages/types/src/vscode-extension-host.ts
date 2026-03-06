@@ -887,6 +887,7 @@ export interface ClineSayTool {
 		| "runSlashCommand"
 		| "updateTodoList"
 		| "skill"
+		| "costrict_checkpoint"
 	parentTaskId?: string
 	path?: string
 	// For readCommandOutput

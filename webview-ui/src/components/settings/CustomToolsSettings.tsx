@@ -9,7 +9,7 @@ import { useAppTranslation } from "@/i18n/TranslationContext"
 
 import { vscode } from "@/utils/vscode"
 
-import { Button } from "@/components/ui"
+import { Button, StandardTooltip } from "@/components/ui"
 
 interface ToolParameter {
 	name: string
@@ -141,7 +141,15 @@ export const CustomToolsSettings = ({ enabled, onChange }: CustomToolsSettingsPr
 										</div>
 									)}
 								</div>
-								<div className="text-vscode-descriptionForeground text-sm">{tool.description}</div>
+								{tool.description.length > 300 ? (
+									<StandardTooltip content={tool.description} maxWidth={400}>
+										<div className="text-vscode-descriptionForeground text-sm">
+											{tool.description.slice(0, 300)}...
+										</div>
+									</StandardTooltip>
+								) : (
+									<div className="text-vscode-descriptionForeground text-sm">{tool.description}</div>
+								)}
 								{tool.parameters.length > 0 && (
 									<div className="space-y-1">
 										<div className="text-xs font-medium text-vscode-foreground">

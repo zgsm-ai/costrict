@@ -5,12 +5,20 @@ import type { ModeConfig } from "@roo-code/types"
 import { getAllModesWithPrompts } from "../../../shared/modes"
 import { ensureSettingsDirectoryExists } from "../../../utils/globalContext"
 
-export async function getModesSection(context: vscode.ExtensionContext, zgsmCodeMode?: string): Promise<string> {
+export async function getModesSection(
+	context: vscode.ExtensionContext,
+	zgsmCodeMode?: string,
+	currentModeSlug?: string,
+): Promise<string> {
 	// Make sure path gets created
 	await ensureSettingsDirectoryExists(context)
 
 	// Get all modes with their overrides from extension state
 	const allModes = await getAllModesWithPrompts(context)
+
+	// Get current mode config to check subagents filter
+	const currentMode = currentModeSlug ? allModes.find((mode: ModeConfig) => mode.slug === currentModeSlug) : undefined
+	const allowedSubagents = currentMode?.subagents
 
 	const modesContent = `====
 
@@ -19,7 +27,17 @@ MODES
 - These are the currently available modes:
 ${allModes
 	.filter((mode: ModeConfig) => {
-		if (!mode.zgsmCodeModeGroup || mode.slug === "review") return true
+		// If current mode has subagents configured, filter to only show those
+		if (allowedSubagents && allowedSubagents.length > 0) {
+			return allowedSubagents.includes(mode.slug)
+		}
+
+		// Original zgsmCodeMode filtering logic mode.apiProvider
+		if (
+			!mode.zgsmCodeModeGroup ||
+			(mode.apiProvider === "zgsm" && ["quick-explore", "task-check", "subcoding", "review"].includes(mode.slug))
+		)
+			return true
 		if (mode.zgsmCodeModeGroup) return mode.zgsmCodeModeGroup.split(",").includes(zgsmCodeMode ?? "vibe")
 		return true
 	})

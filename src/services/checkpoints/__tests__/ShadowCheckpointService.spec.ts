@@ -65,6 +65,15 @@ describe.each([[RepoPerTaskCheckpointService, "RepoPerTaskCheckpointService"]])(
 		let testFile: string
 		let service: RepoPerTaskCheckpointService
 
+		beforeAll(async () => {
+			// Clean up the tmpDir before running tests to ensure a clean state
+			try {
+				await fs.rm(tmpDir, { recursive: true, force: true })
+			} catch {
+				// Ignore errors if directory doesn't exist
+			}
+		})
+
 		beforeEach(async () => {
 			const shadowDir = path.join(tmpDir, `${prefix}-${Date.now()}`)
 			const workspaceDir = path.join(tmpDir, `workspace-${Date.now()}`)

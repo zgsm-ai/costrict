@@ -1,8 +1,11 @@
-import { COMMON_RULES, WIKI_OUTPUT_FILE_PATHS } from "./common/constants"
+import type { CommandContentFactory } from "../commandRegistry.js"
+import { resolveI18nWikiPromptConstants, WIKI_OUTPUT_FILE_PATHS, PROJECT_RULES_OUTPUT_FILE } from "../wikiConstants.js"
 
-const PROJECT_RULES_OUTPUT_FILE = "generated_rules.md"
+export const RULES_GENERATION_TEMPLATE: CommandContentFactory = (params: { workspace: string; language?: string }) => {
+	const { workspace, language = "en" } = params
+	const { COMMON_RULES } = resolveI18nWikiPromptConstants(language)
 
-export const RULES_GENERATION_TEMPLATE = (workspace: string) => `# Project Rules Generation Expert
+	return `# Project Rules Generation Expert
 
 ## Prerequisites (MUST FOLLOW)
 Ensure you are currently in \`📋 Orchestrator\` mode. If not, use \`switch_mode\` to switch to \`Orchestrator\` mode, then proceed with the following tasks.
@@ -223,3 +226,6 @@ Summarize the operations performed in this quality optimization.
 ${COMMON_RULES}
 \`\`\`\`
 `
+}
+
+export default RULES_GENERATION_TEMPLATE

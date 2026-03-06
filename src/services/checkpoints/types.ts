@@ -31,5 +31,6 @@ export interface CheckpointEventMap {
 		suppressMessage?: boolean
 	}
 	restore: { type: "restore"; commitHash: string; duration: number }
+	revert: { type: "revert"; newCommitHash: string; duration: number }
 	error: { type: "error"; error: Error }
 }

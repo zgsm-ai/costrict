@@ -11,7 +11,9 @@ const onCloseWindowCallbacks: ((sessionId: string) => void)[] = []
 let isConnecting = false
 let retryTimeout: NodeJS.Timeout | null = null
 let retryCount = 0
+let forceRetryCount = 0
 const MAX_RETRIES = 15
+const FORCE_MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY = 5000 // 5 seconds
 
 export function connectIPC() {
@@ -99,6 +101,13 @@ export function connectIPC() {
 	}
 
 	async function showRetryFailedNotification() {
+		if (forceRetryCount <= FORCE_MAX_RETRIES) {
+			disconnectIPC()
+			connectIPC()
+			forceRetryCount++
+			return
+		}
+
 		const message = t("common:ipc.connectionFailed")
 		const reloadButton = t("common:ipc.reloadWindow")
 		const retryButton = t("common:ipc.manualRetry")
@@ -106,9 +115,11 @@ export function connectIPC() {
 
 		if (result === reloadButton) {
 			vscode.commands.executeCommand("workbench.action.reloadWindow")
+			forceRetryCount = 0
 		} else if (result === retryButton) {
 			disconnectIPC()
 			connectIPC()
+			forceRetryCount = 0
 		}
 	}
 

@@ -23,6 +23,7 @@ interface ModeSelectorProps {
 	onChange: (value: Mode) => void
 	disabled?: boolean
 	isReviewing?: boolean
+	isStreaming?: boolean
 	title: string
 	triggerClassName?: string
 	modeShortcutText: string
@@ -36,6 +37,7 @@ export const ModeSelector = ({
 	onChange,
 	disabled = false,
 	isReviewing = false,
+	isStreaming = false,
 	title,
 	triggerClassName = "",
 	modeShortcutText,
@@ -86,7 +88,11 @@ export const ModeSelector = ({
 
 	// Notify parent when current mode is invalid so it can update its state
 	React.useEffect(() => {
-		if (apiConfiguration?.apiProvider === "zgsm" && value === "review") return
+		if (
+			apiConfiguration?.apiProvider === "zgsm" &&
+			["quick-explore", "task-check", "subcoding", "review"].includes(value)
+		)
+			return
 		const isValidMode = modes.some((mode) => mode.slug === value)
 
 		if (isValidMode) {
@@ -234,7 +240,11 @@ export const ModeSelector = ({
 		<Popover open={open} onOpenChange={onOpenChange} data-testid="mode-selector-root">
 			<StandardTooltip content={`${title}${title ? ` (${zgsmCodeMode})` : ""}`}>
 				<PopoverTrigger
-					disabled={disabled || isReviewing}
+					disabled={
+						disabled ||
+						isReviewing ||
+						(["quick-explore", "task-check", "subcoding"].includes(value) && isStreaming)
+					}
 					data-testid="mode-selector-trigger"
 					className={cn(
 						"inline-flex items-center gap-1.5 relative whitespace-nowrap px-1.5 py-1 text-xs",
@@ -249,9 +259,9 @@ export const ModeSelector = ({
 							? "bg-primary opacity-90 hover:bg-primary-hover text-vscode-button-foreground"
 							: null,
 					)}>
-					{isReviewing ? (
+					{isReviewing || ["quick-explore", "task-check", "subcoding"].includes(value) ? (
 						<span className="animate-pulse font-bold bg-gradient-to-r from-vscode-foreground to-vscode-foreground/50 bg-clip-text text-transparent drop-shadow-[0_0_8px_theme('colors.vscode.charts.blue')] shadow-[0_0_20px_theme('colors.vscode.charts.blue')]">
-							Review...
+							{value}...
 						</span>
 					) : (
 						<span className="truncate bg-vscode-input-background">

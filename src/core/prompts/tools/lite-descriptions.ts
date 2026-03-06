@@ -80,8 +80,13 @@ getLiteSwitchModeDescription.toolname = "switch_mode"
 
 export function getLiteNewTaskDescription(): string {
 	return `## new_task
-Create new task in specified mode.
-Params fields: mode (REQUIRED), message (REQUIRED), todos (REQUIRED)`
+Create a new task instance in the chosen mode using your provided message and initial todo list (if required).
+CRITICAL: Call alone. Gather info in a prior turn if needed.
+
+Params fields:
+ - mode (REQUIRED)
+ - message (REQUIRED)
+ - todos (REQUIRED)`
 }
 getLiteNewTaskDescription.toolname = "new_task"
 
@@ -248,6 +253,42 @@ getLiteSearchAndReplaceDescription.toolname = "search_and_replace"
 
 getLiteSearchReplaceDescription.toolname = "search_replace"
 
+export function getLiteSequentialThinkingDescription(): string {
+	return `## sequential_thinking
+结构化思考工具,支持分步骤思考、修订和分支。
+Params fields:
+- thought (REQUIRED): 当前思考步骤的内容
+- nextThoughtNeeded (REQUIRED): 是否需要继续思考
+- thoughtNumber (REQUIRED): 当前步骤编号（从1开始）
+- totalThoughts (REQUIRED): 预计总步骤数
+- isRevision (optional): 是否是对之前思考的修订
+- revisesThought (optional): 要修订的思考编号
+- branchFromThought (optional): 从哪个思考创建分支
+- branchId (optional): 分支标识符
+- needsMoreThoughts (optional): 是否需要超出预计的更多思考`
+}
+getLiteSequentialThinkingDescription.toolname = "sequential_thinking"
+
+export function getLiteFileOutlineDescription(): string {
+	return `## file_outline
+提取文件的大纲结构，显示函数、类、接口的定义。
+Params fields:
+- file_path (REQUIRED): 文件的相对路径
+- include_docstrings (optional): 是否包含文档字符串`
+}
+getLiteFileOutlineDescription.toolname = "file_outline"
+
+export function getLiteCostrictCheckpointDescription(): string {
+	return `## costrict_checkpoint
+Creates and manages snapshots of project state using a shadow Git repository.
+Params fields:
+- action (REQUIRED): The action to perform - "commit", "list", "show_diff", "restore", or "revert"
+- message (optional): Commit message (required when action is "commit")
+- commit_hash (optional): Commit hash (required for "restore", "show_diff", "revert" actions)
+- files (optional): List of file paths to restore (only for "restore" action)`
+}
+getLiteCostrictCheckpointDescription.toolname = "costrict_checkpoint"
+
 const liteTools = [
 	getLiteReadFileDescription,
 	getLiteWriteToFileDescription,
@@ -256,6 +297,7 @@ const liteTools = [
 	getLiteExecuteCommandDescription,
 	getLiteReadCommandOutputDescription,
 	getLiteAskFollowupQuestionDescription,
+	getLiteSequentialThinkingDescription,
 	getLiteBrowserActionDescription,
 	getLiteSwitchModeDescription,
 	getLiteNewTaskDescription,
@@ -271,7 +313,9 @@ const liteTools = [
 	getLiteApplyDiffDescription,
 	getLiteSearchAndReplaceDescription,
 	getLiteSearchReplaceDescription,
+	getLiteFileOutlineDescription,
 	getLiteAttemptCompletionDescription,
+	// getLiteCostrictCheckpointDescription,
 ]
 
 export const liteRetryPrompt = (tag = "tool_call") => `

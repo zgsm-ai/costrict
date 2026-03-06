@@ -38,7 +38,7 @@
 		"eslint": "^9.27.0",
 		"glob": "^11.1.0",
 		"husky": "^9.1.7",
-		"knip": "^5.44.4",
+		"knip": "5.44.4",
 		"lint-staged": "^16.0.0",
 		"mkdirp": "^3.0.1",
 		"only-allow": "^1.2.1",
@@ -78,6 +78,9 @@
 			"@types/react": "^18.3.23",
 			"@types/react-dom": "^18.3.5",
 			"zod": "3.25.76"
-		}
+		},
+		"ignoredBuiltDependencies": [
+			"protobufjs"
+		]
 	}
 }

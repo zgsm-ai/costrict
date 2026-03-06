@@ -78,7 +78,7 @@ import {
 	TerminalSquare,
 	MessageCircle,
 	Repeat2,
-	TimerReset,
+	RotateCcw,
 	Split,
 	ArrowRight,
 	Check,
@@ -1290,9 +1290,7 @@ export const ChatRowContent = ({
 						<>
 							{/* header Info */}
 							<div
-								className={`group text-sm transition-opacity ${
-									isApiRequestInProgress ? "opacity-100" : "opacity-40 hover:opacity-100"
-								}`}
+								className={`group text-sm transition-opacity`}
 								style={{
 									...headerStyle,
 									marginBottom:
@@ -1329,8 +1327,10 @@ export const ChatRowContent = ({
 												? t("common:confirmation.deleteMessageOrRollback")
 												: t("common:confirmation.deleteMessage")
 										}>
-										<TimerReset
-											className="size-5 mt-[3px] cursor-pointer"
+										<RotateCcw
+											className={`size-4 mt-[3px] cursor-pointer ${
+												isApiRequestInProgress ? "opacity-100" : "opacity-60 hover:opacity-100"
+											}`}
 											style={{
 												color: "rgba(0, 188, 255, 1)",
 											}}
@@ -1548,14 +1548,15 @@ export const ChatRowContent = ({
 										<RandomLoadingMessage language={language as RandomLoadingMessageLanguage} />
 									</span>
 								</div>
-							) :
-							<div style={headerStyle}>
-								<MessageCircle className="w-4 shrink-0" aria-label="Speech bubble icon" />
-								<span style={{ fontWeight: "bold" }}>{t("chat:text.rooSaid")}</span>
-								{message.ts ? format(new Date(message.ts), "yyyy-MM-dd HH:mm:ss") : ""}
-								<div style={{ flexGrow: 1 }} />
-								<OpenMarkdownPreviewButton markdown={message.text} />
-							</div>}
+							) : (
+								<div style={headerStyle}>
+									<MessageCircle className="w-4 shrink-0" aria-label="Speech bubble icon" />
+									<span style={{ fontWeight: "bold" }}>{t("chat:text.rooSaid")}</span>
+									{message.ts ? format(new Date(message.ts), "yyyy-MM-dd HH:mm:ss") : ""}
+									<div style={{ flexGrow: 1 }} />
+									<OpenMarkdownPreviewButton markdown={message.text} />
+								</div>
+							)}
 							<div className="pl-6">
 								<Markdown
 									collapseWithoutScroll={collapseWithoutScrollEnabled}

@@ -64,7 +64,8 @@ function getGroupName(group: GroupEntry): ToolGroup {
 }
 
 const ModesView = () => {
-	const { t } = useAppTranslation()
+	const { t, i18n } = useAppTranslation()
+	const currentLanguage = i18n.language
 
 	const {
 		apiConfiguration,
@@ -138,13 +139,13 @@ const ModesView = () => {
 			const updatedPrompt = { ...existingPrompt, ...promptData }
 
 			// Only include properties that differ from defaults
-			if (updatedPrompt.roleDefinition === getRoleDefinition(mode)) {
+			if (updatedPrompt.roleDefinition === getRoleDefinition(mode, undefined, currentLanguage)) {
 				delete updatedPrompt.roleDefinition
 			}
-			if (updatedPrompt.description === getDescription(mode)) {
+			if (updatedPrompt.description === getDescription(mode, undefined, currentLanguage)) {
 				delete updatedPrompt.description
 			}
-			if (updatedPrompt.whenToUse === getWhenToUse(mode)) {
+			if (updatedPrompt.whenToUse === getWhenToUse(mode, undefined, currentLanguage)) {
 				delete updatedPrompt.whenToUse
 			}
 
@@ -154,7 +155,7 @@ const ModesView = () => {
 				customPrompt: updatedPrompt,
 			})
 		},
-		[customModePrompts],
+		[customModePrompts, currentLanguage],
 	)
 
 	const updateCustomMode = useCallback((slug: string, modeConfig: ModeConfig) => {
@@ -294,6 +295,12 @@ const ModesView = () => {
 		const findMode = (m: ModeConfig): boolean => m.slug === visualMode
 		return customModes?.find(findMode) || modes.find(findMode)
 	}, [visualMode, customModes, modes])
+
+	// Helper function to check if current mode is hidden
+	const isCurrentModeHidden = useCallback((): boolean => {
+		const currentMode = getCurrentMode()
+		return currentMode?.zgsmCodeModeGroup === "hide"
+	}, [getCurrentMode])
 
 	// Check if the current mode has rules to export
 	const checkRulesDirectory = useCallback((slug: string) => {
@@ -905,7 +912,7 @@ const ModesView = () => {
 												})
 											}
 										}}
-										disabled={isExporting}
+										disabled={isExporting || isCurrentModeHidden()}
 										title={t("prompts:exportMode.title")}
 										data-testid="export-mode-toolbar-button">
 										<Upload className="h-4 w-4" />
@@ -955,6 +962,7 @@ const ModesView = () => {
 								<Button
 									variant="ghost"
 									size="icon"
+									disabled={isCurrentModeHidden()}
 									onClick={() => {
 										const currentMode = getCurrentMode()
 										if (currentMode?.slug) {
@@ -972,10 +980,18 @@ const ModesView = () => {
 					</div>
 					<VSCodeTextArea
 						resize="vertical"
+						disabled={isCurrentModeHidden()}
+						style={{
+							pointerEvents: isCurrentModeHidden() ? "none" : "auto",
+						}}
 						value={(() => {
 							const customMode = findModeBySlug(visualMode, customModes)
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
-							return customMode?.roleDefinition ?? prompt?.roleDefinition ?? getRoleDefinition(visualMode)
+							return (
+								customMode?.roleDefinition ??
+								prompt?.roleDefinition ??
+								getRoleDefinition(visualMode, customModes, currentLanguage)
+							)
 						})()}
 						onChange={(e) => {
 							const value =
@@ -1011,6 +1027,7 @@ const ModesView = () => {
 								<Button
 									variant="ghost"
 									size="icon"
+									disabled={isCurrentModeHidden()}
 									onClick={() => {
 										const currentMode = getCurrentMode()
 										if (currentMode?.slug) {
@@ -1027,10 +1044,15 @@ const ModesView = () => {
 						{t("prompts:description.description")}
 					</div>
 					<VSCodeTextField
+						disabled={isCurrentModeHidden()}
 						value={(() => {
 							const customMode = findModeBySlug(visualMode, customModes)
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
-							return customMode?.description ?? prompt?.description ?? getDescription(visualMode)
+							return (
+								customMode?.description ??
+								prompt?.description ??
+								getDescription(visualMode, customModes, currentLanguage)
+							)
 						})()}
 						onChange={(e) => {
 							const value =
@@ -1065,6 +1087,7 @@ const ModesView = () => {
 								<Button
 									variant="ghost"
 									size="icon"
+									disabled={isCurrentModeHidden()}
 									onClick={() => {
 										const currentMode = getCurrentMode()
 										if (currentMode?.slug) {
@@ -1082,10 +1105,18 @@ const ModesView = () => {
 					</div>
 					<VSCodeTextArea
 						resize="vertical"
+						disabled={isCurrentModeHidden()}
+						style={{
+							pointerEvents: isCurrentModeHidden() ? "none" : "auto",
+						}}
 						value={(() => {
 							const customMode = findModeBySlug(visualMode, customModes)
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
-							return customMode?.whenToUse ?? prompt?.whenToUse ?? getWhenToUse(visualMode)
+							return (
+								customMode?.whenToUse ??
+								prompt?.whenToUse ??
+								getWhenToUse(visualMode, customModes, currentLanguage)
+							)
 						})()}
 						onChange={(e) => {
 							const value =
@@ -1126,6 +1157,7 @@ const ModesView = () => {
 									<Button
 										variant="ghost"
 										size="icon"
+										disabled={isCurrentModeHidden()}
 										onClick={() => setIsToolsEditMode(!isToolsEditMode)}>
 										<span
 											className={`codicon codicon-${isToolsEditMode ? "check" : "edit"}`}></span>
@@ -1153,7 +1185,7 @@ const ModesView = () => {
 											key={group}
 											checked={isGroupEnabled}
 											onChange={handleGroupChange(group, Boolean(isCustomMode), customMode)}
-											disabled={!isCustomMode}>
+											disabled={!isCustomMode || isCurrentModeHidden()}>
 											{t(`prompts:tools.toolNames.${group}`)}
 											{group === "edit" && (
 												<div className="text-xs text-vscode-descriptionForeground mt-0.5">
@@ -1210,6 +1242,7 @@ const ModesView = () => {
 								<Button
 									variant="ghost"
 									size="icon"
+									disabled={isCurrentModeHidden()}
 									onClick={() => {
 										const currentMode = getCurrentMode()
 										if (currentMode?.slug) {
@@ -1229,13 +1262,17 @@ const ModesView = () => {
 					</div>
 					<VSCodeTextArea
 						resize="vertical"
+						disabled={isCurrentModeHidden()}
+						style={{
+							pointerEvents: isCurrentModeHidden() ? "none" : "auto",
+						}}
 						value={(() => {
 							const customMode = findModeBySlug(visualMode, customModes)
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
 							return (
 								customMode?.customInstructions ??
 								prompt?.customInstructions ??
-								getCustomInstructions(visualMode, customModes)
+								getCustomInstructions(visualMode, customModes, currentLanguage)
 							)
 						})()}
 						onChange={(e) => {
@@ -1310,6 +1347,7 @@ const ModesView = () => {
 					<div className="flex gap-2 mb-4">
 						<Button
 							variant="primary"
+							disabled={isCurrentModeHidden()}
 							onClick={() => {
 								const currentMode = getCurrentMode()
 								if (currentMode) {
@@ -1318,7 +1356,7 @@ const ModesView = () => {
 										mode: currentMode.slug,
 										values: {
 											modelId:
-												apiConfiguration.apiProvider === "zgsm"
+												apiConfiguration?.apiProvider === "zgsm"
 													? apiConfiguration?.zgsmModelId
 													: apiConfiguration?.apiModelId,
 										},
@@ -1332,6 +1370,7 @@ const ModesView = () => {
 							<Button
 								variant="ghost"
 								size="icon"
+								disabled={isCurrentModeHidden()}
 								onClick={() => {
 									const currentMode = getCurrentMode()
 									if (currentMode) {
@@ -1365,6 +1404,10 @@ const ModesView = () => {
 					<VSCodeTextArea
 						resize="vertical"
 						value={customInstructions || ""}
+						disabled={isCurrentModeHidden()}
+						style={{
+							pointerEvents: isCurrentModeHidden() ? "none" : "auto",
+						}}
 						onChange={(e) => {
 							const value =
 								(e as unknown as CustomEvent)?.detail?.target?.value ??
@@ -1499,6 +1542,10 @@ const ModesView = () => {
 								<VSCodeTextArea
 									resize="vertical"
 									value={newModeRoleDefinition}
+									disabled={isCurrentModeHidden()}
+									style={{
+										pointerEvents: isCurrentModeHidden() ? "none" : "auto",
+									}}
 									onChange={(e) => {
 										setNewModeRoleDefinition((e.target as HTMLTextAreaElement).value)
 									}}
@@ -1537,6 +1584,10 @@ const ModesView = () => {
 								<VSCodeTextArea
 									resize="vertical"
 									value={newModeWhenToUse}
+									disabled={isCurrentModeHidden()}
+									style={{
+										pointerEvents: isCurrentModeHidden() ? "none" : "auto",
+									}}
 									onChange={(e) => {
 										setNewModeWhenToUse((e.target as HTMLTextAreaElement).value)
 									}}
@@ -1582,6 +1633,10 @@ const ModesView = () => {
 									{t("prompts:createModeDialog.customInstructions.description")}
 								</div>
 								<VSCodeTextArea
+									disabled={isCurrentModeHidden()}
+									style={{
+										pointerEvents: isCurrentModeHidden() ? "none" : "auto",
+									}}
 									resize="vertical"
 									value={newModeCustomInstructions}
 									onChange={(e) => {

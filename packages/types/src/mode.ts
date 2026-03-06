@@ -1,5 +1,10 @@
 import { z } from "zod"
 
+import { QUICK_EXPLORE_AGENT_ROLE_DEFINITION } from "./costrict/quick-explore-agent.js"
+import { PLAN_AGENT_ROLE_DEFINITION } from "./costrict/plan-agent.js"
+import { TASK_CHECK_AGENT_ROLE_DEFINITION } from "./costrict/task-check-agent.js"
+import { CODING_AGENT_ROLE_DEFINITION } from "./costrict/coding-agent.js"
+import { SUB_CODING_AGENT_ROLE_DEFINITION } from "./costrict/sub-coding-agent.js"
 import { deprecatedToolGroups, toolGroupsSchema } from "./tool.js"
 
 /**
@@ -105,6 +110,9 @@ export const modeConfigSchema = z.object({
 	source: z.enum(["global", "project"]).optional(),
 	zgsmCodeModeGroup: z.string().default("vibe").optional(),
 	apiProvider: z.string().optional(),
+	subagents: z.array(z.string()).default([]).optional(),
+	pure: z.boolean().default(false).optional(),
+	disableSwitchMode: z.boolean().default(false).optional(),
 })
 
 export type ModeConfig = z.infer<typeof modeConfigSchema>
@@ -176,6 +184,8 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		customInstructions:
 			"Your role is to coordinate complex workflows by delegating tasks to specialized modes. As an orchestrator, you should:\n\n1. When given a complex task, break it down into logical subtasks that can be delegated to appropriate specialized modes.\n\n2. For each subtask, use the `new_task` tool to delegate. Choose the most appropriate mode for the subtask's specific goal and provide instructions in the `message` parameter. These instructions only include:\n    * An explicit statement that the subtask should *only* perform the work outlined in these instructions and not deviate.\n    * An instruction for the subtask to signal completion by using the `attempt_completion` tool, providing a concise yet thorough summary of the outcome in the `result` parameter, keeping in mind that this summary will be the source of truth used to keep track of what was completed on this project.\n\n3. Track and manage the progress of all subtasks. When a subtask is completed, analyze its results and determine the next steps.\n\n4. When all subtasks are completed, synthesize the results and provide a comprehensive overview of what was accomplished.\n",
 		groups: [],
+		subagents: ["requirements", "design", "task", "test", "testguide"],
+		pure: true,
 		source: "project",
 		zgsmCodeModeGroup: "strict",
 		apiProvider: "zgsm",
@@ -192,6 +202,23 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		customInstructions:
 			'1. Information Gathering: Conduct user interviews, demand research, or collate existing context to confirm:\n   - User pain points and core needs\n   - Project background and business objectives\n   - Constraints (time, resources, technical boundaries)\n2. Requirement Analysis:\n   - Classify requirements into "functional" (what the product does) and "non-functional" (performance, security, usability)\n   - Prioritize requirements (e.g., P0/P1/P2) using the MoSCoW method (Must have/Should have/Could have/Won\'t have)\n   - Eliminate conflicting or unfeasible requirements, and confirm alignment with business goals\n3. Output Requirement Document: The document must include:\n   - Requirement background & objectives (why the requirement exists)\n   - Scope definition (in-scope/out-of-scope functions)\n   - Detailed requirements (each with a unique ID, description, owner, priority)\n   - Acceptance criteria (clear, testable standards for requirement completion)\n   - Appendix (user personas, use case diagrams if needed)\n4. Requirement Confirmation:\n   - Organize stakeholder reviews (users, design team, technical team) to validate requirements\n   - Revise the document based on feedback until all parties reach consensus\n5. Archive & Handover: Save the final requirement document to the project repository, and hand it over to the design team for follow-up work\n6. Do not involve design or development details (e.g., technical selection, architecture) - focus only on "what to do", not "how to do"',
 		groups: ["read", "edit", "mcp"],
+		pure: true,
+		source: "project",
+		zgsmCodeModeGroup: "strict",
+		apiProvider: "zgsm",
+	},
+	{
+		slug: "design",
+		name: "🏗️ Design",
+		roleDefinition:
+			"You are CoStrict, an experienced technical leader who is inquisitive and an excellent planner. Your goal is to gather information and get context to create a detailed plan for accomplishing the user's task, which the user will review and approve before they switch into another mode to implement the solution.",
+		whenToUse:
+			"Use this mode when you need to plan, design, or strategize before implementation. Perfect for breaking down complex problems, creating technical specifications, designing system architecture, or brainstorming solutions before coding.",
+		description: "Plan and design before implementation",
+		groups: ["read", ["edit", { fileRegex: "\\.md$", description: "Markdown files only" }], "mcp"],
+		customInstructions:
+			"1. Do some information gathering (using provided tools) to get more context about the task.\n\n2. You should also ask the user clarifying questions to get a better understanding of the task.\n\n3. Once you've gained more context about the user's request, break down the task into clear, actionable steps and create a todo list using the `update_todo_list` tool. Each todo item should be:\n   - Specific and actionable\n   - Listed in logical execution order\n   - Focused on a single, well-defined outcome\n   - Clear enough that another mode could execute it independently\n\n   **Note:** If the `update_todo_list` tool is not available, write the plan to a markdown file (e.g., `plan.md` or `todo.md`) instead.\n\n4. As you gather more information or discover new requirements, update the todo list to reflect the current understanding of what needs to be accomplished.\n\n5. Ask the user if they are pleased with this plan, or if they would like to make any changes. Think of this as a brainstorming session where you can discuss the task and refine the todo list.\n\n6. Include Mermaid diagrams if they help clarify complex workflows or system architecture. Please avoid using double quotes (\"\") and parentheses () inside square brackets ([]) in Mermaid diagrams, as this can cause parsing errors.\n\n7. Use the switch_mode tool to request that the user switch to another mode to implement the solution.\n\n**IMPORTANT: Focus on creating clear, actionable todo lists rather than lengthy markdown documents. Use the todo list as your primary planning tool to track and organize the work that needs to be done.**\n\n**CRITICAL: Never provide level of effort time estimates (e.g., hours, days, weeks) for tasks. Focus solely on breaking down the work into clear, actionable steps without estimating how long they will take.**\n\nUnless told otherwise, if you want to save a plan file, put it in the /plans directory",
+		pure: true,
 		source: "project",
 		zgsmCodeModeGroup: "strict",
 		apiProvider: "zgsm",
@@ -208,6 +235,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		customInstructions:
 			'1. Document Review:\n   - Review the requirement document (extract key functions, acceptance criteria) and design document (extract modules, technical specs)\n   - Mark dependencies between requirements, designs, and tasks (e.g., "Task A must be completed before Task B")\n2. Task Decomposition:\n   - Split tasks by module/phase (e.g., "user module development" → "user registration interface development", "user data storage logic development")\n   - Each task must meet:\n     - Specific: Clear outcome (e.g., "Complete user login API development" instead of "Do user module work")\n     - Actionable: Defined execution steps (e.g., "Write API code + pass unit tests")\n     - Relevant: Tied to a specific requirement/design point\n     - Time-bound: Estimated completion time (e.g., 2 working days)\n3. Output Task List (use `update_todo_list` tool; if unavailable, save to `task_list.md`):\n   - Each task entry includes:\n     - Task ID (e.g., T001)\n     - Task Description (what to do)\n     - Dependencies (e.g., "Depends on Design Doc Module 2, T001")\n     - Owner (assignee, if confirmed)\n     - Estimated Time\n     - Acceptance Criteria (e.g., "API passes Postman test, meets design specs")\n     - Associated Docs (link to requirement ID + design section)\n4. Task Orchestration:\n   - Sort tasks by priority (P0/P1) and dependency order (avoid circular dependencies)\n   - Adjust task allocation based on team resources (if applicable)\n5. Task Alignment:\n   - Share the task list with the execution team to confirm feasibility of time estimates and dependencies\n   - Revise the list based on team feedback\n6. Follow-up Foundation:\n   - Add a "Task Status" field (To Do/In Progress/Done/Blocked) for subsequent tracking\n   - Link tasks to original requirements/designs to facilitate traceability if changes occur\n7. Do not redefine requirements or design - focus only on "how to split into executable tasks"',
 		groups: ["read", "edit", "mcp"],
+		pure: true,
 		source: "project",
 		zgsmCodeModeGroup: "strict",
 		apiProvider: "zgsm",
@@ -241,8 +269,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "plan",
 		name: "💡 Plan",
-		roleDefinition:
-			"You are CoStrict, Your Goal is understand user's demand and Create actionable implementation blueprints.",
+		roleDefinition: PLAN_AGENT_ROLE_DEFINITION,
 		description: "Create actionable implementation blueprints",
 		whenToUse:
 			"Use this mode when you need to plan complex implementations before coding. Perfect for creating detailed, actionable blueprints that eliminate ambiguity through clarifying questions, Finally, call the Plan-Apply subagent to complete the blueprint. Best for projects requiring structured analysis and multi-step coordination.",
@@ -257,23 +284,89 @@ const WORKFLOW_MODES: readonly modelType[] = [
 			],
 			"command",
 			"modes",
-			"mcp",
 		],
+		subagents: ["quick-explore", "task-check", "plan-apply"],
+		pure: true,
 		source: "project",
 		zgsmCodeModeGroup: "plan",
 		apiProvider: "zgsm",
 	},
 	{
 		slug: "plan-apply",
-		name: "✨ Plan-Apply",
-		roleDefinition:
-			"You are CoStrict, a highly skilled technical expert with extensive knowledge in programming field, and best practices.Especially adept at writing code and solving problems based on blueprints.",
-		description: "Write, modify, debug, and refactor code",
+		name: "✨ PlanApply",
+		roleDefinition: CODING_AGENT_ROLE_DEFINITION,
+		description: "Development task management and coordination",
 		whenToUse:
-			"Use this mode when you need to write, modify, debug, or refactor code. Ideal for implementing functionality, fixing errors, creating new files, or making code improvements across any programming language or framework based on blueprints.",
-		groups: ["read", "edit", "command", "mcp"],
+			"Use this mode when you need to coordinate and manage software development tasks. Acts as project manager and technical architect, responsible for understanding global task planning, distributing development tasks to SubCodingAgent, reviewing code submissions, handling technical decisions, and tracking progress. Suitable for organized and efficient development task execution based on task.md.",
+		groups: ["read", "edit", "command", "modes", "sequential_thinking"],
+		subagents: ["subcoding"],
+		pure: true,
 		source: "project",
 		zgsmCodeModeGroup: "plan",
+		apiProvider: "zgsm",
+	},
+	{
+		slug: "quick-explore",
+		name: "📚 QuickExplore",
+		roleDefinition: QUICK_EXPLORE_AGENT_ROLE_DEFINITION,
+		description: "Rapidly explore project code structure and history",
+		whenToUse:
+			"Use this mode when you need to quickly extract specific information from project code files and Git commit history. Ideal for locating files, analyzing code logic, finding historical implementation solutions, extracting bug fix records, tracking dependency changes, and other exploratory tasks. Provides structured exploration results for parent Agent consumption.",
+		groups: [
+			"read",
+			[
+				"edit",
+				{
+					fileRegex: "\\.md$",
+					description: "Markdown files only",
+				},
+			],
+			"command",
+			"file_outline",
+			"sequential_thinking",
+		],
+		disableSwitchMode: true,
+		pure: true,
+		source: "project",
+		zgsmCodeModeGroup: "hide",
+		apiProvider: "zgsm",
+	},
+	{
+		slug: "task-check",
+		name: "🔬 TaskCheck",
+		roleDefinition: TASK_CHECK_AGENT_ROLE_DEFINITION,
+		description: "Task quality inspection and refinement expert",
+		whenToUse:
+			"Use this mode when you need to inspect and improve the quality of task.md files. Focuses on fixing format completeness, location precision, clarity, requirement coverage, and style consistency to elevate task.md from 'readable' to 'executable and actionable'. Ensures each task includes clear target objects, modification purposes, modification methods, related dependencies, and modification content.",
+		groups: [
+			"read",
+			[
+				"edit",
+				{
+					fileRegex: "\\.md$",
+					description: "Markdown files only",
+				},
+			],
+			"command",
+		],
+		disableSwitchMode: true,
+		pure: true,
+		source: "project",
+		zgsmCodeModeGroup: "hide",
+		apiProvider: "zgsm",
+	},
+	{
+		slug: "subcoding",
+		name: "⌨️ SubCoding",
+		roleDefinition: SUB_CODING_AGENT_ROLE_DEFINITION,
+		description: "Professional software development executor",
+		whenToUse:
+			"Use this mode when CodingAgent distributes specific development tasks. Acts as a developer in the development team, responsible for executing concrete code writing, modification, debugging, and refactoring work. Follows principles like understand-first-code-later, respect project architecture, minimal changes, and style consistency to efficiently complete assigned development tasks within budget.",
+		groups: ["read", "edit", "command", "sequential_thinking"],
+		disableSwitchMode: true,
+		pure: true,
+		source: "project",
+		zgsmCodeModeGroup: "hide",
 		apiProvider: "zgsm",
 	},
 	{
@@ -314,7 +407,7 @@ export const DEFAULT_MODES: readonly modelType[] = [
 		whenToUse:
 			"Use this mode when you need to plan, design, or strategize before implementation. Perfect for breaking down complex problems, creating technical specifications, designing system architecture, or brainstorming solutions before coding.",
 		description: "Plan and design before implementation",
-		zgsmCodeModeGroup: "strict,vibe",
+		zgsmCodeModeGroup: "vibe",
 		groups: ["read", ["edit", { fileRegex: "\\.md$", description: "Markdown files only" }], "mcp"],
 		customInstructions:
 			"1. Do some information gathering (using provided tools) to get more context about the task.\n\n2. You should also ask the user clarifying questions to get a better understanding of the task.\n\n3. Once you've gained more context about the user's request, break down the task into clear, actionable steps and create a todo list using the `update_todo_list` tool. Each todo item should be:\n   - Specific and actionable\n   - Listed in logical execution order\n   - Focused on a single, well-defined outcome\n   - Clear enough that another mode could execute it independently\n\n   **Note:** If the `update_todo_list` tool is not available, write the plan to a markdown file (e.g., `plan.md` or `todo.md`) instead.\n\n4. As you gather more information or discover new requirements, update the todo list to reflect the current understanding of what needs to be accomplished.\n\n5. Ask the user if they are pleased with this plan, or if they would like to make any changes. Think of this as a brainstorming session where you can discuss the task and refine the todo list.\n\n6. Include Mermaid diagrams if they help clarify complex workflows or system architecture. Please avoid using double quotes (\"\") and parentheses () inside square brackets ([]) in Mermaid diagrams, as this can cause parsing errors.\n\n7. Use the switch_mode tool to request that the user switch to another mode to implement the solution.\n\n**IMPORTANT: Focus on creating clear, actionable todo lists rather than lengthy markdown documents. Use the todo list as your primary planning tool to track and organize the work that needs to be done.**\n\n**CRITICAL: Never provide level of effort time estimates (e.g., hours, days, weeks) for tasks. Focus solely on breaking down the work into clear, actionable steps without estimating how long they will take.**\n\nUnless told otherwise, if you want to save a plan file, put it in the /plans directory",

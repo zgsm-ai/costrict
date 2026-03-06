@@ -1,10 +1,12 @@
-// Costrict Wiki v2 重构版本 - 真正可执行的智能代码仓库分析系统
-// 整合所有高价值组件，实现完整的分析流程
-
-import { WIKI_OUTPUT_FILE_PATHS, SUBTASK_FILENAMES, subtaskDir, COMMON_RULES } from "./common/constants"
+import type { CommandContentFactory } from "../commandRegistry.js"
+import { getSubtaskDir, resolveI18nWikiPromptConstants, WIKI_OUTPUT_FILE_PATHS } from "../wikiConstants.js"
 
 // Main execution template in English version
-export const PROJECT_WIKI_TEMPLATE = (workspace: string) => `
+export const PROJECT_WIKI_TEMPLATE: CommandContentFactory = (params: { workspace: string; language?: string }) => {
+	const { workspace, language = "en" } = params
+	const { SUBTASK_FILENAMES, COMMON_RULES } = resolveI18nWikiPromptConstants(language)
+	const subtaskDir = getSubtaskDir(language)
+	return `
 # 🚀 Intelligent Code Repository Analysis and Documentation Generation
 
 ## Prerequisite Steps (MUST STRICTLY FOLLOW)
@@ -111,6 +113,6 @@ When all following conditions are met, task execution is complete:
 
 Now please begin executing the task scheduler's responsibilities and coordinate the complete analysis of the workspace \`${workspace}\`. Please ensure each subtask is fully executed and apply intelligent retry mechanisms when encountering errors. The final output should be a complete, high-quality set of technical documentation and analysis reports.
 `
+}
 
-// 导出重构后的主模板
 export default PROJECT_WIKI_TEMPLATE

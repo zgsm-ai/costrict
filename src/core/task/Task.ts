@@ -186,7 +186,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	readonly parentTaskId?: string
 	childTaskId?: string
 	pendingNewTaskToolCallId?: string
-
+	preMode?: string
 	readonly instanceId: string
 	readonly metadata: TaskMetadata
 
@@ -1517,6 +1517,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						if (message) {
 							this.resumableAsk = message
 							this.emit(RooCodeEventName.TaskResumable, this.taskId)
+							if (["quick-explore", "task-check", "subcoding"].includes(this._taskMode!)) {
+								provider?.handleModeSwitch?.(this.preMode || defaultModeSlug)
+							}
 						}
 					}, statusMutationTimeout),
 				)
@@ -1528,6 +1531,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						if (message) {
 							this.idleAsk = message
 							this.emit(RooCodeEventName.TaskIdle, this.taskId)
+							if (["quick-explore", "task-check", "subcoding"].includes(this._taskMode!)) {
+								provider?.handleModeSwitch?.(this.preMode || defaultModeSlug)
+							}
 						}
 					}, statusMutationTimeout),
 				)
@@ -1549,7 +1555,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 		}
 		// No need to ask about tool calls in review mode; this is a temporary measure and needs to be removed later.
-		if (this._taskMode === "review" && type === "tool") {
+		if (["quick-explore", "task-check", "subcoding", "review"].includes(this._taskMode!) && type === "tool") {
 			this.approveAsk()
 		}
 		// Wait for askResponse to be set
@@ -2445,6 +2451,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.emitFinalTokenUsageUpdate()
 
 		this.emit(RooCodeEventName.TaskAborted)
+		if (["quick-explore", "task-check", "subcoding"].includes(this._taskMode!)) {
+			await provider?.handleModeSwitch?.(this.preMode || defaultModeSlug)
+		}
 		this.clineMessages
 			.filter((msg) => msg.type === "ask" && msg.ask === "followup" && !msg.isAnswered)
 			.forEach((msg) => (msg.isAnswered = true))
@@ -2775,6 +2784,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				maxDiagnosticMessages,
 				skillsManager: provider?.getSkillsManager(),
 				currentMode,
+				language: state?.language,
 			})
 
 			// Switch mode if specified in a slash command's frontmatter
@@ -5283,6 +5293,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 	updateMode(mode?: string) {
 		this._taskMode = mode
+		if (!["quick-explore", "task-check", "subcoding"].includes(mode || defaultModeSlug)) {
+			this.preMode = mode
+		}
 	}
 	async switchModel() {
 		try {
@@ -5321,6 +5334,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					...this.apiConfiguration,
 					zgsmModelId: modelId || "Auto",
 				})
+
+				// Update this task's API configuration to match the new profile
+				const newState = await provider.getState()
+				if (newState?.apiConfiguration) {
+					this.updateApiConfiguration(newState.apiConfiguration)
+				}
 			}
 
 			await this.say("auto_switch_model", `${oldModelId} --> ${modelId}`)

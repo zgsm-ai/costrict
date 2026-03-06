@@ -135,10 +135,7 @@ const TaskHeader = ({
 			vscode.postMessage({ type: "showTaskWithId", text: parentTaskId })
 		}
 	}
-	const percentage = useMemo(
-		() => Math.round(((contextTokens || 0) / contextWindow) * 100),
-		[contextTokens, contextWindow],
-	)
+
 	return (
 		<div className="group pt-2 pb-0 px-3">
 			{isSubtask && (
@@ -328,7 +325,7 @@ const TaskHeader = ({
 									</StandardTooltip>
 								</>
 							)}
-							{percentage >= 50 && condenseButton}
+							{condenseButton}
 						</div>
 					</div>
 				)}

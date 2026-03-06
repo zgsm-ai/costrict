@@ -15,11 +15,15 @@ describe("mode-validator", () => {
 	describe("isToolAllowedForMode", () => {
 		describe("code mode", () => {
 			it("allows all code mode tools", () => {
-				// Code mode has all groups
-				Object.entries(TOOL_GROUPS).forEach(([_, config]) => {
-					config.tools.forEach((tool: string) => {
-						expect(isToolAllowedForMode(tool, codeMode, [])).toBe(true)
-					})
+				// Code mode has read, edit, command, and mcp groups
+				const codeModeTools = [
+					...TOOL_GROUPS.read.tools,
+					...TOOL_GROUPS.edit.tools,
+					...TOOL_GROUPS.command.tools,
+					...TOOL_GROUPS.mcp.tools,
+				]
+				codeModeTools.forEach((tool) => {
+					expect(isToolAllowedForMode(tool, codeMode, [])).toBe(true)
 				})
 			})
 

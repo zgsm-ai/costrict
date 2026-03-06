@@ -545,6 +545,17 @@ export class NativeToolCallParser {
 				}
 				break
 
+			case "costrict_checkpoint":
+				if (partialArgs.action !== undefined) {
+					nativeArgs = {
+						action: partialArgs.action,
+						message: partialArgs.message,
+						commit_hash: partialArgs.commit_hash,
+						files: partialArgs.files,
+					}
+				}
+				break
+
 			case "apply_diff":
 				if (partialArgs.path !== undefined || partialArgs.diff !== undefined) {
 					nativeArgs = {
@@ -696,6 +707,31 @@ export class NativeToolCallParser {
 						mode: partialArgs.mode,
 						message: partialArgs.message,
 						todos: partialArgs.todos,
+					}
+				}
+				break
+
+			case "file_outline":
+				if (partialArgs.file_path !== undefined) {
+					nativeArgs = {
+						file_path: partialArgs.file_path,
+						include_docstrings: this.coerceOptionalBoolean(partialArgs.include_docstrings),
+					}
+				}
+				break
+
+			case "sequential_thinking":
+				if (partialArgs.thought !== undefined || partialArgs.nextThoughtNeeded !== undefined) {
+					nativeArgs = {
+						thought: partialArgs.thought,
+						nextThoughtNeeded: partialArgs.nextThoughtNeeded,
+						thoughtNumber: partialArgs.thoughtNumber,
+						totalThoughts: partialArgs.totalThoughts,
+						isRevision: this.coerceOptionalBoolean(partialArgs.isRevision),
+						needsMoreThoughts: this.coerceOptionalBoolean(partialArgs.needsMoreThoughts),
+						branchFromThought: this.coerceOptionalNumber(partialArgs.branchFromThought),
+						revisesThought: this.coerceOptionalNumber(partialArgs.revisesThought),
+						branchId: partialArgs.branchId,
 					}
 				}
 				break
@@ -933,6 +969,15 @@ export class NativeToolCallParser {
 							questions: normalizedArgs.questions,
 						} as NativeArgsFor<TName>
 					}
+					break
+
+				case "costrict_checkpoint":
+					nativeArgs = {
+						action: normalizedArgs.action || "list",
+						message: normalizedArgs.message,
+						commit_hash: normalizedArgs.commit_hash,
+						files: normalizedArgs.files,
+					} as NativeArgsFor<TName>
 					break
 
 				case "codebase_search":

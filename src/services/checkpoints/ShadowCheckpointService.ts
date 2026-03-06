@@ -76,6 +76,19 @@ function createSanitizedGit(baseDir: string): SimpleGit {
 	return git
 }
 
+/**
+ * Error thrown when a revert operation results in merge conflicts
+ */
+export class RevertConflictError extends Error {
+	public readonly conflictedFiles: string[]
+
+	constructor(message: string, options: { conflictedFiles: string[] }) {
+		super(message)
+		this.name = "RevertConflictError"
+		this.conflictedFiles = options.conflictedFiles
+	}
+}
+
 export abstract class ShadowCheckpointService extends EventEmitter {
 	public readonly taskId: string
 	public readonly checkpointsDir: string
@@ -367,6 +380,86 @@ export abstract class ShadowCheckpointService extends EventEmitter {
 			const error = e instanceof Error ? e : new Error(String(e))
 			this.log(`[${this.constructor.name}#restoreCheckpoint] failed to restore checkpoint: ${error.message}`)
 			this.emit("error", { type: "error", error })
+			throw error
+		}
+	}
+
+	/**
+	 * Reverts the changes from a specific checkpoint by creating a new commit.
+	 * This preserves the complete git history and is a safe, non-destructive operation.
+	 *
+	 * Note: This method only reverts a single commit. It does NOT restore the state
+	 * to that checkpoint. To restore to a specific checkpoint state, use restoreCheckpoint instead.
+	 *
+	 * @param commitHash - The hash of the checkpoint to revert
+	 * @returns The hash of the new revert commit
+	 * @throws Error if git repo is not initialized, commit hash is invalid, or revert fails
+	 * @throws RevertConflictError if the revert operation results in merge conflicts
+	 */
+	public async revertCheckpoint(commitHash: string): Promise<string> {
+		const startTime = Date.now()
+
+		try {
+			this.log(`[${this.constructor.name}#revertCheckpoint] starting checkpoint revert`)
+
+			// 1. 验证 Git 仓库是否初始化
+			if (!this.git) {
+				throw new Error("Shadow git repo not initialized")
+			}
+
+			// 2. 验证 commitHash 是否存在于检查点历史中
+			const logs = await this.git.log({ maxCount: 1 })
+			const commits = logs.all
+			const existingCommits = commits.map((commit: any) => commit.hash)
+
+			if (!existingCommits.includes(commitHash)) {
+				throw new Error(`Commit ${commitHash} does not exist in the checkpoint history`)
+			}
+
+			// 3. 执行 git revert 操作
+			// 使用 --no-edit 避免打开编辑器（因为 shadow repo 是自动化的）
+			await this.git.raw(["revert", commitHash, "--no-edit"])
+
+			// 4. 获取新创建的 revert 提交 hash
+			const newLogs = await this.git.log({ maxCount: 1 })
+			const newCommitHash = newLogs.all[0]?.hash
+
+			if (!newCommitHash) {
+				throw new Error("Failed to create revert commit")
+			}
+
+			// 5. 更新检查点列表
+			// 注意：revert 提交本身应该被记录为检查点
+			// 因为它是一个用户触发的有意义的提交
+			this._checkpoints.push(newCommitHash)
+
+			// 6. 触发 revert 事件
+			const duration = Date.now() - startTime
+			this.emit("revert", {
+				type: "revert",
+				newCommitHash: newCommitHash,
+				duration,
+			})
+
+			this.log(
+				`[${this.constructor.name}#revertCheckpoint] reverted ${commitHash} ` +
+					`with new commit ${newCommitHash} in ${duration}ms`,
+			)
+
+			return newCommitHash
+		} catch (e) {
+			const error = e instanceof Error ? e : new Error(String(e))
+
+			// 如果不是 RevertConflictError，包装为标准错误
+			if (error.name !== "RevertConflictError") {
+				this.log(
+					`[${this.constructor.name}#revertCheckpoint] failed to revert checkpoint ${commitHash}: ${error.message}`,
+				)
+			}
+
+			this.emit("error", { type: "error", error })
+
+			// 重新抛出错误，以便调用者可以处理
 			throw error
 		}
 	}

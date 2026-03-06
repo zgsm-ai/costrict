@@ -46,7 +46,7 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 	private authClient: OAuth2Client
 	private projectId: string | null = null
 	private credentials: OAuthCredentials | null = null
-
+	private lastThoughtSignature?: string
 	constructor(options: ApiHandlerOptions) {
 		super()
 		this.options = options
@@ -252,13 +252,15 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 						const parsed = JSON.parse(data)
 						yield parsed
 					} catch (e) {
-						console.error("Error parsing SSE data:", e)
+						throw new Error("Failed to parse response: " + e.message)
 					}
 				}
 			}
 		}
 	}
-
+	public getThoughtSignature(): string | undefined {
+		return this.lastThoughtSignature
+	}
 	async *createMessage(
 		systemInstruction: string,
 		messages: Anthropic.Messages.MessageParam[],
@@ -266,9 +268,10 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 	): ApiStream {
 		await this.ensureAuthenticated()
 		const projectId = await this.discoverProjectId()
-
 		const { id: model, info, reasoning: thinkingConfig, maxTokens } = this.getModel()
-
+		this.lastThoughtSignature = undefined
+		const usingNativeTools = Boolean(metadata?.tools && metadata.tools.length > 0)
+		const includeThoughtSignatures = Boolean(thinkingConfig) || usingNativeTools
 		const toolIdToName = new Map<string, string>()
 		for (const message of messages) {
 			if (Array.isArray(message.content)) {
@@ -304,13 +307,15 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 			}
 		}
 
-		const contents = messages.map((message) =>
-			convertAnthropicMessageToGemini(message, {
-				includeThoughtSignatures: false,
-				toolIdToName,
-				isGeminiCli: true,
-			}),
-		)
+		const contents = messages
+			.map((message) =>
+				convertAnthropicMessageToGemini(message, {
+					includeThoughtSignatures,
+					toolIdToName,
+					isGeminiCli: true,
+				}),
+			)
+			.flat()
 		// Prepare request body for Code Assist API - matching Cline's structure
 		const requestBody: any = {
 			model: model,
@@ -370,9 +375,11 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 
 			// Process the SSE stream
 			let lastUsageMetadata: any = undefined
+			let hasTextContent = false
 			const toolCallMatcher = new TagMatcher(
 				toolCallTag,
 				(chunk) => {
+					if (!chunk.matched) hasTextContent = true
 					return {
 						type: chunk.matched ? "fake_tool_call" : "text",
 						text: chunk.data,
@@ -380,50 +387,61 @@ export class GeminiCliHandler extends BaseProvider implements SingleCompletionHa
 				},
 				Infinity,
 			)
-			for await (const jsonData of this.parseSSEStream(response.data as NodeJS.ReadableStream)) {
-				// Extract content from the response
-				const responseData = jsonData.response || jsonData
-				const candidate = responseData.candidates?.[0]
+			try {
+				for await (const jsonData of this.parseSSEStream(response.data as NodeJS.ReadableStream)) {
+					// Extract content from the response
+					const responseData = jsonData.response || jsonData
+					const candidate = responseData.candidates?.[0]
 
-				if (candidate?.content?.parts) {
-					for (const part of candidate.content.parts) {
-						if (part.text) {
-							// Check if this is a thinking/reasoning part
-							if (part.thought === true) {
+					if (candidate?.content?.parts) {
+						for (const part of candidate.content.parts) {
+							if (part.thoughtSignature && includeThoughtSignatures) {
+								this.lastThoughtSignature = part.thoughtSignature
+							}
+							if (part.text) {
+								// Check if this is a thinking/reasoning part
+								if (part.thought === true) {
+									yield {
+										type: "reasoning",
+										text: part.text,
+									}
+								} else {
+									for (const chunk of toolCallMatcher.update(part.text)) {
+										yield chunk as ApiStreamChunk
+									}
+								}
+							} else if (part.functionCall) {
+								const toolCallInfo = {
+									name: part.functionCall.name,
+									arguments: part.functionCall.arguments || part.functionCall.args || {},
+								}
 								yield {
-									type: "reasoning",
-									text: part.text,
+									type: "fake_tool_call",
+									text: JSON.stringify(toolCallInfo),
 								}
-							} else {
-								for (const chunk of toolCallMatcher.update(part.text)) {
-									yield chunk as ApiStreamChunk
-								}
-							}
-						} else if (part.functionCall) {
-							const toolCallInfo = {
-								name: part.functionCall.name,
-								arguments: part.functionCall.arguments || part.functionCall.args || {},
-							}
-							yield {
-								type: "fake_tool_call",
-								text: JSON.stringify(toolCallInfo),
 							}
 						}
 					}
-				}
 
-				// Store usage metadata for final reporting
-				if (responseData.usageMetadata) {
-					lastUsageMetadata = responseData.usageMetadata
-				}
-
-				// Check if this is the final chunk
-				if (candidate?.finishReason) {
-					for (const chunk of toolCallMatcher.final()) {
-						yield chunk as ApiStreamChunk
+					// Store usage metadata for final reporting
+					if (responseData.usageMetadata) {
+						lastUsageMetadata = responseData.usageMetadata
 					}
-					break
+
+					// Check if this is the final chunk
+					if (candidate?.finishReason) {
+						for (const chunk of toolCallMatcher.final()) {
+							yield chunk as ApiStreamChunk
+						}
+						break
+					}
 				}
+			} catch (error) {
+				yield {
+					type: "text",
+					text: "\n",
+				}
+				throw error
 			}
 
 			// Yield final usage information

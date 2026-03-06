@@ -1,113 +1,118 @@
+// npx vitest run integrations/terminal/__tests__/shellEncoding.test.ts
+
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { execa, Options } from "execa"
+
+const mockPid = 12345
+
+// Mock execa - must be before any imports that use execa
+vitest.mock("execa", () => {
+	const mockKill = vitest.fn()
+	const boundExeca = vitest.fn()
+	const execa = Object.assign(boundExeca, {
+		bind: (_ctx: any) => (options: any) => {
+			boundExeca(options)
+			return (_template: TemplateStringsArray, ..._args: any[]) => ({
+				pid: mockPid,
+				iterable: (_opts: any) =>
+					(async function* () {
+						yield "test output\n"
+					})(),
+				kill: mockKill,
+			})
+		},
+	})
+	return { execa, ExecaError: class extends Error {} }
+})
+
+vitest.mock("ps-tree", () => ({
+	default: vitest.fn((_: number, cb: any) => cb(null, [])),
+}))
+
+vitest.mock("../../../utils/platform", () => ({
+	isCliPatform: vitest.fn(() => true),
+	isJetbrainsPlatform: vitest.fn(() => false),
+}))
+
+vitest.mock("../../../utils/shell", () => ({
+	getShell: vitest.fn(() => "/bin/bash"),
+}))
+
+vitest.mock("../../../utils/ideaShellEnvLoader", () => ({
+	getIdeaShellEnvWithUpdatePath: vitest.fn((env: any) => env),
+}))
+
+// Imports must come after mocks
+import { Options } from "execa"
+import { execa } from "execa"
 import { ExecaTerminalProcess } from "../ExecaTerminalProcess"
-import { getShell } from "../../../utils/shell"
-
-// Mock getShell function
-vi.mock("../../../utils/shell")
-
-// Mock execa
-vi.mock("execa")
+import { BaseTerminal } from "../BaseTerminal"
+import type { RooTerminal } from "../types"
 
 describe("ExecaTerminalProcess Shell Encoding", () => {
-	let mockTerminal: any
+	let mockTerminal: RooTerminal
 	let originalEnv: NodeJS.ProcessEnv
 
 	beforeEach(() => {
 		vi.clearAllMocks()
 		originalEnv = { ...process.env }
+		BaseTerminal.setExecaShellPath(undefined)
 
 		mockTerminal = {
-			getCurrentWorkingDirectory: vi.fn().mockReturnValue("/test"),
+			provider: "execa",
+			id: 1,
 			busy: false,
-			setActiveStream: vi.fn(),
-		}
+			running: false,
+			getCurrentWorkingDirectory: vitest.fn().mockReturnValue("/test/cwd"),
+			isClosed: vitest.fn().mockReturnValue(false),
+			runCommand: vitest.fn(),
+			setActiveStream: vitest.fn().mockResolvedValue(undefined),
+			shellExecutionComplete: vitest.fn(),
+			process: undefined,
+		} as unknown as RooTerminal
 	})
 
 	afterEach(() => {
 		process.env = originalEnv
+		vi.clearAllMocks()
 	})
 
 	it("should use PowerShell encoding command for PowerShell", async () => {
-		// Mock getShell to return PowerShell path
-		vi.mocked(getShell).mockReturnValue("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+		BaseTerminal.setExecaShellPath("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
+		const terminalProcess = new ExecaTerminalProcess(mockTerminal)
 
-		const process = new ExecaTerminalProcess(mockTerminal)
+		await terminalProcess.run('echo "test"')
 
-		// Mock execa
-		const mockExeca = vi.mocked(execa)
-		const mockReturnValue = {
-			pid: 1234,
-			iterable: vi.fn().mockReturnValue({
-				[Symbol.asyncIterator]: vi.fn().mockReturnValue({
-					next: vi.fn().mockResolvedValue({ value: "test output", done: false }),
-				}),
-			}),
-		}
-		mockExeca.mockReturnValue(mockReturnValue as any)
-
-		await process.run('echo "test"')
-
-		// Verify that execa was called with the PowerShell encoding command
-		expect(mockExeca).toHaveBeenCalledTimes(1)
-		const call = mockExeca.mock.calls[0]
-		// Based on actual behavior, PowerShell calls use template string with options
-		expect(call[0]).toMatchObject({
-			cwd: "/test",
+		const execaMock = vitest.mocked(execa)
+		expect(execaMock).toHaveBeenCalledTimes(1)
+		const calledOptions = execaMock.mock.calls[0][0] as any
+		expect(calledOptions).toMatchObject({
+			cwd: "/test/cwd",
 			all: true,
 			encoding: "buffer",
 		})
-		// Verify shell property exists (can be true or a path)
-		expect((call[0] as Options).shell).toBeTruthy()
+		expect(calledOptions.shell).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
 	})
 
 	it("should use CMD encoding command for CMD", async () => {
-		// Mock getShell to return CMD path
-		vi.mocked(getShell).mockReturnValue("C:\\Windows\\System32\\cmd.exe")
+		BaseTerminal.setExecaShellPath("C:\\Windows\\System32\\cmd.exe")
+		const terminalProcess = new ExecaTerminalProcess(mockTerminal)
 
-		const process = new ExecaTerminalProcess(mockTerminal)
+		await terminalProcess.run('echo "test"')
 
-		// Mock execa
-		const mockExeca = vi.mocked(execa)
-		const mockReturnValue = {
-			pid: 1234,
-			iterable: vi.fn().mockReturnValue({
-				[Symbol.asyncIterator]: vi.fn().mockReturnValue({
-					next: vi.fn().mockResolvedValue({ value: "test output", done: false }),
-				}),
-			}),
-		}
-		mockExeca.mockReturnValue(mockReturnValue as any)
-
-		await process.run('echo "test"')
-
-		// Verify that execa was called with the CMD encoding command
-		expect(mockExeca).toHaveBeenCalledTimes(1)
-		const call = mockExeca.mock.calls[0]
-		// For CMD, execa is called with template string: execa(options)`chcp 65001 >nul 2>&1 && ${command}`
-		expect(call[0]).toMatchObject({
-			cwd: "/test",
+		const execaMock = vitest.mocked(execa)
+		expect(execaMock).toHaveBeenCalledTimes(1)
+		const calledOptions = execaMock.mock.calls[0][0] as any
+		expect(calledOptions).toMatchObject({
+			cwd: "/test/cwd",
 			all: true,
 			encoding: "buffer",
 		})
-		// Verify shell property exists (can be true or a path)
-		expect((call[0] as Options).shell).toBeTruthy()
+		expect(calledOptions.shell).toBe("C:\\Windows\\System32\\cmd.exe")
 	})
 
 	it("should not modify command on non-Windows platforms", async () => {
-		const process = new ExecaTerminalProcess(mockTerminal)
-
-		// Mock execa
-		const mockExeca = vi.mocked(execa)
-		const mockReturnValue = {
-			pid: 1234,
-			iterable: vi.fn().mockReturnValue({
-				[Symbol.asyncIterator]: vi.fn().mockReturnValue({
-					next: vi.fn().mockResolvedValue({ value: "test output", done: false }),
-				}),
-			}),
-		}
-		mockExeca.mockReturnValue(mockReturnValue as any)
+		BaseTerminal.setExecaShellPath("/bin/bash")
+		const terminalProcess = new ExecaTerminalProcess(mockTerminal)
 
 		// Temporarily modify process.platform for testing
 		const originalPlatform = (global.process as any).platform
@@ -117,19 +122,17 @@ describe("ExecaTerminalProcess Shell Encoding", () => {
 		})
 
 		try {
-			await process.run('echo "test"')
+			await terminalProcess.run('echo "test"')
 
-			// Verify that execa was called with the original command (no encoding prefix)
-			expect(mockExeca).toHaveBeenCalledTimes(1)
-			const call = mockExeca.mock.calls[0]
-			// For non-Windows platforms, execa is called with template string: execa(options)`${actualCommand}`
-			expect(call[0]).toMatchObject({
-				cwd: "/test",
+			const execaMock = vitest.mocked(execa)
+			expect(execaMock).toHaveBeenCalledTimes(1)
+			const calledOptions = execaMock.mock.calls[0][0] as any
+			expect(calledOptions).toMatchObject({
+				cwd: "/test/cwd",
 				all: true,
 				encoding: "buffer",
 			})
-			// Verify shell property exists (can be true or a path)
-			expect((call[0] as Options).shell).toBeTruthy()
+			expect(calledOptions.shell).toBe("/bin/bash")
 		} finally {
 			// Restore original platform
 			Object.defineProperty(global.process, "platform", {
@@ -140,68 +143,36 @@ describe("ExecaTerminalProcess Shell Encoding", () => {
 	})
 
 	it("should handle Git Bash path correctly", async () => {
-		// Mock getShell to return Git Bash path
-		vi.mocked(getShell).mockReturnValue("C:\\Program Files\\Git\\bin\\bash.exe")
+		BaseTerminal.setExecaShellPath("C:\\Program Files\\Git\\bin\\bash.exe")
+		const terminalProcess = new ExecaTerminalProcess(mockTerminal)
 
-		const process = new ExecaTerminalProcess(mockTerminal)
+		await terminalProcess.run('echo "test"')
 
-		// Mock execa
-		const mockExeca = vi.mocked(execa)
-		const mockReturnValue = {
-			pid: 1234,
-			iterable: vi.fn().mockReturnValue({
-				[Symbol.asyncIterator]: vi.fn().mockReturnValue({
-					next: vi.fn().mockResolvedValue({ value: "test output", done: false }),
-				}),
-			}),
-		}
-		mockExeca.mockReturnValue(mockReturnValue as any)
-
-		await process.run('echo "test"')
-
-		// Verify that execa was called with the Git Bash command
-		expect(mockExeca).toHaveBeenCalledTimes(1)
-		const call = mockExeca.mock.calls[0]
-		// For Git Bash, options come first, then shell path and arguments
-		expect(call[0]).toMatchObject({
-			cwd: "/test",
+		const execaMock = vitest.mocked(execa)
+		expect(execaMock).toHaveBeenCalledTimes(1)
+		const calledOptions = execaMock.mock.calls[0][0] as any
+		expect(calledOptions).toMatchObject({
+			cwd: "/test/cwd",
 			all: true,
 			encoding: "buffer",
 		})
-		// Verify shell property exists (can be true or a path)
-		expect((call[0] as Options).shell).toBeTruthy()
+		expect(calledOptions.shell).toBe("C:\\Program Files\\Git\\bin\\bash.exe")
 	})
 
 	it("should handle legacy PowerShell path correctly", async () => {
-		// Mock getShell to return legacy PowerShell path
-		vi.mocked(getShell).mockReturnValue("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
+		BaseTerminal.setExecaShellPath("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
+		const terminalProcess = new ExecaTerminalProcess(mockTerminal)
 
-		const process = new ExecaTerminalProcess(mockTerminal)
+		await terminalProcess.run('echo "test"')
 
-		// Mock execa
-		const mockExeca = vi.mocked(execa)
-		const mockReturnValue = {
-			pid: 1234,
-			iterable: vi.fn().mockReturnValue({
-				[Symbol.asyncIterator]: vi.fn().mockReturnValue({
-					next: vi.fn().mockResolvedValue({ value: "test output", done: false }),
-				}),
-			}),
-		}
-		mockExeca.mockReturnValue(mockReturnValue as any)
-
-		await process.run('echo "test"')
-
-		// Verify that execa was called with the PowerShell encoding command
-		expect(mockExeca).toHaveBeenCalledTimes(1)
-		const call = mockExeca.mock.calls[0]
-		// For Legacy PowerShell, options come first, then shell path and arguments
-		expect(call[0]).toMatchObject({
-			cwd: "/test",
+		const execaMock = vitest.mocked(execa)
+		expect(execaMock).toHaveBeenCalledTimes(1)
+		const calledOptions = execaMock.mock.calls[0][0] as any
+		expect(calledOptions).toMatchObject({
+			cwd: "/test/cwd",
 			all: true,
 			encoding: "buffer",
 		})
-		// Verify shell property exists (can be true or a path)
-		expect((call[0] as Options).shell).toBeTruthy()
+		expect(calledOptions.shell).toBe("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
 	})
 })

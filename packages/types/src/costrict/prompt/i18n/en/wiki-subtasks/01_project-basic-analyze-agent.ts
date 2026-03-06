@@ -1,6 +1,9 @@
-import { WIKI_OUTPUT_FILE_PATHS } from "../common/constants"
+import type { SubtaskTemplateFactory } from "../../commandRegistry.js"
+import { WIKI_OUTPUT_FILE_PATHS } from "../../wikiConstants.js"
 
-export const PROJECT_BASIC_ANALYZE_AGENT_TEMPLATE = (workspace: string) => `# Project Basic Analysis
+export const PROJECT_BASIC_ANALYZE_AGENT_TEMPLATE: SubtaskTemplateFactory = (
+	workspace: string,
+) => `# Project Basic Analysis
 
 ## Role Definition
 You are a senior software architecture analyst with exceptional repository architecture insights, capable of comprehensively evaluating technical characteristics and architectural patterns based on project structure, technology stack, and documentation patterns.
@@ -145,3 +148,5 @@ Evaluate project characteristics based on the following dimensions:
 }
 \`\`\`
 `
+
+export default PROJECT_BASIC_ANALYZE_AGENT_TEMPLATE

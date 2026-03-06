@@ -110,7 +110,8 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 						break
 					case TaskCommandName.GetCommands:
 						try {
-							const commands = await getCommands(this.sidebarProvider.cwd)
+							const state = await this.sidebarProvider.getState()
+							const commands = await getCommands(this.sidebarProvider.cwd, state.language)
 
 							sendResponse(RooCodeEventName.CommandsResponse, [
 								commands.map((cmd) => ({

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, memo, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
-import { BookOpenText, MessageCircleWarning, Copy, Check, Microscope, Info, TimerReset } from "lucide-react"
+import { BookOpenText, MessageCircleWarning, Copy, Check, Microscope, Info, RotateCcw } from "lucide-react"
 import { useCopyToClipboard } from "@src/utils/clipboard"
 import { vscode } from "@src/utils/vscode"
 import CodeBlock from "../common/CodeBlock"
@@ -306,8 +306,8 @@ export const ErrorRow = memo(
 											? t("common:confirmation.deleteMessageOrRollback")
 											: t("common:confirmation.deleteMessage")
 									}>
-									<TimerReset
-										className="size-5 mt-[3px] mr-[-6px] cursor-pointer"
+									<RotateCcw
+										className="size-4  cursor-pointer opacity-60 hover:opacity-100"
 										style={{
 											color: "rgba(0, 188, 255, 1)",
 										}}

@@ -43,6 +43,7 @@ import { CodeReviewErrorType, type TelemetryErrorType } from "../telemetry"
 import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
 import { fileExistsAtPath } from "../../../utils/fs"
 import { isJetbrainsPlatform } from "../../../utils/platform"
+import { defaultModeSlug } from "../../../shared/modes"
 /**
  * Code Review Service - Singleton
  *
@@ -243,7 +244,7 @@ export class CodeReviewService {
 			progress: 0.001, // use 0.001 to indicate running
 			total: 0,
 		})
-		this.prevMode = (await provider.getMode()) ?? "code"
+		this.prevMode = (await provider.getMode()) ?? defaultModeSlug
 		const task = await provider.createTask(message, undefined, undefined, undefined, { mode: "review" })
 
 		// 🔑 防止重复处理完成事件的标志

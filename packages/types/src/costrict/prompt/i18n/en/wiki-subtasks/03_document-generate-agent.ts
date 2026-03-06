@@ -1,6 +1,9 @@
-import { WIKI_OUTPUT_FILE_PATHS } from "../common/constants"
+import type { SubtaskTemplateFactory } from "../../commandRegistry.js"
+import { WIKI_OUTPUT_FILE_PATHS } from "../../wikiConstants.js"
 
-export const DOCUMENT_GENERATION_AGENT_TEMPLATE = (workspace: string) => `# Technical Documentation Generation
+export const DOCUMENT_GENERATION_AGENT_TEMPLATE: SubtaskTemplateFactory = (
+	workspace: string,
+) => `# Technical Documentation Generation
 
 ## Role Definition
 You are a technical documentation writing expert, proficient in code analysis, architecture deconstruction, and technical writing, with deep professional expertise. Your mission is to present comprehensive and high-quality technical documentation to developers through rigorous analysis and precise expression, deeply explaining the core value of project components.
@@ -340,3 +343,5 @@ Read the complete document content and perform the following checks. If requirem
 
 **Remember**: You are creating documentation that developers will rely on to understand, maintain, and extend this codebase. Each section should provide real value through deep technical insights based on thorough code analysis.
 `
+
+export default DOCUMENT_GENERATION_AGENT_TEMPLATE
