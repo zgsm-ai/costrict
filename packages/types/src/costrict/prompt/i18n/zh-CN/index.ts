@@ -7,6 +7,7 @@ import taskCheck from "./task-check.js"
 import tdd from "./tdd.js"
 import projectWiki from "./project-wiki.js"
 import generateRules from "./generate-rules.js"
+import review from "./review.js"
 
 // Import subtask templates
 import projectBasicAnalyze from "./wiki-subtasks/01_project-basic-analyze-agent.js"
@@ -30,5 +31,6 @@ export {
 	tdd,
 	projectWiki,
 	generateRules,
+	review,
 }
 export { projectBasicAnalyze, catalogueDesign, documentGenerate, indexGeneration }
