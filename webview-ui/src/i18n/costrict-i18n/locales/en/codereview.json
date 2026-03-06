@@ -2,7 +2,7 @@
 	"welcomePage": {
 		"title": "CoStrict",
 		"tips": "You can also select functions/code blocks/multiple files, right-click > CoStrict > Code Review",
-		"dismiss": "Don't show again",
+		"dismiss": "dismiss",
 		"reviewCurrentChanges": "Review Current Changes",
 		"noFiles": "No files to review"
 	},

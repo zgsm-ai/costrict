@@ -10,6 +10,7 @@ import {
 	taskCheck as zhCNTaskCheck,
 	task as zhCNTask,
 	design as zhCNDesign,
+	review as zhCNReview,
 } from "./zh-CN/index.js"
 import {
 	planApply as enPlanApply,
@@ -21,6 +22,7 @@ import {
 	taskCheck as enTaskCheck,
 	task as enTask,
 	design as enDesign,
+	review as enReview,
 } from "./en/index.js"
 
 type PromptRegistry = Record<string, Record<string, PromptComponent>>
@@ -36,6 +38,7 @@ const registry: PromptRegistry = {
 		task: zhCNTask,
 		strict: zhCNSpec,
 		design: zhCNDesign,
+		review: zhCNReview,
 	},
 	"zh-TW": {
 		plan: zhCNPlan,
@@ -47,6 +50,7 @@ const registry: PromptRegistry = {
 		task: zhCNTask,
 		strict: zhCNSpec,
 		design: zhCNDesign,
+		review: zhCNReview,
 	},
 	en: {
 		plan: enPlan,
@@ -58,6 +62,7 @@ const registry: PromptRegistry = {
 		task: enTask,
 		strict: enSpec,
 		design: enDesign,
+		review: enReview,
 	},
 	// Future model dimension: simply append "zh-CN_claude": { ... }
 }

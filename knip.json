@@ -9,7 +9,25 @@
 		"src/extension.ts",
 		"scripts/**",
 		"apps/cli/scripts/**",
-		"apps/web-roo-code/next-sitemap.config.cjs"
+		"apps/web-roo-code/next-sitemap.config.cjs",
+
+		"packages/cloud/src/__mocks__/vscode.ts",
+		"packages/types/src/costrict/fix-agent.ts",
+		"src/api/providers/fetchers/roo.ts",
+		"src/api/providers/roo.ts",
+		"src/core/costrict/wiki/utils/rooCommandsUtils.ts",
+		"src/core/ignore/__mocks__/RooIgnoreController.ts",
+		"src/core/prompts/tools/native-tools/codebase_search.ts",
+		"src/core/prompts/tools/native-tools/costrict_checkpoint.ts",
+		"src/core/tools/CodebaseSearchTool.ts",
+		"src/services/glob/__mocks__/list-files.ts",
+		"webview-ui/src/__mocks__/vscode.ts",
+		"webview-ui/src/components/cloud/CloudAccountSwitcher.tsx",
+		"webview-ui/src/components/code-review/CodebaseSync.tsx",
+		"webview-ui/src/components/common/__mocks__/CodeBlock.tsx",
+		"webview-ui/src/components/common/__mocks__/MarkdownBlock.tsx",
+		"webview-ui/src/components/common/TelemetryBanner.tsx",
+		"webview-ui/src/components/settings/providers/Roo.tsx"
 	],
 	"workspaces": {
 		"src": {
