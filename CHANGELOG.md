@@ -1,5 +1,13 @@
 # CoStrict Change Log
 
+## [2.4.1]
+
+- Optimize streaming status tracking by moving state management from client to backend
+- Add OpenAI native provider support and comprehensive type definitions
+- Refactor settings UI organization (integrate Auto Cleanup into CheckpointSettings)
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/0892455db298ef5b48e8153a8e3d11763b5b4584)
+- Fix known issues
+
 ## [2.4.0]
 
 - Add new Plan Agent integration (new agents added: quick-explore, task-check, subcoding)
