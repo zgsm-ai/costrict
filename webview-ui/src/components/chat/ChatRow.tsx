@@ -353,6 +353,17 @@ export const ChatRowContent = ({
 		return []
 	}, [message.text, message.say])
 
+	const multipleChoiceData = useMemo(() => {
+		if (message.type === "ask" && message.ask === "multiple_choice" && !message.partial) {
+			const data = safeJsonParse<MultipleChoiceData>(message.text)
+			// Costrict: Merge saved user response for display on reload
+			if (data && message.userResponse) {
+				data.userResponse = message.userResponse as MultipleChoiceResponse
+			}
+			return data
+		}
+		return null
+	}, [message.type, message.ask, message.partial, message.text, message.userResponse])
 	// When resuming task, last won't be api_req_failed but a resume_task
 	// message, so api_req_started will show loading spinner. That's why we just
 	// remove the last api_req_started that failed without streaming anything.
@@ -470,7 +481,7 @@ export const ChatRowContent = ({
 						getIconSpan("arrow-swap", normalColor)
 					) : apiRequestFailedMessage ? (
 						getIconSpan("error", errorColor)
-					) : isLast ? (
+					) : isLast && isStreaming ? (
 						<ProgressIndicator />
 					) : (
 						getIconSpan("arrow-swap", normalColor)
@@ -506,13 +517,25 @@ export const ChatRowContent = ({
 					<MessageCircleQuestionMark className="w-4 shrink-0" aria-label="Question icon" />,
 					<span style={{ color: normalColor, fontWeight: "bold" }}>{t("chat:questions.hasQuestion")}</span>,
 				]
-			case "multiple_choice":
+			case "multiple_choice": {
+				const isLoading = isLast && isStreaming
+				if (!isLoading && multipleChoiceData) {
+					return [
+						<MessageCircleQuestionMark
+							className="w-4 shrink-0"
+							aria-label="Multiple choice question icon"
+						/>,
+						<span style={{ color: normalColor, fontWeight: "bold" }}>
+							{t("chat:multipleChoice.headerTitle")}
+						</span>,
+					]
+				}
+
 				return [
-					<MessageCircleQuestionMark className="w-4 shrink-0" aria-label="Multiple choice question icon" />,
-					<span style={{ color: normalColor, fontWeight: "bold" }}>
-						{t("chat:multipleChoice.headerTitle")}
-					</span>,
+					<VSCodeProgressRing className="size-4" />,
+					<span className="text-sm">{t("chat:multipleChoice.loading")}</span>,
 				]
+			}
 			default:
 				return [null, null]
 		}
@@ -530,6 +553,7 @@ export const ChatRowContent = ({
 		apiReqCancelReason,
 		cost,
 		apiRequestFailedMessage,
+		multipleChoiceData,
 	])
 
 	const headerStyle: React.CSSProperties = {
@@ -566,18 +590,6 @@ export const ChatRowContent = ({
 		}
 		return null
 	}, [message.type, message.ask, message.partial, message.text])
-
-	const multipleChoiceData = useMemo(() => {
-		if (message.type === "ask" && message.ask === "multiple_choice" && !message.partial) {
-			const data = safeJsonParse<MultipleChoiceData>(message.text)
-			// Costrict: Merge saved user response for display on reload
-			if (data && message.userResponse) {
-				data.userResponse = message.userResponse as MultipleChoiceResponse
-			}
-			return data
-		}
-		return null
-	}, [message.type, message.ask, message.partial, message.text, message.userResponse])
 
 	const handleCopyErrorDetail = useCallback(
 		(message: string) => {
@@ -630,7 +642,7 @@ export const ChatRowContent = ({
 				return (
 					<>
 						<div style={headerStyle}>
-							{message.partial && isLast ? null : tool.isProtected ? (
+							{message.partial && isLast && isStreaming ? null : tool.isProtected ? (
 								<span
 									className="codicon codicon-lock"
 									style={{ color: "var(--vscode-editorWarning-foreground)", marginBottom: "-1.5px" }}
@@ -638,7 +650,7 @@ export const ChatRowContent = ({
 							) : (
 								toolIcon("diff")
 							)}
-							{message.partial && isLast ? (
+							{message.partial && isLast && isStreaming ? (
 								<span style={{ fontWeight: "bold" }}>
 									<RandomLoadingMessage language={language as RandomLoadingMessageLanguage} />
 								</span>
@@ -658,7 +670,7 @@ export const ChatRowContent = ({
 								code={unifiedDiff ?? tool.content ?? tool.diff ?? ""}
 								language="diff"
 								progressStatus={message.progressStatus}
-								isLoading={message.partial && isLast}
+								isLoading={message.partial && isLast && isStreaming}
 								isExpanded={isExpanded}
 								onToggleExpand={handleToggleExpand}
 								onJumpToFile={onJumpToCreatedFile}
@@ -671,7 +683,7 @@ export const ChatRowContent = ({
 				return (
 					<>
 						<div style={headerStyle}>
-							{message.partial && isLast ? null : tool.isProtected ? (
+							{message.partial && isLast && isStreaming ? null : tool.isProtected ? (
 								<span
 									className="codicon codicon-lock"
 									style={{ color: "var(--vscode-editorWarning-foreground)", marginBottom: "-1.5px" }}
@@ -679,7 +691,7 @@ export const ChatRowContent = ({
 							) : (
 								toolIcon("insert")
 							)}
-							{message.partial && isLast ? (
+							{message.partial && isLast && isStreaming ? (
 								<span style={{ fontWeight: "bold" }}>
 									<RandomLoadingMessage language={language as RandomLoadingMessageLanguage} />
 								</span>
@@ -703,7 +715,7 @@ export const ChatRowContent = ({
 								code={unifiedDiff ?? tool.diff}
 								language="diff"
 								progressStatus={message.progressStatus}
-								isLoading={message.partial && isLast}
+								isLoading={message.partial && isLast && isStreaming}
 								isExpanded={isExpanded}
 								onToggleExpand={handleToggleExpand}
 								diffStats={tool.diffStats}
@@ -1301,7 +1313,10 @@ export const ChatRowContent = ({
 									justifyContent: "space-between",
 								}}>
 								<div style={{ display: "flex", alignItems: "center", gap: "10px", flexGrow: 1 }}>
-									{!apiRequestFailedMessage && !apiReqStreamingFailedMessage && isLast ? (
+									{!apiRequestFailedMessage &&
+									!apiReqStreamingFailedMessage &&
+									isLast &&
+									isStreaming ? (
 										<ProgressIndicator />
 									) : (
 										getIconSpan("arrow-swap", normalColor)
@@ -1535,7 +1550,7 @@ export const ChatRowContent = ({
 					return null // we should never see this message type
 				case "text": {
 					const resultText = `${message?.text ?? ""}`
-					const loadingMessage = isLast && message.partial
+					const loadingMessage = isLast && message.partial && isStreaming
 					if (!resultText?.trim()) {
 						return <div className="ml-2 mb-0 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
 					}
@@ -2186,7 +2201,7 @@ export const ChatRowContent = ({
 								</div>
 							)}
 							<div className="flex flex-col gap-2 ml-6">
-								{message.partial ? (
+								{message.partial && isStreaming ? (
 									<div className="flex items-center gap-2 py-2 text-vscode-descriptionForeground">
 										<VSCodeProgressRing className="size-4" />
 										<span className="text-sm">{t("chat:multipleChoice.loading")}</span>

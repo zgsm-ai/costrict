@@ -54,8 +54,7 @@ import {
 } from "@roo-code/types"
 import { aggregateTaskCostsRecursive, type AggregatedCosts } from "./aggregateTaskCosts"
 import { TelemetryService } from "@roo-code/telemetry"
-// import { CloudService, BridgeOrchestrator } from "@roo-code/cloud"
-import { CloudService /* getRooCodeApiUrl */ } from "@roo-code/cloud"
+import { CloudService, getRooCodeApiUrl } from "@roo-code/cloud"
 
 import { Package } from "../../shared/package"
 import { findLast } from "../../shared/array"
@@ -102,8 +101,6 @@ import { CustomModesManager } from "../config/CustomModesManager"
 import { Task } from "../task/Task"
 
 import { webviewMessageHandler } from "./webviewMessageHandler"
-// import type { ClineMessage } from "@roo-code/types"
-// import { readApiMessages, saveApiMessages, saveTaskMessages } from "../task-persistence"
 import type { ClineMessage, TodoItem } from "@roo-code/types"
 import { readApiMessages, saveApiMessages, saveTaskMessages, TaskHistoryStore } from "../task-persistence"
 import { readTaskMessages } from "../task-persistence/taskMessages"
@@ -574,9 +571,8 @@ export class ClineProvider
 					)
 				}
 			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : String(error)
-				this.log(`Failed to load full model details for LM Studio: ${errorMessage}`)
-				vscode.window.showErrorMessage(errorMessage)
+				this.log(`Failed to load full model details for LM Studio: ${error}`)
+				vscode.window.showErrorMessage(error?.message)
 			}
 		}
 	}
@@ -604,9 +600,8 @@ export class ClineProvider
 				// all running promises will exit as well.
 				await task.abortTask(true)
 			} catch (e) {
-				const errorMessage = e instanceof Error ? e.message : String(e)
 				this.log(
-					`[ClineProvider#removeClineFromStack] abortTask() failed ${task.taskId}.${task.instanceId}: ${errorMessage}`,
+					`[ClineProvider#removeClineFromStack] abortTask() failed ${task.taskId}.${task.instanceId}: ${e?.message}`,
 				)
 			}
 
@@ -804,6 +799,8 @@ export class ClineProvider
 	public static getVisibleInstance(): ClineProvider | undefined {
 		return findLast(Array.from(this.activeInstances), (instance) => instance.view?.visible === true)
 	}
+
+	// Task Stack Management
 	public static getAllInstance(): ClineProvider | undefined {
 		return Array.from(this.activeInstances)[0]
 	}
@@ -989,7 +986,7 @@ export class ClineProvider
 			({
 				terminalShellIntegrationTimeout = Terminal.defaultShellIntegrationTimeout,
 				terminalShellIntegrationDisabled = false,
-				terminalCommandDelay = 150,
+				terminalCommandDelay = 100,
 				terminalZshClearEolMark = true,
 				terminalZshOhMy = false,
 				terminalZshP10k = false,
@@ -1227,6 +1224,8 @@ export class ClineProvider
 			experiments,
 			useZgsmCustomConfig,
 			experimentSettings,
+			cloudUserInfo,
+			taskSyncEnabled,
 		} = await this.getState()
 
 		const task = new Task({
@@ -1245,7 +1244,6 @@ export class ClineProvider
 			onCreated: this.taskCreationCallback,
 			startTask: options?.startTask ?? true,
 			experimentSettings,
-			// enableBridge: false,
 			// Preserve the status from the history item to avoid overwriting it when the task saves messages
 			initialStatus: historyItem.status,
 		})
@@ -1258,22 +1256,19 @@ export class ClineProvider
 			const oldTask = this.clineStack[stackIndex]
 
 			// Abort the old task to stop running processes and mark as abandoned
-			if (oldTask) {
-				try {
-					await oldTask.abortTask(true)
-				} catch (e) {
-					const errorMessage = e instanceof Error ? e.message : String(e)
-					this.log(
-						`[createTaskWithHistoryItem] abortTask() failed for old task ${oldTask.taskId}.${oldTask.instanceId}: ${errorMessage}`,
-					)
-				}
+			try {
+				await oldTask.abortTask(true)
+			} catch (e) {
+				this.log(
+					`[createTaskWithHistoryItem] abortTask() failed for old task ${oldTask.taskId}.${oldTask.instanceId}: ${e?.message}`,
+				)
+			}
 
-				// Remove event listeners from the old task
-				const cleanupFunctions = this.taskEventListeners.get(oldTask)
-				if (cleanupFunctions) {
-					cleanupFunctions.forEach((cleanup) => cleanup())
-					this.taskEventListeners.delete(oldTask)
-				}
+			// Remove event listeners from the old task
+			const cleanupFunctions = this.taskEventListeners.get(oldTask)
+			if (cleanupFunctions) {
+				cleanupFunctions.forEach((cleanup) => cleanup())
+				this.taskEventListeners.delete(oldTask)
 			}
 
 			// Replace the task in the stack
@@ -1886,7 +1881,7 @@ export class ClineProvider
 	}
 
 	async ensureSettingsDirectoryExists(): Promise<string> {
-		const { getSettingsDirectoryPath } = await import("../../utils/storage.js")
+		const { getSettingsDirectoryPath } = await import("../../utils/storage")
 		const globalStoragePath = this.contextProxy.globalStorageUri.fsPath
 		return getSettingsDirectoryPath(globalStoragePath)
 	}
@@ -2675,7 +2670,7 @@ export class ClineProvider
 		// 	)
 		// }
 
-		// let taskSyncEnabled: boolean = false
+		let taskSyncEnabled: boolean = false
 
 		// try {
 		// 	taskSyncEnabled = CloudService.instance.isTaskSyncEnabled()
@@ -3370,9 +3365,7 @@ export class ClineProvider
 	public async clearTask(): Promise<void> {
 		if (this.clineStack.length > 0) {
 			const task = this.clineStack[this.clineStack.length - 1]
-			if (task) {
-				console.log(`[clearTask] clearing task ${task.taskId}.${task.instanceId}`)
-			}
+			console.log(`[clearTask] clearing task ${task.taskId}.${task.instanceId}`)
 			await this.removeClineFromStack()
 		}
 	}
@@ -3436,7 +3429,7 @@ export class ClineProvider
 			const packageJSON = this.context.extension?.packageJSON
 
 			this._appProperties = {
-				appName: (packageJSON?.name ?? Package.name) as string,
+				appName: packageJSON?.name ?? Package.name,
 				appVersion: packageJSON?.version ?? Package.version,
 				vscodeVersion: vscode.version,
 				platform: process.platform,

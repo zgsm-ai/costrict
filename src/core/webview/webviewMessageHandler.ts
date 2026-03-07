@@ -606,10 +606,6 @@ export const webviewMessageHandler = async (
 			}
 			break
 		}
-		case "zgsmAbort": {
-			await provider.cancelTask()
-			break
-		}
 		case "showZgsmCodebaseDisableConfirmDialog": {
 			await provider.postMessageToWebview({ type: "showZgsmCodebaseDisableConfirmDialog" })
 			break

@@ -233,8 +233,8 @@ export async function activate(
 		loginTip()
 		// init project-wiki subtasks with current language.
 		const state = await provider.getState()
-		await ensureProjectWikiSubtasksExists(state.language ?? "en")
-		flushModels(
+
+		void flushModels(
 			{
 				provider: "zgsm",
 				baseUrl: provider.getValue("zgsmBaseUrl"),
@@ -254,6 +254,7 @@ export async function activate(
 				})
 			},
 		)
+		void ensureProjectWikiSubtasksExists(state.language ?? "en")
 	}, 2000)
 }
 

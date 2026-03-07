@@ -27,7 +27,6 @@ import {
 	Plug,
 	Server,
 	Users2,
-	Trash2,
 	ArrowLeft,
 	GitCommitVertical,
 	GraduationCap,
@@ -83,7 +82,6 @@ import PromptsSettings from "./PromptsSettings"
 import { SlashCommandsSettings } from "./SlashCommandsSettings"
 import { SkillsSettings } from "./SkillsSettings"
 import { UISettings } from "./UISettings"
-import { AutoCleanupSettings } from "./AutoCleanupSettings"
 import ModesView from "../modes/ModesView"
 import McpView from "../mcp/McpView"
 import { WorktreesView } from "../worktrees/WorktreesView"
@@ -110,7 +108,6 @@ export const sectionNames = [
 	"notifications",
 	"contextManagement",
 	"terminal",
-	"autoCleanup",
 	"modes",
 	"mcp",
 	"worktrees",
@@ -581,7 +578,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			{ id: "terminal", icon: SquareTerminal },
 			{ id: "prompts", icon: MessageSquare },
 			{ id: "experimental", icon: FlaskConical },
-			{ id: "autoCleanup", icon: Trash2 },
 			{ id: "ui", icon: Glasses },
 			{ id: "notifications", icon: Bell },
 			{ id: "language", icon: Globe },
@@ -881,6 +877,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							<CheckpointSettings
 								enableCheckpoints={enableCheckpoints}
 								checkpointTimeout={checkpointTimeout}
+								autoCleanup={autoCleanup}
 								setCachedStateField={setCachedStateField}
 							/>
 						)}
@@ -943,10 +940,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								terminalZdotdir={terminalZdotdir}
 								setCachedStateField={setCachedStateField}
 							/>
-						)}
-						{/* Auto Cleanup Section */}
-						{renderTab === "autoCleanup" && (
-							<AutoCleanupSettings autoCleanup={autoCleanup} setCachedStateField={setCachedStateField} />
 						)}
 						{/* Modes Section */}
 						{renderTab === "modes" && <ModesView />}

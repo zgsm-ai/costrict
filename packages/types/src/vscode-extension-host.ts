@@ -56,6 +56,7 @@ export interface ExtensionMessage {
 		| "zgsmInviteCode"
 		| "zgsmNotices"
 		| "settingsUpdated"
+		| "streamingStatusUpdated"
 		// zgsm
 		| "ollamaModels"
 		| "lmStudioModels"
@@ -430,6 +431,12 @@ export type ExtensionState = Pick<
 	 * (captured during async getStateToPostToWebview) from overwriting newer messages.
 	 */
 	clineMessagesSeq?: number
+
+	/**
+	 * Indicates whether extension is currently streaming responses from AI.
+	 * This state is managed by backend and updated via streamingStatusUpdated messages.
+	 */
+	isStreaming?: boolean
 }
 
 export interface Command {
@@ -466,7 +473,6 @@ export interface WebviewMessage {
 		| "zgsmRebuildCodebaseIndex"
 		| "zgsmLogin"
 		| "zgsmLogout"
-		| "zgsmAbort"
 		| "zgsmCodeMode"
 		| "useZgsmCustomConfig"
 		| "showZgsmCodebaseDisableConfirmDialog"

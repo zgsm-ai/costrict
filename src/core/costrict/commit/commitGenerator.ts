@@ -317,6 +317,13 @@ export class CommitMessageGenerator {
 			aiMessage = (aiMessage.split("</think>")[1] || "").trim()
 		}
 
+		if (aiMessage.startsWith("```")) {
+			aiMessage = aiMessage.slice(3).trim()
+			if (aiMessage.endsWith("```")) {
+				aiMessage = aiMessage.slice(0, -3).trim()
+			}
+		}
+
 		if (!aiMessage) {
 			throw new Error(t("commit:commit.error.aiFailed"))
 		}

@@ -105,7 +105,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		metadata?: ApiHandlerCreateMessageMetadata,
 	): ApiStream {
 		// Performance monitoring log
-		this.abortController = new AbortController()
+		this.abortController = metadata?.abortController ?? new AbortController()
 		const requestId = uuidv7()
 		const workflowModes = ["strict", "plan"] as Array<string | undefined>
 		await this.updateModelInfo()
@@ -198,7 +198,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 							requestOptions,
 							Object.assign(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
 								headers: _headers,
-								signal: this.abortController.signal,
+								signal: this?.abortController?.signal,
 							}),
 						)
 						.withResponse()
@@ -262,7 +262,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 						requestOptions,
 						Object.assign(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
 							headers: _headers,
-							signal: this.abortController.signal,
+							signal: this?.abortController?.signal,
 						}),
 					)
 					this.logger.info(`[ResponseId]:`, response._request_id)
@@ -309,10 +309,6 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					}
 				}
 			}
-		} catch (err) {
-			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-			isDev && this.logger.error(`[createMessage] ${err}`)
-			throw err
 		} finally {
 			this.logger.info(`[ResponseID ${requestOptions?.model ?? modelId} sse createMessage end]:`, requestId)
 		}
@@ -683,8 +679,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					// Process in batch when threshold is reached or buffer is too large
 					const shouldFlush =
 						now - time >= this.apiResponseRenderModeInfo.interval ||
-						contentBuffer.length >= this.apiResponseRenderModeInfo.limit || // Prevent buffer from growing too large
-						this.abortController?.signal.aborted // Flush immediately on abort signal
+						contentBuffer.length >= this.apiResponseRenderModeInfo.limit
 
 					time = now
 					if (shouldFlush) {
@@ -735,7 +730,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					bufferToolCalls(delta, finishReason)
 
 					// Flush tool call buffer periodically based on time interval
-					const shouldFlushToolCalls = contentBuffer.length === 0 || this.abortController?.signal.aborted // Flush immediately on abort signal
+					const shouldFlushToolCalls = contentBuffer.length === 0
 
 					if (shouldFlushToolCalls && toolCallBuffer.length > 0) {
 						const events = flushToolCallBuffer()
@@ -1023,7 +1018,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				stream = await (this.client as OpenAI).chat.completions.create(
 					requestOptions,
 					Object.assign(methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
-						signal: this.abortController?.signal,
+						signal: this?.abortController?.signal,
 					}),
 				)
 			} catch (error) {
@@ -1062,7 +1057,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				response = await (this.client as OpenAI).chat.completions.create(
 					requestOptions,
 					Object.assign(methodIsAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
-						signal: this.abortController?.signal,
+						signal: this?.abortController?.signal,
 					}),
 				)
 			} catch (error) {
@@ -1202,18 +1197,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		return this.chatType
 	}
 
-	cancelChat(reason?: ClineApiReqCancelReason): void {
-		try {
-			if (!this.abortController) return
-			if (reason === "user_cancelled") {
-				this.logger.info(`[cancelChat] User Cancelled chat request: ${reason}`)
-			} else {
-				this.logger.info(`[cancelChat] AI Cancelled chat request: ${reason}`)
-			}
-			this.abortController?.abort(reason)
-			this.abortController = undefined
-		} catch (error) {
-			this.logger.info(`Error while cancelling message ${error}`)
-		}
+	clearProviderAbortController(): void {
+		this.abortController = undefined
 	}
 }

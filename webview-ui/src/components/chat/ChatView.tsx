@@ -166,6 +166,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		experiments,
 		showWorktreesInHomeScreen,
 		language,
+		isStreaming = false,
 	} = useExtensionState()
 
 	// Show a WarningRow when the user sends a message with a retired provider.
@@ -666,50 +667,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		}
 	}, [])
 
-	const isStreaming = useMemo(() => {
-		// Checking clineAsk isn't enough since messages effect may be called
-		// again for a tool for example, set clineAsk to its value, and if the
-		// next message is not an ask then it doesn't reset. This is likely due
-		// to how much more often we're updating messages as compared to before,
-		// and should be resolved with optimizations as it's likely a rendering
-		// bug. But as a final guard for now, the cancel button will show if the
-		// last message is not an ask.
-		const isLastAsk = !!modifiedMessages.at(-1)?.ask
-
-		const isToolCurrentlyAsking =
-			isLastAsk && clineAsk !== undefined && enableButtons && primaryButtonText !== undefined
-
-		if (isToolCurrentlyAsking) {
-			return false
-		}
-
-		const isLastMessagePartial = modifiedMessages.at(-1)?.partial === true
-
-		if (isLastMessagePartial) {
-			return true
-		} else {
-			const lastApiReqStarted = findLast(
-				modifiedMessages,
-				(message: ClineMessage) => message.say === "api_req_started",
-			)
-
-			if (
-				lastApiReqStarted &&
-				lastApiReqStarted.text !== null &&
-				lastApiReqStarted.text !== undefined &&
-				lastApiReqStarted.say === "api_req_started"
-			) {
-				const cost = JSON.parse(lastApiReqStarted.text).cost
-
-				if (cost === undefined) {
-					return true // API request has not finished yet.
-				}
-			}
-		}
-
-		return false
-	}, [modifiedMessages, clineAsk, enableButtons, primaryButtonText])
-
 	const markFollowUpAsAnswered = useCallback(() => {
 		const lastFollowUpMessage = messagesRef.current.findLast((msg: ClineMessage) =>
 			["followup", "multiple_choice"].includes(msg.ask!),
@@ -862,7 +819,13 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const handleStopTask = useCallback(() => {
 		vscode.postMessage({ type: "cancelTask" })
 		setDidClickCancel(true)
-	}, [setDidClickCancel])
+		setTimeout(() => {
+			if (!isStreaming) return
+
+			vscode.postMessage({ type: "cancelTask" })
+			setDidClickCancel(true)
+		}, 150)
+	}, [setDidClickCancel, isStreaming])
 
 	// Handle enqueue button click from textarea
 	const handleEnqueueCurrentMessage = useCallback(() => {

@@ -439,6 +439,12 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					setCommands(message.commands ?? [])
 					break
 				}
+				case "streamingStatusUpdated": {
+					if (message?.values?.status !== undefined) {
+						setState((prevState) => ({ ...prevState, isStreaming: message?.values?.status ?? false }))
+					}
+					break
+				}
 				case "messageUpdated": {
 					const clineMessage = message.clineMessage!
 					setState((prevState) => {
@@ -582,6 +588,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 
 	const contextValue: ExtensionStateContextType = {
 		...state,
+		isStreaming: state.isStreaming ?? false,
 		reasoningBlockCollapsed: state.reasoningBlockCollapsed ?? true,
 		showSpeedInfo: state.showSpeedInfo ?? false,
 		automaticallyFocus: state.automaticallyFocus ?? false,

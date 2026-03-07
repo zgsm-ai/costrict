@@ -4,11 +4,13 @@ import { VSCodeCheckbox, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { Trans } from "react-i18next"
 import { buildDocLink } from "@src/utils/docLinks"
 import { Slider } from "@/components/ui"
+import { AutoCleanupSettings as AutoCleanupSettingsType } from "@roo-code/types"
 
 import { SetCachedStateField } from "./types"
 import { SectionHeader } from "./SectionHeader"
 import { Section } from "./Section"
 import { SearchableSetting } from "./SearchableSetting"
+import { AutoCleanupSettings } from "./AutoCleanupSettings"
 import {
 	DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 	MAX_CHECKPOINT_TIMEOUT_SECONDS,
@@ -18,12 +20,14 @@ import {
 type CheckpointSettingsProps = HTMLAttributes<HTMLDivElement> & {
 	enableCheckpoints?: boolean
 	checkpointTimeout?: number
-	setCachedStateField: SetCachedStateField<"enableCheckpoints" | "checkpointTimeout">
+	autoCleanup?: AutoCleanupSettingsType
+	setCachedStateField: SetCachedStateField<"enableCheckpoints" | "checkpointTimeout" | "autoCleanup">
 }
 
 export const CheckpointSettings = ({
 	enableCheckpoints,
 	checkpointTimeout,
+	autoCleanup,
 	setCachedStateField,
 	...props
 }: CheckpointSettingsProps) => {
@@ -86,6 +90,8 @@ export const CheckpointSettings = ({
 					</SearchableSetting>
 				)}
 			</Section>
+
+			<AutoCleanupSettings autoCleanup={autoCleanup} setCachedStateField={setCachedStateField} className="mt-8" />
 		</div>
 	)
 }

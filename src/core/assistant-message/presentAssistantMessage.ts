@@ -45,7 +45,7 @@ import { isValidToolName, validateToolUse } from "../tools/validateToolUse"
 import { formatResponse } from "../prompts/responses"
 // import { codebaseSearchTool } from "../tools/CodebaseSearchTool"
 import { updateCospecMetadata } from "../checkpoints"
-import { fixBrowserLaunchAction } from "../../utils/fixbrowserLaunchAction"
+// import { fixBrowserLaunchAction } from "../../utils/fixbrowserLaunchAction"
 import { fixNativeToolname } from "../../utils/fixNativeToolname"
 // import { isNativeProtocol } from "@roo-code/types"
 // import { resolveToolProtocol } from "../../utils/resolveToolProtocol"
@@ -103,10 +103,12 @@ export async function presentAssistantMessage(cline: Task) {
 		block = { ...cline.assistantMessageContent[cline.currentStreamingContentIndex] }
 	} catch (error) {
 		console.error(`ERROR cloning block:`, error)
-		console.error(
-			`Block content:`,
-			JSON.stringify(cline.assistantMessageContent[cline.currentStreamingContentIndex], null, 2),
-		)
+		if (process.env.NODE_ENV === "development") {
+			console.error(
+				`Block content:`,
+				JSON.stringify(cline.assistantMessageContent[cline.currentStreamingContentIndex], null, 2),
+			)
+		}
 		cline.presentAssistantMessageLocked = false
 		return
 	}
