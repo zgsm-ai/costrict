@@ -1,5 +1,10 @@
 # CoStrict Change Log
 
+## [2.4.2]
+
+- Optimize commit message generation
+- Update docs
+
 ## [2.4.1]
 
 - Optimize streaming status tracking by moving state management from client to backend
