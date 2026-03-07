@@ -93,3 +93,7 @@ Communicate via [GitHub Issues](https://github.com/zgsm-ai/costrict/issues/new/c
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=zgsm-ai/costrict&type=Date)](https://www.star-history.com/#zgsm-ai/costrict&Date)
+
+## Acknowledgments
+
+Special thanks to [Roo Code](https://github.com/RooCodeInc/Roo-Code), [OpenSpec](https://github.com/Fission-AI/OpenSpec), [agents.md](https://github.com/agentsmd/agents.md), and [agentskills](https://github.com/agentskills/agentskills) for their open-source contributions.
