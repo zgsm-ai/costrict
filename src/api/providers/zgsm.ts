@@ -917,7 +917,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		return { id, info, ...params }
 	}
 
-	async completePrompt(prompt: string, systemPrompt?: string, metadata?: any): Promise<string> {
+	async completePrompt(prompt: string, systemPrompt?: string, metadata?: any, retry: number = 0): Promise<string> {
 		const isAzureAiInference = this._isAzureAiInference(this.baseURL)
 		await this.updateModelInfo()
 		const model = this.getModel()
@@ -926,19 +926,21 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const cachedClientId = getClientId()
 		const cachedWorkspacePath = getWorkspacePath()
 		const messages = [{ role: "user", content: prompt }] as any[]
-		if (systemPrompt) {
-			messages.unshift({ role: "system", content: systemPrompt })
-		}
 		const _mid = (metadata?.modelId || model.id)?.toLowerCase()
+		const maxToken = metadata?.maxLength ?? 300
+		const temperature = _mid.includes("kimi") ? 0.6 : 0.9
+		if (systemPrompt) {
+			messages.unshift({ role: "system", content: systemPrompt + `\nMaximum Commit message length: ${maxToken}` })
+		}
 		const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming & {
 			extra_body: any
 			thinking: any
 		} = {
 			model: metadata?.modelId || model.id,
-			messages: messages,
-			temperature: _mid.includes("kimi") ? 0.6 : 0.9,
-			max_tokens: metadata?.maxLength ?? 300,
-			max_completion_tokens: metadata?.maxLength ?? 300,
+			messages,
+			temperature,
+			max_tokens: maxToken,
+			max_completion_tokens: maxToken,
 			thinking: {
 				type: "disabled",
 			},
@@ -962,11 +964,20 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 							"user",
 						),
 					},
-					timeout: 60_000,
+					timeout: 120_000,
 					signal: metadata?.signal,
 				}),
 			)
-			return response.choices?.[0]?.message?.content || ""
+
+			const message = response.choices?.[0]?.message
+
+			const reasoningContent = (message as any)?.reasoning_content || (message as any)?.reasoning || ""
+
+			if (!message?.content && reasoningContent && retry === 0) {
+				return this.completePrompt(reasoningContent, systemPrompt, metadata, retry + 1)
+			}
+
+			return message?.content || reasoningContent || ""
 		} catch (error) {
 			throw handleOpenAIError(error, this.providerName)
 		}

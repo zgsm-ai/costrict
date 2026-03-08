@@ -298,8 +298,15 @@ export class CommitMessageGenerator {
 		}
 		this.abortController = new AbortController()
 		// Prepare prompt for AI
-		const systemPrompt =
-			"You are an expert at generating concise, meaningful commit messages based on git diff information. Follow conventional commit format when appropriate."
+		const systemPrompt = `
+You are an expert at generating concise, meaningful commit messages based on git diff information. Follow conventional commit format when appropriate.
+
+Rules:
+1. Output ONLY the commit message
+2. No thinking process
+3. No conversational filler
+4. Start directly with the message content	
+`
 		let aiMessage = await singleCompletionHandler(
 			apiConfiguration!,
 			this.buildAIPrompt(diffInfo, options),
