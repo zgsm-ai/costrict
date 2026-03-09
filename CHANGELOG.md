@@ -1,5 +1,12 @@
 # CoStrict Change Log
 
+## [2.4.3]
+
+- Implement streaming status tracking and improve task management
+- Optimize prompt caching by extracting static sections
+- Disable zgsmCodebaseIndexEnabled by default
+- Fix known issues
+
 ## [2.4.2]
 
 - Optimize commit message generation
