@@ -20,3 +20,6 @@ export {
 
 // MUST_FOLLOW_RULES
 export { getMustFollowRules, getLiteMustFollowRules } from "./must-follow-rules"
+
+// English-only output rule (cacheable static section)
+export { getEnglishOnlySection } from "./english-only-rules"

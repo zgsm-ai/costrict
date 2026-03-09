@@ -66,7 +66,9 @@ describe("getRulesSection", () => {
 
 		expect(result).toContain("RULES")
 		expect(result).toContain("project base directory")
-		expect(result).toContain(cwd)
+		// cwd is no longer included in RULES section - it's now in SYSTEM INFORMATION
+		// See: refactor(prompts): optimize prompt caching by extracting static sections
+		expect(result).toContain("SYSTEM INFORMATION")
 	})
 
 	it("includes vendor confidentiality section when isStealthModel is true", () => {

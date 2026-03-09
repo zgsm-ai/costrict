@@ -71,6 +71,7 @@ describe("getEnvironmentDetails", () => {
 			customInstructions: "test instructions",
 			language: "en",
 			showRooIgnoredFiles: false,
+			includeCurrentTime: true,
 		}
 
 		mockProvider = {

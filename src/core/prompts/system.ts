@@ -28,6 +28,7 @@ import {
 	getLiteObjectiveSection,
 	getLiteSharedToolUseSection,
 	getLiteRulesSection,
+	getEnglishOnlySection,
 } from "./sections"
 import { experiments as experimentsUtil, EXPERIMENT_IDS } from "../../shared/experiments"
 import { defaultLang } from "../../utils/language"
@@ -143,23 +144,33 @@ async function generatePrompt(data: {
 
 	const disableSwitchMode = modeConfig.disableSwitchMode === true
 
-	const basePrompt = `${roleDefinition}
+	// === Cache-optimized prompt structure ===
+	// Static sections are placed FIRST to maximize prompt cache hit rate.
+	// Dynamic content (cwd, mode, user rules) is pushed to the end.
+	// See: plans/system-prompt-cache-optimization.md
 
-${usePurePrompts ? "" : markdownFormattingSection()}
+	// Determine if English-only rule should be added (for non-Chinese languages)
+	const shouldAddEnglishOnlyRule = language !== "zh-CN"
+
+	const basePrompt = `${usePurePrompts ? "" : markdownFormattingSection()}
 
 ${usePurePrompts ? "" : useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}${toolsCatalog}
 
 ${usePurePrompts ? "" : useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
 
-${usePurePrompts ? "" : useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
+${usePurePrompts ? "" : useLitePrompts ? getLiteObjectiveSection() : getObjectiveSection()}
+
+${usePurePrompts || !shouldAddEnglishOnlyRule ? "" : getEnglishOnlySection()}
+
+${roleDefinition}
 
 ${disableSwitchMode ? "" : modesSection}
 ${usePurePrompts ? "" : skillsSection ? `\n${skillsSection}` : ""}
+${usePurePrompts ? "" : useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
+
 ${usePurePrompts ? "" : useLitePrompts ? getLiteRulesSection(cwd, settings, experiments) : getRulesSection(cwd, settings, experiments)}
 
 ${usePurePrompts ? "" : getSystemInfoSection(cwd, shell)}
-
-${usePurePrompts ? "" : useLitePrompts ? getLiteObjectiveSection() : getObjectiveSection()}
 
 ${
 	usePurePrompts

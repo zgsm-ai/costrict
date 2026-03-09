@@ -29,8 +29,12 @@ export function getLiteToolUseGuidelinesSection(): string {
 
 /**
  * Lite version of capabilities section - core capabilities only
+ * NOTE: cwd reference removed for prompt cache optimization.
+ * The workspace directory is now specified in SYSTEM INFORMATION section.
+ * @param _cwd - Kept for API compatibility, but not used in the section content.
+ * @see plans/system-prompt-cache-optimization.md - Strategy 2
  */
-export function getLiteCapabilitiesSection(cwd: string, mcpHub?: McpHub): string {
+export function getLiteCapabilitiesSection(_cwd: string, mcpHub?: McpHub): string {
 	const mcpNote = mcpHub ? "\n- Access to MCP servers for additional tools and resources" : ""
 
 	return `====
@@ -38,7 +42,7 @@ export function getLiteCapabilitiesSection(cwd: string, mcpHub?: McpHub): string
 CAPABILITIES
 
 - Execute CLI commands, list/read/write files, regex search, and ask follow-up questions
-- Workspace directory: '${cwd}' - file structure provided in environment_details
+- Workspace directory is specified in SYSTEM INFORMATION - file structure provided in environment_details
 - Commands run in VSCode terminal, can be interactive or long-running${mcpNote}`
 }
 
@@ -58,15 +62,22 @@ Work through tasks iteratively and methodically:
 4. Incorporate feedback if provided, but avoid pointless back-and-forth`
 }
 
+/**
+ * Lite version of rules section - simplified and concise
+ * NOTE: cwd reference removed for prompt cache optimization.
+ * The workspace directory is now specified in SYSTEM INFORMATION section.
+ * @param _cwd - Kept for API compatibility, but not used in the section content.
+ * @see plans/system-prompt-cache-optimization.md - Strategy 2
+ */
 export function getLiteRulesSection(
-	cwd: string,
+	_cwd: string,
 	settings?: SystemPromptSettings,
 	experiments?: Record<string, boolean>,
 ): string {
 	if (experiments?.useLitePrompts) {
 		return `====
 RULES
-- Base directory: ${cwd.toPosix()}
+- Base directory is specified in SYSTEM INFORMATION
 - Use relative paths from base directory
 - Read before edit
 - Tools are sequential; confirm after each use
@@ -83,7 +94,7 @@ RULES
 RULES
 
 ## Paths & Execution
-- Base directory: ${cwd.toPosix()} (fixed; cannot cd out)
+- Base directory is specified in SYSTEM INFORMATION (fixed; cannot cd out)
 - All paths must be relative; no ~ or $HOME
 - External execution: \`cd <dir> ${chainOp} <command>\`${chainNote ? ` (${chainNote})` : ""}
 - Before execute_command, review SYSTEM INFORMATION and environment_details
