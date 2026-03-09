@@ -60,7 +60,7 @@ async function initialize(provider: ClineProvider, logger: ILogger) {
 	const oldDebug = provider.getValue("debug")
 	const oldEnabled = provider.getValue("zgsmCodebaseIndexEnabled")
 	if (oldEnabled == null) {
-		await provider.setValue("zgsmCodebaseIndexEnabled", true)
+		await provider.setValue("zgsmCodebaseIndexEnabled", false)
 	}
 	updateDefaultDebug(oldDebug ?? false)
 	//

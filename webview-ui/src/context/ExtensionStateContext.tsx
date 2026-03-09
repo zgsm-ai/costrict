@@ -236,7 +236,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		ttsSpeed: 1.0,
 		enableCheckpoints: true,
 		useZgsmCustomConfig: false,
-		zgsmCodebaseIndexEnabled: true,
+		zgsmCodebaseIndexEnabled: false,
 		zgsmCodeMode: "vibe",
 		checkpointTimeout: DEFAULT_CHECKPOINT_TIMEOUT_SECONDS, // Default to 15 seconds
 		language: (window as any).defaultLanguage || "en", // Default language code
