@@ -301,7 +301,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		maxDiagnosticMessages: 50,
 		openRouterImageApiKey: "",
 		openRouterImageGenerationSelectedModel: "",
-		includeCurrentTime: true,
+		includeCurrentTime: false,
 		includeCurrentCost: true,
 		lockApiConfigAcrossModes: false,
 	})
@@ -332,7 +332,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 	const [skills, setSkills] = useState<SkillMetadata[]>([])
 	const [includeTaskHistoryInEnhance, setIncludeTaskHistoryInEnhance] = useState(true)
 	// const [prevCloudIsAuthenticated, setPrevCloudIsAuthenticated] = useState(false)
-	const [includeCurrentTime, setIncludeCurrentTime] = useState(true)
+	const [includeCurrentTime, setIncludeCurrentTime] = useState(false)
 	const [includeCurrentCost, setIncludeCurrentCost] = useState(true)
 	const [notices, setNotices] = useState<
 		Array<{ title: string; type: "always" | "once"; content: string; timestamp: number; expired: number }>
