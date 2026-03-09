@@ -56,6 +56,7 @@ export abstract class OpenAICompatibleHandler extends BaseProvider implements Si
 		super()
 		this.options = options
 		this.config = config
+		const isKimiCode = this._isKimiCode(this.options.openAiBaseUrl)
 
 		// Create the OpenAI-compatible provider using AI SDK
 		this.provider = createOpenAICompatible({
@@ -64,11 +65,27 @@ export abstract class OpenAICompatibleHandler extends BaseProvider implements Si
 			apiKey: config.apiKey,
 			headers: {
 				...DEFAULT_HEADERS,
+				...(isKimiCode
+					? {
+							"HTTP-Referer": "https://github.com/RooCodeInc/Roo-Cline",
+							"X-Title": "Roo Code",
+						}
+					: {}),
 				...(config.headers || {}),
 			},
 		})
 	}
-
+	protected _getUrlHost(baseUrl?: string): string {
+		try {
+			return new URL(baseUrl ?? "").host
+		} catch (error) {
+			return ""
+		}
+	}
+	protected _isKimiCode(baseUrl?: string): boolean {
+		const urlHost = this._getUrlHost(baseUrl)
+		return urlHost.includes("api.kimi.com")
+	}
 	/**
 	 * Get the language model for the configured model ID.
 	 */

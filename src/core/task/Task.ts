@@ -304,7 +304,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		setChatType?: (type: "user" | "system") => void
 		// setToolProtocol?: (toolProtocol?: "native" | "xml") => void
 		getChatType?: () => "user" | "system"
-		clearProviderAbortController?: () => void
+		clearProviderAbortController?: (cancelType?: ClineApiReqCancelReason) => void
 	}
 	apiConfiguration: ProviderSettings
 	private static lastGlobalApiRequestTime?: number
@@ -2357,8 +2357,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			console.log(`[Task#${this.taskId}.${this.instanceId}] Aborting current HTTP request`)
 			this.currentRequestAbortController.abort()
 			this.currentRequestAbortController = undefined
-			this?.api?.clearProviderAbortController?.()
 		}
+		this?.api?.clearProviderAbortController?.(this.abortReason)
 	}
 
 	/**
@@ -3165,7 +3165,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							}
 							case "fake_reasoning": {
 								reasoningMessage += chunk.text
-								if (this.apiConfiguration?.apiProvider === "zgsm" && lastApiReqIndex >= 0) {
+								if (
+									["zgsm", "opanai"].includes(this.apiConfiguration?.apiProvider || "") &&
+									lastApiReqIndex >= 0
+								) {
 									const lastApiReq = this.clineMessages[lastApiReqIndex]
 									if (lastApiReq === this.clineMessages[this.clineMessages.length - 1]) {
 										await this.addToClineMessages({
@@ -3235,7 +3238,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						}
 
 						if (this.abort) {
-							this?.api?.clearProviderAbortController?.()
+							this?.api?.clearProviderAbortController?.(this.abortReason)
 
 							if (!this.abandoned) {
 								// Only need to gracefully abort if this instance
@@ -4623,6 +4626,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// Reset the flag after using it
 		this.skipPrevResponseIdOnce = false
 		metadata.signal = abortSignal
+		metadata.abortController = this.currentRequestAbortController
 		// The provider accepts reasoning items alongside standard messages; cast to the expected parameter type.
 		const stream = this.api.createMessage(
 			systemPrompt,

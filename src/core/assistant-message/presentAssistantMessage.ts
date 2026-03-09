@@ -51,6 +51,15 @@ import { fixNativeToolname } from "../../utils/fixNativeToolname"
 // import { resolveToolProtocol } from "../../utils/resolveToolProtocol"
 import { sanitizeToolUseId } from "../../utils/tool-id"
 
+const editTools = [
+	"write_to_file",
+	"apply_diff",
+	"search_and_replace",
+	"search_replace",
+	"edit_file",
+	"edit",
+	"apply_patch",
+]
 /**
  * Processes and presents assistant message content to the user interface.
  *
@@ -152,14 +161,6 @@ export async function presentAssistantMessage(cline: Task) {
 					)
 					return
 				}
-				const editTools = [
-					"write_to_file",
-					"apply_diff",
-					"search_and_replace",
-					"search_replace",
-					"edit_file",
-					"apply_patch",
-				]
 				let resultContent: string
 				let imageBlocks: Anthropic.ImageBlockParam[] = []
 
@@ -499,14 +500,6 @@ export async function presentAssistantMessage(cline: Task) {
 			let approvalFeedback: { text: string; images?: string[] } | undefined
 
 			const pushToolResult = (content: ToolResponse) => {
-				const editTools = [
-					"write_to_file",
-					"apply_diff",
-					"search_and_replace",
-					"search_replace",
-					"edit_file",
-					"apply_patch",
-				]
 				// Native tool calling: only allow ONE tool_result per tool call
 				if (hasToolResult) {
 					console.warn(

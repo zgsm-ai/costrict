@@ -1343,13 +1343,13 @@ export const ChatRowContent = ({
 												: t("common:confirmation.deleteMessage")
 										}>
 										<RotateCcw
-											className={`size-4 mt-[3px] cursor-pointer ${
-												isApiRequestInProgress ? "opacity-100" : "opacity-60 hover:opacity-100"
-											}`}
+											className={`size-4 mt-[3px] cursor-pointer 
+											${isStreaming ? "opacity-10" : isApiRequestInProgress ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
 											style={{
 												color: "rgba(0, 188, 255, 1)",
 											}}
 											onClick={(e) => {
+												if (isStreaming) return
 												e.preventDefault()
 												e.stopPropagation()
 												vscode.postMessage({ type: "deleteMessage", value: deleteMessageTs })

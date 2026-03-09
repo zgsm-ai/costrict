@@ -60,10 +60,12 @@ interface ChatTextAreaProps {
 	hoverPreviewMap?: Map<string, string>
 	// Edit mode props
 	isEditMode?: boolean
+	isAutoCommandRuning?: boolean
 	onCancel?: () => void
 	// Stop/Queue functionality
 	isStreaming?: boolean
 	onStop?: () => void
+	onStopCommand?: () => void
 	onEnqueueMessage?: () => void
 }
 
@@ -71,6 +73,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 	(
 		{
 			inputValue = "",
+			isAutoCommandRuning = false,
 			setInputValue,
 			// selectApiConfigDisabled,
 			placeholderText,
@@ -88,6 +91,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			onCancel,
 			isStreaming = false,
 			onStop,
+			onStopCommand,
 			onEnqueueMessage,
 		},
 		ref,
@@ -1385,27 +1389,28 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 													? t("chat:stop.title")
 													: t("chat:pressToSend", { keyCombination: sendKeyCombination })
 										}
-										disabled={!isStreaming && !hasInputContent}
-										onClick={isStreaming ? onStop : onSend}
+										disabled={!isStreaming && !hasInputContent && !isAutoCommandRuning}
+										onClick={isAutoCommandRuning ? onStopCommand : isStreaming ? onStop : onSend}
 										className={cn(
 											"relative inline-flex items-center justify-center right-[2px]",
 											"bg-transparent border-none p-1.5",
 											"rounded-full min-w-[20px] min-h-[20px]",
 											"text-vscode-descriptionForeground hover:text-vscode-foreground",
 											"transition-all duration-200",
-											isEditMode || isStreaming || hasInputContent
+											isEditMode || isStreaming || hasInputContent || isAutoCommandRuning
 												? "opacity-100 hover:opacity-100 pointer-events-auto"
 												: "opacity-40 cursor-not-allowed grayscale-[30%] hover:bg-transparent hover:border-[rgba(255,255,255,0.08)] active:bg-transparent",
-											(isEditMode || isStreaming || hasInputContent) &&
+											(isEditMode || isStreaming || hasInputContent || isAutoCommandRuning) &&
 												"hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]",
 											"focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder",
-											(isEditMode || isStreaming || hasInputContent) &&
+											(isEditMode || isStreaming || hasInputContent || isAutoCommandRuning) &&
 												"active:bg-[rgba(255,255,255,0.1)]",
-											(isEditMode || isStreaming || hasInputContent) && "cursor-pointer",
-											isStreaming &&
+											(isEditMode || isStreaming || hasInputContent || isAutoCommandRuning) &&
+												"cursor-pointer",
+											(isStreaming || isAutoCommandRuning) &&
 												"animate-pulse bg-vscode-button-background hover:bg-vscode-button-background",
 										)}>
-										{isStreaming ? (
+										{isStreaming || isAutoCommandRuning ? (
 											<Square className="size-3 stroke-none fill-vscode-button-foreground" />
 										) : (
 											<SendHorizontal className="size-4" />

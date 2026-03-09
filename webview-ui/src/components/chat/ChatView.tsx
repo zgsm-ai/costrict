@@ -167,6 +167,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		showWorktreesInHomeScreen,
 		language,
 		isStreaming = false,
+		alwaysAllowExecute = false,
+		autoApprovalEnabled,
 	} = useExtensionState()
 
 	// Show a WarningRow when the user sends a message with a retired provider.
@@ -188,16 +190,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	// task, then the extension is in a bad state and needs to be debugged (see
 	// Cline.abort).
 	const task = useMemo(() => messages.at(0), [messages])
-
-	// // Dynamically calculating the current task text: Extract the latest user_feedback message from messages to use as the current task.
-	// const currentTaskText = useMemo(() => {
-	// 	const lastUserFeedback = findLast(messages, (msg) => msg.say === "user_feedback")
-	// 	if (lastUserFeedback?.text) {
-	// 		return lastUserFeedback
-	// 	}
-	// 	return task
-	// }, [messages, task])
-
 	const curWorkspaceHistory = useMemo(
 		() => (taskHistory || []).filter((t) => t.workspace === cwd),
 		[cwd, taskHistory],
@@ -248,11 +240,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({})
 	const prevExpandedRowsRef = useRef<Record<number, boolean>>()
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
-	const stickyFollowRef = useRef<boolean>(false)
-	// const [showScrollToBottom, setShowScrollToBottom] = useState(false)
-	// // const [isAtBottom, setIsAtBottom] = useState(false)
-	const userExpandingRef = useRef<boolean>(false)
-	// const isAtBottomRef = useRef(false)
 	const lastTtsRef = useRef<string>("")
 	const [wasStreaming, setWasStreaming] = useState<boolean>(false)
 	const [checkpointWarning, setCheckpointWarning] = useState<
@@ -318,7 +305,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const isFollowUpAutoApprovalPaused = useMemo(() => {
 		return !!(inputValue && inputValue?.trim().length > 0 && clineAsk === "followup")
 	}, [inputValue, clineAsk])
-
+	const isAutoCommandRuning = useMemo(
+		() => alwaysAllowExecute && autoApprovalEnabled && clineAsk === "command",
+		[alwaysAllowExecute, autoApprovalEnabled, clineAsk],
+	)
 	// Cancel auto-approval timeout when user starts typing
 	useEffect(() => {
 		// Only send cancel if there's actual input (user is typing)
@@ -607,39 +597,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	// useScrollLifecycle which has its own effect keyed on taskTs.
 	useEffect(() => {
 		setExpandedRows({})
-		// everVisibleMessagesTsRef.current.clear() // Clear for new task
-		// setCurrentFollowUpTs(-1) // Clear follow-up answered state for new task
-		// setIsCondensing(false) // Reset condensing state when switching tasks
-		// // Note: sendingDisabled is not reset here as it's managed by message effects
-
-		// // // Reset user response flag for new task
-		// // userRespondedRef.current = false
-
-		// // Ensure new task starts anchored to the bottom. Virtuoso's
-		// // initialTopMostItemIndex fires at mount but the message data may
-		// // arrive asynchronously, so we also engage sticky follow and
-		// // explicitly scroll after a frame to handle the race.
-		// let rafId: number | undefined
-		// if (task?.ts) {
-		// 	stickyFollowRef.current = true
-		// 	rafId = requestAnimationFrame(() => {
-		// 		virtuosoRef.current?.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior: "auto" })
-		// 	})
-		// }
-		// return () => {
-		// 	if (rafId !== undefined) {
-		// 		cancelAnimationFrame(rafId)
-		// 	}
-		// }
 		everVisibleMessagesTsRef.current.clear()
 		setCurrentFollowUpTs(null)
 		setIsCondensing(false)
-
-		// if (autoApproveTimeoutRef.current) {
-		// 	clearTimeout(autoApproveTimeoutRef.current)
-		// 	autoApproveTimeoutRef.current = null
-		// }
-		// userRespondedRef.current = false
 	}, [task?.ts])
 
 	const taskTs = task?.ts
@@ -676,15 +636,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		}
 	}, [])
 
-	const handleChatReset = useCallback((isCommandInput = false, askType?: ClineAsk) => {
+	const handleChatReset = useCallback(() => {
 		// Only reset message-specific state, preserving mode.
 		setInputValue("")
-		setSendingDisabled(!isCommandInput)
+		setSendingDisabled(true)
 		setSelectedImages([])
-		setClineAsk(isCommandInput ? askType : undefined)
-		setEnableButtons(isCommandInput ?? false)
+		setClineAsk(undefined)
+		setEnableButtons(false)
 		// Do not reset mode here as it should persist.
-		// disableAutoScrollRef.current = false
 		// setPrimaryButtonText(undefined)
 		// setSecondaryButtonText(undefined)
 	}, [])
@@ -711,7 +670,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				// - API request in progress (isStreaming)
 				// - Queue has items (preserve message order during drain)
 				// - Command is running (command_output) - user's message should be queued for AI, not sent to terminal
-				if (sendingDisabled || isStreaming || messageQueue.length > 0) {
+				if (
+					sendingDisabled ||
+					isStreaming ||
+					messageQueue.length > 0 ||
+					clineAskRef.current === "command_output"
+				) {
 					try {
 						vscode.postMessage({ type: "queueMessage", text, images })
 						setInputValue("")
@@ -726,7 +690,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				}
 
 				// Mark that user has responded - this prevents any pending auto-approvals.
-				const isCommandInput = clineAskRef.current === "command_output"
 				if (messagesRef.current.length === 0) {
 					vscode.postMessage({ type: "newTask", text, images, values: { chatType } })
 				} else if (clineAskRef.current) {
@@ -738,11 +701,25 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					switch (
 						clineAskRef.current // Use clineAskRef.current
 					) {
+						case "command": // User can provide feedback to a tool or command use.
+							if (isAutoCommandRuning) {
+								setInputValue("")
+								setSelectedImages([])
+								setPrimaryButtonText(undefined)
+								setSecondaryButtonText(undefined)
+								vscode.postMessage({ type: "queueMessage", text, images })
+							} else {
+								vscode.postMessage({
+									type: "askResponse",
+									askResponse: "messageResponse",
+									text,
+									images,
+								})
+							}
+							break
 						case "followup":
 						case "multiple_choice":
 						case "tool":
-						case "command": // User can provide feedback to a tool or command use.
-						case "command_output": // User can send input to command stdin.
 						case "use_mcp_server":
 						case "completion_result": // If this happens then the user has feedback for the completion result.
 						case "resume_task":
@@ -753,7 +730,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 								askResponse: "messageResponse",
 								text,
 								images,
-								values: { chatType, isCommandInput },
 							})
 							break
 						// There is no other case that a textfield should be enabled.
@@ -763,16 +739,17 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					vscode.postMessage({ type: "askResponse", askResponse: "messageResponse", text, images })
 				}
 
-				handleChatReset(isCommandInput, clineAskRef.current)
+				handleChatReset()
 			}
 		},
 		[
-			handleChatReset,
-			markFollowUpAsAnswered,
+			apiConfiguration.apiProvider,
 			sendingDisabled,
 			isStreaming,
 			messageQueue.length,
-			apiConfiguration?.apiProvider,
+			handleChatReset,
+			markFollowUpAsAnswered,
+			isAutoCommandRuning,
 		], // messagesRef and clineAskRef are stable
 	)
 
@@ -916,7 +893,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			setPrimaryButtonText(undefined)
 			setSecondaryButtonText(undefined)
 		},
-		[clineAsk, currentTaskItem?.parentTaskId, startNewTask, markFollowUpAsAnswered],
+		[clineAsk, currentTaskItem?.parentTaskId, markFollowUpAsAnswered, startNewTask],
 	)
 
 	const handleSecondaryButtonClick = useCallback(
@@ -1491,50 +1468,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	// Scroll when user toggles certain rows.
 	const toggleRowExpansion = useCallback(
 		(ts: number) => {
-			// Mark that user is actively expanding/collapsing content
-			userExpandingRef.current = true
-			// Immediately disable sticky follow to prevent Virtuoso from auto-scrolling
-			stickyFollowRef.current = false
 			handleSetExpandedRow(ts)
 			// The logic to set disableAutoScrollRef.current = true on expansion
 			// is now handled by the useEffect hook that observes expandedRows.
-
-			// Clear the flag after content has had time to render and settle
-			// Increased timeout to handle large content blocks
-			setTimeout(() => {
-				userExpandingRef.current = false
-			}, 1000)
 		},
 		[handleSetExpandedRow],
 	)
-
-	// const handleRowHeightChange = useCallback(
-	// 	(isTaller: boolean) => {
-	// 		// Don't auto-scroll if the user is actively expanding/collapsing content
-	// 		// This prevents scroll conflicts when user manually expands the last message
-	// 		// or expands Markdown content
-	// 		if (userExpandingRef.current || markdownExpandingRef.current) {
-	// 			return
-	// 		}
-	// 		if (isAtBottomRef.current) {
-	// 			if (isTaller) {
-	// 				scrollToBottomSmooth()
-	// 			} else {
-	// 				setTimeout(() => scrollToBottomAuto(), 0)
-	// 			}
-	// 		}
-	// 	},
-	// 	[scrollToBottomSmooth, scrollToBottomAuto],
-	// )
-
-	// // Disable sticky follow when user scrolls up inside the chat container
-	// const handleWheel = useCallback((event: Event) => {
-	// 	const wheelEvent = event as WheelEvent
-	// 	if (wheelEvent.deltaY < 0 && scrollContainerRef.current?.contains(wheelEvent.target as Node)) {
-	// 		stickyFollowRef.current = false
-	// 	}
-	// }, [])
-	// useEvent("wheel", handleWheel, window, { passive: true })
 
 	// Effect to clear checkpoint warning when messages appear or task changes
 	useEffect(() => {
@@ -1617,7 +1556,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				setInputValue(preservedInput)
 			}
 		},
-		[clineAsk, markFollowUpAsAnswered, alwaysAllowModeSwitch, switchToMode, handleSendMessage],
+		[handleSendMessage, setInputValue, switchToMode, alwaysAllowModeSwitch, clineAsk, markFollowUpAsAnswered],
 	)
 
 	const handleBatchFileResponse = useCallback((response: { [key: string]: boolean }) => {
@@ -1775,14 +1714,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		acceptInput: () => {
 			const hasInput = inputValue?.trim() || selectedImages?.length > 0
 
-			// // Special case: during command_output, queue the message instead of
-			// // triggering the primary button action (which would lose the message)
-			// if (clineAskRef.current === "command_output" && hasInput) {
-			// 	vscode.postMessage({ type: "queueMessage", text: inputValue.trim(), images: selectedImages })
-			// 	setInputValue("")
-			// 	setSelectedImages([])
-			// 	return
-			// }
+			// Special case: during command_output, queue the message instead of
+			// triggering the primary button action (which would lose the message)
+			if (clineAskRef.current === "command_output" && hasInput) {
+				vscode.postMessage({ type: "queueMessage", text: inputValue.trim(), images: selectedImages })
+				setInputValue("")
+				setSelectedImages([])
+				return
+			}
 
 			if (enableButtons && primaryButtonText) {
 				handlePrimaryButtonClick(inputValue, selectedImages)
@@ -1967,22 +1906,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							increaseViewportBy={{ top: 3_000, bottom: 1000 }}
 							data={groupedMessages}
 							itemContent={itemContent}
-							// followOutput={(isAtBottom: boolean) => {
-							// 	// Disable auto-scrolling when user is manually expanding/collapsing content
-							// 	// This prevents scroll jumping when expanding the last message or Markdown content
-							// 	if (userExpandingRef.current || markdownExpandingRef.current) {
-							// 		return false
-							// 	}
-							// 	return isAtBottom || stickyFollowRef.current
-							// }}
-							// atBottomStateChange={(isAtBottom: boolean) => {
-							// 	isAtBottomRef.current = isAtBottom
-							// 	setShowScrollToBottom(!isAtBottom)
-							// 	// Clear sticky follow when user scrolls away from bottom
-							// 	if (!isAtBottom) {
-							// 		stickyFollowRef.current = false
-							// 	}
-							// }}
 							followOutput={followOutputCallback}
 							atBottomStateChange={atBottomStateChangeCallback}
 							atBottomThreshold={10}
@@ -2079,6 +2002,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				}}
 				mode={mode}
 				setMode={setMode}
+				isAutoCommandRuning={isAutoCommandRuning}
+				onStopCommand={() => {
+					handleSecondaryButtonClick(inputValue, selectedImages)
+					vscode.postMessage({ type: "terminalOperation", terminalOperation: "abort" })
+				}}
 				modeShortcutText={modeShortcutText}
 				hoverPreviewMap={hoverPreviewMap}
 				isStreaming={isStreaming}

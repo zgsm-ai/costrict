@@ -41,8 +41,10 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 
 	public override async run(command: string) {
 		this.command = command
+
 		try {
 			this.isHot = true
+
 			this.subprocess = execa({
 				shell: !isCliPatform() ? getShell() : BaseTerminal.getExecaShellPath() || true,
 				cwd: this.terminal.getCurrentWorkingDirectory(),
@@ -81,8 +83,6 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				})
 			}
 
-			// Check if this is a background command (ends with &)
-			const isBackgroundCommand = /&\s*(#.*)?$/.test(command.trim())
 			const rawStream = this.subprocess.iterable({ from: "all", preserveNewlines: true })
 			const useGbkEncoding = isGbkEncodedCommand(command)
 
@@ -100,31 +100,16 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 
 			await this.terminal.setActiveStream(stream, Promise.resolve(this.pid))
 
-			let outputCount = 0
-			delay(6_000).then(() => {
-				if (this.aborted || outputCount > 0) {
-					return
-				}
-
-				const warning = `[${isBackgroundCommand ? "background " : ""}command running] ${command.length > 80 ? `${command.slice(0, 80)}...` : command}\n`
-				this.emit("line", warning)
-				this.startHotTimer(warning)
-			})
-
 			for await (const line of stream) {
 				if (this.aborted) {
 					break
 				}
-				if (outputCount < 3) outputCount++
 
 				this.fullOutput += line
 
 				const now = Date.now()
 
-				if (
-					this.isListening &&
-					(now - this.lastEmitTime_ms > 500 || this.lastEmitTime_ms === 0 || outputCount <= 3)
-				) {
+				if (this.isListening && (now - this.lastEmitTime_ms > 1000 || this.lastEmitTime_ms === 0)) {
 					this.emitRemainingBufferIfListening()
 					this.lastEmitTime_ms = now
 				}

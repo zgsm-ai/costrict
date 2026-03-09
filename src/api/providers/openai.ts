@@ -40,11 +40,18 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 		const baseURL = this.options.openAiBaseUrl || "https://api.openai.com/v1"
 		const apiKey = this.options.openAiApiKey ?? "not-provided"
 		const isAzureAiInference = this._isAzureAiInference(this.options.openAiBaseUrl)
+		const isKimiCode = this._isKimiCode(this.options.openAiBaseUrl)
 		const urlHost = this._getUrlHost(this.options.openAiBaseUrl)
 		const isAzureOpenAi = urlHost === "azure.com" || urlHost.endsWith(".azure.com") || options.openAiUseAzure
 
 		const headers = {
 			...DEFAULT_HEADERS,
+			...(isKimiCode
+				? {
+						"HTTP-Referer": "https://github.com/RooCodeInc/Roo-Cline",
+						"X-Title": "Roo Code",
+					}
+				: {}),
 			...(this.options.openAiHeaders || {}),
 		}
 
@@ -90,6 +97,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
 		const deepseekReasoner = modelId.includes("deepseek-reasoner") || enabledR1Format
+		let hasReasoning = false
 
 		if (modelId.includes("o1") || modelId.includes("o3") || modelId.includes("o4")) {
 			yield* this.handleO3FamilyMessage(modelId, systemPrompt, messages, metadata)
@@ -177,14 +185,15 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 				throw handleOpenAIError(error, this.providerName)
 			}
 
-			const matcher = new TagMatcher(
-				"think",
-				(chunk) =>
-					({
-						type: chunk.matched ? "reasoning" : "text",
-						text: chunk.data,
-					}) as const,
-			)
+			const matcher = new TagMatcher("think", (chunk) => {
+				if (chunk.matched) {
+					hasReasoning = true
+				}
+				return {
+					type: chunk.matched ? "reasoning" : "text",
+					text: chunk.data,
+				} as const
+			})
 
 			let lastUsage
 			const activeToolCallIds = new Set<string>()
@@ -200,6 +209,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 				}
 
 				if ("reasoning_content" in delta && delta.reasoning_content) {
+					hasReasoning = true
 					yield {
 						type: "reasoning",
 						text: (delta.reasoning_content as string | undefined) || "",
@@ -212,7 +222,10 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 					lastUsage = chunk.usage
 				}
 			}
-
+			if (!hasReasoning) {
+				// Add a fake reasoning event to ensure the frontend processes the response
+				yield { type: "fake_reasoning", text: " " }
+			}
 			for (const chunk of matcher.final()) {
 				yield chunk
 			}
@@ -509,6 +522,10 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 	private _isGrokXAI(baseUrl?: string): boolean {
 		const urlHost = this._getUrlHost(baseUrl)
 		return urlHost.includes("x.ai")
+	}
+	private _isKimiCode(baseUrl?: string): boolean {
+		const urlHost = this._getUrlHost(baseUrl)
+		return urlHost.includes("api.kimi.com")
 	}
 
 	protected _isAzureAiInference(baseUrl?: string): boolean {
