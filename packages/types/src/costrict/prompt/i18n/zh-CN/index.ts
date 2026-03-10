@@ -8,6 +8,7 @@ import tdd from "./tdd.js"
 import projectWiki from "./project-wiki.js"
 import generateRules from "./generate-rules.js"
 import review from "./review.js"
+import security from "./security.js"
 
 // Import subtask templates
 import projectBasicAnalyze from "./wiki-subtasks/01_project-basic-analyze-agent.js"
@@ -24,6 +25,7 @@ export {
 	quickExplore,
 	spec,
 	subcoding,
+	security,
 	taskCheck,
 	requirements,
 	task,

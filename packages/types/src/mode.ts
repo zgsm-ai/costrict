@@ -382,6 +382,17 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		zgsmCodeModeGroup: "hide",
 		apiProvider: "zgsm",
 	},
+	{
+		slug: "security",
+		name: "🔍 Security",
+		roleDefinition: "",
+		whenToUse: "",
+		description: "Review code and identify potential issues",
+		groups: ["read", "mcp"],
+		source: "project",
+		zgsmCodeModeGroup: "hide",
+		apiProvider: "zgsm",
+	},
 ]
 
 /**

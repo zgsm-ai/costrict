@@ -43,7 +43,7 @@ import { CodeReviewErrorType, type TelemetryErrorType } from "../telemetry"
 import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
 import { fileExistsAtPath } from "../../../utils/fs"
 import { isJetbrainsPlatform } from "../../../utils/platform"
-import { defaultModeSlug } from "../../../shared/modes"
+import { defaultModeSlug, type Mode } from "../../../shared/modes"
 /**
  * Code Review Service - Singleton
  *
@@ -194,6 +194,10 @@ export class CodeReviewService {
 		}
 	}
 
+	private getRestoreMode(mode: string): Mode {
+		return mode === "review" || mode === "security" ? "code" : mode
+	}
+
 	public async handleAuthError() {
 		if (!this.clineProvider) return
 		this.sendReviewTaskUpdateMessage(ReviewTaskStatus.ERROR, {
@@ -207,7 +211,7 @@ export class CodeReviewService {
 		this.recordReviewError(CodeReviewErrorType.AuthError as TelemetryErrorType)
 	}
 
-	public async startReview(target: ReviewTarget) {
+	public async startReview(target: ReviewTarget, mode: Mode = "review") {
 		const visibleProvider = this.getProvider()
 		if (visibleProvider) {
 			const chatMessage = target.data
@@ -221,7 +225,7 @@ export class CodeReviewService {
 					return ""
 				})
 				.join(" ")
-			this.createReviewTask(chatMessage ?? "", target)
+			await this.createReviewTask(chatMessage ?? "", target, { mode })
 		}
 	}
 
@@ -229,6 +233,7 @@ export class CodeReviewService {
 		message: string,
 		targets: ReviewTarget,
 		options?: {
+			mode?: Mode
 			onTaskComplete?: () => void
 		},
 	) {
@@ -245,7 +250,8 @@ export class CodeReviewService {
 			total: 0,
 		})
 		this.prevMode = (await provider.getMode()) ?? defaultModeSlug
-		const task = await provider.createTask(message, undefined, undefined, undefined, { mode: "review" })
+		const taskMode = options?.mode ?? "review"
+		const task = await provider.createTask(message, undefined, undefined, undefined, { mode: taskMode })
 
 		// 🔑 防止重复处理完成事件的标志
 		let completionHandled = false
@@ -260,9 +266,9 @@ export class CodeReviewService {
 		this.updateTaskState({ timeoutId })
 
 		const resetMode = async () => {
-			const preMode = this.prevMode === "review" ? "code" : this.prevMode
-			await provider.handleModeSwitch(preMode)
-			task.updateMode(preMode)
+			const restoreMode = this.getRestoreMode(this.prevMode)
+			await provider.handleModeSwitch(restoreMode)
+			task.updateMode(restoreMode)
 			this.prevMode = ""
 		}
 
@@ -481,7 +487,7 @@ export class CodeReviewService {
 			await provider?.removeClineFromStack()
 			await provider?.refreshWorkspace()
 		} finally {
-			const prevMode = this.prevMode
+			const prevMode = this.getRestoreMode(this.prevMode)
 			this.prevMode = ""
 			await provider?.handleModeSwitch(prevMode)
 		}
