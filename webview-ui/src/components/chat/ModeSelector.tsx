@@ -65,37 +65,42 @@ export const ModeSelector = ({
 		}
 	}, [hasOpenedModeSelector, setHasOpenedModeSelector])
 
-	// Get all modes including custom modes and merge custom prompt descriptions.
-	const modes = React.useMemo(() => {
-		const allModes = filterModesByZgsmCodeMode(
-			getAllModes(customModes),
-			zgsmCodeMode || "vibe",
-			apiConfiguration?.apiProvider,
-		)
-		return allModes.map((mode) => ({
+	// Keep the full mode list separate from the provider-filtered list.
+	// During zgsm mode switches, `zgsmCodeMode` and `mode` can update in separate ticks.
+	// Treating a temporarily filtered-out mode as "invalid" causes ModeSwitch transitions
+	// like plan <-> strict to be forced back to the default code mode.
+	const allModes = React.useMemo(() => {
+		return getAllModes(customModes).map((mode) => ({
 			...mode,
 			description:
 				t(`modes:descriptions.${mode.slug}`, {
 					defaultValue: customModePrompts?.[mode.slug]?.description,
 				}) ?? mode.description,
 		}))
-	}, [customModes, zgsmCodeMode, apiConfiguration?.apiProvider, t, customModePrompts])
+	}, [customModes, t, customModePrompts])
 
-	// Find the selected mode, falling back to default if current mode doesn't exist (e.g., after workspace switch)
+	const modes = React.useMemo(() => {
+		return filterModesByZgsmCodeMode(allModes, zgsmCodeMode || "vibe", apiConfiguration?.apiProvider)
+	}, [allModes, zgsmCodeMode, apiConfiguration?.apiProvider])
+
+	// Find the selected mode from the full list first so transient filter changes don't
+	// misreport a valid mode as missing while ModeSwitch is syncing both states.
 	const selectedMode = React.useMemo(() => {
-		return modes.find((mode) => mode.slug === value) ?? modes.find((mode) => mode.slug === defaultModeSlug)
-	}, [modes, value])
+		return allModes.find((mode) => mode.slug === value) ?? allModes.find((mode) => mode.slug === defaultModeSlug)
+	}, [allModes, value])
 
-	// Notify parent when current mode is invalid so it can update its state
+	// Notify parent only when the current mode truly doesn't exist anymore (for example,
+	// after a workspace switch deleted a custom mode). A mode hidden by the current zgsm
+	// filter is still valid and should not be forced back to the default mode.
 	React.useEffect(() => {
 		if (
 			apiConfiguration?.apiProvider === "zgsm" &&
 			["quick-explore", "task-check", "subcoding", "review"].includes(value)
 		)
 			return
-		const isValidMode = modes.some((mode) => mode.slug === value)
+		const isKnownMode = allModes.some((mode) => mode.slug === value)
 
-		if (isValidMode) {
+		if (isKnownMode) {
 			lastNotifiedInvalidModeRef.current = null
 			return
 		}
@@ -104,13 +109,13 @@ export const ModeSelector = ({
 			return
 		}
 
-		const fallbackMode = modes.find((mode) => mode.slug === defaultModeSlug)
+		const fallbackMode = allModes.find((mode) => mode.slug === defaultModeSlug)
 		if (fallbackMode) {
 			lastNotifiedInvalidModeRef.current = value
 			onChange(fallbackMode.slug as Mode)
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- onChange omitted to prevent loops when parent doesn't memoize
-	}, [modes, value])
+	}, [allModes, value, apiConfiguration?.apiProvider])
 
 	// Memoize searchable items for fuzzy search with separate name and
 	// description search.

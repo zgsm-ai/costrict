@@ -268,6 +268,38 @@ describe("ModeSelector", () => {
 		})
 	})
 
+	test("keeps the current zgsm mode when it is temporarily hidden by filtering", async () => {
+		mockModes = [
+			{
+				slug: "code",
+				name: "Code",
+				description: "Code mode",
+				roleDefinition: "Role definition",
+				groups: ["read", "edit"],
+				zgsmCodeModeGroup: "vibe,plan,strict",
+			},
+			{
+				slug: "plan",
+				name: "Plan",
+				description: "Plan mode",
+				roleDefinition: "Role definition",
+				groups: ["read"],
+				zgsmCodeModeGroup: "plan",
+			},
+		]
+
+		const onChange = vi.fn()
+
+		render(
+			<ModeSelector title="Mode Selector" value={"plan" as Mode} onChange={onChange} modeShortcutText="Ctrl+M" />,
+		)
+
+		await vi.waitFor(() => {
+			expect(screen.getByTestId("mode-selector-trigger")).toHaveTextContent("Plan")
+			expect(onChange).not.toHaveBeenCalled()
+		})
+	})
+
 	test("shows default mode name when current mode is not available", () => {
 		// Set up modes where "code" is available (the default mode)
 		mockModes = [
