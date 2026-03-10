@@ -519,6 +519,8 @@ export interface WebviewMessage {
 		| "showTaskWithId"
 		| "deleteTaskWithId"
 		| "exportTaskWithId"
+		| "backupTasks"
+		| "restoreTasks"
 		| "importSettings"
 		| "exportSettings"
 		| "resetState"
@@ -785,6 +787,8 @@ export interface WebviewMessage {
 	worktreeForce?: boolean
 	worktreeNewWindow?: boolean
 	worktreeIncludeContent?: string
+	/** Conflict resolution strategy for restoreTasks: 'skip' (default) or 'overwrite'. */
+	conflict?: "skip" | "overwrite"
 }
 
 export interface RequestOpenAiCodexRateLimitsMessage {

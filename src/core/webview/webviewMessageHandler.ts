@@ -979,6 +979,12 @@ export const webviewMessageHandler = async (
 		case "exportTaskWithId":
 			provider.exportTaskWithId(message.text!)
 			break
+		case "backupTasks":
+			await provider.backupTaskHistory()
+			break
+		case "restoreTasks":
+			await provider.restoreTaskHistory(message.conflict)
+			break
 		case "getTaskWithAggregatedCosts": {
 			try {
 				const taskId = message.text

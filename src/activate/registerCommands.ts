@@ -194,6 +194,20 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			filePath,
 		)
 	},
+	backupTaskHistory: async () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+		if (!visibleProvider) {
+			return
+		}
+		await visibleProvider.backupTaskHistory()
+	},
+	restoreTaskHistory: async () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+		if (!visibleProvider) {
+			return
+		}
+		await visibleProvider.restoreTaskHistory()
+	},
 	focusInput: async () => {
 		try {
 			await focusPanel(tabPanel, sidebarPanel)
