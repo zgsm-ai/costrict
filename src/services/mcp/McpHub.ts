@@ -1,6 +1,5 @@
 import * as fs from "fs/promises"
 import * as path from "path"
-
 import * as vscode from "vscode"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport, getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js"
@@ -38,6 +37,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { arePathsEqual, getWorkspacePath } from "../../utils/path"
 import { injectVariables } from "../../utils/config"
 import { NotificationService } from "./costrict/NotificationService"
+import { getEligibleBuiltinServers } from "./costrict/BuiltinMcpServers"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { isJetbrainsPlatform } from "../../utils/platform"
@@ -590,7 +590,52 @@ export class McpHub {
 		}
 	}
 
+	/**
+	 * Ensures built-in MCP servers are present in the global config.
+	 * Each entry is only injected when it does not already exist in the config
+	 * and its CLI command satisfies the minimum version requirement.
+	 */
+	private async ensureBuiltinMcpServers(): Promise<void> {
+		try {
+			const settingsPath = await this.getMcpSettingsFilePath()
+			const content = await fs.readFile(settingsPath, "utf-8")
+			const config = JSON.parse(content)
+
+			if (!config.mcpServers || typeof config.mcpServers !== "object") {
+				config.mcpServers = {}
+			}
+
+			const eligible = await getEligibleBuiltinServers()
+			let modified = false
+			for (const { name, config: serverConfig } of eligible) {
+				if (config.mcpServers[name]) {
+					continue
+				}
+				config.mcpServers[name] = serverConfig
+				modified = true
+			}
+
+			if (modified) {
+				this.isProgrammaticUpdate = true
+				try {
+					await safeWriteJson(settingsPath, config, { prettyPrint: true })
+				} finally {
+					if (this.flagResetTimer) {
+						clearTimeout(this.flagResetTimer)
+					}
+					this.flagResetTimer = setTimeout(() => {
+						this.isProgrammaticUpdate = false
+						this.flagResetTimer = undefined
+					}, 600)
+				}
+			}
+		} catch (error) {
+			console.error("Failed to inject built-in MCP servers:", error)
+		}
+	}
+
 	private async initializeGlobalMcpServers(): Promise<void> {
+		await this.ensureBuiltinMcpServers()
 		await this.initializeMcpServers("global")
 	}
 
