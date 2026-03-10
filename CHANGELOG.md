@@ -1,5 +1,10 @@
 # CoStrict Change Log
 
+## [2.4.4]
+
+- Add support for task history backup and restore, supporting export as .tar.gz backup files (PR #1049)
+- Fix: prevent mode reset when temporarily hidden by zgsm filter (PR #1048)
+
 ## [2.4.3]
 
 - Implement streaming status tracking and improve task management
