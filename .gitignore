@@ -61,3 +61,7 @@ plans/
 roo-cli-*.tar.gz*
 zgsm-cli-*.tar.gz*
 cos-cli-*.tar.gz*
+
+# Bundled skills (generated during build)
+dist/bundled-skills/
+src/bundled-skills/
