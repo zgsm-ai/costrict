@@ -7,7 +7,7 @@ import {
 	requirements as zhCNRequirements,
 	spec as zhCNSpec,
 	subcoding as zhCNSubcoding,
-	security as zhCNSecurity,
+	securityReview as zhCNSecurityReview,
 	taskCheck as zhCNTaskCheck,
 	task as zhCNTask,
 	design as zhCNDesign,
@@ -20,7 +20,7 @@ import {
 	requirements as enRequirements,
 	spec as enSpec,
 	subcoding as enSubcoding,
-	security as enSecurity,
+	securityReview as enSecurityReview,
 	taskCheck as enTaskCheck,
 	task as enTask,
 	design as enDesign,
@@ -41,7 +41,7 @@ const registry: PromptRegistry = {
 		strict: zhCNSpec,
 		design: zhCNDesign,
 		review: zhCNReview,
-		security: zhCNSecurity,
+		"security-review": zhCNSecurityReview,
 	},
 	"zh-TW": {
 		plan: zhCNPlan,
@@ -54,7 +54,7 @@ const registry: PromptRegistry = {
 		strict: zhCNSpec,
 		design: zhCNDesign,
 		review: zhCNReview,
-		security: zhCNSecurity,
+		"security-review": zhCNSecurityReview,
 	},
 	en: {
 		plan: enPlan,
@@ -67,7 +67,7 @@ const registry: PromptRegistry = {
 		strict: enSpec,
 		design: enDesign,
 		review: enReview,
-		security: enSecurity,
+		"security-review": enSecurityReview,
 	},
 	// Future model dimension: simply append "zh-CN_claude": { ... }
 }
