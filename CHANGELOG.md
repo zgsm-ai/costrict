@@ -1,5 +1,11 @@
 # CoStrict Change Log
 
+## [2.4.5]
+
+- Add codebase index initialization condition for better activation control (PR #1054)
+- Improve commit message generation and platform compatibility (PR #1052)
+- Fix: update API endpoints to use costrict-static path (PR #1051)
+
 ## [2.4.4]
 
 - Add support for task history backup and restore, supporting export as .tar.gz backup files (PR #1049)
