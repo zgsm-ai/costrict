@@ -19,7 +19,6 @@ import { t } from "../i18n"
 import { EditorContext, EditorUtils } from "../integrations/editor/EditorUtils"
 import * as path from "path"
 import { handleGenerateCommitMessage } from "../core/costrict/commit"
-import { isJetbrainsPlatform } from "../utils/platform"
 
 interface UriSource {
 	path: string
@@ -83,10 +82,6 @@ export const registerCommands = (options: RegisterCommandOptions) => {
 	const { context } = options
 
 	for (const [id, callback] of Object.entries(getCommandsMap(options))) {
-		if (id === "generateCommitMessage" && isJetbrainsPlatform()) {
-			console.log("Running on JetBrains platform, Git extension dependency not required")
-			continue
-		}
 		const command = getCommand(id as CommandId)
 		context.subscriptions.push(vscode.commands.registerCommand(command, callback))
 	}
@@ -320,14 +315,21 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 			action: "toggleAutoApprove",
 		})
 	},
-	generateCommitMessage: async (e: any) => {
+	generateCommitMessage: async (e: any): Promise<string | undefined> => {
+		let commitMessage: string | undefined
 		try {
-			await handleGenerateCommitMessage(provider, (mssage: string) => {
-				e.inputBox.value = mssage
+			await handleGenerateCommitMessage(provider, (message: string) => {
+				commitMessage = message
+				// VSCode compatibility: set inputBox value if available
+				if (e?.inputBox?.value !== undefined) {
+					e.inputBox.value = message
+				}
 			})
+			return commitMessage
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error)
 			vscode.window.showErrorMessage(`Failed to generate commit message: ${errorMessage}`)
+			return undefined
 		}
 	},
 })

@@ -65,9 +65,11 @@ export class ZgsmAuthStorage {
 
 		// Reinitialize codebase-index client
 		writeCostrictAccessToken(tokens.access_token, tokens.refresh_token).then(async () => {
-			await zgsmCodebaseIndexManager.initialize()
-			zgsmCodebaseIndexManager.syncToken()
-			workspaceEventMonitor.initialize()
+			if (state?.apiConfiguration?.zgsmCodebaseIndexEnabled) {
+				await zgsmCodebaseIndexManager.initialize()
+				zgsmCodebaseIndexManager.syncToken()
+				workspaceEventMonitor.initialize()
+			}
 		})
 	}
 
