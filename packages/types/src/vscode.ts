@@ -60,6 +60,8 @@ export const commandIds = [
 
 	"setCustomStoragePath",
 	"importSettings",
+	"backupTaskHistory",
+	"restoreTaskHistory",
 
 	"focusInput",
 	"acceptInput",

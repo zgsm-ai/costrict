@@ -49,5 +49,9 @@
 	"subtaskTag": "子任务",
 	"deleteWithSubtasks": "这也将删除 {{count}} 个子任务。您确定吗？",
 	"expandSubtasks": "展开子任务",
-	"collapseSubtasks": "收起子任务"
+	"collapseSubtasks": "收起子任务",
+	"backupTasks": "备份任务",
+	"restoreTasks": "恢复任务",
+	"backingUpTasks": "请等待，不要进行其他操作，正在备份任务历史...",
+	"restoringTasks": "请等待，不要进行其他操作，正在恢复任务历史..."
 }

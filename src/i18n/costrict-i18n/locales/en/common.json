@@ -203,7 +203,9 @@
 	},
 	"history": {
 		"warn": "History task cache exceeds {{size}}, you can manually clean up history to free disk space",
-		"viewAllHistory": "View all tasks"
+		"viewAllHistory": "View all tasks",
+		"backingUpTasks": "Please wait, do not perform other operations, Backing up task history...",
+		"restoringTasks": "Please wait, do not perform other operations, Restoring task history..."
 	},
 	"autoCleanup": {
 		"completed": "Auto cleanup completed: {{count}} tasks removed, {{space}} freed"

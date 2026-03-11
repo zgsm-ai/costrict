@@ -1,5 +1,6 @@
 import React, { memo, useState, useMemo } from "react"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Archive, ArchiveRestore } from "lucide-react"
+import { vscode } from "@/utils/vscode"
 import { DeleteTaskDialog } from "./DeleteTaskDialog"
 import { BatchDeleteTaskDialog } from "./BatchDeleteTaskDialog"
 import { Virtuoso } from "react-virtuoso"
@@ -121,20 +122,46 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 							{t("history:history")}({prettyBytes(taskCacheSize)})
 						</h3>
 					</div>
-					<StandardTooltip
-						content={
-							isSelectionMode ? `${t("history:exitSelectionMode")}` : `${t("history:enterSelectionMode")}`
-						}>
-						<Button
-							variant={isSelectionMode ? "primary" : "secondary"}
-							onClick={toggleSelectionMode}
-							data-testid="toggle-selection-mode-button">
-							<span
-								className={`codicon ${isSelectionMode ? "codicon-check-all" : "codicon-checklist"} mr-1`}
-							/>
-							{isSelectionMode ? t("history:exitSelection") : t("history:selectionMode")}
-						</Button>
-					</StandardTooltip>
+					<div className="flex items-center gap-1">
+						<StandardTooltip content={t("history:backupTasks")}>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="px-1.5"
+								onClick={() => vscode.postMessage({ type: "backupTasks" })}
+								data-testid="backup-tasks-button"
+								aria-label={t("history:backupTasks")}>
+								<Archive className="w-4 h-4" />
+							</Button>
+						</StandardTooltip>
+						<StandardTooltip content={t("history:restoreTasks")}>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="px-1.5"
+								onClick={() => vscode.postMessage({ type: "restoreTasks" })}
+								data-testid="restore-tasks-button"
+								aria-label={t("history:restoreTasks")}>
+								<ArchiveRestore className="w-4 h-4" />
+							</Button>
+						</StandardTooltip>
+						<StandardTooltip
+							content={
+								isSelectionMode
+									? `${t("history:exitSelectionMode")}`
+									: `${t("history:enterSelectionMode")}`
+							}>
+							<Button
+								variant={isSelectionMode ? "primary" : "secondary"}
+								onClick={toggleSelectionMode}
+								data-testid="toggle-selection-mode-button">
+								<span
+									className={`codicon ${isSelectionMode ? "codicon-check-all" : "codicon-checklist"} mr-1`}
+								/>
+								{isSelectionMode ? t("history:exitSelection") : t("history:selectionMode")}
+							</Button>
+						</StandardTooltip>
+					</div>
 				</div>
 				<div className="flex flex-col gap-2">
 					<VSCodeTextField

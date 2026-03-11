@@ -102,7 +102,15 @@ import { Task } from "../task/Task"
 
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import type { ClineMessage, TodoItem } from "@roo-code/types"
-import { readApiMessages, saveApiMessages, saveTaskMessages, TaskHistoryStore } from "../task-persistence"
+import {
+	createTasksBackup,
+	readApiMessages,
+	restoreTasksBackup,
+	type RestoreResult,
+	saveApiMessages,
+	saveTaskMessages,
+	TaskHistoryStore,
+} from "../task-persistence"
 import { readTaskMessages } from "../task-persistence/taskMessages"
 import { getNonce } from "./getNonce"
 import { getUri } from "./getUri"
@@ -2040,6 +2048,109 @@ export class ClineProvider
 		}
 	}
 
+	/**
+	 * Opens a save-file dialog and creates a .tar.gz backup of the entire tasks directory.
+	 */
+	async backupTaskHistory(): Promise<void> {
+		const { getStorageBasePath } = await import("../../utils/storage.js")
+		const basePath = await getStorageBasePath(this.contextProxy.globalStorageUri.fsPath)
+
+		const defaultUri = await resolveDefaultSaveUri(
+			this.contextProxy,
+			"lastTaskBackupPath",
+			`costrict-tasks-backup-${new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)}.tar.gz`,
+			{ useWorkspace: false, fallbackDir: path.join(os.homedir(), "Downloads") },
+		)
+
+		const saveUri = await vscode.window.showSaveDialog({
+			defaultUri,
+			filters: { "Gzip Archive": ["tar.gz", "tgz"] },
+			title: "Save Task History Backup",
+		})
+
+		if (!saveUri) {
+			return // User cancelled
+		}
+
+		try {
+			await vscode.window.withProgress(
+				{
+					location: vscode.ProgressLocation.Notification,
+					title: t("common:history.backingUpTasks"),
+					cancellable: false,
+				},
+				async () => {
+					await createTasksBackup(basePath, saveUri.fsPath)
+				},
+			)
+			await saveLastExportPath(this.contextProxy, "lastTaskBackupPath", saveUri)
+			vscode.window.showInformationMessage(`Task history backup saved to: ${saveUri.fsPath}`)
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err)
+			vscode.window.showErrorMessage(`Failed to create task history backup: ${msg}`)
+		}
+	}
+
+	/**
+	 * Opens an open-file dialog and restores tasks from a .tar.gz backup, merging with existing data.
+	 */
+	async restoreTaskHistory(conflict: "skip" | "overwrite" = "skip"): Promise<void> {
+		const { getStorageBasePath } = await import("../../utils/storage.js")
+		const basePath = await getStorageBasePath(this.contextProxy.globalStorageUri.fsPath)
+
+		const openUris = await vscode.window.showOpenDialog({
+			canSelectFiles: true,
+			canSelectFolders: false,
+			canSelectMany: false,
+			filters: { "Gzip Archive": ["tar.gz", "tgz", "gz"] },
+			title: "Select Task History Backup",
+		})
+
+		if (!openUris || openUris.length === 0) {
+			return // User cancelled
+		}
+
+		const srcPath = openUris[0]!.fsPath
+
+		try {
+			const result: RestoreResult = await vscode.window.withProgress(
+				{
+					location: vscode.ProgressLocation.Notification,
+					title: t("common:history.restoringTasks"),
+					cancellable: false,
+				},
+				async () => {
+					const res = await restoreTasksBackup(basePath, srcPath, { conflict })
+
+					// Reconcile in-memory cache with the newly written index
+					await this.taskHistoryStore.reconcile()
+
+					// Refresh the webview
+					await this.postStateToWebview()
+
+					return res
+				},
+			)
+
+			const parts: string[] = []
+			if (result.imported > 0) parts.push(`${result.imported} imported`)
+			if (result.skipped > 0) parts.push(`${result.skipped} skipped`)
+			if (result.overwritten > 0) parts.push(`${result.overwritten} overwritten`)
+			const summary = parts.length > 0 ? parts.join(", ") : "no changes"
+
+			if (result.errors.length > 0) {
+				vscode.window.showWarningMessage(
+					`Task history restored (${summary}). ${result.errors.length} error(s): ${result.errors.slice(0, 3).join("; ")}`,
+				)
+			} else {
+				vscode.window.showInformationMessage(`Task history restored: ${summary}.`)
+			}
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err)
+			vscode.window.showErrorMessage(`Failed to restore task history: ${msg}`)
+		}
+	}
+
 	/* Condenses a task's message history to use fewer tokens. */
 	async condenseTaskContext(taskId: string) {
 		let task: Task | undefined
@@ -2116,7 +2227,8 @@ export class ClineProvider
 
 				// Delete the task directory
 				try {
-					const dirPath = await getTaskDirectoryPath(globalStoragePath, taskId)
+					// Don't create directory if it doesn't exist (createIfNotExists: false)
+					const dirPath = await getTaskDirectoryPath(globalStoragePath, taskId, false)
 					await fs.rm(dirPath, { recursive: true, force: true })
 					console.log(`[deleteTaskWithId${taskId}] removed task directory`)
 				} catch (error) {

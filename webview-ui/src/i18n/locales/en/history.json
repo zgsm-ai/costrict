@@ -49,5 +49,9 @@
 	"subtaskTag": "Subtask",
 	"deleteWithSubtasks": "This will also delete {{count}} subtask(s). Are you sure?",
 	"expandSubtasks": "Expand subtasks",
-	"collapseSubtasks": "Collapse subtasks"
+	"collapseSubtasks": "Collapse subtasks",
+	"backupTasks": "Backup Tasks",
+	"restoreTasks": "Restore Tasks",
+	"backingUpTasks": "Please wait, do not perform other operations, Backing up task history...",
+	"restoringTasks": "Please wait, do not perform other operations, Restoring task history..."
 }
