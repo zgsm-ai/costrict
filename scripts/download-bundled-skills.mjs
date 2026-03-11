@@ -11,6 +11,13 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { pipeline } from "stream/promises"
 import { createWriteStream } from "fs"
+import { fileURLToPath } from "url"
+import { dirname } from "path"
+
+// Get project root directory (parent of scripts directory)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const projectRoot = path.dirname(__dirname)
 
 /**
  * Skills to download during build
@@ -189,7 +196,7 @@ async function downloadSkill(config, outputBaseDir) {
 async function main() {
 	console.log("\n🚀 CoStrict - Downloading GitHub Skills for Bundling\n")
 
-	const outputDir = path.join(process.cwd(), "dist", "bundled-skills")
+	const outputDir = path.join(projectRoot, "src", "bundled-skills")
 
 	// Clean output directory
 	await fs.rm(outputDir, { recursive: true, force: true })
