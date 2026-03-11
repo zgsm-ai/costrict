@@ -7,9 +7,9 @@
  * - Mode-specific skills are installed to skills-{mode}/ directories
  *
  * Version tracking:
- * - Extension version from package.json is added to SKILL.md as a comment
- * - On each run, check if the installed version matches the current extension version
- * - If versions don't match, re-install the skill
+ * - Uses bundled-skills/index.json for version information
+ * - Stores installed version in a separate .version file in user directory
+ * - Does NOT modify SKILL.md content
  */
 
 import * as fs from "fs/promises"
@@ -20,8 +20,17 @@ import { createLogger, ILogger } from "../../utils/logger"
 
 const logger: ILogger = createLogger("BuiltinSkillsInstaller")
 
-// Version comment pattern in SKILL.md
-const VERSION_COMMENT_PATTERN = /<!--\s*Builtin Skill Version:\s*([0-9.]+)\s*-->/
+/**
+ * Bundled skill index structure from index.json
+ */
+interface BundledSkillsIndex {
+	version: string
+	skills: Array<{
+		name: string
+		repo: string
+		branch: string
+	}>
+}
 
 /**
  * Bundled skill configuration
@@ -29,7 +38,7 @@ const VERSION_COMMENT_PATTERN = /<!--\s*Builtin Skill Version:\s*([0-9.]+)\s*-->
 interface BuiltinSkillConfig {
 	/** Skill name (local directory name) */
 	name: string
-	/** Storage key to track installed version */
+	/** Storage key to track installed version in globalState */
 	versionKey: string
 	/** Target mode for this skill (optional, if specified installs to skills-{mode}/) */
 	mode?: string
@@ -60,26 +69,6 @@ function getExtensionVersion(context: vscode.ExtensionContext): string {
 }
 
 /**
- * Extract version from SKILL.md content
- */
-function extractVersionFromSkill(content: string): string | null {
-	const match = content.match(VERSION_COMMENT_PATTERN)
-	return match ? match[1] : null
-}
-
-/**
- * Add version comment to skill content
- */
-function addVersionComment(content: string, version: string): string {
-	const versionComment = `<!--
-Builtin Skill Version: ${version}
-Do not remove this comment, it's used for version checking
--->
-`
-	return versionComment + content
-}
-
-/**
  * Get path to bundled skills directory in extension
  */
 function getBundledSkillsPath(context: vscode.ExtensionContext): string {
@@ -96,39 +85,59 @@ function getUserSkillsPath(mode?: string): string {
 }
 
 /**
- * Check if the skill needs to be updated due to version change
- * Returns true if:
- * - File doesn't exist
- * - File is corrupted or can't be read
- * - Version comment is missing or invalid
- * - Version doesn't match extension version
+ * Get the version file path for tracking installed skill version
  */
-async function needsUpdate(
-	skillDir: string,
-	skillName: string,
-	currentVersion: string,
-): Promise<boolean> {
-	const skillMdPath = path.join(skillDir, skillName, "SKILL.md")
+function getVersionFilePath(skillDir: string, skillName: string): string {
+	return path.join(skillDir, skillName, ".version")
+}
+
+/**
+ * Get the bundled version from index.json
+ */
+async function getBundledVersion(bundledSkillsPath: string): Promise<string> {
 	try {
-		const content = await fs.readFile(skillMdPath, "utf-8")
-		const installedVersion = extractVersionFromSkill(content)
-		// Update if version is missing, invalid, or doesn't match
-		return installedVersion !== currentVersion
+		const indexPath = path.join(bundledSkillsPath, "index.json")
+		const content = await fs.readFile(indexPath, "utf-8")
+		const index: BundledSkillsIndex = JSON.parse(content)
+		return index.version || "0.0.0"
 	} catch {
-		// File doesn't exist or can't be read
-		return true
+		return "0.0.0"
 	}
 }
 
 /**
+ * Get the installed version from .version file
+ */
+async function getInstalledVersion(versionFilePath: string): Promise<string | null> {
+	try {
+		const content = await fs.readFile(versionFilePath, "utf-8")
+		return content.trim()
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Check if the skill needs to be updated
+ * Returns true if:
+ * - File doesn't exist
+ * - Version doesn't match bundled version
+ */
+async function needsUpdate(skillDir: string, skillName: string, bundledVersion: string): Promise<boolean> {
+	const versionFilePath = getVersionFilePath(skillDir, skillName)
+	const installedVersion = await getInstalledVersion(versionFilePath)
+	return installedVersion !== bundledVersion
+}
+
+/**
  * Copy skill from bundled directory to user directory
- * Adds version comment to SKILL.md during copy
+ * Does NOT modify SKILL.md content
  */
 async function copyBundledSkill(
 	skillName: string,
 	bundledPath: string,
 	userPath: string,
-	currentVersion: string,
+	bundledVersion: string,
 ): Promise<boolean> {
 	try {
 		// Check if bundled skill exists
@@ -142,34 +151,24 @@ async function copyBundledSkill(
 		const skillTargetDir = path.join(userPath, skillName)
 
 		// Remove old version if exists
-		if (await fs.access(skillTargetDir).then(() => true).catch(() => false)) {
+		if (
+			await fs
+				.access(skillTargetDir)
+				.then(() => true)
+				.catch(() => false)
+		) {
 			await fs.rm(skillTargetDir, { recursive: true, force: true })
 		}
 
 		// Create target directory
 		await fs.mkdir(skillTargetDir, { recursive: true })
 
-		// Copy all files recursively
-		const entries = await fs.readdir(skillSourceDir, { withFileTypes: true })
-		for (const entry of entries) {
-			const srcPath = path.join(skillSourceDir, entry.name)
-			const destPath = path.join(skillTargetDir, entry.name)
+		// Copy all files recursively without modification
+		await fs.cp(skillSourceDir, skillTargetDir, { recursive: true })
 
-			if (entry.isDirectory()) {
-				await fs.mkdir(destPath, { recursive: true })
-				// Recursively copy subdirectories
-				await fs.cp(srcPath, destPath, { recursive: true })
-			} else if (entry.isFile()) {
-				let content = await fs.readFile(srcPath, "utf-8")
-
-				// Add version comment to SKILL.md
-				if (entry.name === "SKILL.md") {
-					content = addVersionComment(content, currentVersion)
-				}
-
-				await fs.writeFile(destPath, content, "utf-8")
-			}
-		}
+		// Write .version file separately
+		const versionFilePath = path.join(skillTargetDir, ".version")
+		await fs.writeFile(versionFilePath, bundledVersion, "utf-8")
 
 		return true
 	} catch {
@@ -186,9 +185,12 @@ async function installBuiltinSkill(
 	bundledSkillsPath: string,
 ): Promise<boolean> {
 	const { name, versionKey, mode } = config
-	const currentVersion = getExtensionVersion(context)
 
-	// Check installed version
+	// Get bundled version from index.json
+	const bundledVersion = await getBundledVersion(bundledSkillsPath)
+	const extensionVersion = getExtensionVersion(context)
+
+	// Check installed version in globalState
 	const installedVersion = context.globalState.get<string>(versionKey)
 
 	// Get user skills path
@@ -196,29 +198,28 @@ async function installBuiltinSkill(
 	const skillDir = path.join(userSkillsPath, name)
 
 	// Check if update is needed
-	const dirExists = await fs.access(skillDir).then(() => true).catch(() => false)
+	const dirExists = await fs
+		.access(skillDir)
+		.then(() => true)
+		.catch(() => false)
 	if (dirExists) {
-		if (installedVersion === currentVersion) {
-			// Also check SKILL.md for version comment
-			const needsUpdateCheck = await needsUpdate(skillDir, name, currentVersion)
-			if (!needsUpdateCheck) {
-				logger.info(`[BuiltinSkills] ${name}: Up to date (v${currentVersion})`)
-				return true
-			}
+		if (installedVersion === bundledVersion) {
+			logger.info(`[BuiltinSkills] ${name}: Up to date (v${bundledVersion})`)
+			return true
 		}
-		logger.info(`[BuiltinSkills] ${name}: Version changed (v${installedVersion} -> v${currentVersion}), updating`)
+		logger.info(`[BuiltinSkills] ${name}: Version changed (v${installedVersion} -> v${bundledVersion}), updating`)
 	} else {
-		logger.info(`[BuiltinSkills] ${name}: Installing (v${currentVersion})`)
+		logger.info(`[BuiltinSkills] ${name}: Installing (v${bundledVersion})`)
 	}
 
 	// Copy from bundled skills to mode-specific or generic directory
-	const bundledInstalled = await copyBundledSkill(name, bundledSkillsPath, userSkillsPath, currentVersion)
+	const bundledInstalled = await copyBundledSkill(name, bundledSkillsPath, userSkillsPath, bundledVersion)
 
 	if (bundledInstalled) {
-		// Store installed version
-		await context.globalState.update(versionKey, currentVersion)
+		// Store installed version in globalState
+		await context.globalState.update(versionKey, bundledVersion)
 		const modeInfo = mode ? ` to ${mode} mode` : ""
-		logger.info(`[BuiltinSkills] ${name}: Installed from bundled skills${modeInfo} (v${currentVersion})`)
+		logger.info(`[BuiltinSkills] ${name}: Installed from bundled skills${modeInfo} (v${bundledVersion})`)
 		return true
 	}
 
@@ -235,21 +236,26 @@ async function installBuiltinSkill(
  * Mode-specific skills are installed to skills-{mode}/ directories,
  * which ensures they only activate in that specific mode.
  *
- * Skills are automatically updated when the extension version changes.
+ * Skills are automatically updated when the bundled version changes.
  */
 export async function installGitHubSkills(context: vscode.ExtensionContext): Promise<void> {
 	const bundledSkillsPath = getBundledSkillsPath(context)
 
 	// Check if bundled skills exist
-	const bundledExists = await fs.access(bundledSkillsPath).then(() => true).catch(() => false)
+	const bundledExists = await fs
+		.access(bundledSkillsPath)
+		.then(() => true)
+		.catch(() => false)
 
 	if (!bundledExists) {
 		logger.info("[BuiltinSkills] No bundled skills found, skipping")
 		return
 	}
 
-	const currentVersion = getExtensionVersion(context)
-	logger.info(`[BuiltinSkills] Installing ${BUILTIN_SKILLS.length} built-in skills (extension v${currentVersion})...`)
+	const extensionVersion = getExtensionVersion(context)
+	logger.info(
+		`[BuiltinSkills] Installing ${BUILTIN_SKILLS.length} built-in skills (extension v${extensionVersion})...`,
+	)
 
 	// Install all skills (copy from bundled to user directory)
 	const results = await Promise.all(

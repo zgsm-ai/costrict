@@ -76,44 +76,47 @@ async function downloadFile(url, destinationPath) {
 }
 
 /**
- * Update SKILL.md to set modeSlugs to security-review
- * This ensures the skill only works in security-review mode
+ * Update SKILL.md frontmatter to ensure proper activation
+ * - Uses name and description from index.json
+ * - Sets modeSlugs to security-review for mode-specific activation
  */
-async function updateSkillModeSlug(skillOutputDir) {
+async function updateSkillFrontmatter(skillOutputDir, skillMetadata) {
 	const skillMdPath = path.join(skillOutputDir, "SKILL.md")
 	try {
 		let content = await fs.readFile(skillMdPath, "utf-8")
 
-		// Replace or add modeSlugs in frontmatter
-		if (content.includes("modeSlugs:")) {
-			// Replace existing modeSlugs
-			content = content.replace(/modeSlugs:\s*\[[\s\S]*?\]/, "modeSlugs:\n  - security-review")
-		} else if (content.includes("mode:")) {
-			// Replace legacy mode field
-			content = content.replace(/mode:\s*\S+/, "mode: security-review")
-		} else {
-			// Add modeSlugs after frontmatter start
-			const frontmatterEnd = content.indexOf("---", 3)
-			if (frontmatterEnd !== -1) {
-				const insertPos = content.indexOf("\n", content.indexOf("---", 3) + 3)
-				if (insertPos !== -1) {
-					content = content.slice(0, insertPos) + "\nmodeSlugs:\n  - security-review" + content.slice(insertPos)
-				}
-			}
+		// Use metadata from index.json
+		const { name, description } = skillMetadata
+
+		// Find the end of first frontmatter block
+		const frontmatterEnd = content.indexOf("---", 3)
+
+		if (frontmatterEnd !== -1) {
+			// Extract body content after frontmatter
+			const bodyContent = content.slice(frontmatterEnd + 3)
+
+			// Build clean frontmatter (no extra blank lines)
+			const newFrontmatter = `name: ${name}
+description: ${description}
+modeSlugs:
+  - security-review`
+
+			// Reconstruct file with clean frontmatter
+			content = `---\n${newFrontmatter}\n---${bodyContent}`
 		}
 
 		await fs.writeFile(skillMdPath, content, "utf-8")
-		console.log(`    ✓ Updated modeSlugs to security-review`)
+		console.log(`    ✓ Updated SKILL.md frontmatter (name: ${name}, modeSlugs: security-review)`)
 	} catch (error) {
-		console.error(`    ⚠ Warning: Could not update modeSlugs: ${error.message}`)
+		console.error(`    ⚠ Warning: Could not update SKILL.md: ${error.message}`)
 	}
 }
 
 /**
- * Fetch file list from index.json
- * index.json is in the repo root, not in the subdir
+ * Fetch skill metadata from index.json
+ * Returns { name, description, files } or null if failed
  */
-async function fetchFileListFromIndex(repo, branch) {
+async function fetchSkillMetadata(repo, branch) {
 	const indexUrl = `https://raw.githubusercontent.com/${repo}/${branch}/index.json`
 
 	return new Promise((resolve) => {
@@ -124,7 +127,7 @@ async function fetchFileListFromIndex(repo, branch) {
 		}).on("response", async (response) => {
 			if (response.statusCode !== 200) {
 				console.error(`    ✗ Failed to fetch index.json: ${response.statusCode}`)
-				resolve([])
+				resolve(null)
 				return
 			}
 
@@ -133,14 +136,21 @@ async function fetchFileListFromIndex(repo, branch) {
 			response.on("end", () => {
 				try {
 					const json = JSON.parse(data)
-					// Extract files array from index.json
-					const files = json.skills?.[0]?.files || []
-					resolve(files)
+					const skill = json.skills?.[0]
+					if (skill) {
+						resolve({
+							name: skill.name,
+							description: skill.description,
+							files: skill.files || []
+						})
+					} else {
+						resolve(null)
+					}
 				} catch {
-					resolve([])
+					resolve(null)
 				}
 			})
-		}).on("error", () => resolve([]))
+		}).on("error", () => resolve(null))
 	})
 }
 
@@ -164,17 +174,19 @@ async function downloadSkill(config, outputBaseDir) {
 	// Prefix paths with subdir if specified
 	const pathPrefix = subdir ? `${subdir}/` : ""
 
-	// Fetch file list from index.json (from repo root, not subdir)
-	console.log(`  Fetching file list from index.json...`)
-	const filesToDownload = await fetchFileListFromIndex(repo, branch)
-	console.log(`  Found ${filesToDownload.length} files to download`)
-
-	// Add README files (not in index.json but useful)
-	const additionalFiles = ["README.md", "README_CN.md"]
-	const allFiles = [...filesToDownload, ...additionalFiles]
+	// Fetch skill metadata from index.json (from repo root, not subdir)
+	console.log(`  Fetching skill metadata from index.json...`)
+	const skillMetadata = await fetchSkillMetadata(repo, branch)
+	if (!skillMetadata) {
+		console.error(`   ✗ Failed to fetch skill metadata`)
+		return
+	}
+	console.log(`  Found ${skillMetadata.files.length} files to download`)
+	console.log(`  Skill name: ${skillMetadata.name}`)
+	console.log(`  Description: ${skillMetadata.description.substring(0, 80)}...`)
 
 	// Download all files
-	for (const file of allFiles) {
+	for (const file of skillMetadata.files) {
 		const url = `https://raw.githubusercontent.com/${repo}/${branch}/${pathPrefix}${file}`
 		const targetPath = path.join(skillOutputDir, file)
 
@@ -184,10 +196,24 @@ async function downloadSkill(config, outputBaseDir) {
 		await downloadFile(url, targetPath)
 	}
 
-	// Update SKILL.md to set modeSlugs to security-review
-	await updateSkillModeSlug(skillOutputDir)
+	// Update SKILL.md frontmatter using metadata from index.json
+	await updateSkillFrontmatter(skillOutputDir, skillMetadata)
 
 	console.log(`   ✓ Skill ${name} downloaded successfully`)
+}
+
+/**
+ * Get extension version from package.json
+ */
+async function getExtensionVersion() {
+	try {
+		const packagePath = path.join(projectRoot, "src", "package.json")
+		const content = await fs.readFile(packagePath, "utf-8")
+		const pkg = JSON.parse(content)
+		return pkg.version || "0.0.0"
+	} catch {
+		return "0.0.0"
+	}
 }
 
 /**
@@ -202,6 +228,9 @@ async function main() {
 	await fs.rm(outputDir, { recursive: true, force: true })
 	await fs.mkdir(outputDir, { recursive: true })
 
+	// Get extension version for index.json
+	const extensionVersion = await getExtensionVersion()
+
 	// Download all skills
 	let successCount = 0
 	for (const skill of BUILD_SKILLS) {
@@ -213,13 +242,13 @@ async function main() {
 		}
 	}
 
-	// Create index file
+	// Create index file with extension version
 	const indexPath = path.join(outputDir, "index.json")
 	await fs.writeFile(
 		indexPath,
 		JSON.stringify(
 			{
-				version: new Date().toISOString(),
+				version: extensionVersion,
 				skills: BUILD_SKILLS.map((s) => ({ name: s.name, repo: s.repo, branch: s.branch })),
 			},
 			null,
@@ -229,6 +258,7 @@ async function main() {
 
 	console.log(`\n✓ Downloaded ${successCount}/${BUILD_SKILLS.length} skills`)
 	console.log(`✓ Output: ${outputDir}`)
+	console.log(`✓ Index version: ${extensionVersion}`)
 	console.log("\n💡 These skills will be bundled with the extension\n")
 }
 
