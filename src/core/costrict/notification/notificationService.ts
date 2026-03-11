@@ -76,7 +76,7 @@ export class NotificationService {
 		}
 		const { language, apiConfiguration } = await this.provider.getState()
 		const baseUrl = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
-		const response = await axios.get(`${baseUrl}/costrict/announcement/announcement_${language}.json`, {
+		const response = await axios.get(`${baseUrl}/costrict-static/announcement/announcement_${language}.json`, {
 			headers: {
 				"zgsm-request-id": getClientId(),
 			},
