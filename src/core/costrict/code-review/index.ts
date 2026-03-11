@@ -121,7 +121,7 @@ export function initCodeReview(
 			await startUriFileOrFolderReview(selectedUris)
 		},
 		securityFilesAndFolders: async (_: vscode.Uri, selectedUris: vscode.Uri[]) => {
-			await startUriFileOrFolderReview(selectedUris, "security")
+			await startUriFileOrFolderReview(selectedUris, "security-review")
 		},
 		acceptIssue: async (thread: vscode.CommentThread) => {
 			const visibleProvider = await ClineProvider.getInstance()
@@ -258,7 +258,7 @@ export function initCodeReview(
 							visibleProvider?.log("[CodeReview] Invalid args structure")
 							return
 						}
-						await startFileOrFolderReview(filePaths, "security")
+						await startFileOrFolderReview(filePaths, "security-review")
 					},
 					acceptIssueJetbrains: async (args: any) => {
 						const visibleProvider = await ClineProvider.getInstance()

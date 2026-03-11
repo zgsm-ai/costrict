@@ -1510,7 +1510,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 		// No need to ask about tool calls in review mode; this is a temporary measure and needs to be removed later.
 		if (
-			["quick-explore", "task-check", "subcoding", "review", "security"].includes(this._taskMode!) &&
+			["quick-explore", "task-check", "subcoding", "review", "security-review"].includes(this._taskMode!) &&
 			type === "tool"
 		) {
 			this.approveAsk()

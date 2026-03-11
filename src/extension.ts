@@ -59,6 +59,7 @@ import { defaultLang } from "./utils/language"
 import { createLogger } from "./utils/logger"
 import { loadIdeaShellEnvOnce } from "./utils/ideaShellEnvLoader"
 import { isJetbrainsPlatform } from "./utils/platform"
+import { installGitHubSkills } from "./services/skills/github-skills-installer"
 // import { flushModels, getModels, initializeModelCacheRefresh } from "./api/providers/fetchers/modelCache"
 
 /**
@@ -208,6 +209,18 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 		}
 	// 	}
 	// }
+
+	// Install built-in skills BEFORE initializing ClineProvider
+	// This ensures SkillsManager will discover the bundled skills during initialization
+	outputChannel.appendLine("[BuiltinSkills] Installing bundled skills...")
+	try {
+		await installGitHubSkills(context)
+		outputChannel.appendLine("[BuiltinSkills] Bundled skills installed")
+	} catch (error) {
+		outputChannel.appendLine(
+			`[BuiltinSkills] Failed to install: ${error instanceof Error ? error.message : String(error)}`,
+		)
+	}
 
 	// Initialize the provider *before* the CoStrict Cloud service.
 	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy, mdmService)
