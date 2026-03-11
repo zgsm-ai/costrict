@@ -140,9 +140,11 @@ export async function activate(
 				}
 				provider.log(`Login status detected at plugin startup: valid (${tokens.state})`)
 				writeCostrictAccessToken(tokens.access_token, tokens.refresh_token).then(async () => {
-					await zgsmCodebaseIndexManager.initialize()
-					zgsmCodebaseIndexManager.syncToken()
-					workspaceEventMonitor.initialize()
+					if (provider.getValue("zgsmCodebaseIndexEnabled")) {
+						await zgsmCodebaseIndexManager.initialize()
+						zgsmCodebaseIndexManager.syncToken()
+						workspaceEventMonitor.initialize()
+					}
 				})
 				zgsmAuthService.startTokenRefresh(tokens.refresh_token, getClientId(), tokens.state)
 				zgsmAuthService.updateUserInfo(tokens.access_token)
