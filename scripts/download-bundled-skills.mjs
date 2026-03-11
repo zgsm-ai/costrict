@@ -20,6 +20,7 @@ const BUILD_SKILLS = [
 		name: "security-review",
 		repo: "zgsm-ai/security-review",
 		branch: "main",
+		subdir: "security-review", // Skill files are in this subdirectory
 		outputDir: "security-review",
 	},
 ]
@@ -102,93 +103,78 @@ async function updateSkillModeSlug(skillOutputDir) {
 }
 
 /**
- * Get directory tree from GitHub API
+ * Fetch file list from index.json
+ * index.json is in the repo root, not in the subdir
  */
-async function getDirectoryTree(repo, branch, dirPath) {
-	const apiUrl = `https://api.github.com/repos/${repo}/git/trees/${branch}:${dirPath}?recursive=1`
-
-	console.log(`  Fetching tree for: ${dirPath}`)
+async function fetchFileListFromIndex(repo, branch) {
+	const indexUrl = `https://raw.githubusercontent.com/${repo}/${branch}/index.json`
 
 	return new Promise((resolve) => {
-		https
-			.get(apiUrl, {
-				headers: {
-					"User-Agent": "CoStrict-Build",
-					Accept: "application/vnd.github.v3+json",
-				},
-			})
-			.on("response", async (response) => {
-				if (response.statusCode !== 200) {
-					console.error(`    ✗ API error: ${response.statusCode}`)
+		https.get(indexUrl, {
+			headers: {
+				"User-Agent": "CoStrict-Build",
+			},
+		}).on("response", async (response) => {
+			if (response.statusCode !== 200) {
+				console.error(`    ✗ Failed to fetch index.json: ${response.statusCode}`)
+				resolve([])
+				return
+			}
+
+			let data = ""
+			response.on("data", (chunk) => { data += chunk })
+			response.on("end", () => {
+				try {
+					const json = JSON.parse(data)
+					// Extract files array from index.json
+					const files = json.skills?.[0]?.files || []
+					resolve(files)
+				} catch {
 					resolve([])
-					return
 				}
-
-				let data = ""
-				response.on("data", (chunk) => {
-					data += chunk
-				})
-				response.on("end", () => {
-					try {
-						const json = JSON.parse(data)
-						resolve(json.tree || [])
-					} catch {
-						resolve([])
-					}
-				})
 			})
-			.on("error", () => resolve([]))
+		}).on("error", () => resolve([]))
 	})
-}
-
-/**
- * Download all files from a directory
- */
-async function downloadDirectory(repo, branch, dirPath, tree, outputBaseDir) {
-	// Filter files in this directory
-	const files = tree.filter((item) => item.type === "blob" && item.path.startsWith(dirPath))
-
-	console.log(`  Downloading ${files.length} files from ${dirPath}/...`)
-
-	for (const item of files) {
-		const relativePath = item.path.substring(dirPath.length)
-		const targetPath = path.join(outputBaseDir, relativePath)
-
-		// Create parent directories
-		await fs.mkdir(path.dirname(targetPath), { recursive: true })
-
-		// Download file
-		const url = `https://raw.githubusercontent.com/${repo}/${branch}/${item.path}`
-		await downloadFile(url, targetPath)
-	}
 }
 
 /**
  * Download a single skill
  */
 async function downloadSkill(config, outputBaseDir) {
-	const { name, repo, branch, outputDir } = config
+	const { name, repo, branch, subdir, outputDir } = config
 
 	console.log(`\n📦 Downloading skill: ${name}`)
 	console.log(`   From: https://github.com/${repo}`)
 	console.log(`   Branch: ${branch}`)
+	if (subdir) {
+		console.log(`   Subdir: ${subdir}`)
+	}
 
 	// Create output directory
 	const skillOutputDir = path.join(outputBaseDir, outputDir)
 	await fs.mkdir(skillOutputDir, { recursive: true })
 
-	// Download core files
-	const coreFiles = ["SKILL.md", "agent.md", "README.md", "README_CN.md", "index.json"]
-	for (const file of coreFiles) {
-		const url = `https://raw.githubusercontent.com/${repo}/${branch}/${file}`
-		const targetPath = path.join(skillOutputDir, file)
-		await downloadFile(url, targetPath)
-	}
+	// Prefix paths with subdir if specified
+	const pathPrefix = subdir ? `${subdir}/` : ""
 
-	// Download references directory
-	const tree = await getDirectoryTree(repo, branch, "references")
-	if (tree.length > 0) {
-		await downloadDirectory(repo, branch, "references", tree, skillOutputDir)
+	// Fetch file list from index.json (from repo root, not subdir)
+	console.log(`  Fetching file list from index.json...`)
+	const filesToDownload = await fetchFileListFromIndex(repo, branch)
+	console.log(`  Found ${filesToDownload.length} files to download`)
+
+	// Add README files (not in index.json but useful)
+	const additionalFiles = ["README.md", "README_CN.md"]
+	const allFiles = [...filesToDownload, ...additionalFiles]
+
+	// Download all files
+	for (const file of allFiles) {
+		const url = `https://raw.githubusercontent.com/${repo}/${branch}/${pathPrefix}${file}`
+		const targetPath = path.join(skillOutputDir, file)
+
+		// Create parent directories
+		await fs.mkdir(path.dirname(targetPath), { recursive: true })
+
+		await downloadFile(url, targetPath)
 	}
 
 	// Update SKILL.md to set modeSlugs to security-review
