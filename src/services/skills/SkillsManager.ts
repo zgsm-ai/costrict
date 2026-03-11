@@ -19,6 +19,7 @@ import {
 	SKILL_NAME_MAX_LENGTH,
 } from "@roo-code/types"
 import { t } from "../../i18n"
+import { installGitHubSkills } from "./github-skills-installer"
 
 // Re-export for convenience
 export type { SkillMetadata, SkillContent }
@@ -34,8 +35,31 @@ export class SkillsManager {
 	}
 
 	async initialize(): Promise<void> {
+		// Initialize builtin skills before discovering
+		// This ensures bundled skills are installed to user directory on first run
+		// and re-installed if deleted
+		await this.initializeBuiltinSkills()
+
 		await this.discoverSkills()
 		await this.setupFileWatchers()
+	}
+
+	/**
+	 * Initialize builtin skills by installing bundled skills to user directory.
+	 * This is called during initialization to ensure skills are available.
+	 */
+	private async initializeBuiltinSkills(): Promise<void> {
+		const provider = this.providerRef.deref()
+		if (!provider) {
+			return
+		}
+
+		try {
+			await installGitHubSkills(provider.context)
+		} catch (error) {
+			// Log but don't fail - skills can be manually installed
+			console.error(`[SkillsManager] Failed to initialize builtin skills: ${error}`)
+		}
 	}
 
 	/**
