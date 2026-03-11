@@ -1,5 +1,6 @@
 .pnpm-store
 **/dist/**
+/dist/
 out
 out-*
 node_modules
