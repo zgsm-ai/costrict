@@ -188,7 +188,7 @@
 			},
 			{
 				"command": "zgsm.securityFilesAndFolders",
-				"title": "%command.securityScan.title%"
+				"title": "%command.securityReview.title%"
 			},
 			{
 				"command": "zgsm.reviewCommit",
@@ -233,7 +233,7 @@
 			},
 			{
 				"command": "zgsm.securityFilesAndFoldersJetbrains",
-				"title": "%command.securityScan.title%"
+				"title": "%command.securityReview.title%"
 			},
 			{
 				"command": "zgsm.askReviewSuggestionWithAIJetbrains",
