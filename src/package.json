@@ -388,6 +388,11 @@
 					"when": "editorHasSelection && workbenchState != 'empty'"
 				},
 				{
+					"command": "zgsm.securityFilesAndFolders",
+					"group": "zgsm@6",
+					"when": "editorHasSelection && workbenchState != 'empty'"
+				},
+				{
 					"command": "zgsm.view.issue",
 					"group": "zissue@1"
 				}
