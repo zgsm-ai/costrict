@@ -164,6 +164,8 @@ import * as path from "path"
 import * as fsUtils from "../../../utils/fs"
 import { getWorkspacePath } from "../../../utils/path"
 import { ensureSettingsDirectoryExists } from "../../../utils/globalContext"
+import { ZgsmCodebaseIndexManager } from "../../costrict/codebase-index"
+import { workspaceEventMonitor } from "../../costrict/codebase-index/workspace-event-monitor"
 import { generateErrorDiagnostics } from "../diagnosticsHandler"
 import type { ModeConfig } from "@roo-code/types"
 
@@ -1105,5 +1107,84 @@ describe("webviewMessageHandler - downloadErrorDiagnostics", () => {
 
 		expect(vscode.window.showErrorMessage).toHaveBeenCalledWith("No active task to generate diagnostics for")
 		expect(generateErrorDiagnostics).not.toHaveBeenCalled()
+	})
+})
+
+describe("webviewMessageHandler - codebase index toggle", () => {
+	let mockCodebaseIndexManager: {
+		ensureInitialized: ReturnType<typeof vi.fn>
+		toggleIndexSwitch: ReturnType<typeof vi.fn>
+		restartClient: ReturnType<typeof vi.fn>
+	}
+	let initializeMonitorSpy: ReturnType<typeof vi.spyOn>
+
+	beforeEach(() => {
+		vi.clearAllMocks()
+		vi.mocked(getWorkspacePath).mockReturnValue("/mock/workspace")
+		mockClineProvider.getState = vi.fn().mockResolvedValue({
+			apiConfiguration: {
+				apiProvider: "zgsm",
+			},
+		})
+		mockClineProvider.contextProxy.getValue = vi.fn().mockReturnValue(false)
+		mockClineProvider.contextProxy.setValue = vi.fn().mockResolvedValue(undefined)
+
+		mockCodebaseIndexManager = {
+			ensureInitialized: vi.fn().mockResolvedValue(undefined),
+			toggleIndexSwitch: vi.fn().mockResolvedValue({ success: true, data: true, message: "ok" }),
+			restartClient: vi.fn(),
+		}
+		vi.spyOn(ZgsmCodebaseIndexManager, "getInstance").mockReturnValue(mockCodebaseIndexManager as any)
+		initializeMonitorSpy = vi.spyOn(workspaceEventMonitor, "initialize").mockResolvedValue(undefined)
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
+	})
+
+	it("ensures lifecycle readiness without restarting the client when enabling indexing", async () => {
+		await webviewMessageHandler(mockClineProvider, {
+			type: "zgsmCodebaseIndexEnabled",
+			bool: true,
+		} as any)
+
+		expect(mockCodebaseIndexManager.ensureInitialized).toHaveBeenCalledWith("toggleIndexSwitch")
+		expect(mockCodebaseIndexManager.toggleIndexSwitch).toHaveBeenCalledWith({
+			workspace: "/mock/workspace",
+			switch: "on",
+		})
+		expect(mockCodebaseIndexManager.ensureInitialized.mock.invocationCallOrder[0]).toBeLessThan(
+			mockCodebaseIndexManager.toggleIndexSwitch.mock.invocationCallOrder[0],
+		)
+		expect(mockCodebaseIndexManager.restartClient).not.toHaveBeenCalled()
+		expect(mockClineProvider.contextProxy.setValue).toHaveBeenCalledWith("zgsmCodebaseIndexEnabled", true)
+		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
+			type: "zgsmCodebaseIndexEnabled",
+			payload: true,
+		})
+		expect(initializeMonitorSpy).toHaveBeenCalled()
+	})
+
+	it("reverts persisted and posted state when the backend toggle fails", async () => {
+		mockClineProvider.contextProxy.getValue = vi.fn().mockReturnValue(true)
+		mockCodebaseIndexManager.toggleIndexSwitch.mockResolvedValue({
+			success: false,
+			data: false,
+			message: "backend error",
+		})
+
+		await webviewMessageHandler(mockClineProvider, {
+			type: "zgsmCodebaseIndexEnabled",
+			bool: false,
+		} as any)
+
+		expect(mockCodebaseIndexManager.ensureInitialized).toHaveBeenCalledWith("toggleIndexSwitch")
+		expect(mockCodebaseIndexManager.restartClient).not.toHaveBeenCalled()
+		expect(mockClineProvider.contextProxy.setValue).toHaveBeenCalledWith("zgsmCodebaseIndexEnabled", true)
+		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
+			type: "zgsmCodebaseIndexEnabled",
+			payload: true,
+		})
+		expect(initializeMonitorSpy).not.toHaveBeenCalled()
 	})
 })

@@ -507,6 +507,14 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 
 	useEvent("message", handleMessage)
 
+	const codebaseIndexTooltipText = isPendingEnable
+		? !cwd
+			? t("settings:codebase.semanticIndex.codebaseIndexDisabled")
+			: t("settings:codebase.general.onlyCostrictProviderSupport")
+		: !zgsmCodebaseIndexEnabled
+			? t("settings:codebase.general.codebaseIndexBuildDisabledHint")
+			: null
+
 	return (
 		<div>
 			<SectionHeader>
@@ -523,13 +531,9 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 									<div>{t("settings:codebase.general.codebaseIndexBuild")}</div>
 								</div>
 							</TooltipTrigger>
-							{isPendingEnable && (
+							{codebaseIndexTooltipText && (
 								<TooltipContent>
-									<p>
-										{!cwd
-											? t("settings:codebase.semanticIndex.codebaseIndexDisabled")
-											: t("settings:codebase.general.onlyCostrictProviderSupport")}
-									</p>
+									<p>{codebaseIndexTooltipText}</p>
 								</TooltipContent>
 							)}
 						</Tooltip>

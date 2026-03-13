@@ -222,6 +222,7 @@
 		"general": {
 			"indexBuildFailed": "Index build failed",
 			"codebaseIndexBuild": "Codebase Index Build",
+			"codebaseIndexBuildDisabledHint": "When index building is disabled, the CoStrict service will still start normally, but indexes will not be built automatically.",
 			"onlyCostrictProviderSupport": "Only CoStrict provider supports this service"
 		},
 		"errors": {
