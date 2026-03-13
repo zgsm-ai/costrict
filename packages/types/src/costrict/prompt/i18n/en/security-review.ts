@@ -10,7 +10,7 @@ The security-review skill provides:
 - **WooYun real-world vulnerability case patterns** (88,636 cases from 2010-2016)
 - Modern security domains: **LLM, Serverless, Android**
 
-**Remember**: Always use the security-review skill with default configuration - do not attempt security review without it, and do not switch to other modes to complete security review tasks.`,
+**Remember**: Always use the security-review skill with **default directory configuration** - do not attempt security review without it, and do not switch to other modes to complete security review tasks.`,
 }
 
 export default prompt

@@ -327,9 +327,39 @@ export class CodeReviewService {
 
 			try {
 				this.logger.info("[CodeReview] Review Task completed")
-				const reportMessage = [...trackedTask.clineMessages]
+				let reportMessage = [...trackedTask.clineMessages]
 					.reverse()
 					.find((msg) => msg.type === "say" && msg?.text?.includes("I-AM-CODE-REVIEW-REPORT-V1"))
+
+				// If no report found in message queue, try to read from default output directory
+				if (!reportMessage?.text) {
+					this.logger.info(
+						"[CodeReview] No report found in message queue, attempting to read from default output directory",
+					)
+					const defaultOutputDir = "security-review_result"
+					const fullReportPath = path.resolve(provider.cwd, defaultOutputDir, "full_report.jsonl")
+					this.logger.info(`[CodeReview] Looking for report at: ${fullReportPath}`)
+
+					if (await fileExistsAtPath(fullReportPath)) {
+						this.logger.info("[CodeReview] Found full_report.jsonl, reading report from file")
+						try {
+							const fs = await import("node:fs")
+							const reportContent = fs.readFileSync(fullReportPath, "utf-8")
+							// Construct a synthetic report message with the file content
+							reportMessage = {
+								type: "say",
+								text: `I-AM-CODE-REVIEW-REPORT-V1\n${reportContent}`,
+								timestamp: new Date().toISOString(),
+							} as any
+							this.logger.info("[CodeReview] Successfully loaded report from file")
+						} catch (error) {
+							this.logger.error(`[CodeReview] Failed to read report file: ${error}`)
+						}
+					} else {
+						this.logger.info(`[CodeReview] Report file not found at ${fullReportPath}`)
+					}
+				}
+
 				if (reportMessage?.text) {
 					const { issues, review_task_id, title, conclusion } = await this.getIssues(
 						reportMessage.text,
