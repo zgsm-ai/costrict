@@ -3663,7 +3663,7 @@ export const webviewMessageHandler = async (
 		}
 		case "createReviewTask": {
 			const reviewInstance = CodeReviewService.getInstance()
-			const { files } = message.payload! as CreateReviewTaskPayload
+			const { files, mode } = message.payload! as CreateReviewTaskPayload
 			const cwd = getCurrentCwd()
 
 			const untrackedFiles =
@@ -3683,6 +3683,7 @@ export const webviewMessageHandler = async (
 					})),
 				},
 				{
+					mode,
 					onTaskComplete: async () => {
 						if (intentAddedFiles.length > 0) {
 							await restoreFilesFromStaged(cwd, intentAddedFiles)

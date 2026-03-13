@@ -42,10 +42,10 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onStartReview }) => {
 
 	useEvent("message", handleMessage)
 
-	const handleStartReview = () => {
+	const handleStartReview = (mode?: string) => {
 		vscode.postMessage({
 			type: "createReviewTask",
-			payload: { files },
+			payload: { files, mode },
 		})
 		onStartReview() // Immediately switch to Review page
 	}

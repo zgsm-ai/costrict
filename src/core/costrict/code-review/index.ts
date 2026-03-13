@@ -76,6 +76,42 @@ export function initCodeReview(
 		)
 	}
 
+	const startSelectedCodeReview = async (mode: Mode = "review"): Promise<void> => {
+		const visibleProvider = await ClineProvider.getInstance()
+		const editor = vscode.window.activeTextEditor
+		if (!visibleProvider || !editor) {
+			return
+		}
+		reviewInstance.setProvider(visibleProvider)
+		if (!(await reviewInstance.checkApiProviderSupport())) {
+			return
+		}
+		const fileUri = editor.document.uri
+		const range = editor.selection
+		const cwd = visibleProvider.cwd.toPosix()
+		const filePath = toRelativePath(fileUri.fsPath.toPosix(), cwd)
+		const params = {
+			filePath,
+			endLine: range.end.line + 1 + "",
+			startLine: range.start.line + 1 + "",
+			selectedText: editor.document.getText(range),
+		}
+		const prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
+		reviewInstance.createReviewTask(
+			prompt,
+			{
+				type: ReviewTargetType.CODE,
+				data: [
+					{
+						file_path: filePath,
+						line_range: [range.start.line, range.end.line],
+					},
+				],
+			},
+			mode !== "review" ? { mode } : undefined,
+		)
+	}
+
 	const commandMap: Partial<Record<CostrictCommandId, any>> = {
 		codeReviewButtonClicked: async () => {
 			let visibleProvider = getVisibleProviderOrLog(outputChannel)
@@ -86,37 +122,8 @@ export function initCodeReview(
 
 			visibleProvider?.postMessageToWebview({ type: "action", action: "codeReviewButtonClicked" })
 		},
-		codeReview: async () => {
-			const visibleProvider = await ClineProvider.getInstance()
-			const editor = vscode.window.activeTextEditor
-			if (!visibleProvider || !editor) {
-				return
-			}
-			reviewInstance.setProvider(visibleProvider)
-			if (!(await reviewInstance.checkApiProviderSupport())) {
-				return
-			}
-			const fileUri = editor.document.uri
-			const range = editor.selection
-			const cwd = visibleProvider.cwd.toPosix()
-			const filePath = toRelativePath(fileUri.fsPath.toPosix(), cwd)
-			const params = {
-				filePath,
-				endLine: range.end.line + 1 + "",
-				startLine: range.start.line + 1 + "",
-				selectedText: editor.document.getText(range),
-			}
-			const prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
-			reviewInstance.createReviewTask(prompt, {
-				type: ReviewTargetType.CODE,
-				data: [
-					{
-						file_path: filePath,
-						line_range: [range.start.line, range.end.line],
-					},
-				],
-			})
-		},
+		codeReview: async () => startSelectedCodeReview(),
+		securityReviewCode: async () => startSelectedCodeReview("security-review"),
 		reviewFilesAndFolders: async (_: vscode.Uri, selectedUris: vscode.Uri[]) => {
 			await startUriFileOrFolderReview(selectedUris)
 		},

@@ -4,6 +4,7 @@
 		"tips": "你也可以选中函数/代码块/多文件，右键 > CoStrict > Code Review ",
 		"dismiss": "不再提示",
 		"reviewCurrentChanges": "审查当前变更",
+		"securityScan": "安全扫描",
 		"noFiles": "没有需要审查的文件"
 	},
 	"history": {
