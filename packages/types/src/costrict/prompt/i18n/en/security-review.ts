@@ -8,9 +8,7 @@ The security-review skill provides:
 - Support for **9 programming languages**: Java, Python, Go, PHP, JavaScript/Node.js, C/C++, .NET/C#, Ruby, Rust
 - Coverage of **OWASP Top 10**, injection attacks, authentication bypass, business logic flaws
 - **WooYun real-world vulnerability case patterns** (88,636 cases from 2010-2016)
-- Modern security domains: **LLM, Serverless, Android**
-
-**Remember**: Always use the security-review skill with **default directory configuration** - do not attempt security review without it, and do not switch to other modes to complete security review tasks.`,
+- Modern security domains: **LLM, Serverless, Android**`,
 }
 
 export default prompt

@@ -227,7 +227,13 @@ export class CodeReviewService {
 					return ""
 				})
 				.join(" ")
-			await this.createReviewTask(chatMessage ?? "", target, { mode })
+
+			// For security-review mode, append auto-confirmation message
+			const autoExecuteMessage = t("common:review.tip.auto_execute_with_default_config")
+			const finalMessage =
+				mode === "security-review" && chatMessage ? `${chatMessage} ${autoExecuteMessage}` : (chatMessage ?? "")
+
+			await this.createReviewTask(finalMessage, target, { mode })
 		}
 	}
 

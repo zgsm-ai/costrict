@@ -8,9 +8,7 @@ security-review 技能提供：
 - 支持**9 种编程语言**：Java、Python、Go、PHP、JavaScript/Node.js、C/C++、.NET/C#、Ruby、Rust
 - 覆盖**OWASP Top 10**、注入攻击、认证绕过、业务逻辑漏洞等
 - **乌云真实漏洞案例模式**（2010-2016 年 88,636 个案例）
-- 现代安全领域：**LLM、Serverless、Android**
-
-**请记住**：始终使用 security-review 技能并采用**默认目录配置** - 不要在没有它的情况下尝试安全审计，也不要切换到其他模式来完成安全审查任务。`,
+- 现代安全领域：**LLM、Serverless、Android**`,
 }
 
 export default prompt
