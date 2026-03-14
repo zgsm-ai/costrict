@@ -39,6 +39,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	historyPreviewCollapsed?: boolean // Add the new state property
 	didHydrateState: boolean
 	showWelcome: boolean
+	didHydrateCliState: boolean
 	theme: any
 	mcpServers: McpServer[]
 	currentCheckpoint?: string
@@ -57,6 +58,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	hasClosedCodeReviewWelcomeTips: boolean // Track if user has dismissed code review welcome tips
 	reviewTask: ReviewTaskPayload
 	setReviewTask: (value: ReviewTaskPayload) => void
+	setDidHydrateSClitate: (value: boolean) => void
 	setHasOpenedModeSelector: (value: boolean) => void // Setter for the new property
 	alwaysAllowFollowupQuestions: boolean // New property for follow-up questions auto-approve
 	setAlwaysAllowFollowupQuestions: (value: boolean) => void // Setter for the new property
@@ -307,6 +309,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 	})
 
 	const [didHydrateState, setDidHydrateState] = useState(false)
+	const [didHydrateCliState, setDidHydrateSClitate] = useState(false)
 	const [showWelcome, setShowWelcome] = useState(false)
 	const [theme, setTheme] = useState<any>(undefined)
 	const [filePaths, setFilePaths] = useState<string[]>([])
@@ -594,6 +597,8 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		automaticallyFocus: state.automaticallyFocus ?? false,
 		didHydrateState,
 		showWelcome,
+		didHydrateCliState,
+		setDidHydrateSClitate,
 		theme,
 		mcpServers,
 		currentCheckpoint,

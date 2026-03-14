@@ -17,6 +17,7 @@ import HistoryView from "./components/history/HistoryView"
 import SettingsView, { SettingsViewRef } from "./components/settings/SettingsView"
 import CodeReviewPage from "./components/code-review"
 import CodeReviewHistoryView from "./components/code-review/CodeReviewHistoryView"
+import CostrictCliView from "./components/costrict-cli/CostrictCliView"
 import WelcomeView from "./components/welcome/WelcomeViewProvider"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
 import { CheckpointRestoreDialog } from "./components/chat/CheckpointRestoreDialog"
@@ -39,6 +40,7 @@ type Tab =
 	| "settings"
 	| "history"
 	| "chat"
+	| "cs-cli"
 	| "marketplace"
 	| "cloud"
 	| "zgsm-account"
@@ -111,6 +113,8 @@ const App = () => {
 		hasClosedCodeReviewWelcomeTips,
 		reviewTask,
 		setReviewTask,
+		didHydrateCliState,
+		setDidHydrateSClitate,
 	} = useExtensionState()
 	const { t } = useTranslation()
 
@@ -119,7 +123,7 @@ const App = () => {
 
 	const [showAnnouncement, setShowAnnouncement] = useState(false)
 	const [tab, setTab] = useState<Tab>("chat")
-	const isChatTab = useMemo(() => ["chat", "codeReview"].includes(tab), [tab])
+	const isChatTab = useMemo(() => ["chat", "codeReview", "cs-cli"].includes(tab), [tab])
 
 	const [humanRelayDialogState, setHumanRelayDialogState] = useState<HumanRelayDialogState>({
 		isOpen: false,
@@ -167,14 +171,21 @@ const App = () => {
 
 			setCurrentSection(undefined)
 			setCurrentMarketplaceTab(undefined)
-
+			if (newTab === "cs-cli" && !didHydrateCliState) {
+				setDidHydrateSClitate(true)
+			}
+			// Notify backend of active tab change so it can hibernate/wake non-CLI features
 			if (settingsRef.current?.checkUnsaveChanges) {
-				settingsRef.current.checkUnsaveChanges(() => setTab(newTab))
+				settingsRef.current.checkUnsaveChanges(() => {
+					setTab(newTab)
+					vscode.postMessage({ type: "switchTab", tab: newTab })
+				})
 			} else {
 				setTab(newTab)
+				vscode.postMessage({ type: "switchTab", tab: newTab })
 			}
 		},
-		[mdmCompliant],
+		[didHydrateCliState, mdmCompliant, setDidHydrateSClitate],
 	)
 
 	const toggleCodeReviewTips = useCallback(() => {
@@ -317,10 +328,16 @@ const App = () => {
 		]
 
 		if (apiConfiguration?.apiProvider === "zgsm") {
-			baseTabs.push({
-				label: "CODE REVIEW",
-				value: "codeReview",
-			})
+			baseTabs.push(
+				{
+					label: "CODE REVIEW",
+					value: "codeReview",
+				},
+				{
+					label: "CLI",
+					value: "cs-cli",
+				},
+			)
 		}
 
 		return baseTabs
@@ -448,14 +465,28 @@ const App = () => {
 							</StandardTooltip>
 						</div>
 					)}
+					{tab === "cs-cli" && (
+						<div className="header-right flex absolute right-3 gap-1">
+							<StandardTooltip content="Restart CS-Cli">
+								<i
+									className="codicon codicon-refresh cursor-pointer p-0.5"
+									onClick={() => {
+										setDidHydrateSClitate(true)
+										vscode.postMessage({ type: "CostrictCliRestart" })
+									}}></i>
+							</StandardTooltip>
+						</div>
+					)}
 				</div>
-				<TabContent className={tab === "codeReview" ? "p-0" : ""}>
-					<ChatView
-						ref={chatViewRef}
-						isHidden={tab !== "chat"}
-						showAnnouncement={showAnnouncement}
-						hideAnnouncement={() => setShowAnnouncement(false)}
-					/>
+				<TabContent className={tab === "codeReview" || tab === "cs-cli" ? "p-0" : ""}>
+					{tab !== "cs-cli" && (
+						<ChatView
+							ref={chatViewRef}
+							isHidden={tab !== "chat"}
+							showAnnouncement={showAnnouncement}
+							hideAnnouncement={() => setShowAnnouncement(false)}
+						/>
+					)}
 					{tab === "codeReview" && (
 						<CodeReviewPage
 							isHidden={tab !== "codeReview"}
@@ -465,6 +496,9 @@ const App = () => {
 								codeReviewNavigateRef.current = fn
 							}}
 						/>
+					)}
+					{apiConfiguration.apiProvider === "zgsm" && didHydrateCliState && (
+						<CostrictCliView isHidden={tab !== "cs-cli"} />
 					)}
 				</TabContent>
 			</div>

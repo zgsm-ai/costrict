@@ -85,6 +85,7 @@ import { MarketplaceManager, MarketplaceItemType } from "../../services/marketpl
 import { ZgsmAuthConfig, ZgsmAuthService, ZgsmAuthStorage } from "../costrict/auth"
 import { CodeReviewService } from "../costrict/code-review"
 import { ZgsmCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
+import { getTerminalManager } from "../cli-wrap"
 import { ErrorCodeManager } from "../costrict/error-code"
 import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
 import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-event-monitor"
@@ -616,6 +617,34 @@ export const webviewMessageHandler = async (
 		case "cancelReviewTask":
 			await CodeReviewService.getInstance().cancelCurrentTask()
 			break
+		// CostrictCli terminal management
+		case "CostrictCliStart": {
+			const terminalManager = getTerminalManager()
+			terminalManager.setMessageSender((msg) => provider.postMessageToWebview(msg))
+			await terminalManager.start({
+				cols: message.cols ?? 80,
+				rows: message.rows ?? 24,
+			})
+			break
+		}
+		case "CostrictCliInput":
+			if (message.data) {
+				await getTerminalManager().write(message.data)
+			}
+			break
+		case "CostrictCliResize":
+			if (message.cols && message.rows) {
+				await getTerminalManager().resize(message.cols, message.rows)
+			}
+			break
+		case "CostrictCliStop":
+			await getTerminalManager().stop()
+			break
+		case "CostrictCliRestart": {
+			await getTerminalManager().stop()
+			await provider.postMessageToWebview({ type: "CostrictCliRestart" })
+			break
+		}
 		case "webviewDidLaunch":
 			// Load custom modes first
 			const customModes = await provider.customModesManager.getCustomModes()
@@ -3282,6 +3311,8 @@ export const webviewMessageHandler = async (
 					tab: message.tab,
 					values: message.values,
 				})
+				// Notify provider of active tab change to enable/disable hibernation
+				provider.setActiveTab(message.tab)
 			}
 			break
 		}

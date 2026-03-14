@@ -167,7 +167,7 @@ export const CLAUDE_CODE_API_CONFIG = {
 		// Note: fine-grained-tool-streaming removed for OAuth compatibility
 	],
 	// User-Agent must match Claude Code's signature for OAuth tokens to be accepted
-	// Format matches opencode-anthropic-auth: "claude-cli/VERSION (external, cli)"
+	// Format matches anthropic-auth: "claude-cli/VERSION (external, cli)"
 	userAgent: "claude-cli/2.1.2 (external, cli)",
 } as const
 
