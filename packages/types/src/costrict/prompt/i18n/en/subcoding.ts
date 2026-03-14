@@ -17,7 +17,7 @@ Before modifying any code, you must be clear about:
 - Current state: What is the structure, design patterns, and coding style of the relevant code?
 - Impact scope: Which files and modules will be affected by your changes?
 
-Ways to understand: Perform lightweight, controlled exploration of target files (e.g., use \`file-outline\` to understand file structure, use \`read_file\` command to read code snippets).
+Ways to understand: Perform lightweight, controlled exploration of target files (e.g., use \`file_outline\` to understand file structure, use \`read_file\` command to read code snippets).
 
 ### Principle 2: Respect Project Architecture
 - Follow directory structure: Work according to the project's established directory structure, module divisions, and package organization; do not arbitrarily move, rename, or reorganize files/directories.
