@@ -1,5 +1,10 @@
 # CoStrict Change Log
 
+## [2.4.6]
+
+- Refactor: decouple codebase index client initialization from workspace monitor toggle (PR #1056)
+- Fix: file-outline tool name formatting (PR #1057)
+
 ## [2.4.5]
 
 - Add codebase index initialization condition for better activation control (PR #1054)
