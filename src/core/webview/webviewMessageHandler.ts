@@ -1207,7 +1207,7 @@ export const webviewMessageHandler = async (
 				} else {
 					// Handle rejection: Post a specific error message for this provider.
 					const errorMessage = result.reason instanceof Error ? result.reason.message : String(result.reason)
-					console.error(`Error fetching models for ${routerName}:`, result.reason)
+					console.warn(`Error fetching models for ${routerName}:`, result.reason)
 
 					routerModels[routerName] = {} // Ensure it's an empty object in the main routerModels message.
 

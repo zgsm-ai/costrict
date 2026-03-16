@@ -152,25 +152,27 @@ async function generatePrompt(data: {
 	// Determine if English-only rule should be added (for non-Chinese languages)
 	const shouldAddEnglishOnlyRule = language !== "zh-CN"
 
-	const basePrompt = `${usePurePrompts ? "" : markdownFormattingSection()}
+	const basePrompt = `${usePurePrompts || settings?.isCostrictCli ? "" : markdownFormattingSection()}
 
-${usePurePrompts ? "" : useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}${toolsCatalog}
+${usePurePrompts || settings?.isCostrictCli ? "" : useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}${toolsCatalog}
 
-${usePurePrompts ? "" : useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
+${usePurePrompts || settings?.isCostrictCli ? "" : useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
 
-${usePurePrompts ? "" : useLitePrompts ? getLiteObjectiveSection() : getObjectiveSection()}
+${usePurePrompts || settings?.isCostrictCli ? "" : useLitePrompts ? getLiteObjectiveSection() : getObjectiveSection()}
 
 ${usePurePrompts || !shouldAddEnglishOnlyRule ? "" : getEnglishOnlySection()}
 
 ${roleDefinition}
 
 ${disableSwitchMode ? "" : modesSection}
-${usePurePrompts ? "" : skillsSection ? `\n${skillsSection}` : ""}
-${usePurePrompts ? "" : useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
+${usePurePrompts || settings?.isCostrictCli ? "" : skillsSection ? `\n${skillsSection}` : ""}
+${usePurePrompts ? "" : (useLitePrompts ?
+	getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : 
+	getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined))}
 
-${usePurePrompts ? "" : useLitePrompts ? getLiteRulesSection(cwd, settings, experiments) : getRulesSection(cwd, settings, experiments)}
+${usePurePrompts || settings?.isCostrictCli ? "" : useLitePrompts ? getLiteRulesSection(cwd, settings, experiments) : getRulesSection(cwd, settings, experiments)}
 
-${usePurePrompts ? "" : getSystemInfoSection(cwd, shell)}
+${usePurePrompts || settings?.isCostrictCli ? "" : getSystemInfoSection(cwd, shell)}
 
 ${
 	usePurePrompts

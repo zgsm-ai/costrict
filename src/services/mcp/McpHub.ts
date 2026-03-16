@@ -42,6 +42,7 @@ import { safeWriteJson } from "../../utils/safeWriteJson"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { isJetbrainsPlatform } from "../../utils/platform"
 import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
+import { getEligibleBuiltinServers } from "./costrict/BuiltinMcpServers"
 
 // Discriminated union for connection states
 export type ConnectedMcpConnection = {
@@ -587,6 +588,53 @@ export class McpHub {
 			} else {
 				this.showErrorMessage(`Failed to initialize ${source} MCP servers`, error)
 			}
+		}
+	}
+
+	/**
+	 * Ensures built-in MCP servers are present in the global config.
+	 * Each entry is only injected when it does not already exist in the config
+	 * and its CLI command satisfies the minimum version requirement.
+	 */
+	private async ensureBuiltinMcpServers(disabled = false): Promise<void> {
+		try {
+			const settingsPath = await this.getMcpSettingsFilePath()
+			const content = await fs.readFile(settingsPath, "utf-8")
+			const config = JSON.parse(content)
+
+			if (!config.mcpServers || typeof config.mcpServers !== "object") {
+				config.mcpServers = {}
+			}
+
+			if (disabled) {
+			    delete config.mcpServers["costrict-cli"]
+			}
+			const eligible = await getEligibleBuiltinServers(disabled)
+			let modified = false
+			for (const { name, config: serverConfig } of eligible) {
+				if (config.mcpServers[name]) {
+					continue
+				}
+				config.mcpServers[name] = serverConfig
+				modified = true
+			}
+
+			if (modified) {
+				this.isProgrammaticUpdate = true
+				try {
+					await safeWriteJson(settingsPath, config, { prettyPrint: true })
+				} finally {
+					if (this.flagResetTimer) {
+						clearTimeout(this.flagResetTimer)
+					}
+					this.flagResetTimer = setTimeout(() => {
+						this.isProgrammaticUpdate = false
+						this.flagResetTimer = undefined
+					}, 600)
+				}
+			}
+		} catch (error) {
+			console.error("Failed to inject built-in MCP servers:", error)
 		}
 	}
 
@@ -1479,6 +1527,9 @@ export class McpHub {
 		source?: "global" | "project",
 	): Promise<void> {
 		try {
+			if(serverName === "costrict-cli") {
+				await this.ensureBuiltinMcpServers(disabled)
+			}
 			// Find the connection to determine if it's a global or project server
 			const connection = this.findConnection(serverName, source)
 			if (!connection) {

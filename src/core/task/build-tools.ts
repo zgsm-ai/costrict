@@ -32,6 +32,7 @@ interface BuildToolsOptions {
 	 * to pass all tool definitions while restricting callable tools.
 	 */
 	includeAllToolsWithRestrictions?: boolean
+	isCostrictCli?: boolean
 }
 
 interface BuildToolsResult {
@@ -92,6 +93,7 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 		modelInfo,
 		useLitePrompts,
 		includeAllToolsWithRestrictions,
+		isCostrictCli
 	} = options
 
 	const mcpHub = provider.getMcpHub()

@@ -217,6 +217,25 @@ export const ZgsmAI = ({
 							{t("settings:providers.refreshModels.label")}
 						</div>
 					</Button>
+					{/* CLI Mode Toggle */}
+					<div>
+						<Checkbox
+							checked={apiConfiguration?.isCostrictCli ?? false}
+							onChange={(checked: boolean) => {
+								setApiConfigurationField("isCostrictCli", checked)
+								vscode.postMessage({
+									type: "toggleMcpServer",
+									serverName: "costrict-cli",
+									source: "global",
+									disabled: !checked,
+								})
+							}}>
+							{t("settings:providers.isCostrictCli")}
+						</Checkbox>
+						<div className="text-sm text-vscode-descriptionForeground ml-6">
+							{t("settings:providers.isCostrictCliDescription")}
+						</div>
+					</div>
 					{debug && (
 						<div>
 							<VSCodeCheckbox

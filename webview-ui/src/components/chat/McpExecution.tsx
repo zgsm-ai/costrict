@@ -184,6 +184,48 @@ export const McpExecution = ({
 		}
 	}, [text, useMcpServer, initialServerName, initialToolName, serverName, toolName, isArguments])
 
+	if (serverName === "costrict-cli") {
+		return (
+			<div className="w-full bg-vscode-editor-background rounded-xs p-2">
+				{/* Tool information section */}
+				{useMcpServer?.type === "use_mcp_tool" && (	
+					<div onClick={(e) => e.stopPropagation()}>
+						<McpToolRow
+							tool={{
+								name: `${serverName} (${useMcpServer.toolName})`,
+								alwaysAllow:
+									server?.tools?.find((tool) => tool.name === useMcpServer.toolName)?.alwaysAllow ||
+									false,
+							}}
+							serverName={useMcpServer.serverName}
+							serverSource={server?.source}
+							alwaysAllowMcp={alwaysAllowMcp}
+							isInChatContext={true}
+						/>
+					</div>
+				)}
+				{/* Arguments section - display like command (always visible) */}
+				{(isArguments || useMcpServer?.arguments || argumentsText) && (
+					<div
+						className={cn({
+							"mt-1 pt-1":
+								!isArguments && (useMcpServer?.type === "use_mcp_tool" || (toolName && serverName)),
+						})}>
+						<CodeBlock source={formattedArgumentsText} language="json" />
+					</div>
+				)}
+				{/* Response section - collapsible like command output */}
+				<ResponseContainer
+					isExpanded={isResponseExpanded}
+					response={formattedResponseText}
+					isJson={responseIsJson}
+					hasArguments={!!(isArguments || useMcpServer?.arguments || argumentsText)}
+					isPartial={status ? status.status !== "completed" : false}
+				/>
+			</div>
+		)
+	}
+
 	return (
 		<>
 			<div className="flex flex-row items-center justify-between gap-2 mb-1">

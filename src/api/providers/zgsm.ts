@@ -11,6 +11,7 @@ import {
 	zgsmModelsConfig as zgsmModels,
 	// TOOL_PROTOCOL,
 	ClineApiReqCancelReason,
+	toolNamesFilter,
 } from "@roo-code/types"
 
 import type { ApiHandlerOptions } from "../../shared/api"
@@ -58,7 +59,13 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		super()
 		this.options = options
 		this.logger = createLogger(Package.outputChannel)
-		this.baseURL = `${this.options.zgsmBaseUrl?.trim() || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}/chat-rag/api/v1`
+		// todo: 在项目中增加完整的 isCostrictCli 相关逻辑 
+		if (options.isCostrictCli) {
+			this.baseURL = `http://localhost:4096/cs/v1`
+		} else {
+			this.baseURL = `${this.options.zgsmBaseUrl?.trim() || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}/chat-rag/api/v1`
+		}
+		// this.baseURL = `${this.options.zgsmBaseUrl?.trim() || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}/chat-rag/api/v1`
 		const apiKey = options.zgsmAccessToken || "not-provided"
 		const isAzureAiInference = this._isAzureAiInference(this.baseURL)
 		const urlHost = this._getUrlHost(this.baseURL)
@@ -195,7 +202,12 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 
 					const { data, response } = await (this.client as OpenAI).chat.completions
 						.create(
-							requestOptions,
+							{
+								...requestOptions,
+								model: `costrict/${requestOptions.model}`,
+								// messages: requestOptions.messages,
+								// stream: true,
+							},
 							Object.assign(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
 								headers: _headers,
 								signal: this?.abortController?.signal,
@@ -364,6 +376,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 	): Array<OpenAI.Chat.ChatCompletionMessageParam | Anthropic.Messages.MessageParam> {
 		let convertedMessages: Array<OpenAI.Chat.ChatCompletionMessageParam | Anthropic.Messages.MessageParam>
 		const _mid = modelInfo.id?.toLowerCase()
+		systemPrompt += `\nuse costrict-cli mcp` 
 		if (isDeepseekReasoner) {
 			convertedMessages = convertToR1Format([{ role: "user", content: systemPrompt }, ...messages])
 		} else {
@@ -642,6 +655,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					if (toolCall.id) {
 						activeToolCallIds.add(toolCall.id)
 					}
+					if (toolCall.function?.name != null) {
+						toolCall.function.name = !toolCall.function.name.startsWith("mcp--") && !toolNamesFilter.includes(toolCall.function.name as any) ? `mcp--costrict-cli-${toolCall.function.name}`: toolCall.function.name
+					}
 					toolCallBuffer.push({
 						type: "tool_call_partial",
 						index: toolCall.index,
@@ -706,7 +722,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 							requestId,
 							JSON.stringify(chunk),
 						)
-					for (const key of ["reasoning_content", "reasoning"] as const) {
+					for (const key of ["reasoning_content", "reasoning", "reasoning_text"] as const) {
 						if (key in delta) {
 							const reasoning_content = ((delta as any)[key] as string | undefined) || ""
 							if (reasoning_content) {

@@ -56,6 +56,7 @@ import {
 	MAX_MCP_TOOLS_THRESHOLD,
 	countEnabledMcpTools,
 	zgsmModelsConfig,
+	toolNamesFilter,
 } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
 // import { customToolRegistry } from "@roo-code/core"
@@ -1800,6 +1801,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				disabledTools: state?.disabledTools,
 				modelInfo,
 				includeAllToolsWithRestrictions: false,
+				isCostrictCli: this?.apiConfiguration?.isCostrictCli ?? false
 			})
 			allTools = toolsResult.tools
 		}
@@ -4102,6 +4104,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				{
 					terminalShellIntegrationDisabled,
 					todoListEnabled: apiConfiguration?.todoListEnabled ?? true,
+					isCostrictCli: apiConfiguration?.isCostrictCli ?? false,
 					useAgentRules:
 						vscode.workspace.getConfiguration(Package.name).get<boolean>("useAgentRules") ?? true,
 					enableSubfolderRules: enableSubfolderRules ?? false,
@@ -4168,6 +4171,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				disabledTools: state?.disabledTools,
 				modelInfo,
 				includeAllToolsWithRestrictions: false,
+				isCostrictCli: this?.apiConfiguration?.isCostrictCli ?? false
 			})
 			allTools = toolsResult.tools
 		}
@@ -4386,6 +4390,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						disabledTools: state?.disabledTools,
 						modelInfo,
 						includeAllToolsWithRestrictions: false,
+						isCostrictCli: this?.apiConfiguration?.isCostrictCli ?? false
 					})
 					contextMgmtTools = toolsResult.tools
 				}
@@ -4551,6 +4556,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				modelInfo,
 				useLitePrompts: experiments?.useLitePrompts ?? false,
 				includeAllToolsWithRestrictions: supportsAllowedFunctionNames,
+				isCostrictCli: this?.apiConfiguration?.isCostrictCli ?? false
 			})
 			allTools = toolsResult.tools
 			allowedFunctionNames = toolsResult.allowedFunctionNames
@@ -4610,7 +4616,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// Include tools whenever they are present.
 			...(shouldIncludeTools
 				? {
-						tools: allTools,
+						tools: allTools?.filter(v => {
+							if (v.type !== "function") return
+							return v.function.name.startsWith("mcp--") || toolNamesFilter.includes(v.function.name as any)
+						}) ,
 						tool_choice: "auto",
 						parallelToolCalls: true,
 						// When mode restricts tools, provide allowedFunctionNames so providers

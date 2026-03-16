@@ -102,7 +102,7 @@ const McpToolRow = ({ tool, serverName, serverSource, alwaysAllowMcp, isInChatCo
 					className={`mt-1 text-xs text-vscode-descriptionForeground ${
 						isToolEnabled ? "opacity-80" : "opacity-40"
 					}`}>
-					{tool.description}
+					{tool.description.length > 100 ? tool.description.slice(0, 150) + "..." : tool.description}
 				</div>
 			)}
 			{isToolEnabled &&

@@ -880,6 +880,52 @@ describe("webviewMessageHandler - mcpEnabled", () => {
 	})
 })
 
+describe("webviewMessageHandler - toggleCostrictCli", () => {
+	let mockMcpHub: any
+
+	beforeEach(() => {
+		vi.clearAllMocks()
+
+		mockMcpHub = {
+			restartConnection: vi.fn().mockResolvedValue(undefined),
+		}
+
+		;(mockClineProvider as any).getMcpHub = vi.fn().mockReturnValue(mockMcpHub)
+	})
+
+	it("calls restartConnection for costrict-cli when bool=true", async () => {
+		await webviewMessageHandler(mockClineProvider, {
+			type: "toggleCostrictCli",
+			bool: true,
+		})
+
+		expect((mockClineProvider as any).getMcpHub).toHaveBeenCalledTimes(1)
+		expect(mockMcpHub.restartConnection).toHaveBeenCalledTimes(1)
+		expect(mockMcpHub.restartConnection).toHaveBeenCalledWith("costrict-cli", "global")
+	})
+
+	it("does not call restartConnection when bool=false", async () => {
+		await webviewMessageHandler(mockClineProvider, {
+			type: "toggleCostrictCli",
+			bool: false,
+		})
+
+		expect(mockMcpHub.restartConnection).not.toHaveBeenCalled()
+	})
+
+	it("handles missing McpHub instance gracefully when bool=true", async () => {
+		;(mockClineProvider as any).getMcpHub = vi.fn().mockReturnValue(undefined)
+
+		// Should not throw
+		await expect(
+			webviewMessageHandler(mockClineProvider, {
+				type: "toggleCostrictCli",
+				bool: true,
+			}),
+		).resolves.not.toThrow()
+	})
+})
+
 describe("webviewMessageHandler - requestCommands", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()

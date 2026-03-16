@@ -42,6 +42,8 @@
 			"capabilities": "配置您的自定义OpenAI兼容模型的功能和定价。在指定模型功能时要小心，因为它们会影响 CoStrict 的表现。"
 		},
 		"useZgsmCustomConfig": "使用自定义配置 (debug 已开启)",
+		"isCostrictCli": "启用 CLI 模式",
+		"isCostrictCliDescription": "启用后，将使用本地 Costrict CLI API（http://localhost:4096）并激活 costrict-cli MCP 服务器。",
 		"geminiCli": {
 			"projectIdDescription": "为企业或非免费套餐访问指定您的 Google Cloud 项目 ID。如使用个人账号并希望自动发现项目，请留空。如果您遇到 API 错误，建议填写项目ID。"
 		},

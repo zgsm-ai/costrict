@@ -215,6 +215,7 @@ const zgsmSchema = apiModelIdProviderModelSchema.extend({
 	useZgsmCustomConfig: z.boolean().optional(),
 	zgsmCodebaseIndexEnabled: z.boolean().optional(),
 	zgsmAiCustomModelInfo: modelInfoSchema.nullish(),
+	isCostrictCli: z.boolean().optional(),
 })
 
 const anthropicSchema = apiModelIdProviderModelSchema.extend({

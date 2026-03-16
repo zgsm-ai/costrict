@@ -1129,16 +1129,25 @@ export class NativeToolCallParser {
 					}
 					break
 
-				case "new_task":
-					if (normalizedArgs.message !== undefined) {
+				case "new_task": {
+					// Handle task alias parameter transformation
+					// When model uses "task" instead of "new_task", parameters are named differently:
+					// - prompt -> message
+					// - subagent_type -> mode
+					// - description is discarded (no equivalent in new_task)
+					const isTaskAlias = (toolCall.name as string) === "task"
+					const message = isTaskAlias ? normalizedArgs.prompt : normalizedArgs.message
+					const mode = isTaskAlias ? normalizedArgs.subagent_type : normalizedArgs.mode
+
+					if (message !== undefined) {
 						nativeArgs = {
-							mode: normalizedArgs.mode ?? defaultModeSlug,
-							message: normalizedArgs.message,
+							mode: mode ?? defaultModeSlug,
+							message: message,
 							todos: normalizedArgs.todos,
 						} as NativeArgsFor<TName>
 					}
 					break
-
+				}
 				default:
 					if (customToolRegistry.has(resolvedName)) {
 						nativeArgs = normalizedArgs as NativeArgsFor<TName>

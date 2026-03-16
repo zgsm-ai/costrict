@@ -410,6 +410,9 @@ export const TOOL_ALIASES: Record<string, ToolName> = {
 	search: "search_files",
 	list: "list_files",
 	search_and_replace: "edit",
+	bash: "execute_command",
+	question: "ask_followup_question",
+	task: "new_task" // Alias for compatibility with models that return "task" instead of "new_task"
 } as const
 
 export type DiffResult =

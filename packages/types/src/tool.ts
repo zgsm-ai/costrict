@@ -62,6 +62,8 @@ export const toolNames = [
 	"costrict_checkpoint",
 ] as const
 
+export const toolNamesFilter = toolNames.filter((name) => ["attempt_completion", "switch_mode", "new_task", "ask_followup_question", "fake_tool_call", "custom_tool"].includes(name))
+
 export const toolNamesSchema = z.enum(toolNames)
 
 export type ToolName = z.infer<typeof toolNamesSchema>

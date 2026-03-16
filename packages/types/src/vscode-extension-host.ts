@@ -492,6 +492,7 @@ export interface WebviewMessage {
 		| "getReviewIssueById"
 		| "deleteReviewHistoryItem"
 		| "showReviewComment"
+		| "toggleCostrictCli"
 		// costrict-end
 		| "humanRelayResponse"
 		| "settingsButtonclicked"

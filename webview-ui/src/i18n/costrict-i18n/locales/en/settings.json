@@ -42,6 +42,8 @@
 			"capabilities": "Configure the capabilities and pricing for your custom OpenAI-compatible model. Be careful when specifying the model capabilities, as they can affect how CoStrict performs."
 		},
 		"useZgsmCustomConfig": "Use custom configuration (debug enabled)",
+		"isCostrictCli": "Enable CLI Mode",
+		"isCostrictCliDescription": "When enabled, uses the local Costrict CLI API (http://localhost:4096) and activates the costrict-cli MCP server.",
 		"geminiCli": {
 			"projectIdDescription": "Specify your Google Cloud Project ID for enterprise or non-free tier access. Leave empty for automatic project discovery with personal accounts. If you encounter an API Error, it is recommended to fill in the Project ID."
 		},
