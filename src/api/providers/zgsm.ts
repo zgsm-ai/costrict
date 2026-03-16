@@ -28,6 +28,7 @@ import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from ".
 import { ZgsmAuthConfig, ZgsmAuthService } from "../../core/costrict/auth"
 import { getClientId } from "../../utils/getClientId"
 import { getWorkspacePath } from "../../utils/path"
+import { buildMcpToolName } from "../../utils/mcp-name"
 import { getApiRequestTimeout } from "./utils/timeout-config"
 import { getApiResponseRenderMode, renderModes } from "./utils/response-render-config"
 import { createLogger, ILogger } from "../../utils/logger"
@@ -59,7 +60,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		super()
 		this.options = options
 		this.logger = createLogger(Package.outputChannel)
-		// todo: 在项目中增加完整的 isCostrictCli 相关逻辑 
+		// todo: 在项目中增加完整的 isCostrictCli 相关逻辑
 		if (options.isCostrictCli) {
 			this.baseURL = `http://localhost:4096/cs/v1`
 		} else {
@@ -104,6 +105,27 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				defaultHeaders: COSTRICT_DEFAULT_HEADERS,
 			})
 		}
+	}
+
+	private normalizeIncomingToolCallName(name: string): string {
+		if (!this.options.isCostrictCli) {
+			return name
+		}
+
+		if (name.startsWith("mcp--") || toolNamesFilter.includes(name as any)) {
+			return name
+		}
+
+		// OpenCode's `question` tool is a first-class interactive tool, not an MCP tool.
+		// Leave it raw so NativeToolCallParser can translate its payload into our ask tools.
+		if (name === "question") {
+			return name
+		}
+
+		// OpenCode's OpenAI-compatible route emits raw tool names like "write".
+		// In CLI mode those are actually tools exposed by the built-in costrict-cli MCP server,
+		// so they must be rewritten to the dynamic MCP naming scheme the downstream parser expects.
+		return buildMcpToolName("costrict-cli", name)
 	}
 
 	override async *createMessage(
@@ -291,7 +313,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 							yield {
 								type: "tool_call",
 								id: toolCall.id,
-								name: toolCall.function.name,
+								name: this.normalizeIncomingToolCallName(toolCall.function.name),
 								arguments: toolCall.function.arguments,
 							}
 						}
@@ -359,6 +381,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			"zgsm-provider": metadata?.provider,
 			"x-costrict-idea": getEditorType(),
 			"zgsm-project-path": encodeURI(workspacePath),
+			...(this.options.isCostrictCli && workspacePath
+				? { "x-opencode-directory": encodeURIComponent(workspacePath) }
+				: {}),
 			"x-caller": metadata?.mode === "review" ? "review-checker" : "chat",
 		}
 	}
@@ -376,7 +401,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 	): Array<OpenAI.Chat.ChatCompletionMessageParam | Anthropic.Messages.MessageParam> {
 		let convertedMessages: Array<OpenAI.Chat.ChatCompletionMessageParam | Anthropic.Messages.MessageParam>
 		const _mid = modelInfo.id?.toLowerCase()
-		systemPrompt += `\nuse costrict-cli mcp` 
+		systemPrompt += `\nuse costrict-cli mcp`
 		if (isDeepseekReasoner) {
 			convertedMessages = convertToR1Format([{ role: "user", content: systemPrompt }, ...messages])
 		} else {
@@ -655,14 +680,14 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					if (toolCall.id) {
 						activeToolCallIds.add(toolCall.id)
 					}
-					if (toolCall.function?.name != null) {
-						toolCall.function.name = !toolCall.function.name.startsWith("mcp--") && !toolNamesFilter.includes(toolCall.function.name as any) ? `mcp--costrict-cli-${toolCall.function.name}`: toolCall.function.name
-					}
+					const normalizedToolName = toolCall.function?.name
+						? this.normalizeIncomingToolCallName(toolCall.function.name)
+						: undefined
 					toolCallBuffer.push({
 						type: "tool_call_partial",
 						index: toolCall.index,
 						id: toolCall.id,
-						name: toolCall.function?.name,
+						name: normalizedToolName,
 						arguments: toolCall.function?.arguments,
 					})
 				}
@@ -871,7 +896,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					type: "tool_call_partial",
 					index: toolCall.index,
 					id: toolCall.id,
-					name: toolCall.function?.name,
+					name: toolCall.function?.name
+						? this.normalizeIncomingToolCallName(toolCall.function.name)
+						: undefined,
 					arguments: toolCall.function?.arguments,
 				}
 			}
@@ -1098,7 +1125,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 						yield {
 							type: "tool_call",
 							id: toolCall.id,
-							name: toolCall.function.name,
+							name: this.normalizeIncomingToolCallName(toolCall.function.name),
 							arguments: toolCall.function.arguments,
 						}
 					}

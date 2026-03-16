@@ -354,7 +354,7 @@ export const ChatRowContent = ({
 	}, [message.text, message.say])
 
 	const multipleChoiceData = useMemo(() => {
-		if (message.type === "ask" && message.ask === "multiple_choice" && !message.partial) {
+		if (message.type === "ask" && message.ask === "multiple_choice") {
 			const data = safeJsonParse<MultipleChoiceData>(message.text)
 			// Costrict: Merge saved user response for display on reload
 			if (data && message.userResponse) {
@@ -363,7 +363,7 @@ export const ChatRowContent = ({
 			return data
 		}
 		return null
-	}, [message.type, message.ask, message.partial, message.text, message.userResponse])
+	}, [message.type, message.ask, message.text, message.userResponse])
 	// When resuming task, last won't be api_req_failed but a resume_task
 	// message, so api_req_started will show loading spinner. That's why we just
 	// remove the last api_req_started that failed without streaming anything.
@@ -518,8 +518,7 @@ export const ChatRowContent = ({
 					<span style={{ color: normalColor, fontWeight: "bold" }}>{t("chat:questions.hasQuestion")}</span>,
 				]
 			case "multiple_choice": {
-				const isLoading = isLast && isStreaming
-				if (!isLoading && multipleChoiceData) {
+				if (multipleChoiceData) {
 					return [
 						<MessageCircleQuestionMark
 							className="w-4 shrink-0"
@@ -2201,21 +2200,18 @@ export const ChatRowContent = ({
 								</div>
 							)}
 							<div className="flex flex-col gap-2 ml-6">
-								{message.partial && isStreaming ? (
+								{multipleChoiceData && onMultipleChoiceSubmit ? (
+									<MultipleChoiceForm
+										data={multipleChoiceData}
+										onSubmit={onMultipleChoiceSubmit}
+										isAnswered={isMultipleChoiceAnswered}
+									/>
+								) : message.partial && isStreaming ? (
 									<div className="flex items-center gap-2 py-2 text-vscode-descriptionForeground">
 										<VSCodeProgressRing className="size-4" />
 										<span className="text-sm">{t("chat:multipleChoice.loading")}</span>
 									</div>
-								) : (
-									multipleChoiceData &&
-									onMultipleChoiceSubmit && (
-										<MultipleChoiceForm
-											data={multipleChoiceData}
-											onSubmit={onMultipleChoiceSubmit}
-											isAnswered={isMultipleChoiceAnswered}
-										/>
-									)
-								)}
+								) : null}
 							</div>
 						</>
 					)

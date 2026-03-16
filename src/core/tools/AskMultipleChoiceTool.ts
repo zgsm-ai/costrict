@@ -81,11 +81,18 @@ export class AskMultipleChoiceTool extends BaseTool<"ask_multiple_choice"> {
 	}
 
 	override async handlePartial(task: Task, block: ToolUse<"ask_multiple_choice">): Promise<void> {
-		// Get questions from params (for XML protocol)
-		const questions: string | undefined = block.params.questions
+		const title = block.nativeArgs?.title
+		const questions = block.nativeArgs?.questions
 
-		// During partial streaming, show partial progress
-		await task.ask("multiple_choice", questions ?? "", block.partial).catch(() => {})
+		// Interactive question tools can remain in a streaming/running state until the user answers.
+		// Send the full questionnaire payload during partial updates so the UI can render the form immediately,
+		// instead of waiting for a tool_call_end that may not arrive until after the answer is submitted.
+		const multipleChoiceData: MultipleChoiceData = {
+			title,
+			questions: Array.isArray(questions) ? questions : [],
+		}
+
+		await task.ask("multiple_choice", JSON.stringify(multipleChoiceData), block.partial).catch(() => {})
 	}
 }
 

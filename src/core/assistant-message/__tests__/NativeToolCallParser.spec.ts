@@ -291,6 +291,51 @@ describe("NativeToolCallParser", () => {
 				})
 			})
 		})
+
+		describe("question tool compatibility", () => {
+			it("should map OpenCode question payloads to ask_multiple_choice", () => {
+				const toolCall = {
+					id: "toolu_question_1",
+					name: "question" as any,
+					arguments: JSON.stringify({
+						questions: [
+							{
+								header: "Calculator type",
+								multiple: false,
+								options: [
+									{ label: "CLI", description: "Run in terminal" },
+									{ label: "GUI", description: "Desktop app" },
+								],
+								question: "What calculator type do you want?",
+							},
+						],
+					}),
+				}
+
+				const result = NativeToolCallParser.parseToolCall(toolCall)
+
+				expect(result).not.toBeNull()
+				expect(result?.type).toBe("tool_use")
+				if (result?.type === "tool_use") {
+					expect(result.name).toBe("ask_multiple_choice")
+					expect(result.originalName).toBe("question")
+					expect(result.nativeArgs).toEqual({
+						title: undefined,
+						questions: [
+							{
+								id: "question_1",
+								prompt: "What calculator type do you want?",
+								options: [
+									{ id: "question_1_option_1", label: "CLI" },
+									{ id: "question_1_option_2", label: "GUI" },
+								],
+								allow_multiple: false,
+							},
+						],
+					})
+				}
+			})
+		})
 	})
 
 	describe("processStreamingChunk", () => {
@@ -309,6 +354,50 @@ describe("NativeToolCallParser", () => {
 				expect(result?.nativeArgs).toBeDefined()
 				const nativeArgs = result?.nativeArgs as { path: string }
 				expect(nativeArgs.path).toBe("src/test.ts")
+			})
+		})
+
+		describe("question tool compatibility", () => {
+			it("should emit partial ask_multiple_choice tool uses for OpenCode question payloads", () => {
+				const id = "toolu_streaming_question"
+				NativeToolCallParser.startStreamingToolCall(id, "question")
+
+				const result = NativeToolCallParser.processStreamingChunk(
+					id,
+					JSON.stringify({
+						questions: [
+							{
+								header: "Calculator type",
+								multiple: false,
+								options: [
+									{ label: "CLI", description: "Run in terminal" },
+									{ label: "GUI", description: "Desktop app" },
+								],
+								question: "What calculator type do you want?",
+							},
+						],
+					}),
+				)
+
+				expect(result).not.toBeNull()
+				expect(result?.name).toBe("ask_multiple_choice")
+				expect(result?.originalName).toBe("question")
+				if (result?.type === "tool_use") {
+					expect(result.nativeArgs).toEqual({
+						title: undefined,
+						questions: [
+							{
+								id: "question_1",
+								prompt: "What calculator type do you want?",
+								options: [
+									{ id: "question_1_option_1", label: "CLI" },
+									{ id: "question_1_option_2", label: "GUI" },
+								],
+								allow_multiple: false,
+							},
+						],
+					})
+				}
 			})
 		})
 	})
@@ -339,6 +428,57 @@ describe("NativeToolCallParser", () => {
 					expect(nativeArgs.path).toBe("finalized.ts")
 					expect(nativeArgs.offset).toBe(1)
 					expect(nativeArgs.limit).toBe(10)
+				}
+			})
+		})
+
+		describe("question tool compatibility", () => {
+			it("should finalize OpenCode question payloads as ask_multiple_choice", () => {
+				const id = "toolu_finalize_question"
+				NativeToolCallParser.startStreamingToolCall(id, "question")
+				NativeToolCallParser.processStreamingChunk(
+					id,
+					JSON.stringify({
+						questions: [
+							{
+								header: "Calculator type",
+								multiple: false,
+								options: [
+									{ label: "CLI", description: "Run in terminal" },
+									{ label: "GUI", description: "Desktop app" },
+								],
+								question: "What calculator type do you want?",
+							},
+						],
+					}),
+				)
+
+				const result = NativeToolCallParser.finalizeStreamingToolCall(id)
+
+				expect(result).not.toBeNull()
+				expect(result?.type).toBe("tool_use")
+				if (result?.type === "tool_use") {
+					expect(result.name).toBe("ask_multiple_choice")
+					expect(result.originalName).toBe("question")
+					expect(result.partial).toBe(false)
+					const nativeArgs = result.nativeArgs as {
+						title?: string
+						questions: Array<{
+							id: string
+							prompt: string
+							options: Array<{ id: string; label: string }>
+							allow_multiple?: boolean
+						}>
+					}
+					expect(nativeArgs.questions[0]).toEqual({
+						id: "question_1",
+						prompt: "What calculator type do you want?",
+						options: [
+							{ id: "question_1_option_1", label: "CLI" },
+							{ id: "question_1_option_2", label: "GUI" },
+						],
+						allow_multiple: false,
+					})
 				}
 			})
 		})

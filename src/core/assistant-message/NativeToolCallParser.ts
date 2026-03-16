@@ -132,6 +132,65 @@ export class NativeToolCallParser {
 		return value
 	}
 
+	private static resolveToolAliasWithArgs(toolName: string, args: Record<string, any>): string {
+		if (toolName === "question" && Array.isArray(args.questions)) {
+			return "ask_multiple_choice"
+		}
+
+		return resolveToolAlias(toolName)
+	}
+
+	private static normalizeAskMultipleChoiceArgs(args: Record<string, any>): Record<string, any> {
+		if (!Array.isArray(args.questions)) {
+			return args
+		}
+
+		return {
+			...args,
+			questions: args.questions.map((question: unknown, questionIndex: number) => {
+				if (!question || typeof question !== "object") {
+					return question
+				}
+
+				const record = question as Record<string, any>
+				const prompt = record.prompt ?? record.question ?? ""
+				const options = Array.isArray(record.options) ? record.options : []
+
+				return {
+					id: record.id ?? `question_${questionIndex + 1}`,
+					prompt: typeof prompt === "string" ? prompt : String(prompt),
+					options: options.map((option: unknown, optionIndex: number) => {
+						if (option && typeof option === "object") {
+							const optionRecord = option as Record<string, any>
+							const label = optionRecord.label ?? optionRecord.text ?? `Option ${optionIndex + 1}`
+
+							return {
+								id: optionRecord.id ?? `question_${questionIndex + 1}_option_${optionIndex + 1}`,
+								label: typeof label === "string" ? label : String(label),
+							}
+						}
+
+						return {
+							id: `question_${questionIndex + 1}_option_${optionIndex + 1}`,
+							label: typeof option === "string" ? option : String(option),
+						}
+					}),
+					allow_multiple:
+						this.coerceOptionalBoolean(record.allow_multiple) ??
+						this.coerceOptionalBoolean(record.multiple),
+				}
+			}),
+		}
+	}
+
+	private static normalizeToolArgsForTool(toolName: string, args: Record<string, any>): Record<string, any> {
+		if (toolName === "ask_multiple_choice") {
+			return this.normalizeAskMultipleChoiceArgs(args)
+		}
+
+		return args
+	}
+
 	/**
 	 * Process a raw tool call chunk from the API stream.
 	 * Handles tracking, buffering, and emits start/delta/end events.
@@ -310,19 +369,16 @@ export class NativeToolCallParser {
 		try {
 			const partialArgs = parseJSON(toolCall.argumentsAccumulator)
 
-			// Resolve tool alias to canonical name
-			const resolvedName = resolveToolAlias(toolCall.name) as ToolName
+			// Resolve aliases with access to the parsed args so OpenCode's `question` tool can
+			// be mapped to the correct canonical ask tool based on payload shape.
+			const parsedArgs = (partialArgs || {}) as Record<string, any>
+			const resolvedName = this.resolveToolAliasWithArgs(toolCall.name, parsedArgs) as ToolName
+			const normalizedArgs = this.normalizeToolArgsForTool(resolvedName, parsedArgs)
 			// Preserve original name if it differs from resolved (i.e., it was an alias)
 			const originalName = toolCall.name !== resolvedName ? toolCall.name : undefined
 
 			// Create partial ToolUse with extracted values
-			return this.createPartialToolUse(
-				toolCall.id,
-				resolvedName,
-				partialArgs || {},
-				true, // partial
-				originalName,
-			)
+			return this.createPartialToolUse(toolCall.id, resolvedName, normalizedArgs, true, originalName)
 		} catch {
 			// Even partial-json-parser can fail on severely malformed JSON
 			// Return null and wait for next chunk
@@ -789,38 +845,9 @@ export class NativeToolCallParser {
 			}
 		}
 
-		// Resolve tool alias to canonical name
-		let resolvedName = resolveToolAlias(toolCall.name as string) as TName
-
-		// Validate tool name (after alias resolution).
-		const matchBuiltinToolName = (toolNames.find(
-			(name) => name === resolvedName || resolvedName.indexOf(name) > -1,
-		) ?? "") as TName
-		const matchCustomToolName = (customToolRegistry
-			.list()
-			.find((name) => name === resolvedName || resolvedName.indexOf(name) > -1) ?? "") as TName
-
-		const _resolvedName = matchBuiltinToolName || matchCustomToolName
-
-		if (!_resolvedName) {
-			console.error(
-				`Invalid tool name: ${toolCall.name} (resolved: ${resolvedName}) | toolCall arguments: ${toolCall.arguments}`,
-			)
-			console.error(`Valid tool names:`, toolNames)
-			return null
-		} else {
-			if (toolCall.name !== _resolvedName) {
-				console.warn(`Resolved tool alias '${toolCall.name}' to '${_resolvedName}'`)
-			}
-			resolvedName = _resolvedName
-		}
-
 		try {
 			// Parse the arguments JSON string
-			const args = toolCall.arguments === "" ? {} : parseJSON(toolCall.arguments)
-
-			// Normalize values to handle type mismatches from LLM
-			// (e.g. stringified objects/arrays: '"[1,2,3]"' -> [1,2,3])
+			const args = (toolCall.arguments === "" ? {} : parseJSON(toolCall.arguments)) as Record<string, any>
 			const normalizedArgs: Record<string, any> = {}
 			for (const [key, value] of Object.entries(args)) {
 				let _key = key
@@ -831,19 +858,40 @@ export class NativeToolCallParser {
 				normalizedArgs[_key] = this.normalizeTypeValue(value)
 			}
 
-			// Build stringified params for display/logging.
+			let resolvedName = this.resolveToolAliasWithArgs(toolCall.name as string, normalizedArgs) as TName
+			const toolArgs = this.normalizeToolArgsForTool(resolvedName, normalizedArgs)
+			const matchBuiltinToolName = (toolNames.find(
+				(name) => name === resolvedName || resolvedName.indexOf(name) > -1,
+			) ?? "") as TName
+			const matchCustomToolName = (customToolRegistry
+				.list()
+				.find((name) => name === resolvedName || resolvedName.indexOf(name) > -1) ?? "") as TName
+			const matchedResolvedName = matchBuiltinToolName || matchCustomToolName
+
+			if (!matchedResolvedName) {
+				console.error(
+					`Invalid tool name: ${toolCall.name} (resolved: ${resolvedName}) | toolCall arguments: ${toolCall.arguments}`,
+				)
+				console.error(`Valid tool names:`, toolNames)
+				return null
+			}
+
+			if (toolCall.name !== matchedResolvedName) {
+				console.warn(`Resolved tool alias '${toolCall.name}' to '${matchedResolvedName}'`)
+			}
+			resolvedName = matchedResolvedName
+
+			// Build stringified params for display/logging from normalized tool args.
 			// Tool execution MUST use nativeArgs (typed) and does not support legacy fallbacks.
 			const params: Partial<Record<ToolParamName, string>> = {}
 
-			for (const [key, value] of Object.entries(args)) {
-				// Validate parameter name
+			for (const [key, value] of Object.entries(toolArgs)) {
 				if (!toolParamNames.includes(key as ToolParamName) && !customToolRegistry.has(resolvedName)) {
 					console.warn(`Unknown parameter '${key}' for tool '${resolvedName}'`)
 					console.warn(`Valid param names:`, toolParamNames)
 					continue
 				}
 
-				// Convert to string for legacy params format
 				const stringValue = typeof value === "string" ? value : JSON.stringify(value)
 				params[key as ToolParamName] = stringValue
 			}
@@ -950,23 +998,23 @@ export class NativeToolCallParser {
 					break
 
 				case "ask_followup_question":
-					if (normalizedArgs.question !== undefined && normalizedArgs.follow_up !== undefined) {
+					if (toolArgs.question !== undefined && toolArgs.follow_up !== undefined) {
 						nativeArgs = {
-							question: normalizedArgs.question,
-							follow_up: normalizedArgs.follow_up,
+							question: toolArgs.question,
+							follow_up: toolArgs.follow_up,
 						} as NativeArgsFor<TName>
 					}
 					break
 				case "ask_multiple_choice":
 					if (
-						normalizedArgs.questions !== undefined &&
-						Array.isArray(normalizedArgs.questions) &&
-						normalizedArgs.questions.length > 0 &&
-						normalizedArgs.questions.filter((q) => Object.keys(q).length > 0).length > 0
+						toolArgs.questions !== undefined &&
+						Array.isArray(toolArgs.questions) &&
+						toolArgs.questions.length > 0 &&
+						toolArgs.questions.filter((q) => Object.keys(q).length > 0).length > 0
 					) {
 						nativeArgs = {
-							title: normalizedArgs.title,
-							questions: normalizedArgs.questions,
+							title: toolArgs.title,
+							questions: toolArgs.questions,
 						} as NativeArgsFor<TName>
 					}
 					break
