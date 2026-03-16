@@ -549,10 +549,19 @@ export class CodeReviewService {
 
 		bindTaskInstance(task)
 
-		provider.postMessageToWebview({
-			type: "action",
-			action: "codeReviewButtonClicked",
-		})
+		// For security-review mode, switch to chat tab instead of code review page
+		if (taskMode === "security-review") {
+			provider.postMessageToWebview({
+				type: "action",
+				action: "switchTab",
+				tab: "chat",
+			})
+		} else {
+			provider.postMessageToWebview({
+				type: "action",
+				action: "codeReviewButtonClicked",
+			})
+		}
 	}
 	// ===== Task Management Methods =====
 
