@@ -118,6 +118,7 @@ import { ZgsmAuthCommands, ZgsmAuthConfig } from "../costrict/auth"
 import { generateNewSessionClientId, getClientId } from "../../utils/getClientId"
 import { defaultCodebaseIndexEnabled } from "../../services/code-index/constants"
 import { CodeReviewService, ReviewTargetType } from "../costrict/code-review"
+import { getTerminalManager } from "../cli-wrap"
 import { defaultLang } from "../../utils/language"
 import ZgsmCodebaseIndexManager from "../costrict/codebase-index"
 import { sendZgsmCloseWindow } from "../costrict/auth/ipc"
@@ -867,6 +868,28 @@ export class ClineProvider
 			return
 		}
 
+		// When the CLI tab is active, forward context directly to the CLI terminal
+		if (visibleProvider.activeTab === "cs-cli") {
+			const { customSupportPrompts } = await visibleProvider.getState()
+			const prompt = supportPrompt.create(promptType as SupportPromptType, params, customSupportPrompts)
+			const terminalManager = getTerminalManager()
+			if (terminalManager.running) {
+				// Use bracketed paste mode so the Ink-based CLI receives the entire
+				// prompt as a single paste event rather than interpreting newlines
+				// as individual Enter keypresses.  Only paste, do not auto-submit.
+				const PASTE_START = "\x1b[200~"
+				const PASTE_END = "\x1b[201~"
+				await terminalManager.write(PASTE_START + prompt + PASTE_END)
+				// Ensure the webview switches to the CLI tab so the user sees the result
+				await visibleProvider.postMessageToWebview({
+					type: "action",
+					action: "switchTab",
+					tab: "cs-cli",
+				})
+				return
+			}
+		}
+
 		const { customSupportPrompts } = await visibleProvider.getState()
 		if (promptType === "ZGSM_CODE_REVIEW") {
 			const reviewInstance = CodeReviewService.getInstance()
@@ -927,6 +950,27 @@ export class ClineProvider
 
 		if (!visibleProvider) {
 			return
+		}
+
+		// When the CLI tab is active, forward context directly to the CLI terminal
+		if (visibleProvider.activeTab === "cs-cli") {
+			const { customSupportPrompts } = await visibleProvider.getState()
+			const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
+			const terminalManager = getTerminalManager()
+			if (terminalManager.running) {
+				// Use bracketed paste mode so the Ink-based CLI receives the entire
+				// prompt as a single paste event rather than interpreting newlines
+				// as individual Enter keypresses.  Only paste, do not auto-submit.
+				const PASTE_START = "\x1b[200~"
+				const PASTE_END = "\x1b[201~"
+				await terminalManager.write(PASTE_START + prompt + PASTE_END)
+				await visibleProvider.postMessageToWebview({
+					type: "action",
+					action: "switchTab",
+					tab: "cs-cli",
+				})
+				return
+			}
 		}
 
 		const { customSupportPrompts } = await visibleProvider.getState()
@@ -2284,6 +2328,10 @@ export class ClineProvider
 				this.log(`Failed to post state on wake from cs-cli tab: ${err}`, "error")
 			})
 		}
+	}
+
+	public get activeTab(): string {
+		return this._activeTab
 	}
 
 	async postStateToWebview() {
