@@ -101,7 +101,7 @@ export function initCodeReview(
 		// For security-review mode, append auto-confirmation message
 		if (mode === "security-review") {
 			const autoExecuteMessage = t("common:review.tip.auto_execute_with_default_config")
-			prompt = `${prompt} ${autoExecuteMessage}`
+			prompt = `${prompt}\n\n${autoExecuteMessage}`
 		}
 
 		reviewInstance.createReviewTask(
