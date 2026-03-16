@@ -218,11 +218,13 @@ export class CodeReviewService {
 		if (visibleProvider) {
 			const chatMessage = target.data
 				?.map((item) => {
-					const { file_path } = item
+					const { file_path, line_range } = item
 					if (target.type === ReviewTargetType.FILE) {
 						return `@/${file_path}`
 					} else if (target.type === ReviewTargetType.FOLDER) {
 						return `@/${file_path}/`
+					} else if (target.type === ReviewTargetType.CODE && line_range) {
+						return `@/${file_path}:${line_range[0]}-${line_range[1]}`
 					}
 					return ""
 				})
