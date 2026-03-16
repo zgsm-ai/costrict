@@ -412,6 +412,19 @@ export class CodeReviewService {
 					await provider.refreshWorkspace()
 					await resetMode()
 					options?.onTaskComplete?.()
+
+					// For security-review mode, switch to code review page if report was generated
+					if (taskMode === "security-review") {
+						// Check if we have a valid report with issues
+						const hasValidReport = this.currentTask?.taskId && this.getAllCachedIssues().length > 0
+						if (hasValidReport) {
+							provider.postMessageToWebview({
+								type: "action",
+								action: "codeReviewButtonClicked",
+							})
+						}
+						// Otherwise stay on chat/agent page
+					}
 				}, 500)
 			}
 		}
