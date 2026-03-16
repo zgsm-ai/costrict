@@ -28,7 +28,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 		}
 
 		if (message.type === "CostrictCliExit") {
-			// terminalRef.current?.write("\r\n\x1b[33m[cs wait start]\x1b[0m\r\n")
+			terminalRef.current?.write("\r\n\x1b[33m[Welcome to CoStrict]\x1b[0m\r\n")
 		}
 
 		if (message.type === "CostrictCliError" && message.error) {

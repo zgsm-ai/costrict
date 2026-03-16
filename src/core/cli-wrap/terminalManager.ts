@@ -1,3 +1,5 @@
+import { execSync } from "child_process"
+
 import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
 import { getWorkspacePath } from "../../utils/path"
 import { isJetbrainsPlatform } from "../../utils/platform"
@@ -48,9 +50,27 @@ export class TerminalManager {
 		this.messageSender = sender
 	}
 
+	private isCsInstalled(): boolean {
+		try {
+			const cmd = process.platform === "win32" ? "where cs.cmd" : "which cs"
+			execSync(cmd, { stdio: "ignore" })
+			return true
+		} catch {
+			return false
+		}
+	}
+
 	async start(options: TerminalOptions): Promise<void> {
 		if (this.isRunning) {
 			await this.stop()
+		}
+
+		if (!this.isCsInstalled()) {
+			this.sendToWebview({
+				type: "CostrictCliError",
+				error: "Costrict CLI is not installed.\r\nPlease install it by running:\r\n\r\n  npm install @costrict/cs -g\r\n",
+			})
+			return
 		}
 
 		try {

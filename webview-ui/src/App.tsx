@@ -207,7 +207,12 @@ const App = () => {
 				// Handle switchTab action with tab parameter
 				if (message.action === "switchTab" && message.tab) {
 					const targetTab = message.tab as Tab
-					switchTab(targetTab)
+					// Use setTab directly instead of switchTab to avoid re-posting
+					// to the backend (which would echo back and cause an infinite loop).
+					if (targetTab === "cs-cli" && !didHydrateCliState) {
+						setDidHydrateSClitate(true)
+					}
+					setTab(targetTab)
 					// Extract targetSection from values if provided
 					const targetSection = message.values?.section as string | undefined
 					setCurrentSection(targetSection)
@@ -264,7 +269,7 @@ const App = () => {
 				chatViewRef.current?.acceptInput()
 			}
 		},
-		[switchTab],
+		[switchTab, didHydrateCliState, setDidHydrateSClitate],
 	)
 
 	useEvent("message", onMessage)
