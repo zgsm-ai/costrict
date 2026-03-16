@@ -51,7 +51,7 @@ export class NotificationService {
 				const response = await this.fetchNotices()
 				await this.processAndSendNotices(response.notices || [])
 			} catch (error) {
-				console.error("Failed to fetch notices periodically:", error)
+				console.warn("Failed to fetch notices periodically:", error)
 			}
 		}, this.FETCH_INTERVAL)
 	}

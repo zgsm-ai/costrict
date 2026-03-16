@@ -720,7 +720,9 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					// Process in batch when threshold is reached or buffer is too large
 					const shouldFlush =
 						now - time >= this.apiResponseRenderModeInfo.interval ||
+						// now - time >= (this.apiResponseRenderModeInfo.interval * (this.options.isCostrictCli ? 2 : 1)) ||
 						contentBuffer.length >= this.apiResponseRenderModeInfo.limit
+					// contentBuffer.length >= (this.apiResponseRenderModeInfo.limit * (this.options.isCostrictCli ? 5 : 1))
 
 					time = now
 					if (shouldFlush) {

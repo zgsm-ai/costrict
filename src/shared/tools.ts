@@ -412,7 +412,17 @@ export const TOOL_ALIASES: Record<string, ToolName> = {
 	search_and_replace: "edit",
 	bash: "execute_command",
 	question: "ask_followup_question",
-	task: "new_task" // Alias for compatibility with models that return "task" instead of "new_task"
+	task: "new_task", // Alias for compatibility with models that return "task" instead of "new_task"
+	// cs (OpenCode) tool name aliases — maps cs raw tool names to plugin built-in tools
+	// write: "write_to_file",
+	// glob: "list_files",
+	// grep: "search_files",
+	// todowrite: "update_todo_list",
+	// todoread: "update_todo_list",
+	// checkpoint: "costrict_checkpoint",
+	// codesearch: "codebase_search",
+	"sequential-thinking": "sequential_thinking",
+	"file-outline": "file_outline",
 } as const
 
 export type DiffResult =

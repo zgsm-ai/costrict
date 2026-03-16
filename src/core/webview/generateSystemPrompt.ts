@@ -38,7 +38,7 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 		const tempApiHandler = buildApiHandler(apiConfiguration)
 		modelInfo = tempApiHandler.getModel().info
 	} catch (error) {
-		console.error("Error fetching model info for system prompt preview:", error)
+		console.warn("Error fetching model info for system prompt preview:", error)
 	}
 
 	const systemPrompt = await SYSTEM_PROMPT(

@@ -183,12 +183,43 @@ export class NativeToolCallParser {
 		}
 	}
 
+	/**
+	 * cs (OpenCode) tool parameter name aliases.
+	 * Maps cs camelCase parameter names to the plugin's snake_case convention.
+	 */
+	private static readonly CS_PARAM_ALIASES: Record<string, string> = {
+		filePath: "path",
+		file_path: "path",
+		oldString: "old_string",
+		newString: "new_string",
+		replaceAll: "replace_all",
+		workdir: "cwd",
+		// grep/search params
+		include: "file_pattern",
+	}
+
+	/**
+	 * Normalize cs (OpenCode) tool arguments to plugin parameter names.
+	 * Remaps camelCase keys from cs tools to snake_case keys expected by plugin tools.
+	 */
+	private static normalizeCsToolArgs(args: Record<string, any>): Record<string, any> {
+		const result: Record<string, any> = {}
+		for (const [key, value] of Object.entries(args)) {
+			const mappedKey = this.CS_PARAM_ALIASES[key] ?? key
+			result[mappedKey] = value
+		}
+		return result
+	}
+
 	private static normalizeToolArgsForTool(toolName: string, args: Record<string, any>): Record<string, any> {
+		// First apply cs parameter name normalization (camelCase → snake_case)
+		const normalizedArgs = this.normalizeCsToolArgs(args)
+
 		if (toolName === "ask_multiple_choice") {
-			return this.normalizeAskMultipleChoiceArgs(args)
+			return this.normalizeAskMultipleChoiceArgs(normalizedArgs)
 		}
 
-		return args
+		return normalizedArgs
 	}
 
 	/**

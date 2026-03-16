@@ -2,6 +2,8 @@ import { exec } from "child_process"
 import { promisify } from "util"
 import { z } from "zod"
 import { ServerConfigSchema } from "../McpHub"
+import { isJetbrainsPlatform } from "../../../utils/platform"
+import { getIdeaShellEnvWithUpdatePath } from "../../../utils/ideaShellEnvLoader"
 
 const execAsync = promisify(exec)
 
@@ -16,12 +18,12 @@ export interface BuiltinServerEntry {
 export const BUILTIN_MCP_SERVERS: BuiltinServerEntry[] = [
 	{
 		name: "costrict-cli",
-		minVersion: "3.0.12",
+		minVersion: "2.0.0",
 		config: {
 			command: "cs",
 			args: ["mcp", "serve"],
 			alwaysAllow: ["*"],
-			disabled: true
+			disabled: true,
 		},
 	},
 	{
@@ -30,9 +32,9 @@ export const BUILTIN_MCP_SERVERS: BuiltinServerEntry[] = [
 			type: "streamable-http",
 			url: "http://localhost:4096/mcp/rpc",
 			alwaysAllow: ["*"],
-			disabled: true
+			disabled: true,
 		},
-	}
+	},
 ]
 
 /**
@@ -53,7 +55,12 @@ export function compareSemver(a: string, b: string): number {
  */
 export async function isCommandVersionSatisfied(command: string, minVersion?: string): Promise<boolean> {
 	try {
-		const { stdout, stderr } = await execAsync(`${command} --version`, { timeout: 5000 })
+		const { stdout, stderr } = await execAsync(`${command} --version`, {
+			timeout: 5000,
+			env: {
+				...(isJetbrainsPlatform() ? getIdeaShellEnvWithUpdatePath(process.env) : process.env),
+			},
+		})
 		if (!minVersion) {
 			return true
 		}
@@ -64,7 +71,8 @@ export async function isCommandVersionSatisfied(command: string, minVersion?: st
 			return false
 		}
 		return compareSemver(match[1], minVersion) >= 0
-	} catch {
+	} catch (e) {
+		console.warn(`Failed to check version of "${command}": ${e}`)
 		return false
 	}
 }
@@ -77,7 +85,7 @@ export async function getEligibleBuiltinServers(disabled: boolean): Promise<Buil
 	const results: BuiltinServerEntry[] = []
 	for (const entry of BUILTIN_MCP_SERVERS) {
 		const command = "command" in entry.config ? entry.config.command : undefined
-	
+
 		if (command) {
 			const compatible = await isCommandVersionSatisfied(command, entry.minVersion)
 			if (compatible) {

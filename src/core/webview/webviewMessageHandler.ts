@@ -86,7 +86,8 @@ import { ZgsmAuthConfig, ZgsmAuthService, ZgsmAuthStorage } from "../costrict/au
 import { CodeReviewService } from "../costrict/code-review"
 import { ZgsmCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
 import { ErrorCodeManager } from "../costrict/error-code"
-import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
+import { writeCostrictAccessToken, processIsRunning, spawnDetached } from "../costrict/codebase-index/utils"
+import { createLogger } from "../../utils/logger"
 import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-event-monitor"
 import { fetchZgsmQuotaInfo, fetchZgsmInviteCode } from "../../api/providers/fetchers/zgsm"
 import { initNotificationService } from "../costrict/notification"
@@ -1611,6 +1612,13 @@ export const webviewMessageHandler = async (
 						message.disabled!,
 						message.source as "global" | "project",
 					)
+				if (message.serverName === "costrict-cli" && message.disabled) {
+					const logger = createLogger()
+					const pids = await processIsRunning("cs", logger)
+					if (pids.length === 0) {
+						void spawnDetached("cs", ["serve"])
+					}
+				}
 			} catch (error) {
 				provider.log(
 					`Failed to toggle MCP server ${message.serverName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
