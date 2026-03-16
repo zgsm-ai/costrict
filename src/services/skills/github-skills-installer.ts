@@ -29,6 +29,7 @@ interface BundledSkillsIndex {
 		name: string
 		repo: string
 		branch: string
+		commitSha: string
 	}>
 }
 
@@ -85,48 +86,18 @@ function getUserSkillsPath(mode?: string): string {
 }
 
 /**
- * Get the version file path for tracking installed skill version
+ * Get the bundled commit SHA from index.json for a specific skill
  */
-function getVersionFilePath(skillDir: string, skillName: string): string {
-	return path.join(skillDir, skillName, ".version")
-}
-
-/**
- * Get the bundled version from index.json
- */
-async function getBundledVersion(bundledSkillsPath: string): Promise<string> {
+async function getBundledCommitSha(bundledSkillsPath: string, skillName: string): Promise<string> {
 	try {
 		const indexPath = path.join(bundledSkillsPath, "index.json")
 		const content = await fs.readFile(indexPath, "utf-8")
 		const index: BundledSkillsIndex = JSON.parse(content)
-		return index.version || "0.0.0"
+		const skill = index.skills.find((s) => s.name === skillName)
+		return skill?.commitSha || ""
 	} catch {
-		return "0.0.0"
+		return ""
 	}
-}
-
-/**
- * Get the installed version from .version file
- */
-async function getInstalledVersion(versionFilePath: string): Promise<string | null> {
-	try {
-		const content = await fs.readFile(versionFilePath, "utf-8")
-		return content.trim()
-	} catch {
-		return null
-	}
-}
-
-/**
- * Check if the skill needs to be updated
- * Returns true if:
- * - File doesn't exist
- * - Version doesn't match bundled version
- */
-async function needsUpdate(skillDir: string, skillName: string, bundledVersion: string): Promise<boolean> {
-	const versionFilePath = getVersionFilePath(skillDir, skillName)
-	const installedVersion = await getInstalledVersion(versionFilePath)
-	return installedVersion !== bundledVersion
 }
 
 /**
@@ -137,7 +108,7 @@ async function copyBundledSkill(
 	skillName: string,
 	bundledPath: string,
 	userPath: string,
-	bundledVersion: string,
+	bundledCommitSha: string,
 ): Promise<boolean> {
 	try {
 		// Check if bundled skill exists
@@ -166,9 +137,9 @@ async function copyBundledSkill(
 		// Copy all files recursively without modification
 		await fs.cp(skillSourceDir, skillTargetDir, { recursive: true })
 
-		// Write .version file separately
+		// Write .version file with commit SHA
 		const versionFilePath = path.join(skillTargetDir, ".version")
-		await fs.writeFile(versionFilePath, bundledVersion, "utf-8")
+		await fs.writeFile(versionFilePath, bundledCommitSha, "utf-8")
 
 		return true
 	} catch {
@@ -186,12 +157,11 @@ async function installBuiltinSkill(
 ): Promise<boolean> {
 	const { name, versionKey, mode } = config
 
-	// Get bundled version from index.json
-	const bundledVersion = await getBundledVersion(bundledSkillsPath)
-	const extensionVersion = getExtensionVersion(context)
+	// Get bundled commit SHA from index.json
+	const bundledCommitSha = await getBundledCommitSha(bundledSkillsPath, name)
 
-	// Check installed version in globalState
-	const installedVersion = context.globalState.get<string>(versionKey)
+	// Check installed commit SHA in globalState
+	const installedCommitSha = context.globalState.get<string>(versionKey)
 
 	// Get user skills path
 	const userSkillsPath = getUserSkillsPath(mode)
@@ -203,23 +173,27 @@ async function installBuiltinSkill(
 		.then(() => true)
 		.catch(() => false)
 	if (dirExists) {
-		if (installedVersion === bundledVersion) {
-			logger.info(`[BuiltinSkills] ${name}: Up to date (v${bundledVersion})`)
+		if (installedCommitSha === bundledCommitSha) {
+			logger.info(`[BuiltinSkills] ${name}: Up to date (${bundledCommitSha})`)
 			return true
 		}
-		logger.info(`[BuiltinSkills] ${name}: Version changed (v${installedVersion} -> v${bundledVersion}), updating`)
+		const shortInstalled = installedCommitSha?.slice(0, 7) || "unknown"
+		const shortBundled = bundledCommitSha?.slice(0, 7) || "unknown"
+		logger.info(`[BuiltinSkills] ${name}: Commit changed (${shortInstalled} -> ${shortBundled}), updating`)
 	} else {
-		logger.info(`[BuiltinSkills] ${name}: Installing (v${bundledVersion})`)
+		const shortBundled = bundledCommitSha?.slice(0, 7) || "unknown"
+		logger.info(`[BuiltinSkills] ${name}: Installing (${shortBundled})`)
 	}
 
 	// Copy from bundled skills to mode-specific or generic directory
-	const bundledInstalled = await copyBundledSkill(name, bundledSkillsPath, userSkillsPath, bundledVersion)
+	const bundledInstalled = await copyBundledSkill(name, bundledSkillsPath, userSkillsPath, bundledCommitSha)
 
 	if (bundledInstalled) {
-		// Store installed version in globalState
-		await context.globalState.update(versionKey, bundledVersion)
+		// Store installed commit SHA in globalState
+		await context.globalState.update(versionKey, bundledCommitSha)
 		const modeInfo = mode ? ` to ${mode} mode` : ""
-		logger.info(`[BuiltinSkills] ${name}: Installed from bundled skills${modeInfo} (v${bundledVersion})`)
+		const shortSha = bundledCommitSha?.slice(0, 7) || "unknown"
+		logger.info(`[BuiltinSkills] ${name}: Installed from bundled skills${modeInfo} (${shortSha})`)
 		return true
 	}
 
