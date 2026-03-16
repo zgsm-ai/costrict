@@ -50,10 +50,10 @@ export class TerminalManager {
 		this.messageSender = sender
 	}
 
-	private isCsInstalled(): boolean {
+	private isCsInstalled(env: any): boolean {
 		try {
 			const cmd = process.platform === "win32" ? "where cs.cmd" : "which cs"
-			execSync(cmd, { stdio: "ignore" })
+			execSync(cmd, { stdio: "ignore", env: { ...process.env, ...env } })
 			return true
 		} catch {
 			return false
@@ -65,7 +65,16 @@ export class TerminalManager {
 			await this.stop()
 		}
 
-		if (!this.isCsInstalled()) {
+		// Prepare environment
+		const env = {
+			...process.env,
+			TERM: "xterm-256color",
+			COLORTERM: "truecolor",
+			...(isJetbrainsPlatform() ? getIdeaShellEnvWithUpdatePath(process.env) : undefined),
+			...options.env,
+		}
+
+		if (!this.isCsInstalled(env)) {
 			this.sendToWebview({
 				type: "CostrictCliError",
 				error: "Costrict CLI is not installed.\r\nPlease install it by running:\r\n\r\n  npm install @costrict/cs -g\r\n",
@@ -78,17 +87,8 @@ export class TerminalManager {
 			const workspacePath = getWorkspacePath()
 			const cwd = options.cwd || workspacePath || process.cwd()
 
-			// Get shell based on platform
-			const shell = this.getShell()
-
-			// Prepare environment
-			const env = {
-				...process.env,
-				TERM: "xterm-256color",
-				COLORTERM: "truecolor",
-				...(isJetbrainsPlatform() ? getIdeaShellEnvWithUpdatePath(process.env) : undefined),
-				...options.env,
-			}
+			// // Get shell based on platform
+			// const shell = this.getShell()
 
 			// Spawn PTY process with CostrictCli
 			this.ptyProcess = ptyModule.spawn(process.platform === "win32" ? "cs.cmd" : "cs", [], {
