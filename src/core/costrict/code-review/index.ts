@@ -96,7 +96,14 @@ export function initCodeReview(
 			startLine: range.start.line + 1 + "",
 			selectedText: editor.document.getText(range),
 		}
-		const prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
+		let prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
+
+		// For security-review mode, append auto-confirmation message
+		if (mode === "security-review") {
+			const autoExecuteMessage = t("common:review.tip.auto_execute_with_default_config")
+			prompt = `${prompt} ${autoExecuteMessage}`
+		}
+
 		reviewInstance.createReviewTask(
 			prompt,
 			{
