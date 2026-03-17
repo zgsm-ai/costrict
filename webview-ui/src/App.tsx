@@ -483,7 +483,7 @@ const App = () => {
 						</div>
 					)}
 				</div>
-				<TabContent className={tab === "codeReview" || tab === "cs-cli" ? "p-0" : ""}>
+				<TabContent className={tab === "cs-cli" ? "p-0 overflow-hidden" : tab === "codeReview" ? "p-0" : ""}>
 					{tab !== "cs-cli" && (
 						<ChatView
 							ref={chatViewRef}
