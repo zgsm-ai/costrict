@@ -12,12 +12,52 @@ interface CostrictCliViewProps {
 	isHidden: boolean
 }
 
+const parseCssPixelValue = (value: string | null | undefined) => {
+	if (!value) {
+		return undefined
+	}
+
+	const parsed = Number.parseFloat(value)
+	return Number.isFinite(parsed) ? parsed : undefined
+}
+
+const getTerminalRenderOptions = () => {
+	const rootStyles = window.getComputedStyle(document.documentElement)
+	const bodyStyles = window.getComputedStyle(document.body)
+	const fontFamily =
+		rootStyles.getPropertyValue("--vscode-editor-font-family").trim() ||
+		bodyStyles.getPropertyValue("--vscode-editor-font-family").trim() ||
+		"monospace"
+	const fontSize =
+		parseCssPixelValue(rootStyles.getPropertyValue("--vscode-editor-font-size")) ??
+		parseCssPixelValue(bodyStyles.getPropertyValue("--vscode-editor-font-size")) ??
+		12
+	const lineHeightValue =
+		rootStyles.getPropertyValue("--vscode-editor-line-height").trim() ||
+		bodyStyles.getPropertyValue("--vscode-editor-line-height").trim()
+	const parsedLineHeight = parseCssPixelValue(lineHeightValue)
+	const lineHeight = parsedLineHeight ? Math.max(1, parsedLineHeight / fontSize) : 1
+
+	return {
+		fontFamily,
+		fontSize,
+		lineHeight,
+		letterSpacing: 0,
+		customGlyphs: false,
+	}
+}
+
 export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const terminalRef = useRef<Terminal | null>(null)
 	const fitAddonRef = useRef<FitAddon | null>(null)
+	const isHiddenRef = useRef(isHidden)
+	const refreshFrameRef = useRef<number | null>(null)
+	const scheduleRefreshRef = useRef<(() => void) | null>(null)
 	const [restartCount, setRestartCount] = useState(0)
 	const [isTerminalReady, setIsTerminalReady] = useState(false)
+
+	isHiddenRef.current = isHidden
 
 	// Handle messages from extension
 	const onMessage = useCallback((e: MessageEvent) => {
@@ -25,6 +65,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 
 		if (message.type === "CostrictCliOutput" && message.data) {
 			terminalRef.current?.write(message.data)
+			scheduleRefreshRef.current?.()
 		}
 
 		if (message.type === "CostrictCliExit") {
@@ -64,6 +105,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			// cursorStyle: "block",
 			scrollback: 0,
 			allowProposedApi: true,
+			...getTerminalRenderOptions(),
 		})
 
 		// Load addons
@@ -83,6 +125,21 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 		// Store refs
 		terminalRef.current = terminal
 		fitAddonRef.current = fitAddon
+		scheduleRefreshRef.current = () => {
+			if (refreshFrameRef.current !== null) {
+				return
+			}
+
+			refreshFrameRef.current = requestAnimationFrame(() => {
+				refreshFrameRef.current = null
+				const currentTerminal = terminalRef.current
+				if (!currentTerminal || isHiddenRef.current || currentTerminal.rows <= 0) {
+					return
+				}
+
+				currentTerminal.refresh(0, currentTerminal.rows - 1)
+			})
+		}
 
 		// Handle user input - send to extension
 		terminal.onData((data) => {
@@ -116,22 +173,62 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 				rows,
 			})
 		})
-		// 延迟 fit，确保 DOM 已渲染完成（重启时 React 的重新渲染需要一帧）
-		const rafId = setTimeout(() => {
+
+		// Flag to track if initial fit has been done
+		let hasInitialFit = false
+		let resizeObserverTimer: number | null = null
+
+		const fitTerminal = () => {
+			if (isHiddenRef.current) {
+				return
+			}
+
+			const width = container.clientWidth
+			const height = container.clientHeight
+
+			if (width <= 0 || height <= 0) {
+				return
+			}
+
 			fitAddon.fit()
-			// Request to start Costrict process with actual terminal dimensions
-			vscode.postMessage({
-				type: "CostrictCliStart",
-				cols: terminal.cols,
-				rows: terminal.rows,
-			})
-			terminal.focus()
-			setIsTerminalReady(true)
-		}, 1000)
+
+			// Only send CostrictCliStart once after first successful fit.
+			if (!hasInitialFit && terminal.cols > 0 && terminal.rows > 0) {
+				hasInitialFit = true
+				vscode.postMessage({
+					type: "CostrictCliStart",
+					cols: terminal.cols,
+					rows: terminal.rows,
+				})
+				terminal.focus()
+				setIsTerminalReady(true)
+			}
+		}
+
+		// Use ResizeObserver to monitor container size changes
+		// This ensures terminal is resized whenever the container changes
+		const resizeObserver = new ResizeObserver(() => {
+			if (resizeObserverTimer !== null) {
+				clearTimeout(resizeObserverTimer)
+			}
+			resizeObserverTimer = window.setTimeout(() => {
+				fitTerminal()
+			}, 50)
+		})
+
+		resizeObserver.observe(container)
 
 		// Cleanup
 		return () => {
-			clearTimeout(rafId)
+			if (resizeObserverTimer !== null) {
+				clearTimeout(resizeObserverTimer)
+			}
+			if (refreshFrameRef.current !== null) {
+				cancelAnimationFrame(refreshFrameRef.current)
+				refreshFrameRef.current = null
+			}
+			scheduleRefreshRef.current = null
+			resizeObserver.disconnect()
 			container.removeEventListener("wheel", handleWheel)
 			vscode.postMessage({
 				type: "CostrictCliStop",
@@ -145,16 +242,33 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 	// Handle resize when visibility changes
 	useEffect(() => {
 		if (!isHidden && terminalRef.current && fitAddonRef.current) {
-			// 使用 requestAnimationFrame 确保 DOM 已渲染完成
-			requestAnimationFrame(() => {
-				// 再次检查，因为状态可能在等待期间改变
-				if (terminalRef.current && fitAddonRef.current) {
-					// fit() 内部会调用 terminal.resize(cols, rows)，触发 onResize 回调，
-					// 自动发送 CostrictCliResize 消息给 PTY，无需额外 postMessage。
-					fitAddonRef.current.fit()
-					terminalRef.current?.focus()
-				}
+			// When tab becomes visible, immediately try to fit before any other renders
+			// Use multiple requestAnimationFrames to ensure layout is fully calculated
+			let frame1: number | null = null
+			let frame2: number | null = null
+
+			frame1 = requestAnimationFrame(() => {
+				frame2 = requestAnimationFrame(() => {
+					if (terminalRef.current && fitAddonRef.current) {
+						const container = containerRef.current
+						if (!container || container.clientWidth <= 0 || container.clientHeight <= 0) {
+							return
+						}
+
+						fitAddonRef.current.fit()
+						terminalRef.current.focus()
+					}
+				})
 			})
+
+			return () => {
+				if (frame1 !== null) {
+					cancelAnimationFrame(frame1)
+				}
+				if (frame2 !== null) {
+					cancelAnimationFrame(frame2)
+				}
+			}
 		}
 	}, [isHidden])
 
@@ -166,14 +280,24 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 		let resizeTimer: number | null = null
 
 		const handleResize = () => {
-			if (!isHidden && fitAddonRef.current) {
+			if (!isHidden && fitAddonRef.current && terminalRef.current) {
 				if (resizeTimer !== null) {
-					cancelAnimationFrame(resizeTimer)
+					clearTimeout(resizeTimer)
 				}
-				resizeTimer = requestAnimationFrame(() => {
+				// Use larger debounce for window resize to ensure layout stability
+				resizeTimer = window.setTimeout(() => {
 					resizeTimer = null
-					fitAddonRef.current?.fit()
-				})
+					const container = containerRef.current
+					if (
+						fitAddonRef.current &&
+						terminalRef.current &&
+						container &&
+						container.clientWidth > 0 &&
+						container.clientHeight > 0
+					) {
+						fitAddonRef.current.fit()
+					}
+				}, 100)
 			}
 		}
 
@@ -181,7 +305,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 		return () => {
 			window.removeEventListener("resize", handleResize)
 			if (resizeTimer !== null) {
-				cancelAnimationFrame(resizeTimer)
+				clearTimeout(resizeTimer)
 			}
 		}
 	}, [isHidden])
@@ -189,7 +313,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 	return (
 		<div
 			ref={containerRef}
-			className={isHidden ? "hidden" : ""}
+			className={isHidden ? "costrict-cli-terminal hidden" : "costrict-cli-terminal"}
 			style={{
 				width: "100%",
 				height: "100%",
@@ -197,6 +321,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 				position: "relative",
 				margin: 0,
 				padding: 0,
+				overflow: "hidden",
 			}}>
 			{!isTerminalReady && !isHidden && (
 				<div
