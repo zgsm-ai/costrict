@@ -36,6 +36,7 @@ export class TerminalManager {
 	private ptyProcess: IPty | null = null
 	private messageSender: MessageSender | null = null
 	private isRunning = false
+	private port: number | null = null
 
 	private constructor() {}
 
@@ -50,6 +51,13 @@ export class TerminalManager {
 		this.messageSender = sender
 	}
 
+	/**
+	 * Returns the HTTP port the CLI is listening on, or null if not available.
+	 */
+	getPort(): number | null {
+		return this.port
+	}
+
 	private isCsInstalled(env: any): boolean {
 		try {
 			const cmd = process.platform === "win32" ? "where cs.cmd" : "which cs"
@@ -58,6 +66,13 @@ export class TerminalManager {
 		} catch {
 			return false
 		}
+	}
+
+	/**
+	 * Allocate a random port in the ephemeral range for the CLI HTTP server.
+	 */
+	private allocatePort(): number {
+		return Math.floor(Math.random() * (65535 - 16384 + 1)) + 16384
 	}
 
 	async start(options: TerminalOptions): Promise<void> {
@@ -87,17 +102,21 @@ export class TerminalManager {
 			const workspacePath = getWorkspacePath()
 			const cwd = options.cwd || workspacePath || process.cwd()
 
-			// // Get shell based on platform
-			// const shell = this.getShell()
+			// Allocate a port for the CLI HTTP server
+			this.port = this.allocatePort()
 
-			// Spawn PTY process with CostrictCli
-			this.ptyProcess = ptyModule.spawn(process.platform === "win32" ? "cs.cmd" : "cs", [], {
-				name: "xterm-256color",
-				cols: options.cols || 80,
-				rows: options.rows || 24,
-				cwd,
-				env,
-			})
+			// Spawn PTY process with CostrictCli, passing --port for HTTP API access
+			this.ptyProcess = ptyModule.spawn(
+				process.platform === "win32" ? "cs.cmd" : "cs",
+				["--port", this.port.toString()],
+				{
+					name: "xterm-256color",
+					cols: options.cols || 80,
+					rows: options.rows || 24,
+					cwd,
+					env,
+				},
+			)
 
 			this.isRunning = true
 
@@ -110,14 +129,55 @@ export class TerminalManager {
 			this.ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
 				this.isRunning = false
 				this.ptyProcess = null
+				this.port = null
 				this.sendToWebview({ type: "CostrictCliExit", exitCode })
 			})
 		} catch (error) {
+			this.port = null
 			const errorMessage = error instanceof Error ? error.message : String(error)
 			this.sendToWebview({ type: "CostrictCliError", error: errorMessage })
 			throw error
 		}
 	}
+
+	/**
+	 * Wait for the CLI HTTP server to become ready.
+	 * Polls the /app endpoint up to maxRetries times with the given interval.
+	 * Returns true if the server is reachable, false otherwise.
+	 */
+	async waitForReady(maxRetries = 10, intervalMs = 200): Promise<boolean> {
+		if (!this.port) {
+			return false
+		}
+		for (let i = 0; i < maxRetries; i++) {
+			try {
+				await fetch(`http://localhost:${this.port}/app`)
+				return true
+			} catch {
+				// Not ready yet
+			}
+			await new Promise((resolve) => setTimeout(resolve, intervalMs))
+		}
+		return false
+	}
+
+	// /**
+	//  * Inject text into the CLI prompt via the HTTP API.
+	//  * Throws if the port is not available or the request fails.
+	//  */
+	// async appendPrompt(text: string): Promise<void> {
+	// 	if (!this.port) {
+	// 		throw new Error("CLI HTTP port is not available")
+	// 	}
+	// 	const response = await fetch(`http://localhost:${this.port}/tui/append-prompt`, {
+	// 		method: "POST",
+	// 		headers: { "Content-Type": "application/json" },
+	// 		body: JSON.stringify({ text }),
+	// 	})
+	// 	if (!response.ok) {
+	// 		throw new Error(`appendPrompt failed: ${response.status} ${response.statusText}`)
+	// 	}
+	// }
 
 	async write(data: string): Promise<void> {
 		if (this.ptyProcess && this.isRunning) {
@@ -140,6 +200,7 @@ export class TerminalManager {
 			}
 			this.ptyProcess = null
 			this.isRunning = false
+			this.port = null
 		}
 	}
 

@@ -87,13 +87,12 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 		}
 
 		if (message.type === "CostrictCliRestart") {
-			// 先重置 isTerminalReady，让 React 立即渲染 loading 动画，
-			// 再通过 restartCount 触发 useEffect 重新初始化 xterm。
-			// 如果只在 useEffect 内 setIsTerminalReady(false)，React 会在 effect
-			// 同步执行完毕后才处理该 setState，此时 xterm 已完成挂载，
-			// loading 动画几乎不可见。
 			setIsTerminalReady(false)
 			setRestartCount((c) => c + 1)
+		}
+
+		if (message.type === "CostrictCliHttpReady") {
+			setIsTerminalReady(true)
 		}
 	}, [])
 
@@ -180,15 +179,9 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 
 		const clipboardTarget = terminal.textarea ?? container
 		const handlePaste = (event: Event) => {
-			// 必须在捕获阶段（capture: true）且立即阻止后续监听器（stopImmediatePropagation），
-			// 否则 xterm 自己注册在同一 textarea 上的 paste 监听器会先于此函数执行，
-			// 把剪贴板内容通过 onData 写入 PTY，再加上 CostrictCliRequestPaste 又写一次，
-			// 导致文本被粘贴两次。
 			event.preventDefault()
 			event.stopImmediatePropagation()
 
-			// 优先从 paste 事件的 clipboardData 同步读取，避免异步往返插件端。
-			// Ctrl+V 和右键粘贴都会触发 paste 事件，clipboardData 在两种情况下均可用。
 			const text = (event as ClipboardEvent).clipboardData?.getData("text/plain") ?? ""
 			if (text) {
 				const PASTE_START = "\x1b[200~"
@@ -197,7 +190,6 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 				return
 			}
 
-			// 兜底：clipboardData 为空时（极少数情况）走插件端读取
 			vscode.postMessage({ type: "CostrictCliRequestPaste" })
 		}
 		const handleCopy = (event: Event) => {
@@ -221,16 +213,9 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			handleCopySelection(selection)
 		}
 
-		// capture: true 确保在捕获阶段触发，早于 xterm 注册的冒泡阶段 paste 监听器
 		clipboardTarget.addEventListener("paste", handlePaste, { capture: true })
 		clipboardTarget.addEventListener("copy", handleCopy)
 		clipboardTarget.addEventListener("cut", handleCut)
-
-		// 将鼠标滚轮事件转换为方向键发给 PTY，由 Ink ScrollArea 处理滚动。
-		// 原因：cs cli 基于 Ink 的自定义 ScrollArea（marginTop 负值裁切 + 自绘滚动条）。
-		// xterm 的 scrollback 已设为 0 以禁用其独立缓冲，但如果不拦截 wheel 事件，
-		// xterm 会尝试发送鼠标上报序列（X10/SGR 协议），而 Ink 并不处理这些序列。
-		// 转换为 ↑/↓ ANSI 方向键序列后，PTY 直接传给 Ink，触发 ScrollArea 的 SCROLL_UP/DOWN。
 		const handleWheel = (e: WheelEvent) => {
 			e.preventDefault()
 			// 每 100px deltaY 触发一次滚动，至少触发 1 次
@@ -268,7 +253,6 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			}
 
 			fitAddon.fit()
-
 			// Only send CostrictCliStart once after first successful fit.
 			if (!hasInitialFit && terminal.cols > 0 && terminal.rows > 0) {
 				hasInitialFit = true
@@ -278,7 +262,6 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 					rows: terminal.rows,
 				})
 				terminal.focus()
-				setIsTerminalReady(true)
 			}
 		}
 

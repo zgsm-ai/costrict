@@ -138,6 +138,7 @@ export interface ExtensionMessage {
 		| "CostrictCliClear"
 		| "CostrictCliPasteUnavailable"
 		| "CostrictCliRestart"
+		| "CostrictCliHttpReady"
 	text?: string
 	/** For fileContent: { path, content, error? } */
 	fileContent?: { path: string; content: string | null; error?: string }
@@ -753,6 +754,8 @@ export interface WebviewMessage {
 	cols?: number // For CostrictCliResize
 	rows?: number // For CostrictCliResize
 	exitCode?: number // For CostrictCliExit
+	ready?: boolean // For CostrictCliHttpReady
+	port?: number | null // For CostrictCliHttpReady
 	requestId?: string
 	ids?: string[]
 	terminalOperation?: "continue" | "abort"

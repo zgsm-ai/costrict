@@ -625,6 +625,15 @@ export const webviewMessageHandler = async (
 				cols: message.cols ?? 80,
 				rows: message.rows ?? 24,
 			})
+			// Wait for the CLI HTTP server to become ready and notify the webview
+			const httpReady = await terminalManager.waitForReady()
+			await provider.postMessageToWebview({
+				type: "CostrictCliHttpReady",
+				values: {
+					ready: httpReady,
+					port: terminalManager.getPort(),
+				},
+			})
 			break
 		}
 		case "CostrictCliInput":
