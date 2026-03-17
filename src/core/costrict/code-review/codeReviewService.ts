@@ -117,17 +117,6 @@ export class CodeReviewService {
 	}
 
 	/**
-	 * Handle task timeout
-	 */
-	private handleTaskTimeout(): void {
-		this.logger.info("[CodeReview] Task timeout")
-		this.updateTaskState({
-			error: new Error(t("common:review.tip.task_timeout")),
-			isCompleted: true,
-		})
-	}
-
-	/**
 	 * Get singleton instance
 	 *
 	 * @param clineProvider - ClineProvider instance for WebView communication
@@ -272,12 +261,11 @@ export class CodeReviewService {
 		const boundTaskInstanceIds = new Set<string>()
 		const listenerDisposers: Array<() => void> = []
 
-		const timeoutId = setTimeout(
-			() => {
-				void handleTaskFailure(new Error(t("common:review.tip.task_timeout")))
-			},
-			15 * 60 * 1000,
-		)
+		// Set timeout based on mode: 1 hour for security-review, 15 minutes for others
+		const timeoutMs = taskMode === "security-review" ? 60 * 60 * 1000 : 15 * 60 * 1000
+		const timeoutId = setTimeout(() => {
+			void handleTaskFailure(new Error(t("common:review.tip.task_timeout")))
+		}, timeoutMs)
 
 		this.updateTaskState({ timeoutId })
 
