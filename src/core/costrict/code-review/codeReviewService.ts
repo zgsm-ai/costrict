@@ -261,8 +261,8 @@ export class CodeReviewService {
 		const boundTaskInstanceIds = new Set<string>()
 		const listenerDisposers: Array<() => void> = []
 
-		// Set timeout based on mode: 2 hours for security-review, 15 minutes for others
-		const timeoutMs = taskMode === "security-review" ? 120 * 60 * 1000 : 15 * 60 * 1000
+		// Set timeout based on mode: 3 hours for security-review, 15 minutes for others
+		const timeoutMs = taskMode === "security-review" ? 180 * 60 * 1000 : 15 * 60 * 1000
 		const timeoutId = setTimeout(() => {
 			void handleTaskFailure(new Error(t("common:review.tip.task_timeout")))
 		}, timeoutMs)
