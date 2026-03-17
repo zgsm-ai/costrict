@@ -136,6 +136,7 @@ export interface ExtensionMessage {
 		| "CostrictCliExit"
 		| "CostrictCliError"
 		| "CostrictCliClear"
+		| "CostrictCliPasteUnavailable"
 		| "CostrictCliRestart"
 	text?: string
 	/** For fileContent: { path, content, error? } */
@@ -681,6 +682,7 @@ export interface WebviewMessage {
 		// CostrictCli messages
 		| "CostrictCliStart"
 		| "CostrictCliInput"
+		| "CostrictCliRequestPaste"
 		| "CostrictCliResize"
 		| "CostrictCliStop"
 		| "CostrictCliRestart"
