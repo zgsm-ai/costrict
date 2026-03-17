@@ -632,6 +632,18 @@ export const webviewMessageHandler = async (
 				await getTerminalManager().write(message.data)
 			}
 			break
+		case "CostrictCliRequestPaste": {
+			const clipboardText = await vscode.env.clipboard.readText()
+			if (!clipboardText) {
+				await provider.postMessageToWebview({ type: "CostrictCliPasteUnavailable" })
+				break
+			}
+
+			const PASTE_START = "\x1b[200~"
+			const PASTE_END = "\x1b[201~"
+			await getTerminalManager().write(PASTE_START + clipboardText + PASTE_END)
+			break
+		}
 		case "CostrictCliResize":
 			if (message.cols && message.rows) {
 				await getTerminalManager().resize(message.cols, message.rows)
