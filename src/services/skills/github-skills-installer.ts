@@ -8,7 +8,8 @@
  *
  * Version tracking:
  * - Uses bundled-skills/index.json for version information
- * - Stores installed version in a separate .version file in user directory
+ * - Reads/writes .version file in user skill directory for version comparison
+ * - Does NOT use globalState for version tracking
  * - Does NOT modify SKILL.md content
  */
 
@@ -39,8 +40,6 @@ interface BundledSkillsIndex {
 interface BuiltinSkillConfig {
 	/** Skill name (local directory name) */
 	name: string
-	/** Storage key to track installed version in globalState */
-	versionKey: string
 	/** Target mode for this skill (optional, if specified installs to skills-{mode}/) */
 	mode?: string
 }
@@ -51,7 +50,6 @@ interface BuiltinSkillConfig {
 const BUILTIN_SKILLS: readonly BuiltinSkillConfig[] = [
 	{
 		name: "security-review",
-		versionKey: "builtinSkill.securityReview.version",
 		mode: "security-review", // Install to skills-security-review/ directory
 	},
 ]
@@ -95,6 +93,19 @@ async function getBundledCommitSha(bundledSkillsPath: string, skillName: string)
 		const index: BundledSkillsIndex = JSON.parse(content)
 		const skill = index.skills.find((s) => s.name === skillName)
 		return skill?.commitSha || ""
+	} catch {
+		return ""
+	}
+}
+
+/**
+ * Get the installed commit SHA from .version file in user directory
+ */
+async function getInstalledCommitSha(skillDir: string): Promise<string> {
+	try {
+		const versionFilePath = path.join(skillDir, ".version")
+		const content = await fs.readFile(versionFilePath, "utf-8")
+		return content.trim()
 	} catch {
 		return ""
 	}
@@ -150,22 +161,18 @@ async function copyBundledSkill(
 /**
  * Install a single built-in skill
  */
-async function installBuiltinSkill(
-	config: BuiltinSkillConfig,
-	context: vscode.ExtensionContext,
-	bundledSkillsPath: string,
-): Promise<boolean> {
-	const { name, versionKey, mode } = config
+async function installBuiltinSkill(config: BuiltinSkillConfig, bundledSkillsPath: string): Promise<boolean> {
+	const { name, mode } = config
 
 	// Get bundled commit SHA from index.json
 	const bundledCommitSha = await getBundledCommitSha(bundledSkillsPath, name)
 
-	// Check installed commit SHA in globalState
-	const installedCommitSha = context.globalState.get<string>(versionKey)
-
 	// Get user skills path
 	const userSkillsPath = getUserSkillsPath(mode)
 	const skillDir = path.join(userSkillsPath, name)
+
+	// Check installed commit SHA from .version file
+	const installedCommitSha = await getInstalledCommitSha(skillDir)
 
 	// Check if update is needed
 	const dirExists = await fs
@@ -189,8 +196,6 @@ async function installBuiltinSkill(
 	const bundledInstalled = await copyBundledSkill(name, bundledSkillsPath, userSkillsPath, bundledCommitSha)
 
 	if (bundledInstalled) {
-		// Store installed commit SHA in globalState
-		await context.globalState.update(versionKey, bundledCommitSha)
 		const modeInfo = mode ? ` to ${mode} mode` : ""
 		const shortSha = bundledCommitSha?.slice(0, 7) || "unknown"
 		logger.info(`[BuiltinSkills] ${name}: Installed from bundled skills${modeInfo} (${shortSha})`)
@@ -232,9 +237,7 @@ export async function installGitHubSkills(context: vscode.ExtensionContext): Pro
 	)
 
 	// Install all skills (copy from bundled to user directory)
-	const results = await Promise.all(
-		BUILTIN_SKILLS.map((config) => installBuiltinSkill(config, context, bundledSkillsPath)),
-	)
+	const results = await Promise.all(BUILTIN_SKILLS.map((config) => installBuiltinSkill(config, bundledSkillsPath)))
 
 	const successCount = results.filter((r) => r).length
 	logger.info(`[BuiltinSkills] Installation complete: ${successCount}/${BUILTIN_SKILLS.length} skills`)
@@ -243,11 +246,13 @@ export async function installGitHubSkills(context: vscode.ExtensionContext): Pro
 /**
  * Get list of installed built-in skills
  */
-export async function getInstalledGitHubSkills(context: vscode.ExtensionContext): Promise<string[]> {
+export async function getInstalledGitHubSkills(): Promise<string[]> {
 	const installed: string[] = []
 
 	for (const config of BUILTIN_SKILLS) {
-		const version = context.globalState.get<string>(config.versionKey)
+		const userSkillsPath = getUserSkillsPath(config.mode)
+		const skillDir = path.join(userSkillsPath, config.name)
+		const version = await getInstalledCommitSha(skillDir)
 		if (version) {
 			installed.push(config.name)
 		}
@@ -260,12 +265,13 @@ export async function getInstalledGitHubSkills(context: vscode.ExtensionContext)
  * Get version info for a specific skill
  */
 export async function getGitHubSkillVersion(
-	context: vscode.ExtensionContext,
 	skillName: string,
 ): Promise<{ installed: boolean; version: string | null } | null> {
 	const config = BUILTIN_SKILLS.find((s) => s.name === skillName)
 	if (!config) return null
 
-	const version = context.globalState.get<string>(config.versionKey) || null
-	return { installed: version !== null, version }
+	const userSkillsPath = getUserSkillsPath(config.mode)
+	const skillDir = path.join(userSkillsPath, config.name)
+	const version = await getInstalledCommitSha(skillDir)
+	return { installed: version !== "", version: version || null }
 }
