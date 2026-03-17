@@ -232,6 +232,19 @@ async function downloadSkill(config, outputBaseDir) {
 		console.log(`  Commit: ${commitSha.slice(0, 7)}`)
 	}
 
+	// Clean up existing skill directory to ensure fresh install
+	// This prevents old files from lingering when files are removed in new versions
+	console.log(`  Cleaning existing skill directory...`)
+	try {
+		await fs.rm(skillOutputDir, { recursive: true, force: true })
+		console.log(`    ✓ Cleaned ${outputDir}`)
+	} catch {
+		// Directory might not exist, that's fine
+	}
+
+	// Recreate output directory after cleanup
+	await fs.mkdir(skillOutputDir, { recursive: true })
+
 	// Download all files
 	for (const file of files) {
 		const url = `https://raw.githubusercontent.com/${repo}/${branch}/${pathPrefix}${file}`
