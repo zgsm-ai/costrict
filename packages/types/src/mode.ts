@@ -391,10 +391,15 @@ const WORKFLOW_MODES: readonly modelType[] = [
 			"Use this mode for security code audit tasks, including vulnerability scanning, security flaw detection, penetration testing preparation, and identifying potential security risks. It's specifically designed for analyzing code for OWASP Top 10 vulnerabilities, business logic flaws, authentication/authorization issues, injection attacks, and other security defects.",
 		description:
 			"Security code review mode using the security-review skill for comprehensive vulnerability detection",
-		groups: ["read", "mcp"],
+		groups: [
+			"read",
+			["edit", { fileRegex: "\\.(md|json)$", description: "Markdown and JSON files only" }],
+			"command",
+			"mcp",
+		],
 		disableSwitchMode: true,
 		source: "project",
-		zgsmCodeModeGroup: "hide",
+		pure: true,
 		apiProvider: "zgsm",
 	},
 ]

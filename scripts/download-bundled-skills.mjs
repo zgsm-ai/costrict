@@ -25,7 +25,7 @@ const projectRoot = path.dirname(__dirname)
 const BUILD_SKILLS = [
 	{
 		name: "security-review",
-		repo: "zgsm-ai/security-review",
+		repo: "zgsm-ai/security-review-skill",
 		branch: "main",
 		subdir: "security-review", // Skill files are in this subdirectory
 		outputDir: "security-review",
