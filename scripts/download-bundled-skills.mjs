@@ -120,12 +120,20 @@ async function fetchLatestCommitSha(repo, branch) {
 	const apiUrl = `https://api.github.com/repos/${repo}/commits/${branch}`
 
 	return new Promise((resolve) => {
-		https.get(apiUrl, {
+		const req = https.get(apiUrl, {
 			headers: {
 				"User-Agent": "CoStrict-Build",
 				"Accept": "application/vnd.github.v3+json",
 			},
-		}).on("response", (response) => {
+		})
+
+		// Set a timeout to avoid hanging
+		req.setTimeout(5000, () => {
+			req.destroy()
+			resolve(null)
+		})
+
+		req.on("response", (response) => {
 			if (response.statusCode !== 200) {
 				resolve(null)
 				return
@@ -298,36 +306,48 @@ async function loadLocalIndex(outputDir) {
 }
 
 /**
- * Check if skill needs to be downloaded based on commit SHA
- * Returns true if download is needed, false if cached
+ * Check if skill needs update by fetching metadata and comparing commit SHA
+ * Returns { needsUpdate: boolean, metadata: object | null, commitSha: string | null }
  */
-async function needsDownload(skillConfig, localIndex) {
-	if (!localIndex) {
-		return true
+async function checkSkillUpdate(skillConfig, localIndex) {
+	// Find local skill info
+	const localSkill = localIndex?.skills?.find(s => s.name === skillConfig.name)
+	const localCommitSha = localSkill?.commitSha || null
+
+	// Fetch latest commit SHA from GitHub (may fail due to network issues)
+	console.log(`  Checking ${skillConfig.name} for updates...`)
+	const latestCommitSha = await fetchLatestCommitSha(skillConfig.repo, skillConfig.branch)
+
+	// Try to fetch metadata first (works even if GitHub API fails)
+	console.log(`    Fetching skill metadata from index.json...`)
+	const metadata = await fetchSkillMetadata(skillConfig.repo, skillConfig.branch)
+
+	if (!metadata) {
+		console.error(`    ✗ Failed to fetch skill metadata, skipping`)
+		return { needsUpdate: false, metadata: null, commitSha: null }
 	}
 
-	// Find the skill in local index
-	const localSkill = localIndex.skills?.find(s => s.name === skillConfig.name)
-	if (!localSkill || !localSkill.commitSha) {
-		return true
+	// If we got commit SHA, use it to compare
+	if (latestCommitSha) {
+		if (localCommitSha === latestCommitSha) {
+			console.log(`    ✓ Up to date (commit: ${latestCommitSha.slice(0, 7)})`)
+			return { needsUpdate: false, metadata: localSkill, commitSha: latestCommitSha }
+		}
+		console.log(`    → Update available (${localCommitSha?.slice(0, 7) || "none"} → ${latestCommitSha.slice(0, 7)})`)
+	} else {
+		console.log(`    ⚠ Could not fetch commit SHA, but metadata is available`)
+		// If no local skill exists, we should download
+		if (!localSkill) {
+			console.log(`    → No local version found, will download`)
+			return { needsUpdate: true, metadata, commitSha: null }
+		}
+		// If local exists but we can't compare commits, skip to avoid unnecessary updates
+		console.log(`    → Local version exists, skipping update without commit comparison`)
+		return { needsUpdate: false, metadata: localSkill, commitSha: localCommitSha }
 	}
 
-	// Fetch latest commit SHA from GitHub
-	console.log(`  Checking for updates...`)
-	const latestSha = await fetchLatestCommitSha(skillConfig.repo, skillConfig.branch)
-
-	if (!latestSha) {
-		console.log(`  ⚠ Could not fetch latest commit, downloading anyway`)
-		return true
-	}
-
-	if (latestSha === localSkill.commitSha) {
-		console.log(`  ✓ Up to date (commit: ${latestSha.slice(0, 7)})`)
-		return false
-	}
-
-	console.log(`  → Update available (${localSkill.commitSha.slice(0, 7)} → ${latestSha.slice(0, 7)})`)
-	return true
+	console.log(`    ✓ Metadata fetched successfully`)
+	return { needsUpdate: true, metadata, commitSha: latestCommitSha }
 }
 
 /**
@@ -347,53 +367,76 @@ async function main() {
 	// Ensure output directory exists
 	await fs.mkdir(outputDir, { recursive: true })
 
-	// Download all skills that need updating
-	let successCount = 0
-	let skippedCount = 0
-	const downloadedSkills = []
-
+	// Phase 1: Check all skills for updates first
+	console.log("🔍 Phase 1: Checking for updates...")
+	const updateChecks = []
 	for (const skillConfig of BUILD_SKILLS) {
-		const needsUpdate = await needsDownload(skillConfig, localIndex)
+		const check = await checkSkillUpdate(skillConfig, localIndex)
+		updateChecks.push({ skillConfig, check })
+	}
 
-		if (!needsUpdate) {
-			skippedCount++
-			// Keep the existing skill info
-			const localSkill = localIndex.skills?.find(s => s.name === skillConfig.name)
-			if (localSkill) {
-				downloadedSkills.push(localSkill)
-			}
-			continue
+	// Filter skills that actually need updating
+	const skillsToUpdate = updateChecks.filter(({ check }) => check.needsUpdate)
+	const skillsToSkip = updateChecks.filter(({ check }) => !check.needsUpdate)
+
+	console.log(`\n📊 Summary: ${skillsToUpdate.length} updates, ${skillsToSkip.length} up-to-date`)
+
+	if (skillsToUpdate.length === 0) {
+		console.log("\n✓ All skills are up to date, nothing to download")
+		return
+	}
+
+	// Phase 2: Download only skills that need updating
+	console.log("\n📥 Phase 2: Downloading updates...")
+	let successCount = 0
+	const updatedSkills = []
+
+	// Start with skills that are up to date
+	for (const { skillConfig, check } of skillsToSkip) {
+		if (check.metadata) {
+			updatedSkills.push({
+				name: check.metadata.name,
+				repo: skillConfig.repo,
+				branch: skillConfig.branch,
+				commitSha: check.commitSha,
+			})
 		}
+	}
 
+	// Download updated skills
+	for (const { skillConfig } of skillsToUpdate) {
 		try {
 			const result = await downloadSkill(skillConfig, outputDir)
 			if (result) {
 				successCount++
-				downloadedSkills.push(result)
+				updatedSkills.push(result)
 			}
 		} catch (error) {
 			console.error(`   ✗ Failed to download ${skillConfig.name}: ${error}`)
+			// Keep the old version on failure
+			const localSkill = localIndex?.skills?.find(s => s.name === skillConfig.name)
+			if (localSkill) {
+				updatedSkills.push(localSkill)
+			}
 		}
 	}
 
-	// Always create/update index file with current info
+	// Update index file
 	const indexPath = path.join(outputDir, "index.json")
 	await fs.writeFile(
 		indexPath,
 		JSON.stringify(
 			{
 				version: extensionVersion,
-				skills: downloadedSkills,
+				skills: updatedSkills,
 			},
 			null,
 			2,
 		),
 	)
 
-	if (skippedCount > 0) {
-		console.log(`\n✓ Skipped ${skippedCount} skills (already up to date)`)
-	}
-	console.log(`✓ Downloaded ${successCount}/${BUILD_SKILLS.length} skills`)
+	console.log(`\n✓ Downloaded ${successCount}/${skillsToUpdate.length} updates`)
+	console.log(`✓ Total skills: ${updatedSkills.length}`)
 	console.log(`✓ Output: ${outputDir}`)
 	console.log(`✓ Index version: ${extensionVersion}`)
 	console.log("\n💡 These skills will be bundled with the extension\n")

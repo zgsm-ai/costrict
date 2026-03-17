@@ -167,6 +167,12 @@ async function installBuiltinSkill(config: BuiltinSkillConfig, bundledSkillsPath
 	// Get bundled commit SHA from index.json
 	const bundledCommitSha = await getBundledCommitSha(bundledSkillsPath, name)
 
+	// Skip if commitSha is null/empty (skill not properly bundled)
+	if (!bundledCommitSha) {
+		logger.info(`[BuiltinSkills] ${name}: No commitSha in index.json, skipping`)
+		return false
+	}
+
 	// Get user skills path
 	const userSkillsPath = getUserSkillsPath(mode)
 	const skillDir = path.join(userSkillsPath, name)
