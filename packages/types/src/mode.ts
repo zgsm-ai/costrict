@@ -399,7 +399,6 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		],
 		disableSwitchMode: true,
 		source: "project",
-		pure: true,
 		apiProvider: "zgsm",
 	},
 ]
