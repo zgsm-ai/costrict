@@ -399,6 +399,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 			"mcp",
 		],
 		disableSwitchMode: true,
+		zgsmCodeModeGroup: "hide",
 		taskMode: "task",
 		source: "project",
 		apiProvider: "zgsm",

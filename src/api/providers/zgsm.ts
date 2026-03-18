@@ -347,7 +347,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			"zgsm-provider": metadata?.provider,
 			"x-costrict-idea": getEditorType(),
 			"zgsm-project-path": encodeURI(workspacePath),
-			"x-caller": metadata?.mode === "review" ? "review-checker" : "chat",
+			"x-caller": ["review", "security-review"].includes(metadata?.mode || "") ? "review-checker" : "chat",
 		}
 	}
 
