@@ -169,6 +169,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			vscode.postMessage({ type: "CostrictCliRequestPaste" })
 		}
 
+		const shouldUsePasteShortcutFallback = Boolean((window as any).isJetbrainsPlatform)
 		terminal.attachCustomKeyEventHandler((event) => {
 			const selection = terminal.getSelection()
 			const action = getTerminalClipboardAction(event, selection)
@@ -180,14 +181,16 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			event.preventDefault()
 
 			if (action === "paste") {
-				// Some hosts (notably JetBrains webviews) swallow Ctrl/Cmd+V without ever
-				// dispatching a DOM paste event to xterm's textarea. Schedule a fallback
-				// clipboard request and let a real paste event cancel it when available.
-				clearPendingPasteShortcutFallback()
-				pasteShortcutFallbackRef.current = window.setTimeout(() => {
-					pasteShortcutFallbackRef.current = null
-					vscode.postMessage({ type: "CostrictCliRequestPaste" })
-				}, 0)
+				if (shouldUsePasteShortcutFallback) {
+					// JetBrains-hosted webviews can swallow Ctrl/Cmd+V without ever
+					// dispatching a DOM paste event to xterm's textarea, so only that host
+					// gets the keyboard-triggered clipboard fallback.
+					clearPendingPasteShortcutFallback()
+					pasteShortcutFallbackRef.current = window.setTimeout(() => {
+						pasteShortcutFallbackRef.current = null
+						vscode.postMessage({ type: "CostrictCliRequestPaste" })
+					}, 0)
+				}
 				return false
 			}
 

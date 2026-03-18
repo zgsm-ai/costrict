@@ -83,11 +83,43 @@ describe("CostrictCliView", () => {
 		terminalState.customKeyEventHandler = undefined
 		terminalState.selection = ""
 		terminalState.textarea = undefined
+		Reflect.deleteProperty(window as any, "isJetbrainsPlatform")
 	})
 
-	it("falls back to extension clipboard paste when no DOM paste event arrives", () => {
+	it("waits for the DOM paste event in VS Code instead of scheduling an extension fallback", () => {
 		vi.useFakeTimers()
 		try {
+			render(<CostrictCliView isHidden={false} />)
+
+			expect(terminalState.customKeyEventHandler).toBeDefined()
+
+			const event = new KeyboardEvent("keydown", {
+				key: "v",
+				ctrlKey: true,
+				bubbles: true,
+				cancelable: true,
+			})
+			const preventDefaultSpy = vi.spyOn(event, "preventDefault")
+
+			const result = terminalState.customKeyEventHandler?.(event)
+
+			expect(result).toBe(false)
+			expect(preventDefaultSpy).toHaveBeenCalledTimes(1)
+			expect(vscode.postMessage).not.toHaveBeenCalled()
+
+			vi.runOnlyPendingTimers()
+
+			expect(vscode.postMessage).not.toHaveBeenCalled()
+			expect(vi.mocked(copyToClipboard)).not.toHaveBeenCalled()
+		} finally {
+			vi.useRealTimers()
+		}
+	})
+
+	it("falls back to extension clipboard paste in JetBrains when no DOM paste event arrives", () => {
+		vi.useFakeTimers()
+		try {
+			Object.assign(window as any, { isJetbrainsPlatform: true })
 			render(<CostrictCliView isHidden={false} />)
 
 			expect(terminalState.customKeyEventHandler).toBeDefined()
