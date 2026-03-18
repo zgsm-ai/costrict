@@ -486,7 +486,7 @@ export class CodeReviewService {
 				clearAbortHandlingTimeout()
 				abortHandlingTimeout = setTimeout(() => {
 					void handleTaskFailure(new Error(t("common:review.tip.task_cancelled")))
-				}, 300)
+				}, 60_000)
 			}
 
 			taskInstance.on(RooCodeEventName.Message, onMessage as any)
