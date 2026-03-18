@@ -113,6 +113,7 @@ export const modeConfigSchema = z.object({
 	subagents: z.array(z.string()).default([]).optional(),
 	pure: z.boolean().default(false).optional(),
 	disableSwitchMode: z.boolean().default(false).optional(),
+	taskMode: z.string().optional(),
 })
 
 export type ModeConfig = z.infer<typeof modeConfigSchema>
@@ -398,6 +399,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 			"mcp",
 		],
 		disableSwitchMode: true,
+		taskMode: "security-review",
 		source: "project",
 		apiProvider: "zgsm",
 	},

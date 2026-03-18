@@ -3675,6 +3675,16 @@ export class ClineProvider
 				`[delegateParentAndOpenChild] Parent mismatch: expected ${parentTaskId}, current ${parent.taskId}`,
 			)
 		}
+
+		// Check if parent mode has taskMode restriction
+		const state = await this.getState()
+		const parentMode = getModeBySlug(state?.mode ?? "", state?.customModes)
+		if (parentMode?.taskMode && mode !== parentMode.taskMode) {
+			throw new Error(
+				`[delegateParentAndOpenChild] Parent mode '${parentMode.name}' only allows delegation to '${parentMode.taskMode}' mode. Requested: '${mode}'`,
+			)
+		}
+
 		// 2) Flush pending tool results to API history BEFORE disposing the parent.
 		//    This is critical: when tools are called before new_task,
 		//    their tool_result blocks are in userMessageContent but not yet saved to API history.
