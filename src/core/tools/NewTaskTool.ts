@@ -5,7 +5,6 @@ import { TodoItem } from "@roo-code/types"
 import { Task } from "../task/Task"
 import { getModeBySlug } from "../../shared/modes"
 import { formatResponse } from "../prompts/responses"
-import { t } from "../../i18n"
 import { parseMarkdownChecklist } from "./UpdateTodoListTool"
 import { Package } from "../../shared/package"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
@@ -51,6 +50,20 @@ export class NewTaskTool extends BaseTool<"new_task"> {
 			}
 
 			const state = await provider.getState()
+
+			// Check if parent mode has taskMode restriction
+			const currentMode = getModeBySlug(state?.mode ?? "", state?.customModes)
+			if (currentMode?.taskMode && mode !== currentMode.taskMode) {
+				task.recordToolError("new_task")
+				task.didToolFailInCurrentTurn = true
+				pushToolResult(
+					formatResponse.toolError(
+						`Mode '${currentMode.name}' only allows delegation to '${currentMode.taskMode}' mode. ` +
+							`Requested mode: '${mode}'.`,
+					),
+				)
+				return
+			}
 
 			// Use Package.name (dynamic at build time) as the VSCode configuration namespace.
 			// Supports multiple extension variants (e.g., stable/nightly) without hardcoded strings.

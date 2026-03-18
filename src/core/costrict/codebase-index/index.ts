@@ -35,6 +35,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 	private clineProvider: ClineProvider | null = null
 	// private platformDetector: PlatformDetector
 	private isInitialized: boolean = false
+	private initializePromise: Promise<void> | null = null
 	// private serverEndpoint = ""
 	private preBuildInfo = {
 		type: "",
@@ -105,14 +106,36 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 	}
 
 	/**
-	 * Initialize client
+	 * Initialize client lifecycle. Concurrent callers share the same in-flight setup.
 	 */
 	public async initialize(): Promise<void> {
 		if (this.isInitialized) {
-			// this.log("CodebaseKeeper client already initialized, skipping", "info", "ZgsmCodebaseIndexManager")
 			return
 		}
 
+		if (this.initializePromise) {
+			await this.initializePromise
+			return
+		}
+
+		this.initializePromise = this.doInitialize()
+
+		try {
+			await this.initializePromise
+		} finally {
+			this.initializePromise = null
+		}
+	}
+
+	public async ensureInitialized(src = "ensureInitialized"): Promise<void> {
+		await this.initialize()
+
+		if (!this.isInitialized) {
+			throw new Error(`${src ? `[${src}] ` : ""}Client lifecycle is not ready`)
+		}
+	}
+
+	private async doInitialize(): Promise<void> {
 		// Check if client is already installed locally
 		try {
 			// Create client configuration

@@ -25,7 +25,7 @@ const projectRoot = path.dirname(__dirname)
 const BUILD_SKILLS = [
 	{
 		name: "security-review",
-		repo: "zgsm-ai/security-review",
+		repo: "zgsm-ai/security-review-skill",
 		branch: "main",
 		subdir: "security-review", // Skill files are in this subdirectory
 		outputDir: "security-review",
@@ -113,20 +113,28 @@ modeSlugs:
 }
 
 /**
- * Fetch skill metadata from index.json
- * Returns { name, description, files } or null if failed
+ * Fetch latest commit SHA for a repo branch
+ * Returns commit SHA string or null if failed
  */
-async function fetchSkillMetadata(repo, branch) {
-	const indexUrl = `https://raw.githubusercontent.com/${repo}/${branch}/index.json`
+async function fetchLatestCommitSha(repo, branch) {
+	const apiUrl = `https://api.github.com/repos/${repo}/commits/${branch}`
 
 	return new Promise((resolve) => {
-		https.get(indexUrl, {
+		const req = https.get(apiUrl, {
 			headers: {
 				"User-Agent": "CoStrict-Build",
+				"Accept": "application/vnd.github.v3+json",
 			},
-		}).on("response", async (response) => {
+		})
+
+		// Set a timeout to avoid hanging
+		req.setTimeout(5000, () => {
+			req.destroy()
+			resolve(null)
+		})
+
+		req.on("response", (response) => {
 			if (response.statusCode !== 200) {
-				console.error(`    ✗ Failed to fetch index.json: ${response.statusCode}`)
 				resolve(null)
 				return
 			}
@@ -136,16 +144,7 @@ async function fetchSkillMetadata(repo, branch) {
 			response.on("end", () => {
 				try {
 					const json = JSON.parse(data)
-					const skill = json.skills?.[0]
-					if (skill) {
-						resolve({
-							name: skill.name,
-							description: skill.description,
-							files: skill.files || []
-						})
-					} else {
-						resolve(null)
-					}
+					resolve(json.sha || null)
 				} catch {
 					resolve(null)
 				}
@@ -155,7 +154,59 @@ async function fetchSkillMetadata(repo, branch) {
 }
 
 /**
+ * Fetch skill metadata from index.json
+ * Returns { name, description, files, commitSha } or null if failed
+ */
+async function fetchSkillMetadata(repo, branch) {
+	const indexUrl = `https://raw.githubusercontent.com/${repo}/${branch}/index.json`
+
+	// Fetch both commit SHA and index.json in parallel
+	const [commitSha, indexData] = await Promise.all([
+		fetchLatestCommitSha(repo, branch),
+		new Promise((resolve) => {
+			https.get(indexUrl, {
+				headers: {
+					"User-Agent": "CoStrict-Build",
+				},
+			}).on("response", async (response) => {
+				if (response.statusCode !== 200) {
+					resolve(null)
+					return
+				}
+
+				let data = ""
+				response.on("data", (chunk) => { data += chunk })
+				response.on("end", () => {
+					try {
+						resolve(JSON.parse(data))
+					} catch {
+						resolve(null)
+					}
+				})
+			}).on("error", () => resolve(null))
+		}),
+	])
+
+	if (!indexData) {
+		return null
+	}
+
+	const skill = indexData.skills?.[0]
+	if (!skill) {
+		return null
+	}
+
+	return {
+		name: skill.name,
+		description: skill.description,
+		files: skill.files || [],
+		commitSha,
+	}
+}
+
+/**
  * Download a single skill
+ * Returns { name, repo, branch, commitSha } or null if failed
  */
 async function downloadSkill(config, outputBaseDir) {
 	const { name, repo, branch, subdir, outputDir } = config
@@ -179,14 +230,31 @@ async function downloadSkill(config, outputBaseDir) {
 	const skillMetadata = await fetchSkillMetadata(repo, branch)
 	if (!skillMetadata) {
 		console.error(`   ✗ Failed to fetch skill metadata`)
-		return
+		return null
 	}
-	console.log(`  Found ${skillMetadata.files.length} files to download`)
-	console.log(`  Skill name: ${skillMetadata.name}`)
-	console.log(`  Description: ${skillMetadata.description.substring(0, 80)}...`)
+	const { commitSha, files, ...metadata } = skillMetadata
+	console.log(`  Found ${files.length} files to download`)
+	console.log(`  Skill name: ${metadata.name}`)
+	console.log(`  Description: ${metadata.description.substring(0, 80)}...`)
+	if (commitSha) {
+		console.log(`  Commit: ${commitSha.slice(0, 7)}`)
+	}
+
+	// Clean up existing skill directory to ensure fresh install
+	// This prevents old files from lingering when files are removed in new versions
+	console.log(`  Cleaning existing skill directory...`)
+	try {
+		await fs.rm(skillOutputDir, { recursive: true, force: true })
+		console.log(`    ✓ Cleaned ${outputDir}`)
+	} catch {
+		// Directory might not exist, that's fine
+	}
+
+	// Recreate output directory after cleanup
+	await fs.mkdir(skillOutputDir, { recursive: true })
 
 	// Download all files
-	for (const file of skillMetadata.files) {
+	for (const file of files) {
 		const url = `https://raw.githubusercontent.com/${repo}/${branch}/${pathPrefix}${file}`
 		const targetPath = path.join(skillOutputDir, file)
 
@@ -197,9 +265,16 @@ async function downloadSkill(config, outputBaseDir) {
 	}
 
 	// Update SKILL.md frontmatter using metadata from index.json
-	await updateSkillFrontmatter(skillOutputDir, skillMetadata)
+	await updateSkillFrontmatter(skillOutputDir, metadata)
 
 	console.log(`   ✓ Skill ${name} downloaded successfully`)
+
+	return {
+		name,
+		repo,
+		branch,
+		commitSha,
+	}
 }
 
 /**
@@ -217,6 +292,65 @@ async function getExtensionVersion() {
 }
 
 /**
+ * Load local index.json if exists
+ * Returns parsed object or null
+ */
+async function loadLocalIndex(outputDir) {
+	try {
+		const indexPath = path.join(outputDir, "index.json")
+		const content = await fs.readFile(indexPath, "utf-8")
+		return JSON.parse(content)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Check if skill needs update by fetching metadata and comparing commit SHA
+ * Returns { needsUpdate: boolean, metadata: object | null, commitSha: string | null }
+ */
+async function checkSkillUpdate(skillConfig, localIndex) {
+	// Find local skill info
+	const localSkill = localIndex?.skills?.find(s => s.name === skillConfig.name)
+	const localCommitSha = localSkill?.commitSha || null
+
+	// Fetch latest commit SHA from GitHub (may fail due to network issues)
+	console.log(`  Checking ${skillConfig.name} for updates...`)
+	const latestCommitSha = await fetchLatestCommitSha(skillConfig.repo, skillConfig.branch)
+
+	// Try to fetch metadata first (works even if GitHub API fails)
+	console.log(`    Fetching skill metadata from index.json...`)
+	const metadata = await fetchSkillMetadata(skillConfig.repo, skillConfig.branch)
+
+	if (!metadata) {
+		console.error(`    ✗ Failed to fetch skill metadata, skipping`)
+		return { needsUpdate: false, metadata: null, commitSha: null }
+	}
+
+	// If we got commit SHA, use it to compare
+	if (latestCommitSha) {
+		if (localCommitSha === latestCommitSha) {
+			console.log(`    ✓ Up to date (commit: ${latestCommitSha.slice(0, 7)})`)
+			return { needsUpdate: false, metadata: localSkill, commitSha: latestCommitSha }
+		}
+		console.log(`    → Update available (${localCommitSha?.slice(0, 7) || "none"} → ${latestCommitSha.slice(0, 7)})`)
+	} else {
+		console.log(`    ⚠ Could not fetch commit SHA, but metadata is available`)
+		// If no local skill exists, we should download
+		if (!localSkill) {
+			console.log(`    → No local version found, will download`)
+			return { needsUpdate: true, metadata, commitSha: null }
+		}
+		// If local exists but we can't compare commits, skip to avoid unnecessary updates
+		console.log(`    → Local version exists, skipping update without commit comparison`)
+		return { needsUpdate: false, metadata: localSkill, commitSha: localCommitSha }
+	}
+
+	console.log(`    ✓ Metadata fetched successfully`)
+	return { needsUpdate: true, metadata, commitSha: latestCommitSha }
+}
+
+/**
  * Main function
  */
 async function main() {
@@ -224,39 +358,85 @@ async function main() {
 
 	const outputDir = path.join(projectRoot, "src", "bundled-skills")
 
-	// Clean output directory
-	await fs.rm(outputDir, { recursive: true, force: true })
-	await fs.mkdir(outputDir, { recursive: true })
-
 	// Get extension version for index.json
 	const extensionVersion = await getExtensionVersion()
 
-	// Download all skills
+	// Load local index to check for updates
+	const localIndex = await loadLocalIndex(outputDir)
+
+	// Ensure output directory exists
+	await fs.mkdir(outputDir, { recursive: true })
+
+	// Phase 1: Check all skills for updates first
+	console.log("🔍 Phase 1: Checking for updates...")
+	const updateChecks = []
+	for (const skillConfig of BUILD_SKILLS) {
+		const check = await checkSkillUpdate(skillConfig, localIndex)
+		updateChecks.push({ skillConfig, check })
+	}
+
+	// Filter skills that actually need updating
+	const skillsToUpdate = updateChecks.filter(({ check }) => check.needsUpdate)
+	const skillsToSkip = updateChecks.filter(({ check }) => !check.needsUpdate)
+
+	console.log(`\n📊 Summary: ${skillsToUpdate.length} updates, ${skillsToSkip.length} up-to-date`)
+
+	if (skillsToUpdate.length === 0) {
+		console.log("\n✓ All skills are up to date, nothing to download")
+		return
+	}
+
+	// Phase 2: Download only skills that need updating
+	console.log("\n📥 Phase 2: Downloading updates...")
 	let successCount = 0
-	for (const skill of BUILD_SKILLS) {
-		try {
-			await downloadSkill(skill, outputDir)
-			successCount++
-		} catch (error) {
-			console.error(`   ✗ Failed to download ${skill.name}: ${error}`)
+	const updatedSkills = []
+
+	// Start with skills that are up to date
+	for (const { skillConfig, check } of skillsToSkip) {
+		if (check.metadata) {
+			updatedSkills.push({
+				name: check.metadata.name,
+				repo: skillConfig.repo,
+				branch: skillConfig.branch,
+				commitSha: check.commitSha,
+			})
 		}
 	}
 
-	// Create index file with extension version
+	// Download updated skills
+	for (const { skillConfig } of skillsToUpdate) {
+		try {
+			const result = await downloadSkill(skillConfig, outputDir)
+			if (result) {
+				successCount++
+				updatedSkills.push(result)
+			}
+		} catch (error) {
+			console.error(`   ✗ Failed to download ${skillConfig.name}: ${error}`)
+			// Keep the old version on failure
+			const localSkill = localIndex?.skills?.find(s => s.name === skillConfig.name)
+			if (localSkill) {
+				updatedSkills.push(localSkill)
+			}
+		}
+	}
+
+	// Update index file
 	const indexPath = path.join(outputDir, "index.json")
 	await fs.writeFile(
 		indexPath,
 		JSON.stringify(
 			{
 				version: extensionVersion,
-				skills: BUILD_SKILLS.map((s) => ({ name: s.name, repo: s.repo, branch: s.branch })),
+				skills: updatedSkills,
 			},
 			null,
 			2,
 		),
 	)
 
-	console.log(`\n✓ Downloaded ${successCount}/${BUILD_SKILLS.length} skills`)
+	console.log(`\n✓ Downloaded ${successCount}/${skillsToUpdate.length} updates`)
+	console.log(`✓ Total skills: ${updatedSkills.length}`)
 	console.log(`✓ Output: ${outputDir}`)
 	console.log(`✓ Index version: ${extensionVersion}`)
 	console.log("\n💡 These skills will be bundled with the extension\n")

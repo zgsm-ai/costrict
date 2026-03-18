@@ -15,7 +15,7 @@ import * as vscode from "vscode"
 import path from "node:path"
 import type { AxiosRequestConfig } from "axios"
 import { v7 as uuidv7 } from "uuid"
-import { ExtensionMessage, RooCodeEventName, type TaskEvents } from "@roo-code/types"
+import { ExtensionMessage, RooCodeEventName } from "@roo-code/types"
 
 import { ReviewTask, UpdateIssueStatusResponse } from "./types"
 import { updateIssueStatusAPI, getPrompt, reportIssue, getIssueByTaskId } from "./api"
@@ -38,6 +38,7 @@ import { getClientId } from "../../../utils/getClientId"
 import { t } from "../../../i18n"
 import { CommentService, type CommentThreadInfo } from "../../../integrations/comment"
 import type { ClineProvider } from "../../webview/ClineProvider"
+import type { Task } from "../../task/Task"
 import { TelemetryService } from "@roo-code/telemetry"
 import { CodeReviewErrorType, type TelemetryErrorType } from "../telemetry"
 import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
@@ -68,6 +69,7 @@ export class CodeReviewService {
 	private logger: ILogger
 	private taskList: Map<string, string> = new Map()
 	private historyTaskId: string | null = null
+	private disposeTaskLifecycle: (() => void) | null = null
 	/**
 	 * Private constructor for singleton pattern
 	 */
@@ -112,17 +114,6 @@ export class CodeReviewService {
 		if (this.currentTask.isCompleted) return ReviewTaskStatus.COMPLETED
 		if (this.currentTask.progress > 0) return ReviewTaskStatus.RUNNING
 		return ReviewTaskStatus.INITIAL
-	}
-
-	/**
-	 * Handle task timeout
-	 */
-	private handleTaskTimeout(): void {
-		this.logger.info("[CodeReview] Task timeout")
-		this.updateTaskState({
-			error: new Error(t("common:review.tip.task_timeout")),
-			isCompleted: true,
-		})
 	}
 
 	/**
@@ -216,16 +207,26 @@ export class CodeReviewService {
 		if (visibleProvider) {
 			const chatMessage = target.data
 				?.map((item) => {
-					const { file_path } = item
+					const { file_path, line_range } = item
 					if (target.type === ReviewTargetType.FILE) {
 						return `@/${file_path}`
 					} else if (target.type === ReviewTargetType.FOLDER) {
 						return `@/${file_path}/`
+					} else if (target.type === ReviewTargetType.CODE && line_range) {
+						return `@/${file_path}:${line_range[0]}-${line_range[1]}`
 					}
 					return ""
 				})
 				.join(" ")
-			await this.createReviewTask(chatMessage ?? "", target, { mode })
+
+			// For security-review mode, append auto-confirmation message
+			const autoExecuteMessage = t("common:review.tip.auto_execute_with_default_config")
+			const finalMessage =
+				mode === "security-review" && chatMessage
+					? `${chatMessage}\n\n${autoExecuteMessage}`
+					: (chatMessage ?? "")
+
+			await this.createReviewTask(finalMessage, target, { mode })
 		}
 	}
 
@@ -252,27 +253,69 @@ export class CodeReviewService {
 		this.prevMode = (await provider.getMode()) ?? defaultModeSlug
 		const taskMode = options?.mode ?? "review"
 		const task = await provider.createTask(message, undefined, undefined, undefined, { mode: taskMode })
-
-		// 🔑 防止重复处理完成事件的标志
+		const trackedTaskId = task.taskId
+		let trackedTask: Task = task
 		let completionHandled = false
+		let delegatedChildTaskId: string | null = null
+		let abortHandlingTimeout: NodeJS.Timeout | undefined
+		const boundTaskInstanceIds = new Set<string>()
+		const listenerDisposers: Array<() => void> = []
 
-		const timeoutId = setTimeout(
-			() => {
-				this.handleTaskTimeout()
-			},
-			15 * 60 * 1000,
-		)
+		// Set timeout based on mode: 3 hours for security-review, 15 minutes for others
+		const timeoutMs = taskMode === "security-review" ? 180 * 60 * 1000 : 15 * 60 * 1000
+		const timeoutId = setTimeout(() => {
+			void handleTaskFailure(new Error(t("common:review.tip.task_timeout")))
+		}, timeoutMs)
 
 		this.updateTaskState({ timeoutId })
+
+		const clearAbortHandlingTimeout = () => {
+			if (abortHandlingTimeout) {
+				clearTimeout(abortHandlingTimeout)
+				abortHandlingTimeout = undefined
+			}
+		}
+
+		const disposeLifecycleListeners = () => {
+			clearAbortHandlingTimeout()
+			const disposers = listenerDisposers.splice(0)
+			for (const dispose of disposers.reverse()) {
+				dispose()
+			}
+		}
+
+		const releaseTaskLifecycle = () => {
+			disposeLifecycleListeners()
+			if (this.disposeTaskLifecycle === releaseTaskLifecycle) {
+				this.disposeTaskLifecycle = null
+			}
+		}
+
+		this.disposeTaskLifecycle = releaseTaskLifecycle
 
 		const resetMode = async () => {
 			const restoreMode = this.getRestoreMode(this.prevMode)
 			await provider.handleModeSwitch(restoreMode)
-			task.updateMode(restoreMode)
+			trackedTask.updateMode(restoreMode)
 			this.prevMode = ""
 		}
 
-		// 统一的完成处理函数
+		const handleTaskFailure = async (error: Error) => {
+			if (completionHandled || this.currentTask?.isCompleted) {
+				releaseTaskLifecycle()
+				clearTimeout(timeoutId)
+				return
+			}
+			completionHandled = true
+			clearTimeout(timeoutId)
+			releaseTaskLifecycle()
+			this.updateTaskState({
+				error,
+				isCompleted: true,
+			})
+			await resetMode()
+		}
+
 		const handleCompletion = async () => {
 			if (completionHandled) {
 				this.logger.info("[CodeReview] Completion already handled, skipping")
@@ -282,9 +325,39 @@ export class CodeReviewService {
 
 			try {
 				this.logger.info("[CodeReview] Review Task completed")
-				const reportMessage = [...task.clineMessages]
+				let reportMessage = [...trackedTask.clineMessages]
 					.reverse()
 					.find((msg) => msg.type === "say" && msg?.text?.includes("I-AM-CODE-REVIEW-REPORT-V1"))
+
+				// If no report found in message queue, try to read from default output directory
+				if (!reportMessage?.text) {
+					this.logger.info(
+						"[CodeReview] No report found in message queue, attempting to read from default output directory",
+					)
+					const defaultOutputDir = "security-review_result"
+					const fullReportPath = path.resolve(provider.cwd, defaultOutputDir, "full_report.jsonl")
+					this.logger.info(`[CodeReview] Looking for report at: ${fullReportPath}`)
+
+					if (await fileExistsAtPath(fullReportPath)) {
+						this.logger.info("[CodeReview] Found full_report.jsonl, reading report from file")
+						try {
+							const fs = await import("node:fs")
+							const reportContent = fs.readFileSync(fullReportPath, "utf-8")
+							// Construct a synthetic report message with the file content
+							reportMessage = {
+								type: "say",
+								text: `I-AM-CODE-REVIEW-REPORT-V1\n${reportContent}`,
+								timestamp: new Date().toISOString(),
+							} as any
+							this.logger.info("[CodeReview] Successfully loaded report from file")
+						} catch (error) {
+							this.logger.error(`[CodeReview] Failed to read report file: ${error}`)
+						}
+					} else {
+						this.logger.info(`[CodeReview] Report file not found at ${fullReportPath}`)
+					}
+				}
+
 				if (reportMessage?.text) {
 					const { issues, review_task_id, title, conclusion } = await this.getIssues(
 						reportMessage.text,
@@ -320,87 +393,182 @@ export class CodeReviewService {
 				})
 			} finally {
 				clearTimeout(timeoutId)
+				releaseTaskLifecycle()
 
 				setTimeout(async () => {
 					await provider.removeClineFromStack()
 					await provider.refreshWorkspace()
 					await resetMode()
 					options?.onTaskComplete?.()
+
+					// For security-review mode, switch to code review page if report was generated
+					if (taskMode === "security-review") {
+						// Check if we have a valid report with issues
+						const hasValidReport = this.currentTask?.taskId && this.getAllCachedIssues().length > 0
+						if (hasValidReport) {
+							provider.postMessageToWebview({
+								type: "action",
+								action: "codeReviewButtonClicked",
+							})
+						}
+						// Otherwise stay on chat/agent page
+					}
 				}, 500)
 			}
 		}
 
-		// 🔑 立即同步注册所有事件监听器（避免竞态条件）
-		// 方式1：通过 Message 事件检测 completion_result（最早触发）
-		task.on(RooCodeEventName.Message, ({ message: msg }) => {
-			if (!completionHandled && msg.type === "say" && !msg.partial && msg.say === "completion_result") {
-				this.logger.info("[CodeReview] Detected completion via Message event (completion_result)")
-				handleCompletion()
+		const bindTaskInstance = (taskInstance: Task) => {
+			if (taskInstance.taskId !== trackedTaskId || boundTaskInstanceIds.has(taskInstance.instanceId)) {
+				return
 			}
-		})
 
-		// 方式2：TaskCompleted 事件作为备份
-		task.on(RooCodeEventName.TaskCompleted, () => {
-			this.logger.info("[CodeReview] Detected completion via TaskCompleted event")
-			handleCompletion()
-		})
+			trackedTask = taskInstance
+			boundTaskInstanceIds.add(taskInstance.instanceId)
+			clearAbortHandlingTimeout()
+			this.logger.info(
+				`[CodeReview] Binding lifecycle to task instance ${taskInstance.taskId}.${taskInstance.instanceId}`,
+			)
 
-		task.on(RooCodeEventName.TaskStarted, () => {
-			this.updateTaskState({
-				isCompleted: false,
-				progress: 0.001, // use 0.001 to indicate running
-			})
-		})
-
-		task.on(RooCodeEventName.TaskAskResponded, () => {
-			const messageCount = task.clineMessages.length
-			let progress = 0
-			if (messageCount <= 10) {
-				progress = messageCount * 0.05
-			} else {
-				progress = Math.min(0.5 + (messageCount - 10) * 0.02, 0.95)
+			const onMessage = ({ message: msg }: { message: any }) => {
+				if (!completionHandled && msg.type === "say" && !msg.partial && msg.say === "completion_result") {
+					this.logger.info("[CodeReview] Detected completion via Message event (completion_result)")
+					void handleCompletion()
+				}
 			}
-			this.updateTaskState({
-				progress: Math.round(progress * 100) / 100,
+
+			const onTaskCompleted = () => {
+				this.logger.info("[CodeReview] Detected completion via TaskCompleted event")
+				void handleCompletion()
+			}
+
+			const onTaskStarted = () => {
+				delegatedChildTaskId = null
+				this.updateTaskState({
+					isCompleted: false,
+					progress: 0.001, // use 0.001 to indicate running
+				})
+			}
+
+			const onTaskAskResponded = () => {
+				const messageCount = taskInstance.clineMessages.length
+				let progress = 0
+				if (messageCount <= 10) {
+					progress = messageCount * 0.05
+				} else {
+					progress = Math.min(0.5 + (messageCount - 10) * 0.02, 0.95)
+				}
+				this.updateTaskState({
+					progress: Math.round(progress * 100) / 100,
+				})
+			}
+
+			const onTaskResumable = async () => {
+				if (completionHandled || delegatedChildTaskId) return
+				await handleTaskFailure(new Error(t("common:review.tip.service_unavailable")))
+			}
+
+			const onTaskIdle = async () => {
+				if (completionHandled || delegatedChildTaskId) return
+				await handleTaskFailure(new Error(t("common:review.tip.service_unavailable")))
+			}
+
+			const onTaskAborted = () => {
+				if (completionHandled) return
+				if (this.currentTask?.isCompleted) {
+					releaseTaskLifecycle()
+					clearTimeout(timeoutId)
+					return
+				}
+				if (delegatedChildTaskId) {
+					this.logger.info("[CodeReview] Ignoring TaskAborted because review task is delegated")
+					return
+				}
+				clearAbortHandlingTimeout()
+				abortHandlingTimeout = setTimeout(() => {
+					void handleTaskFailure(new Error(t("common:review.tip.task_cancelled")))
+				}, 60_000)
+			}
+
+			taskInstance.on(RooCodeEventName.Message, onMessage as any)
+			taskInstance.on(RooCodeEventName.TaskCompleted, onTaskCompleted)
+			taskInstance.on(RooCodeEventName.TaskStarted, onTaskStarted)
+			taskInstance.on(RooCodeEventName.TaskAskResponded, onTaskAskResponded)
+			taskInstance.on(RooCodeEventName.TaskResumable, onTaskResumable)
+			taskInstance.on(RooCodeEventName.TaskIdle, onTaskIdle)
+			taskInstance.on(RooCodeEventName.TaskAborted, onTaskAborted)
+
+			listenerDisposers.push(() => {
+				taskInstance.off(RooCodeEventName.Message, onMessage as any)
+				taskInstance.off(RooCodeEventName.TaskCompleted, onTaskCompleted)
+				taskInstance.off(RooCodeEventName.TaskStarted, onTaskStarted)
+				taskInstance.off(RooCodeEventName.TaskAskResponded, onTaskAskResponded)
+				taskInstance.off(RooCodeEventName.TaskResumable, onTaskResumable)
+				taskInstance.off(RooCodeEventName.TaskIdle, onTaskIdle)
+				taskInstance.off(RooCodeEventName.TaskAborted, onTaskAborted)
 			})
+		}
+
+		const onTaskCreated = (createdTask: any) => {
+			if (completionHandled || createdTask.taskId !== trackedTaskId) {
+				return
+			}
+			bindTaskInstance(createdTask as Task)
+		}
+
+		const onTaskDelegated = (parentTaskId: string, childTaskId: string) => {
+			if (completionHandled || parentTaskId !== trackedTaskId) {
+				return
+			}
+			delegatedChildTaskId = childTaskId
+			clearAbortHandlingTimeout()
+			this.logger.info(`[CodeReview] Review task delegated to child task ${childTaskId}`)
+		}
+
+		const onTaskDelegationResumed = (parentTaskId: string, childTaskId: string) => {
+			if (completionHandled || parentTaskId !== trackedTaskId) {
+				return
+			}
+			if (delegatedChildTaskId === childTaskId) {
+				delegatedChildTaskId = null
+			}
+			clearAbortHandlingTimeout()
+			this.logger.info(`[CodeReview] Review task resumed after child task ${childTaskId}`)
+			const resumedTask = provider.getCurrentTask()
+			if (resumedTask?.taskId === trackedTaskId) {
+				bindTaskInstance(resumedTask)
+			}
+		}
+
+		provider.on(RooCodeEventName.TaskCreated, onTaskCreated)
+		provider.on(RooCodeEventName.TaskDelegated, onTaskDelegated)
+		provider.on(RooCodeEventName.TaskDelegationResumed, onTaskDelegationResumed)
+		listenerDisposers.push(() => {
+			provider.off(RooCodeEventName.TaskCreated, onTaskCreated)
+			provider.off(RooCodeEventName.TaskDelegated, onTaskDelegated)
+			provider.off(RooCodeEventName.TaskDelegationResumed, onTaskDelegationResumed)
 		})
 
-		// 错误情况的处理
-		task.on(RooCodeEventName.TaskResumable, async () => {
-			if (completionHandled) return
-			this.updateTaskState({
-				error: new Error(t("common:review.tip.service_unavailable")),
-				isCompleted: true,
-			})
-			await resetMode()
-		})
+		bindTaskInstance(task)
 
-		task.on(RooCodeEventName.TaskIdle, async () => {
-			if (completionHandled) return
-			this.updateTaskState({
-				error: new Error(t("common:review.tip.service_unavailable")),
-				isCompleted: true,
+		// For security-review mode, switch to chat tab instead of code review page
+		if (taskMode === "security-review") {
+			provider.postMessageToWebview({
+				type: "action",
+				action: "switchTab",
+				tab: "chat",
 			})
-			await resetMode()
-		})
-		task.on(RooCodeEventName.TaskAborted, async () => {
-			if (completionHandled) return
-			this.updateTaskState({
-				error: new Error(t("common:review.tip.task_cancelled")),
-				isCompleted: true,
+		} else {
+			provider.postMessageToWebview({
+				type: "action",
+				action: "codeReviewButtonClicked",
 			})
-			await resetMode()
-		})
-
-		// 把 postMessageToWebview 移到事件注册之后
-		provider.postMessageToWebview({
-			type: "action",
-			action: "codeReviewButtonClicked",
-		})
+		}
 	}
 	// ===== Task Management Methods =====
 
 	public reset() {
+		this.disposeTaskLifecycle?.()
+		this.disposeTaskLifecycle = null
 		if (this.currentTask) {
 			if (this.currentTask.timeoutId) {
 				clearTimeout(this.currentTask.timeoutId)
@@ -459,6 +627,8 @@ export class CodeReviewService {
 	 * Abort current running task
 	 */
 	abortCurrentTask(): void {
+		this.disposeTaskLifecycle?.()
+		this.disposeTaskLifecycle = null
 		// Clear cache
 		this.clearCache()
 
@@ -897,6 +1067,8 @@ export class CodeReviewService {
 	}
 
 	public async dispose(): Promise<void> {
+		this.disposeTaskLifecycle?.()
+		this.disposeTaskLifecycle = null
 		this.currentTask = null
 		this.cachedIssues.clear()
 		this.currentActiveIssueId = null

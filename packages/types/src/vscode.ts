@@ -83,6 +83,7 @@ export const costrictCommandIds = [
 	"rejectIssueJetbrains",
 	"reviewFilesAndFolders",
 	"securityFilesAndFolders",
+	"securityReviewCode",
 	"reviewRepo",
 	"reviewCommit",
 	"askReviewSuggestionWithAI",

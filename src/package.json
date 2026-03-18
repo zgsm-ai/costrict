@@ -3,7 +3,7 @@
 	"displayName": "%extension.displayName.long%",
 	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
-	"version": "2.4.4",
+	"version": "2.4.6",
 	"icon": "assets/images/shenma_robot_logo_big.png",
 	"galleryBanner": {
 		"color": "#617A91",
@@ -187,8 +187,12 @@
 				"title": "%command.codeReview.title%"
 			},
 			{
+				"command": "zgsm.securityReviewCode",
+				"title": "%command.securityReview.title%"
+			},
+			{
 				"command": "zgsm.securityFilesAndFolders",
-				"title": "%command.securityScan.title%"
+				"title": "%command.securityReview.title%"
 			},
 			{
 				"command": "zgsm.reviewCommit",
@@ -233,7 +237,7 @@
 			},
 			{
 				"command": "zgsm.securityFilesAndFoldersJetbrains",
-				"title": "%command.securityScan.title%"
+				"title": "%command.securityReview.title%"
 			},
 			{
 				"command": "zgsm.askReviewSuggestionWithAIJetbrains",
@@ -385,6 +389,11 @@
 				{
 					"command": "zgsm.codeReview",
 					"group": "zgsm@5",
+					"when": "editorHasSelection && workbenchState != 'empty'"
+				},
+				{
+					"command": "zgsm.securityReviewCode",
+					"group": "zgsm@6",
 					"when": "editorHasSelection && workbenchState != 'empty'"
 				},
 				{

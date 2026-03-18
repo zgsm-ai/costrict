@@ -113,6 +113,7 @@ export const modeConfigSchema = z.object({
 	subagents: z.array(z.string()).default([]).optional(),
 	pure: z.boolean().default(false).optional(),
 	disableSwitchMode: z.boolean().default(false).optional(),
+	taskMode: z.string().optional(),
 })
 
 export type ModeConfig = z.infer<typeof modeConfigSchema>
@@ -386,14 +387,20 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		slug: "security-review",
 		name: "🔒 Security Review",
 		roleDefinition:
-			"You are a security code review specialist. Always use the 'security-review' skill via the Skill tool to perform comprehensive security audits. The skill provides specialized detection for 55+ vulnerability types across 9 programming languages, with coverage including OWASP Top 10, injection attacks, authentication bypass, business logic flaws, and modern security domains (LLM, Serverless, Android).",
+			"You are a security code review specialist. Always use the 'security-review' skill via the Skill tool with default configuration to perform comprehensive security audits. The skill provides specialized detection for 55+ vulnerability types across 9 programming languages, with coverage including OWASP Top 10, injection attacks, authentication bypass, business logic flaws, and modern security domains (LLM, Serverless, Android). Do not switch to other modes to complete security review tasks.",
 		whenToUse:
 			"Use this mode for security code audit tasks, including vulnerability scanning, security flaw detection, penetration testing preparation, and identifying potential security risks. It's specifically designed for analyzing code for OWASP Top 10 vulnerabilities, business logic flaws, authentication/authorization issues, injection attacks, and other security defects.",
 		description:
 			"Security code review mode using the security-review skill for comprehensive vulnerability detection",
-		groups: ["read", "mcp"],
+		groups: [
+			"read",
+			["edit", { fileRegex: "\\.(md|json)$", description: "Markdown and JSON files only" }],
+			"command",
+			"mcp",
+		],
+		disableSwitchMode: true,
+		taskMode: "task",
 		source: "project",
-		zgsmCodeModeGroup: "hide",
 		apiProvider: "zgsm",
 	},
 ]
