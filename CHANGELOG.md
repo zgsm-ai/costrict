@@ -1,5 +1,10 @@
 # CoStrict Change Log
 
+## [2.4.7]
+
+- Add security code scanning
+- Fix known issues
+
 ## [2.4.6]
 
 - Refactor: decouple codebase index client initialization from workspace monitor toggle (PR #1056)
