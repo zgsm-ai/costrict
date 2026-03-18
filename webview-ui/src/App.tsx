@@ -203,6 +203,17 @@ const App = () => {
 		(e: MessageEvent) => {
 			const message: ExtensionMessage = e.data
 
+			// When CLI tab is active, route invoke messages to the terminal via bracketed paste
+			if (message.type === "invoke" && tab === "cs-cli") {
+				const text = message.text ?? ""
+				if (text) {
+					const PASTE_START = "\x1b[200~"
+					const PASTE_END = "\x1b[201~"
+					vscode.postMessage({ type: "CostrictCliInput", data: PASTE_START + text + PASTE_END })
+				}
+				return
+			}
+
 			if (message.type === "action" && message.action) {
 				// Handle switchTab action with tab parameter
 				if (message.action === "switchTab" && message.tab) {
@@ -269,7 +280,7 @@ const App = () => {
 				chatViewRef.current?.acceptInput()
 			}
 		},
-		[switchTab, didHydrateCliState, setDidHydrateSClitate],
+		[switchTab, didHydrateCliState, setDidHydrateSClitate, tab],
 	)
 
 	useEvent("message", onMessage)
