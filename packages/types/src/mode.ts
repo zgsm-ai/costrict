@@ -399,7 +399,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 			"mcp",
 		],
 		disableSwitchMode: true,
-		taskMode: "security-review",
+		taskMode: "task",
 		source: "project",
 		apiProvider: "zgsm",
 	},
