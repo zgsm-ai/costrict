@@ -615,6 +615,7 @@ Add your skill instructions here.
 		dirs.push({ dir: path.join(globalCostrictDir, "skills"), source: "global" })
 		for (const mode of modesList) {
 			dirs.push({ dir: path.join(globalRooDir, `skills-${mode}`), source: "global", mode })
+			dirs.push({ dir: path.join(globalCostrictDir, `skills-${mode}`), source: "global", mode })
 		}
 
 		// Project .roo directories (highest priority)
@@ -687,6 +688,8 @@ Add your skill instructions here.
 			// .roo mode-specific
 			this.watchDirectory(path.join(globalRooDir, `skills-${mode}`))
 			this.watchDirectory(path.join(projectRooDir, `skills-${mode}`))
+			// .costrict mode-specific
+			this.watchDirectory(path.join(getGlobalCostrictDirectory(), `skills-${mode}`))
 			// .agents mode-specific
 			this.watchDirectory(path.join(globalAgentsDir, `skills-${mode}`))
 			this.watchDirectory(path.join(projectAgentsDir, `skills-${mode}`))

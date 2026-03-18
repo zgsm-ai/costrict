@@ -3,7 +3,7 @@
 	"displayName": "%extension.displayName.long%",
 	"description": "%extension.description%",
 	"publisher": "zgsm-ai",
-	"version": "2.4.6",
+	"version": "2.4.7",
 	"icon": "assets/images/shenma_robot_logo_big.png",
 	"galleryBanner": {
 		"color": "#617A91",
@@ -187,6 +187,14 @@
 				"title": "%command.codeReview.title%"
 			},
 			{
+				"command": "zgsm.securityReviewCode",
+				"title": "%command.securityReview.title%"
+			},
+			{
+				"command": "zgsm.securityFilesAndFolders",
+				"title": "%command.securityReview.title%"
+			},
+			{
 				"command": "zgsm.reviewCommit",
 				"title": "%command.reviewCommit.title%",
 				"icon": "assets/images/reviewLogo.png"
@@ -226,6 +234,10 @@
 			{
 				"command": "zgsm.reviewFilesAndFoldersJetbrains",
 				"title": "%command.codeReview.title%"
+			},
+			{
+				"command": "zgsm.securityFilesAndFoldersJetbrains",
+				"title": "%command.securityReview.title%"
 			},
 			{
 				"command": "zgsm.askReviewSuggestionWithAIJetbrains",
@@ -350,6 +362,11 @@
 					"command": "zgsm.reviewFilesAndFolders",
 					"group": "zgsm.explorerSubmenu@2",
 					"when": "!explorerResourceIsFolder"
+				},
+				{
+					"command": "zgsm.securityFilesAndFolders",
+					"group": "zgsm.explorerSubmenu@3",
+					"when": "!explorerResourceIsFolder"
 				}
 			],
 			"zgsm": [
@@ -372,6 +389,11 @@
 				{
 					"command": "zgsm.codeReview",
 					"group": "zgsm@5",
+					"when": "editorHasSelection && workbenchState != 'empty'"
+				},
+				{
+					"command": "zgsm.securityReviewCode",
+					"group": "zgsm@6",
 					"when": "editorHasSelection && workbenchState != 'empty'"
 				},
 				{
@@ -828,7 +850,7 @@
 		"format": "prettier --write .",
 		"build:native": "cd node_modules/node-pty && npx node-gyp rebuild",
 		"bundle": "node esbuild.mjs",
-		"vscode:prepublish": "pnpm build:native && pnpm bundle --production",
+		"vscode:prepublish": "node ../scripts/download-bundled-skills.mjs && pnpm bundle --production",
 		"vsix": "mkdirp ../bin && vsce package --no-dependencies --out ../bin",
 		"publish:marketplace": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"watch:bundle": "pnpm bundle --watch",

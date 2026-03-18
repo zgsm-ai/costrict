@@ -30,6 +30,7 @@
 	"command.documentation.title": "文件",
 	"command.shortKeyCut.title": "CoStrict程式碼補全快捷鍵",
 	"command.codeReview.title": "程式碼審查",
+	"command.securityReview.title": "安全審查",
 	"command.reviewCommit.title": "CoStrict Review",
 	"command.addComment.title": "添加註解",
 	"command.addTests.title": "產生單元測試",

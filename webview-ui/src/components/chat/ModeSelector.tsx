@@ -95,7 +95,7 @@ export const ModeSelector = ({
 	React.useEffect(() => {
 		if (
 			apiConfiguration?.apiProvider === "zgsm" &&
-			["quick-explore", "task-check", "subcoding", "review"].includes(value)
+			["quick-explore", "task-check", "subcoding", "review", "security-review"].includes(value)
 		)
 			return
 		const isKnownMode = allModes.some((mode) => mode.slug === value)
@@ -196,7 +196,7 @@ export const ModeSelector = ({
 
 	// Auto-switch to "code" mode when value is "review" but not reviewing
 	React.useEffect(() => {
-		if (value === "review" && !isReviewing) {
+		if (["review", "security-review"].includes(value) && !isReviewing) {
 			onChange("code")
 		}
 	}, [value, isReviewing, onChange])

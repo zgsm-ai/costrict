@@ -1,5 +1,6 @@
 .pnpm-store
 **/dist/**
+/dist/
 out
 out-*
 node_modules
@@ -60,3 +61,6 @@ plans/
 roo-cli-*.tar.gz*
 zgsm-cli-*.tar.gz*
 cos-cli-*.tar.gz*
+
+# Bundled skills (generated during build)
+src/bundled-skills/

@@ -35,7 +35,8 @@ ${allModes
 		// Original zgsmCodeMode filtering logic mode.apiProvider
 		if (
 			!mode.zgsmCodeModeGroup ||
-			(mode.apiProvider === "zgsm" && ["quick-explore", "task-check", "subcoding", "review"].includes(mode.slug))
+			(mode.apiProvider === "zgsm" &&
+				["quick-explore", "task-check", "subcoding", "review", "security-review"].includes(mode.slug))
 		)
 			return true
 		if (mode.zgsmCodeModeGroup) return mode.zgsmCodeModeGroup.split(",").includes(zgsmCodeMode ?? "vibe")

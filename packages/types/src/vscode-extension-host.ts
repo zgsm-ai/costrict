@@ -870,6 +870,7 @@ export interface ReviewFilesPayload {
 
 export interface CreateReviewTaskPayload {
 	files?: Array<{ path: string; status: string }>
+	mode?: string
 }
 
 export interface CodeReviewWelcomeTipsPayload {
