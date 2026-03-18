@@ -56,6 +56,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 	const isHiddenRef = useRef(isHidden)
 	const refreshFrameRef = useRef<number | null>(null)
 	const scheduleRefreshRef = useRef<(() => void) | null>(null)
+	const pasteShortcutFallbackRef = useRef<number | null>(null)
 	const [restartCount, setRestartCount] = useState(0)
 	const [isTerminalReady, setIsTerminalReady] = useState(false)
 
@@ -157,6 +158,16 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 		const handleCopySelection = (selection: string) => {
 			copyToClipboard(selection)
 		}
+		const clearPendingPasteShortcutFallback = () => {
+			if (pasteShortcutFallbackRef.current !== null) {
+				window.clearTimeout(pasteShortcutFallbackRef.current)
+				pasteShortcutFallbackRef.current = null
+			}
+		}
+		const requestPasteFromExtension = () => {
+			clearPendingPasteShortcutFallback()
+			vscode.postMessage({ type: "CostrictCliRequestPaste" })
+		}
 
 		terminal.attachCustomKeyEventHandler((event) => {
 			const selection = terminal.getSelection()
@@ -168,9 +179,20 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 
 			event.preventDefault()
 
-			// paste 交由 DOM paste 事件统一处理（见 handlePaste），
+			if (action === "paste") {
+				// Some hosts (notably JetBrains webviews) swallow Ctrl/Cmd+V without ever
+				// dispatching a DOM paste event to xterm's textarea. Schedule a fallback
+				// clipboard request and let a real paste event cancel it when available.
+				clearPendingPasteShortcutFallback()
+				pasteShortcutFallbackRef.current = window.setTimeout(() => {
+					pasteShortcutFallbackRef.current = null
+					vscode.postMessage({ type: "CostrictCliRequestPaste" })
+				}, 0)
+				return false
+			}
+
 			// copy/cut 在 keydown 阶段直接执行，因为 copy/cut 没有对应的 DOM 剪贴板事件可依赖。
-			if (action !== "paste" && selection) {
+			if (selection) {
 				handleCopySelection(selection)
 			}
 
@@ -179,6 +201,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 
 		const clipboardTarget = terminal.textarea ?? container
 		const handlePaste = (event: Event) => {
+			clearPendingPasteShortcutFallback()
 			event.preventDefault()
 			event.stopImmediatePropagation()
 
@@ -190,7 +213,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 				return
 			}
 
-			vscode.postMessage({ type: "CostrictCliRequestPaste" })
+			requestPasteFromExtension()
 		}
 		const handleCopy = (event: Event) => {
 			const selection = terminal.getSelection()
@@ -287,6 +310,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 				cancelAnimationFrame(refreshFrameRef.current)
 				refreshFrameRef.current = null
 			}
+			clearPendingPasteShortcutFallback()
 			scheduleRefreshRef.current = null
 			resizeObserver.disconnect()
 			clipboardTarget.removeEventListener("paste", handlePaste, { capture: true })

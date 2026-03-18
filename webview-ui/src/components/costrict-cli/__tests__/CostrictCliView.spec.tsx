@@ -85,25 +85,34 @@ describe("CostrictCliView", () => {
 		terminalState.textarea = undefined
 	})
 
-	it("posts a paste request when Ctrl+V is pressed in the terminal", () => {
-		render(<CostrictCliView isHidden={false} />)
+	it("falls back to extension clipboard paste when no DOM paste event arrives", () => {
+		vi.useFakeTimers()
+		try {
+			render(<CostrictCliView isHidden={false} />)
 
-		expect(terminalState.customKeyEventHandler).toBeDefined()
+			expect(terminalState.customKeyEventHandler).toBeDefined()
 
-		const event = new KeyboardEvent("keydown", {
-			key: "v",
-			ctrlKey: true,
-			bubbles: true,
-			cancelable: true,
-		})
-		const preventDefaultSpy = vi.spyOn(event, "preventDefault")
+			const event = new KeyboardEvent("keydown", {
+				key: "v",
+				ctrlKey: true,
+				bubbles: true,
+				cancelable: true,
+			})
+			const preventDefaultSpy = vi.spyOn(event, "preventDefault")
 
-		const result = terminalState.customKeyEventHandler?.(event)
+			const result = terminalState.customKeyEventHandler?.(event)
 
-		expect(result).toBe(false)
-		expect(preventDefaultSpy).toHaveBeenCalledTimes(1)
-		expect(vscode.postMessage).toHaveBeenCalledWith({ type: "CostrictCliRequestPaste" })
-		expect(vi.mocked(copyToClipboard)).not.toHaveBeenCalled()
+			expect(result).toBe(false)
+			expect(preventDefaultSpy).toHaveBeenCalledTimes(1)
+			expect(vscode.postMessage).not.toHaveBeenCalled()
+
+			vi.runOnlyPendingTimers()
+
+			expect(vscode.postMessage).toHaveBeenCalledWith({ type: "CostrictCliRequestPaste" })
+			expect(vi.mocked(copyToClipboard)).not.toHaveBeenCalled()
+		} finally {
+			vi.useRealTimers()
+		}
 	})
 
 	it("passes Ctrl+C through when there is no selection", () => {
@@ -144,19 +153,40 @@ describe("CostrictCliView", () => {
 		expect(vscode.postMessage).not.toHaveBeenCalled()
 	})
 
-	it("intercepts paste events so only the custom paste chain runs", () => {
-		render(<CostrictCliView isHidden={false} />)
+	it("uses pasted clipboard text and cancels the keyboard fallback when DOM paste arrives", () => {
+		vi.useFakeTimers()
+		try {
+			render(<CostrictCliView isHidden={false} />)
 
-		const pasteEvent = new Event("paste", { bubbles: true, cancelable: true })
-		const preventDefaultSpy = vi.spyOn(pasteEvent, "preventDefault")
-		const stopPropagationSpy = vi.spyOn(pasteEvent, "stopPropagation")
+			const keydownEvent = new KeyboardEvent("keydown", {
+				key: "v",
+				ctrlKey: true,
+				bubbles: true,
+				cancelable: true,
+			})
+			terminalState.customKeyEventHandler?.(keydownEvent)
 
-		terminalState.textarea?.dispatchEvent(pasteEvent)
+			const pasteEvent = new Event("paste", { bubbles: true, cancelable: true })
+			Object.defineProperty(pasteEvent, "clipboardData", {
+				value: { getData: vi.fn(() => "pasted from dom") },
+			})
+			const preventDefaultSpy = vi.spyOn(pasteEvent, "preventDefault")
+			const stopImmediatePropagationSpy = vi.spyOn(pasteEvent, "stopImmediatePropagation")
 
-		expect(preventDefaultSpy).toHaveBeenCalledTimes(1)
-		expect(stopPropagationSpy).toHaveBeenCalledTimes(1)
-		expect(vscode.postMessage).toHaveBeenCalledWith({ type: "CostrictCliRequestPaste" })
-		expect(vi.mocked(copyToClipboard)).not.toHaveBeenCalled()
+			terminalState.textarea?.dispatchEvent(pasteEvent)
+			vi.runOnlyPendingTimers()
+
+			expect(preventDefaultSpy).toHaveBeenCalledTimes(1)
+			expect(stopImmediatePropagationSpy).toHaveBeenCalledTimes(1)
+			expect(vscode.postMessage).toHaveBeenCalledTimes(1)
+			expect(vscode.postMessage).toHaveBeenCalledWith({
+				type: "CostrictCliInput",
+				data: "\x1b[200~pasted from dom\x1b[201~",
+			})
+			expect(vi.mocked(copyToClipboard)).not.toHaveBeenCalled()
+		} finally {
+			vi.useRealTimers()
+		}
 	})
 
 	it("intercepts cut events so they do not fall through to the native clipboard chain", () => {
