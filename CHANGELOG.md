@@ -1,5 +1,33 @@
 # CoStrict Change Log
 
+## [2.4.7]
+
+- Add security code scanning
+- Fix known issues
+
+## [2.4.6]
+
+- Refactor: decouple codebase index client initialization from workspace monitor toggle (PR #1056)
+- Fix: file-outline tool name formatting (PR #1057)
+
+## [2.4.5]
+
+- Add codebase index initialization condition for better activation control (PR #1054)
+- Improve commit message generation and platform compatibility (PR #1052)
+- Fix: update API endpoints to use costrict-static path (PR #1051)
+
+## [2.4.4]
+
+- Add support for task history backup and restore, supporting export as .tar.gz backup files (PR #1049)
+- Fix: prevent mode reset when temporarily hidden by zgsm filter (PR #1048)
+
+## [2.4.3]
+
+- Implement streaming status tracking and improve task management
+- Optimize prompt caching by extracting static sections
+- Disable zgsmCodebaseIndexEnabled by default
+- Fix known issues
+
 ## [2.4.2]
 
 - Optimize commit message generation

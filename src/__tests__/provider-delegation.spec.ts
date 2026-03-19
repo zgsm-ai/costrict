@@ -48,6 +48,10 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 			updateTaskHistory,
 			handleModeSwitch,
 			log: vi.fn(),
+			getState: vi.fn().mockResolvedValue({
+				mode: "",
+				customModes: [],
+			}),
 		} as unknown as ClineProvider
 
 		const params = {
@@ -130,6 +134,10 @@ describe("ClineProvider.delegateParentAndOpenChild()", () => {
 			updateTaskHistory,
 			handleModeSwitch,
 			log: vi.fn(),
+			getState: vi.fn().mockResolvedValue({
+				mode: "",
+				customModes: [],
+			}),
 		} as unknown as ClineProvider
 
 		await (ClineProvider.prototype as any).delegateParentAndOpenChild.call(provider, {

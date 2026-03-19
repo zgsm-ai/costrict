@@ -222,6 +222,7 @@
 		"general": {
 			"indexBuildFailed": "索引建置失敗",
 			"codebaseIndexBuild": "Codebase索引建置",
+			"codebaseIndexBuildDisabledHint": "未開啟索引建置時，CoStrict 服務仍會正常啟動，但不會自動建置索引。",
 			"onlyCostrictProviderSupport": "僅 CoStrict 提供商支援此服務"
 		},
 		"errors": {

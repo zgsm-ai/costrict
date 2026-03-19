@@ -3,7 +3,8 @@
 		"title": "CoStrict",
 		"tips": "You can also select functions/code blocks/multiple files, right-click > CoStrict > Code Review",
 		"dismiss": "dismiss",
-		"reviewCurrentChanges": "Review Current Changes",
+		"reviewCurrentChanges": "Code Review",
+		"securityScan": "Security Review",
 		"noFiles": "No files to review"
 	},
 	"history": {

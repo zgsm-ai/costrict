@@ -81,7 +81,7 @@ export class ErrorCodeManager {
 		try {
 			const { language, apiConfiguration } = await this.provider.getState()
 			const baseUrl = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
-			const response = await axios.get(`${baseUrl}/costrict/error-code/error_codes_${language}.json`, {
+			const response = await axios.get(`${baseUrl}/costrict-static/error-code/error_codes_${language}.json`, {
 				headers: {
 					"zgsm-request-id": getClientId(),
 				},

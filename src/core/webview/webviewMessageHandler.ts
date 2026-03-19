@@ -979,6 +979,12 @@ export const webviewMessageHandler = async (
 		case "exportTaskWithId":
 			provider.exportTaskWithId(message.text!)
 			break
+		case "backupTasks":
+			await provider.backupTaskHistory()
+			break
+		case "restoreTasks":
+			await provider.restoreTaskHistory(message.conflict)
+			break
 		case "getTaskWithAggregatedCosts": {
 			try {
 				const taskId = message.text
@@ -3100,6 +3106,7 @@ export const webviewMessageHandler = async (
 
 				// Call ZgsmCodebaseIndexManager.getIndexStatus()
 				const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
+				await zgsmCodebaseIndexManager.ensureInitialized("getIndexStatus")
 				const response = await zgsmCodebaseIndexManager.getIndexStatus(workspacePath)
 				const errorCodeManager = ErrorCodeManager.getInstance()
 
@@ -3533,8 +3540,9 @@ export const webviewMessageHandler = async (
 					switch: isEnabled ? "on" : "off",
 				}
 
-				// Get ZgsmCodebaseIndexManager instance and call toggleIndexSwitch method
+				// Ensure the local client lifecycle is ready before updating the workspace switch.
 				const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
+				await zgsmCodebaseIndexManager.ensureInitialized("toggleIndexSwitch")
 				const result = await zgsmCodebaseIndexManager.toggleIndexSwitch(switchRequest)
 
 				if (result.success) {
@@ -3546,12 +3554,13 @@ export const webviewMessageHandler = async (
 						"info",
 						"ZgsmCodebaseIndexManager",
 					)
-					zgsmCodebaseIndexManager.restartClient()
 					await provider.postMessageToWebview({
 						type: "zgsmCodebaseIndexEnabled",
 						payload: isEnabled,
 					})
-					workspaceEventMonitor.initialize()
+					if (isEnabled) {
+						await workspaceEventMonitor.initialize()
+					}
 				} else {
 					await updateGlobalState("zgsmCodebaseIndexEnabled", oldEnabled)
 
@@ -3600,6 +3609,7 @@ export const webviewMessageHandler = async (
 				}
 
 				// Call ZgsmCodebaseIndexManager.triggerIndexBuild()
+				await zgsmCodebaseIndexManager.ensureInitialized("triggerIndexBuild")
 				const result = await zgsmCodebaseIndexManager.triggerIndexBuild(indexBuildRequest)
 
 				if (result.success) {
@@ -3653,7 +3663,7 @@ export const webviewMessageHandler = async (
 		}
 		case "createReviewTask": {
 			const reviewInstance = CodeReviewService.getInstance()
-			const { files } = message.payload! as CreateReviewTaskPayload
+			const { files, mode } = message.payload! as CreateReviewTaskPayload
 			const cwd = getCurrentCwd()
 
 			const untrackedFiles =
@@ -3673,6 +3683,7 @@ export const webviewMessageHandler = async (
 					})),
 				},
 				{
+					mode,
 					onTaskComplete: async () => {
 						if (intentAddedFiles.length > 0) {
 							await restoreFilesFromStaged(cwd, intentAddedFiles)

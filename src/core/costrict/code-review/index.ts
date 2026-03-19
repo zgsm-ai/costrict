@@ -17,6 +17,7 @@ import { getChangedFiles } from "../../../utils/git"
 import { t } from "../../../i18n"
 import { GitCommitListener } from "./gitCommitListener"
 import { isJetbrainsPlatform } from "../../../utils/platform"
+import type { Mode } from "../../../shared/modes"
 
 let commitListener: GitCommitListener | undefined
 
@@ -47,6 +48,77 @@ export function initCodeReview(
 		console.log("Running on JetBrains platform, Git extension dependency not required")
 	}
 
+	const startFileOrFolderReview = async (paths: readonly string[], mode: Mode = "review") => {
+		const visibleProvider = await ClineProvider.getInstance()
+		if (!visibleProvider) {
+			return
+		}
+		reviewInstance.setProvider(visibleProvider)
+		if (!(await reviewInstance.checkApiProviderSupport())) {
+			return
+		}
+		const cwd = visibleProvider.cwd.toPosix()
+		await reviewInstance.startReview(
+			{
+				type: ReviewTargetType.FILE,
+				data: paths.map((filePath) => ({
+					file_path: toRelativePath(filePath.toPosix(), cwd),
+				})),
+			},
+			mode,
+		)
+	}
+
+	const startUriFileOrFolderReview = async (selectedUris: readonly vscode.Uri[], mode: Mode = "review") => {
+		await startFileOrFolderReview(
+			selectedUris.map((uri) => uri.fsPath),
+			mode,
+		)
+	}
+
+	const startSelectedCodeReview = async (mode: Mode = "review"): Promise<void> => {
+		const visibleProvider = await ClineProvider.getInstance()
+		const editor = vscode.window.activeTextEditor
+		if (!visibleProvider || !editor) {
+			return
+		}
+		reviewInstance.setProvider(visibleProvider)
+		if (!(await reviewInstance.checkApiProviderSupport())) {
+			return
+		}
+		const fileUri = editor.document.uri
+		const range = editor.selection
+		const cwd = visibleProvider.cwd.toPosix()
+		const filePath = toRelativePath(fileUri.fsPath.toPosix(), cwd)
+		const params = {
+			filePath,
+			endLine: range.end.line + 1 + "",
+			startLine: range.start.line + 1 + "",
+			selectedText: editor.document.getText(range),
+		}
+		let prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
+
+		// For security-review mode, append auto-confirmation message
+		if (mode === "security-review") {
+			const autoExecuteMessage = t("common:review.tip.auto_execute_with_default_config")
+			prompt = `${prompt}\n\n${autoExecuteMessage}`
+		}
+
+		reviewInstance.createReviewTask(
+			prompt,
+			{
+				type: ReviewTargetType.CODE,
+				data: [
+					{
+						file_path: filePath,
+						line_range: [range.start.line, range.end.line],
+					},
+				],
+			},
+			mode !== "review" ? { mode } : undefined,
+		)
+	}
+
 	const commandMap: Partial<Record<CostrictCommandId, any>> = {
 		codeReviewButtonClicked: async () => {
 			let visibleProvider = getVisibleProviderOrLog(outputChannel)
@@ -57,53 +129,13 @@ export function initCodeReview(
 
 			visibleProvider?.postMessageToWebview({ type: "action", action: "codeReviewButtonClicked" })
 		},
-		codeReview: async () => {
-			const visibleProvider = await ClineProvider.getInstance()
-			const editor = vscode.window.activeTextEditor
-			if (!visibleProvider || !editor) {
-				return
-			}
-			reviewInstance.setProvider(visibleProvider)
-			if (!(await reviewInstance.checkApiProviderSupport())) {
-				return
-			}
-			const fileUri = editor.document.uri
-			const range = editor.selection
-			const cwd = visibleProvider.cwd.toPosix()
-			const filePath = toRelativePath(fileUri.fsPath.toPosix(), cwd)
-			const params = {
-				filePath,
-				endLine: range.end.line + 1 + "",
-				startLine: range.start.line + 1 + "",
-				selectedText: editor.document.getText(range),
-			}
-			const prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
-			reviewInstance.createReviewTask(prompt, {
-				type: ReviewTargetType.CODE,
-				data: [
-					{
-						file_path: filePath,
-						line_range: [range.start.line, range.end.line],
-					},
-				],
-			})
-		},
+		codeReview: async () => startSelectedCodeReview(),
+		securityReviewCode: async () => startSelectedCodeReview("security-review"),
 		reviewFilesAndFolders: async (_: vscode.Uri, selectedUris: vscode.Uri[]) => {
-			const visibleProvider = await ClineProvider.getInstance()
-			if (!visibleProvider) {
-				return
-			}
-			reviewInstance.setProvider(visibleProvider)
-			if (!(await reviewInstance.checkApiProviderSupport())) {
-				return
-			}
-			const cwd = visibleProvider.cwd.toPosix()
-			reviewInstance.startReview({
-				type: ReviewTargetType.FILE,
-				data: selectedUris.map((uri) => ({
-					file_path: toRelativePath(uri.fsPath.toPosix(), cwd),
-				})),
-			})
+			await startUriFileOrFolderReview(selectedUris)
+		},
+		securityFilesAndFolders: async (_: vscode.Uri, selectedUris: vscode.Uri[]) => {
+			await startUriFileOrFolderReview(selectedUris, "security-review")
 		},
 		acceptIssue: async (thread: vscode.CommentThread) => {
 			const visibleProvider = await ClineProvider.getInstance()
@@ -223,28 +255,24 @@ export function initCodeReview(
 						})
 					},
 					reviewFilesAndFoldersJetbrains: async (args: any) => {
-						const visibleProvider = await ClineProvider.getInstance()
-						if (!visibleProvider) {
-							return
-						}
-						reviewInstance.setProvider(visibleProvider)
-						if (!(await reviewInstance.checkApiProviderSupport())) {
-							return
-						}
-						visibleProvider.log(`[CodeReview] start review ${JSON.stringify(args)}`)
 						const data = args?.[0]?.[0]
-						if (!data) {
-							visibleProvider.log("[CodeReview] Invalid args structure")
+						const filePaths = data?.filePaths
+						if (!filePaths) {
+							const visibleProvider = await ClineProvider.getInstance()
+							visibleProvider?.log("[CodeReview] Invalid args structure")
 							return
 						}
-						const cwd = visibleProvider.cwd.toPosix()
-						const { filePaths } = data
-						reviewInstance.startReview({
-							type: ReviewTargetType.FILE,
-							data: filePaths.map((filePath: string) => ({
-								file_path: toRelativePath(filePath.toPosix(), cwd),
-							})),
-						})
+						await startFileOrFolderReview(filePaths, "review")
+					},
+					securityFilesAndFoldersJetbrains: async (args: any) => {
+						const data = args?.[0]?.[0]
+						const filePaths = data?.filePaths
+						if (!filePaths) {
+							const visibleProvider = await ClineProvider.getInstance()
+							visibleProvider?.log("[CodeReview] Invalid args structure")
+							return
+						}
+						await startFileOrFolderReview(filePaths, "security-review")
 					},
 					acceptIssueJetbrains: async (args: any) => {
 						const visibleProvider = await ClineProvider.getInstance()

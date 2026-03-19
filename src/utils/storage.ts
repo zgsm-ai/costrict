@@ -49,11 +49,20 @@ export async function getStorageBasePath(defaultPath: string): Promise<string> {
 
 /**
  * Gets the storage directory path for a task
+ * @param globalStoragePath The global storage path
+ * @param taskId The task ID
+ * @param createIfNotExists Whether to create the directory if it doesn't exist (default: true)
  */
-export async function getTaskDirectoryPath(globalStoragePath: string, taskId: string): Promise<string> {
+export async function getTaskDirectoryPath(
+	globalStoragePath: string,
+	taskId: string,
+	createIfNotExists: boolean = true,
+): Promise<string> {
 	const basePath = await getStorageBasePath(globalStoragePath)
 	const taskDir = path.join(basePath, "tasks", taskId)
-	await fs.mkdir(taskDir, { recursive: true })
+	if (createIfNotExists) {
+		await fs.mkdir(taskDir, { recursive: true })
+	}
 	return taskDir
 }
 

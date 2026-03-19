@@ -60,6 +60,8 @@ export const commandIds = [
 
 	"setCustomStoragePath",
 	"importSettings",
+	"backupTaskHistory",
+	"restoreTaskHistory",
 
 	"focusInput",
 	"acceptInput",
@@ -75,10 +77,13 @@ export const costrictCommandIds = [
 	"codeReview",
 	"codeReviewJetbrains",
 	"reviewFilesAndFoldersJetbrains",
+	"securityFilesAndFoldersJetbrains",
 	"askReviewSuggestionWithAIJetbrains",
 	"acceptIssueJetbrains",
 	"rejectIssueJetbrains",
 	"reviewFilesAndFolders",
+	"securityFilesAndFolders",
+	"securityReviewCode",
 	"reviewRepo",
 	"reviewCommit",
 	"askReviewSuggestionWithAI",

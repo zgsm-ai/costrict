@@ -35,5 +35,8 @@
 !assets/images/**
 !assets/costrict/**
 
+# Include bundled skills
+!bundled-skills/**
+
 # Include .env file for telemetry
 !.env

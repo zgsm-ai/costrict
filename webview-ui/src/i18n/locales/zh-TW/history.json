@@ -49,5 +49,9 @@
 	"subtaskTag": "子工作",
 	"deleteWithSubtasks": "這也將刪除 {{count}} 個子工作。您確定嗎？",
 	"expandSubtasks": "展開子工作",
-	"collapseSubtasks": "收起子工作"
+	"collapseSubtasks": "收起子工作",
+	"backupTasks": "備份工作",
+	"restoreTasks": "復原工作",
+	"backingUpTasks": "請稍候，請勿進行其他操作，正在備份工作歷史...",
+	"restoringTasks": "請稍候，請勿進行其他操作，正在復原工作歷史..."
 }

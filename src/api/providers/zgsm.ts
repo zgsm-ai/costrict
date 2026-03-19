@@ -116,7 +116,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			workflowModes.includes(metadata?.parentTaskMode) ||
 			workflowModes.includes(metadata?.zgsmCodeMode)
 		this.apiResponseRenderModeInfo = getApiResponseRenderMode()
-		if ("review" === metadata?.mode && this.client) {
+		if (("review" === metadata?.mode || "security-review" === metadata?.mode) && this.client) {
 			this.client.maxRetries = 1
 		}
 		// 1. Cache calculation results and configuration
@@ -347,7 +347,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			"zgsm-provider": metadata?.provider,
 			"x-costrict-idea": getEditorType(),
 			"zgsm-project-path": encodeURI(workspacePath),
-			"x-caller": metadata?.mode === "review" ? "review-checker" : "chat",
+			"x-caller": ["review", "security-review"].includes(metadata?.mode || "") ? "review-checker" : "chat",
 		}
 	}
 
@@ -926,31 +926,22 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const cachedClientId = getClientId()
 		const cachedWorkspacePath = getWorkspacePath()
 		const messages = [{ role: "user", content: prompt }] as any[]
-		const _mid = (metadata?.modelId || model.id)?.toLowerCase()
-		const maxToken = metadata?.maxLength ?? 300
-		const temperature = _mid.includes("kimi") ? 0.6 : 0.9
 		if (systemPrompt) {
-			messages.unshift({ role: "system", content: systemPrompt + `\nMaximum Commit message length: ${maxToken}` })
+			messages.unshift({ role: "system", content: systemPrompt })
 		}
-		const requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming & {
-			extra_body: any
-			thinking: any
-		} = {
+		const requestOptions = {
 			model: metadata?.modelId || model.id,
 			messages,
-			temperature,
-			max_tokens: maxToken,
-			max_completion_tokens: maxToken,
-			thinking: {
-				type: "disabled",
-			},
+			max_tokens: 4000,
+			max_completion_tokens: 4000,
 			extra_body: {
 				prompt_mode: "raw",
 			},
+		} as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming & {
+			extra_body: any
+			thinking: any
 		}
 
-		// Add max_tokens if needed
-		this.addMaxTokensIfNeeded(requestOptions, modelInfo)
 		try {
 			const response = await (this.client as OpenAI).chat.completions.create(
 				requestOptions,

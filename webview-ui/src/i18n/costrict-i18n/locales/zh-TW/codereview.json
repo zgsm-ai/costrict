@@ -4,6 +4,7 @@
 		"tips": "你也可以選中函數/代碼塊/多文件，右鍵 > CoStrict > Code Review ",
 		"dismiss": "不再提示",
 		"reviewCurrentChanges": "審查當前變更",
+		"securityScan": "安全掃描",
 		"noFiles": "沒有需要審查的文件"
 	},
 	"history": {
