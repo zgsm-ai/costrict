@@ -279,9 +279,15 @@ const TaskHeader = ({
 											availableInputSpace > 0
 												? Math.round(((contextTokens || 0) / availableInputSpace) * 100)
 												: 0
+										const percentageClassName =
+											percentage < 70
+												? "text-vscode-charts-green"
+												: percentage < 85
+													? "text-vscode-charts-yellow"
+													: "text-vscode-charts-red"	
 										return (
 											<>
-												<CircularProgress percentage={percentage} />
+												<CircularProgress percentage={percentage} className={percentageClassName} />
 												<span>{percentage}%</span>
 											</>
 										)

@@ -10,6 +10,16 @@ const shellCache = {
 	shell: "",
 	updateAt: 0,
 }
+
+/**
+ * Reset internal state - used for testing
+ * @internal
+ */
+export function resetShellState() {
+	pwshInstalled = false
+	shellCache.shell = ""
+	shellCache.updateAt = 0
+}
 // Security: Allowlist of approved shell executables to prevent arbitrary command execution
 const SHELL_ALLOWLIST = new Set<string>([
 	// Windows PowerShell variants

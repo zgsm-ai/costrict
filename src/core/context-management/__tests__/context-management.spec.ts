@@ -1701,4 +1701,219 @@ describe("Context Management", () => {
 			expect(result.newContextTokensAfterTruncation).toBeGreaterThan(0)
 		})
 	})
+
+	/**
+	 * Tests for conservative reservedTokens calculation
+	 * This ensures context management triggers early enough for models with large max output tokens
+	 */
+	describe("conservative reservedTokens calculation", () => {
+		const messages: ApiMessage[] = [
+			{ role: "user", content: "First message" },
+			{ role: "assistant", content: "Second message" },
+			{ role: "user", content: "Third message" },
+			{ role: "assistant", content: "Fourth message" },
+			{ role: "user", content: "" },
+		]
+
+		describe("willManageContext", () => {
+			it("should use modelMaxTokens when larger than maxTokens", () => {
+				// Scenario: maxTokens=undefined, modelMaxTokens=32768
+				// Should use 32768 as reservedTokens instead of default 8192
+				const contextWindow = 200000
+				const totalTokens = 165630 // Would trigger with 32768, but not with 8192
+
+				// With 8192 reserved: allowedTokens = 200000 * 0.9 - 8192 = 171808, 165630 < 171808 (no trigger)
+				// With 32768 reserved: allowedTokens = 200000 * 0.9 - 32768 = 147232, 165630 > 147232 (trigger)
+				const result = willManageContext({
+					totalTokens,
+					contextWindow,
+					maxTokens: undefined, // Simulates non-Anthropic format returning undefined
+					autoCondenseContext: false,
+					autoCondenseContextPercent: 100,
+					profileThresholds: {},
+					currentProfileId: "default",
+					lastMessageTokens: 0,
+					modelMaxTokens: 32768,
+				})
+				expect(result).toBe(true)
+			})
+
+			it("should use settingsMaxTokens when larger than maxTokens", () => {
+				const contextWindow = 200000
+				const totalTokens = 165630
+
+				const result = willManageContext({
+					totalTokens,
+					contextWindow,
+					maxTokens: undefined,
+					autoCondenseContext: false,
+					autoCondenseContextPercent: 100,
+					profileThresholds: {},
+					currentProfileId: "default",
+					lastMessageTokens: 0,
+					settingsMaxTokens: 32768,
+				})
+				expect(result).toBe(true)
+			})
+
+			it("should use maxTokens when larger than modelMaxTokens and settingsMaxTokens", () => {
+				const contextWindow = 200000
+				const totalTokens = 165630
+
+				const result = willManageContext({
+					totalTokens,
+					contextWindow,
+					maxTokens: 40000,
+					autoCondenseContext: false,
+					autoCondenseContextPercent: 100,
+					profileThresholds: {},
+					currentProfileId: "default",
+					lastMessageTokens: 0,
+					modelMaxTokens: 32768,
+					settingsMaxTokens: 16000,
+				})
+				// With 40000 reserved: allowedTokens = 200000 * 0.9 - 40000 = 140000, 165630 > 140000 (trigger)
+				expect(result).toBe(true)
+			})
+
+			it("should not trigger when tokens are below threshold even with large modelMaxTokens", () => {
+				const contextWindow = 200000
+				const totalTokens = 100000
+
+				const result = willManageContext({
+					totalTokens,
+					contextWindow,
+					maxTokens: undefined,
+					autoCondenseContext: false,
+					autoCondenseContextPercent: 100,
+					profileThresholds: {},
+					currentProfileId: "default",
+					lastMessageTokens: 0,
+					modelMaxTokens: 32768,
+				})
+				// With 32768 reserved: allowedTokens = 200000 * 0.9 - 32768 = 147232, 100000 < 147232 (no trigger)
+				expect(result).toBe(false)
+			})
+
+			it("should fall back to ANTHROPIC_DEFAULT_MAX_TOKENS when all are undefined", () => {
+				const contextWindow = 100000
+				const totalTokens = 81809 // Just above threshold with ANTHROPIC_DEFAULT_MAX_TOKENS (8192)
+
+				const result = willManageContext({
+					totalTokens,
+					contextWindow,
+					maxTokens: undefined,
+					autoCondenseContext: false,
+					autoCondenseContextPercent: 100,
+					profileThresholds: {},
+					currentProfileId: "default",
+					lastMessageTokens: 0,
+					modelMaxTokens: undefined,
+					settingsMaxTokens: undefined,
+				})
+				// With 8192 reserved: allowedTokens = 100000 * 0.9 - 8192 = 81808, 81809 > 81808 (trigger)
+				expect(result).toBe(true)
+			})
+
+			it("should handle GPT-5 style scenario (32K output tokens)", () => {
+				// This test simulates the exact scenario from the bug report:
+				// - GPT-5 model with 32K max output tokens
+				// - 165,630 input tokens + 32,768 output = 198,398 > 196,608 (exceeds limit)
+				// - The fix ensures context management triggers before reaching this state
+				const contextWindow = 196608 // GPT-5 context window
+				const totalTokens = 153600 // ~78% of context
+
+				// Without the fix (8192 reserved): allowedTokens = 196608 * 0.9 - 8192 = 168755
+				// 153600 < 168755, so no trigger (WRONG - would cause token limit error)
+
+				// With the fix (32768 reserved): allowedTokens = 196608 * 0.9 - 32768 = 144179
+				// 153600 > 144179, so trigger (CORRECT - context management runs)
+				const result = willManageContext({
+					totalTokens,
+					contextWindow,
+					maxTokens: undefined, // getModelMaxOutputTokens returns undefined for non-Anthropic format
+					autoCondenseContext: true,
+					autoCondenseContextPercent: 90,
+					profileThresholds: {},
+					currentProfileId: "default",
+					lastMessageTokens: 0,
+					modelMaxTokens: 32768, // GPT-5 model's max output tokens
+				})
+				expect(result).toBe(true)
+			})
+		})
+
+		describe("manageContext", () => {
+			it("should use modelMaxTokens for reservedTokens when maxTokens is undefined", async () => {
+				const contextWindow = 200000
+				const totalTokens = 165630 // Above threshold with 32768 reserved
+
+				const result = await manageContext({
+					messages,
+					totalTokens,
+					contextWindow,
+					maxTokens: undefined,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: false,
+					autoCondenseContextPercent: 100,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+					modelMaxTokens: 32768,
+				})
+
+				// Should trigger truncation because 165630 > 147232 (allowedTokens with 32768 reserved)
+				expect(result.truncationId).toBeDefined()
+				expect(result.messagesRemoved).toBeGreaterThan(0)
+			})
+
+			it("should use settingsMaxTokens for reservedTokens when larger than maxTokens", async () => {
+				const contextWindow = 200000
+				const totalTokens = 165630
+
+				const result = await manageContext({
+					messages,
+					totalTokens,
+					contextWindow,
+					maxTokens: 8192,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: false,
+					autoCondenseContextPercent: 100,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+					settingsMaxTokens: 32768,
+				})
+
+				// Should trigger truncation because settingsMaxTokens (32768) > maxTokens (8192)
+				expect(result.truncationId).toBeDefined()
+			})
+
+			it("should not truncate when tokens are below threshold with large modelMaxTokens", async () => {
+				const contextWindow = 200000
+				const totalTokens = 100000 // Below threshold
+
+				const result = await manageContext({
+					messages,
+					totalTokens,
+					contextWindow,
+					maxTokens: undefined,
+					apiHandler: mockApiHandler,
+					autoCondenseContext: false,
+					autoCondenseContextPercent: 100,
+					systemPrompt: "System prompt",
+					taskId,
+					profileThresholds: {},
+					currentProfileId: "default",
+					modelMaxTokens: 32768,
+				})
+
+				// Should NOT trigger truncation
+				expect(result.truncationId).toBeUndefined()
+				expect(result.messages).toEqual(messages)
+			})
+		})
+	})
 })

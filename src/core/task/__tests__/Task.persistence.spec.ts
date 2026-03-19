@@ -181,9 +181,6 @@ vi.mock("vscode", () => {
 			language: "en",
 		},
 		EventEmitter: vi.fn().mockImplementation(() => mockEventEmitter),
-		Disposable: {
-			from: vi.fn(),
-		},
 		TabInputText: vi.fn(),
 	}
 })
