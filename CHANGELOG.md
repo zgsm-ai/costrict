@@ -1,5 +1,15 @@
 # CoStrict Change Log
 
+## [2.4.8]
+
+- Optimize context management with conservative reservedTokens calculation for models with large max output tokens
+- Add ZgsmCodeMode type and mode filtering for better mode selection control
+- Refactor file ignore patterns and improve list-files service
+- Update provider handling and error management
+- Fix Agent internationalization
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/137d3f4fd8a1195bd2a2f228b00c58683e0e77b8)
+- Fix known issues
+
 ## [2.4.7]
 
 - Add security code scanning

@@ -1,10 +1,4 @@
 import { z } from "zod"
-
-import { QUICK_EXPLORE_AGENT_ROLE_DEFINITION } from "./costrict/quick-explore-agent.js"
-import { PLAN_AGENT_ROLE_DEFINITION } from "./costrict/plan-agent.js"
-import { TASK_CHECK_AGENT_ROLE_DEFINITION } from "./costrict/task-check-agent.js"
-import { CODING_AGENT_ROLE_DEFINITION } from "./costrict/coding-agent.js"
-import { SUB_CODING_AGENT_ROLE_DEFINITION } from "./costrict/sub-coding-agent.js"
 import { deprecatedToolGroups, toolGroupsSchema } from "./tool.js"
 
 /**
@@ -270,7 +264,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "plan",
 		name: "💡 Plan",
-		roleDefinition: PLAN_AGENT_ROLE_DEFINITION,
+		roleDefinition: "",
 		description: "Create actionable implementation blueprints",
 		whenToUse:
 			"Use this mode when you need to plan complex implementations before coding. Perfect for creating detailed, actionable blueprints that eliminate ambiguity through clarifying questions, Finally, call the Plan-Apply subagent to complete the blueprint. Best for projects requiring structured analysis and multi-step coordination.",
@@ -295,7 +289,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "plan-apply",
 		name: "✨ PlanApply",
-		roleDefinition: CODING_AGENT_ROLE_DEFINITION,
+		roleDefinition: "",
 		description: "Development task management and coordination",
 		whenToUse:
 			"Use this mode when you need to coordinate and manage software development tasks. Acts as project manager and technical architect, responsible for understanding global task planning, distributing development tasks to SubCodingAgent, reviewing code submissions, handling technical decisions, and tracking progress. Suitable for organized and efficient development task execution based on task.md.",
@@ -309,7 +303,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "quick-explore",
 		name: "📚 QuickExplore",
-		roleDefinition: QUICK_EXPLORE_AGENT_ROLE_DEFINITION,
+		roleDefinition: "",
 		description: "Rapidly explore project code structure and history",
 		whenToUse:
 			"Use this mode when you need to quickly extract specific information from project code files and Git commit history. Ideal for locating files, analyzing code logic, finding historical implementation solutions, extracting bug fix records, tracking dependency changes, and other exploratory tasks. Provides structured exploration results for parent Agent consumption.",
@@ -335,7 +329,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "task-check",
 		name: "🔬 TaskCheck",
-		roleDefinition: TASK_CHECK_AGENT_ROLE_DEFINITION,
+		roleDefinition: "",
 		description: "Task quality inspection and refinement expert",
 		whenToUse:
 			"Use this mode when you need to inspect and improve the quality of task.md files. Focuses on fixing format completeness, location precision, clarity, requirement coverage, and style consistency to elevate task.md from 'readable' to 'executable and actionable'. Ensures each task includes clear target objects, modification purposes, modification methods, related dependencies, and modification content.",
@@ -359,7 +353,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "subcoding",
 		name: "⌨️ SubCoding",
-		roleDefinition: SUB_CODING_AGENT_ROLE_DEFINITION,
+		roleDefinition: "",
 		description: "Professional software development executor",
 		whenToUse:
 			"Use this mode when CodingAgent distributes specific development tasks. Acts as a developer in the development team, responsible for executing concrete code writing, modification, debugging, and refactoring work. Follows principles like understand-first-code-later, respect project architecture, minimal changes, and style consistency to efficiently complete assigned development tasks within budget.",
