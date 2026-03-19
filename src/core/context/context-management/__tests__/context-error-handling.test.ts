@@ -86,6 +86,7 @@ describe("checkContextWindowExceededError", () => {
 				"maximum context window",
 				"input tokens exceed limit",
 				"too many tokens",
+				"The input (440143 tokens) is longer than the model's context length (196608 tokens)",
 			]
 
 			patterns.forEach((pattern) => {
@@ -151,6 +152,7 @@ describe("checkContextWindowExceededError", () => {
 				"context is too long",
 				"exceeds the context window",
 				"token limit exceeded",
+				"The input is longer than the model's context length",
 			]
 
 			patterns.forEach((pattern) => {

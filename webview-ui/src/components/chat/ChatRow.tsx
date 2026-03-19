@@ -1246,7 +1246,7 @@ export const ChatRowContent = ({
 										onClick={() =>
 											vscode.postMessage({
 												type: "showTaskWithId",
-												text: completedChildTaskId || message.subtaskId,
+												text: message.subtaskId || completedChildTaskId,
 											})
 										}>
 										{t("chat:subtasks.goToSubtask")}
@@ -1264,7 +1264,7 @@ export const ChatRowContent = ({
 													e.stopPropagation()
 													vscode.postMessage({
 														type: "showTaskWithIdInNewTab",
-														text: completedChildTaskId || message.subtaskId,
+														text: message.subtaskId || completedChildTaskId,
 													})
 												}}>
 												{t("worktrees:openInNewWindow")}

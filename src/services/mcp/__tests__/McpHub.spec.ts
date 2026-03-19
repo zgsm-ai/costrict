@@ -79,8 +79,38 @@ vi.mock("vscode", () => ({
 			dispose: vi.fn(),
 		}),
 	},
+	Uri: {
+		file: vi.fn((path: string) => ({
+			scheme: "file",
+			authority: "",
+			path,
+			query: "",
+			fragment: "",
+			fsPath: path,
+			with: vi.fn(),
+			toJSON: vi.fn(),
+		})),
+		parse: vi.fn((uri: string) => ({
+			scheme: "file",
+			authority: "",
+			path: uri,
+			query: "",
+			fragment: "",
+			fsPath: uri,
+			with: vi.fn(),
+			toJSON: vi.fn(),
+		})),
+	},
+	RelativePattern: vi.fn().mockImplementation((base: string, pattern: string) => ({
+		base,
+		pattern,
+	})),
 	Disposable: {
-		from: vi.fn(),
+		from: vi.fn().mockImplementation((...disposables: any[]) => ({
+			dispose: vi.fn().mockImplementation(() => {
+				disposables.forEach((d) => d?.dispose?.())
+			}),
+		})),
 	},
 }))
 vi.mock("fs/promises")

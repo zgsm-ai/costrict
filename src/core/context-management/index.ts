@@ -147,6 +147,16 @@ export type WillManageContextOptions = {
 	profileThresholds: Record<string, number>
 	currentProfileId: string
 	lastMessageTokens: number
+	/**
+	 * The model's maxTokens value from model.info.maxTokens.
+	 * Used to ensure context management triggers early enough when using models with large max output tokens.
+	 */
+	modelMaxTokens?: number | null
+	/**
+	 * The user's configured maxTokens value from settings.modelMaxTokens.
+	 * Used to ensure context management triggers early enough for user-configured output limits.
+	 */
+	settingsMaxTokens?: number | null
 }
 
 /**
@@ -167,18 +177,29 @@ export function willManageContext({
 	profileThresholds,
 	currentProfileId,
 	lastMessageTokens,
+	modelMaxTokens,
+	settingsMaxTokens,
 }: WillManageContextOptions): boolean {
+	// Use a conservative reservedTokens calculation by taking the maximum of all possible values.
+	// This ensures context management triggers early enough when using models with large max output tokens
+	// (e.g., GPT-5 with 32K output tokens) to avoid "token count exceeds maximum context length" errors.
+	// See: https://github.com/RooVetGit/Roo-Cline/issues/XXX
+	const effectiveReservedTokens = Math.max(
+		maxTokens ?? 0,
+		modelMaxTokens ?? 0,
+		settingsMaxTokens ?? 0,
+		ANTHROPIC_DEFAULT_MAX_TOKENS,
+	)
+
 	if (!autoCondenseContext) {
 		// When auto-condense is disabled, only truncation can occur
-		const reservedTokens = maxTokens || ANTHROPIC_DEFAULT_MAX_TOKENS
 		const prevContextTokens = totalTokens + lastMessageTokens
-		const allowedTokens = contextWindow * (1 - TOKEN_BUFFER_PERCENTAGE) - reservedTokens
+		const allowedTokens = contextWindow * (1 - TOKEN_BUFFER_PERCENTAGE) - effectiveReservedTokens
 		return prevContextTokens > allowedTokens
 	}
 
-	const reservedTokens = maxTokens || ANTHROPIC_DEFAULT_MAX_TOKENS
 	const prevContextTokens = totalTokens + lastMessageTokens
-	const allowedTokens = contextWindow * (1 - TOKEN_BUFFER_PERCENTAGE) - reservedTokens
+	const allowedTokens = contextWindow * (1 - TOKEN_BUFFER_PERCENTAGE) - effectiveReservedTokens
 
 	// Determine the effective threshold to use
 	let effectiveThreshold = autoCondenseContextPercent
@@ -229,6 +250,16 @@ export type ContextManagementOptions = {
 	cwd?: string
 	/** Optional controller for file access validation */
 	rooIgnoreController?: RooIgnoreController
+	/**
+	 * The model's maxTokens value from model.info.maxTokens.
+	 * Used to ensure context management triggers early enough when using models with large max output tokens.
+	 */
+	modelMaxTokens?: number | null
+	/**
+	 * The user's configured maxTokens value from settings.modelMaxTokens.
+	 * Used to ensure context management triggers early enough for user-configured output limits.
+	 */
+	settingsMaxTokens?: number | null
 }
 
 export type ContextManagementResult = SummarizeResponse & {
@@ -262,12 +293,23 @@ export async function manageContext({
 	filesReadByRoo,
 	cwd,
 	rooIgnoreController,
+	modelMaxTokens,
+	settingsMaxTokens,
 }: ContextManagementOptions): Promise<ContextManagementResult> {
 	let error: string | undefined
 	let errorDetails: string | undefined
 	let cost = 0
-	// Calculate the maximum tokens reserved for response
-	const reservedTokens = maxTokens || ANTHROPIC_DEFAULT_MAX_TOKENS
+
+	// Use a conservative reservedTokens calculation by taking the maximum of all possible values.
+	// This ensures context management triggers early enough when using models with large max output tokens
+	// (e.g., GPT-5 with 32K output tokens) to avoid "token count exceeds maximum context length" errors.
+	// See: https://github.com/RooVetGit/Roo-Cline/issues/XXX
+	const reservedTokens = Math.max(
+		maxTokens ?? 0,
+		modelMaxTokens ?? 0,
+		settingsMaxTokens ?? 0,
+		ANTHROPIC_DEFAULT_MAX_TOKENS,
+	)
 
 	// Estimate tokens for the last message (which is always a user message)
 	const lastMessage = messages[messages.length - 1]

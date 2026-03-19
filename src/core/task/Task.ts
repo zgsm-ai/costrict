@@ -4302,7 +4302,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			mode,
 			zgsmCodeMode,
 			autoCondenseContext = true,
-			autoCondenseContextPercent = 100,
+			autoCondenseContextPercent = 90,
 			profileThresholds = {},
 			showSpeedInfo = false,
 			// automaticallyFocus = false,
@@ -4362,6 +4362,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				profileThresholds,
 				currentProfileId,
 				lastMessageTokens,
+				// Pass model and settings maxTokens to ensure context management triggers
+				// early enough for models with large max output tokens (e.g., GPT-5 with 32K)
+				modelMaxTokens: modelInfo.maxTokens,
+				settingsMaxTokens: this.apiConfiguration.modelMaxTokens,
 			})
 
 			// Send condenseTaskContextStarted BEFORE manageContext to show in-progress indicator
@@ -4439,6 +4443,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					filesReadByRoo: contextMgmtFilesReadByRoo,
 					cwd: this.cwd,
 					rooIgnoreController: this.rooIgnoreController,
+					// Pass model and settings maxTokens to ensure context management triggers
+					// early enough for models with large max output tokens (e.g., GPT-5 with 32K)
+					modelMaxTokens: modelInfo.maxTokens,
+					settingsMaxTokens: this.apiConfiguration.modelMaxTokens,
 				})
 				if (truncateResult.messages !== this.apiConversationHistory) {
 					await this.overwriteApiConversationHistory(truncateResult.messages)

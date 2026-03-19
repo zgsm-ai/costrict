@@ -65,8 +65,7 @@ function getGroupName(group: GroupEntry): ToolGroup {
 
 const ModesView = () => {
 	const { t, i18n } = useAppTranslation()
-	const currentLanguage = i18n.language
-
+	const [currentLanguage, setCurrentLanguage] = useState(i18n.language)
 	const {
 		apiConfiguration,
 		customModePrompts,
@@ -207,6 +206,10 @@ const ModesView = () => {
 	const handleModeSwitchRef = useRef(handleModeSwitch)
 	const customModesRef = useRef(customModes)
 	const switchModeRef = useRef(switchMode)
+
+	useEffect(() => {
+		setCurrentLanguage(i18n.language)
+	}, [i18n.language])
 
 	// Update refs when dependencies change
 	useEffect(() => {
@@ -989,8 +992,7 @@ const ModesView = () => {
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
 							return (
 								customMode?.roleDefinition ??
-								prompt?.roleDefinition ??
-								getRoleDefinition(visualMode, customModes, currentLanguage)
+								(prompt?.roleDefinition || getRoleDefinition(visualMode, customModes, currentLanguage))
 							)
 						})()}
 						onChange={(e) => {
@@ -1050,8 +1052,7 @@ const ModesView = () => {
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
 							return (
 								customMode?.description ??
-								prompt?.description ??
-								getDescription(visualMode, customModes, currentLanguage)
+								(prompt?.description || getDescription(visualMode, customModes, currentLanguage))
 							)
 						})()}
 						onChange={(e) => {
@@ -1114,8 +1115,7 @@ const ModesView = () => {
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
 							return (
 								customMode?.whenToUse ??
-								prompt?.whenToUse ??
-								getWhenToUse(visualMode, customModes, currentLanguage)
+								(prompt?.whenToUse || getWhenToUse(visualMode, customModes, currentLanguage))
 							)
 						})()}
 						onChange={(e) => {
@@ -1271,8 +1271,8 @@ const ModesView = () => {
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
 							return (
 								customMode?.customInstructions ??
-								prompt?.customInstructions ??
-								getCustomInstructions(visualMode, customModes, currentLanguage)
+								(prompt?.customInstructions ||
+									getCustomInstructions(visualMode, customModes, currentLanguage))
 							)
 						})()}
 						onChange={(e) => {

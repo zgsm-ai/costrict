@@ -7,7 +7,6 @@ import ignore from "ignore"
 import { arePathsEqual } from "../../utils/path"
 import { getBinPath } from "../../services/ripgrep"
 import { DIRS_TO_IGNORE } from "./constants"
-import delay from "delay"
 
 /**
  * Gitignore cache entry with content and modification time
@@ -594,7 +593,29 @@ async function listFilteredDirectories(
 /**
  * Critical directories that should always be ignored, even inside explicitly targeted hidden directories
  */
-const CRITICAL_IGNORE_PATTERNS = new Set(["node_modules", ".git", "__pycache__", "venv", "env"])
+const CRITICAL_IGNORE_PATTERNS = new Set([
+	"node_modules",
+	".git",
+	".cache",
+	".turbo",
+	"bundle",
+	"__pycache__",
+	"venv",
+	"env",
+	// JavaScript/TypeScript
+	"dist",
+	"out",
+	// Rust, Java
+	"target",
+	// C/C++, Java, General
+	"build",
+	// Go, Ruby, PHP
+	"vendor",
+	// Go, General
+	"bin",
+	// Testing
+	"coverage",
+])
 
 /**
  * Check if a directory matches any of the given patterns

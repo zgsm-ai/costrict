@@ -4,7 +4,7 @@ import { Trans } from "react-i18next"
 import { t } from "i18next"
 import { Settings } from "lucide-react"
 
-import type { ModeConfig, Command } from "@roo-code/types"
+import type { ModeConfig, Command, ZgsmCodeMode } from "@roo-code/types"
 
 import {
 	ContextMenuOptionType,
@@ -21,6 +21,7 @@ interface ContextMenuProps {
 	onSelect: (type: ContextMenuOptionType, value?: string) => void
 	searchQuery: string
 	inputValue: string
+	zgsmCodeMode: ZgsmCodeMode
 	onMouseDown: () => void
 	selectedIndex: number
 	setSelectedIndex: (index: number) => void
@@ -35,6 +36,7 @@ interface ContextMenuProps {
 const ContextMenu: React.FC<ContextMenuProps> = ({
 	onSelect,
 	searchQuery,
+	zgsmCodeMode,
 	onMouseDown,
 	selectedIndex,
 	setSelectedIndex,
@@ -48,8 +50,16 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 	const menuRef = useRef<HTMLDivElement>(null)
 
 	const filteredOptions = useMemo(() => {
-		return getContextMenuOptions(searchQuery, selectedType, queryItems, dynamicSearchResults, modes, commands)
-	}, [searchQuery, selectedType, queryItems, dynamicSearchResults, modes, commands])
+		return getContextMenuOptions(
+			searchQuery,
+			selectedType,
+			queryItems,
+			dynamicSearchResults,
+			modes,
+			commands,
+			zgsmCodeMode,
+		)
+	}, [zgsmCodeMode, searchQuery, selectedType, queryItems, dynamicSearchResults, modes, commands])
 
 	useEffect(() => {
 		if (menuRef.current) {

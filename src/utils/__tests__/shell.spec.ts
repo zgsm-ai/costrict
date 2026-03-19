@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import * as vscode from "vscode"
 import { userInfo } from "os"
 import fs from "fs"
-import { getShell, SHELL_PATHS } from "../shell"
+import { getShell, SHELL_PATHS, resetShellState } from "../shell"
 
 // Mock vscode module
 vi.mock("vscode", () => ({
@@ -95,6 +95,9 @@ describe("Shell Detection Tests", () => {
 
 		// Reset userInfo mock to default
 		vi.mocked(userInfo).mockReturnValue({ shell: null } as any)
+
+		// Reset shell module state
+		resetShellState()
 	})
 
 	afterEach(() => {
@@ -190,7 +193,7 @@ describe("Shell Detection Tests", () => {
 			statSyncMock.mockRestore()
 		})
 
-		it("falls back to PowerShell Legacy if profile includes 'powershell' but PowerShell 7 was already detected", () => {
+		it("returns PowerShell 7 if profile includes 'powershell' and PowerShell 7 is available", () => {
 			// Mock PowerShell 7 exists (but pwshInstalled is already true from previous tests)
 			const existsSyncMock = mockExistsSync([SHELL_PATHS.POWERSHELL_7])
 			const statSyncMock = mockStatSync([SHELL_PATHS.POWERSHELL_7])
@@ -198,8 +201,8 @@ describe("Shell Detection Tests", () => {
 			mockVsCodeConfig("windows", "PowerShell", {
 				PowerShell: { source: "PowerShell" },
 			})
-			// Since pwshInstalled is true from previous test, this should return Legacy PowerShell
-			expect(getShell()).toBe("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
+			// Since pwshInstalled was reset in beforeEach, it will detect PowerShell 7 again
+			expect(getShell()).toBe("C:\\Program Files\\PowerShell\\7\\pwsh.exe")
 
 			existsSyncMock.mockRestore()
 			statSyncMock.mockRestore()
