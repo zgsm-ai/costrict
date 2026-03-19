@@ -11,7 +11,7 @@
 	},
 	"engines": {
 		"vscode": "^1.93.1",
-		"node": "20.19.2"
+		"node": ">=20.19.2"
 	},
 	"author": {
 		"name": "zgsm-ai"

@@ -122,6 +122,17 @@ vi.mock("vscode", () => {
 			QuickFix: { value: "quickfix" },
 			RefactorRewrite: { value: "refactor.rewrite" },
 		},
+		RelativePattern: vi.fn().mockImplementation((base: string, pattern: string) => ({
+			base,
+			pattern,
+		})),
+		Disposable: {
+			from: vi.fn().mockImplementation((...disposables: any[]) => ({
+				dispose: vi.fn().mockImplementation(() => {
+					disposables.forEach((d) => d?.dispose?.())
+				}),
+			})),
+		},
 		extensions: {
 			getExtension: vi.fn().mockReturnValue({
 				extensionUri: { ...mockUri, fsPath: "/mock/extension/path" },

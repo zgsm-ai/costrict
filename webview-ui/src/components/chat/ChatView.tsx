@@ -559,10 +559,20 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						case "api_req_finished":
 						case "error":
 						case "text":
-						case "command_output":
 						case "mcp_server_request_started":
 						case "mcp_server_response":
 						case "completion_result":
+							break
+						case "command_output":
+							// say:command_output means the command is actively running and producing output.
+							// Ensure buttons reflect the running state (Proceed/Kill) regardless of whether
+							// ask:command_output or say:command_output arrived last, preventing a race condition
+							// where a say message overwrites the correct button state set by ask:command_output.
+							setSendingDisabled(false)
+							setClineAsk("command_output")
+							setEnableButtons(true)
+							setPrimaryButtonText("chat:proceedWhileRunning.title")
+							setSecondaryButtonText("chat:killCommand.title")
 							break
 					}
 					break

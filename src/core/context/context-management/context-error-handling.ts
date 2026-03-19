@@ -25,6 +25,7 @@ function checkIsOpenRouterContextWindowError(error: unknown): boolean {
 			/\bmaximum\s*context\b/i,
 			/\b(?:input\s*)?tokens?\s*exceed/i,
 			/\btoo\s*many\s*tokens?\b/i,
+			/\blonger\s*than\s*(?:the\s*)?(?:model'?s?\s*)?context\b/i,
 		] as const
 
 		return String(status) === "400" && CONTEXT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
@@ -77,6 +78,7 @@ function checkIsAnthropicContextWindowError(response: unknown): boolean {
 				/token.*limit/i,
 				/context_length_exceeded/i,
 				/max_tokens_to_sample/i,
+				/\blonger\s*than\s*(?:the\s*)?(?:model'?s?\s*)?context/i,
 			]
 
 			// Additional check for Anthropic-specific error codes
