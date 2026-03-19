@@ -18,7 +18,7 @@
 		"bundle:nightly": "node scripts/download-bundled-skills.mjs && turbo bundle:nightly --log-order grouped --output-logs new-only",
 		"vsix": "node scripts/download-bundled-skills.mjs && turbo vsix --log-order grouped --output-logs new-only",
 		"vsix:nightly": "node scripts/download-bundled-skills.mjs && turbo vsix:nightly --log-order grouped --output-logs new-only",
-		"clean": "turbo clean --log-order grouped --output-logs new-only && rimraf dist out bin .vite-port .turbo",
+		"clean": "turbo clean --log-order grouped --output-logs new-only && rimraf dist out bin .vite-port .turbo bundled-skills",
 		"install:vsix": "pnpm install --frozen-lockfile && pnpm clean && pnpm vsix && node scripts/install-vsix.js",
 		"install:vsix:nightly": "pnpm install --frozen-lockfile && pnpm clean && pnpm vsix:nightly && node scripts/install-vsix.js --nightly",
 		"code-server:install": "node scripts/code-server.js",

@@ -83,6 +83,7 @@ export class TerminalManager {
 		// Prepare environment
 		const env = {
 			...process.env,
+			COSTRICT_CALLER: "vscode",
 			TERM: "xterm-256color",
 			COLORTERM: "truecolor",
 			...(isJetbrainsPlatform() ? getIdeaShellEnvWithUpdatePath(process.env) : undefined),
@@ -104,7 +105,7 @@ export class TerminalManager {
 
 			// Allocate a port for the CLI HTTP server
 			this.port = this.allocatePort()
-
+			env["_EXTENSION_COSTRICT_PORT"] = this.port.toString()
 			// Spawn PTY process with CostrictCli, passing --port for HTTP API access
 			this.ptyProcess = ptyModule.spawn(
 				process.platform === "win32" ? "cs.cmd" : "cs",
