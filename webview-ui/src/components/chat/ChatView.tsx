@@ -161,6 +161,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		// telemetrySetting,
 		soundEnabled,
 		soundVolume,
+		zgsmCodeMode,
 		// cloudIsAuthenticated,
 		messageQueue = [],
 		experiments,
@@ -1663,23 +1664,34 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		],
 	)
 
+	const allModes = useMemo(
+		() =>
+			getAllModes(customModes).filter((v) => {
+				if (v.zgsmCodeModeGroup) {
+					if (v.zgsmCodeModeGroup === "hide") return false
+					if (!v.zgsmCodeModeGroup?.split(",").includes(zgsmCodeMode!)) return false
+				}
+
+				return true
+			}),
+		[customModes, zgsmCodeMode],
+	)
+
 	// Function to handle mode switching
 	const switchToNextMode = useCallback(() => {
-		const allModes = getAllModes(customModes)
 		const currentModeIndex = allModes.findIndex((m) => m.slug === mode)
 		const nextModeIndex = (currentModeIndex + 1) % allModes.length
 		// Update local state and notify extension to sync mode change
 		switchToMode(allModes[nextModeIndex].slug)
-	}, [mode, customModes, switchToMode])
+	}, [allModes, switchToMode, mode])
 
 	// Function to handle switching to previous mode
 	const switchToPreviousMode = useCallback(() => {
-		const allModes = getAllModes(customModes)
 		const currentModeIndex = allModes.findIndex((m) => m.slug === mode)
 		const previousModeIndex = (currentModeIndex - 1 + allModes.length) % allModes.length
 		// Update local state and notify extension to sync mode change
 		switchToMode(allModes[previousModeIndex].slug)
-	}, [mode, customModes, switchToMode])
+	}, [allModes, switchToMode, mode])
 
 	// Mode switching keyboard handler. Scroll-intent keyboard detection
 	// (PageUp, Home, ArrowUp) is handled by useScrollLifecycle.

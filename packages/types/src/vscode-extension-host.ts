@@ -25,7 +25,7 @@ import type { IZgsmModelResponseData, ModelRecord, RouterModels } from "./model.
 import type { OpenAiCodexRateLimitInfo } from "./providers/openai-codex-rate-limits.js"
 import type { SkillMetadata } from "./skills.js"
 import type { WorktreeIncludeStatus } from "./worktree.js"
-
+export type ZgsmCodeMode = "vibe" | "strict" | "raw" | "plan"
 /**
  * ExtensionMessage
  * Extension -> Webview | CLI
@@ -380,7 +380,7 @@ export type ExtensionState = Pick<
 	mcpEnabled: boolean
 
 	// mode: Mode
-	zgsmCodeMode?: "vibe" | "strict" | "raw" | "plan"
+	zgsmCodeMode?: ZgsmCodeMode
 	mode: string
 	customModes: ModeConfig[]
 	toolRequirements?: Record<string, boolean> // Map of tool names to their requirements (e.g. {"apply_diff": true})

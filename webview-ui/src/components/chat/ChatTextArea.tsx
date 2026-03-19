@@ -118,6 +118,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			reviewTask,
 			automaticallyFocus,
 			ttsEnabled,
+			zgsmCodeMode,
 			// lockApiConfigAcrossModes,
 		} = useExtensionState()
 		const selectedProviderModels = useMemo(() => {
@@ -490,6 +491,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								fileSearchResults,
 								allModes,
 								commands,
+								zgsmCodeMode,
 							)
 							const optionsLength = options.length
 
@@ -528,6 +530,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							fileSearchResults,
 							allModes,
 							commands,
+							zgsmCodeMode,
 						)[selectedMenuIndex]
 						if (
 							selectedOption &&
@@ -613,23 +616,24 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				}
 			},
 			[
-				onSend,
 				showContextMenu,
-				searchQuery,
+				handleHistoryNavigation,
 				selectedMenuIndex,
-				handleMentionSelect,
+				searchQuery,
 				selectedType,
+				queryItems,
+				fileSearchResults,
+				allModes,
+				commands,
+				zgsmCodeMode,
+				handleMentionSelect,
+				enterBehavior,
+				resetHistoryNavigation,
+				onSend,
 				inputValue,
 				cursorPosition,
-				setInputValue,
 				justDeletedSpaceAfterMention,
-				queryItems,
-				allModes,
-				fileSearchResults,
-				handleHistoryNavigation,
-				resetHistoryNavigation,
-				commands,
-				enterBehavior,
+				setInputValue,
 			],
 		)
 
@@ -1109,6 +1113,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									selectedType={selectedType}
 									queryItems={queryItems}
 									modes={allModes}
+									zgsmCodeMode={zgsmCodeMode ?? "vibe"}
 									loading={searchLoading}
 									dynamicSearchResults={fileSearchResults}
 									commands={commands}
