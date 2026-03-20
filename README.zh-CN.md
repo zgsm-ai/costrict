@@ -1,106 +1,160 @@
 <div align="center">
-    <h1>CoStrict (prev. Shenma)</h1>
-    <h2>企业严肃开发的AI智能体伙伴</h2>
-</div>
-<br>
-<div align="center">
-<a href="https://github.com/zgsm-ai/costrict/blob/main/README.md" target="_blank">English</a> | 简体中文
-</div>
-<br>
-<br>
 
-CoStrict 是一款免费开源的AI辅助编程工具，支持企业私有化部署，是企业严肃编程的最佳选择。核心场景能力突出：企业级严肃编程（Strict Mode）、代码审查（Code Review）、代码补全（Code Completion）等，特性功能亮点十足：企业级业务理解、系统规范的AI开发流程、氛围编程模式、MCP服务、多种高级免费模型、API/模型自定义、模式选择/自定义等。支持多种主流IDE工具，已支持VS Code和JetBrains IDEs。支持Python、Go、 Java、JavaScript/TypeScript、C/C++等多种主流语言。
+<img src="https://img.shields.io/badge/版本-latest-blue?style=flat-square" alt="Version">
+<img src="https://img.shields.io/badge/许可证-Apache%202.0-green?style=flat-square" alt="License">
+<img src="https://img.shields.io/badge/平台-VS%20Code%20%7C%20JetBrains-orange?style=flat-square" alt="Platform">
+<img src="https://img.shields.io/badge/欢迎PR-brightgreen?style=flat-square" alt="PRs Welcome">
+
+</div>
 
 <div align="center">
 
-<a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm" target="_blank"><img src="./assets/images/readme/download on vscode marketplace.png" alt="Download on VS Marketplace"></a>
-<img src="./assets/images/readme/rate review.png" alt="Rate Review">
-<a href="https://docs.costrict.ai/guide/installation/" target="_blank"><img src="./assets/images/readme/docs_center_zh.png" alt="Docs Center"></a>
+# CoStrict
+
+**企业严肃开发的 AI 智能体伙伴**
+
+_免费 • 开源 • 支持私有化部署_
+
+English | [简体中文](./README.zh-CN.md)
 
 </div>
 
-### CoStrict Cli (<a href="https://docs.costrict.ai/cli/guide/installation" target="_blank">Cli docs</a> | <a href="https://costrict.ai/download" target="_blank">download</a>)
+---
 
-<img width="400" src="./assets/images/readme/cli.webp" alt="CoStrict Cli">
+**CoStrict** 是一款免费开源的 AI 辅助编程工具，专为企业级开发场景设计。支持私有化部署，是组织级安全、标准化 AI 开发工作流的最佳选择。
 
-### <img width="30" src="./assets/images/readme/idea.webp" alt="Jetbrains plugin"> Jetbrains 插件 (<a href="https://github.com/zgsm-ai/costrict-jetbrains-agent" target="_blank">仓库</a> | <a href="https://costrict.ai/download" target="_blank">下载</a>)
+## ✨ 核心能力
 
-### 社区交流&意见反馈
+| 功能            | 描述                                                               |
+| --------------- | ------------------------------------------------------------------ |
+| 🔒 **严肃编程** | 标准化 AI 代码生成流程，包含需求分析、架构设计、任务规划、测试生成 |
+| 🔍 **代码审查** | 基于全仓库 RAG 的代码分析，采用多专家模型交叉验证                  |
+| ⚡ **代码补全** | 秒级上下文感知代码生成                                             |
+| 🎯 **氛围编程** | 自然语言多轮对话快速开发                                           |
+| 🔗 **MCP 集成** | 标准化系统连接，支持 API、数据库、自定义工具集成                   |
+| 🎨 **多模态**   | 支持图片上传和视觉上下文输入                                       |
 
-<img width="100" src="./assets/images/readme/wechat.png" alt="Communication Group">&nbsp;
-<img width="100" src="./assets/images/readme/communication_group.webp" alt="Communication Group">
+## 📦 安装方式
 
-## 产品特性 Features
+### VS Code 扩展
 
-- **严肃编程（Strict Mode）：**
-  严肃编程规范了AI生成代码的流程，使其更符合企业开发场景。它将一句话的需求，系统性地拆解为需求设计、架构设计、测试设计、代码设计等步骤，如同为AI设定了标准工序，确保输出结果高质量、高可控。
+<a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
+  <img src="./assets/images/readme/download on vscode marketplace.png" alt="从 VS Marketplace 安装" width="200">
+</a>
 
-<br>
+### 命令行工具
 
-<a href="https://docs.costrict.ai/tutorial-videos/video#%E4%B8%A5%E8%82%83%E7%BC%96%E7%A8%8B" target="_blank"><img src="./assets/images/readme/strict_mode_zh_buffer.webp" alt="Docs Center"></a>
+支持命令行使用：
 
-![Strict Mode](./assets/images/readme/strict_zh.webp)
+<a href="https://docs.costrict.ai/cli/guide/installation">
+  <img src="https://img.shields.io/badge/CLI-文档-blue?style=for-the-badge" alt="CLI 文档">
+</a>
+<a href="https://costrict.ai/download">
+  <img src="https://img.shields.io/badge/下载-最新版本-success?style=for-the-badge" alt="下载">
+</a>
 
-- **代码补全（Code Completion）：**
-  代码审查能够进行全量代码仓库的索引解析，公司级编码知识库RAG（增强检索） 在发现问题和确认问题上采用“多专家模型专项检查”+“多模型交叉确认”策略 支持用户对函数、选中代码行、代码文件和整个工程文件进行代码检查
+### JetBrains 插件
 
-<a href="https://docs.costrict.ai/tutorial-videos/video#%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5" target="_blank"><img src="./assets/images/readme/codereview_buffer.webp" alt="Docs Center"></a>
+<a href="https://github.com/zgsm-ai/costrict-jetbrains-agent">
+  <img src="https://img.shields.io/badge/GitHub-仓库-informational?style=for-the-badge" alt="JetBrains 仓库">
+</a>
 
-![morefeature](./assets/images/readme/codereview.webp)
+## 🚀 主要特性
 
-<br>
+### 严肃编程（Strict Mode）
 
-- **更多特性（More Features）：**
-    - **代码补全：** 代码自动补全，CoStrict 能根据光标所在位置的上下文代码，自动生成后续代码，快速秒级出码
-    - **氛围编程：** 氛围编程专为快速开发与简单任务场景设计，它支持多轮自然语言对话，边说边改，精准生成代码
-    - **MCP服务：** 无缝对接MCP开放生态，实现标准化系统连接。您可以通过MCP服务集成外部 API、连接数据库或开发定制工具等
-    - **第三方API和模型自定义：** 官方提供了各种免费的高级模型；也支持使用第三方API提供商如Anthropic、OpenAl等；您还可以配置任何与OpenAl兼容的API；或者通过I M Studio/Ollama使用本地模型
-    - **模式自定义：** 我们提供了多种默认模式以适应不同场景，例如：代码能力突出的Code模式、擅长复杂任务拆解的Orchestrator模式。您也可以根据需求自定义模式
-    - **大仓库上下文：** CoStrict 会自动将大文件全仓库数据纳入上下文，对于代码补全场景也会根据光标位置动态感知上下文。 你也可以通过@键添加文件/文件夹、终端、问题等等给输入更精准的上下文信息
-    - **[OpenSpec](https://github.com/Fission-AI/OpenSpec) 集成：** 无缝集成 OpenSpec，让 AI 智能体能够处理变更提案。使用 `/openspec-init` 初始化即可设置标准化的功能规划、实施和评审工作流。OpenSpec 提供技能、命令和统一流程，帮助团队管理变更，确保代码开发的一致性和高质量。
-    - **支持图片：** 多模态模型支持上传图片，您可以点击对话框下方的图片icon上传图片，也可以按住shift键将图片拖拽到输入框内
-    - **快捷菜单：** 选中代码，点击右键出现功能菜单，支持：解释代码、修复代码、改进代码、添加注释、代码审查、添加日志、增加容错、简化代码、优化性能等功能，能满足你所有的代码场景
-    - **多语言支持：** 支持主流编程语言：Python, Go, Java, JavaScript, TypeScript, C/C++ 等所有编程语言
-    - **隐私 & 安全：** 为确保数据安全和更好的服务更低的成本，我们提供了专业完整的私有化部署方案，通过物理隔离和端到端加密，确保代码的安全。
+规范 AI 生成代码流程，使其符合企业开发场景，确保输出高质量、高可控。
 
-![morefeature](./assets/images/readme/more-feature.webp)
+<a href="https://docs.costrict.ai/tutorial-videos/video#%E4%B8%A5%E8%82%83%E7%BC%96%E7%A8%8B">
+  <img src="./assets/images/readme/strict_mode_zh_buffer.webp" alt="严肃编程演示" width="100%">
+</a>
 
-## 更多帮助 For more assistance
+<img src="./assets/images/readme/strict_zh.webp" alt="严肃编程" width="100%">
 
-更多操作详情可访问 CoStrict 官方文档：https://docs.costrict.ai/guide/installation
+### 代码审查（Code Review）
 
-私有化部署指引文档：https://docs.costrict.ai/deployment/introduction
+全仓库索引解析，公司级编码知识库 RAG，采用多专家模型专项检查 + 多模型交叉确认策略。
 
-## 如何贡献
+<a href="https://docs.costrict.ai/tutorial-videos/video#%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5">
+  <img src="./assets/images/readme/codereview_buffer.webp" alt="代码审查演示" width="100%">
+</a>
 
-CoStrict 是由友好的用户、贡献者、提交者和项目管理委员会成员共同开发和维护的开源项目。
+<img src="./assets/images/readme/codereview.webp" alt="代码审查" width="100%">
 
-欢迎所有人以多种方式加入并为项目做出贡献，不仅限于代码贡献。诸如上报问题、报告漏洞、提议新功能、改进文档、完善网站、组织活动或撰写博客文章等贡献均受到欢迎和认可。
+### 更多特性
 
-本文档是 CoStrict 社区新成员入门贡献项目的指南。
+- 🌐 **多语言支持** - Python、Go、Java、JavaScript/TypeScript、C/C++ 及所有编程语言
+- 🔐 **隐私与安全** - 专业私有化部署方案，物理隔离 + 端到端加密
+- 🎛️ **API 与模型自定义** - 内置免费高级模型 + 支持 Anthropic、OpenAI、兼容 OpenAI 的 API 及本地模型
+- 📁 **大仓库上下文** - 自动纳入全仓库上下文，支持 @ 文件/文件夹提及
+- 🔧 **模式自定义** - 多种默认模式（Code、Orchestrator）+ 自定义模式支持
+- 📝 **OpenSpec 集成** - 通过 `/openspec-init` 初始化标准化变更提案工作流
+- 🖱️ **快捷菜单** - 选中代码右键菜单，支持解释、修复、改进、注释、审查、日志、容错、简化、性能优化等功能
+
+<img src="./assets/images/readme/more-feature.webp" alt="更多特性" width="100%">
+
+## 📚 文档资源
+
+| 资源       | 链接                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------- |
+| 安装指南   | [docs.costrict.ai/guide/installation](https://docs.costrict.ai/guide/installation)           |
+| 私有化部署 | [docs.costrict.ai/deployment/introduction](https://docs.costrict.ai/deployment/introduction) |
+| 教程视频   | [docs.costrict.ai/tutorial-videos/video](https://docs.costrict.ai/tutorial-videos/video)     |
+| CLI 文档   | [docs.costrict.ai/cli/guide/installation](https://docs.costrict.ai/cli/guide/installation)   |
+
+## 🤝 社区与支持
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="./assets/images/readme/wechat.png" width="120"><br>
+      <b>微信群</b>
+    </td>
+    <td align="center" width="33%">
+      <img src="./assets/images/readme/communication_group.webp" width="120"><br>
+      <b>意见反馈</b>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://github.com/zgsm-ai/costrict/issues/new/choose">
+        <img src="https://img.shields.io/badge/GitHub-Issues-blue?style=for-the-badge&logo=github" alt="GitHub Issues">
+      </a>
+    </td>
+  </tr>
+</table>
+
+## 🤝 参与贡献
+
+欢迎参与贡献！详情请查看 [贡献指南](assets/docs/devel/zh-CN/fork.md)。
 
 ### 上报问题
 
-首先确保该问题尚未报告，您可以在 GitHub 的 [Issues](https://github.com/zgsm-ai/costrict/issues) 下进行搜索。
-
-如果您无法找到一个开放的问题来解决该问题，可以 [新建 Issue](https://github.com/zgsm-ai/costrict/issues/new/choose)。请确保包含一个标题和清晰的描述，尽可能多的相关信息，以及一个代码示例或可执行的测试用例，以方便其他维护者复现该问题。
+在 [Issues](https://github.com/zgsm-ai/costrict/issues) 搜索确认问题未被报告后，可 [新建 Issue](https://github.com/zgsm-ai/costrict/issues/new/choose)。
 
 ### 提交代码
 
-CoStrict项目采用 Github Forking 工作流：[CoStrict项目代码贡献流程](https://github.com/zgsm-ai/costrict/blob/main/assets/docs/devel/zh-CN/fork.md)
+采用 GitHub Forking 工作流，详见 [代码贡献流程](https://github.com/zgsm-ai/costrict/blob/main/assets/docs/devel/zh-CN/fork.md)。
 
-## 免责声明
-
-**请注意**，Sangfor, Inc. **不**对与 CoStrict 相关的任何代码、模型或其他工具、任何相关的第三方工具或任何由此产生的输出作出任何陈述或保证。您承担使用任何此类工具或输出的**所有风险**；此类工具均按**“原样”**和**“可用”**的基础提供。此类风险可能包括但不限于知识产权侵权、网络漏洞或攻击、偏见、不准确、错误、缺陷、病毒、停机、财产损失或损害和/或人身伤害。您对自己使用任何此类工具或输出负全部责任（包括但不限于其合法性、适当性和结果）。
-
-## 版权声明
+## 📄 许可证
 
 [Apache 2.0 © 2025 Sangfor, Inc.](./LICENSE)
 
-## Star History
+## ⭐ Star 历史
 
-[![Star History Chart](https://api.star-history.com/svg?repos=zgsm-ai/costrict&type=Date)](https://www.star-history.com/#zgsm-ai/costrict&Date)
+<a href="https://www.star-history.com/#zgsm-ai/costrict&Date">
+  <img src="https://api.star-history.com/svg?repos=zgsm-ai/costrict&type=Date" alt="Star 历史图表" width="100%">
+</a>
 
-## 致谢
+## 🙏 致谢
 
-特别感谢 [Roo Code](https://github.com/RooCodeInc/Roo-Code)、[OpenSpec](https://github.com/Fission-AI/OpenSpec)、[agents.md](https://github.com/agentsmd/agents.md) 和 [agentskills](https://github.com/agentskills/agentskills) 提供的开源贡献。
+特别感谢以下开源项目：
+
+[![Roo Code](https://img.shields.io/badge/Roo%20Code-仓库-blue?style=flat-square)](https://github.com/RooCodeInc/Roo-Code)
+[![OpenSpec](https://img.shields.io/badge/OpenSpec-仓库-blue?style=flat-square)](https://github.com/Fission-AI/OpenSpec)
+[![agents.md](https://img.shields.io/badge/agents.md-仓库-blue?style=flat-square)](https://github.com/agentsmd/agents.md)
+[![agentskills](https://img.shields.io/badge/agentskills-仓库-blue?style=flat-square)](https://github.com/agentskills/agentskills)
+
+---
+
+## 免责声明
+
+**请注意**，Sangfor, Inc. **不**对与 CoStrict 相关的任何代码、模型或其他工具、任何相关的第三方工具或任何由此产生的输出作出任何陈述或保证。您承担使用任何此类工具或输出的**所有风险**；此类工具均按**"原样"**和**"可用"**的基础提供。此类风险可能包括但不限于知识产权侵权、网络漏洞或攻击、偏见、不准确、错误、缺陷、病毒、停机、财产损失或损害和/或人身伤害。您对自己使用任何此类工具或输出负全部责任（包括但不限于其合法性、适当性和结果）。
