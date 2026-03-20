@@ -98,7 +98,8 @@ async function updateSkillFrontmatter(skillOutputDir, skillMetadata) {
 			// Build clean frontmatter (no extra blank lines)
 			const newFrontmatter = `name: ${name}
 description: ${description}
-modeSlugs:
+metadata:
+ modeSlugs:
   - security-review`
 
 			// Reconstruct file with clean frontmatter
@@ -106,7 +107,7 @@ modeSlugs:
 		}
 
 		await fs.writeFile(skillMdPath, content, "utf-8")
-		console.log(`    ✓ Updated SKILL.md frontmatter (name: ${name}, modeSlugs: security-review)`)
+		console.log(`    ✓ Updated SKILL.md frontmatter (name: ${name}, metadata.modeSlugs: security-review)`)
 	} catch (error) {
 		console.error(`    ⚠ Warning: Could not update SKILL.md: ${error.message}`)
 	}
@@ -446,3 +447,4 @@ main().catch((error) => {
 	console.error("Fatal error:", error)
 	process.exit(1)
 })
+

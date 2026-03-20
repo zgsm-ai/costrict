@@ -17,7 +17,10 @@ export interface SkillMetadata {
 	 * - undefined or empty array means the skill is available in all modes ("Any mode").
 	 * - An array with one or more mode slugs restricts the skill to those modes.
 	 */
-	modeSlugs?: string[]
+	metadata?: {
+		modeSlugs: string[]
+		[key: string]: any // Additional metadata
+	}
 }
 
 /**
