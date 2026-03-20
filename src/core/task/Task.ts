@@ -3456,8 +3456,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						streamingFailedMessage = this.abort
 							? undefined
 							: await this.convertErrorMessage(error, () => {
-									shouldStop = true
-								})
+								shouldStop = true
+								this.updateStreamingStatus(false)
+							})
 						if (streamingFailedMessage) {
 							streamingFailedMessage = `${t("common:interruption.streamTerminatedByProvider")}: ${streamingFailedMessage}`
 						}
@@ -4675,6 +4676,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			let forceAutoApprovaldisabled = false
 			const errorMsg = await this.convertErrorMessage(error, () => {
 				forceAutoApprovaldisabled = true
+				this.updateStreamingStatus(false)
 			})
 			this.isWaitingForFirstChunk = false
 			this.currentRequestAbortController = undefined

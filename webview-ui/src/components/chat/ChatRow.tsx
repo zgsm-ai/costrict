@@ -1644,7 +1644,7 @@ export const ChatRowContent = ({
 										/>
 									</div>
 								) : (
-									<div className="flex justify-between cursor-pointer">
+									<div className="flex justify-between cursor-pointer h-6 overflow-hidden">
 										<div
 											className="grow px-2 py-1 wrap-anywhere rounded-lg transition-colors"
 											onClick={(e) => {

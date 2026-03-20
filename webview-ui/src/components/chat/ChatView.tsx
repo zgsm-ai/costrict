@@ -64,7 +64,6 @@ import ChatSearch from "./ChatSearch"
 // import { Cloud } from "lucide-react"
 // import CloudAgents from "../cloud/CloudAgents"
 import { WorktreeSelector } from "./WorktreeSelector"
-import { useZgsmUserInfo } from "@/hooks/useZgsmUserInfo"
 import FileChangesPanel from "./FileChangesPanel"
 import { useScrollLifecycle } from "@src/hooks/useScrollLifecycle"
 
@@ -166,7 +165,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		messageQueue = [],
 		experiments,
 		showWorktreesInHomeScreen,
-		language,
 		isStreaming = false,
 		alwaysAllowExecute = false,
 		autoApprovalEnabled,
@@ -1497,15 +1495,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const placeholderText = `${task ? t("chat:typeMessage") : t("chat:typeTask")}${placeholderTip}`
 
-	const summaryIconUri = useMemo(() => (window as any).COSTRICT_BASE_URI + "/summary_icon.webp", [])
-	const { hash } = useZgsmUserInfo(apiConfiguration?.zgsmAccessToken)
-
-	const handleOpenAnnualSummary = useCallback(() => {
-		const baseUrl = apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL
-		const summaryUrl = `${baseUrl}/credit/manager/annual-summary${hash ? `?state=${hash}` : ""}`
-		vscode.postMessage({ type: "openExternal", url: summaryUrl })
-	}, [apiConfiguration?.zgsmBaseUrl, hash])
-
 	const switchToMode = useCallback(
 		(modeSlug: string): void => {
 			// Update local state and notify extension to sync mode change.
@@ -1837,19 +1826,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							className="absolute top-2 right-3 z-10"
 						/> */}
 						<VersionIndicator onClick={() => {}} className="fixed top-10 right-6 z-10" />
-
-						{language === "zh-CN" && apiConfiguration?.zgsmAccessToken && (
-							<button
-								onClick={handleOpenAnnualSummary}
-								className="fixed top-20 right-6 z-10 cursor-pointer hover:opacity-80 transition-opacity animate-pulse"
-								aria-label="annual-summary">
-								<img
-									src={summaryIconUri}
-									alt="annual-summary"
-									className="w-22 transition-transform hover:scale-110 hover:rotate-3 active:scale-95 duration-300 ease-in-out"
-								/>
-							</button>
-						)}
 
 						<RooHero />
 						{/* {telemetrySetting === "unset" && <TelemetryBanner />} */}

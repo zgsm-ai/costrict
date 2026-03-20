@@ -900,21 +900,21 @@ describe("webviewMessageHandler - requestCommands", () => {
 				description: "Primary skill slug",
 				path: "/mock/.roo/skills/skill-slug-entry/SKILL.md",
 				source: "project",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 			{
 				name: "skill-slug-entry",
 				description: "Duplicate skill slug",
 				path: "/mock/.roo/skills/duplicate-skill/SKILL.md",
 				source: "global",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 			{
 				name: "another-skill-slug",
 				description: "Another skill-generated command",
 				path: "/mock/.roo/skills/another-skill-slug/SKILL.md",
 				source: "global",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 		])
 
@@ -974,14 +974,14 @@ describe("webviewMessageHandler - requestCommands", () => {
 				description: "Deploy skill",
 				path: "/mock/.roo/skills/deploy/SKILL.md",
 				source: "global",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 			{
 				name: "skill-only",
 				description: "Skill-generated command",
 				path: "/mock/.roo/skills/skill-only/SKILL.md",
 				source: "project",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 		])
 

@@ -76,6 +76,7 @@ export function getLiteRulesSection(
 ): string {
 	if (experiments?.useLitePrompts) {
 		return `====
+
 RULES
 - Base directory is specified in SYSTEM INFORMATION
 - Use relative paths from base directory
