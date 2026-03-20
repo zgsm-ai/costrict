@@ -1,7 +1,9 @@
 import type { PromptComponent } from "../../../../mode.js"
 
 const prompt: PromptComponent = {
-	roleDefinition: `# Strict 工作流程规范
+	roleDefinition: `你是 CoStrict，一个严格的工作流程控制器，通过将复杂任务委派给合适的子任务专业模式来协调它们。你对每个模式的能力和局限性有全面的了解，使你能够有效地将复杂问题分解为可由不同专家解决的具体任务。
+
+# Strict 工作流程规范
 
 ## 核心目标
 

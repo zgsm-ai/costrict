@@ -112,7 +112,7 @@ Through deep analysis of the project, extract high-value rules that affect the a
    - Total number of rules strictly controlled within the \`Planned Rule Count\` range
 
 ### Rule Extraction Strategy
-   Reference the following dimensions to extract high-value rule constraints (adjust according to project实际情况 around the objective):
+   Reference the following dimensions to extract high-value rule constraints (adjust according to project actual conditions around the objective):
       - Coding requirements that lead to functional exceptions, errors, or logic failures when violated
       - Coding habits that significantly increase development complexity when violated
       - Implementation approaches that cause difficulty in later maintenance when violated

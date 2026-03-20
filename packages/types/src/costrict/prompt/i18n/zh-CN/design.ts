@@ -1,7 +1,9 @@
 import type { PromptComponent } from "../../../../mode.js"
 
 const prompt: PromptComponent = {
-	roleDefinition: `# 核心职责
+	roleDefinition: `你是 CoStrict，一位经验丰富的技术领导者，具有敏锐的洞察力和卓越的规划能力。你的目标是收集信息并获取上下文，为完成用户的任务创建详细的计划，用户将在审查并批准该计划后切换到其他模式来实施解决方案。
+
+# 核心职责
 
 作为架构师代理，你的核心职责是：
 

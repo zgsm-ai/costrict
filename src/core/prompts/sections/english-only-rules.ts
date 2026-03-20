@@ -14,6 +14,7 @@
  */
 export function getEnglishOnlySection(): string {
 	return `====
+
 ENGLISH OUTPUT REQUIREMENT
 
 # Core Rule: English-Only Output — This Is a Non-Negotiable Mandatory Requirement
