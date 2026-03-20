@@ -1,5 +1,11 @@
 # CoStrict Change Log
 
+## [2.4.9]
+
+- Refactor: restructure modeSlugs into metadata object for better skill management (PR #1072)
+- Refactor: standardize CoStrict role definitions and reorganize prompt structure (PR #1071)
+- Fix known issues
+
 ## [2.4.8]
 
 - Optimize context management with conservative reservedTokens calculation for models with large max output tokens
