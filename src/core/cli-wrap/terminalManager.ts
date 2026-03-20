@@ -3,6 +3,7 @@ import { execSync } from "child_process"
 import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
 import { getWorkspacePath } from "../../utils/path"
 import { isJetbrainsPlatform } from "../../utils/platform"
+import { getContextSyncService } from "./contextSync"
 
 // Lazy load node-pty to avoid blocking extension activation if module is missing
 let pty: typeof import("node-pty") | null = null
@@ -121,6 +122,9 @@ export class TerminalManager {
 
 			this.isRunning = true
 
+			// Start syncing editor context to CLI
+			getContextSyncService().start()
+
 			// Handle output from the process
 			this.ptyProcess.onData((data: string) => {
 				this.sendToWebview({ type: "CostrictCliOutput", data })
@@ -157,7 +161,12 @@ export class TerminalManager {
 			} catch {
 				// Not ready yet
 			}
-			await new Promise((resolve) => setTimeout(resolve, intervalMs))
+			await new Promise((resolve) =>
+				setTimeout(() => {
+					resolve(true)
+					getContextSyncService().debouncedSync()
+				}, intervalMs),
+			)
 		}
 		return false
 	}
@@ -193,6 +202,9 @@ export class TerminalManager {
 	}
 
 	async stop(): Promise<void> {
+		// Stop syncing editor context
+		getContextSyncService().stop()
+
 		if (this.ptyProcess) {
 			try {
 				this.ptyProcess.kill()

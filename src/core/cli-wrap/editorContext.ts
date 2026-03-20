@@ -39,8 +39,8 @@ export function getActiveFileContext(): FileContext | undefined {
 
 	const sel = activeEditor.selection
 	if (!sel.isEmpty) {
-		const startLine = sel.start.line + 1
-		const endLine = sel.end.line + 1
+		const startLine = sel.start.line
+		const endLine = sel.end.line
 		selection = { startLine, endLine }
 
 		if (startLine === endLine) {
