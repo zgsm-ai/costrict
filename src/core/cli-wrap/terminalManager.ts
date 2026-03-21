@@ -61,7 +61,7 @@ export class TerminalManager {
 
 	private isCsInstalled(env: any): boolean {
 		try {
-			const cmd = process.platform === "win32" ? "where cs.cmd" : "which cs"
+			const cmd = process.platform === "win32" ? "where cs" : "which cs"
 			execSync(cmd, { stdio: "ignore", env: { ...process.env, ...env } })
 			return true
 		} catch {
@@ -109,7 +109,7 @@ export class TerminalManager {
 			env["_EXTENSION_COSTRICT_PORT"] = this.port.toString()
 			// Spawn PTY process with CostrictCli, passing --port for HTTP API access
 			this.ptyProcess = ptyModule.spawn(
-				process.platform === "win32" ? "cs.cmd" : "cs",
+				process.platform === "win32" ? "cs.exe" : "cs",
 				["--port", this.port.toString()],
 				{
 					name: "xterm-256color",
@@ -119,6 +119,9 @@ export class TerminalManager {
 					env,
 				},
 			)
+			if (!this.ptyProcess) {
+				throw new Error("Terminal process could not be started, plaese restart cli")
+			}
 
 			this.isRunning = true
 
@@ -164,7 +167,7 @@ export class TerminalManager {
 			await new Promise((resolve) =>
 				setTimeout(() => {
 					resolve(true)
-					getContextSyncService().debouncedSync()
+					getContextSyncService().syncContext()
 				}, intervalMs),
 			)
 		}

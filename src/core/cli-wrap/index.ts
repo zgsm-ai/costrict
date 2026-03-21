@@ -1,4 +1,3 @@
 export { TerminalManager, getTerminalManager } from "./terminalManager"
 export { getActiveFileContext, getOpenTabs } from "./editorContext"
-export type { FileContext } from "./editorContext"
-export { EditorWatcher } from "./editorWatcher"
+export type { FileContext } from "./types"

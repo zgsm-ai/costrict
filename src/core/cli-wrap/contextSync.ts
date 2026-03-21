@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import { getActiveFileContext, getOpenTabs } from "./editorContext"
 import { getTerminalManager } from "./terminalManager"
+import { FileContext } from "./types"
 
 /**
  * Context Sync Service
@@ -11,7 +12,7 @@ import { getTerminalManager } from "./terminalManager"
 export class ContextSyncService {
 	private static instance: ContextSyncService | null = null
 	private disposables: vscode.Disposable[] = []
-	private lastContext: string = ""
+	private lastContext: { activeFile?: FileContext; openTabs: string[]; timestamp?: number }[] = []
 	private syncInterval: NodeJS.Timeout | null = null
 	private debounceTimer: NodeJS.Timeout | null = null
 
@@ -32,16 +33,20 @@ export class ContextSyncService {
 		this.stop()
 
 		// Listen for active editor changes
-		this.disposables.push(vscode.window.onDidChangeActiveTextEditor(() => this.debouncedSync()))
+		this.disposables.push(
+			vscode.window.onDidChangeActiveTextEditor(() => this.syncContext("onDidChangeActiveTextEditor")),
+		)
 
 		// Listen for selection changes
-		this.disposables.push(vscode.window.onDidChangeTextEditorSelection(() => this.debouncedSync()))
+		this.disposables.push(
+			vscode.window.onDidChangeTextEditorSelection(() => this.syncContext("onDidChangeTextEditorSelection")),
+		)
 
 		// Listen for tab changes
-		this.disposables.push(vscode.window.tabGroups.onDidChangeTabs(() => this.debouncedSync()))
+		this.disposables.push(vscode.window.tabGroups.onDidChangeTabs(() => this.syncContext("onDidChangeTabs")))
 
 		// Periodic sync as fallback (every 5 seconds)
-		this.syncInterval = setInterval(() => this.syncContext(), 5000)
+		// this.syncInterval = setInterval(() => this.debouncedSync(), 5000)
 
 		// Initial sync
 		this.syncContext()
@@ -50,20 +55,33 @@ export class ContextSyncService {
 	/**
 	 * Debounced sync to avoid excessive HTTP requests.
 	 */
-	public debouncedSync(): void {
-		if (this.debounceTimer) {
-			clearTimeout(this.debounceTimer)
+	private async debouncedSync(port: number) {
+		try {
+			const response = await fetch(`http://localhost:${port}/tui/context`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(this.lastContext.pop()),
+			})
+
+			if (!response.ok) {
+				console.error(`[ContextSync] Failed to sync: ${response.status}`)
+			} else {
+				console.log(`[ContextSync] Sync successful`)
+			}
+		} catch (error) {
+			// Silently fail - CLI might not be ready yet
+			console.error("[ContextSync] Error:", error)
 		}
-		this.debounceTimer = setTimeout(() => {
-			this.syncContext()
-			this.debounceTimer = null
-		}, 100)
 	}
 
 	/**
 	 * Sync editor context to the CLI.
 	 */
-	private async syncContext(): Promise<void> {
+	public async syncContext(eventType?: string): Promise<void> {
+		if (this.debounceTimer) {
+			clearTimeout(this.debounceTimer)
+			this.debounceTimer = null
+		}
 		const terminalManager = getTerminalManager()
 		const port = terminalManager.getPort()
 
@@ -76,38 +94,16 @@ export class ContextSyncService {
 		// Limit to the most recent 10 tabs
 		const allTabs = getOpenTabs()
 		const openTabs = allTabs.slice(0, 10)
-
-		const contextData = {
-			activeFile,
-			openTabs,
+		if (this.lastContext.length >= 5) {
+			this.lastContext.shift()
 		}
+		this.lastContext.push({ activeFile, openTabs, timestamp: Date.now() })
+		console.log(`[ContextSync ${eventType}] Syncing ${openTabs.length} tabs to CLI on port ${port}`)
+		console.log(`[ContextSync ${eventType}] Tabs: ${openTabs.join(", ")}`)
 
-		// Skip if context hasn't changed (avoid unnecessary requests)
-		const contextStr = JSON.stringify(contextData)
-		if (contextStr === this.lastContext) {
-			return
-		}
-		this.lastContext = contextStr
-
-		console.log(`[ContextSync] Syncing ${openTabs.length} tabs to CLI on port ${port}`)
-		console.log(`[ContextSync] Tabs: ${openTabs.join(", ")}`)
-
-		try {
-			const response = await fetch(`http://localhost:${port}/tui/context`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: contextStr,
-			})
-
-			if (!response.ok) {
-				console.error(`[ContextSync] Failed to sync: ${response.status}`)
-			} else {
-				console.log(`[ContextSync] Sync successful`)
-			}
-		} catch (error) {
-			// Silently fail - CLI might not be ready yet
-			console.error("[ContextSync] Error:", error)
-		}
+		this.debounceTimer = setTimeout(() => {
+			this.debouncedSync(port)
+		}, 300)
 	}
 
 	/**
@@ -131,7 +127,7 @@ export class ContextSyncService {
 		this.disposables = []
 
 		// Reset state
-		this.lastContext = ""
+		this.lastContext = []
 	}
 
 	/**

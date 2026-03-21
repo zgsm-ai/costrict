@@ -1,19 +1,5 @@
 import * as vscode from "vscode"
-
-/**
- * Represents the context of the currently active file in the editor.
- */
-export interface FileContext {
-	/** Relative path from workspace root */
-	relativePath: string
-	/** Formatted file reference, e.g. "@src/foo.ts#L5-L10" */
-	fileRef: string
-	/** Selection range (1-based line numbers), if any */
-	selection?: {
-		startLine: number
-		endLine: number
-	}
-}
+import { FileContext } from "./types"
 
 /**
  * Get the context of the currently active file in the editor.
@@ -39,8 +25,8 @@ export function getActiveFileContext(): FileContext | undefined {
 
 	const sel = activeEditor.selection
 	if (!sel.isEmpty) {
-		const startLine = sel.start.line
-		const endLine = sel.end.line
+		const startLine = sel.start.line + 1
+		const endLine = sel.end.line + 1
 		selection = { startLine, endLine }
 
 		if (startLine === endLine) {
