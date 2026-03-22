@@ -33,31 +33,35 @@ English | [简体中文](./README.zh-CN.md)
 | 🎯 **氛围编程** | 自然语言多轮对话快速开发                                           |
 | 🔗 **MCP 集成** | 标准化系统连接，支持 API、数据库、自定义工具集成                   |
 | 🎨 **多模态**   | 支持图片上传和视觉上下文输入                                       |
+| 🛠️ **技能支持** | 可扩展技能系统，支持专业化任务工作流                               |
 
 ## 📦 安装方式
 
-### VS Code 扩展
-
-<a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
-  <img src="./assets/images/readme/download on vscode marketplace.png" alt="从 VS Marketplace 安装" width="200">
-</a>
-
-### 命令行工具
-
-支持命令行使用：
-
-<a href="https://docs.costrict.ai/cli/guide/installation">
-  <img src="https://img.shields.io/badge/CLI-文档-blue?style=for-the-badge" alt="CLI 文档">
-</a>
-<a href="https://costrict.ai/download">
-  <img src="https://img.shields.io/badge/下载-最新版本-success?style=for-the-badge" alt="下载">
-</a>
-
-### JetBrains 插件
-
-<a href="https://github.com/zgsm-ai/costrict-jetbrains-agent">
-  <img src="https://img.shields.io/badge/GitHub-仓库-informational?style=for-the-badge" alt="JetBrains 仓库">
-</a>
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <b>VS Code 扩展</b><br><br>
+      <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
+        <img src="./assets/images/readme/download on vscode marketplace.png" alt="从 VS Marketplace 安装" width="180">
+      </a>
+    </td>
+    <td align="center" width="33%">
+      <b>命令行工具</b><br><br>
+      <a href="https://docs.costrict.ai/cli/guide/installation">
+        <img src="https://img.shields.io/badge/CLI-文档-blue?style=for-the-badge" alt="CLI 文档">
+      </a>
+      <a href="https://costrict.ai/download">
+        <img src="https://img.shields.io/badge/下载-最新版本-success?style=for-the-badge" alt="下载">
+      </a>
+    </td>
+    <td align="center" width="33%">
+      <b>JetBrains 插件</b><br><br>
+      <a href="https://github.com/zgsm-ai/costrict-jetbrains-agent">
+        <img src="https://img.shields.io/badge/GitHub-仓库-informational?style=for-the-badge" alt="JetBrains 仓库">
+      </a>
+    </td>
+  </tr>
+</table>
 
 ## 🚀 主要特性
 
@@ -65,21 +69,35 @@ English | [简体中文](./README.zh-CN.md)
 
 规范 AI 生成代码流程，使其符合企业开发场景，确保输出高质量、高可控。
 
-<a href="https://docs.costrict.ai/tutorial-videos/video#%E4%B8%A5%E8%82%83%E7%BC%96%E7%A8%8B">
-  <img src="./assets/images/readme/strict_mode_zh_buffer.webp" alt="严肃编程演示" width="100%">
-</a>
-
-<img src="./assets/images/readme/strict_zh.webp" alt="严肃编程" width="100%">
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://docs.costrict.ai/tutorial-videos/video#%E4%B8%A5%E8%82%83%E7%BC%96%E7%A8%8B">
+        <img src="./assets/images/readme/strict_mode_zh_buffer.webp" alt="严肃编程演示" width="100%">
+      </a>
+    </td>
+    <td align="center" width="50%">
+      <img src="./assets/images/readme/strict_zh.webp" alt="严肃编程" width="100%">
+    </td>
+  </tr>
+</table>
 
 ### 代码审查（Code Review）
 
 全仓库索引解析，公司级编码知识库 RAG，采用多专家模型专项检查 + 多模型交叉确认策略。
 
-<a href="https://docs.costrict.ai/tutorial-videos/video#%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5">
-  <img src="./assets/images/readme/codereview_buffer.webp" alt="代码审查演示" width="100%">
-</a>
-
-<img src="./assets/images/readme/codereview.webp" alt="代码审查" width="100%">
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://docs.costrict.ai/tutorial-videos/video#%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5">
+        <img src="./assets/images/readme/codereview_buffer.webp" alt="代码审查演示" width="100%">
+      </a>
+    </td>
+    <td align="center" width="50%">
+      <img src="./assets/images/readme/codereview.webp" alt="代码审查" width="100%">
+    </td>
+  </tr>
+</table>
 
 ### 更多特性
 

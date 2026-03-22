@@ -33,31 +33,35 @@ _Free • Open Source • Private Deployment_
 | 🎯 **Vibe Code**       | Rapid development through natural language dialogue                                                                 |
 | 🔗 **MCP Integration** | Standardized system connectivity for APIs, databases, and custom tools                                              |
 | 🎨 **Multi-modal**     | Support for image context and visual inputs                                                                         |
+| 🛠️ **Skills Support**  | Extensible skills system for specialized task workflows                                                             |
 
 ## 📦 Installation
 
-### VS Code Extension
-
-<a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
-  <img src="./assets/images/readme/download on vscode marketplace_en.png" alt="Install from VS Marketplace" width="200">
-</a>
-
-### CLI Tool
-
-Available for command-line usage:
-
-<a href="https://docs.costrict.ai/cli/guide/installation">
-  <img src="https://img.shields.io/badge/CLI-Documentation-blue?style=for-the-badge" alt="CLI Docs">
-</a>
-<a href="https://costrict.ai/download">
-  <img src="https://img.shields.io/badge/Download-Latest-success?style=for-the-badge" alt="Download">
-</a>
-
-### JetBrains Plugin
-
-<a href="https://github.com/zgsm-ai/costrict-jetbrains-agent">
-  <img src="https://img.shields.io/badge/GitHub-Repository-informational?style=for-the-badge" alt="JetBrains Repo">
-</a>
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <b>VS Code Extension</b><br><br>
+      <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
+        <img src="./assets/images/readme/download on vscode marketplace_en.png" alt="Install from VS Marketplace" width="180">
+      </a>
+    </td>
+    <td align="center" width="33%">
+      <b>CLI Tool</b><br><br>
+      <a href="https://docs.costrict.ai/cli/guide/installation">
+        <img src="https://img.shields.io/badge/CLI-Documentation-blue?style=for-the-badge" alt="CLI Docs">
+      </a>
+      <a href="https://costrict.ai/download">
+        <img src="https://img.shields.io/badge/Download-Latest-success?style=for-the-badge" alt="Download">
+      </a>
+    </td>
+    <td align="center" width="33%">
+      <b>JetBrains Plugin</b><br><br>
+      <a href="https://github.com/zgsm-ai/costrict-jetbrains-agent">
+        <img src="https://img.shields.io/badge/GitHub-Repository-informational?style=for-the-badge" alt="JetBrains Repo">
+      </a>
+    </td>
+  </tr>
+</table>
 
 ## 🚀 Key Features
 
@@ -65,21 +69,35 @@ Available for command-line usage:
 
 Standardizes AI-generated code workflows for enterprise scenarios, ensuring high-quality and controllable outputs.
 
-<a href="https://docs.costrict.ai/en/tutorial-videos/video/#strict-mode">
-  <img src="./assets/images/readme/strict_mode_en_buffer.webp" alt="Strict Mode Demo" width="100%">
-</a>
-
-<img src="./assets/images/readme/strict_mode_en.webp" alt="Strict Mode" width="100%">
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://docs.costrict.ai/en/tutorial-videos/video/#strict-mode">
+        <img src="./assets/images/readme/strict_mode_en_buffer.webp" alt="Strict Mode Demo" width="100%">
+      </a>
+    </td>
+    <td align="center" width="50%">
+      <img src="./assets/images/readme/strict_mode_en.webp" alt="Strict Mode" width="100%">
+    </td>
+  </tr>
+</table>
 
 ### Code Review
 
 Repository-wide indexing and RAG-based analysis with multi-model verification strategies.
 
-<a href="https://docs.costrict.ai/en/tutorial-videos/video/#ai-codereview">
-  <img src="./assets/images/readme/codereview_buffer.webp" alt="Code Review Demo" width="100%">
-</a>
-
-<img src="./assets/images/readme/codereview_en.webp" alt="Code Review" width="100%">
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://docs.costrict.ai/en/tutorial-videos/video/#ai-codereview">
+        <img src="./assets/images/readme/codereview_buffer.webp" alt="Code Review Demo" width="100%">
+      </a>
+    </td>
+    <td align="center" width="50%">
+      <img src="./assets/images/readme/codereview_en.webp" alt="Code Review" width="100%">
+    </td>
+  </tr>
+</table>
 
 ### More Features
 
