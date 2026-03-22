@@ -55,12 +55,24 @@ export class ContextSyncService {
 	/**
 	 * Debounced sync to avoid excessive HTTP requests.
 	 */
-	private async debouncedSync(port: number) {
+	private async debouncedSync(port?: number | string) {
+		// Check if there's any context to sync
+		if (this.lastContext.length === 0) {
+			console.log("[ContextSync] No context to sync")
+			return
+		}
+
 		try {
+			const contextData = this.lastContext.pop()
+			if (!contextData) {
+				console.log("[ContextSync] Context data is undefined, skipping sync")
+				return
+			}
+
 			const response = await fetch(`http://localhost:${port}/tui/context`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(this.lastContext.pop()),
+				body: JSON.stringify(contextData),
 			})
 
 			if (!response.ok) {
@@ -69,8 +81,8 @@ export class ContextSyncService {
 				console.log(`[ContextSync] Sync successful`)
 			}
 		} catch (error) {
-			// Silently fail - CLI might not be ready yet
-			console.error("[ContextSync] Error:", error)
+			// Log error but don't throw - CLI might not be ready yet
+			console.error("[ContextSync] Error syncing context:", error)
 		}
 	}
 

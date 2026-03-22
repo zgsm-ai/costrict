@@ -60,6 +60,7 @@ import { createLogger } from "./utils/logger"
 import { loadIdeaShellEnvOnce } from "./utils/ideaShellEnvLoader"
 import { isJetbrainsPlatform } from "./utils/platform"
 import { installGitHubSkills } from "./services/skills/github-skills-installer"
+import { getTerminalManager } from "./core/cli-wrap"
 // import { flushModels, getModels, initializeModelCacheRefresh } from "./api/providers/fetchers/modelCache"
 
 /**
@@ -518,4 +519,7 @@ export async function deactivate() {
 	await McpServerManager.cleanup(extensionContext)
 	TelemetryService.instance.shutdown()
 	TerminalRegistry.cleanup()
+
+	// Dispose CLI terminal manager to kill any running PTY process
+	getTerminalManager().dispose()
 }

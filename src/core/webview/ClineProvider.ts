@@ -802,6 +802,14 @@ export class ClineProvider
 		this.customModesManager?.dispose()
 		this.taskHistoryStore.dispose()
 		this.flushGlobalStateWriteThrough()
+
+		// Stop CLI terminal process if running
+		const terminalManager = getTerminalManager()
+		if (terminalManager.running) {
+			await terminalManager.stop()
+			this.log("Stopped CLI terminal process")
+		}
+
 		this.log("Disposed all disposables")
 		ClineProvider.activeInstances.delete(this)
 

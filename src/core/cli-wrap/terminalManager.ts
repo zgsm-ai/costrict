@@ -55,7 +55,7 @@ export class TerminalManager {
 	/**
 	 * Returns the HTTP port the CLI is listening on, or null if not available.
 	 */
-	getPort(): number | null {
+	getPort() {
 		return this.port
 	}
 
@@ -94,7 +94,7 @@ export class TerminalManager {
 		if (!this.isCsInstalled(env)) {
 			this.sendToWebview({
 				type: "CostrictCliError",
-				error: "Costrict CLI is not installed.\r\nPlease install it by running:\r\n\r\n  npm install @costrict/cs -g\r\n",
+				error: "Costrict CLI is not installed.\r\nPlease install Costrict CLI from https://docs.costrict.ai/en/cli/guide/installation",
 			})
 			return
 		}
@@ -106,11 +106,10 @@ export class TerminalManager {
 
 			// Allocate a port for the CLI HTTP server
 			this.port = this.allocatePort()
-			env["_EXTENSION_COSTRICT_PORT"] = this.port.toString()
 			// Spawn PTY process with CostrictCli, passing --port for HTTP API access
 			this.ptyProcess = ptyModule.spawn(
 				process.platform === "win32" ? "cs.exe" : "cs",
-				["--port", this.port.toString()],
+				["--port", `${this.port}`],
 				{
 					name: "xterm-256color",
 					cols: options.cols || 80,
@@ -120,7 +119,7 @@ export class TerminalManager {
 				},
 			)
 			if (!this.ptyProcess) {
-				throw new Error("Terminal process could not be started, plaese restart cli")
+				throw new Error("Terminal process could not be started, please restart CLI")
 			}
 
 			this.isRunning = true
@@ -212,7 +211,9 @@ export class TerminalManager {
 			try {
 				this.ptyProcess.kill()
 			} catch (error) {
-				// Ignore errors when killing process
+				// Log error but continue cleanup
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				console.error(`[TerminalManager] Error killing process: ${errorMessage}`)
 			}
 			this.ptyProcess = null
 			this.isRunning = false
