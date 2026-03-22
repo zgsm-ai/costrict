@@ -3,6 +3,7 @@ import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import { WebLinksAddon } from "@xterm/addon-web-links"
 import { Unicode11Addon } from "@xterm/addon-unicode11"
+import { SerializeAddon } from "@xterm/addon-serialize"
 import { useEvent } from "react-use"
 import { VSCodeProgressRing } from "@vscode/webview-ui-toolkit/react"
 import { copyToClipboard } from "@/utils/clipboard"
@@ -26,14 +27,10 @@ const parseCssPixelValue = (value: string | null | undefined) => {
 const getTerminalRenderOptions = () => {
 	const rootStyles = window.getComputedStyle(document.documentElement)
 	const bodyStyles = window.getComputedStyle(document.body)
-	const fontFamily =
-		rootStyles.getPropertyValue("--vscode-editor-font-family").trim() ||
-		bodyStyles.getPropertyValue("--vscode-editor-font-family").trim() ||
-		"monospace"
 	const fontSize =
 		parseCssPixelValue(rootStyles.getPropertyValue("--vscode-editor-font-size")) ??
 		parseCssPixelValue(bodyStyles.getPropertyValue("--vscode-editor-font-size")) ??
-		12
+		16
 	const lineHeightValue =
 		rootStyles.getPropertyValue("--vscode-editor-line-height").trim() ||
 		bodyStyles.getPropertyValue("--vscode-editor-line-height").trim()
@@ -41,7 +38,7 @@ const getTerminalRenderOptions = () => {
 	const lineHeight = parsedLineHeight ? Math.max(1, parsedLineHeight / fontSize) : 1
 
 	return {
-		fontFamily,
+		fontFamily: '"JetBrains Mono", "WenQuanYi Micro Hei Mono", monospace',
 		fontSize,
 		lineHeight,
 		letterSpacing: 0,
@@ -107,8 +104,9 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 
 		// Create terminal instance
 		const terminal = new Terminal({
-			// cursorBlink: true,
-			// cursorStyle: "block",
+			cursorStyle: "block",
+			cursorBlink: true,
+			tabStopWidth: 4,
 			scrollback: 0,
 			allowProposedApi: true,
 			...getTerminalRenderOptions(),
@@ -116,10 +114,12 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 
 		// Load addons
 		const fitAddon = new FitAddon()
+		const serializeAddon = new SerializeAddon()
 
 		// activate the new version
 		terminal.loadAddon(new WebLinksAddon())
 		terminal.loadAddon(fitAddon)
+		terminal.loadAddon(serializeAddon)
 		terminal.loadAddon(new Unicode11Addon())
 		terminal.unicode.activeVersion = "11"
 

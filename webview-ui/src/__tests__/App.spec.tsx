@@ -178,6 +178,10 @@ describe("App", () => {
 			experiments: {},
 			language: "en",
 			telemetrySetting: "enabled",
+			apiConfiguration: {
+				apiProvider: "openai",
+			},
+			didHydrateCliState: false,
 			reviewTask: {
 				status: "initial",
 				data: {
