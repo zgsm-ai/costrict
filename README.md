@@ -11,7 +11,7 @@
 
 # CoStrict
 
-<img src="./assets/images/shenma.svg" alt="CoStrict Logo" width="80">
+<img src="./assets/images/shenma_robot_logo_big.png" alt="CoStrict Logo" width="60">
 
 **Strict AI Coder for Enterprises**
 
