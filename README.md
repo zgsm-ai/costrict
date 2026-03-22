@@ -11,6 +11,8 @@
 
 # CoStrict
 
+<img src="./assets/images/shenma.svg" alt="CoStrict Logo" width="80">
+
 **Strict AI Coder for Enterprises**
 
 _Free • Open Source • Private Deployment_
@@ -69,7 +71,7 @@ _Free • Open Source • Private Deployment_
 
 Standardizes AI-generated code workflows for enterprise scenarios, ensuring high-quality and controllable outputs.
 
-<table>
+<table bgcolor="#1e1e1e">
   <tr>
     <td align="center" width="50%">
       <a href="https://docs.costrict.ai/en/tutorial-videos/video/#strict-mode">
@@ -86,7 +88,7 @@ Standardizes AI-generated code workflows for enterprise scenarios, ensuring high
 
 Repository-wide indexing and RAG-based analysis with multi-model verification strategies.
 
-<table>
+<table bgcolor="#1e1e1e">
   <tr>
     <td align="center" width="50%">
       <a href="https://docs.costrict.ai/en/tutorial-videos/video/#ai-codereview">

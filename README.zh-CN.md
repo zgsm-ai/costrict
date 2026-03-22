@@ -11,6 +11,8 @@
 
 # CoStrict
 
+<img src="./assets/images/shenma.svg" alt="CoStrict Logo" width="80">
+
 **企业严肃开发的 AI 智能体伙伴**
 
 _免费 • 开源 • 支持私有化部署_
@@ -69,7 +71,7 @@ English | [简体中文](./README.zh-CN.md)
 
 规范 AI 生成代码流程，使其符合企业开发场景，确保输出高质量、高可控。
 
-<table>
+<table bgcolor="#1e1e1e">
   <tr>
     <td align="center" width="50%">
       <a href="https://docs.costrict.ai/tutorial-videos/video#%E4%B8%A5%E8%82%83%E7%BC%96%E7%A8%8B">
@@ -86,7 +88,7 @@ English | [简体中文](./README.zh-CN.md)
 
 全仓库索引解析，公司级编码知识库 RAG，采用多专家模型专项检查 + 多模型交叉确认策略。
 
-<table>
+<table bgcolor="#1e1e1e">
   <tr>
     <td align="center" width="50%">
       <a href="https://docs.costrict.ai/tutorial-videos/video#%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5">
