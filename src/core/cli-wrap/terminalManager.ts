@@ -1,9 +1,10 @@
-import { execSync } from "child_process"
+import { execSync, type ExecSyncOptionsWithStringEncoding } from "child_process"
 
 import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
 import { getWorkspacePath } from "../../utils/path"
 import { isJetbrainsPlatform } from "../../utils/platform"
 import { getContextSyncService } from "./contextSync"
+import { getShell } from "../../utils/shell"
 
 // Lazy load node-pty to avoid blocking extension activation if module is missing
 let pty: typeof import("node-pty") | null = null
@@ -59,6 +60,17 @@ export class TerminalManager {
 		return this.port
 	}
 
+	getEnvs (envs: any) {
+		return {
+			...process.env,
+			COSTRICT_CALLER: "vscode",
+			TERM: "xterm-256color",
+			COLORTERM: "truecolor",
+			...(isJetbrainsPlatform() ? getIdeaShellEnvWithUpdatePath(process.env) : undefined),
+			...envs,
+		}
+	}
+
 	private isCsInstalled(env: any): boolean {
 		try {
 			const cmd = process.platform === "win32" ? "where cs" : "which cs"
@@ -67,6 +79,48 @@ export class TerminalManager {
 		} catch {
 			return false
 		}
+	}
+
+	private getCsCommand(): string {
+		const shell = getShell()
+		const opt = { 
+			stdio: "pipe", 
+			encoding: "utf-8", 
+			// shell,
+			env: this.getEnvs({})
+		} as ExecSyncOptionsWithStringEncoding
+
+		if (process.platform === "win32") {
+			try {
+				const cmdPath = execSync("where cs.cmd", opt).trim().split("\r\n")[0]
+				if (cmdPath) {
+					return cmdPath
+				}
+			} catch {
+				// fall through
+			}
+			try {
+				const cmdPath = execSync("where cs.exe", opt).trim().split("\r\n")[0]
+				if (cmdPath) {
+					return cmdPath
+				}
+			} catch {
+				// fall through
+			}
+			
+			return "cs.exe"
+		}
+
+		try {
+			const cmdPath = execSync("which cs", opt).trim()
+			if (cmdPath) {
+				return cmdPath
+			}
+		} catch {
+			// fall through
+		}
+	
+		return "cs"
 	}
 
 	/**
@@ -82,14 +136,7 @@ export class TerminalManager {
 		}
 
 		// Prepare environment
-		const env = {
-			...process.env,
-			COSTRICT_CALLER: "vscode",
-			TERM: "xterm-256color",
-			COLORTERM: "truecolor",
-			...(isJetbrainsPlatform() ? getIdeaShellEnvWithUpdatePath(process.env) : undefined),
-			...options.env,
-		}
+		const env = this.getEnvs(options.env)
 
 		if (!this.isCsInstalled(env)) {
 			this.sendToWebview({
@@ -107,17 +154,13 @@ export class TerminalManager {
 			// Allocate a port for the CLI HTTP server
 			this.port = this.allocatePort()
 			// Spawn PTY process with CostrictCli, passing --port for HTTP API access
-			this.ptyProcess = ptyModule.spawn(
-				process.platform === "win32" ? "cs.exe" : "cs",
-				["--port", `${this.port}`],
-				{
-					name: "xterm-256color",
-					cols: options.cols || 80,
-					rows: options.rows || 24,
-					cwd,
-					env,
-				},
-			)
+			this.ptyProcess = ptyModule.spawn(this.getCsCommand(), ["--port", `${this.port}`], {
+				name: "xterm-256color",
+				cols: options.cols || 80,
+				rows: options.rows || 24,
+				cwd,
+				env,
+			})
 			if (!this.ptyProcess) {
 				throw new Error("Terminal process could not be started, please restart CLI")
 			}
@@ -152,7 +195,7 @@ export class TerminalManager {
 	 * Polls the /app endpoint up to maxRetries times with the given interval.
 	 * Returns true if the server is reachable, false otherwise.
 	 */
-	async waitForReady(maxRetries = 10, intervalMs = 200): Promise<boolean> {
+	async waitForReady(maxRetries = 10, intervalMs = 5000): Promise<boolean> {
 		if (!this.port) {
 			return false
 		}

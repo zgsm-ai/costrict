@@ -233,6 +233,7 @@ export const ChatRowContent = ({
 	const [showCopySuccess, setShowCopySuccess] = useState(false)
 	const [isEditing, setIsEditing] = useState(false)
 	const [editedContent, setEditedContent] = useState("")
+	const [isFeedbackExpanded, setIsFeedbackExpanded] = useState(false)
 	const [editMode, setEditMode] = useState<Mode>(mode || "code")
 	const [editImages, setEditImages] = useState<string[]>([])
 	const { copyWithFeedback } = useCopyToClipboard()
@@ -1644,17 +1645,58 @@ export const ChatRowContent = ({
 										/>
 									</div>
 								) : (
-									<div className="flex justify-between cursor-pointer h-6 overflow-hidden">
+									<div className="flex justify-between cursor-pointer">
 										<div
-											className="grow px-2 py-1 wrap-anywhere rounded-lg transition-colors"
-											onClick={(e) => {
-												e.stopPropagation()
-												if (!isStreaming) {
-													handleEditClick()
-												}
-											}}
-											title={t("chat:queuedMessages.clickToEdit")}>
-											<Mention text={message.text} withShadow />
+											className="grow px-2 py-1 wrap-anywhere rounded-lg transition-colors">
+											{message.text && message.text.length > 200 ? (
+												<>
+													<div
+														className="wrap-anywhere"
+														onClick={(e) => {
+															e.stopPropagation()
+															if (!isStreaming) {
+																handleEditClick()
+															}
+														}}
+														title={t("chat:queuedMessages.clickToEdit")}
+														style={{
+															wordBreak: "break-word",
+															overflowWrap: "anywhere",
+															maxHeight: !isFeedbackExpanded ? "120px" : "none",
+															overflow: !isFeedbackExpanded ? "hidden" : "auto",
+															position: "relative",
+														}}
+													>
+														<Mention text={message.text} withShadow />
+													</div>
+													<div className={"flex gap-2 pr-1 justify-end"}>
+														{!isFeedbackExpanded && (
+															<button
+																className="text-vscode-textLink-foreground hover:underline mt-1 relative -right-12"
+																onClick={(e) => {
+																	e.stopPropagation()
+																	setIsFeedbackExpanded(true)
+																}}
+															>
+																{t("chat:markdown.expandPrompt")}
+															</button>
+														)}
+														{isFeedbackExpanded && (
+															<button
+																className="text-vscode-textLink-foreground hover:underline mt-1 relative -right-12"
+																onClick={(e) => {
+																	e.stopPropagation()
+																	setIsFeedbackExpanded(false)
+																}}
+															>
+																{t("chat:markdown.collapsePrompt")}
+															</button>
+														)}
+													</div>
+												</>
+											) : (
+												<Mention text={message.text} withShadow />
+											)}
 										</div>
 										<div className="flex gap-2 pr-1">
 											<div

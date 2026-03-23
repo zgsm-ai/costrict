@@ -12,13 +12,17 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 /**
- * Copy node-pty's runtime files (lib/, build/Release/*.node, package.json) into
- * dest, resolving symlinks so vsce always bundles the real files.
+ * Copy node-pty's runtime files (lib/, package.json, prebuilds/) into dest,
+ * resolving symlinks so vsce always bundles the real files.
  *
- * node-pty cannot be bundled by esbuild (it contains native .node addons), so we
+ * node-pty cannot be bundled by esbuild (it contains native .node addons) so we
  * mark it `external` and manually vendor it into dist/node_modules/node-pty.
  * That way the packaged extension can always resolve `require('node-pty')` relative
  * to dist/extension.js regardless of how pnpm lays out its store symlinks.
+ *
+ * If a locally compiled pty.node exists in build/Release/ (e.g. from running
+ * `pnpm build:native` on Linux), it is promoted into prebuilds/{platform}-{arch}/
+ * so that all platforms are handled uniformly through the prebuilds/ directory.
  *
  * @param {string} src  Resolved (real) path to the node-pty package root.
  * @param {string} dest Target directory – typically dist/node_modules/node-pty.
@@ -29,11 +33,11 @@ function copyNodePty(src, dest) {
 	const items = [
 		"lib",
 		"package.json",
-		// Old structure: native modules are in build/Release
-		path.join("build", "Release"),
-		// New structure (node-pty 1.0+): native prebuilts are in prebuilds/
-		// We don't copy all prebuilds in build, only extract from npm-install
-		// The correct platform binary is selected at runtime by node-pty
+		// node-pty 1.0+ uses prebuilds/ for platform-specific native modules.
+		// build/Release/ is NOT copied directly; instead, if a locally compiled
+		// pty.node exists in build/Release/, it is promoted into
+		// prebuilds/{platform}-{arch}/ below so all platforms are handled
+		// uniformly via the prebuilds/ directory.
 	]
 
 	for (const item of items) {
@@ -62,6 +66,27 @@ function copyNodePty(src, dest) {
 		const prebuildsDest = path.join(dest, "prebuilds")
 		copyDirSync(prebuildsSrc, prebuildsDest)
 		console.log(`[node-pty] Copied prebuilds from ${prebuildsSrc}`)
+	}
+
+	// If a locally compiled pty.node exists in build/Release/ (e.g. from
+	// `pnpm build:native`), promote it into prebuilds/{platform}-{arch}/ so
+	// that node-pty's runtime loader can find it. This is essential for
+	// platforms like linux-x64 / linux-arm64 where npm may not ship prebuilt
+	// binaries.
+	const buildReleaseSrc = path.join(src, "build", "Release")
+	if (fs.existsSync(path.join(buildReleaseSrc, "pty.node"))) {
+		const prebuildPlatformDir = path.join(dest, "prebuilds", `${process.platform}-${process.arch}`)
+		fs.mkdirSync(prebuildPlatformDir, { recursive: true })
+		fs.copyFileSync(
+			path.join(buildReleaseSrc, "pty.node"),
+			path.join(prebuildPlatformDir, "pty.node"),
+		)
+		// Also copy spawn-helper if present (needed on Unix platforms)
+		const spawnHelper = path.join(buildReleaseSrc, "spawn-helper")
+		if (fs.existsSync(spawnHelper)) {
+			fs.copyFileSync(spawnHelper, path.join(prebuildPlatformDir, "spawn-helper"))
+		}
+		console.log(`[node-pty] Promoted build/Release to prebuilds/${process.platform}-${process.arch}`)
 	}
 
 	console.log(`[node-pty] Copied runtime files to ${dest}`)

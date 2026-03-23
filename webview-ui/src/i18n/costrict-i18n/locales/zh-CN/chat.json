@@ -162,7 +162,8 @@
 		"loading": "准备问题中..."
 	},
 	"markdown": {
-		"expandPrompt": "点击展开"
+		"expandPrompt": "点击展开",
+		"collapsePrompt": "点击收起"
 	},
 	"aiContentWarning": "内容由AI生成，请仔细甄别！"
 }

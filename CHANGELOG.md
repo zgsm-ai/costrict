@@ -2,6 +2,12 @@
 
 > Only the last 5 versions are displayed. For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.5.1]
+
+- Fix CoStrict CLI shell fallback detection on Windows and improve terminal rendering (PR #1081)
+- Update node-pty dependency and bundle local builds correctly
+- Fix known issues
+
 ## [2.5.0]
 
 - Enhance CoStrict CLI integration with embedded terminal support, improved context synchronization, and better clipboard paste handling (PR #1079, #1075, #1076)
@@ -29,14 +35,3 @@
 
 - Add security code scanning
 - Fix known issues
-
-## [2.4.6]
-
-- Refactor: decouple codebase index client initialization from workspace monitor toggle (PR #1056)
-- Fix: file-outline tool name formatting (PR #1057)
-
-## [2.4.5]
-
-- Add codebase index initialization condition for better activation control (PR #1054)
-- Improve commit message generation and platform compatibility (PR #1052)
-- Fix: update API endpoints to use costrict-static path (PR #1051)

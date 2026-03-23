@@ -162,7 +162,8 @@
 		"loading": "準備問題中..."
 	},
 	"markdown": {
-		"expandPrompt": "點擊展開"
+		"expandPrompt": "點擊展開",
+		"collapsePrompt": "點擊收起"
 	},
 	"aiContentWarning": "內容由AI生成，請仔細甄別！"
 }
