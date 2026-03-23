@@ -69,6 +69,19 @@ export class TerminalManager {
 		}
 	}
 
+	private getCsCommand(): string {
+		if (process.platform !== "win32") {
+			return "cs"
+		}
+		// Windows: 优先尝试 cs.cmd，然后回退到 cs.exe
+		try {
+			execSync("where cs.cmd", { stdio: "ignore" })
+			return "cs.cmd"
+		} catch {
+			return "cs.exe"
+		}
+	}
+
 	/**
 	 * Allocate a random port in the ephemeral range for the CLI HTTP server.
 	 */
@@ -107,17 +120,13 @@ export class TerminalManager {
 			// Allocate a port for the CLI HTTP server
 			this.port = this.allocatePort()
 			// Spawn PTY process with CostrictCli, passing --port for HTTP API access
-			this.ptyProcess = ptyModule.spawn(
-				process.platform === "win32" ? "cs.exe" : "cs",
-				["--port", `${this.port}`],
-				{
-					name: "xterm-256color",
-					cols: options.cols || 80,
-					rows: options.rows || 24,
-					cwd,
-					env,
-				},
-			)
+			this.ptyProcess = ptyModule.spawn(this.getCsCommand(), ["--port", `${this.port}`], {
+				name: "xterm-256color",
+				cols: options.cols || 80,
+				rows: options.rows || 24,
+				cwd,
+				env,
+			})
 			if (!this.ptyProcess) {
 				throw new Error("Terminal process could not be started, please restart CLI")
 			}
