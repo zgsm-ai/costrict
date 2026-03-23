@@ -2,6 +2,13 @@
 
 > Only the last 5 versions are displayed. For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.5.0]
+
+- Enhance CoStrict CLI integration with embedded terminal support, improved context synchronization, and better clipboard paste handling (PR #1079, #1075, #1076)
+- Redesign and modernize README documentation with updated layout and styling (PR #1074, #1077, #1078)
+- Update download-bundled-skills script to include new skills and improve warning messages
+- Fix known issues
+
 ## [2.4.9]
 
 - Refactor: restructure modeSlugs into metadata object for better skill management (PR #1072)

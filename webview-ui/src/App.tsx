@@ -340,6 +340,7 @@ const App = () => {
 			{
 				label: "AGENT",
 				value: "chat",
+				icon: "codicon-hubot",
 			},
 		]
 
@@ -348,10 +349,13 @@ const App = () => {
 				{
 					label: "CODE REVIEW",
 					value: "codeReview",
+					icon: "codicon-code-review",
+					// icon: "codicon-search",
 				},
 				{
 					label: "CLI",
 					value: "cs-cli",
+					icon: "codicon-terminal",
 				},
 			)
 		}
@@ -420,18 +424,29 @@ const App = () => {
 			<div className={`${isChatTab ? "fixed inset-0 flex flex-col" : "hidden"}`}>
 				<div className={`header flex items-center justify-between px-5 ${isChatTab ? "" : "hidden"}`}>
 					<TabList value={tab} onValueChange={(val) => switchTab(val as Tab)} className="header-left h-7">
-						{tabs.map(({ label, value }) => {
+						{tabs.map(({ label, value, icon }) => {
 							const isSelected = tab === value
-							const activeTabClass = isSelected ? "border-b border-gray-200" : ""
 
 							return (
 								<TabTrigger
 									key={value}
 									value={value}
 									isSelected={isSelected}
-									className={cn(activeTabClass, "mr-4", "cursor-pointer")}
+									className={cn(
+										"mr-4",
+										"cursor-pointer",
+										"border-none",
+										"outline-none",
+										"shadow-none",
+										"bg-transparent",
+										"no-underline",
+										isSelected && "text-vscode-focusBorder",
+									)}
 									focusNeedRing={false}>
-									{label}
+									<span className="flex items-center gap-1">
+										{icon && <i className={cn("codicon", icon)} style={{ fontSize: "14px" }}></i>}
+										{label}
+									</span>
 								</TabTrigger>
 							)
 						})}
