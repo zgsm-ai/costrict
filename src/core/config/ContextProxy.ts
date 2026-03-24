@@ -43,6 +43,7 @@ export class ContextProxy {
 	private stateCache: GlobalState
 	private secretCache: SecretState
 	private _isInitialized = false
+	private backgroundMigrationsPromise: Promise<void> | null = null
 
 	constructor(context: vscode.ExtensionContext) {
 		this.originalContext = context
@@ -55,7 +56,12 @@ export class ContextProxy {
 		return this._isInitialized
 	}
 
+	private logPerf(label: string, start: number) {
+		logger.info(`[ContextProxy][Perf] ${label}: ${(performance.now() - start).toFixed(1)}ms`)
+	}
+
 	public async initialize() {
+		let stepStart = performance.now()
 		for (const key of GLOBAL_STATE_KEYS) {
 			try {
 				// Revert to original assignment
@@ -64,6 +70,7 @@ export class ContextProxy {
 				logger.error(`Error loading global ${key}: ${error instanceof Error ? error.message : String(error)}`)
 			}
 		}
+		this.logPerf("initialize.globalState", stepStart)
 
 		const promises = [
 			...SECRET_STATE_KEYS.map(async (key) => {
@@ -86,21 +93,41 @@ export class ContextProxy {
 			}),
 		]
 
+		stepStart = performance.now()
 		await Promise.all(promises)
-
-		// Migration: Check for old nested image generation settings and migrate them
-		await this.migrateImageGenerationSettings()
-
-		// Migration: Sanitize invalid/removed API providers
-		await this.migrateInvalidApiProvider()
-
-		// Migration: Move legacy customCondensingPrompt to customSupportPrompts
-		await this.migrateLegacyCondensingPrompt()
-
-		// Migration: Clear old default condensing prompt so users get the improved v2 default
-		await this.migrateOldDefaultCondensingPrompt()
+		this.logPerf("initialize.secrets", stepStart)
 
 		this._isInitialized = true
+		this.backgroundMigrationsPromise = this.runBackgroundMigrations()
+	}
+
+	private async runBackgroundMigrations() {
+		const start = performance.now()
+		try {
+			let stepStart = performance.now()
+			await this.migrateImageGenerationSettings()
+			this.logPerf("migrateImageGenerationSettings", stepStart)
+
+			stepStart = performance.now()
+			await this.migrateInvalidApiProvider()
+			this.logPerf("migrateInvalidApiProvider", stepStart)
+
+			stepStart = performance.now()
+			await this.migrateLegacyCondensingPrompt()
+			this.logPerf("migrateLegacyCondensingPrompt", stepStart)
+
+			stepStart = performance.now()
+			await this.migrateOldDefaultCondensingPrompt()
+			this.logPerf("migrateOldDefaultCondensingPrompt", stepStart)
+
+			this.logPerf("backgroundMigrations.total", start)
+		} catch (error) {
+			logger.error(
+				`Error during background ContextProxy migrations: ${error instanceof Error ? error.message : String(error)}`,
+			)
+		} finally {
+			this.backgroundMigrationsPromise = null
+		}
 	}
 
 	/**

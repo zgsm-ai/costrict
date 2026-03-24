@@ -1,87 +1,12 @@
 import i18next from "i18next"
-import { zgsmTranslations, mergeLanguageResources } from "./costrict-i18n/setup"
-import { ZGSM_LANGUAGES } from "../shared/language"
 
-// Build translations object
-const translations: Record<string, Record<string, any>> = {}
-
-// Determine if running in test environment
-const isTestEnv = process.env.NODE_ENV === "test"
-
-// Load translations based on environment
-if (!isTestEnv) {
-	try {
-		// Dynamic imports to avoid browser compatibility issues
-		const fs = require("fs")
-		const path = require("path")
-
-		const localesDir = path.join(__dirname, "i18n", "locales")
-
-		try {
-			// Find all language directories
-			const languageDirs = fs.readdirSync(localesDir, { withFileTypes: true })
-			const ALLOW_LANGUAGES = Object.keys(ZGSM_LANGUAGES)
-
-			const languages = languageDirs
-				.filter(
-					(dirent: { isDirectory: () => boolean; name: string }) =>
-						dirent.isDirectory() && !dirent.name.startsWith("."),
-				)
-				.map((dirent: { name: string }) => dirent.name)
-				.filter((language: string) => ALLOW_LANGUAGES.includes(language))
-
-			// Process each language
-			languages.forEach((language: string) => {
-				const langPath = path.join(localesDir, language)
-
-				// Find all JSON files in the language directory
-				const files = fs
-					.readdirSync(langPath, { withFileTypes: true })
-					.filter(
-						(dirent: { isFile: () => boolean; name: string }) =>
-							dirent.isFile() && dirent.name.endsWith(".json") && !dirent.name.startsWith("."),
-					)
-					.map((dirent: { name: string }) => dirent.name)
-
-				// Initialize language in translations object
-				if (!translations[language]) {
-					translations[language] = {}
-				}
-
-				// Process each namespace file
-				files.forEach((file: string) => {
-					const namespace = path.basename(file, ".json")
-					const filePath = path.join(langPath, file)
-
-					try {
-						// Read and parse the JSON file
-						const content = fs.readFileSync(filePath, "utf8")
-						translations[language][namespace] = JSON.parse(content)
-					} catch (error) {
-						console.error(`Error loading translation file ${filePath}:`, error)
-					}
-				})
-			})
-
-			console.log(`Loaded translations for languages: ${Object.keys(translations).join(", ")}`)
-		} catch (dirError) {
-			console.error(`Error processing directory ${localesDir}:`, dirError)
-		}
-	} catch (error) {
-		console.error("Error loading translations:", error)
-	}
-}
-
-// Merge CoStrict translations
-const mergedTranslations = mergeLanguageResources(translations, zgsmTranslations)
-// console.log(`Merged translations:`, mergedTranslations)
-
-// Initialize i18next with configuration
+// Initialize i18next with an empty resource set so language bundles can be
+// loaded lazily during extension activation or when the user switches language.
 i18next.init({
 	lng: "en",
 	fallbackLng: "en",
 	debug: false,
-	resources: mergedTranslations,
+	resources: {},
 	interpolation: {
 		escapeValue: false,
 	},

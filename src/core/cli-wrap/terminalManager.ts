@@ -1,10 +1,9 @@
-import { execSync, type ExecSyncOptionsWithStringEncoding } from "child_process"
+import { exec } from "child_process"
 
 import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
 import { getWorkspacePath } from "../../utils/path"
 import { isJetbrainsPlatform } from "../../utils/platform"
 import { getContextSyncService } from "./contextSync"
-import { getShell } from "../../utils/shell"
 
 // Lazy load node-pty to avoid blocking extension activation if module is missing
 let pty: typeof import("node-pty") | null = null
@@ -39,6 +38,8 @@ export class TerminalManager {
 	private messageSender: MessageSender | null = null
 	private isRunning = false
 	private port: number | null = null
+	private resolvedCsCommand: string | null = null
+	private resolveCsCommandPromise: Promise<string | null> | null = null
 
 	private constructor() {}
 
@@ -47,6 +48,22 @@ export class TerminalManager {
 			TerminalManager.instance = new TerminalManager()
 		}
 		return TerminalManager.instance
+	}
+
+	private logPerf(label: string, start: number) {
+		console.info(`[TerminalManager][Perf] ${label}: ${(performance.now() - start).toFixed(1)}ms`)
+	}
+
+	private execCommand(command: string, env: Record<string, string>): Promise<string> {
+		return new Promise((resolve, reject) => {
+			exec(command, { env }, (error, stdout) => {
+				if (error) {
+					reject(error)
+					return
+				}
+				resolve(stdout.trim())
+			})
+		})
 	}
 
 	setMessageSender(sender: MessageSender) {
@@ -60,7 +77,7 @@ export class TerminalManager {
 		return this.port
 	}
 
-	getEnvs (envs: any) {
+	getEnvs(envs: any) {
 		return {
 			...process.env,
 			COSTRICT_CALLER: "vscode",
@@ -71,56 +88,52 @@ export class TerminalManager {
 		}
 	}
 
-	private isCsInstalled(env: any): boolean {
-		try {
-			const cmd = process.platform === "win32" ? "where cs" : "which cs"
-			execSync(cmd, { stdio: "ignore", env: { ...process.env, ...env } })
-			return true
-		} catch {
-			return false
+	private async resolveCsCommand(env: Record<string, string>): Promise<string | null> {
+		if (this.resolvedCsCommand) {
+			return this.resolvedCsCommand
 		}
-	}
 
-	private getCsCommand(): string {
-		const shell = getShell()
-		const opt = { 
-			stdio: "pipe", 
-			encoding: "utf-8", 
-			// shell,
-			env: this.getEnvs({})
-		} as ExecSyncOptionsWithStringEncoding
+		if (this.resolveCsCommandPromise) {
+			return this.resolveCsCommandPromise
+		}
 
-		if (process.platform === "win32") {
+		this.resolveCsCommandPromise = (async () => {
+			const mergedEnv = { ...process.env, ...env } as Record<string, string>
+
+			if (process.platform === "win32") {
+				for (const cmd of ["where cs.cmd", "where cs.exe"]) {
+					try {
+						const output = await this.execCommand(cmd, mergedEnv)
+						const cmdPath = output.split(/\r?\n/).find(Boolean)?.trim()
+						if (cmdPath) {
+							this.resolvedCsCommand = cmdPath
+							return cmdPath
+						}
+					} catch {
+						// fall through
+					}
+				}
+				return null
+			}
+
 			try {
-				const cmdPath = execSync("where cs.cmd", opt).trim().split("\r\n")[0]
+				const cmdPath = await this.execCommand("which cs", mergedEnv)
 				if (cmdPath) {
+					this.resolvedCsCommand = cmdPath
 					return cmdPath
 				}
 			} catch {
 				// fall through
 			}
-			try {
-				const cmdPath = execSync("where cs.exe", opt).trim().split("\r\n")[0]
-				if (cmdPath) {
-					return cmdPath
-				}
-			} catch {
-				// fall through
-			}
-			
-			return "cs.exe"
-		}
+
+			return null
+		})()
 
 		try {
-			const cmdPath = execSync("which cs", opt).trim()
-			if (cmdPath) {
-				return cmdPath
-			}
-		} catch {
-			// fall through
+			return await this.resolveCsCommandPromise
+		} finally {
+			this.resolveCsCommandPromise = null
 		}
-	
-		return "cs"
 	}
 
 	/**
@@ -131,14 +144,20 @@ export class TerminalManager {
 	}
 
 	async start(options: TerminalOptions): Promise<void> {
+		const startTime = performance.now()
 		if (this.isRunning) {
 			await this.stop()
 		}
 
 		// Prepare environment
+		let stepStart = performance.now()
 		const env = this.getEnvs(options.env)
+		this.logPerf("start.getEnvs", stepStart)
 
-		if (!this.isCsInstalled(env)) {
+		stepStart = performance.now()
+		const csCommand = await this.resolveCsCommand(env)
+		this.logPerf("start.resolveCsCommand", stepStart)
+		if (!csCommand) {
 			this.sendToWebview({
 				type: "CostrictCliError",
 				error: "Costrict CLI is not installed.\r\nPlease install Costrict CLI from https://docs.costrict.ai/en/cli/guide/installation",
@@ -147,20 +166,26 @@ export class TerminalManager {
 		}
 
 		try {
+			stepStart = performance.now()
 			const ptyModule = await loadPty()
+			this.logPerf("start.loadPty", stepStart)
+
 			const workspacePath = getWorkspacePath()
 			const cwd = options.cwd || workspacePath || process.cwd()
 
 			// Allocate a port for the CLI HTTP server
 			this.port = this.allocatePort()
+
+			stepStart = performance.now()
 			// Spawn PTY process with CostrictCli, passing --port for HTTP API access
-			this.ptyProcess = ptyModule.spawn(this.getCsCommand(), ["--port", `${this.port}`], {
+			this.ptyProcess = ptyModule.spawn(csCommand, ["--port", `${this.port}`], {
 				name: "xterm-256color",
 				cols: options.cols || 80,
 				rows: options.rows || 24,
 				cwd,
 				env,
 			})
+			this.logPerf("start.spawn", stepStart)
 			if (!this.ptyProcess) {
 				throw new Error("Terminal process could not be started, please restart CLI")
 			}
@@ -182,6 +207,7 @@ export class TerminalManager {
 				this.port = null
 				this.sendToWebview({ type: "CostrictCliExit", exitCode })
 			})
+			this.logPerf("start.total", startTime)
 		} catch (error) {
 			this.port = null
 			const errorMessage = error instanceof Error ? error.message : String(error)

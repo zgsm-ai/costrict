@@ -58,14 +58,12 @@ export class ContextSyncService {
 	private async debouncedSync(port?: number | string) {
 		// Check if there's any context to sync
 		if (this.lastContext.length === 0) {
-			console.log("[ContextSync] No context to sync")
 			return
 		}
 
 		try {
 			const contextData = this.lastContext.pop()
 			if (!contextData) {
-				console.log("[ContextSync] Context data is undefined, skipping sync")
 				return
 			}
 
@@ -110,8 +108,6 @@ export class ContextSyncService {
 			this.lastContext.shift()
 		}
 		this.lastContext.push({ activeFile, openTabs, timestamp: Date.now() })
-		console.log(`[ContextSync ${eventType}] Syncing ${openTabs.length} tabs to CLI on port ${port}`)
-		console.log(`[ContextSync ${eventType}] Tabs: ${openTabs.join(", ")}`)
 
 		this.debounceTimer = setTimeout(() => {
 			this.debouncedSync(port)

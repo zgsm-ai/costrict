@@ -796,7 +796,7 @@ export const webviewMessageHandler = async (
 					let newValue = value
 					if (key === "language") {
 						newValue = value ?? "en"
-						changeLanguage(newValue as Language)
+						await changeLanguage(newValue as Language)
 						// Initialize subtask files for the new language.
 						await ensureProjectWikiSubtasksExists(newValue as string)
 					} else if (key === "allowedCommands") {

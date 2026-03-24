@@ -1,22 +1,7 @@
 import * as vscode from "vscode"
-import * as dotenvx from "@dotenvx/dotenvx"
 import * as fs from "fs"
 import * as path from "path"
 import * as ZgsmCore from "./core/costrict"
-
-// Load environment variables from .env file
-// The extension-level .env is optional (not shipped in production builds).
-// Avoid calling dotenvx when the file doesn't exist, otherwise dotenvx emits
-// a noisy [MISSING_ENV_FILE] error to the extension host console.
-const envPath = path.join(__dirname, "..", ".env")
-if (fs.existsSync(envPath)) {
-	try {
-		dotenvx.config({ path: envPath })
-	} catch (e) {
-		// Best-effort only: never fail extension activation due to optional env loading.
-		console.warn("Failed to load environment variables:", e)
-	}
-}
 
 // import type { CloudUserInfo, AuthState } from "@roo-code/types"
 // import { CloudService, BridgeOrchestrator } from "@roo-code/cloud"
@@ -79,6 +64,31 @@ let extensionContext: vscode.ExtensionContext
 // let settingsUpdatedHandler: (() => void) | undefined
 // let userInfoHandler: ((data: { userInfo: CloudUserInfo }) => Promise<void>) | undefined
 
+function logPerf(label: string, start: number) {
+	outputChannel.appendLine(`[Perf] ${label}: ${(performance.now() - start).toFixed(1)}ms`)
+}
+
+async function loadOptionalEnvFile(context: vscode.ExtensionContext): Promise<void> {
+	const isDebugMode = context.extensionMode === vscode.ExtensionMode.Development
+	if (!isDebugMode) {
+		return
+	}
+
+	const envPath = path.join(__dirname, "..", ".env")
+	if (!fs.existsSync(envPath)) {
+		return
+	}
+
+	const start = performance.now()
+	try {
+		const dotenvx = await import("@dotenvx/dotenvx")
+		dotenvx.config({ path: envPath })
+		logPerf("loadOptionalEnvFile", start)
+	} catch (e) {
+		outputChannel.appendLine(`[Env] Failed to load environment variables: ${e}`)
+	}
+}
+
 /**
  * Check if we should auto-open the CoStrict sidebar after switching to a worktree.
  * This is called during extension activation to handle the worktree auto-open flow.
@@ -131,28 +141,42 @@ async function checkWorktreeAutoOpen(
 // This method is called when your extension is activated.
 // Your extension is activated the very first time the command is executed.
 export async function activate(context: vscode.ExtensionContext) {
+	const activateStart = performance.now()
 	extensionContext = context
 	outputChannel = createLogger(Package.outputChannel).channel
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
+	outputChannel.appendLine("[Perf] activate:start")
+
+	let stepStart = performance.now()
+	await loadOptionalEnvFile(context)
+	logPerf("activate.loadOptionalEnvFile.total", stepStart)
 
 	// Initialize network proxy configuration early, before any network requests.
 	// When proxyUrl is configured, all HTTP/HTTPS traffic will be routed through it.
 	// Only applied in debug mode (F5).
+	stepStart = performance.now()
 	await initializeNetworkProxy(context, outputChannel)
+	logPerf("activate.initializeNetworkProxy", stepStart)
 
 	// Set extension path for custom tool registry to find bundled esbuild
+	stepStart = performance.now()
 	customToolRegistry.setExtensionPath(context.extensionPath)
+	logPerf("activate.setExtensionPath", stepStart)
 
 	// Migrate old settings to new
+	stepStart = performance.now()
 	await migrateSettings(context, outputChannel)
+	logPerf("activate.migrateSettings", stepStart)
 	if (isJetbrainsPlatform()) {
 		setTimeout(() => {
 			loadIdeaShellEnvOnce(context)
 		}, 1000)
 	}
 	// Initialize telemetry service.
+	stepStart = performance.now()
 	TelemetryService.createInstance()
+	logPerf("activate.TelemetryService.createInstance", stepStart)
 
 	// try {
 	// 	telemetryService.register(new PostHogTelemetryClient())
@@ -160,33 +184,47 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 	console.warn("Failed to register PostHogTelemetryClient:", error)
 	// }
 
-	// Create logger for cloud services.
-	const cloudLogger = createDualLogger(createOutputChannelLogger(outputChannel))
+	// // Create logger for cloud services.
+	// const cloudLogger = createDualLogger(createOutputChannelLogger(outputChannel))
 
-	// Initialize MDM service
-	const mdmService = await MdmService.createInstance(cloudLogger)
+	// // Initialize MDM service
+	// stepStart = performance.now()
+	// const mdmService = await MdmService.createInstance(cloudLogger)
+	// logPerf("activate.MdmService.createInstance", stepStart)
 
 	// Initialize i18n for internationalization support.
-	initializeI18n(context.globalState.get("language") ?? formatLanguage(await defaultLang()))
+	stepStart = performance.now()
+	await initializeI18n(context.globalState.get("language") ?? formatLanguage(await defaultLang()))
+	logPerf("activate.initializeI18n", stepStart)
 
 	// Initialize terminal shell execution handlers.
+	stepStart = performance.now()
 	TerminalRegistry.initialize()
+	logPerf("activate.TerminalRegistry.initialize", stepStart)
 
 	// Initialize Claude Code OAuth manager for direct API access.
+	stepStart = performance.now()
 	claudeCodeOAuthManager.initialize(context, (message) => outputChannel.appendLine(message))
+	logPerf("activate.claudeCodeOAuthManager.initialize", stepStart)
 
 	// Initialize OpenAI Codex OAuth manager for ChatGPT subscription-based access.
+	stepStart = performance.now()
 	openAiCodexOAuthManager.initialize(context, (message) => outputChannel.appendLine(message))
+	logPerf("activate.openAiCodexOAuthManager.initialize", stepStart)
 
 	// Get default commands from configuration.
+	stepStart = performance.now()
 	const defaultCommands = vscode.workspace.getConfiguration(Package.name).get<string[]>("allowedCommands") || []
+	logPerf("activate.getDefaultCommands", stepStart)
 
 	// Initialize global state if not already set.
 	if (!context.globalState.get("allowedCommands")) {
-		context.globalState.update("allowedCommands", defaultCommands)
+		void context.globalState.update("allowedCommands", defaultCommands)
 	}
 
+	stepStart = performance.now()
 	const contextProxy = await ContextProxy.getInstance(context)
+	logPerf("activate.ContextProxy.getInstance", stepStart)
 
 	// // Initialize code index managers for all workspace folders.
 	// const codeIndexManagers: CodeIndexManager[] = []
@@ -225,7 +263,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 
 	// Initialize the provider *before* the CoStrict Cloud service.
-	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy, mdmService)
+	stepStart = performance.now()
+	// const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy, mdmService)
+	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
+	logPerf("activate.new ClineProvider", stepStart)
+	logPerf("activate.total", activateStart)
 
 	// // Initialize Roo Code Cloud service.
 	// const postStateListener = () => ClineProvider.getVisibleInstance()?.postStateToWebviewWithoutClineMessages()
