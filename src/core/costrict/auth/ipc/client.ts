@@ -14,7 +14,7 @@ let retryCount = 0
 let forceRetryCount = 0
 const MAX_RETRIES = 15
 const FORCE_MAX_RETRIES = 3
-const INITIAL_RETRY_DELAY = 5000 // 5 seconds
+const INITIAL_RETRY_DELAY = 1000 // 1 second
 
 export function connectIPC() {
 	if (client && !client.destroyed) {

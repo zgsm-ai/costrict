@@ -72,10 +72,9 @@ export const ModeSelector = ({
 	const allModes = React.useMemo(() => {
 		return getAllModes(customModes).map((mode) => ({
 			...mode,
-			description:
-				t(`modes:descriptions.${mode.slug}`, {
-					defaultValue: customModePrompts?.[mode.slug]?.description,
-				}) ?? mode.description,
+			description: t(`modes:descriptions.${mode.slug}`, {
+				defaultValue: customModePrompts?.[mode.slug]?.description ?? mode.description,
+			}),
 		}))
 	}, [customModes, t, customModePrompts])
 

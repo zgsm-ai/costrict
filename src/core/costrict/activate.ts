@@ -95,8 +95,10 @@ export async function activate(
 	initErrorCodeManager(provider)
 	initGitCheckoutDetector(context, logger)
 	await initialize(provider, logger)
-	await startIPCServer()
-	connectIPC()
+	// Start IPC server in background – never block extension activation.
+	void startIPCServer()
+		.then(() => connectIPC())
+		.catch((err) => console.error("IPC startup failed:", err))
 
 	if (isVscodePlatform) {
 		registerAutoCompletionProvider(context, provider)

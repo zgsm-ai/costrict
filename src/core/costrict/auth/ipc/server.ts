@@ -63,6 +63,17 @@ export function startIPCServer(): Promise<void> {
 		// Try to connect to see if a server is already running
 		const testSocket = net.createConnection({ path: ipcPath })
 
+		// Set a short timeout to avoid blocking extension activation when
+		// a stale socket file exists but no server is listening (e.g. after
+		// a previous VSCode window crashed without cleanup).
+		testSocket.setTimeout(1000)
+
+		testSocket.on("timeout", () => {
+			console.log("IPC test connection timed out, assuming no server running.")
+			testSocket.destroy()
+			createServer()
+		})
+
 		testSocket.on("connect", () => {
 			// A server is already running.
 			console.log("IPC server already running.")
