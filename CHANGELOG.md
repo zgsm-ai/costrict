@@ -1,6 +1,12 @@
 # CoStrict Change Log
 
-> Only the last 5 versions are displayed. For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
+> For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
+
+## [2.5.2]
+
+- Optimize startup performance
+- Add loading screen with logo animation and improve fuzzy matching
+- Fix known issues
 
 ## [2.5.1]
 
