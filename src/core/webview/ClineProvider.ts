@@ -368,7 +368,7 @@ export class ClineProvider
 	/**
 	 * Perform automatic cleanup of task history based on configured settings
 	 */
-	private async performAutoCleanup() {
+	async performAutoCleanup() {
 		if (!this.autoCleanupService) {
 			return
 		}
@@ -1147,11 +1147,6 @@ export class ClineProvider
 			null,
 			this.disposables,
 		)
-
-		// Perform auto cleanup on startup if configured
-		this.performAutoCleanup().then(() => {
-			this.log("Auto cleanup check completed on startup")
-		})
 
 		// Listen for when color changes
 		const configDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {

@@ -91,6 +91,7 @@ import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
 import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-event-monitor"
 import { fetchZgsmQuotaInfo, fetchZgsmInviteCode } from "../../api/providers/fetchers/zgsm"
 import { initNotificationService } from "../costrict/notification"
+import { installGitHubSkills } from "../../services/skills/github-skills-installer"
 import delay from "delay"
 import { ensureProjectWikiSubtasksExists } from "../costrict/wiki/projectWikiHelpers"
 import { setPendingTodoList } from "../tools/UpdateTodoListTool"
@@ -111,6 +112,8 @@ import {
 import { isJetbrainsPlatform } from "../../utils/platform"
 import { showFileDiffFromGitStatus } from "../../utils/zgsmUtils"
 import { ReviewTargetType } from "../../shared/codeReview"
+
+let webviewDidLaunchTimer: NodeJS.Timeout | undefined
 
 export const webviewMessageHandler = async (
 	provider: ClineProvider,
@@ -666,7 +669,7 @@ export const webviewMessageHandler = async (
 			await provider.postMessageToWebview({ type: "CostrictCliRestart" })
 			break
 		}
-		case "webviewDidLaunch":
+		case "webviewDidLaunch": {
 			// Load custom modes first
 			const customModes = await provider.customModesManager.getCustomModes()
 			await updateGlobalState("customModes", customModes)
@@ -743,10 +746,52 @@ export const webviewMessageHandler = async (
 				const isOptedIn = telemetrySetting !== "disabled"
 				TelemetryService.instance.updateTelemetryState(isOptedIn)
 			})
-			initNotificationService(provider)
-
 			provider.isViewLaunched = true
+			clearTimeout(webviewDidLaunchTimer)
+			webviewDidLaunchTimer = setTimeout(() => {
+
+				void initNotificationService(provider)
+
+				// Deferred background work — only needed once the webview is ready
+				void flushModels(
+					{
+						provider: "zgsm",
+						baseUrl: provider.getValue("zgsmBaseUrl"),
+					},
+					true,
+					(models: ModelRecord) => {
+						const openAiModels = [] as string[]
+						const fullResponseData = [] as ModelInfo[]
+						for (const [id, value] of Object.entries(models)) {
+							openAiModels.push(id)
+							fullResponseData.push(value)
+						}
+						provider.postMessageToWebview({
+							type: "zgsmModels",
+							openAiModels,
+							fullResponseData,
+						})
+					},
+				)
+
+				void provider.getState().then((state) => {
+					void ensureProjectWikiSubtasksExists(state.language ?? "en")
+				})
+
+				void installGitHubSkills(provider.context)
+					.then(() => provider.log("[BuiltinSkills] Bundled skills installed"))
+					.catch((error) =>
+						provider.log(
+							`[BuiltinSkills] Failed to install: ${error instanceof Error ? error.message : String(error)}`,
+						),
+					)
+				// Perform auto cleanup shortly after startup so initial webview rendering is not blocked.
+				void provider?.performAutoCleanup?.().then(() => {
+					provider.log("Auto cleanup check completed on startup")
+				})
+			}, 500)
 			break
+		}
 		case "newTask":
 			// Initializing new instance of Cline will make sure that any
 			// agentically running promises in old instance don't affect our new

@@ -27,6 +27,7 @@ import ErrorBoundary from "./components/ErrorBoundary"
 // import { CloudView } from "./components/cloud/CloudView"
 import { useAddNonInteractiveClickListener } from "./components/ui/hooks/useNonInteractiveClick"
 import { TooltipProvider } from "./components/ui/tooltip"
+import logoSvg from "./assets/logo.svg?raw"
 import { STANDARD_TOOLTIP_DELAY, StandardTooltip } from "./components/ui/standard-tooltip"
 import { ZgsmAccountView } from "./components/cloud/ZgsmAccountView"
 import { TabContent, TabList, TabTrigger } from "./components/common/Tab"
@@ -170,7 +171,7 @@ const App = () => {
 			}
 
 			setCurrentSection(undefined)
-			setCurrentMarketplaceTab(undefined)
+			// setCurrentMarketplaceTab(undefined)
 			if (newTab === "cs-cli" && !didHydrateCliState) {
 				setDidHydrateSClitate(true)
 			}
@@ -196,8 +197,8 @@ const App = () => {
 	}, [hasClosedCodeReviewWelcomeTips])
 
 	const [currentSection, setCurrentSection] = useState<string | undefined>(undefined)
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const [currentMarketplaceTab, setCurrentMarketplaceTab] = useState<string | undefined>(undefined)
+	// // eslint-disable-next-line @typescript-eslint/no-unused-vars
+	// const [currentMarketplaceTab, setCurrentMarketplaceTab] = useState<string | undefined>(undefined)
 
 	const onMessage = useCallback(
 		(e: MessageEvent) => {
@@ -227,7 +228,7 @@ const App = () => {
 					// Extract targetSection from values if provided
 					const targetSection = message.values?.section as string | undefined
 					setCurrentSection(targetSection)
-					setCurrentMarketplaceTab(undefined)
+					// setCurrentMarketplaceTab(undefined)
 				} else {
 					// Handle other actions using the mapping
 					const newTab =
@@ -235,12 +236,12 @@ const App = () => {
 							message.action === "cloudButtonClicked" ? "zgsmAccountButtonClicked" : message.action
 						]
 					const section = message.values?.section as string | undefined
-					const marketplaceTab = message.values?.marketplaceTab as string | undefined
+					// const marketplaceTab = message.values?.marketplaceTab as string | undefined
 
 					if (newTab) {
 						switchTab(newTab)
 						setCurrentSection(section)
-						setCurrentMarketplaceTab(marketplaceTab)
+						// setCurrentMarketplaceTab(marketplaceTab)
 					}
 				}
 			}
@@ -388,7 +389,55 @@ const App = () => {
 	}, [reviewTask.status, setReviewTask])
 
 	if (!didHydrateState) {
-		return null
+		return (
+			<div className="fixed inset-0 flex flex-col bg-vscode-editor-background text-vscode-foreground">
+				{/* <div className="header flex items-center justify-between px-5 h-[44px] border-b border-vscode-panel-border">
+					<div className="flex items-center gap-4 text-sm opacity-80">
+						<div className="flex items-center gap-1">
+							<i className="codicon codicon-hubot" style={{ fontSize: "14px" }}></i>
+							<span>AGENT</span>
+						</div>
+					</div>
+				</div> */}
+				<div className="flex-1 flex items-center justify-center px-6">
+					<div className="flex flex-col items-center gap-5 text-center">
+						<div className="relative flex items-center justify-center">
+							<div className="absolute size-20 rounded-full bg-vscode-button-background/10 animate-ping" />
+							<div
+								className="relative flex size-16 items-center justify-center rounded-2xl border border-vscode-panel-border bg-vscode-sideBar-background shadow-[0_0_30px_rgba(0,0,0,0.18)] overflow-hidden"
+								style={{ animation: "loadingLogoFloat 1.8s ease-in-out infinite" }}>
+								<div
+									className="size-10 [&>svg]:w-full [&>svg]:h-full"
+									style={{ animation: "loadingLogoGlow 1.8s ease-in-out infinite" }}
+									dangerouslySetInnerHTML={{ __html: logoSvg }}
+								/>
+							</div>
+						</div>
+
+						<div className="flex flex-col items-center gap-2">
+							<div className="text-base font-medium tracking-[0.18em] text-vscode-foreground/90">
+								COSTRICT
+							</div>
+							<div className="flex items-center gap-2 text-sm text-vscode-descriptionForeground">
+								<span className="codicon codicon-loading codicon-modifier-spin text-base" />
+								<span>{t("common:ui.initializing_interface", "正在初始化界面...")}</span>
+							</div>
+						</div>
+
+						<style>
+							{`@keyframes loadingLogoFloat {
+								0%, 100% { transform: translateY(0) scale(1); }
+								50% { transform: translateY(-6px) scale(1.03); }
+							}
+							@keyframes loadingLogoGlow {
+								0%, 100% { opacity: 0.92; filter: drop-shadow(0 0 6px rgba(56, 139, 253, 0.14)); }
+								50% { opacity: 1; filter: drop-shadow(0 0 14px rgba(56, 139, 253, 0.28)); }
+							}`}
+						</style>
+					</div>
+				</div>
+			</div>
+		)
 	}
 
 	// Do not conditionally load ChatView, it's expensive and there's state we

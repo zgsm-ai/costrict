@@ -37,10 +37,10 @@ export class ContextSyncService {
 			vscode.window.onDidChangeActiveTextEditor(() => this.syncContext("onDidChangeActiveTextEditor")),
 		)
 
-		// // Listen for selection changes
-		// this.disposables.push(
-		// 	vscode.window.onDidChangeTextEditorSelection(() => this.syncContext("onDidChangeTextEditorSelection")),
-		// )
+		// Listen for selection changes
+		this.disposables.push(
+			vscode.window.onDidChangeTextEditorSelection(() => this.syncContext("onDidChangeTextEditorSelection")),
+		)
 
 		// Listen for tab changes
 		this.disposables.push(vscode.window.tabGroups.onDidChangeTabs(() => this.syncContext("onDidChangeTabs")))

@@ -80,14 +80,10 @@ export const WorktreesView = () => {
 		return () => window.removeEventListener("message", handleMessage)
 	}, [fetchWorktrees, fetchIncludeStatus])
 
-	// Initial fetch and polling
+	// Initial fetch
 	useEffect(() => {
 		fetchWorktrees()
 		fetchIncludeStatus()
-
-		// Poll every 3 seconds for updates
-		const interval = setInterval(fetchWorktrees, 3000)
-		return () => clearInterval(interval)
 	}, [fetchWorktrees, fetchIncludeStatus])
 
 	// Handle create worktree include file

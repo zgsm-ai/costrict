@@ -26,7 +26,7 @@ import { TelemetryService /* PostHogTelemetryClient */ } from "@roo-code/telemet
 import { customToolRegistry } from "@roo-code/core"
 
 import "./utils/path" // Necessary to have access to String.prototype.toPosix.
-import { createOutputChannelLogger, createDualLogger } from "./utils/outputChannelLogger"
+// import { createOutputChannelLogger, createDualLogger } from "./utils/outputChannelLogger"
 import { initializeNetworkProxy } from "./utils/networkProxy"
 
 import { Package } from "./shared/package"
@@ -59,8 +59,6 @@ import { defaultLang } from "./utils/language"
 import { createLogger } from "./utils/logger"
 import { loadIdeaShellEnvOnce } from "./utils/ideaShellEnvLoader"
 import { isJetbrainsPlatform } from "./utils/platform"
-import { installGitHubSkills } from "./services/skills/github-skills-installer"
-import { getTerminalManager } from "./core/cli-wrap"
 // import { flushModels, getModels, initializeModelCacheRefresh } from "./api/providers/fetchers/modelCache"
 
 /**
@@ -136,16 +134,22 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
 
-	// Initialize network proxy configuration early, before any network requests.
-	// When proxyUrl is configured, all HTTP/HTTPS traffic will be routed through it.
-	// Only applied in debug mode (F5).
-	await initializeNetworkProxy(context, outputChannel)
+	// Kick off non-critical startup tasks in the background so activation can continue.
+	void initializeNetworkProxy(context, outputChannel).catch((error) => {
+		outputChannel.appendLine(
+			`[NetworkProxy] Failed to initialize network proxy: ${error instanceof Error ? error.message : String(error)}`,
+		)
+	})
 
 	// Set extension path for custom tool registry to find bundled esbuild
 	customToolRegistry.setExtensionPath(context.extensionPath)
 
-	// Migrate old settings to new
-	await migrateSettings(context, outputChannel)
+	// Migrate old settings to new without blocking activation.
+	void migrateSettings(context, outputChannel).catch((error) => {
+		outputChannel.appendLine(
+			`[SettingsMigration] Failed during startup migration: ${error instanceof Error ? error.message : String(error)}`,
+		)
+	})
 	if (isJetbrainsPlatform()) {
 		setTimeout(() => {
 			loadIdeaShellEnvOnce(context)
@@ -160,8 +164,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 	console.warn("Failed to register PostHogTelemetryClient:", error)
 	// }
 
-	// Create logger for cloud services.
-	const cloudLogger = createDualLogger(createOutputChannelLogger(outputChannel))
+	// // Create logger for cloud services.
+	// const cloudLogger = createDualLogger(createOutputChannelLogger(outputChannel))
 
 	// // Initialize MDM service
 	// const mdmService = await MdmService.createInstance(cloudLogger)
@@ -210,19 +214,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 		}
 	// 	}
 	// }
-
-	// Install built-in skills asynchronously in background
-	// This does not block extension activation
-	outputChannel.appendLine("[BuiltinSkills] Installing bundled skills in background...")
-	void installGitHubSkills(context)
-		.then(() => {
-			outputChannel.appendLine("[BuiltinSkills] Bundled skills installed")
-		})
-		.catch((error) => {
-			outputChannel.appendLine(
-				`[BuiltinSkills] Failed to install: ${error instanceof Error ? error.message : String(error)}`,
-			)
-		})
 
 	// Initialize the provider *before* the CoStrict Cloud service.
 	// const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy, mdmService)
@@ -353,18 +344,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Check for worktree auto-open path (set when switching to a worktree)
 	await checkWorktreeAutoOpen(context, outputChannel)
 
-	// Auto-import configuration if specified in settings.
-	try {
-		await autoImportSettings(outputChannel, {
-			providerSettingsManager: provider.providerSettingsManager,
-			contextProxy: provider.contextProxy,
-			customModesManager: provider.customModesManager,
-		})
-	} catch (error) {
+	// Auto-import configuration if specified in settings, without blocking activation.
+	void autoImportSettings(outputChannel, {
+		providerSettingsManager: provider.providerSettingsManager,
+		contextProxy: provider.contextProxy,
+		customModesManager: provider.customModesManager,
+	}).catch((error) => {
 		outputChannel.appendLine(
 			`[AutoImport] Error during auto-import: ${error instanceof Error ? error.message : String(error)}`,
 		)
-	}
+	})
 
 	registerCommands({ context, outputChannel, provider })
 
@@ -482,7 +471,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	}
 
-	ZgsmCore.activate(context, provider, outputChannel)
+	void ZgsmCore.activate(context, provider, outputChannel)
 	// // Initialize background model cache refresh
 	// initializeModelCacheRefresh()
 
@@ -520,7 +509,4 @@ export async function deactivate() {
 	await McpServerManager.cleanup(extensionContext)
 	TelemetryService.instance.shutdown()
 	TerminalRegistry.cleanup()
-
-	// Dispose CLI terminal manager to kill any running PTY process
-	getTerminalManager().dispose()
 }

@@ -267,7 +267,6 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 					this.log("CodebaseKeeper client check and upgrade completed", "info", "ZgsmCodebaseIndexManager")
 					return "upgraded"
 				} else {
-					this.log("Current version is already latest, no upgrade needed", "info", "ZgsmCodebaseIndexManager")
 					return "noUpdate"
 				}
 			}

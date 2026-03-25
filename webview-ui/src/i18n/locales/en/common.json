@@ -21,7 +21,8 @@
 	},
 	"ui": {
 		"search_placeholder": "Search...",
-		"no_results": "No results found"
+		"no_results": "No results found",
+		"initializing_interface": "Initializing interface..."
 	},
 	"mermaid": {
 		"loading": "Generating mermaid diagram...",

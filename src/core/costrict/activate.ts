@@ -6,7 +6,7 @@
  */
 
 import * as vscode from "vscode"
-import { flushModels } from "./../../api/providers/fetchers/modelCache"
+import { getTerminalManager } from "./../../core/cli-wrap"
 import type { ClineProvider } from "../webview/ClineProvider"
 import { registerAutoCompletionProvider, CompletionStatusBar } from "./auto-complete"
 
@@ -46,9 +46,7 @@ import { writeCostrictAccessToken } from "./codebase-index/utils"
 import { getPanel } from "../../activate/registerCommands"
 import { t } from "../../i18n"
 import prettyBytes from "pretty-bytes"
-import { ensureProjectWikiSubtasksExists } from "./wiki/projectWikiHelpers"
 import { isCliPatform, isJetbrainsPlatform } from "../../utils/platform"
-import type { ModelInfo, ModelRecord } from "@roo-code/types"
 import { updateDefaultDebug } from "../../utils/getDebugState"
 
 const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
@@ -110,7 +108,7 @@ export async function activate(
 	context.subscriptions.push(
 		onZgsmTokensUpdate((tokens: { state: string; access_token: string; refresh_token: string }) => {
 			zgsmAuthService.saveTokens(tokens)
-			provider.log(`new token from other window: ${tokens.access_token}`)
+			provider.log("Auth tokens refreshed from another window")
 		}),
 		onZgsmLogout((sessionId: string) => {
 			if (generateNewSessionClientId() === sessionId) return
@@ -141,17 +139,34 @@ export async function activate(
 					return
 				}
 				provider.log(`Login status detected at plugin startup: valid (${tokens.state})`)
-				writeCostrictAccessToken(tokens.access_token, tokens.refresh_token).then(async () => {
-					const { apiConfiguration } = await provider.getState()
-					if (apiConfiguration.apiProvider !== "zgsm") {
-						return
-					}
-					await zgsmCodebaseIndexManager.ensureInitialized("activate")
-					await zgsmCodebaseIndexManager.syncToken()
-					if (apiConfiguration.zgsmCodebaseIndexEnabled) {
-						await workspaceEventMonitor.initialize()
-					}
-				})
+				void writeCostrictAccessToken(tokens.access_token, tokens.refresh_token)
+					.then(async () => {
+						const { apiConfiguration } = await provider.getState()
+						if (apiConfiguration.apiProvider !== "zgsm") {
+							return
+						}
+
+						setTimeout(() => {
+							void (async () => {
+								try {
+									await zgsmCodebaseIndexManager.ensureInitialized("activate")
+									await zgsmCodebaseIndexManager.syncToken()
+									if (apiConfiguration.zgsmCodebaseIndexEnabled) {
+										await workspaceEventMonitor.initialize()
+									}
+								} catch (error) {
+									provider.log(
+										`Deferred codebase index startup failed: ${error instanceof Error ? error.message : String(error)}`,
+									)
+								}
+							})()
+						}, 3000)
+					})
+					.catch((error) => {
+						provider.log(
+							`Failed to persist auth token for codebase index startup: ${error instanceof Error ? error.message : String(error)}`,
+						)
+					})
 				zgsmAuthService.startTokenRefresh(tokens.refresh_token, getClientId(), tokens.state)
 				zgsmAuthService.updateUserInfo(tokens.access_token)
 			})
@@ -168,7 +183,6 @@ export async function activate(
 					}
 				})
 			}
-			provider.log("Login status detected at plugin startup: invalid")
 		}
 	} catch (error) {
 		provider.log("Failed to check login status at startup: " + error.message)
@@ -237,32 +251,8 @@ export async function activate(
 				})
 		}
 	})
-	setTimeout(async () => {
+	setTimeout(() => {
 		loginTip()
-		// init project-wiki subtasks with current language.
-		const state = await provider.getState()
-
-		void flushModels(
-			{
-				provider: "zgsm",
-				baseUrl: provider.getValue("zgsmBaseUrl"),
-			},
-			true,
-			(models: ModelRecord) => {
-				const openAiModels = [] as string[]
-				const fullResponseData = [] as ModelInfo[]
-				for (const [id, value] of Object.entries(models)) {
-					openAiModels.push(id)
-					fullResponseData.push(value)
-				}
-				provider.postMessageToWebview({
-					type: "zgsmModels",
-					openAiModels,
-					fullResponseData,
-				})
-			},
-		)
-		void ensureProjectWikiSubtasksExists(state.language ?? "en")
 	}, 2000)
 }
 
@@ -270,24 +260,27 @@ export async function activate(
  * Deactivation function for ZGSM
  */
 export async function deactivate() {
+	// Dispose CLI terminal manager to kill any running PTY process
+	void getTerminalManager().dispose()
+
 	// Stop periodic health checks
-	ZgsmCodebaseIndexManager.getInstance().stopHealthCheck()
+	void ZgsmCodebaseIndexManager.getInstance().stopHealthCheck()
 
 	// Stop periodic notice fetching
-	NotificationService.getInstance().stopPeriodicFetch()
+	void NotificationService.getInstance().stopPeriodicFetch()
 
 	// Dispose git commit listener
-	disposeGitCommitListener()
+	void disposeGitCommitListener()
 
 	// Dispose code review service (saves history)
-	await CodeReviewService.getInstance().dispose()
+	void await CodeReviewService.getInstance().dispose()
 
 	// ZgsmCodebaseIndexManager.getInstance().stopExistingClient()
 	// Clean up IPC connections
-	disconnectIPC()
-	stopIPCServer()
+	void disconnectIPC()
+	void stopIPCServer()
 	// Clean up workspace event monitoring
-	workspaceEventMonitor.handleVSCodeClose()
+	void workspaceEventMonitor.handleVSCodeClose()
 
 	// Currently no specific cleanup needed
 	loggerDeactivate()
