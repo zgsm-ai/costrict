@@ -74,7 +74,7 @@ import { t } from "../../i18n"
 import { getApiMetrics, hasTokenUsageChanged, hasToolUsageChanged } from "../../shared/getApiMetrics"
 import { ClineAskResponse } from "../../shared/WebviewMessage"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
-import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
+import { defaultModeSlug, getModeBySlug, getPromptTagsForMode } from "../../shared/modes"
 import { DiffStrategy, type ToolUse } from "../../shared/tools"
 import { getModelMaxOutputTokens } from "../../shared/api"
 
@@ -139,7 +139,7 @@ import { ZgsmAuthService } from "../costrict/auth"
 import { AutoApprovalHandler, checkAutoApproval } from "../auto-approval"
 import { MessageManager } from "../message-manager"
 import { validateAndFixToolResultIds } from "./validateToolResultIds"
-import { getModelsFromCache } from "../../api/providers/fetchers/modelCache"
+import { ModelFallbackManager } from "./ModelFallbackManager"
 import { mergeConsecutiveApiMessages } from "./mergeConsecutiveApiMessages"
 import { resolveToolAlias } from "../prompts/tools/filter-tools-for-mode"
 
@@ -160,12 +160,7 @@ export interface TaskOptions extends CreateTaskOptions {
 	images?: string[]
 	historyItem?: HistoryItem
 	experiments?: Record<string, boolean>
-	experimentSettings?: {
-		smartMistakeDetectionConfig?: {
-			autoSwitchModel?: boolean
-			autoSwitchModelThreshold?: number
-		}
-	}
+	experimentSettings?: { smartMistakeDetectionConfig?: { autoSwitchModel?: boolean } }
 	startTask?: boolean
 	rootTask?: Task
 	parentTask?: Task
@@ -307,6 +302,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		clearProviderAbortController?: (cancelType?: ClineApiReqCancelReason) => void
 	}
 	apiConfiguration: ProviderSettings
+	modelFallbackManager?: ModelFallbackManager
 	private static lastGlobalApiRequestTime?: number
 	private autoApprovalHandler: AutoApprovalHandler
 
@@ -535,12 +531,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			EXPERIMENT_IDS.SMART_MISTAKE_DETECTION,
 		)
 		if (this.useSmartMistakeDetection) {
-			const config = experimentSettings?.smartMistakeDetectionConfig
-			this.smartMistakeDetector = new SmartMistakeDetector(
-				undefined, // timeWindowMs
-				config?.autoSwitchModel,
-				config?.autoSwitchModelThreshold,
-			)
+			this.smartMistakeDetector = new SmartMistakeDetector()
+			const autoSwitchModel = experimentSettings?.smartMistakeDetectionConfig?.autoSwitchModel ?? false
+			if (autoSwitchModel && this.apiConfiguration.apiProvider === "zgsm") {
+				this.modelFallbackManager = new ModelFallbackManager(this.apiConfiguration)
+			}
 		}
 		this.parentTask = parentTask
 		this.taskNumber = taskNumber
@@ -1705,9 +1700,24 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * @param newApiConfiguration - The new API configuration to use
 	 */
 	public updateApiConfiguration(newApiConfiguration: ProviderSettings): void {
+		// Check if the model has changed (user manually switched models)
+		const oldModelId = getModelId(this.apiConfiguration)
+		const newModelId = getModelId(newApiConfiguration)
+		const modelChanged = oldModelId !== newModelId
+
 		// Update the configuration and rebuild the API handler
 		this.apiConfiguration = newApiConfiguration
 		this.api = buildApiHandler(this.apiConfiguration)
+
+		// Sync the ModelFallbackManager with the new configuration
+		// This ensures buildFallbackApiHandler() uses the latest API keys, base URLs, etc.
+		if (this.modelFallbackManager) {
+			if (modelChanged) {
+				this.modelFallbackManager.updateConfiguration(newApiConfiguration)
+				// User manually switched models - reset fallback state
+				this.modelFallbackManager.reset()
+			}
+		}
 	}
 
 	public async submitUserMessage(
@@ -1810,6 +1820,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// Build metadata with tools and taskId for the condensing API call
 		const metadata: ApiHandlerCreateMessageMetadata = {
 			mode,
+			promptTags: getPromptTagsForMode(
+				mode ?? defaultModeSlug,
+				state?.customModePrompts,
+				state?.customModes,
+			).join(),
 			taskId: this.taskId,
 			...(allTools.length > 0
 				? {
@@ -2710,6 +2725,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						this.apiConfiguration?.apiProvider === "zgsm"
 							? this.apiConfiguration?.zgsmModelId
 							: this.apiConfiguration?.apiModelId,
+					// Add fallback model ID when fallback is active
+					isFallbackActive:
+						this.apiConfiguration?.apiProvider === "zgsm" && this.modelFallbackManager?.isFallbackActive,
 				}),
 			)
 
@@ -2794,6 +2812,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					this.apiConfiguration?.apiProvider === "zgsm"
 						? this.apiConfiguration?.zgsmModelId
 						: this.apiConfiguration?.apiModelId,
+				// Add fallback model ID when fallback is active
+				isFallbackActive:
+					this.apiConfiguration?.apiProvider === "zgsm" && this.modelFallbackManager?.isFallbackActive,
 			} satisfies ClineApiReqInfo)
 
 			await this.saveClineMessages()
@@ -2858,6 +2879,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							this.apiConfiguration?.apiProvider === "zgsm"
 								? this.apiConfiguration?.zgsmModelId
 								: this.apiConfiguration?.apiModelId,
+						// Add fallback model ID when fallback is active
+						isFallbackActive:
+							this.apiConfiguration?.apiProvider === "zgsm" &&
+							this.modelFallbackManager?.isFallbackActive,
 					} satisfies ClineApiReqInfo)
 				}
 
@@ -3456,9 +3481,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						streamingFailedMessage = this.abort
 							? undefined
 							: await this.convertErrorMessage(error, () => {
-								shouldStop = true
-								this.updateStreamingStatus(false)
-							})
+									shouldStop = true
+									this.updateStreamingStatus(false)
+								})
 						if (streamingFailedMessage) {
 							streamingFailedMessage = `${t("common:interruption.streamTerminatedByProvider")}: ${streamingFailedMessage}`
 						}
@@ -3533,6 +3558,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				}
 
 				this.didCompleteReadingStream = true
+
+				// Record successful API request for model fallback management
+				if (this.apiConfiguration.apiProvider === "zgsm") {
+					this.modelFallbackManager?.recordSuccess()
+				}
 
 				// Process accumulated fake_tool_call after stream ends
 				// Content was only accumulated during streaming, now parse and execute tool calls
@@ -4179,6 +4209,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// Build metadata with tools and taskId for the condensing API call
 		const metadata: ApiHandlerCreateMessageMetadata = {
 			mode,
+			promptTags: getPromptTagsForMode(
+				mode ?? defaultModeSlug,
+				state?.customModePrompts,
+				state?.customModes,
+			).join(),
 			taskId: this.taskId,
 			...(allTools.length > 0
 				? {
@@ -4402,6 +4437,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// Build metadata with tools and taskId for the condensing API call
 			const contextMgmtMetadata: ApiHandlerCreateMessageMetadata = {
 				mode,
+				promptTags: getPromptTagsForMode(
+					mode ?? defaultModeSlug,
+					state?.customModePrompts,
+					state?.customModes,
+				).join(),
 				taskId: this.taskId,
 				...(contextMgmtTools.length > 0
 					? {
@@ -4572,6 +4612,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		const metadata: ApiHandlerCreateMessageMetadata = {
 			mode: mode,
+			promptTags: getPromptTagsForMode(
+				mode ?? defaultModeSlug,
+				state?.customModePrompts,
+				state?.customModes,
+			).join(),
 			allToolNames:
 				apiConfiguration?.apiProvider === "gemini-cli"
 					? allTools.map((tool: any) => resolveToolAlias(tool?.function?.name)).filter((name) => !!name)
@@ -4640,7 +4685,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		metadata.signal = abortSignal
 		metadata.abortController = this.currentRequestAbortController
 		// The provider accepts reasoning items alongside standard messages; cast to the expected parameter type.
-		const stream = this.api.createMessage(
+		// Use fallback API handler if model fallback is active (temporary, doesn't modify user config)
+		const effectiveApi =
+			(this.apiConfiguration.apiProvider === "zgsm" && this.modelFallbackManager?.buildFallbackApiHandler()) ||
+			this.api
+		const stream = effectiveApi.createMessage(
 			systemPrompt,
 			cleanConversationHistory as unknown as Anthropic.Messages.MessageParam[],
 			metadata,
@@ -4685,6 +4734,17 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// Record API error in SmartMistakeDetector
 			this.consecutiveMistakeCount++
 			this.smartMistakeDetector?.addMistake(MistakeType.TOOL_FAILURE, `API request failed: ${errorMsg}`, "high")
+
+			// // Record failure for model fallback management
+			// if (this.apiConfiguration.apiProvider === "zgsm") {
+			// 	const switched = this.modelFallbackManager?.recordFailure(error, "server_error")
+			// 	if (switched) {
+			// 		const statusMsg = this.modelFallbackManager?.getFallbackStatusMessage()
+			// 		if (statusMsg) {
+			// 			await this.say("auto_switch_model", statusMsg)
+			// 		}
+			// 	}
+			// }
 
 			// If it's a context window error and we haven't exceeded max retries for this error type
 			if (isContextWindowExceededError && retryAttempt < MAX_CONTEXT_WINDOW_RETRIES) {
@@ -4800,6 +4860,19 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				}
 			}
 
+			// Record failure for model fallback once per backoff cycle (not per countdown second)
+			if (this.apiConfiguration.apiProvider === "zgsm") {
+				const switched = this.modelFallbackManager?.recordFailure(undefined, "server_error")
+				if (switched) {
+					// const statusMsg = this.modelFallbackManager?.getFallbackStatusMessage()
+					// if (statusMsg) {
+					// 	await this.say("auto_switch_model", statusMsg)
+					// }
+					this.consecutiveMistakeCount = 0
+					return
+				}
+			}
+
 			// Show countdown timer with exponential backoff
 			for (let i = finalDelay; i > 0; i--) {
 				// Check abort flag during countdown to allow early exit
@@ -4815,21 +4888,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						undefined,
 						true,
 					)
-				}
-				if (
-					this.apiConfiguration.apiProvider === "zgsm" &&
-					this.smartMistakeDetector?.shouldAutoSwitchModel()
-				) {
-					try {
-						await this.switchModel()
-						this.consecutiveMistakeCount = 0
-						this.smartMistakeDetector.clear()
-						this.smartMistakeDetector.markModelSwitched()
-						return
-					} catch (error) {
-						console.error("Failed to auto switch model:", error)
-						await this.say("error", t("common:smartMistakeDetector.autoSwitchModelFailed"))
-					}
 				}
 				await delay(1000)
 			}
@@ -5185,16 +5243,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				"model", // Explicitly mark as model-related error
 			)
 
-			if (this.smartMistakeDetector.shouldAutoSwitchModel()) {
-				try {
-					await this.switchModel()
+			if (this.apiConfiguration.apiProvider === "zgsm") {
+				const switched = this.modelFallbackManager?.recordFailure(undefined, "tool_error")
+				if (switched) {
+					// const statusMsg = this.modelFallbackManager?.getFallbackStatusMessage()
+					// if (statusMsg) {
+					// 	await this.say("auto_switch_model", statusMsg)
+					// }
 					this.consecutiveMistakeCount = 0
-					this.smartMistakeDetector.clear()
-					this.smartMistakeDetector.markModelSwitched()
 					return
-				} catch (error) {
-					console.error("Failed to auto switch model:", error)
-					await this.say("error", t("common:smartMistakeDetector.autoSwitchModelFailed"))
 				}
 			}
 		}
@@ -5244,8 +5301,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				}
 			}
 
-			// this.consecutiveMistakeCount = 0
-			// this.smartMistakeDetector.clear()
+			// Reset counters after user interaction to prevent immediate re-triggering
+			this.consecutiveMistakeCount = 0
+			this.smartMistakeDetector.clear()
 		}
 	}
 	updateMode(mode?: string) {
@@ -5254,57 +5312,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.preMode = mode
 		}
 	}
-	async switchModel() {
-		try {
-			const oldModelId = getModelId(this.apiConfiguration)
-			const models = getModelsFromCache("zgsm") || {}
-			const modelList = Object.entries(getModelsFromCache("zgsm") || {}).filter((m) => {
-				return oldModelId !== m[0]
-			})
-
-			if (modelList.length === 0) {
-				throw new Error("No available models")
-			}
-			const currentModel = models[oldModelId as string]
-			const currentModelContextWindow = currentModel?.contextWindow ?? zgsmModelsConfig.default.contextWindow
-
-			const top5Models = modelList
-				.sort((a, b) => {
-					const aModel = a[1]
-					const bModel = b[1]
-					if (aModel.creditConsumption === bModel.creditConsumption) {
-						return bModel.contextWindow - aModel.contextWindow
-					}
-					return aModel.creditConsumption! - bModel.creditConsumption!
-				})
-				.filter((m) => m[1].contextWindow >= currentModelContextWindow)
-				.slice(0, 5)
-
-			const modelId = top5Models[(top5Models.length * Math.random()) << 0][0]
-
-			// TODO: For zgsm provider, add requirement to support automatic model switching when smart error detection is enabled
-			const provider = await this.providerRef.deref()
-
-			if (provider) {
-				await provider.upsertProviderProfile(this._taskApiConfigName!, {
-					// ...provider.getProviderProfile(this._taskApiConfigName!)
-					...this.apiConfiguration,
-					zgsmModelId: modelId || "Auto",
-				})
-
-				// Update this task's API configuration to match the new profile
-				const newState = await provider.getState()
-				if (newState?.apiConfiguration) {
-					this.updateApiConfiguration(newState.apiConfiguration)
-				}
-			}
-
-			await this.say("auto_switch_model", `${oldModelId} --> ${modelId}`)
-		} catch (error) {
-			console.log("switchModel error", error)
-		}
-	}
-
 	private async handleLegacyMistakeLimit(currentUserContent: Anthropic.Messages.ContentBlockParam[]): Promise<void> {
 		if (this.consecutiveMistakeLimit > 0 && this.consecutiveMistakeCount >= this.consecutiveMistakeLimit) {
 			// Track consecutive mistake errors in telemetry via event and PostHog exception tracking.

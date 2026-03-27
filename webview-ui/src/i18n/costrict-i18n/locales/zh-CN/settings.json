@@ -121,15 +121,11 @@
 		},
 		"SMART_MISTAKE_DETECTION": {
 			"name": "强制完成模式",
-			"description": "启用后，CoStrict 将使用智能错误检测系统，该系统采用加权评分和渐进式警告。相比简单的连续错误计数，这提供了更细致的错误跟踪和自动执行恢复能力。（token 消耗量大）"
-		},
-		"AUTO_SWITCH_MODEL": {
-			"name": "自动切换模型",
-			"description": "当连续错误次数超过阈值时自动切换到其他模型"
-		},
-		"AUTO_SWITCH_MODEL_THRESHOLD": {
-			"name": "切换阈值",
-			"description": "切换模型前的连续错误次数（1-10）"
+			"description": "启用后，CoStrict 将使用智能错误检测系统，该系统采用加权评分和渐进式警告。相比简单的连续错误计数，这提供了更细致的错误跟踪和自动执行恢复能力。（token 消耗量大）",
+			"AUTO_SWITCH_MODEL": {
+				"name": "自动切换模型",
+				"description": "当前模型连续失败时，自动切换到备用模型继续完成任务。"
+			}
 		},
 		"CHAT_SEARCH": {
 			"name": "窗口内聊天记录搜索",

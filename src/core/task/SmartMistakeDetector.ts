@@ -52,8 +52,6 @@ export interface MistakeCheckResult {
 	warning?: string
 	/** Whether can auto recover */
 	canAutoRecover?: boolean
-	/** Whether should auto switch model */
-	shouldAutoSwitchModel?: boolean
 }
 
 /**
@@ -89,35 +87,16 @@ export class SmartMistakeDetector {
 	/** Time window (milliseconds) */
 	private readonly timeWindowMs: number
 
-	/** Default time window: 5 minutes */
+	/** Default time window: 2 minutes */
 	private static readonly DEFAULT_TIME_WINDOW_MS = 2 * 60 * 1000
-
-	/** Auto switch model enabled flag */
-	private readonly autoSwitchModelEnabled: boolean = false
-
-	/** Auto switch model threshold - increased from 3 to 6 to reduce false positives */
-	private readonly autoSwitchModelThreshold: number = 3
-
-	/** Last model switch timestamp - used for cooldown period */
-	private lastSwitchTime?: number
-
-	/** Model switch cooldown period (milliseconds) - default 10 minutes */
-	private readonly switchCooldownMs: number = 10 * 60 * 1000
-
-	/** Minimum high-severity errors required in short period - increased from 3 to 5 */
-	private readonly highSeverityThreshold: number = 5
 
 	/**
 	 * Constructor
 	 *
-	 * @param timeWindowMs - Time window (milliseconds), default 5 minutes
-	 * @param autoSwitchModelEnabled - Enable auto switch model feature, default false
-	 * @param autoSwitchModelThreshold - Threshold for auto switch model, default 3
+	 * @param timeWindowMs - Time window (milliseconds), default 2 minutes
 	 */
-	constructor(timeWindowMs?: number, autoSwitchModelEnabled?: boolean, autoSwitchModelThreshold?: number) {
+	constructor(timeWindowMs?: number) {
 		this.timeWindowMs = timeWindowMs ?? SmartMistakeDetector.DEFAULT_TIME_WINDOW_MS
-		this.autoSwitchModelEnabled = autoSwitchModelEnabled ?? false
-		this.autoSwitchModelThreshold = autoSwitchModelThreshold ?? 3
 	}
 
 	/**
@@ -355,71 +334,17 @@ export class SmartMistakeDetector {
 	}
 
 	/**
-	 * Check if should auto switch model
-	 *
-	 * Determine if model should be automatically switched based on weighted score.
-	 * Uses internal weighted score calculation instead of simple consecutive count.
-	 * Also checks for high-severity error density in short time periods.
-	 *
-	 * Improvements:
-	 * - Added cooldown period to prevent frequent switching
-	 * - Only considers model-related errors (filters out environmental issues)
-	 * - Increased thresholds to reduce false positives
-	 *
-	 * @returns Whether model should be switched
-	 */
-	shouldAutoSwitchModel(): boolean {
-		if (!this.autoSwitchModelEnabled) {
-			return false
-		}
-
-		// Check cooldown period - prevent switching too frequently
-		if (this.lastSwitchTime && Date.now() - this.lastSwitchTime < this.switchCooldownMs) {
-			return false
-		}
-
-		// Filter to only consider model-related errors (not environmental or system issues)
-		const modelRelatedMistakes = this.mistakes.filter((m) => m.source === "model" || !m.source)
-
-		if (modelRelatedMistakes.length === 0) {
-			return false
-		}
-
-		// Check error density in short time period (5 or more high-severity MODEL errors within 5 minutes)
-		const recentMistakes = this.getMistakesInLastMinutes(5).filter((m) => m.source === "model" || !m.source)
-		const highSeverityCount = recentMistakes.filter((m) => m.severity === "high").length
-
-		if (highSeverityCount >= this.highSeverityThreshold) {
-			return true // Frequent high-severity errors in short time, switch immediately
-		}
-
-		// Otherwise use weighted score judgment (only for model-related errors)
-		const weightedScore = modelRelatedMistakes.reduce((score, mistake) => {
-			const typeWeight = MISTAKE_WEIGHTS[mistake.type] || 1
-			const severityWeight = SEVERITY_WEIGHTS[mistake.severity] || 1
-			return score + typeWeight * severityWeight
-		}, 0)
-
-		return weightedScore >= this.autoSwitchModelThreshold
-	}
-
-	/**
-	 * Mark that model has been switched
-	 *
-	 * Records the switch time to enforce cooldown period
-	 */
-	markModelSwitched(): void {
-		this.lastSwitchTime = Date.now()
-	}
-
-	/**
 	 * Record successful operation
 	 *
-	 * Used to balance error records and avoid over-sensitivity
+	 * Used to balance error records and avoid over-sensitivity.
+	 * Removes the oldest high-severity mistake record (one at a time)
+	 * to gradually reduce the weighted score rather than clearing all at once.
 	 */
 	recordSuccess(): void {
-		// If there are error records, consider reducing the severity of recent errors
-		// or subtracting a certain value from the weighted score
-		this.mistakes = this.mistakes.filter((m) => m.severity !== "high")
+		// Find and remove the oldest high-severity mistake (gradual reduction)
+		const highIndex = this.mistakes.findIndex((m) => m.severity === "high")
+		if (highIndex !== -1) {
+			this.mistakes.splice(highIndex, 1)
+		}
 	}
 }

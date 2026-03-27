@@ -85,7 +85,7 @@ import { MarketplaceManager, MarketplaceItemType } from "../../services/marketpl
 import { ZgsmAuthConfig, ZgsmAuthService, ZgsmAuthStorage } from "../costrict/auth"
 import { CodeReviewService } from "../costrict/code-review"
 import { ZgsmCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
-import { getTerminalManager } from "../cli-wrap"
+import { getTerminalManager, getCostrictCliInstallDocsUrl } from "../cli-wrap"
 import { ErrorCodeManager } from "../costrict/error-code"
 import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
 import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-event-monitor"
@@ -628,13 +628,18 @@ export const webviewMessageHandler = async (
 				cols: message.cols ?? 80,
 				rows: message.rows ?? 24,
 			})
+			if (!terminalManager.running || !terminalManager.getPort()) {
+				break
+			}
 			// Wait for the CLI HTTP server to become ready and notify the webview
 			const httpReady = await terminalManager.waitForReady()
 			await provider.postMessageToWebview({
 				type: "CostrictCliHttpReady",
 				values: {
 					ready: httpReady,
+					kind: httpReady ? undefined : "startup-timeout",
 					port: terminalManager.getPort(),
+					docsUrl: httpReady ? undefined : getCostrictCliInstallDocsUrl(),
 				},
 			})
 			break
@@ -662,7 +667,7 @@ export const webviewMessageHandler = async (
 			}
 			break
 		case "CostrictCliStop":
-			await getTerminalManager().stop()
+			await getTerminalManager().stop(message?.values?.signal)
 			break
 		case "CostrictCliRestart": {
 			await getTerminalManager().stop()
@@ -749,7 +754,6 @@ export const webviewMessageHandler = async (
 			provider.isViewLaunched = true
 			clearTimeout(webviewDidLaunchTimer)
 			webviewDidLaunchTimer = setTimeout(() => {
-
 				void initNotificationService(provider)
 
 				// Deferred background work — only needed once the webview is ready

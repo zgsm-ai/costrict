@@ -139,6 +139,7 @@ export interface ExtensionMessage {
 		| "CostrictCliPasteUnavailable"
 		| "CostrictCliRestart"
 		| "CostrictCliHttpReady"
+		| "CostrictCliToast"
 	text?: string
 	/** For fileContent: { path, content, error? } */
 	fileContent?: { path: string; content: string | null; error?: string }
@@ -1015,6 +1016,8 @@ export interface ClineApiReqInfo {
 	selectReason?: string
 	isAuto?: boolean
 	originModelId?: string
+	/** The fallback model ID actually used when primary model fails (set by ModelFallbackManager) */
+	isFallbackActive?: boolean
 	// Raw timing data for frontend calculation
 	requestIdTimestamp?: number
 	responseIdTimestamp?: number

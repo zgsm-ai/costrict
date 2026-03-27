@@ -1283,8 +1283,8 @@ export class ClineProvider
 			enableCheckpoints,
 			checkpointTimeout,
 			experiments,
-			useZgsmCustomConfig,
 			experimentSettings,
+			useZgsmCustomConfig,
 			cloudUserInfo,
 			taskSyncEnabled,
 		} = await this.getState()
@@ -1298,13 +1298,13 @@ export class ClineProvider
 			consecutiveMistakeLimit: apiConfiguration.consecutiveMistakeLimit,
 			historyItem,
 			experiments,
+			experimentSettings,
 			rootTask: historyItem.rootTask,
 			parentTask: historyItem.parentTask,
 			taskNumber: historyItem.number,
 			workspacePath: historyItem.workspace,
 			onCreated: this.taskCreationCallback,
 			startTask: options?.startTask ?? true,
-			experimentSettings,
 			// Preserve the status from the history item to avoid overwriting it when the task saves messages
 			initialStatus: historyItem.status,
 		})
@@ -3450,12 +3450,12 @@ export class ClineProvider
 			task: text,
 			images,
 			experiments,
+			experimentSettings,
 			rootTask: this.clineStack.length > 0 ? this.clineStack[0] : undefined,
 			parentTask,
 			taskNumber: this.clineStack.length + 1,
 			onCreated: this.taskCreationCallback,
 			initialTodos: options.initialTodos,
-			experimentSettings,
 			// Ensure this task is present in clineStack before startTask() emits
 			// its initial state update, so state.currentTaskId is available ASAP.
 			startTask: false,

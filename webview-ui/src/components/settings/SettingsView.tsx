@@ -214,9 +214,10 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		includeCurrentCost,
 		maxGitStatusFiles,
 		autoCleanup,
-		experimentSettings,
 		debug,
 	} = cachedState
+
+	const experimentSettings = cachedState.experimentSettings ?? {}
 
 	const apiConfiguration = useMemo(() => cachedState.apiConfiguration ?? {}, [cachedState.apiConfiguration])
 
@@ -368,19 +369,12 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 	const setSmartMistakeDetectionConfig = useCallback((config: SmartMistakeDetectionConfig) => {
 		setCachedState((prevState) => {
-			const currentConfig = prevState.experimentSettings?.smartMistakeDetectionConfig || {}
-			if (isEqual(currentConfig, config)) {
-				return prevState
+			const newExperimentSettings = {
+				...(prevState.experimentSettings ?? {}),
+				smartMistakeDetectionConfig: config,
 			}
-
 			setChangeDetected(true)
-			return {
-				...prevState,
-				experimentSettings: {
-					...prevState.experimentSettings,
-					smartMistakeDetectionConfig: config,
-				},
-			}
+			return { ...prevState, experimentSettings: newExperimentSettings }
 		})
 	}, [])
 
@@ -984,6 +978,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								experiments={experiments}
 								apiConfiguration={apiConfiguration}
 								setApiConfigurationField={setApiConfigurationField}
+								experimentSettings={experimentSettings}
+								setSmartMistakeDetectionConfig={setSmartMistakeDetectionConfig}
 								imageGenerationProvider={imageGenerationProvider}
 								openRouterImageApiKey={openRouterImageApiKey as string | undefined}
 								openRouterImageGenerationSelectedModel={
@@ -992,15 +988,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								setImageGenerationProvider={setImageGenerationProvider}
 								setOpenRouterImageApiKey={setOpenRouterImageApiKey}
 								setImageGenerationSelectedModel={setImageGenerationSelectedModel}
-								setSmartMistakeDetectionConfig={setSmartMistakeDetectionConfig}
-								experimentSettings={
-									cachedState.experimentSettings || {
-										smartMistakeDetectionConfig: {
-											autoSwitchModel: false,
-											autoSwitchModelThreshold: 3,
-										},
-									}
-								}
 							/>
 						)}
 
@@ -1008,7 +995,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						{renderTab === "language" && (
 							<LanguageSettings language={language || "en"} setCachedStateField={setCachedStateField} />
 						)}
-
 						{/* About Section */}
 						{renderTab === "about" && (
 							<About

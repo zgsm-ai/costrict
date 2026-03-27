@@ -24,6 +24,60 @@
 		"no_results": "No results found",
 		"initializing_interface": "Initializing interface..."
 	},
+	"costrictCli": {
+		"brand": "COSTRICT",
+		"title": "CoStrict CLI",
+		"tabs": {
+			"agent": "AGENT",
+			"codeReview": "CODE REVIEW",
+			"cli": "COSTRICT CLI"
+		},
+		"status": {
+			"starting": "Starting…",
+			"ready": "Ready",
+			"restarting": "Restarting…",
+			"exited": "Exited",
+			"error": "Error"
+		},
+		"actions": {
+			"clear": "Clear terminal output",
+			"restart": "Restart CoStrict CLI"
+		},
+		"help": "CoStrict CLI terminal. Use Tab to reach toolbar actions and the terminal input. Standard typing and clipboard shortcuts continue to work inside the terminal.",
+		"loading": {
+			"title": "CoStrict CLI",
+			"description": "Code snippets and selected file paths can be sent to CLI."
+		},
+		"aria": {
+			"terminalPanel": "CoStrict CLI terminal panel",
+			"terminal": "CoStrict CLI terminal",
+			"liveRegion": "CoStrict CLI status: {{status}}{{errorSegment}}{{toastSegment}}",
+			"errorSegment": ". Error: {{error}}",
+			"toastSegment": ". {{toast}}"
+		},
+		"errorBanner": "CoStrict CLI error: {{error}}",
+		"restartConfirm": {
+			"title": "Restart CoStrict CLI?",
+			"description": "This will restart the current CoStrict CLI session in this tab. Terminal output will be cleared while the CLI starts again.",
+			"confirm": "Restart"
+		},
+		"startError": {
+			"genericTitle": "CoStrict CLI couldn't start",
+			"genericDescription": "Restart the CLI. If it still fails, check whether the \"cs\" command is available in your shell PATH.",
+			"missingCliTitle": "Install CoStrict CLI to continue",
+			"missingCliDescription": "CoStrict CLI is not installed or not available in PATH.",
+			"startupTimeout": "CoStrict CLI started, but the local service did not become ready in time.",
+			"startupTimeoutDescription": "The local service took too long to become ready.",
+			"installLink": "View installation docs",
+			"missingCliHint": "After installation, reopen or restart this tab.",
+			"retryHint": "You can restart CoStrict CLI from this panel."
+		},
+		"exited": {
+			"title": "CoStrict CLI has exited",
+			"description": "The CLI process in this tab has stopped. Restart CoStrict CLI to start a new session here.",
+			"terminalMessage": "CoStrict CLI has exited"
+		}
+	},
 	"mermaid": {
 		"loading": "Generating mermaid diagram...",
 		"render_error": "Unable to Render Diagram",

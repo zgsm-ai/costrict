@@ -142,7 +142,9 @@
 	},
 	"autoMode": {
 		"selectedLLM": "Auto model: {{selectedLLM}}",
-		"selectReason": "Select reason: {{selectReason}}"
+		"selectReason": "Select reason: {{selectReason}}",
+		"fallbackModel": "{{originModelId}} → {{fallbackModelId}}",
+		"fallbackModelTooltip": "Fallback model activated"
 	},
 	"multipleChoice": {
 		"confirm": "Confirm",

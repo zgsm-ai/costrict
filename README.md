@@ -61,6 +61,9 @@ _Free • Open Source • Private Deployment_
       <a href="https://github.com/zgsm-ai/costrict-jetbrains-agent">
         <img src="https://img.shields.io/badge/GitHub-Repository-informational?style=for-the-badge" alt="JetBrains Repo">
       </a>
+      <a href="https://costrict.ai/download">
+        <img src="https://img.shields.io/badge/Download-Latest-success?style=for-the-badge" alt="Download">
+      </a>
     </td>
   </tr>
 </table>

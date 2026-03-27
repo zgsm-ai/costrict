@@ -108,13 +108,13 @@ export class CoworkflowFileWatcher implements ICoworkflowFileWatcher {
 		try {
 			const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
 			if (!workspaceFolder) {
-				this.errorHandler.logError(
-					this.errorHandler.createError(
-						"file_system_error",
-						"info",
-						"No workspace folder available for coworkflow monitoring",
-					),
-				)
+				// this.errorHandler.logError(
+				// 	this.errorHandler.createError(
+				// 		"file_system_error",
+				// 		"info",
+				// 		"No workspace folder available for coworkflow monitoring",
+				// 	),
+				// )
 				return undefined
 			}
 
@@ -208,16 +208,16 @@ export class CoworkflowFileWatcher implements ICoworkflowFileWatcher {
 			(error) => {
 				// Handle different types of file system errors
 				if (error.code === "FileNotFound" || error.code === "ENOENT") {
-					// Directory doesn't exist - this is normal, just log info
-					this.errorHandler.logError(
-						this.errorHandler.createError(
-							"not_found_error",
-							"info",
-							".cospec directory not found - coworkflow monitoring disabled",
-							error,
-							vscode.Uri.file(coworkflowPath),
-						),
-					)
+					// // Directory doesn't exist - this is normal, just log info
+					// this.errorHandler.logError(
+					// 	this.errorHandler.createError(
+					// 		"not_found_error",
+					// 		"info",
+					// 		".cospec directory not found - coworkflow monitoring disabled",
+					// 		error,
+					// 		vscode.Uri.file(coworkflowPath),
+					// 	),
+					// )
 				} else if (error.code === "EACCES" || error.code === "EPERM") {
 					// Permission error
 					const coworkflowError = this.errorHandler.createError(

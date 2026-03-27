@@ -443,7 +443,10 @@ async function main() {
 	console.log("\n💡 These skills will be bundled with the extension\n")
 }
 
-main().catch((error) => {
+main().then(() => {
+	process.exit(0)
+})
+.catch((error) => {
 	console.error("Fatal error:", error)
 	process.exit(1)
 })

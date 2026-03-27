@@ -24,6 +24,60 @@
 		"no_results": "找不到結果",
 		"initializing_interface": "正在初始化介面..."
 	},
+	"costrictCli": {
+		"brand": "COSTRICT",
+		"title": "CoStrict CLI",
+		"tabs": {
+			"agent": "AGENT",
+			"codeReview": "CODE REVIEW",
+			"cli": "COSTRICT CLI"
+		},
+		"status": {
+			"starting": "啟動中…",
+			"ready": "就緒",
+			"restarting": "重新啟動中…",
+			"exited": "已退出",
+			"error": "錯誤"
+		},
+		"actions": {
+			"clear": "清除終端輸出",
+			"restart": "重新啟動 CoStrict CLI"
+		},
+		"help": "CoStrict CLI 終端。使用 Tab 可切換到工具列操作與終端輸入區域。終端內仍支援標準輸入與剪貼簿快捷鍵。",
+		"loading": {
+			"title": "CoStrict CLI",
+			"description": "程式碼片段和選取的檔案路徑可傳送到 CLI"
+		},
+		"aria": {
+			"terminalPanel": "CoStrict CLI 終端面板",
+			"terminal": "CoStrict CLI 終端",
+			"liveRegion": "CoStrict CLI 狀態：{{status}}{{errorSegment}}{{toastSegment}}",
+			"errorSegment": "。錯誤：{{error}}",
+			"toastSegment": "。{{toast}}"
+		},
+		"errorBanner": "CoStrict CLI 錯誤：{{error}}",
+		"restartConfirm": {
+			"title": "要重新啟動 CoStrict CLI 嗎？",
+			"description": "這會重新啟動目前分頁中的 CoStrict CLI 工作階段。CLI 重新啟動期間，終端輸出將會被清除。",
+			"confirm": "重新啟動"
+		},
+		"startError": {
+			"genericTitle": "CoStrict CLI 無法啟動",
+			"genericDescription": "請先重新啟動 CLI；若仍失敗，再檢查目前 shell 的 PATH 中是否可用 \"cs\" 指令。",
+			"missingCliTitle": "請先安裝 CoStrict CLI",
+			"missingCliDescription": "找不到 CoStrict CLI，或目前 PATH 中無法使用它。",
+			"startupTimeout": "CoStrict CLI 已啟動，但本機服務未能在預期時間內就緒。",
+			"startupTimeoutDescription": "本機服務就緒時間過長。",
+			"installLink": "查看安裝文件",
+			"missingCliHint": "安裝完成後，重新開啟或重新啟動此分頁。",
+			"retryHint": "你可以直接在目前面板重新啟動 CoStrict CLI。"
+		},
+		"exited": {
+			"title": "CoStrict CLI 已退出",
+			"description": "此分頁中的 CLI 行程已停止。重新啟動 CoStrict CLI 以在此處開始新的工作階段。",
+			"terminalMessage": "CoStrict CLI 已退出"
+		}
+	},
 	"mermaid": {
 		"loading": "正在產生 Mermaid 圖表...",
 		"render_error": "無法渲染圖表",

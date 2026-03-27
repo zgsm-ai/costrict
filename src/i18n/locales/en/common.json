@@ -270,7 +270,6 @@
 		"errorTypeDistribution": "- Error type distribution:\n",
 		"errorTypeItem": "  • {{type}}: {{count}} times\n",
 		"severityDistribution": "- Severity distribution:\n",
-		"severityItem": "  • {{severity}}: {{count}} times\n",
-		"autoSwitchModelFailed": "Failed to automatically switch model, please manually select another model"
+		"severityItem": "  • {{severity}}: {{count}} times\n"
 	}
 }

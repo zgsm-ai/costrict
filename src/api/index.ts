@@ -3,6 +3,8 @@ import OpenAI from "openai"
 
 import { isRetiredProvider, type ProviderSettings, type ModelInfo } from "@roo-code/types"
 
+import type { PromptTag } from "../shared/modes"
+
 import { ApiStream } from "./transform/stream"
 
 import {
@@ -58,6 +60,8 @@ export interface ApiHandlerCreateMessageMetadata {
 	 * - Requesty: Sent in extra metadata
 	 */
 	mode?: string
+	// PromptTag
+	promptTags?: string
 	suppressPreviousResponseId?: boolean
 	onRequestHeadersReady?: (headers: Record<string, string>) => void
 	/**

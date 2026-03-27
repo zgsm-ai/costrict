@@ -16,6 +16,7 @@ import { TOOL_GROUPS, ALWAYS_AVAILABLE_TOOLS } from "./tools"
 
 export type Mode = string
 export type ZgsmCodeMode = "vibe" | "strict" | "plan" | "raw"
+export type PromptTag = "systempromptmodified" | "rulesmodified" | "promptcustomized"
 
 // Helper to extract group name regardless of format
 export function getGroupName(group: GroupEntry): ToolGroup {
@@ -316,4 +317,34 @@ export function getCustomInstructions(modeSlug: string, customModes?: ModeConfig
 
 	const i18nPrompt = resolveI18nPrompt(modeSlug, language)
 	return i18nPrompt?.customInstructions ?? mode.customInstructions ?? ""
+}
+
+export function getPromptTagsForMode(
+	modeSlug: string,
+	customModePrompts?: CustomModePrompts,
+	customModes?: ModeConfig[],
+): PromptTag[] {
+	const baseMode = getModeBySlug(modeSlug, customModes) || modes.find((mode) => mode.slug === modeSlug) || modes[0]
+	const promptComponent = customModePrompts?.[modeSlug]
+	const promptTags = new Set<PromptTag>()
+
+	if (
+		promptComponent?.roleDefinition !== undefined &&
+		promptComponent.roleDefinition !== (baseMode.roleDefinition || "")
+	) {
+		promptTags.add("systempromptmodified")
+	}
+
+	if (
+		promptComponent?.customInstructions !== undefined &&
+		promptComponent.customInstructions !== (baseMode.customInstructions || "")
+	) {
+		promptTags.add("rulesmodified")
+	}
+
+	if (promptTags.size > 0) {
+		promptTags.add("promptcustomized")
+	}
+
+	return Array.from(promptTags)
 }

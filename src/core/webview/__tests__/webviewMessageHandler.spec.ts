@@ -39,6 +39,22 @@ vi.mock("../diagnosticsHandler", () => ({
 
 import type { ModelRecord } from "@roo-code/types"
 
+const mockTerminalManager = {
+	setMessageSender: vi.fn(),
+	start: vi.fn(),
+	waitForReady: vi.fn(),
+	getPort: vi.fn(),
+	running: true,
+	write: vi.fn(),
+	resize: vi.fn(),
+	stop: vi.fn(),
+}
+
+vi.mock("../../cli-wrap", () => ({
+	getTerminalManager: vi.fn(() => mockTerminalManager),
+	getCostrictCliInstallDocsUrl: vi.fn(() => "https://docs.costrict.ai/en/cli/guide/installation"),
+}))
+
 import { webviewMessageHandler } from "../webviewMessageHandler"
 import type { ClineProvider } from "../ClineProvider"
 import { getModels } from "../../../api/providers/fetchers/modelCache"
@@ -185,6 +201,14 @@ import { resolveImageMentions } from "../../mentions/resolveImageMentions"
 describe("webviewMessageHandler - requestLmStudioModels", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		mockTerminalManager.setMessageSender.mockReset()
+		mockTerminalManager.start.mockReset()
+		mockTerminalManager.waitForReady.mockReset()
+		mockTerminalManager.getPort.mockReset()
+		mockTerminalManager.write.mockReset()
+		mockTerminalManager.resize.mockReset()
+		mockTerminalManager.stop.mockReset()
+		mockTerminalManager.running = true
 		mockClineProvider.getState = vi.fn().mockResolvedValue({
 			apiConfiguration: {
 				lmStudioModelId: "model-1",
@@ -1186,5 +1210,55 @@ describe("webviewMessageHandler - codebase index toggle", () => {
 			payload: true,
 		})
 		expect(initializeMonitorSpy).not.toHaveBeenCalled()
+	})
+})
+
+describe("webviewMessageHandler - CostrictCliStart", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+		mockTerminalManager.setMessageSender.mockReset()
+		mockTerminalManager.start.mockResolvedValue(undefined)
+		mockTerminalManager.waitForReady.mockResolvedValue(true)
+		mockTerminalManager.getPort.mockReturnValue(43111)
+		mockTerminalManager.running = true
+	})
+
+	it("does not post http-ready when CLI is missing and terminal never becomes running", async () => {
+		mockTerminalManager.running = false
+		mockTerminalManager.getPort.mockReturnValue(null)
+
+		await webviewMessageHandler(mockClineProvider, {
+			type: "CostrictCliStart",
+			cols: 120,
+			rows: 40,
+		} as any)
+
+		expect(mockTerminalManager.setMessageSender).toHaveBeenCalledTimes(1)
+		expect(mockTerminalManager.start).toHaveBeenCalledWith({ cols: 120, rows: 40 })
+		expect(mockTerminalManager.waitForReady).not.toHaveBeenCalled()
+		expect(mockClineProvider.postMessageToWebview).not.toHaveBeenCalledWith(
+			expect.objectContaining({ type: "CostrictCliHttpReady" }),
+		)
+	})
+
+	it("posts startup-timeout metadata without mixing it into missing-cli guidance", async () => {
+		mockTerminalManager.waitForReady.mockResolvedValue(false)
+
+		await webviewMessageHandler(mockClineProvider, {
+			type: "CostrictCliStart",
+			cols: 100,
+			rows: 30,
+		} as any)
+
+		expect(mockTerminalManager.waitForReady).toHaveBeenCalledTimes(1)
+		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
+			type: "CostrictCliHttpReady",
+			values: {
+				ready: false,
+				kind: "startup-timeout",
+				port: 43111,
+				docsUrl: "https://docs.costrict.ai/en/cli/guide/installation",
+			},
+		})
 	})
 })

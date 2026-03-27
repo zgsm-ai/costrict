@@ -305,6 +305,7 @@ export const ChatRowContent = ({
 		selectReason,
 		isAuto,
 		originModelId,
+		isFallbackActive,
 		firstTokenLatency,
 		tokensPerSecond,
 		totalDuration,
@@ -345,6 +346,7 @@ export const ChatRowContent = ({
 				info?.selectReason,
 				info?.isAuto,
 				info?.originModelId,
+				info?.isFallbackActive,
 				calculatedFirstTokenLatency,
 				calculatedTokensPerSecond,
 				calculatedTotalDuration,
@@ -385,16 +387,29 @@ export const ChatRowContent = ({
 	const successColor = "var(--vscode-charts-green)"
 	const linkColor = "var(--vscode-textLink-foreground)"
 	const cancelledColor = "var(--vscode-descriptionForeground)"
-	const getIconSpan = (iconName: string, color: string) => (
+	const getIconSpan = ({
+		iconName,
+		color,
+		width = 16,
+		height = 16,
+	}: {
+		iconName: string
+		color: string
+		width?: number
+		height?: number
+	}) => (
 		<div
 			style={{
-				width: 16,
-				height: 16,
+				width,
+				height,
 				display: "flex",
 				alignItems: "center",
 				justifyContent: "center",
 			}}>
-			<span className={`codicon codicon-${iconName}`} style={{ color, fontSize: 16, marginBottom: "-1.5px" }} />
+			<span
+				className={`codicon codicon-${iconName}`}
+				style={{ color, fontSize: width, marginBottom: "-1.5px" }}
+			/>
 		</div>
 	)
 	const [icon, title] = useMemo(() => {
@@ -474,18 +489,18 @@ export const ChatRowContent = ({
 				return [
 					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
 						apiReqCancelReason === "user_cancelled" ? (
-							getIconSpan("error", cancelledColor)
+							getIconSpan({ iconName: "error", color: cancelledColor })
 						) : (
-							getIconSpan("error", errorColor)
+							getIconSpan({ iconName: "error", color: errorColor })
 						)
 					) : cost !== null && cost !== undefined ? (
-						getIconSpan("arrow-swap", normalColor)
+						getIconSpan({ iconName: "arrow-swap", color: normalColor })
 					) : apiRequestFailedMessage ? (
-						getIconSpan("error", errorColor)
+						getIconSpan({ iconName: "error", color: errorColor })
 					) : isLast && isStreaming ? (
 						<ProgressIndicator />
 					) : (
-						getIconSpan("arrow-swap", normalColor)
+						getIconSpan({ iconName: "arrow-swap", color: errorColor })
 					),
 					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
 						apiReqCancelReason === "user_cancelled" ? (
@@ -1210,16 +1225,16 @@ export const ChatRowContent = ({
 	switch (message.type) {
 		case "say":
 			switch (message.say) {
-				case "auto_switch_model":
-					return (
-						<ErrorRow
-							deleteMessageTs={deleteMessageTs}
-							type="auto_switch_model"
-							message={message.text || ""}
-							expandable={true}
-							isLast={isLast}
-						/>
-					)
+				// case "auto_switch_model":
+				// 	return (
+				// 		<ErrorRow
+				// 			deleteMessageTs={deleteMessageTs}
+				// 			type="auto_switch_model"
+				// 			message={message.text || ""}
+				// 			expandable={true}
+				// 			isLast={isLast}
+				// 		/>
+				// 	)
 				case "diff_error":
 					return (
 						<ErrorRow
@@ -1320,14 +1335,29 @@ export const ChatRowContent = ({
 									isStreaming ? (
 										<ProgressIndicator />
 									) : (
-										getIconSpan("arrow-swap", normalColor)
+										getIconSpan({ iconName: "arrow-swap", color: normalColor })
 									)}
 									{title}
 									{(selectedLLM || originModelId) && !selectReason && (
-										<div
-											className="text-xs text-vscode-descriptionForeground border-vscode-dropdown-border/50 border px-1.5 py-0.5 rounded-lg"
-											title="Selected Model">
-											{isAuto ? t("chat:autoMode.selectedLLM", { selectedLLM }) : originModelId}
+										<div className="text-xs text-vscode-descriptionForeground border-vscode-dropdown-border/50 border px-1.5 py-0.5 rounded-lg">
+											{isFallbackActive
+												? originModelId
+												: isAuto
+													? t("chat:autoMode.selectedLLM", { selectedLLM })
+													: originModelId}
+											{isFallbackActive && (
+												<span
+													title={`${t("chat:autoMode.fallbackModelTooltip")} (${isAuto ? t("chat:autoMode.selectedLLM", { selectedLLM }) : originModelId})`}
+													style={{ display: "inline-flex" }}>
+													&nbsp;
+													{getIconSpan({
+														iconName: "warning",
+														color: normalColor,
+														width: 12,
+														height: 12,
+													})}
+												</span>
+											)}
 										</div>
 									)}
 								</div>
@@ -1647,17 +1677,17 @@ export const ChatRowContent = ({
 								) : (
 									<div className="flex justify-between cursor-pointer">
 										<div
-											className="grow px-2 py-1 wrap-anywhere rounded-lg transition-colors">
+											className="grow px-2 py-1 wrap-anywhere rounded-lg transition-colors"
+											onClick={(e) => {
+												e.stopPropagation()
+												if (!isStreaming) {
+													handleEditClick()
+												}
+											}}>
 											{message.text && message.text.length > 200 ? (
 												<>
 													<div
 														className="wrap-anywhere"
-														onClick={(e) => {
-															e.stopPropagation()
-															if (!isStreaming) {
-																handleEditClick()
-															}
-														}}
 														title={t("chat:queuedMessages.clickToEdit")}
 														style={{
 															wordBreak: "break-word",
@@ -1665,8 +1695,7 @@ export const ChatRowContent = ({
 															maxHeight: !isFeedbackExpanded ? "120px" : "none",
 															overflow: !isFeedbackExpanded ? "hidden" : "auto",
 															position: "relative",
-														}}
-													>
+														}}>
 														<Mention text={message.text} withShadow />
 													</div>
 													<div className={"flex gap-2 pr-1 justify-end"}>
@@ -1676,8 +1705,7 @@ export const ChatRowContent = ({
 																onClick={(e) => {
 																	e.stopPropagation()
 																	setIsFeedbackExpanded(true)
-																}}
-															>
+																}}>
 																{t("chat:markdown.expandPrompt")}
 															</button>
 														)}
@@ -1687,8 +1715,7 @@ export const ChatRowContent = ({
 																onClick={(e) => {
 																	e.stopPropagation()
 																	setIsFeedbackExpanded(false)
-																}}
-															>
+																}}>
 																{t("chat:markdown.collapsePrompt")}
 															</button>
 														)}

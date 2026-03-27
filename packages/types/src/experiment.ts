@@ -31,7 +31,6 @@ export type ExperimentId = z.infer<typeof experimentIdsSchema>
  */
 export const smartMistakeDetectionConfigSchema = z.object({
 	autoSwitchModel: z.boolean().optional(),
-	autoSwitchModelThreshold: z.number().optional(),
 })
 
 export type SmartMistakeDetectionConfig = z.infer<typeof smartMistakeDetectionConfigSchema>

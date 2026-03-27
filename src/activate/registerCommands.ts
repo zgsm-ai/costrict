@@ -88,7 +88,11 @@ export const registerCommands = (options: RegisterCommandOptions) => {
 	}
 }
 
-const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOptions): Record<CommandId, any> => ({
+export const getCommandsMap = ({
+	context,
+	outputChannel,
+	provider,
+}: RegisterCommandOptions): Record<CommandId, any> => ({
 	activationCompleted: () => {},
 	cloudButtonClicked: () => {
 		const visibleProvider = getVisibleProviderOrLog(outputChannel)
@@ -295,11 +299,18 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 				const PASTE_START = "\x1b[200~"
 				const PASTE_END = "\x1b[201~"
 				await terminalManager.write(PASTE_START + chatMessage + PASTE_END)
-				await visibleProvider.postMessageToWebview({
-					type: "action",
-					action: "switchTab",
-					tab: "cs-cli",
-				})
+				await Promise.all([
+					visibleProvider.postMessageToWebview({
+						type: "action",
+						action: "switchTab",
+						tab: "cs-cli",
+					}),
+					visibleProvider.postMessageToWebview({
+						type: "CostrictCliToast",
+						text: "File path inserted into CoStrict CLI",
+					}),
+				])
+				void vscode.window.showInformationMessage("File path inserted into CoStrict CLI")
 				return
 			}
 		}

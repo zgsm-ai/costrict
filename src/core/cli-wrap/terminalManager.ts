@@ -6,6 +6,36 @@ import { isJetbrainsPlatform } from "../../utils/platform"
 import { getContextSyncService } from "./contextSync"
 import { getShell } from "../../utils/shell"
 
+const COSTRICT_CLI_INSTALL_DOCS_URL = "https://docs.costrict.ai/en/cli/guide/installation"
+
+export type CostrictCliErrorKind = "missing-cli" | "start-failed" | "startup-timeout"
+
+const getCostrictCliErrorPayload = (
+	kind: Extract<CostrictCliErrorKind, "missing-cli" | "start-failed">,
+	fallbackError?: string,
+) => {
+	const normalizedError = fallbackError?.trim()
+
+	if (kind === "missing-cli") {
+		return {
+			error: `CoStrict CLI was not found on this machine.\r\nInstall it first: ${COSTRICT_CLI_INSTALL_DOCS_URL}`,
+			values: {
+				kind,
+				docsUrl: COSTRICT_CLI_INSTALL_DOCS_URL,
+			},
+		}
+	}
+
+	return {
+		error: normalizedError ?? "CoStrict CLI failed to start.",
+		values: {
+			kind,
+		},
+	}
+}
+
+export const getCostrictCliInstallDocsUrl = () => COSTRICT_CLI_INSTALL_DOCS_URL
+
 // Lazy load node-pty to avoid blocking extension activation if module is missing
 let pty: typeof import("node-pty") | null = null
 
@@ -28,7 +58,7 @@ export type MessageSender = (message: any) => Promise<void> | void
 interface IPty {
 	write(data: string): void
 	resize(cols: number, rows: number): void
-	kill(): void
+	kill(signal?: string): void
 	onData(listener: (data: string) => void): void
 	onExit(listener: (e: { exitCode: number }) => void): void
 }
@@ -60,7 +90,7 @@ export class TerminalManager {
 		return this.port
 	}
 
-	getEnvs (envs: any) {
+	getEnvs(envs: any) {
 		return {
 			...process.env,
 			COSTRICT_CALLER: "vscode",
@@ -83,11 +113,11 @@ export class TerminalManager {
 
 	private getCsCommand(): string {
 		const shell = getShell()
-		const opt = { 
-			stdio: "pipe", 
-			encoding: "utf-8", 
+		const opt = {
+			stdio: "pipe",
+			encoding: "utf-8",
 			// shell,
-			env: this.getEnvs({})
+			env: this.getEnvs({}),
 		} as ExecSyncOptionsWithStringEncoding
 
 		if (process.platform === "win32") {
@@ -107,7 +137,7 @@ export class TerminalManager {
 			} catch {
 				// fall through
 			}
-			
+
 			return "cs.exe"
 		}
 
@@ -119,7 +149,7 @@ export class TerminalManager {
 		} catch {
 			// fall through
 		}
-	
+
 		return "cs"
 	}
 
@@ -139,9 +169,10 @@ export class TerminalManager {
 		const env = this.getEnvs(options.env)
 
 		if (!this.isCsInstalled(env)) {
+			this.port = null
 			this.sendToWebview({
 				type: "CostrictCliError",
-				error: "Costrict CLI is not installed.\r\nPlease install Costrict CLI from https://docs.costrict.ai/en/cli/guide/installation",
+				...getCostrictCliErrorPayload("missing-cli"),
 			})
 			return
 		}
@@ -185,7 +216,15 @@ export class TerminalManager {
 		} catch (error) {
 			this.port = null
 			const errorMessage = error instanceof Error ? error.message : String(error)
-			this.sendToWebview({ type: "CostrictCliError", error: errorMessage })
+			const errorCode = error && typeof error === "object" ? (error as NodeJS.ErrnoException).code : undefined
+			const errorKind =
+				errorCode === "ENOENT" || /spawn .*ENOENT|not found|no such file or directory/i.test(errorMessage)
+					? "missing-cli"
+					: "start-failed"
+			this.sendToWebview({
+				type: "CostrictCliError",
+				...getCostrictCliErrorPayload(errorKind, errorMessage),
+			})
 			throw error
 		}
 	}
@@ -246,13 +285,13 @@ export class TerminalManager {
 		}
 	}
 
-	async stop(): Promise<void> {
+	async stop(signal?: string): Promise<void> {
 		// Stop syncing editor context
 		getContextSyncService().stop()
 
 		if (this.ptyProcess) {
 			try {
-				this.ptyProcess.kill()
+				this.ptyProcess.kill(signal)
 			} catch (error) {
 				// Log error but continue cleanup
 				const errorMessage = error instanceof Error ? error.message : String(error)

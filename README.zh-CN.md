@@ -61,6 +61,9 @@ English | [简体中文](./README.zh-CN.md)
       <a href="https://github.com/zgsm-ai/costrict-jetbrains-agent">
         <img src="https://img.shields.io/badge/GitHub-仓库-informational?style=for-the-badge" alt="JetBrains 仓库">
       </a>
+      <a href="https://costrict.ai/download">
+        <img src="https://img.shields.io/badge/下载-最新版本-success?style=for-the-badge" alt="下载">
+      </a>
     </td>
   </tr>
 </table>

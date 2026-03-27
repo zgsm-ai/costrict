@@ -15,6 +15,7 @@ import {
 	getDescription,
 	getFullModeDetails,
 	getModeSelection,
+	getPromptTagsForMode,
 	getRoleDefinition,
 	getWhenToUse,
 	modes,
@@ -755,6 +756,57 @@ describe("FileRestrictionError", () => {
 			"Tool 'apply_diff' in mode 'Markdown Editor' can only edit files matching pattern: \\.md$ (Markdown files only). Got: test.js",
 		)
 		expect(error.name).toBe("FileRestrictionError")
+	})
+})
+
+describe("getPromptTagsForMode", () => {
+	it("returns empty array when no prompt overrides exist", () => {
+		expect(getPromptTagsForMode("ask")).toEqual([])
+	})
+
+	it("returns systempromptmodified and promptcustomized when roleDefinition differs", () => {
+		expect(
+			getPromptTagsForMode("ask", {
+				ask: {
+					roleDefinition: "Modified ask role",
+				},
+			}),
+		).toEqual(["systempromptmodified", "promptcustomized"])
+	})
+
+	it("returns rulesmodified and promptcustomized when customInstructions differ", () => {
+		expect(
+			getPromptTagsForMode("ask", {
+				ask: {
+					customInstructions: "Modified ask instructions",
+				},
+			}),
+		).toEqual(["rulesmodified", "promptcustomized"])
+	})
+
+	it("compares overrides against custom mode definitions when present", () => {
+		const customModes: ModeConfig[] = [
+			{
+				slug: "code",
+				name: "Custom Code",
+				roleDefinition: "Custom Code Role",
+				customInstructions: "Custom Code Instructions",
+				groups: ["read"],
+			},
+		]
+
+		expect(
+			getPromptTagsForMode(
+				"code",
+				{
+					code: {
+						roleDefinition: "Custom Code Role",
+						customInstructions: "Changed Custom Code Instructions",
+					},
+				},
+				customModes,
+			),
+		).toEqual(["rulesmodified", "promptcustomized"])
 	})
 })
 

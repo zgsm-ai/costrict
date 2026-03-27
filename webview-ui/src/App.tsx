@@ -18,6 +18,7 @@ import SettingsView, { SettingsViewRef } from "./components/settings/SettingsVie
 import CodeReviewPage from "./components/code-review"
 import CodeReviewHistoryView from "./components/code-review/CodeReviewHistoryView"
 import CostrictCliView from "./components/costrict-cli/CostrictCliView"
+import LoadingView from "./components/LoadingView"
 import WelcomeView from "./components/welcome/WelcomeViewProvider"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
 import { CheckpointRestoreDialog } from "./components/chat/CheckpointRestoreDialog"
@@ -27,7 +28,6 @@ import ErrorBoundary from "./components/ErrorBoundary"
 // import { CloudView } from "./components/cloud/CloudView"
 import { useAddNonInteractiveClickListener } from "./components/ui/hooks/useNonInteractiveClick"
 import { TooltipProvider } from "./components/ui/tooltip"
-import logoSvg from "./assets/logo.svg?raw"
 import { STANDARD_TOOLTIP_DELAY, StandardTooltip } from "./components/ui/standard-tooltip"
 import { ZgsmAccountView } from "./components/cloud/ZgsmAccountView"
 import { TabContent, TabList, TabTrigger } from "./components/common/Tab"
@@ -339,7 +339,7 @@ const App = () => {
 	const tabs = useMemo(() => {
 		const baseTabs = [
 			{
-				label: "AGENT",
+				label: t("common:costrictCli.tabs.agent"),
 				value: "chat",
 				icon: "codicon-hubot",
 			},
@@ -348,13 +348,13 @@ const App = () => {
 		if (apiConfiguration?.apiProvider === "zgsm") {
 			baseTabs.push(
 				{
-					label: "CODE REVIEW",
+					label: t("common:costrictCli.tabs.codeReview"),
 					value: "codeReview",
 					icon: "codicon-code-review",
 					// icon: "codicon-search",
 				},
 				{
-					label: "CLI",
+					label: t("common:costrictCli.tabs.cli"),
 					value: "cs-cli",
 					icon: "codicon-terminal",
 				},
@@ -362,7 +362,7 @@ const App = () => {
 		}
 
 		return baseTabs
-	}, [apiConfiguration?.apiProvider])
+	}, [apiConfiguration?.apiProvider, t])
 
 	const resetTabs = useCallback(() => {
 		setTab("chat")
@@ -389,55 +389,7 @@ const App = () => {
 	}, [reviewTask.status, setReviewTask])
 
 	if (!didHydrateState) {
-		return (
-			<div className="fixed inset-0 flex flex-col bg-vscode-editor-background text-vscode-foreground">
-				{/* <div className="header flex items-center justify-between px-5 h-[44px] border-b border-vscode-panel-border">
-					<div className="flex items-center gap-4 text-sm opacity-80">
-						<div className="flex items-center gap-1">
-							<i className="codicon codicon-hubot" style={{ fontSize: "14px" }}></i>
-							<span>AGENT</span>
-						</div>
-					</div>
-				</div> */}
-				<div className="flex-1 flex items-center justify-center px-6">
-					<div className="flex flex-col items-center gap-5 text-center">
-						<div className="relative flex items-center justify-center">
-							<div className="absolute size-20 rounded-full bg-vscode-button-background/10 animate-ping" />
-							<div
-								className="relative flex size-16 items-center justify-center rounded-2xl border border-vscode-panel-border bg-vscode-sideBar-background shadow-[0_0_30px_rgba(0,0,0,0.18)] overflow-hidden"
-								style={{ animation: "loadingLogoFloat 1.8s ease-in-out infinite" }}>
-								<div
-									className="size-10 [&>svg]:w-full [&>svg]:h-full"
-									style={{ animation: "loadingLogoGlow 1.8s ease-in-out infinite" }}
-									dangerouslySetInnerHTML={{ __html: logoSvg }}
-								/>
-							</div>
-						</div>
-
-						<div className="flex flex-col items-center gap-2">
-							<div className="text-base font-medium tracking-[0.18em] text-vscode-foreground/90">
-								COSTRICT
-							</div>
-							<div className="flex items-center gap-2 text-sm text-vscode-descriptionForeground">
-								<span className="codicon codicon-loading codicon-modifier-spin text-base" />
-								<span>{t("common:ui.initializing_interface", "正在初始化界面...")}</span>
-							</div>
-						</div>
-
-						<style>
-							{`@keyframes loadingLogoFloat {
-								0%, 100% { transform: translateY(0) scale(1); }
-								50% { transform: translateY(-6px) scale(1.03); }
-							}
-							@keyframes loadingLogoGlow {
-								0%, 100% { opacity: 0.92; filter: drop-shadow(0 0 6px rgba(56, 139, 253, 0.14)); }
-								50% { opacity: 1; filter: drop-shadow(0 0 14px rgba(56, 139, 253, 0.28)); }
-							}`}
-						</style>
-					</div>
-				</div>
-			</div>
-		)
+		return <LoadingView />
 	}
 
 	// Do not conditionally load ChatView, it's expensive and there's state we
@@ -542,18 +494,6 @@ const App = () => {
 								<i
 									className="codicon codicon-history cursor-pointer p-0.5"
 									onClick={() => switchTab("codeReviewHistory")}></i>
-							</StandardTooltip>
-						</div>
-					)}
-					{tab === "cs-cli" && (
-						<div className="header-right flex absolute right-3 gap-1">
-							<StandardTooltip content="Restart CS-Cli">
-								<i
-									className="codicon codicon-refresh cursor-pointer p-0.5"
-									onClick={() => {
-										setDidHydrateSClitate(true)
-										vscode.postMessage({ type: "CostrictCliRestart" })
-									}}></i>
 							</StandardTooltip>
 						</div>
 					)}

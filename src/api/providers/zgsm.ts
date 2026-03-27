@@ -347,6 +347,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			"zgsm-provider": metadata?.provider,
 			"x-costrict-idea": getEditorType(),
 			"zgsm-project-path": encodeURI(workspacePath),
+			"zgsm-prompt-tags": metadata?.promptTags || "",
 			"x-caller": ["review", "security-review"].includes(metadata?.mode || "") ? "review-checker" : "chat",
 		}
 	}
@@ -471,6 +472,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 
 		requestOptions.extra_body = {
 			mode: metadata?.mode,
+			promptTags: metadata?.promptTags,
 		}
 
 		this.addMaxTokensIfNeeded(requestOptions, modelInfo)
@@ -507,6 +509,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				: undefined),
 			extra_body: {
 				prompt_mode: metadata?.mode,
+				promptTags: metadata?.promptTags,
 			},
 		}
 
