@@ -3116,6 +3116,15 @@ export class ClineProvider
 		await this.contextProxy.setValues(values)
 	}
 
+	async fixHistory() {
+		const { getStorageBasePath } = await import("../../utils/storage.js")
+		const basePath = await getStorageBasePath(this.contextProxy.globalStorageUri.fsPath)
+		const historyIndexPath = path.join(basePath, "tasks", "_index.json")
+		await fs.rm(historyIndexPath, { force: true })
+		await delay(1000)
+		await vscode.commands.executeCommand("workbench.action.closeWindow")
+	}
+
 	async fixCodebase() {
 		let answer = await vscode.window.showInformationMessage(
 			t("common:confirmation.reset_codebase"),
@@ -3201,7 +3210,7 @@ export class ClineProvider
 		const { getStorageBasePath } = await import("../../utils/storage.js")
 		const basePath = await getStorageBasePath(this.contextProxy.globalStorageUri.fsPath)
 		const taskDir = path.join(basePath, "tasks")
-		await fs.rm(taskDir, { recursive: true, force: true })
+		await fs.rm(taskDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
 		const homeDir = os.homedir()
 		const versionDir = path.join(homeDir, ".costrict", "share")
 		const versionFilePath = path.join(versionDir, "version.json")

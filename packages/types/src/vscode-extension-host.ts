@@ -490,6 +490,7 @@ export interface WebviewMessage {
 		| "costrictTelemetry"
 		| "fetchZgsmInviteCode"
 		| "fixCodebase"
+		| "fixHistory"
 		| "checkReviewSuggestion"
 		| "cancelReviewTask"
 		| "startCodereview"

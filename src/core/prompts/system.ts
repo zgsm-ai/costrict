@@ -137,9 +137,6 @@ async function generatePrompt(data: {
 		getSkillsSection(skillsManager, mode as string),
 	])
 
-	// Tools catalog is not included in the system prompt.
-	const toolsCatalog = ""
-
 	const usePurePrompts = modeConfig.pure === true
 
 	const disableSwitchMode = modeConfig.disableSwitchMode === true
@@ -156,7 +153,7 @@ async function generatePrompt(data: {
 
 ${usePurePrompts ? "" : markdownFormattingSection()}
 
-${usePurePrompts ? "" : useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}${toolsCatalog}
+${usePurePrompts ? "" : useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}
 
 ${usePurePrompts ? "" : useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
 

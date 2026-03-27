@@ -899,7 +899,8 @@
 			"import": "匯入",
 			"export": "匯出",
 			"reset": "重設",
-			"fixCodebase": "修正Codebase"
+			"fixCodebase": "修正Codebase",
+			"fixHistory": "修正歷史記錄索引"
 		}
 	},
 	"thinkingBudget": {

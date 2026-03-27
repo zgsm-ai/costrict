@@ -899,7 +899,8 @@
 			"import": "导入",
 			"export": "导出",
 			"reset": "重置",
-			"fixCodebase": "修复Codebase"
+			"fixCodebase": "修复Codebase",
+			"fixHistory": "修复历史记录索引"
 		}
 	},
 	"thinkingBudget": {

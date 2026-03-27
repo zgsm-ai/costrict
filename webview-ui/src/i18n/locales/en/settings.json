@@ -1006,7 +1006,8 @@
 			"import": "Import",
 			"export": "Export",
 			"reset": "Reset",
-			"fixCodebase": "Fix codebase"
+			"fixCodebase": "Fix codebase",
+			"fixHistory": "Fix history index"
 		}
 	},
 	"thinkingBudget": {
