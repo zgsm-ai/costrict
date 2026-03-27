@@ -2337,9 +2337,10 @@ export class ClineProvider
 		return this._activeTab
 	}
 
-	async postStateToWebview() {
-		// Suppress state pushes while the cs-cli tab is active to save resources
-		if (this._activeTab === "cs-cli") {
+	async postStateToWebview(options?: { force?: boolean }) {
+		// Suppress state pushes while the cs-cli tab is active to save resources,
+		// unless this is an explicit forced hydration for a newly launched webview.
+		if (this._activeTab === "cs-cli" && !options?.force) {
 			return
 		}
 		const state = await this.getStateToPostToWebview()

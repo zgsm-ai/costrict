@@ -111,7 +111,7 @@ Repository-wide indexing and RAG-based analysis with multi-model verification st
 - 🎛️ **API & Model Customization** - Built-in free models + support for Anthropic, OpenAI, OpenAI-compatible APIs, and local models
 - 📁 **Large Repository Context** - Automatic context inclusion with @ file/folder mentions
 - 🔧 **Mode Customization** - Multiple default modes (Code, Orchestrator) with custom mode support
-- 📝 **OpenSpec Integration** - Standardized change proposal workflows with `/openspec-init`
+- 📝 **[OpenSpec Integration](https://github.com/Fission-AI/OpenSpec)** - Standardized change proposal workflows with `/openspec-init`
 
 <img src="./assets/images/readme/more-feature_en.webp" alt="More Features" width="100%">
 

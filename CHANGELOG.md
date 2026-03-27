@@ -2,6 +2,17 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.5.3]
+
+- Enhance CoStrict CLI UX with improved terminal management and user interface
+- Add InlineToast component for better notification display
+- Add LoadingView component for improved loading state visualization
+- Update experimental settings with new configuration options
+- Enhance internationalization support across multiple languages
+- Update automatic model fallback
+- Update docs
+- Fix known issues
+
 ## [2.5.2]
 
 - Optimize startup performance

@@ -679,7 +679,7 @@ export const webviewMessageHandler = async (
 			const customModes = await provider.customModesManager.getCustomModes()
 			await updateGlobalState("customModes", customModes)
 
-			provider.postStateToWebview()
+			provider.postStateToWebview({ force: true })
 			provider.workspaceTracker?.initializeFilePaths() // Don't await.
 
 			getTheme().then((theme) => provider.postMessageToWebview({ type: "theme", text: JSON.stringify(theme) }))

@@ -80,6 +80,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 	const scheduleRefreshRef = useRef<(() => void) | null>(null)
 	const pasteShortcutFallbackRef = useRef<number | null>(null)
 	const toastTimerRef = useRef<number | null>(null)
+	const hasSentStartRef = useRef(false)
 	const liveRegionId = useId()
 	const restartDialogContentId = useId()
 	const restartDialogDescriptionId = useId()
@@ -179,6 +180,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 
 	// Initialize terminal
 	useEffect(() => {
+		hasSentStartRef.current = false
 		setStatus(restartCount > 0 ? "restarting" : "starting")
 		setErrorMessage(null)
 		setErrorKind(null)
@@ -364,8 +366,6 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			})
 		})
 
-		// Flag to track if initial fit has been done
-		let hasInitialFit = false
 		let resizeObserverTimer: number | null = null
 
 		const fitTerminal = () => {
@@ -381,9 +381,8 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			}
 
 			fitAddon.fit()
-			// Only send CostrictCliStart once after first successful fit.
-			if (!hasInitialFit && terminal.cols > 0 && terminal.rows > 0) {
-				hasInitialFit = true
+			if (!hasSentStartRef.current && terminal.cols > 0 && terminal.rows > 0) {
+				hasSentStartRef.current = true
 				vscode.postMessage({
 					type: "CostrictCliStart",
 					cols: terminal.cols,
@@ -417,6 +416,7 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			}
 			clearPendingPasteShortcutFallback()
 			scheduleRefreshRef.current = null
+			hasSentStartRef.current = false
 			resizeObserver.disconnect()
 			clipboardTarget.removeEventListener("paste", handlePaste, { capture: true })
 			clipboardTarget.removeEventListener("copy", handleCopy)

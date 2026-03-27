@@ -310,7 +310,6 @@ export const getCommandsMap = ({
 						text: "File path inserted into CoStrict CLI",
 					}),
 				])
-				void vscode.window.showInformationMessage("File path inserted into CoStrict CLI")
 				return
 			}
 		}

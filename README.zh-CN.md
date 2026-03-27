@@ -111,7 +111,7 @@ English | [简体中文](./README.zh-CN.md)
 - 🎛️ **API 与模型自定义** - 内置免费高级模型 + 支持 Anthropic、OpenAI、兼容 OpenAI 的 API 及本地模型
 - 📁 **大仓库上下文** - 自动纳入全仓库上下文，支持 @ 文件/文件夹提及
 - 🔧 **模式自定义** - 多种默认模式（Code、Orchestrator）+ 自定义模式支持
-- 📝 **OpenSpec 集成** - 通过 `/openspec-init` 初始化标准化变更提案工作流
+- 📝 **[OpenSpec 集成](https://github.com/Fission-AI/OpenSpec)** - 通过 `/openspec-init` 初始化标准化变更提案工作流
 - 🖱️ **快捷菜单** - 选中代码右键菜单，支持解释、修复、改进、注释、审查、日志、容错、简化、性能优化等功能
 
 <img src="./assets/images/readme/more-feature.webp" alt="更多特性" width="100%">

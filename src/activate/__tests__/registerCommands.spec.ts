@@ -158,6 +158,5 @@ describe("registerCommands", () => {
 			type: "CostrictCliToast",
 			text: "File path inserted into CoStrict CLI",
 		})
-		expect(vscode.window.showInformationMessage).toHaveBeenCalledWith("File path inserted into CoStrict CLI")
 	})
 })

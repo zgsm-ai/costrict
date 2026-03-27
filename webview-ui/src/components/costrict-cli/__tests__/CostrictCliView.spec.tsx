@@ -203,10 +203,9 @@ describe("CostrictCliView", () => {
 		expect(vscode.postMessage).not.toHaveBeenCalledWith({ type: "CostrictCliRestart" })
 	})
 
-	it("renders accessible clear and restart controls", () => {
+	it("renders an accessible restart control", () => {
 		render(<CostrictCliView isHidden={false} />)
 
-		expect(screen.getByRole("button", { name: "common:costrictCli.actions.clear" })).toBeInTheDocument()
 		expect(screen.getByRole("button", { name: "common:costrictCli.actions.restart" })).toHaveAttribute(
 			"aria-haspopup",
 			"dialog",
@@ -234,12 +233,10 @@ describe("CostrictCliView", () => {
 			)
 		})
 
-		expect(screen.getAllByText("common:costrictCli.status.exited").length).toBeGreaterThanOrEqual(2)
+		expect(screen.getByText("common:costrictCli.status.exited")).toBeInTheDocument()
 		expect(screen.getByText("common:costrictCli.exited.title")).toBeInTheDocument()
 		expect(screen.getByText("common:costrictCli.exited.description")).toBeInTheDocument()
-		expect(
-			screen.getAllByRole("button", { name: "common:costrictCli.actions.restart" }).length,
-		).toBeGreaterThanOrEqual(2)
+		expect(screen.getAllByRole("button", { name: "common:costrictCli.actions.restart" })).toHaveLength(2)
 		expect(screen.getByRole("region", { name: "common:costrictCli.aria.terminalPanel" })).toHaveAttribute(
 			"aria-busy",
 			"false",
@@ -477,7 +474,10 @@ describe("CostrictCliView", () => {
 
 		expect(result).toBe(false)
 		expect(preventDefaultSpy).toHaveBeenCalledTimes(1)
-		expect(vscode.postMessage).toHaveBeenCalledWith({ type: "CostrictCliStop" })
+		expect(vscode.postMessage).toHaveBeenCalledWith({
+			type: "CostrictCliStop",
+			values: { signal: "SIGKILL" },
+		})
 		expect(vi.mocked(copyToClipboard)).not.toHaveBeenCalled()
 
 		act(() => {
@@ -488,7 +488,7 @@ describe("CostrictCliView", () => {
 			)
 		})
 
-		expect(screen.getAllByText("common:costrictCli.status.exited").length).toBeGreaterThanOrEqual(2)
+		expect(screen.getByText("common:costrictCli.status.exited")).toBeInTheDocument()
 		expect(screen.getByText("common:costrictCli.exited.title")).toBeInTheDocument()
 		expect(screen.getByText("common:costrictCli.exited.description")).toBeInTheDocument()
 		expect(terminalState.write).toHaveBeenCalledWith(

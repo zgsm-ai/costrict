@@ -172,17 +172,13 @@ ${usePurePrompts ? "" : useLitePrompts ? getLiteRulesSection(cwd, settings, expe
 
 ${usePurePrompts ? "" : getSystemInfoSection(cwd, shell)}
 
-${
-	usePurePrompts
-		? ""
-		: await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
-				language: language ?? formatLanguage(await defaultLang()),
-				rooIgnoreInstructions,
-				settings,
-				shell,
-				useLitePrompts,
-			})
-}${
+${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
+	language: language ?? formatLanguage(await defaultLang()),
+	rooIgnoreInstructions,
+	settings,
+	shell,
+	useLitePrompts,
+})}${
 		zgsmCodeMode === "strict" && mode === "code"
 			? `\nWhen you begin, update, or finish any task listed in tasks.md, reflect that change immediately using the status syntax: [-] for ongoing work, [x] for finished work. Do not delay these updates.`
 			: ""

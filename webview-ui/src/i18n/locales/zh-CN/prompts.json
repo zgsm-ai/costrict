@@ -26,7 +26,10 @@
 			"read": "读取文件",
 			"edit": "编辑文件",
 			"command": "运行命令",
-			"mcp": "MCP服务"
+			"mcp": "MCP服务",
+			"question": "多选交互",
+			"sequential_thinking": "链式思考",
+			"file_outline": "结构解析"
 		},
 		"noTools": "无"
 	},
