@@ -1,18 +1,18 @@
 import { jwtDecode } from "jwt-decode"
 import { getClientId } from "../../../utils/getClientId"
 
-export class ZgsmAuthConfig {
-	private static instance: ZgsmAuthConfig
+export class CostrictAuthConfig {
+	private static instance: CostrictAuthConfig
 
 	private constructor() {
 		// Private constructor to prevent external instantiation
 	}
 
-	public static getInstance(): ZgsmAuthConfig {
-		if (!ZgsmAuthConfig.instance) {
-			ZgsmAuthConfig.instance = new ZgsmAuthConfig()
+	public static getInstance(): CostrictAuthConfig {
+		if (!CostrictAuthConfig.instance) {
+			CostrictAuthConfig.instance = new CostrictAuthConfig()
 		}
-		return ZgsmAuthConfig.instance
+		return CostrictAuthConfig.instance
 	}
 
 	/**

@@ -124,11 +124,11 @@ const ModesView = () => {
 	const displayModes = (modes || [])
 		.map((m) => (localRenames[m.slug] ? { ...m, name: localRenames[m.slug] } : m))
 		.filter((m) => {
-			if (m.apiProvider != null && apiConfiguration?.apiProvider !== "zgsm") {
+			if (m.apiProvider != null && apiConfiguration?.apiProvider !== "costrict") {
 				return false
 			}
 
-			return m.zgsmCodeModeGroup !== "hide"
+			return m.costrictCodeModeGroup !== "hide"
 		})
 
 	// Direct update functions
@@ -302,7 +302,7 @@ const ModesView = () => {
 	// Helper function to check if current mode is hidden
 	const isCurrentModeHidden = useCallback((): boolean => {
 		const currentMode = getCurrentMode()
-		return currentMode?.zgsmCodeModeGroup === "hide"
+		return currentMode?.costrictCodeModeGroup === "hide"
 	}, [getCurrentMode])
 
 	// Check if the current mode has rules to export
@@ -1356,8 +1356,8 @@ const ModesView = () => {
 										mode: currentMode.slug,
 										values: {
 											modelId:
-												apiConfiguration?.apiProvider === "zgsm"
-													? apiConfiguration?.zgsmModelId
+												apiConfiguration?.apiProvider === "costrict"
+													? apiConfiguration?.costrictModelId
 													: apiConfiguration?.apiModelId,
 										},
 									})

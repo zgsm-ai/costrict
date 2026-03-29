@@ -29,11 +29,11 @@ import ErrorBoundary from "./components/ErrorBoundary"
 import { useAddNonInteractiveClickListener } from "./components/ui/hooks/useNonInteractiveClick"
 import { TooltipProvider } from "./components/ui/tooltip"
 import { STANDARD_TOOLTIP_DELAY, StandardTooltip } from "./components/ui/standard-tooltip"
-import { ZgsmAccountView } from "./components/cloud/ZgsmAccountView"
+import { CostrictAccountView } from "./components/cloud/CostrictAccountView"
 import { TabContent, TabList, TabTrigger } from "./components/common/Tab"
 import { cn } from "./lib/utils"
 import { ReauthConfirmationDialog } from "./components/chat/ReauthConfirmationDialog"
-import { ZgsmCodebaseDisableConfirmDialog } from "./components/settings/ZgsmCodebaseDisableConfirmDialog"
+import { CostrictCodebaseDisableConfirmDialog } from "./components/settings/CostrictCodebaseDisableConfirmDialog"
 import { useTranslation } from "react-i18next"
 import { EXPERIMENT_IDS } from "@roo/experiments"
 
@@ -44,7 +44,7 @@ type Tab =
 	| "cs-cli"
 	| "marketplace"
 	| "cloud"
-	| "zgsm-account"
+	| "costrict-account"
 	| "codeReview"
 	// | "worktrees"
 	| "codeReviewHistory"
@@ -73,7 +73,7 @@ interface EditMessageDialogState {
 	images?: string[]
 }
 
-interface ZgsmCodebaseDisableConfirmDialogState {
+interface CostrictCodebaseDisableConfirmDialogState {
 	isOpen: boolean
 }
 
@@ -83,7 +83,7 @@ const MemoizedEditMessageDialog = React.memo(EditMessageDialog)
 const MemoizedReauthConfirmationDialog = React.memo(ReauthConfirmationDialog)
 const MemoizedCheckpointRestoreDialog = React.memo(CheckpointRestoreDialog)
 const MemoizedHumanRelayDialog = React.memo(HumanRelayDialog)
-const MemoizedZgsmCodebaseDisableConfirmDialog = React.memo(ZgsmCodebaseDisableConfirmDialog)
+const MemoizedCostrictCodebaseDisableConfirmDialog = React.memo(CostrictCodebaseDisableConfirmDialog)
 
 const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]>, Tab>> = {
 	chatButtonClicked: "chat",
@@ -91,7 +91,7 @@ const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]
 	historyButtonClicked: "history",
 	// marketplaceButtonClicked: "marketplace",
 	cloudButtonClicked: "cloud",
-	zgsmAccountButtonClicked: "zgsm-account",
+	costrictAccountButtonClicked: "costrict-account",
 	codeReviewButtonClicked: "codeReview",
 }
 
@@ -151,8 +151,8 @@ const App = () => {
 		images: [],
 	})
 
-	const [zgsmCodebaseDisableConfirmDialogState, setZgsmCodebaseDisableConfirmDialogState] =
-		useState<ZgsmCodebaseDisableConfirmDialogState>({
+	const [zgsmCodebaseDisableConfirmDialogState, setCostrictCodebaseDisableConfirmDialogState] =
+		useState<CostrictCodebaseDisableConfirmDialogState>({
 			isOpen: false,
 		})
 
@@ -164,7 +164,7 @@ const App = () => {
 		(newTab: Tab) => {
 			// Only check MDM compliance if mdmCompliant is explicitly false (meaning there's an MDM policy and user is non-compliant)
 			// If mdmCompliant is undefined or true, allow tab switching
-			if (mdmCompliant === false && newTab !== "cloud" && newTab !== "zgsm-account") {
+			if (mdmCompliant === false && newTab !== "cloud" && newTab !== "costrict-account") {
 				// Notify the user that authentication is required by their organization
 				// vscode.postMessage({ type: "showMdmAuthRequiredNotification" })
 				return
@@ -233,7 +233,7 @@ const App = () => {
 					// Handle other actions using the mapping
 					const newTab =
 						tabsByMessageAction[
-							message.action === "cloudButtonClicked" ? "zgsmAccountButtonClicked" : message.action
+							message.action === "cloudButtonClicked" ? "costrictAccountButtonClicked" : message.action
 						]
 					const section = message.values?.section as string | undefined
 					// const marketplaceTab = message.values?.marketplaceTab as string | undefined
@@ -273,8 +273,8 @@ const App = () => {
 				})
 			}
 
-			if (message.type === "showZgsmCodebaseDisableConfirmDialog") {
-				setZgsmCodebaseDisableConfirmDialogState({ isOpen: true })
+			if (message.type === "showCostrictCodebaseDisableConfirmDialog") {
+				setCostrictCodebaseDisableConfirmDialogState({ isOpen: true })
 			}
 
 			if (message.type === "acceptInput") {
@@ -345,7 +345,7 @@ const App = () => {
 			},
 		]
 
-		if (apiConfiguration?.apiProvider === "zgsm") {
+		if (apiConfiguration?.apiProvider === "costrict") {
 			baseTabs.push(
 				{
 					label: t("common:costrictCli.tabs.codeReview"),
@@ -417,8 +417,8 @@ const App = () => {
 					organizations={cloudOrganizations}
 				/>
 			)} */}
-			{tab === "zgsm-account" && (
-				<ZgsmAccountView apiConfiguration={apiConfiguration} onDone={() => switchTab("chat")} />
+			{tab === "costrict-account" && (
+				<CostrictAccountView apiConfiguration={apiConfiguration} onDone={() => switchTab("chat")} />
 			)}
 			{/* {tab === "worktrees" && <WorktreesView onDone={() => switchTab("chat")} />} */}
 			{tab === "codeReviewHistory" && <CodeReviewHistoryView onDone={() => switchTab("codeReview")} />}
@@ -517,7 +517,7 @@ const App = () => {
 							}}
 						/>
 					)}
-					{apiConfiguration.apiProvider === "zgsm" && didHydrateCliState && (
+					{apiConfiguration.apiProvider === "costrict" && didHydrateCliState && (
 						<CostrictCliView isHidden={tab !== "cs-cli"} />
 					)}
 				</TabContent>
@@ -593,16 +593,18 @@ const App = () => {
 				open={reauthConfirmationDialogState.isOpen}
 				onOpenChange={(open) => setReauthConfirmationDialogState((prev) => ({ ...prev, isOpen: open }))}
 				onConfirm={() => {
-					vscode.postMessage({ type: "zgsmLogin", apiConfiguration })
+					vscode.postMessage({ type: "costrictLogin", apiConfiguration })
 					setReauthConfirmationDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>
-			<MemoizedZgsmCodebaseDisableConfirmDialog
+			<MemoizedCostrictCodebaseDisableConfirmDialog
 				open={zgsmCodebaseDisableConfirmDialogState.isOpen}
-				onOpenChange={(open) => setZgsmCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: open }))}
+				onOpenChange={(open) =>
+					setCostrictCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: open }))
+				}
 				onConfirm={() => {
-					vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: false })
-					setZgsmCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: false }))
+					vscode.postMessage({ type: "costrictCodebaseIndexEnabled", bool: false })
+					setCostrictCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>
 		</>

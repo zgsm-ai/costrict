@@ -160,7 +160,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		// telemetrySetting,
 		soundEnabled,
 		soundVolume,
-		zgsmCodeMode,
+		costrictCodeMode,
 		// cloudIsAuthenticated,
 		messageQueue = [],
 		experiments,
@@ -1232,8 +1232,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const groupedMessages = useMemo(() => {
 		// Only filter out the launch ask and result messages - browser actions appear in chat
 		const filtered: ClineMessage[] = visibleMessages.filter((msg) => {
-			// Filter additional message types for zgsm provider
-			if (apiConfiguration?.apiProvider === "zgsm") {
+			// Filter additional message types for costrict provider
+			if (apiConfiguration?.apiProvider === "costrict") {
 				// Filter error messages
 				if (msg.say === "error") return false
 
@@ -1656,14 +1656,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const allModes = useMemo(
 		() =>
 			getAllModes(customModes).filter((v) => {
-				if (v.zgsmCodeModeGroup) {
-					if (v.zgsmCodeModeGroup === "hide") return false
-					if (!v.zgsmCodeModeGroup?.split(",").includes(zgsmCodeMode!)) return false
+				if (v.costrictCodeModeGroup) {
+					if (v.costrictCodeModeGroup === "hide") return false
+					if (!v.costrictCodeModeGroup?.split(",").includes(costrictCodeMode!)) return false
 				}
 
 				return true
 			}),
-		[customModes, zgsmCodeMode],
+		[customModes, costrictCodeMode],
 	)
 
 	// Function to handle mode switching

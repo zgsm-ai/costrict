@@ -9,7 +9,7 @@ describe("UISettings", () => {
 		automaticallyFocus: false,
 		collapseMarkdownWithoutScroll: false,
 		apiConfiguration: {
-			apiProvider: "zgsm",
+			apiProvider: "costrict",
 		},
 		enterBehavior: "send" as const,
 		experiments: {},

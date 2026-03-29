@@ -1,34 +1,34 @@
 import * as vscode from "vscode"
-import { ZgsmAuthService } from "./authService"
+import { CostrictAuthService } from "./authService"
 import type { ClineProvider } from "../../webview/ClineProvider"
 import { getCommand } from "../../../utils/commands"
 
-export class ZgsmAuthCommands {
-	private static instance: ZgsmAuthCommands
+export class CostrictAuthCommands {
+	private static instance: CostrictAuthCommands
 	private static clineProvider: ClineProvider
 
 	public static setProvider(clineProvider: ClineProvider): void {
-		ZgsmAuthCommands.clineProvider = clineProvider
+		CostrictAuthCommands.clineProvider = clineProvider
 	}
 
-	public static getInstance(): ZgsmAuthCommands {
-		if (!ZgsmAuthCommands.instance) {
-			if (!ZgsmAuthCommands.clineProvider) {
+	public static getInstance(): CostrictAuthCommands {
+		if (!CostrictAuthCommands.instance) {
+			if (!CostrictAuthCommands.clineProvider) {
 				// In a real application, initialize should have been called.
-				throw new Error("ZgsmAuthCommands not initialized")
+				throw new Error("CostrictAuthCommands not initialized")
 			}
 			// Initialize dependent services first
-			ZgsmAuthCommands.instance = new ZgsmAuthCommands()
+			CostrictAuthCommands.instance = new CostrictAuthCommands()
 		}
 
-		return ZgsmAuthCommands.instance!
+		return CostrictAuthCommands.instance!
 	}
 
 	/**
 	 * Set ClineProvider instance
 	 */
 	setProvider(clineProvider: ClineProvider): void {
-		ZgsmAuthCommands.clineProvider = clineProvider
+		CostrictAuthCommands.clineProvider = clineProvider
 	}
 
 	/**
@@ -64,7 +64,7 @@ export class ZgsmAuthCommands {
 	 */
 	public async handleLogin(): Promise<void> {
 		try {
-			const loginState = await ZgsmAuthService.getInstance()?.startLogin()
+			const loginState = await CostrictAuthService.getInstance()?.startLogin()
 			console.info(
 				`Login process has started, please complete login in the browser.\nState: ${loginState.state}\nMachineId: ${loginState.machineId}`,
 			)
@@ -78,7 +78,7 @@ export class ZgsmAuthCommands {
 	 */
 	public async handleLogout(): Promise<void> {
 		try {
-			await ZgsmAuthService.getInstance()?.logout()
+			await CostrictAuthService.getInstance()?.logout()
 			vscode.window.showInformationMessage("Successfully logged out")
 		} catch (error) {
 			vscode.window.showErrorMessage(`Logout failed: ${error}`)
@@ -90,7 +90,7 @@ export class ZgsmAuthCommands {
 	 */
 	private async handleCheckLoginStatus(): Promise<void> {
 		try {
-			const token = await ZgsmAuthService.getInstance()?.getCurrentAccessToken()
+			const token = await CostrictAuthService.getInstance()?.getCurrentAccessToken()
 
 			if (token) {
 				vscode.window.showInformationMessage("Currently logged in")
@@ -120,7 +120,7 @@ export class ZgsmAuthCommands {
 	/**
 	 * Get authentication service instance
 	 */
-	// getAuthService(): ZgsmAuthService {
+	// getAuthService(): CostrictAuthService {
 	getAuthService() {
 		// return this.authService
 	}

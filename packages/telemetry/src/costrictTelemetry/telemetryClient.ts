@@ -96,9 +96,9 @@ export class CostrictTelemetryClient extends BaseTelemetryClient {
 	private async getHeaders() {
 		const provider = this.providerRef?.deref() as unknown as ClineProvider
 		const { apiConfiguration } = await provider.getState()
-		const { zgsmAccessToken } = apiConfiguration
+		const { costrictAccessToken } = apiConfiguration
 		return {
-			Authorization: `Bearer ${zgsmAccessToken}`,
+			Authorization: `Bearer ${costrictAccessToken}`,
 			"X-Request-ID": uuidv7(),
 		}
 	}

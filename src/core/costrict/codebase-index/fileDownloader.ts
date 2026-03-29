@@ -7,7 +7,7 @@ import path from "path"
 import * as crypto from "crypto"
 import { createLogger, ILogger } from "../../../utils/logger"
 import { Package } from "../../../shared/package"
-import { ZgsmAuthApi, ZgsmAuthConfig } from "../auth"
+import { CostrictAuthApi, CostrictAuthConfig } from "../auth"
 
 /**
  * Download progress callback function type
@@ -52,8 +52,8 @@ export class FileDownloader {
 		packageInfo: PackageInfoResponse,
 		onProgress?: DownloadProgressCallback,
 	): Promise<string> {
-		const { zgsmBaseUrl } = await ZgsmAuthApi.getInstance().getApiConfiguration()
-		const baseUrl = zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+		const { costrictBaseUrl } = await CostrictAuthApi.getInstance().getApiConfiguration()
+		const baseUrl = costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 		const downloadUrl = `${baseUrl}/costrict${versionInfo.appUrl}`
 
 		this.abortController = new AbortController()

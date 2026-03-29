@@ -6,7 +6,7 @@ import retry from "async-retry"
 import { t } from "../../../i18n"
 import { ClineProvider } from "../../webview/ClineProvider"
 import { TelemetryService } from "@roo-code/telemetry"
-import { ZgsmAuthConfig } from "../auth"
+import { CostrictAuthConfig } from "../auth"
 import { getClientId } from "../../../utils/getClientId"
 import { ProviderSettings } from "@roo-code/types"
 
@@ -80,10 +80,10 @@ export class ErrorCodeManager {
 	private async fetchRemoteCodes(): Promise<IErrorMap> {
 		try {
 			const { language, apiConfiguration } = await this.provider.getState()
-			const baseUrl = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+			const baseUrl = apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 			const response = await axios.get(`${baseUrl}/costrict-static/error-code/error_codes_${language}.json`, {
 				headers: {
-					"zgsm-request-id": getClientId(),
+					"costrict-request-id": getClientId(),
 				},
 			})
 			return response.data
@@ -96,34 +96,34 @@ export class ErrorCodeManager {
 	}
 	/**
 	 * Parse ZGSM JWT token information
-	 * @param zgsmAccessToken JWT token
+	 * @param costrictAccessToken JWT token
 	 * @returns Object containing expiration time, update time, and old mode login status
 	 */
-	private parseZgsmTokenInfo(zgsmAccessToken?: string): {
-		zgsmApiKeyExpiredAt: string
-		zgsmApiKeyUpdatedAt: string
+	private parseCostrictTokenInfo(costrictAccessToken?: string): {
+		costrictApiKeyExpiredAt: string
+		costrictApiKeyUpdatedAt: string
 		isOldModeLoginState: boolean
 	} {
-		if (!zgsmAccessToken) {
+		if (!costrictAccessToken) {
 			return {
-				zgsmApiKeyExpiredAt: "",
-				zgsmApiKeyUpdatedAt: "",
+				costrictApiKeyExpiredAt: "",
+				costrictApiKeyUpdatedAt: "",
 				isOldModeLoginState: false,
 			}
 		}
 
 		try {
-			const { exp, iat, universal_id } = jwtDecode(zgsmAccessToken) as any
+			const { exp, iat, universal_id } = jwtDecode(costrictAccessToken) as any
 			return {
-				zgsmApiKeyExpiredAt: new Date(exp * 1000).toLocaleString(),
-				zgsmApiKeyUpdatedAt: new Date(iat * 1000).toLocaleString(),
+				costrictApiKeyExpiredAt: new Date(exp * 1000).toLocaleString(),
+				costrictApiKeyUpdatedAt: new Date(iat * 1000).toLocaleString(),
 				isOldModeLoginState: !universal_id,
 			}
 		} catch (error) {
 			console.error("Failed to decode ZGSM access token:", error)
 			return {
-				zgsmApiKeyExpiredAt: "",
-				zgsmApiKeyUpdatedAt: "",
+				costrictApiKeyExpiredAt: "",
+				costrictApiKeyUpdatedAt: "",
 				isOldModeLoginState: false,
 			}
 		}
@@ -134,28 +134,28 @@ export class ErrorCodeManager {
 	 * @param errorCode Error code
 	 * @returns Formatted error information object
 	 */
-	public async parseResponse(error: any, isZgsm = false, taskId: string, instanceId: string): Promise<string> {
+	public async parseResponse(error: any, isCostrict = false, taskId: string, instanceId: string): Promise<string> {
 		const isHtml = error?.headers && error.headers["content-type"] && error.headers["content-type"] === "text/html"
 		let rawError =
 			(error.error?.metadata?.raw ? JSON.stringify(error.error.metadata.raw, null, 2) : error.message) ||
 			"Unknown error"
 
-		if (!isZgsm) return rawError
+		if (!isCostrict) return rawError
 		this.unknownError.message = rawError
 		let status = error.status as number
 		const { code, headers } = error
 		const requestId = (headers && headers?.get?.("x-request-id")) ?? null
 		const { apiConfiguration, errorCode } = await this.provider.getState()
-		const { zgsmApiKeyExpiredAt, zgsmApiKeyUpdatedAt, isOldModeLoginState } = this.parseZgsmTokenInfo(
-			apiConfiguration.zgsmAccessToken,
+		const { costrictApiKeyExpiredAt, costrictApiKeyUpdatedAt, isOldModeLoginState } = this.parseCostrictTokenInfo(
+			apiConfiguration.costrictAccessToken,
 		)
 		const defaultError = {
 			401: {
 				message: isOldModeLoginState
 					? t("apiErrors:status.old_mode_token")
 					: t("apiErrors:status.401", {
-							exp: zgsmApiKeyExpiredAt || "-",
-							iat: zgsmApiKeyUpdatedAt || "-",
+							exp: costrictApiKeyExpiredAt || "-",
+							iat: costrictApiKeyUpdatedAt || "-",
 						}),
 				solution: t("apiErrors:solution.401"),
 			},
@@ -215,8 +215,8 @@ export class ErrorCodeManager {
 	 * @returns string
 	 */
 	private async handleInsufficientQuotaError(apiConfiguration: ProviderSettings): Promise<string> {
-		const hash = await this.hashToken(apiConfiguration.zgsmAccessToken || "")
-		const baseurl = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultLoginBaseUrl()
+		const hash = await this.hashToken(apiConfiguration.costrictAccessToken || "")
+		const baseurl = apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultLoginBaseUrl()
 
 		const solution1 = t("apiErrors:solution.ai-gateway.insufficientCredits")
 		const solution2 = t("apiErrors:solution.ai-gateway.quotaAcquisition")
@@ -235,8 +235,8 @@ export class ErrorCodeManager {
 	 * @returns string
 	 */
 	private async handleStarRequiredError(apiConfiguration: any): Promise<string> {
-		const hash = await this.hashToken(apiConfiguration.zgsmAccessToken || "")
-		const baseurl = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultLoginBaseUrl()
+		const hash = await this.hashToken(apiConfiguration.costrictAccessToken || "")
+		const baseurl = apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultLoginBaseUrl()
 
 		const solution1 = t("apiErrors:solution.ai-gateway.pleaseStarProject")
 		const solution2 = t("apiErrors:solution.ai-gateway.howToStar")

@@ -165,7 +165,7 @@ export interface ICodebaseIndexManager {
 	/**
 	 * Check and upgrade client
 	 */
-	checkAndUpgradeClient(): Promise<"firstInstall" | "failed" | "upgraded" | "noUpdate" | "needZgsm" | "updating">
+	checkAndUpgradeClient(): Promise<"firstInstall" | "failed" | "upgraded" | "noUpdate" | "needCostrict" | "updating">
 
 	/**
 	 * Set logger provider

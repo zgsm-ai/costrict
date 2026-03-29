@@ -196,7 +196,7 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 			provider = await openClineInNewTab({ context: this.context, outputChannel: this.outputChannel })
 			this.registerListeners(provider)
 		} else {
-			await vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
+			await vscode.commands.executeCommand(`${Package.commandIDPrefix}.SidebarProvider.focus`)
 
 			provider = this.sidebarProvider
 		}
@@ -220,7 +220,7 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 	}
 
 	public async resumeTask(taskId: string): Promise<void> {
-		await vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
+		await vscode.commands.executeCommand(`${Package.commandIDPrefix}.SidebarProvider.focus`)
 		await this.waitForWebviewLaunch(5_000)
 
 		const { historyItem } = await this.sidebarProvider.getTaskWithId(taskId)

@@ -111,10 +111,10 @@ export const globalSettingsSchema = z.object({
 	openRouterImageGenerationSelectedModel: z.string().optional(),
 
 	customCondensingPrompt: z.string().optional(),
-	// zgsm
-	useZgsmCustomConfig: z.boolean().optional(),
-	zgsmCodebaseIndexEnabled: z.boolean().optional(),
-	zgsmCodeMode: z.union([z.literal("vibe"), z.literal("strict"), z.literal("raw"), z.literal("plan")]).optional(),
+	// costrict
+	useCostrictCustomConfig: z.boolean().optional(),
+	costrictCodebaseIndexEnabled: z.boolean().optional(),
+	costrictCodeMode: z.union([z.literal("vibe"), z.literal("strict"), z.literal("raw"), z.literal("plan")]).optional(),
 
 	autoApprovalEnabled: z.boolean().optional(),
 	alwaysAllowReadOnly: z.boolean().optional(),
@@ -279,11 +279,11 @@ export type RooCodeSettings = GlobalSettings & ProviderSettings
  * SecretState
  */
 export const SECRET_STATE_KEYS = [
-	// zgsm
-	"zgsmAccessToken",
-	"zgsmRefreshToken",
-	"zgsmState",
-	// zgsm
+	// costrict
+	"costrictAccessToken",
+	"costrictRefreshToken",
+	"costrictState",
+	// costrict
 	"apiKey",
 	"openRouterApiKey",
 	"awsAccessKey",
@@ -353,7 +353,7 @@ export const isGlobalStateKey = (key: string): key is Keys<GlobalState> =>
 // Default settings when running evals (unless overridden).
 export const EVALS_SETTINGS: RooCodeSettings = {
 	apiProvider: "openrouter",
-	zgsmCodeMode: "vibe",
+	costrictCodeMode: "vibe",
 	lastShownAnnouncementId: "jul-09-2025-3-23-0",
 
 	pinnedApiConfigs: {},

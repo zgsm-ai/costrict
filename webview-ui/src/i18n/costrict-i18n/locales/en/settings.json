@@ -26,12 +26,12 @@
 		}
 	},
 	"providers": {
-		"getZgsmApiKey": "Login to CoStrict",
-		"getZgsmApiKeyAgain": "Re-login",
-		"zgsm": "CoStrict",
-		"zgsmApiKey": "CoStrict API Key",
-		"zgsmBaseUrl": "CoStrict Base URL",
-		"zgsmDefaultBaseUrl": "Default: {{zgsmBaseUrl}}",
+		"getCostrictApiKey": "Login to CoStrict",
+		"getCostrictApiKeyAgain": "Re-login",
+		"costrict": "CoStrict",
+		"costrictApiKey": "CoStrict API Key",
+		"costrictBaseUrl": "CoStrict Base URL",
+		"costrictDefaultBaseUrl": "Default: {{costrictBaseUrl}}",
 		"lmStudio": {
 			"description": "LM Studio allows you to run models locally on your computer. For instructions on how to get started, see their <a>quickstart guide</a>. You will also need to start LM Studio's <b>local server</b> feature to use it with this extension. <span>Note:</span> CoStrict uses complex prompts and works best with Claude models. Less capable models may not work as expected."
 		},
@@ -41,7 +41,7 @@
 		"customModel": {
 			"capabilities": "Configure the capabilities and pricing for your custom OpenAI-compatible model. Be careful when specifying the model capabilities, as they can affect how CoStrict performs."
 		},
-		"useZgsmCustomConfig": "Use custom configuration (debug enabled)",
+		"useCostrictCustomConfig": "Use custom configuration (debug enabled)",
 		"geminiCli": {
 			"projectIdDescription": "Specify your Google Cloud Project ID for enterprise or non-free tier access. Leave empty for automatic project discovery with personal accounts. If you encounter an API Error, it is recommended to fill in the Project ID."
 		},
@@ -150,7 +150,7 @@
 		"automaticFetch": "The extension automatically fetches the latest list of models available on <serviceLink>{{serviceName}}</serviceLink>. If you're unsure which model to choose, CoStrict works best with <defaultModelLink>{{defaultModelId}}</defaultModelLink>. You can also try searching \"free\" for no-cost options currently available."
 	},
 	"footer": {
-		"feedback": "If you have any questions or feedback, feel free to open an issue at <zgsmGithubLink>github.com/zgsm-ai/costrict</zgsmGithubLink>",
+		"feedback": "If you have any questions or feedback, feel free to open an issue at <costrictGithubLink>github.com/zgsm-ai/costrict</costrictGithubLink>",
 		"telemetry": {
 			"description": "Help improve CoStrict by sending anonymous usage data and error reports. No code, prompts, or personal information is ever sent. See our privacy policy for more details."
 		}

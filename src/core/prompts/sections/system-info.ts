@@ -1,5 +1,5 @@
 import os from "os"
-import { getOperatingSystem } from "../../../utils/zgsmUtils"
+import { getOperatingSystem } from "../../../utils/costrictUtils"
 
 export function getSystemInfoSection(cwd: string, shell?: string): string {
 	let details = `====

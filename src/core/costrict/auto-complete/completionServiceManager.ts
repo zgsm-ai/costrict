@@ -26,14 +26,14 @@ export class CompletionServiceManager {
 			vscode.languages.registerInlineCompletionItemProvider({ pattern: "**" }, this.inlineCompletionProvider),
 		)
 		this.context.subscriptions.push(
-			vscode.commands.registerCommand("zgsm-completion.shortKeyCut", async () => {
+			vscode.commands.registerCommand("costrict-completion.shortKeyCut", async () => {
 				await this.context.workspaceState.update("shortCutKeys", true)
 				await vscode.commands.executeCommand("editor.action.inlineSuggest.trigger")
 			}),
 		)
 		this.context.subscriptions.push(
 			vscode.commands.registerCommand(
-				"zgsm-completion.logAutocompleteOutcome",
+				"costrict-completion.logAutocompleteOutcome",
 				async (completionId: string, completionProvider: CompletionProvider) => {
 					completionProvider.accept(completionId)
 				},

@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from "react"
 import axios from "axios"
-import type { ProviderSettings, ZgsmUserInfo } from "@roo-code/types"
+import type { ProviderSettings, CostrictUserInfo } from "@roo-code/types"
 import { TelemetryEventName } from "@roo-code/types"
 import { telemetryClient } from "@src/utils/TelemetryClient"
 
-export interface ZgsmUserData {
-	userInfo: ZgsmUserInfo | null
+export interface CostrictUserData {
+	userInfo: CostrictUserInfo | null
 	logoPic: string
 	hash: string
 	isAuthenticated: boolean
@@ -59,8 +59,8 @@ export async function imageUrlToBase64(url: string): Promise<string | null> {
 	}
 }
 
-export function useZgsmUserInfo(tokenOrConfig?: string | ProviderSettings): ZgsmUserData {
-	const [data, setData] = useState<ZgsmUserData>({
+export function useCostrictUserInfo(tokenOrConfig?: string | ProviderSettings): CostrictUserData {
+	const [data, setData] = useState<CostrictUserData>({
 		userInfo: null,
 		logoPic: "",
 		hash: "",
@@ -69,12 +69,12 @@ export function useZgsmUserInfo(tokenOrConfig?: string | ProviderSettings): Zgsm
 
 	const cacheRef = useRef<{
 		token?: string
-		result?: ZgsmUserData
+		result?: CostrictUserData
 		isProcessing: boolean
 	}>({ isProcessing: false })
 
 	useEffect(() => {
-		const token = typeof tokenOrConfig === "string" ? tokenOrConfig : tokenOrConfig?.zgsmAccessToken
+		const token = typeof tokenOrConfig === "string" ? tokenOrConfig : tokenOrConfig?.costrictAccessToken
 
 		if (!token) {
 			setData((prevData) => {
@@ -107,7 +107,7 @@ export function useZgsmUserInfo(tokenOrConfig?: string | ProviderSettings): Zgsm
 				const parsedJwt = parseJwt(token)
 
 				const id = parsedJwt.universal_id
-				const userInfo: ZgsmUserInfo = {
+				const userInfo: CostrictUserInfo = {
 					id,
 					name:
 						parsedJwt?.properties?.oauth_GitHub_username ||
@@ -126,7 +126,7 @@ export function useZgsmUserInfo(tokenOrConfig?: string | ProviderSettings): Zgsm
 					hashToken(token),
 				])
 
-				const result: ZgsmUserData = {
+				const result: CostrictUserData = {
 					userInfo,
 					logoPic: logoPic || "",
 					hash,
@@ -141,7 +141,7 @@ export function useZgsmUserInfo(tokenOrConfig?: string | ProviderSettings): Zgsm
 				setData(result)
 			} catch (error) {
 				console.error("Failed to parse JWT token:", error)
-				const errorResult: ZgsmUserData = {
+				const errorResult: CostrictUserData = {
 					userInfo: null,
 					logoPic: "",
 					hash: "",

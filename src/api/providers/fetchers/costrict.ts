@@ -1,11 +1,11 @@
 import axios from "axios"
 import { v7 as uuidv7 } from "uuid"
 import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
-import type { InviteCodeInfo, IZgsmModelResponseData, QuotaInfo } from "@roo-code/types"
+import type { InviteCodeInfo, ICostrictModelResponseData, QuotaInfo } from "@roo-code/types"
 import { readModels } from "./modelCache"
-import { ZgsmAuthService } from "../../../core/costrict/auth"
+import { CostrictAuthService } from "../../../core/costrict/auth"
 
-export async function getZgsmModels(baseUrl?: string, apiKey?: string, openAiHeaders?: Record<string, string>) {
+export async function getCostrictModels(baseUrl?: string, apiKey?: string, openAiHeaders?: Record<string, string>) {
 	const requestId = uuidv7()
 
 	try {
@@ -19,7 +19,7 @@ export async function getZgsmModels(baseUrl?: string, apiKey?: string, openAiHea
 		if (!URL.canParse(trimmedBaseUrl)) {
 			return []
 		}
-		const { id } = (await ZgsmAuthService.getInstance()?.getUserInfo()) || {}
+		const { id } = (await CostrictAuthService.getInstance()?.getUserInfo()) || {}
 
 		const config: Record<string, any> = {}
 		const headers: Record<string, string> = {
@@ -39,19 +39,19 @@ export async function getZgsmModels(baseUrl?: string, apiKey?: string, openAiHea
 
 		const response = await axios.get(`${baseUrl}/ai-gateway/api/v1/models`, config)
 		const fullResponseData = response.data?.data || []
-		return fullResponseData as Array<IZgsmModelResponseData>
+		return fullResponseData as Array<ICostrictModelResponseData>
 	} catch (error) {
 		console.warn(
-			`Error fetching zgsmModels from [${requestId}|${baseUrl}/ai-gateway/api/v1/models]:`,
+			`Error fetching costrictModels from [${requestId}|${baseUrl}/ai-gateway/api/v1/models]:`,
 			error.message,
 		)
-		const modelCache = (await readModels("zgsm")) || {}
+		const modelCache = (await readModels("costrict")) || {}
 
 		return Object.keys(modelCache).map((key) => modelCache[key])
 	}
 }
 
-export async function fetchZgsmQuotaInfo(baseUrl?: string, apiKey?: string): Promise<QuotaInfo | null> {
+export async function fetchCostrictQuotaInfo(baseUrl?: string, apiKey?: string): Promise<QuotaInfo | null> {
 	const requestId = uuidv7()
 	try {
 		if (!baseUrl || !apiKey) {
@@ -80,14 +80,14 @@ export async function fetchZgsmQuotaInfo(baseUrl?: string, apiKey?: string): Pro
 		return response?.data?.data as QuotaInfo
 	} catch (error) {
 		console.warn(
-			`Error fetching ZgsmQuotaInfo from [${requestId}|${baseUrl}/quota-manager/api/v1/quota]:`,
+			`Error fetching CostrictQuotaInfo from [${requestId}|${baseUrl}/quota-manager/api/v1/quota]:`,
 			error.message,
 		)
 		return null
 	}
 }
 
-export async function fetchZgsmInviteCode(baseUrl?: string, apiKey?: string): Promise<InviteCodeInfo | null> {
+export async function fetchCostrictInviteCode(baseUrl?: string, apiKey?: string): Promise<InviteCodeInfo | null> {
 	const requestId = uuidv7()
 
 	try {
@@ -118,7 +118,7 @@ export async function fetchZgsmInviteCode(baseUrl?: string, apiKey?: string): Pr
 		return response?.data?.data as InviteCodeInfo
 	} catch (error) {
 		console.warn(
-			`Error fetching ZgsmInviteCode from [${requestId}|${baseUrl}/quota-manager/api/v1/quota]:`,
+			`Error fetching CostrictInviteCode from [${requestId}|${baseUrl}/quota-manager/api/v1/quota]:`,
 			error.message,
 		)
 		return null

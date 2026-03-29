@@ -1,5 +1,5 @@
 import { getModelsFromCache } from "../../api/providers/fetchers/modelCache"
-import { zgsmModelsConfig, getModelId, type ProviderSettings } from "@roo-code/types"
+import { costrictModelsConfig, getModelId, type ProviderSettings } from "@roo-code/types"
 import { buildApiHandler, type ApiHandler } from "../../api"
 
 /**
@@ -186,7 +186,7 @@ export class ModelFallbackManager {
 		// Create a shallow copy of the config with the fallback model ID
 		const fallbackConfig: ProviderSettings = {
 			...this.baseApiConfiguration,
-			zgsmModelId: this.activeModelId,
+			costrictModelId: this.activeModelId,
 		}
 
 		return buildApiHandler(fallbackConfig) as ApiHandler & Record<string, any>
@@ -272,11 +272,11 @@ export class ModelFallbackManager {
 	 * 5. Pick the first candidate (deterministic, not random)
 	 */
 	private selectFallbackModel(): string | undefined {
-		const models = getModelsFromCache("zgsm") || {}
+		const models = getModelsFromCache("costrict") || {}
 		const now = Date.now()
 
 		const currentModelInfo = models[this.activeModelId]
-		const currentContextWindow = currentModelInfo?.contextWindow ?? zgsmModelsConfig.default.contextWindow
+		const currentContextWindow = currentModelInfo?.contextWindow ?? costrictModelsConfig.default.contextWindow
 
 		const candidates = Object.entries(models)
 			.filter(([modelId]) => {

@@ -1,17 +1,17 @@
 // Export storage module
-export { ZgsmAuthStorage } from "./authStorage"
+export { CostrictAuthStorage } from "./authStorage"
 
 // Export API module
-export { ZgsmAuthApi } from "./authApi"
+export { CostrictAuthApi } from "./authApi"
 
 // Export configuration module
-export { ZgsmAuthConfig } from "./authConfig"
+export { CostrictAuthConfig } from "./authConfig"
 
 // Export command handlers
-export { ZgsmAuthCommands } from "./authCommands"
+export { CostrictAuthCommands } from "./authCommands"
 
 // Export main authentication service
-export { ZgsmAuthService } from "./authService"
+export { CostrictAuthService } from "./authService"
 
 // Export type definitions
 export * from "./types"

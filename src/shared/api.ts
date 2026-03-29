@@ -112,7 +112,7 @@ export const getModelMaxOutputTokens = ({
 	modelId: string
 	model: ModelInfo
 	settings?: ProviderSettings
-	format?: "anthropic" | "openai" | "gemini" | "openrouter" | "zgsm"
+	format?: "anthropic" | "openai" | "gemini" | "openrouter" | "costrict"
 }): number | undefined => {
 	if (shouldUseReasoningBudget({ model, settings })) {
 		return settings?.modelMaxTokens || DEFAULT_HYBRID_REASONING_MODEL_MAX_TOKENS
@@ -168,7 +168,7 @@ type CommonFetchParams = {
 // If a new dynamic provider is added in packages/types, this will fail to compile
 // until a corresponding entry is added here.
 const dynamicProviderExtras = {
-	zgsm: {} as { baseUrl?: string; apiKey?: string; openAiHeaders?: Record<string, string> },
+	costrict: {} as { baseUrl?: string; apiKey?: string; openAiHeaders?: Record<string, string> },
 	openrouter: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
 	"vercel-ai-gateway": {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
 	litellm: {} as { apiKey: string; baseUrl: string },

@@ -2,7 +2,7 @@ import i18next from "i18next"
 import * as fs from "fs"
 import * as path from "path"
 import { LanguageResources, TranslationResource } from "./types"
-import { ZGSM_LANGUAGES } from "../../shared/language"
+import { COSTRICT_LANGUAGES } from "../../shared/language"
 
 // Load translations from directory
 const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
@@ -15,7 +15,7 @@ const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
 			return result
 		}
 
-		const ALLOW_LANGUAGES = Object.keys(ZGSM_LANGUAGES)
+		const ALLOW_LANGUAGES = Object.keys(COSTRICT_LANGUAGES)
 		const languageDirs = fs
 			.readdirSync(dirPath, { withFileTypes: true })
 			.filter((dirent: { isDirectory: () => boolean }) => dirent.isDirectory())
@@ -49,16 +49,16 @@ const loadTranslationsFromDir = (dirPath: string): LanguageResources => {
 	return result
 }
 
-// Load zgsm backend translations
-export const zgsmTranslations = loadTranslationsFromDir(path.join(__dirname, "i18n", "costrict-i18n", "locales"))
-console.log(`Loaded CoStrict backend translations for languages: ${Object.keys(zgsmTranslations).join(", ")}`)
+// Load costrict backend translations
+export const costrictTranslations = loadTranslationsFromDir(path.join(__dirname, "i18n", "costrict-i18n", "locales"))
+console.log(`Loaded CoStrict backend translations for languages: ${Object.keys(costrictTranslations).join(", ")}`)
 
 // Initialize i18next
 i18next.init({
 	lng: "en",
 	fallbackLng: "en",
 	debug: false,
-	resources: zgsmTranslations,
+	resources: costrictTranslations,
 	interpolation: {
 		escapeValue: false,
 	},
@@ -79,21 +79,21 @@ const mergeTranslations = (base: TranslationResource, override: TranslationResou
 
 export const mergeLanguageResources = (
 	currentTranslations: LanguageResources,
-	zgsmTranslations: LanguageResources,
+	costrictTranslations: LanguageResources,
 ): LanguageResources => {
 	const mergedTranslations: LanguageResources = {}
 
 	// Merge CoStrict translations
-	for (const language in zgsmTranslations) {
+	for (const language in costrictTranslations) {
 		if (!mergedTranslations[language]) {
 			mergedTranslations[language] = {}
 		}
 
-		for (const namespace in zgsmTranslations[language]) {
+		for (const namespace in costrictTranslations[language]) {
 			const currentContent = currentTranslations[language]?.[namespace] || {}
-			const zgsmContent = zgsmTranslations[language][namespace]
+			const costrictContent = costrictTranslations[language][namespace]
 
-			mergedTranslations[language][namespace] = mergeTranslations(currentContent, zgsmContent)
+			mergedTranslations[language][namespace] = mergeTranslations(currentContent, costrictContent)
 		}
 	}
 
@@ -122,7 +122,7 @@ export const registerRefreshFunction = (fn: () => void) => {
 }
 
 // Refresh all registered functions when language changes
-export const changeZgsmLanguage = () => {
+export const changeCostrictLanguage = () => {
 	// Execute all registered refresh functions
 	languageRefreshFuncs.forEach((fn) => fn())
 }

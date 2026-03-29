@@ -28,7 +28,7 @@ import { v7 as uuidv7 } from "uuid"
 import { createLogger, ILogger } from "../../../utils/logger"
 import { Package } from "../../../shared/package"
 import { getClientId } from "../../../utils/getClientId"
-import { ZgsmAuthApi, ZgsmAuthConfig } from "../auth"
+import { CostrictAuthApi, CostrictAuthConfig } from "../auth"
 import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
 // import { DEFAULT_HEADERS } from "../../../api/providers/constants"
 
@@ -94,8 +94,8 @@ export class CodebaseIndexClient {
 	 * @param endpoint Server endpoint address
 	 */
 	public async getServerEndpoint() {
-		const { zgsmBaseUrl } = await ZgsmAuthApi.getInstance().getApiConfiguration()
-		return zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+		const { costrictBaseUrl } = await CostrictAuthApi.getInstance().getApiConfiguration()
+		return costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 	}
 
 	/**

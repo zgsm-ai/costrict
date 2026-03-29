@@ -118,7 +118,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			reviewTask,
 			automaticallyFocus,
 			ttsEnabled,
-			zgsmCodeMode,
+			costrictCodeMode,
 			// lockApiConfigAcrossModes,
 		} = useExtensionState()
 		const selectedProviderModels = useMemo(() => {
@@ -491,7 +491,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								fileSearchResults,
 								allModes,
 								commands,
-								zgsmCodeMode,
+								costrictCodeMode,
 							)
 							const optionsLength = options.length
 
@@ -530,7 +530,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							fileSearchResults,
 							allModes,
 							commands,
-							zgsmCodeMode,
+							costrictCodeMode,
 						)[selectedMenuIndex]
 						if (
 							selectedOption &&
@@ -625,7 +625,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				fileSearchResults,
 				allModes,
 				commands,
-				zgsmCodeMode,
+				costrictCodeMode,
 				handleMentionSelect,
 				enterBehavior,
 				resetHistoryNavigation,
@@ -1113,7 +1113,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									selectedType={selectedType}
 									queryItems={queryItems}
 									modes={allModes}
-									zgsmCodeMode={zgsmCodeMode ?? "vibe"}
+									costrictCodeMode={costrictCodeMode ?? "vibe"}
 									loading={searchLoading}
 									dynamicSearchResults={fileSearchResults}
 									commands={commands}
@@ -1511,7 +1511,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								isEditMode={isEditMode}
 								isStreaming={isStreaming}
 								className="min-w-12 text-ellipsis overflow-hidden flex-shrink bg-vscode-input-background"
-								selectedProvider={apiConfiguration.apiProvider || "zgsm"}
+								selectedProvider={apiConfiguration.apiProvider || "costrict"}
 								apiConfiguration={apiConfiguration}
 								organizationAllowList={organizationAllowList}
 								setApiConfigurationField={setApiConfigurationField}

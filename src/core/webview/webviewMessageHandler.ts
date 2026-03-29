@@ -69,7 +69,7 @@ import { resolveImageMentions } from "../mentions/resolveImageMentions"
 import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { getWorkspacePath } from "../../utils/path"
 import { isPathOutsideWorkspace } from "../../utils/pathUtils"
-import { Mode, defaultModeSlug, ZgsmCodeMode } from "../../shared/modes"
+import { Mode, defaultModeSlug, CostrictCodeMode } from "../../shared/modes"
 import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
 import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
@@ -82,14 +82,14 @@ const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 // const pendingIndexStatusRequests = new Map<string, Promise<any>>()
 
 import { MarketplaceManager, MarketplaceItemType } from "../../services/marketplace"
-import { ZgsmAuthConfig, ZgsmAuthService, ZgsmAuthStorage } from "../costrict/auth"
+import { CostrictAuthConfig, CostrictAuthService, CostrictAuthStorage } from "../costrict/auth"
 import { CodeReviewService } from "../costrict/code-review"
-import { ZgsmCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
+import { CostrictCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
 import { getTerminalManager, getCostrictCliInstallDocsUrl } from "../cli-wrap"
 import { ErrorCodeManager } from "../costrict/error-code"
 import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
 import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-event-monitor"
-import { fetchZgsmQuotaInfo, fetchZgsmInviteCode } from "../../api/providers/fetchers/zgsm"
+import { fetchCostrictQuotaInfo, fetchCostrictInviteCode } from "../../api/providers/fetchers/costrict"
 import { initNotificationService } from "../costrict/notification"
 import { installGitHubSkills } from "../../services/skills/github-skills-installer"
 import delay from "delay"
@@ -110,7 +110,7 @@ import {
 	handleCheckoutBranch,
 } from "./worktree"
 import { isJetbrainsPlatform } from "../../utils/platform"
-import { showFileDiffFromGitStatus } from "../../utils/zgsmUtils"
+import { showFileDiffFromGitStatus } from "../../utils/costrictUtils"
 import { ReviewTargetType } from "../../shared/codeReview"
 
 let webviewDidLaunchTimer: NodeJS.Timeout | undefined
@@ -562,7 +562,7 @@ export const webviewMessageHandler = async (
 	}
 
 	switch (message.type) {
-		case "zgsmProviderTip": {
+		case "costrictProviderTip": {
 			const { tipType = "", msg = "" } = message.values || {}
 
 			if (!tipType || !msg) break
@@ -577,14 +577,14 @@ export const webviewMessageHandler = async (
 
 			break
 		}
-		case "zgsmLogin": {
+		case "costrictLogin": {
 			try {
 				TelemetryService.instance.captureEvent(TelemetryEventName.AUTHENTICATION_INITIATED)
 				const currentConfigName = getGlobalState("currentApiConfigName") || "default"
 				if (message.apiConfiguration) {
 					await provider.upsertProviderProfile(currentConfigName, message.apiConfiguration)
 				}
-				await provider.getZgsmAuthCommands?.()?.handleLogin()
+				await provider.getCostrictAuthCommands?.()?.handleLogin()
 			} catch (error) {
 				provider.log(`AuthService#login failed: ${error}`)
 				vscode.window.showErrorMessage("Sign in failed.")
@@ -592,9 +592,9 @@ export const webviewMessageHandler = async (
 
 			break
 		}
-		case "zgsmLogout": {
+		case "costrictLogout": {
 			try {
-				await provider.getZgsmAuthCommands?.()?.handleLogout()
+				await provider.getCostrictAuthCommands?.()?.handleLogout()
 				await provider.postStateToWebview()
 			} catch (error) {
 				provider.log(`AuthService#logout failed: ${error}`)
@@ -610,8 +610,8 @@ export const webviewMessageHandler = async (
 			}
 			break
 		}
-		case "showZgsmCodebaseDisableConfirmDialog": {
-			await provider.postMessageToWebview({ type: "showZgsmCodebaseDisableConfirmDialog" })
+		case "showCostrictCodebaseDisableConfirmDialog": {
+			await provider.postMessageToWebview({ type: "showCostrictCodebaseDisableConfirmDialog" })
 			break
 		}
 		case "checkReviewSuggestion":
@@ -759,8 +759,8 @@ export const webviewMessageHandler = async (
 				// Deferred background work — only needed once the webview is ready
 				void flushModels(
 					{
-						provider: "zgsm",
-						baseUrl: provider.getValue("zgsmBaseUrl"),
+						provider: "costrict",
+						baseUrl: provider.getValue("costrictBaseUrl"),
 					},
 					true,
 					(models: ModelRecord) => {
@@ -771,7 +771,7 @@ export const webviewMessageHandler = async (
 							fullResponseData.push(value)
 						}
 						provider.postMessageToWebview({
-							type: "zgsmModels",
+							type: "costrictModels",
 							openAiModels,
 							fullResponseData,
 						})
@@ -1143,14 +1143,14 @@ export const webviewMessageHandler = async (
 				provider: routerNameFlush,
 			} as GetModelsOptions
 
-			if (opt.provider === "zgsm") {
-				opt.baseUrl = apiConfiguration?.zgsmBaseUrl
-				opt.apiKey = apiConfiguration?.zgsmAccessToken
+			if (opt.provider === "costrict") {
+				opt.baseUrl = apiConfiguration?.costrictBaseUrl
+				opt.apiKey = apiConfiguration?.costrictAccessToken
 				opt.openAiHeaders = apiConfiguration?.openAiHeaders
 			}
 
 			await flushModels(opt, true, (models: ModelRecord) => {
-				if (apiConfiguration?.apiProvider === "zgsm") {
+				if (apiConfiguration?.apiProvider === "costrict") {
 					const openAiModels = [] as string[]
 					const fullResponseData = [] as ModelInfo[]
 					for (const [id, value] of Object.entries(models)) {
@@ -1158,7 +1158,7 @@ export const webviewMessageHandler = async (
 						fullResponseData.push(value)
 					}
 					provider.postMessageToWebview({
-						type: "zgsmModels",
+						type: "costrictModels",
 						openAiModels,
 						fullResponseData,
 					})
@@ -1179,7 +1179,7 @@ export const webviewMessageHandler = async (
 			const routerModels: Record<RouterName, ModelRecord> = providerFilter
 				? ({} as Record<RouterName, ModelRecord>)
 				: {
-						zgsm: {},
+						costrict: {},
 						openrouter: {},
 						"vercel-ai-gateway": {},
 						litellm: {},
@@ -1206,17 +1206,17 @@ export const webviewMessageHandler = async (
 			// Base candidates (only those handled by this aggregate fetcher)
 			const candidates: { key: RouterName; options: GetModelsOptions }[] = [
 				{
-					key: "zgsm",
+					key: "costrict",
 					options: {
-						provider: "zgsm",
+						provider: "costrict",
 						baseUrl:
 							message?.values?.baseUrl ||
-							apiConfiguration.zgsmBaseUrl ||
-							ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl(),
+							apiConfiguration.costrictBaseUrl ||
+							CostrictAuthConfig.getInstance().getDefaultApiBaseUrl(),
 						apiKey:
 							message?.values?.apiKey ||
-							apiConfiguration.zgsmAccessToken ||
-							((await ZgsmAuthStorage.getInstance().getTokens()) ?? {}).access_token,
+							apiConfiguration.costrictAccessToken ||
+							((await CostrictAuthStorage.getInstance().getTokens()) ?? {}).access_token,
 						openAiHeaders: message?.values?.openAiHeaders || {},
 					},
 				},
@@ -1281,7 +1281,7 @@ export const webviewMessageHandler = async (
 				modelFetchPromises.map(async ({ key, options }) => {
 					const models = await safeGetModels(options)
 
-					if (key === "zgsm") {
+					if (key === "costrict") {
 						const openAiModels = [] as string[]
 						const fullResponseData = [] as ModelInfo[]
 						for (const [id, value] of Object.entries(models)) {
@@ -1289,7 +1289,7 @@ export const webviewMessageHandler = async (
 							fullResponseData.push(value)
 						}
 						provider.postMessageToWebview({
-							type: "zgsmModels",
+							type: "costrictModels",
 							openAiModels,
 							fullResponseData,
 						})
@@ -1807,8 +1807,8 @@ export const webviewMessageHandler = async (
 		case "mode":
 			await provider.handleModeSwitch(message.text as Mode)
 			break
-		case "zgsmCodeMode":
-			await provider.setZgsmCodeMode(message.text as ZgsmCodeMode)
+		case "costrictCodeMode":
+			await provider.setCostrictCodeMode(message.text as CostrictCodeMode)
 			break
 		case "updatePrompt":
 			if (message.promptMode && message.customPrompt !== undefined) {
@@ -2115,21 +2115,21 @@ export const webviewMessageHandler = async (
 			break
 		case "upsertApiConfiguration":
 			if (message.text && message.apiConfiguration) {
-				if (message.apiConfiguration.apiProvider === "zgsm") {
+				if (message.apiConfiguration.apiProvider === "costrict") {
 					await provider.providerSettingsManager.saveMergeConfig(
 						{
-							zgsmBaseUrl: message.apiConfiguration.zgsmBaseUrl,
+							costrictBaseUrl: message.apiConfiguration.costrictBaseUrl,
 						},
 						(name, { apiProvider }) => {
-							return apiProvider === "zgsm" && name !== message.text
+							return apiProvider === "costrict" && name !== message.text
 						},
 					)
 				}
 				await provider.upsertProviderProfile(message.text, message.apiConfiguration)
-				if (message.apiConfiguration?.zgsmAccessToken && message.apiConfiguration?.zgsmRefreshToken) {
+				if (message.apiConfiguration?.costrictAccessToken && message.apiConfiguration?.costrictRefreshToken) {
 					writeCostrictAccessToken(
-						message.apiConfiguration?.zgsmAccessToken,
-						message.apiConfiguration?.zgsmRefreshToken,
+						message.apiConfiguration?.costrictAccessToken,
+						message.apiConfiguration?.costrictRefreshToken,
 					)
 				}
 			}
@@ -3184,12 +3184,16 @@ export const webviewMessageHandler = async (
 			// }
 			break
 		}
-		case "zgsmPollCodebaseIndexStatus": {
+		case "costrictPollCodebaseIndexStatus": {
 			try {
 				const { apiConfiguration } = await provider.getState()
 
-				if (apiConfiguration?.apiProvider !== "zgsm") {
-					provider.log("Only CoStrict provider supports this service", "error", "ZgsmCodebaseIndexManager")
+				if (apiConfiguration?.apiProvider !== "costrict") {
+					provider.log(
+						"Only CoStrict provider supports this service",
+						"error",
+						"CostrictCodebaseIndexManager",
+					)
 					return
 				}
 
@@ -3206,10 +3210,10 @@ export const webviewMessageHandler = async (
 					return
 				}
 
-				// Call ZgsmCodebaseIndexManager.getIndexStatus()
-				const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
-				await zgsmCodebaseIndexManager.ensureInitialized("getIndexStatus")
-				const response = await zgsmCodebaseIndexManager.getIndexStatus(workspacePath)
+				// Call CostrictCodebaseIndexManager.getIndexStatus()
+				const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
+				await costrictCodebaseIndexManager.ensureInitialized("getIndexStatus")
+				const response = await costrictCodebaseIndexManager.getIndexStatus(workspacePath)
 				const errorCodeManager = ErrorCodeManager.getInstance()
 
 				const updateFailedReason = (item: IndexStatusInfo) => {
@@ -3607,32 +3611,36 @@ export const webviewMessageHandler = async (
 			}
 			break
 		}
-		case "zgsmCodebaseIndexEnabled": {
+		case "costrictCodebaseIndexEnabled": {
 			try {
 				// Get current workspace path
 				const workspacePath = getWorkspacePath()
 				if (!workspacePath) {
-					provider.log("Unable to get workspace path", "error", "ZgsmCodebaseIndexManager")
+					provider.log("Unable to get workspace path", "error", "CostrictCodebaseIndexManager")
 					break
 				}
 
-				const oldEnabled = getGlobalState("zgsmCodebaseIndexEnabled")
+				const oldEnabled = getGlobalState("costrictCodebaseIndexEnabled")
 
 				if (oldEnabled === message.bool) return
 
 				const { apiConfiguration } = await provider.getState()
 
-				if (apiConfiguration?.apiProvider !== "zgsm") {
-					provider.log("Only CoStrict provider supports this service", "error", "ZgsmCodebaseIndexManager")
+				if (apiConfiguration?.apiProvider !== "costrict") {
+					provider.log(
+						"Only CoStrict provider supports this service",
+						"error",
+						"CostrictCodebaseIndexManager",
+					)
 					return
 				}
 				// Get switch status from message.bool
 				const isEnabled = message.bool
 				if (isEnabled === undefined) {
 					provider.log(
-						"zgsmCodebaseIndexEnabled message missing bool parameter",
+						"costrictCodebaseIndexEnabled message missing bool parameter",
 						"error",
-						"ZgsmCodebaseIndexManager",
+						"CostrictCodebaseIndexManager",
 					)
 					vscode.window.showErrorMessage("Codebase index switch status is invalid")
 					break
@@ -3645,36 +3653,36 @@ export const webviewMessageHandler = async (
 				}
 
 				// Ensure the local client lifecycle is ready before updating the workspace switch.
-				const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
-				await zgsmCodebaseIndexManager.ensureInitialized("toggleIndexSwitch")
-				const result = await zgsmCodebaseIndexManager.toggleIndexSwitch(switchRequest)
+				const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
+				await costrictCodebaseIndexManager.ensureInitialized("toggleIndexSwitch")
+				const result = await costrictCodebaseIndexManager.toggleIndexSwitch(switchRequest)
 
 				if (result.success) {
 					// Save state to global storage
-					await updateGlobalState("zgsmCodebaseIndexEnabled", isEnabled)
+					await updateGlobalState("costrictCodebaseIndexEnabled", isEnabled)
 
 					provider.log(
 						`Codebase index feature has been ${isEnabled ? "enabled" : "disabled"}: ${workspacePath}`,
 						"info",
-						"ZgsmCodebaseIndexManager",
+						"CostrictCodebaseIndexManager",
 					)
 					await provider.postMessageToWebview({
-						type: "zgsmCodebaseIndexEnabled",
+						type: "costrictCodebaseIndexEnabled",
 						payload: isEnabled,
 					})
 					if (isEnabled) {
 						await workspaceEventMonitor.initialize()
 					}
 				} else {
-					await updateGlobalState("zgsmCodebaseIndexEnabled", oldEnabled)
+					await updateGlobalState("costrictCodebaseIndexEnabled", oldEnabled)
 
 					provider.log(
 						`Codebase index switch operation failed: ${result.message}`,
 						"error",
-						"ZgsmCodebaseIndexManager",
+						"CostrictCodebaseIndexManager",
 					)
 					await provider.postMessageToWebview({
-						type: "zgsmCodebaseIndexEnabled",
+						type: "costrictCodebaseIndexEnabled",
 						payload: oldEnabled,
 					})
 				}
@@ -3683,22 +3691,26 @@ export const webviewMessageHandler = async (
 					error instanceof Error
 						? error.message
 						: "Unknown error occurred during codebase index switch operation"
-				provider.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+				provider.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			} finally {
 				// Update UI status
 				await provider.postStateToWebview()
 			}
 			break
 		}
-		case "zgsmRebuildCodebaseIndex": {
+		case "costrictRebuildCodebaseIndex": {
 			try {
 				const { apiConfiguration } = await provider.getState()
 
-				if (apiConfiguration?.apiProvider !== "zgsm") {
-					provider.log("Only CoStrict provider supports this service", "error", "ZgsmCodebaseIndexManager")
+				if (apiConfiguration?.apiProvider !== "costrict") {
+					provider.log(
+						"Only CoStrict provider supports this service",
+						"error",
+						"CostrictCodebaseIndexManager",
+					)
 					return
 				}
-				const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
+				const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
 
 				// Get workspace path
 				const workspacePath = getWorkspacePath() || ""
@@ -3712,27 +3724,27 @@ export const webviewMessageHandler = async (
 					type: rebuildType,
 				}
 
-				// Call ZgsmCodebaseIndexManager.triggerIndexBuild()
-				await zgsmCodebaseIndexManager.ensureInitialized("triggerIndexBuild")
-				const result = await zgsmCodebaseIndexManager.triggerIndexBuild(indexBuildRequest)
+				// Call CostrictCodebaseIndexManager.triggerIndexBuild()
+				await costrictCodebaseIndexManager.ensureInitialized("triggerIndexBuild")
+				const result = await costrictCodebaseIndexManager.triggerIndexBuild(indexBuildRequest)
 
 				if (result.success) {
 					provider.log(
 						`Successfully triggered index rebuild: ${rebuildType}`,
 						"info",
-						"ZgsmCodebaseIndexManager",
+						"CostrictCodebaseIndexManager",
 					)
 				} else {
 					provider.log(
 						`Failed to trigger index rebuild: ${result.message}`,
 						"error",
-						"ZgsmCodebaseIndexManager",
+						"CostrictCodebaseIndexManager",
 					)
 				}
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : "Unknown error occurred when triggering index rebuild"
-				provider.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+				provider.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			} finally {
 				await provider.postStateToWebview()
 			}
@@ -3836,9 +3848,9 @@ export const webviewMessageHandler = async (
 			const requestIdMatch = errorMessage?.match(/RequestID:\s*([a-f0-9-]+)/i)
 			const requestId = requestIdMatch?.[1]
 
-			// Get raw error message if request ID exists and provider is zgsm
+			// Get raw error message if request ID exists and provider is costrict
 			let rawErrorMessage = ""
-			if (requestId && apiConfiguration.apiProvider === "zgsm") {
+			if (requestId && apiConfiguration.apiProvider === "costrict") {
 				const rawError = ErrorCodeManager.getInstance().getRawError(requestId)
 				if (rawError?.message) {
 					rawErrorMessage = `rawErrorMessage: ${rawError.message}`
@@ -3846,16 +3858,16 @@ export const webviewMessageHandler = async (
 			}
 
 			// Get costrict user ID
-			const userInfo = ZgsmAuthService?.getInstance()?.getUserInfo()
-			const zgsmUserId = userInfo?.id || ""
+			const userInfo = CostrictAuthService?.getInstance()?.getUserInfo()
+			const costrictUserId = userInfo?.id || ""
 
 			try {
 				await vscode.env.clipboard.writeText(dedent`
 					[Message]: ${errorMessage}
 					[Provider]: ${apiConfiguration.apiProvider}
-					[UserId]: ${zgsmUserId}
-					[Model]: ${apiConfiguration.apiProvider === "zgsm" ? selectedLLM || originModelId || apiConfiguration.zgsmModelId : apiConfiguration.apiModelId}
-					${apiConfiguration.apiProvider === "zgsm" ? `[BaseUrl]: ${apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}` : ""}
+					[UserId]: ${costrictUserId}
+					[Model]: ${apiConfiguration.apiProvider === "costrict" ? selectedLLM || originModelId || apiConfiguration.costrictModelId : apiConfiguration.apiModelId}
+					${apiConfiguration.apiProvider === "costrict" ? `[BaseUrl]: ${apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}` : ""}
 					[EditorType]: ${editorType}
 					[EditorVersion]: ${vscode.version}
 					[PluginVersion]: ${Package.version}
@@ -3931,33 +3943,33 @@ export const webviewMessageHandler = async (
 			})
 			break
 		}
-		case "fetchZgsmInviteCode": {
+		case "fetchCostrictInviteCode": {
 			const { apiConfiguration } = await provider.getState()
 
-			// zgsmQuotaInfo
-			const data = await fetchZgsmInviteCode(
-				apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl(),
-				apiConfiguration.zgsmAccessToken,
+			// costrictQuotaInfo
+			const data = await fetchCostrictInviteCode(
+				apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl(),
+				apiConfiguration.costrictAccessToken,
 			)
 			if (data) {
 				await provider.postMessageToWebview({
-					type: "zgsmInviteCode",
+					type: "costrictInviteCode",
 					values: data,
 				})
 			}
 			break
 		}
-		case "fetchZgsmQuotaInfo": {
+		case "fetchCostrictQuotaInfo": {
 			const { apiConfiguration } = await provider.getState()
 
-			// zgsmQuotaInfo
-			const data = await fetchZgsmQuotaInfo(
-				apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl(),
-				apiConfiguration.zgsmAccessToken,
+			// costrictQuotaInfo
+			const data = await fetchCostrictQuotaInfo(
+				apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl(),
+				apiConfiguration.costrictAccessToken,
 			)
 			if (data) {
 				await provider.postMessageToWebview({
-					type: "zgsmQuotaInfo",
+					type: "costrictQuotaInfo",
 					values: data,
 				})
 			}

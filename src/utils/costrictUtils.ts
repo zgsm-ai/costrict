@@ -50,7 +50,7 @@ export function getLocalIP(): string {
 			}
 		}
 	} catch (error) {
-		console.log(`[zgsm getLocalIP]: ${error.message}`)
+		console.log(`[costrict getLocalIP]: ${error.message}`)
 	}
 
 	return "127.0.0.1"
@@ -60,7 +60,7 @@ function getSafeOperatingSystemName(): string {
 	try {
 		return osName(os.platform(), os.release())
 	} catch (error) {
-		console.warn(`[zgsm getOperatingSystem] os-name failed: ${error.message}`)
+		console.warn(`[costrict getOperatingSystem] os-name failed: ${error.message}`)
 
 		const platform = os.platform()
 		const release = os.release()
@@ -97,7 +97,7 @@ function getSafeOperatingSystemName(): string {
 
 			return `${platformName} ${release}`
 		} catch (innerError) {
-			console.warn(`[zgsm getOperatingSystem] Fallback failed: ${innerError.message}`)
+			console.warn(`[costrict getOperatingSystem] Fallback failed: ${innerError.message}`)
 			return platformName
 		}
 	}

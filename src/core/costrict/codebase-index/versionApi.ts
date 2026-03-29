@@ -1,5 +1,5 @@
 import { getClientId } from "../../../utils/getClientId"
-import { ZgsmAuthApi, ZgsmAuthConfig } from "../auth"
+import { CostrictAuthApi, CostrictAuthConfig } from "../auth"
 import { PlatformDetector } from "./platform"
 import { PlatformResponse, VersionInfo } from "./types"
 
@@ -20,8 +20,8 @@ export class VersionApi {
 	 * @throws Throws error when API call fails
 	 */
 	async getVersionList(): Promise<PlatformResponse> {
-		const { zgsmBaseUrl } = await ZgsmAuthApi.getInstance().getApiConfiguration()
-		const baseUrl = zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+		const { costrictBaseUrl } = await CostrictAuthApi.getInstance().getApiConfiguration()
+		const baseUrl = costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 		const platform = this.platformDetector.platform
 		const arch = this.platformDetector.arch
 		const url = `${baseUrl}/costrict/costrict/${platform}/${arch}/platform.json`
@@ -31,7 +31,7 @@ export class VersionApi {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"zgsm-request-id": getClientId(),
+					"costrict-request-id": getClientId(),
 				},
 			})
 

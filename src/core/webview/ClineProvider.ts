@@ -60,7 +60,7 @@ import { Package } from "../../shared/package"
 import { findLast } from "../../shared/array"
 import { supportPrompt, type SupportPromptType } from "../../shared/support-prompt"
 import { GlobalFileNames } from "../../shared/globalFileNames"
-import { Mode, defaultModeSlug, getModeBySlug, ZgsmCodeMode } from "../../shared/modes"
+import { Mode, defaultModeSlug, getModeBySlug, CostrictCodeMode } from "../../shared/modes"
 import { experimentDefault } from "../../shared/experiments"
 import { formatLanguage } from "../../shared/language"
 import { WebviewMessage } from "../../shared/WebviewMessage"
@@ -114,14 +114,14 @@ import {
 import { readTaskMessages } from "../task-persistence/taskMessages"
 import { getNonce } from "./getNonce"
 import { getUri } from "./getUri"
-import { ZgsmAuthCommands, ZgsmAuthConfig } from "../costrict/auth"
+import { CostrictAuthCommands, CostrictAuthConfig } from "../costrict/auth"
 import { generateNewSessionClientId, getClientId } from "../../utils/getClientId"
 import { defaultCodebaseIndexEnabled } from "../../services/code-index/constants"
 import { CodeReviewService, ReviewTargetType } from "../costrict/code-review"
 import { getTerminalManager } from "../cli-wrap"
 import { defaultLang } from "../../utils/language"
-import ZgsmCodebaseIndexManager from "../costrict/codebase-index"
-import { sendZgsmCloseWindow } from "../costrict/auth/ipc"
+import CostrictCodebaseIndexManager from "../costrict/codebase-index"
+import { sendCostrictCloseWindow } from "../costrict/auth/ipc"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { isJetbrainsPlatform } from "../../utils/platform"
 import { getAppName } from "../../utils/getAppName"
@@ -153,8 +153,8 @@ export class ClineProvider
 	// Used in package.json as the view's id. This value cannot be changed due
 	// to how VSCode caches views based on their id, and updating the id would
 	// break existing instances of the extension.
-	public static readonly sideBarId = `${Package.name}.SidebarProvider`
-	public static readonly tabPanelId = `${Package.name}.TabPanelProvider`
+	public static readonly sideBarId = `${Package.commandIDPrefix}.SidebarProvider`
+	public static readonly tabPanelId = `${Package.commandIDPrefix}.TabPanelProvider`
 	private static activeInstances: Set<ClineProvider> = new Set()
 	private disposables: vscode.Disposable[] = []
 	private webviewDisposables: vscode.Disposable[] = []
@@ -167,7 +167,7 @@ export class ClineProvider
 	protected skillsManager?: SkillsManager
 	private marketplaceManager: MarketplaceManager
 	private mdmService?: MdmService
-	private zgsmAuthCommands?: ZgsmAuthCommands
+	private costrictAuthCommands?: CostrictAuthCommands
 	private autoCleanupService?: AutoCleanupService
 	private taskCreationCallback: (task: Task) => void
 	private taskEventListeners: WeakMap<Task, Array<() => void>> = new WeakMap()
@@ -833,7 +833,7 @@ export class ClineProvider
 
 		// If no visible provider, try to show the sidebar view
 		if (!visibleProvider) {
-			await vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
+			await vscode.commands.executeCommand(`${Package.commandIDPrefix}.SidebarProvider.focus`)
 			// Wait briefly for the view to become visible
 			await delay(100)
 			visibleProvider = ClineProvider.getVisibleInstance()
@@ -1025,7 +1025,7 @@ export class ClineProvider
 		await visibleProvider.setMode(mode)
 
 		try {
-			await visibleProvider.createTask(prompt, undefined, undefined, { zgsmWorkflowMode: mode })
+			await visibleProvider.createTask(prompt, undefined, undefined, { costrictWorkflowMode: mode })
 		} catch (error) {
 			if (error instanceof OrganizationAllowListViolationError) {
 				// Errors from terminal commands seem to get swallowed / ignored.
@@ -1284,7 +1284,7 @@ export class ClineProvider
 			checkpointTimeout,
 			experiments,
 			experimentSettings,
-			useZgsmCustomConfig,
+			useCostrictCustomConfig,
 			cloudUserInfo,
 			taskSyncEnabled,
 		} = await this.getState()
@@ -1293,7 +1293,7 @@ export class ClineProvider
 			provider: this,
 			apiConfiguration,
 			enableCheckpoints,
-			useZgsmCustomConfig,
+			useCostrictCustomConfig,
 			checkpointTimeout,
 			consecutiveMistakeLimit: apiConfiguration.consecutiveMistakeLimit,
 			historyItem,
@@ -1478,7 +1478,7 @@ export class ClineProvider
 					isJetbrainsPlatform: ${isJetbrainsPlatform()},
 					"ANTHROPIC_MODEL": "${process.env.ANTHROPIC_MODEL}",
 					"ANTHROPIC_BASE_URL": "${process.env.ANTHROPIC_BASE_URL}",
-					"COSTRICT_BASE_URL": "${ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}",
+					"COSTRICT_BASE_URL": "${CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}",
 					"defaultLanguage": "${language}",
 				})
 			</script>
@@ -1594,7 +1594,7 @@ export class ClineProvider
 					isJetbrainsPlatform: ${isJetbrainsPlatform()},
 					"ANTHROPIC_MODEL": "${process.env.ANTHROPIC_MODEL}",
 					"ANTHROPIC_BASE_URL": "${process.env.ANTHROPIC_BASE_URL}",
-					"COSTRICT_BASE_URL": "${ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}",
+					"COSTRICT_BASE_URL": "${CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}",
 					"defaultLanguage": "${language}",
 				})
 			</script>
@@ -2084,7 +2084,7 @@ export class ClineProvider
 			return this.showTaskWithId(id)
 		}
 
-		await vscode.commands.executeCommand("zgsm.openInNewTab", id)
+		await vscode.commands.executeCommand("costrict.openInNewTab", id)
 	}
 
 	async exportTaskWithId(id: string) {
@@ -2534,8 +2534,8 @@ export class ClineProvider
 			ttsEnabled,
 			ttsSpeed,
 			enableCheckpoints,
-			useZgsmCustomConfig,
-			zgsmCodebaseIndexEnabled,
+			useCostrictCustomConfig,
+			costrictCodebaseIndexEnabled,
 			checkpointTimeout,
 			taskHistory,
 			soundVolume,
@@ -2552,7 +2552,7 @@ export class ClineProvider
 			currentApiConfigName,
 			listApiConfigMeta,
 			pinnedApiConfigs,
-			zgsmCodeMode,
+			costrictCodeMode,
 			mode,
 			customModePrompts,
 			customSupportPrompts,
@@ -2634,7 +2634,7 @@ export class ClineProvider
 		const currentTask = this.getCurrentTask()
 
 		if (!debug) {
-			apiConfiguration.useZgsmCustomConfig = false
+			apiConfiguration.useCostrictCustomConfig = false
 		}
 
 		return {
@@ -2667,8 +2667,8 @@ export class ClineProvider
 			ttsEnabled: ttsEnabled ?? false,
 			ttsSpeed: ttsSpeed ?? 1.0,
 			enableCheckpoints: enableCheckpoints ?? true,
-			useZgsmCustomConfig: useZgsmCustomConfig ?? false,
-			zgsmCodebaseIndexEnabled: zgsmCodebaseIndexEnabled ?? false,
+			useCostrictCustomConfig: useCostrictCustomConfig ?? false,
+			costrictCodebaseIndexEnabled: costrictCodebaseIndexEnabled ?? false,
 			checkpointTimeout: checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			shouldShowAnnouncement:
 				telemetrySetting !== "disabled" && lastShownAnnouncementId !== this.latestAnnouncementId,
@@ -2689,7 +2689,7 @@ export class ClineProvider
 			listApiConfigMeta: listApiConfigMeta ?? [],
 			pinnedApiConfigs: pinnedApiConfigs ?? {},
 			mode: mode ?? defaultModeSlug,
-			zgsmCodeMode: zgsmCodeMode ?? "vibe",
+			costrictCodeMode: costrictCodeMode ?? "vibe",
 			customModePrompts: customModePrompts ?? {},
 			customSupportPrompts: customSupportPrompts ?? {},
 			enhancementApiConfigId,
@@ -2798,7 +2798,9 @@ export class ClineProvider
 
 		// Determine apiProvider with the same logic as before, while filtering retired providers.
 		const apiProvider: ProviderName =
-			stateValues.apiProvider && !isRetiredProvider(stateValues.apiProvider) ? stateValues.apiProvider : "zgsm"
+			stateValues.apiProvider && !isRetiredProvider(stateValues.apiProvider)
+				? stateValues.apiProvider
+				: "costrict"
 
 		// Build the apiConfiguration object combining state values and secrets.
 		const providerSettings = this.contextProxy.getProviderSettings()
@@ -2913,8 +2915,8 @@ export class ClineProvider
 			ttsEnabled: stateValues.ttsEnabled ?? false,
 			ttsSpeed: stateValues.ttsSpeed ?? 1.0,
 			enableCheckpoints: stateValues.enableCheckpoints ?? true,
-			useZgsmCustomConfig: stateValues.useZgsmCustomConfig ?? false,
-			zgsmCodebaseIndexEnabled: stateValues.zgsmCodebaseIndexEnabled ?? false,
+			useCostrictCustomConfig: stateValues.useCostrictCustomConfig ?? false,
+			costrictCodebaseIndexEnabled: stateValues.costrictCodebaseIndexEnabled ?? false,
 			checkpointTimeout: stateValues.checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			soundVolume: stateValues.soundVolume,
 			writeDelayMs: stateValues.writeDelayMs ?? DEFAULT_WRITE_DELAY_MS,
@@ -2928,7 +2930,7 @@ export class ClineProvider
 			terminalZshP10k: stateValues.terminalZshP10k ?? false,
 			terminalZdotdir: stateValues.terminalZdotdir ?? false,
 			mode: stateValues.mode ?? defaultModeSlug,
-			zgsmCodeMode: stateValues.zgsmCodeMode ?? "vibe",
+			costrictCodeMode: stateValues.costrictCodeMode ?? "vibe",
 			language: stateValues.language ?? formatLanguage(await defaultLang()),
 			mcpEnabled: stateValues.mcpEnabled ?? true,
 			mcpServers: this.mcpHub?.getAllServers() ?? [],
@@ -3136,10 +3138,10 @@ export class ClineProvider
 			return
 		}
 		try {
-			// ZgsmCodebaseIndexManager.getInstance()
-			const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
-			await zgsmCodebaseIndexManager.stopHealthCheck()
-			await zgsmCodebaseIndexManager.stopExistingClient()
+			// CostrictCodebaseIndexManager.getInstance()
+			const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
+			await costrictCodebaseIndexManager.stopHealthCheck()
+			await costrictCodebaseIndexManager.stopExistingClient()
 
 			const codebaseHomeDir = path.join(os.homedir(), ".costrict")
 			const codebaseIndexDirs = [
@@ -3161,7 +3163,7 @@ export class ClineProvider
 				}
 			}
 
-			sendZgsmCloseWindow(generateNewSessionClientId())
+			sendCostrictCloseWindow(generateNewSessionClientId())
 			await delay(1000)
 			await vscode.commands.executeCommand("workbench.action.closeWindow")
 		} catch (error) {
@@ -3608,8 +3610,8 @@ export class ClineProvider
 		await this.setValues({ mode })
 	}
 
-	public async setZgsmCodeMode(zgsmCodeMode: ZgsmCodeMode): Promise<void> {
-		await this.setValues({ zgsmCodeMode })
+	public async setCostrictCodeMode(costrictCodeMode: CostrictCodeMode): Promise<void> {
+		await this.setValues({ costrictCodeMode })
 		await this.postStateToWebview()
 	}
 
@@ -3688,9 +3690,9 @@ export class ClineProvider
 		}
 
 		let userInfo: { userName?: string } | undefined = {}
-		const { zgsmAccessToken } = apiConfiguration
-		if (zgsmAccessToken) {
-			const decoded = jwtDecode(zgsmAccessToken)
+		const { costrictAccessToken } = apiConfiguration
+		if (costrictAccessToken) {
+			const decoded = jwtDecode(costrictAccessToken)
 			userInfo = {
 				userName: (decoded as any).displayName || "",
 			}
@@ -3737,12 +3739,12 @@ export class ClineProvider
 	public get cwd() {
 		return this.currentWorkspacePath || getWorkspacePath()
 	}
-	public getZgsmAuthCommands() {
-		return this.zgsmAuthCommands
+	public getCostrictAuthCommands() {
+		return this.costrictAuthCommands
 	}
 
-	public setZgsmAuthCommands(zgsmAuthCommands: ZgsmAuthCommands) {
-		this.zgsmAuthCommands = zgsmAuthCommands
+	public setCostrictAuthCommands(costrictAuthCommands: CostrictAuthCommands) {
+		this.costrictAuthCommands = costrictAuthCommands
 	}
 
 	/**

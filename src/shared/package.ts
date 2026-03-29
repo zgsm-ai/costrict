@@ -9,6 +9,7 @@ import { publisher, name, version } from "../package.json"
 export const Package = {
 	publisher,
 	name: process.env.COSTRICT_PKG_NAME || name,
+	commandIDPrefix: "costrict",
 	version: process.env.COSTRICT_PKG_VERSION || version,
 	outputChannel: process.env.COSTRICT_PKG_OUTPUT_CHANNEL || "CoStrict",
 	sha: process.env.COSTRICT_PKG_SHA,

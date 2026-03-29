@@ -127,7 +127,7 @@ export const getCommandsMap = ({
 		return openClineInNewTab({ context, outputChannel, taskId: "" })
 	},
 	openNewButtonClicked: () => {
-		vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
+		vscode.commands.executeCommand(`${Package.commandIDPrefix}.SidebarProvider.focus`)
 	},
 	openInNewTab: (taskId?: string) => openClineInNewTab({ context, outputChannel, taskId }),
 	settingsButtonClicked: () => {

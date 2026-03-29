@@ -4,8 +4,8 @@ import { ModelPicker } from "./ModelPicker"
 import {
 	type ProviderSettings,
 	type ModelInfo,
-	zgsmModelsConfig as zgsmModels,
-	zgsmDefaultModelId,
+	costrictModelsConfig as costrictModels,
+	costrictDefaultModelId,
 	openRouterDefaultModelId,
 	requestyDefaultModelId,
 	// unboundDefaultModelId,
@@ -52,10 +52,12 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 		const message: ExtensionMessage = event.data
 
 		switch (message.type) {
-			case "zgsmModels": {
+			case "costrictModels": {
 				const { fullResponseData = [] } = message
 				setOpenAiModels(
-					Object.fromEntries(fullResponseData.map((item) => [item.id, { ...(item ?? zgsmModels.default) }])),
+					Object.fromEntries(
+						fullResponseData.map((item) => [item.id, { ...(item ?? costrictModels.default) }]),
+					),
 				)
 				break
 			}
@@ -100,15 +102,15 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 
 	useDebounce(
 		() => {
-			if (selectedProvider === "zgsm") {
+			if (selectedProvider === "costrict") {
 				// Use our custom headers state to build the headers object.
 				const headerObject = convertHeadersToObject(customHeaders)
 
 				vscode.postMessage({
 					type: "requestRouterModels",
 					values: {
-						baseUrl: apiConfiguration?.zgsmBaseUrl?.trim(),
-						apiKey: apiConfiguration?.zgsmAccessToken,
+						baseUrl: apiConfiguration?.costrictBaseUrl?.trim(),
+						apiKey: apiConfiguration?.costrictAccessToken,
 						customHeaders: {}, // Reserved for any additional headers
 						openAiHeaders: headerObject,
 					},
@@ -153,11 +155,11 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	// Define provider configuration mapping
 	const providerConfig = useMemo(
 		() => ({
-			zgsm: {
-				modelIdKey: "zgsmModelId",
-				serviceName: "zgsm",
-				defaultModelId: apiConfiguration.zgsmModelId || zgsmDefaultModelId,
-				serviceUrl: apiConfiguration.zgsmBaseUrl?.trim() || "",
+			costrict: {
+				modelIdKey: "costrictModelId",
+				serviceName: "costrict",
+				defaultModelId: apiConfiguration.costrictModelId || costrictDefaultModelId,
+				serviceUrl: apiConfiguration.costrictBaseUrl?.trim() || "",
 				models: openAiModels ?? {},
 			},
 			openrouter: {
@@ -196,7 +198,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				models: routerModels?.litellm ?? {},
 			},
 		}),
-		[apiConfiguration.zgsmModelId, apiConfiguration.zgsmBaseUrl, openAiModels, routerModels],
+		[apiConfiguration.costrictModelId, apiConfiguration.costrictBaseUrl, openAiModels, routerModels],
 	)
 
 	const config = providerConfig[selectedProvider as keyof typeof providerConfig] || {}
@@ -205,8 +207,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 
 	const { id: selectedModelId } = useSelectedModel(apiConfiguration)
 	const defaultModelId =
-		(apiConfiguration.apiProvider === "zgsm" ? apiConfiguration.zgsmModelId : apiConfiguration.apiModelId) ||
-		config.defaultModelId
+		(apiConfiguration.apiProvider === "costrict"
+			? apiConfiguration.costrictModelId
+			: apiConfiguration.apiModelId) || config.defaultModelId
 	const tooltip = showSelect
 		? ""
 		: defaultModelId
@@ -243,7 +246,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 								value={selectedModelId === "custom-arn" ? "custom-arn" : selectedModelId}
 								onValueChange={(value) => {
 									setApiConfigurationField(
-										apiConfiguration.apiProvider === "zgsm" ? "zgsmModelId" : "apiModelId",
+										apiConfiguration.apiProvider === "costrict" ? "costrictModelId" : "apiModelId",
 										value,
 									)
 

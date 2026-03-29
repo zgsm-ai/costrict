@@ -6,7 +6,7 @@ import type { ProviderSettings } from "@roo-code/types"
 import { TelemetryEventName } from "@roo-code/types"
 
 import { useExtensionState } from "@src/context/ExtensionStateContext"
-import { validateApiConfiguration, validateZgsmBaseUrl } from "@src/utils/validate"
+import { validateApiConfiguration, validateCostrictBaseUrl } from "@src/utils/validate"
 import { vscode } from "@src/utils/vscode"
 import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { Button } from "@src/components/ui"
@@ -19,7 +19,7 @@ import { Trans } from "react-i18next"
 import { inputEventTransform } from "../settings/transforms"
 import { ApiErrorMessage } from "../settings/ApiErrorMessage"
 
-type ProviderOption = "zgsm" | "custom"
+type ProviderOption = "costrict" | "custom"
 
 const WelcomeViewProvider = () => {
 	const {
@@ -27,12 +27,12 @@ const WelcomeViewProvider = () => {
 		currentApiConfigName,
 		setApiConfiguration,
 		uriScheme,
-		useZgsmCustomConfig,
-		setUseZgsmCustomConfig,
+		useCostrictCustomConfig,
+		setUseCostrictCustomConfig,
 	} = useExtensionState()
 	const { t } = useAppTranslation()
 	const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
-	const [selectedProvider, setSelectedProvider] = useState<ProviderOption>("zgsm")
+	const [selectedProvider, setSelectedProvider] = useState<ProviderOption>("costrict")
 	const [costrictBaseurl, setCostrictBaseurl] = useState("")
 
 	// Memoize the setApiConfigurationField function to pass to ApiOptions
@@ -45,7 +45,7 @@ const WelcomeViewProvider = () => {
 
 	const handleGetStarted = useCallback(() => {
 		let error = undefined
-		if (apiConfiguration.apiProvider === "zgsm") {
+		if (apiConfiguration.apiProvider === "costrict") {
 			error = t("settings:providers.noProviderMatchFound")
 		} else {
 			// Use custom provider - validate first
@@ -70,7 +70,7 @@ const WelcomeViewProvider = () => {
 	}, [])
 
 	const handleVisitCloudWebsite = useCallback(() => {
-		const error = validateZgsmBaseUrl(costrictBaseurl)
+		const error = validateCostrictBaseUrl(costrictBaseurl)
 
 		if (error) {
 			setErrorMessage(error)
@@ -80,16 +80,16 @@ const WelcomeViewProvider = () => {
 		setErrorMessage(undefined)
 		// Send telemetry for account connect action
 		telemetryClient.capture(TelemetryEventName.ACCOUNT_CONNECT_CLICKED)
-		const zgsmBaseUrl = costrictBaseurl?.trim()?.replace(/\/$/, "")
-		setApiConfigurationFieldForApiOptions("zgsmBaseUrl", zgsmBaseUrl)
+		const costrictBaseUrl = costrictBaseurl?.trim()?.replace(/\/$/, "")
+		setApiConfigurationFieldForApiOptions("costrictBaseUrl", costrictBaseUrl)
 
 		vscode.postMessage({
-			type: "zgsmLogin",
+			type: "costrictLogin",
 			apiConfiguration: {
 				...apiConfiguration,
-				zgsmBaseUrl,
-				apiProvider: "zgsm",
-				zgsmModelId: "Auto",
+				costrictBaseUrl,
+				apiProvider: "costrict",
+				costrictModelId: "Auto",
 			},
 		})
 	}, [apiConfiguration, costrictBaseurl, setApiConfigurationFieldForApiOptions])
@@ -101,7 +101,7 @@ const WelcomeViewProvider = () => {
 				{/* <h2 className="mt-0 mb-0 text-xl">{t("welcome:greeting")}</h2> */}
 
 				<div className="text-base text-vscode-foreground space-y-3">
-					{selectedProvider === "zgsm" && (
+					{selectedProvider === "costrict" && (
 						<p>
 							<Trans i18nKey="welcome:introduction" />
 						</p>
@@ -130,7 +130,7 @@ const WelcomeViewProvider = () => {
 								(e.target as HTMLInputElement)) as HTMLInputElement
 							setSelectedProvider(target.value as ProviderOption)
 						}}>
-						<VSCodeRadio value="zgsm" className="flex items-start gap-2">
+						<VSCodeRadio value="costrict" className="flex items-start gap-2">
 							<div className="flex-1 space-y-1 cursor-pointer">
 								<p className="text-lg font-semibold block -mt-1">
 									{t("welcome:providerSignup.rooCloudProvider")}&nbsp;
@@ -146,7 +146,7 @@ const WelcomeViewProvider = () => {
 									{t("welcome:providerSignup.useAnotherProvider")}
 								</p>
 								<p
-									className={`text-base text-vscode-descriptionForeground mt-0 ${selectedProvider === "zgsm" ? "hidden" : ""}`}>
+									className={`text-base text-vscode-descriptionForeground mt-0 ${selectedProvider === "costrict" ? "hidden" : ""}`}>
 									{t("welcome:providerSignup.useAnotherProviderDescription")}
 								</p>
 							</div>
@@ -166,8 +166,8 @@ const WelcomeViewProvider = () => {
 									setApiConfigurationField={setApiConfigurationFieldForApiOptions}
 									errorMessage={errorMessage}
 									setErrorMessage={setErrorMessage}
-									useZgsmCustomConfig={useZgsmCustomConfig}
-									setCachedStateField={(_, value) => setUseZgsmCustomConfig(value ?? false)}
+									useCostrictCustomConfig={useCostrictCustomConfig}
+									setCachedStateField={(_, value) => setUseCostrictCustomConfig(value ?? false)}
 								/>
 							</div>
 						) : (
@@ -177,11 +177,11 @@ const WelcomeViewProvider = () => {
 									type="url"
 									onInput={handleInputChange}
 									placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
-										zgsmBaseUrl: (window as any).COSTRICT_BASE_URL,
+										costrictBaseUrl: (window as any).COSTRICT_BASE_URL,
 									})}
 									className="w-full">
 									<label className="block font-medium mb-1">
-										{t("settings:providers.zgsmBaseUrl")}
+										{t("settings:providers.costrictBaseUrl")}
 									</label>
 								</VSCodeTextField>
 								{errorMessage && <ApiErrorMessage errorMessage={errorMessage} />}
@@ -190,7 +190,7 @@ const WelcomeViewProvider = () => {
 					</div>
 				</div>
 				<div className="-mt-8">
-					{selectedProvider === "zgsm" ? (
+					{selectedProvider === "costrict" ? (
 						<Button variant="primary" onClick={handleVisitCloudWebsite} className="w-full">
 							{t("account:signIn")}
 						</Button>

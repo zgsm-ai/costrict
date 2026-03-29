@@ -55,7 +55,7 @@ import {
 	ConsecutiveMistakeError,
 	MAX_MCP_TOOLS_THRESHOLD,
 	countEnabledMcpTools,
-	zgsmModelsConfig,
+	costrictModelsConfig,
 } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
 // import { customToolRegistry } from "@roo-code/core"
@@ -135,7 +135,7 @@ import { getMessagesSinceLastSummary, summarizeConversation, getEffectiveApiHist
 import { MessageQueueService } from "../message-queue/MessageQueueService"
 
 import { ErrorCodeManager } from "../costrict/error-code"
-import { ZgsmAuthService } from "../costrict/auth"
+import { CostrictAuthService } from "../costrict/auth"
 import { AutoApprovalHandler, checkAutoApproval } from "../auto-approval"
 import { MessageManager } from "../message-manager"
 import { validateAndFixToolResultIds } from "./validateToolResultIds"
@@ -152,8 +152,8 @@ export interface TaskOptions extends CreateTaskOptions {
 	provider: ClineProvider
 	apiConfiguration: ProviderSettings
 	enableCheckpoints?: boolean
-	useZgsmCustomConfig?: boolean
-	zgsmCodebaseIndexEnabled?: boolean
+	useCostrictCustomConfig?: boolean
+	costrictCodebaseIndexEnabled?: boolean
 	checkpointTimeout?: number
 	consecutiveMistakeLimit?: number
 	task?: string
@@ -174,7 +174,7 @@ export interface TaskOptions extends CreateTaskOptions {
 
 export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	readonly taskId: string
-	readonly zgsmWorkflowMode?: string
+	readonly costrictWorkflowMode?: string
 	readonly rootTaskId?: string
 	readonly parentTaskId?: string
 	childTaskId?: string
@@ -464,7 +464,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		onCreated,
 		initialTodos,
 		workspacePath,
-		zgsmWorkflowMode,
+		costrictWorkflowMode,
 		initialStatus,
 	}: TaskOptions) {
 		super()
@@ -472,8 +472,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (startTask && !task && !images && !historyItem) {
 			throw new Error("Either historyItem or task/images must be provided")
 		}
-		this.zgsmWorkflowMode = zgsmWorkflowMode
-
+		this.costrictWorkflowMode = costrictWorkflowMode
 		if (
 			!checkpointTimeout ||
 			checkpointTimeout > MAX_CHECKPOINT_TIMEOUT_SECONDS ||
@@ -533,7 +532,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (this.useSmartMistakeDetection) {
 			this.smartMistakeDetector = new SmartMistakeDetector()
 			const autoSwitchModel = experimentSettings?.smartMistakeDetectionConfig?.autoSwitchModel ?? false
-			if (autoSwitchModel && this.apiConfiguration.apiProvider === "zgsm") {
+			if (autoSwitchModel && this.apiConfiguration.apiProvider === "costrict") {
 				this.modelFallbackManager = new ModelFallbackManager(this.apiConfiguration)
 			}
 		}
@@ -1915,7 +1914,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			throw new Error(`[CoStrict#say] task ${this.taskId}.${this.instanceId} aborted`)
 		}
 		const isRateLimitRetry =
-			this.apiConfiguration.apiProvider === "zgsm" &&
+			this.apiConfiguration.apiProvider === "costrict" &&
 			!!(type === "api_req_retry_delayed" && text && text?.startsWith("Rate limiting for"))
 
 		if (partial !== undefined) {
@@ -2686,7 +2685,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			if (
 				this.useSmartMistakeDetection &&
 				this.smartMistakeDetector &&
-				this.apiConfiguration.apiProvider === "zgsm"
+				this.apiConfiguration.apiProvider === "costrict"
 			) {
 				await this.handleSmartMistakeLimit(currentUserContent)
 			} else {
@@ -2722,12 +2721,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				JSON.stringify({
 					apiProtocol,
 					originModelId:
-						this.apiConfiguration?.apiProvider === "zgsm"
-							? this.apiConfiguration?.zgsmModelId
+						this.apiConfiguration?.apiProvider === "costrict"
+							? this.apiConfiguration?.costrictModelId
 							: this.apiConfiguration?.apiModelId,
 					// Add fallback model ID when fallback is active
 					isFallbackActive:
-						this.apiConfiguration?.apiProvider === "zgsm" && this.modelFallbackManager?.isFallbackActive,
+						this.apiConfiguration?.apiProvider === "costrict" &&
+						this.modelFallbackManager?.isFallbackActive,
 				}),
 			)
 
@@ -2809,12 +2809,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.clineMessages[lastApiReqIndex].text = JSON.stringify({
 				apiProtocol,
 				originModelId:
-					this.apiConfiguration?.apiProvider === "zgsm"
-						? this.apiConfiguration?.zgsmModelId
+					this.apiConfiguration?.apiProvider === "costrict"
+						? this.apiConfiguration?.costrictModelId
 						: this.apiConfiguration?.apiModelId,
 				// Add fallback model ID when fallback is active
 				isFallbackActive:
-					this.apiConfiguration?.apiProvider === "zgsm" && this.modelFallbackManager?.isFallbackActive,
+					this.apiConfiguration?.apiProvider === "costrict" && this.modelFallbackManager?.isFallbackActive,
 			} satisfies ClineApiReqInfo)
 
 			await this.saveClineMessages()
@@ -2876,12 +2876,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						cancelReason,
 						streamingFailedMessage,
 						originModelId:
-							this.apiConfiguration?.apiProvider === "zgsm"
-								? this.apiConfiguration?.zgsmModelId
+							this.apiConfiguration?.apiProvider === "costrict"
+								? this.apiConfiguration?.costrictModelId
 								: this.apiConfiguration?.apiModelId,
 						// Add fallback model ID when fallback is active
 						isFallbackActive:
-							this.apiConfiguration?.apiProvider === "zgsm" &&
+							this.apiConfiguration?.apiProvider === "costrict" &&
 							this.modelFallbackManager?.isFallbackActive,
 					} satisfies ClineApiReqInfo)
 				}
@@ -3168,7 +3168,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 										name: chunk.name as ToolName,
 										arguments: chunk.arguments,
 									},
-									this?.apiConfiguration?.apiProvider === "zgsm",
+									this?.apiConfiguration?.apiProvider === "costrict",
 								)
 
 								if (!toolUse) {
@@ -3194,7 +3194,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							case "fake_reasoning": {
 								reasoningMessage += chunk.text
 								if (
-									["zgsm", "opanai"].includes(this.apiConfiguration?.apiProvider || "") &&
+									["costrict", "opanai"].includes(this.apiConfiguration?.apiProvider || "") &&
 									lastApiReqIndex >= 0
 								) {
 									const lastApiReq = this.clineMessages[lastApiReqIndex]
@@ -3225,7 +3225,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							case "automodel": {
 								// Check if it is Selected LLM information (only in Auto model mode).
 								if (
-									this.apiConfiguration?.apiProvider === "zgsm" &&
+									this.apiConfiguration?.apiProvider === "costrict" &&
 									lastApiReqIndex >= 0 &&
 									this.clineMessages[lastApiReqIndex]
 								) {
@@ -3560,7 +3560,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				this.didCompleteReadingStream = true
 
 				// Record successful API request for model fallback management
-				if (this.apiConfiguration.apiProvider === "zgsm") {
+				if (this.apiConfiguration.apiProvider === "costrict") {
 					this.modelFallbackManager?.recordSuccess()
 				}
 
@@ -3583,7 +3583,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							// Finalize tool call and get ToolUse object
 							const toolUse = NativeToolCallParser.finalizeStreamingToolCall(
 								assistantXmlToolCallId,
-								this?.apiConfiguration?.apiProvider === "zgsm",
+								this?.apiConfiguration?.apiProvider === "costrict",
 							)
 
 							if (toolUse) {
@@ -3632,7 +3632,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						// Finalize the streaming tool call
 						const finalToolUse = NativeToolCallParser.finalizeStreamingToolCall(
 							event.id,
-							this?.apiConfiguration?.apiProvider === "zgsm",
+							this?.apiConfiguration?.apiProvider === "costrict",
 						)
 
 						// Get the index for this tool call
@@ -4105,10 +4105,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			customInstructions,
 			experiments,
 			language,
-			apiConfiguration,
-			terminalShellIntegrationDisabled,
 			enableSubfolderRules,
-			zgsmCodeMode,
+			costrictCodeMode,
+			terminalShellIntegrationDisabled,
+			apiConfiguration,
 		} = state ?? {}
 
 		return await (async () => {
@@ -4143,7 +4143,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 						.getConfiguration(Package.name)
 						.get<boolean>("newTaskRequireTodos", false),
 					isStealthModel: modelInfo?.isStealthModel,
-					zgsmCodeMode,
+					costrictCodeMode,
 				},
 				undefined, // todoList
 				this.api.getModel().id,
@@ -4336,7 +4336,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			autoApprovalEnabled,
 			// requestDelaySeconds,
 			mode,
-			zgsmCodeMode,
+			costrictCodeMode,
 			autoCondenseContext = true,
 			autoCondenseContextPercent = 90,
 			profileThresholds = {},
@@ -4607,7 +4607,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			allTools = toolsResult.tools
 			allowedFunctionNames = toolsResult.allowedFunctionNames
 		}
-		const { id } = (await ZgsmAuthService.getInstance()?.getUserInfo()) ?? {}
+
+		const { id } = (await CostrictAuthService.getInstance()?.getUserInfo()) ?? {}
 		const shouldIncludeTools = allTools.length > 0
 
 		const metadata: ApiHandlerCreateMessageMetadata = {
@@ -4621,9 +4622,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				apiConfiguration?.apiProvider === "gemini-cli"
 					? allTools.map((tool: any) => resolveToolAlias(tool?.function?.name)).filter((name) => !!name)
 					: undefined,
-			zgsmCodeMode,
+			costrictCodeMode,
 			provider: this.apiConfiguration.apiProvider,
-			zgsmWorkflowMode: this.zgsmWorkflowMode,
+			costrictWorkflowMode: this.costrictWorkflowMode,
 
 			taskId: this.taskId,
 			suppressPreviousResponseId: this.skipPrevResponseIdOnce,
@@ -4634,7 +4635,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				this.lastApiRequestHeaders = headers
 			},
 			onPerformanceTiming:
-				!showSpeedInfo || apiConfiguration?.apiProvider !== "zgsm"
+				!showSpeedInfo || apiConfiguration?.apiProvider !== "costrict"
 					? undefined
 					: async (timing: {
 							requestIdTimestamp?: number
@@ -4687,7 +4688,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// The provider accepts reasoning items alongside standard messages; cast to the expected parameter type.
 		// Use fallback API handler if model fallback is active (temporary, doesn't modify user config)
 		const effectiveApi =
-			(this.apiConfiguration.apiProvider === "zgsm" && this.modelFallbackManager?.buildFallbackApiHandler()) ||
+			(this.apiConfiguration.apiProvider === "costrict" &&
+				this.modelFallbackManager?.buildFallbackApiHandler()) ||
 			this.api
 		const stream = effectiveApi.createMessage(
 			systemPrompt,
@@ -4736,7 +4738,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.smartMistakeDetector?.addMistake(MistakeType.TOOL_FAILURE, `API request failed: ${errorMsg}`, "high")
 
 			// // Record failure for model fallback management
-			// if (this.apiConfiguration.apiProvider === "zgsm") {
+			// if (this.apiConfiguration.apiProvider === "costrict") {
 			// 	const switched = this.modelFallbackManager?.recordFailure(error, "server_error")
 			// 	if (switched) {
 			// 		const statusMsg = this.modelFallbackManager?.getFallbackStatusMessage()
@@ -4850,8 +4852,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				headerText = await this.convertErrorMessage(error, undefined, (id) => {
 					requestId = id
 				})
-				const isZgsm = this.apiConfiguration?.apiProvider === "zgsm"
-				if (isZgsm) {
+				const isCostrict = this.apiConfiguration?.apiProvider === "costrict"
+				if (isCostrict) {
 					const requestIdMatch = headerText?.match(/RequestID:\s*([a-f0-9-]+)/i)
 					const _requestId = requestIdMatch?.[1]
 					if (requestId && !_requestId) {
@@ -4861,7 +4863,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 
 			// Record failure for model fallback once per backoff cycle (not per countdown second)
-			if (this.apiConfiguration.apiProvider === "zgsm") {
+			if (this.apiConfiguration.apiProvider === "costrict") {
 				const switched = this.modelFallbackManager?.recordFailure(undefined, "server_error")
 				if (switched) {
 					// const statusMsg = this.modelFallbackManager?.getFallbackStatusMessage()
@@ -4879,7 +4881,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				if (this.abort) {
 					throw new Error(`[Task#${this.taskId}] Aborted during retry countdown`)
 				}
-				if (this.apiConfiguration.apiProvider === "zgsm") {
+				if (this.apiConfiguration.apiProvider === "costrict") {
 					await this.say("api_req_retry_delayed", `${headerText}\n↻ ${i}s...`, undefined, true)
 				} else {
 					await this.say(
@@ -5199,11 +5201,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		pauseHandler?: () => void,
 		requestIdHandler?: (requestId?: string) => void,
 	) {
-		const isZgsm = this.apiConfiguration?.apiProvider === "zgsm"
+		const isCostrict = this.apiConfiguration?.apiProvider === "costrict"
 		let errorMsg = ""
-		if (isZgsm) {
+		if (isCostrict) {
 			const errorCodeManager = ErrorCodeManager.getInstance()
-			errorMsg = await errorCodeManager.parseResponse(error, isZgsm, this.taskId, this.instanceId)
+			errorMsg = await errorCodeManager.parseResponse(error, isCostrict, this.taskId, this.instanceId)
 
 			const requestId =
 				(error.headers && error.headers?.get?.("x-request-id")) || this?.lastApiRequestHeaders?.["X-Request-ID"]
@@ -5215,7 +5217,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			if (error.status === 401 || error.code === "ai-gateway.insufficient_quota") {
 				if (error.status === 401) {
-					ZgsmAuthService.openStatusBarLoginTip()
+					CostrictAuthService.openStatusBarLoginTip()
 				}
 
 				pauseHandler?.()
@@ -5243,7 +5245,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				"model", // Explicitly mark as model-related error
 			)
 
-			if (this.apiConfiguration.apiProvider === "zgsm") {
+			if (this.apiConfiguration.apiProvider === "costrict") {
 				const switched = this.modelFallbackManager?.recordFailure(undefined, "tool_error")
 				if (switched) {
 					// const statusMsg = this.modelFallbackManager?.getFallbackStatusMessage()

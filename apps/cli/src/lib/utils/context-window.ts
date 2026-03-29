@@ -36,8 +36,8 @@ export function getContextWindow(routerModels: RouterModels | null, apiConfigura
  */
 function getModelIdForProvider(config: ProviderSettings): string | undefined {
 	switch (config.apiProvider) {
-		case "zgsm":
-			return config.zgsmModelId
+		case "costrict":
+			return config.costrictModelId
 		case "openrouter":
 			return config.openRouterModelId
 		case "ollama":

@@ -10,7 +10,7 @@ import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { vscode } from "@src/utils/vscode"
 import { telemetryClient } from "@src/utils/TelemetryClient"
 import { useEvent } from "react-use"
-import { useZgsmUserInfo } from "@src/hooks/useZgsmUserInfo"
+import { useCostrictUserInfo } from "@src/hooks/useCostrictUserInfo"
 import { useCopyToClipboard } from "@src/utils/clipboard"
 import { ClipboardCopy } from "lucide-react"
 import { StandardTooltip } from "../ui"
@@ -237,65 +237,65 @@ const QuotaInfoDisplay = memo(
 	},
 )
 
-const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps) => {
+const CostrictAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps) => {
 	const { t } = useAppTranslation()
 	const { copyWithFeedback } = useCopyToClipboard()
 	const [quotaInfo, setQuotaInfo] = useState<QuotaInfo>()
 	const [inviteCodeInfo, setInviteCodeInfo] = useState<InviteCodeInfo>()
 	const [showQuotaInfo, setShowQuotaInfo] = useState(false)
 	const [isLoadingQuota, setIsLoadingQuota] = useState(false)
-	const { userInfo, logoPic, hash } = useZgsmUserInfo(apiConfiguration?.zgsmAccessToken)
+	const { userInfo, logoPic, hash } = useCostrictUserInfo(apiConfiguration?.costrictAccessToken)
 
 	// Cache static resource URI
 	const coLogoUri = useMemo(() => (window as any).COSTRICT_BASE_URI + "/logo.svg", [])
 
 	// Cache event handler function
+	// Cache event handler function
 	const handleConnectClick = useCallback(() => {
 		// Send telemetry for account connect action
 		telemetryClient.capture(TelemetryEventName.ACCOUNT_CONNECT_CLICKED)
-		vscode.postMessage({ type: "zgsmLogin", apiConfiguration })
+		vscode.postMessage({ type: "costrictLogin", apiConfiguration })
 	}, [apiConfiguration])
 
 	const handleLogoutClick = useCallback(() => {
 		// Send telemetry for account logout action
 		telemetryClient.capture(TelemetryEventName.ACCOUNT_LOGOUT_CLICKED)
-		vscode.postMessage({ type: "zgsmLogout" })
+		vscode.postMessage({ type: "costrictLogout" })
 	}, [])
 
 	const handleVisitCloudWebsite = useCallback(() => {
 		// Send telemetry for cloud website visit
 		telemetryClient.capture(TelemetryEventName.ACCOUNT_CONNECT_CLICKED)
-		const cloudUrl = `${apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager?state=${hash}&tab=usage`
+		const cloudUrl = `${apiConfiguration?.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager?state=${hash}&tab=usage`
 		vscode.postMessage({ type: "openExternal", url: cloudUrl })
-	}, [apiConfiguration?.zgsmBaseUrl, hash])
+	}, [apiConfiguration?.costrictBaseUrl, hash])
 
 	const handleGetMoreQuota = useCallback(() => {
-		const cloudUrl = `${apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager/credit-reward-plan?code=${inviteCodeInfo?.invite_code || ""}`
+		const cloudUrl = `${apiConfiguration?.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager/credit-reward-plan?code=${inviteCodeInfo?.invite_code || ""}`
 		vscode.postMessage({ type: "openExternal", url: cloudUrl })
-	}, [apiConfiguration?.zgsmBaseUrl, inviteCodeInfo?.invite_code])
-
+	}, [apiConfiguration?.costrictBaseUrl, inviteCodeInfo?.invite_code])
 	const handleStarRepository = useCallback(() => {
 		vscode.postMessage({ type: "openExternal", url: "https://github.com/zgsm-ai/costrict" })
 	}, [])
 
 	const handlePurchaseQuota = useCallback(() => {
-		const cloudUrl = `${apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager?state=${hash}&tab=subscription`
+		const cloudUrl = `${apiConfiguration?.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager?state=${hash}&tab=subscription`
 		vscode.postMessage({ type: "openExternal", url: cloudUrl })
-	}, [apiConfiguration?.zgsmBaseUrl, hash])
+	}, [apiConfiguration?.costrictBaseUrl, hash])
 
 	const onMessage = useCallback(
 		(event: MessageEvent) => {
 			const message: ExtensionMessage = event.data
 
 			switch (message.type) {
-				case "zgsmLogined": {
+				case "costrictLogined": {
 					// Reset animation state to prepare for next display
 					setShowQuotaInfo(false)
 					setIsLoadingQuota(false)
 					onDone()
 					break
 				}
-				case "zgsmQuotaInfo": {
+				case "costrictQuotaInfo": {
 					setQuotaInfo(message?.values)
 					setIsLoadingQuota(false)
 					// Use requestAnimationFrame to optimize animation timing
@@ -306,7 +306,7 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 					})
 					break
 				}
-				case "zgsmInviteCode": {
+				case "costrictInviteCode": {
 					setInviteCodeInfo(message?.values)
 					break
 				}
@@ -316,7 +316,7 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 	)
 
 	useEffect(() => {
-		if (!apiConfiguration?.zgsmAccessToken) {
+		if (!apiConfiguration?.costrictAccessToken) {
 			setQuotaInfo(undefined)
 			setInviteCodeInfo(undefined)
 			setShowQuotaInfo(false)
@@ -329,28 +329,28 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 		setIsLoadingQuota(true)
 
 		// Immediately fetch quota information
-		vscode.postMessage({ type: "fetchZgsmQuotaInfo" })
-		vscode.postMessage({ type: "fetchZgsmInviteCode" })
+		vscode.postMessage({ type: "fetchCostrictQuotaInfo" })
+		vscode.postMessage({ type: "fetchCostrictInviteCode" })
 
 		// Set timer but reduce frequency to minimize performance impact
 		const timer = setInterval(() => {
 			if (document.visibilityState === "visible") {
-				vscode.postMessage({ type: "fetchZgsmQuotaInfo" })
-				vscode.postMessage({ type: "fetchZgsmInviteCode" })
+				vscode.postMessage({ type: "fetchCostrictQuotaInfo" })
+				vscode.postMessage({ type: "fetchCostrictInviteCode" })
 			}
 		}, 15_000) // Increased to 15 seconds to reduce request frequency
 
 		return () => {
 			clearInterval(timer)
 		}
-	}, [apiConfiguration?.zgsmAccessToken])
+	}, [apiConfiguration?.costrictAccessToken])
 
 	// Handle page visibility changes
 	useEffect(() => {
 		const handleVisibilityChange = () => {
-			if (document.visibilityState === "visible" && apiConfiguration?.zgsmAccessToken) {
-				vscode.postMessage({ type: "fetchZgsmQuotaInfo" })
-				vscode.postMessage({ type: "fetchZgsmInviteCode" })
+			if (document.visibilityState === "visible" && apiConfiguration?.costrictAccessToken) {
+				vscode.postMessage({ type: "fetchCostrictQuotaInfo" })
+				vscode.postMessage({ type: "fetchCostrictInviteCode" })
 			}
 		}
 
@@ -358,7 +358,7 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 		return () => {
 			document.removeEventListener("visibilitychange", handleVisibilityChange)
 		}
-	}, [apiConfiguration?.zgsmAccessToken])
+	}, [apiConfiguration?.costrictAccessToken])
 
 	useEvent("message", onMessage)
 
@@ -370,7 +370,7 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 					{t("settings:common.done")}
 				</Button>
 			</div>
-			{apiConfiguration?.zgsmAccessToken ? (
+			{apiConfiguration?.costrictAccessToken ? (
 				<>
 					{userInfo && (
 						<div className="flex flex-col items-center mb-0">
@@ -447,7 +447,7 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 								{t("cloud:logOut")}
 							</Button>
 							<Button variant="secondary" onClick={handleConnectClick} className="w-[50%]">
-								{t("settings:providers.getZgsmApiKeyAgain")}
+								{t("settings:providers.getCostrictApiKeyAgain")}
 							</Button>
 						</div>
 					</div>
@@ -483,4 +483,4 @@ const ZgsmAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewProps
 	)
 }
 
-export const ZgsmAccountView = memo(ZgsmAccountViewComponent)
+export const CostrictAccountView = memo(CostrictAccountViewComponent)

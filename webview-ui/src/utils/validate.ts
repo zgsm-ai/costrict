@@ -38,8 +38,8 @@ export function validateApiConfiguration(
 
 function validateModelsAndKeysProvided(apiConfiguration: ProviderSettings): string | undefined {
 	switch (apiConfiguration.apiProvider) {
-		case "zgsm":
-			return validateZgsmBaseUrl(apiConfiguration.zgsmBaseUrl)
+		case "costrict":
+			return validateCostrictBaseUrl(apiConfiguration.costrictBaseUrl)
 		case "openrouter":
 			if (!apiConfiguration.openRouterApiKey) {
 				return i18next.t("settings:validation.apiKey")
@@ -244,7 +244,7 @@ function validateDynamicProviderModelId(
 
 	const models = routerModels?.[provider]
 
-	if (provider !== "zgsm" && models && Object.keys(models).length > 1 && !Object.keys(models).includes(modelId)) {
+	if (provider !== "costrict" && models && Object.keys(models).length > 1 && !Object.keys(models).includes(modelId)) {
 		return i18next.t("settings:validation.modelAvailability", { modelId })
 	}
 
@@ -319,10 +319,9 @@ export const isValidUrl = (url: string) => {
 		return false
 	}
 }
-
-export function validateZgsmBaseUrl(zgsmBaseUrl?: string): string | undefined {
-	zgsmBaseUrl = zgsmBaseUrl?.trim()
-	if (!zgsmBaseUrl || isValidUrl(zgsmBaseUrl)) {
+export function validateCostrictBaseUrl(costrictBaseUrl?: string): string | undefined {
+	costrictBaseUrl = costrictBaseUrl?.trim()
+	if (!costrictBaseUrl || isValidUrl(costrictBaseUrl)) {
 		return undefined
 	}
 

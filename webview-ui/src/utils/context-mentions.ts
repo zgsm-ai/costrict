@@ -1,6 +1,6 @@
 import { Fzf } from "fzf"
 
-import type { ModeConfig, Command, ZgsmCodeMode } from "@roo-code/types"
+import type { ModeConfig, Command, CostrictCodeMode } from "@roo-code/types"
 
 import { mentionRegex } from "@roo/context-mentions"
 
@@ -128,7 +128,7 @@ export function getContextMenuOptions(
 	dynamicSearchResults: SearchResult[] = [],
 	modes?: ModeConfig[],
 	commands?: Command[],
-	zgsmCodeMode?: ZgsmCodeMode,
+	costrictCodeMode?: CostrictCodeMode,
 ): ContextMenuQueryItem[] {
 	// Handle slash commands for modes and commands
 	// Only process as slash command if the query itself starts with "/" (meaning we're typing a slash command)
@@ -177,9 +177,9 @@ export function getContextMenuOptions(
 
 		// Add mode suggestions second
 		const _modes = (modes ?? []).filter((v) => {
-			if (v.zgsmCodeModeGroup) {
-				if (v.zgsmCodeModeGroup === "hide") return false
-				if (!v.zgsmCodeModeGroup?.split(",").includes(zgsmCodeMode!)) return false
+			if (v.costrictCodeModeGroup) {
+				if (v.costrictCodeModeGroup === "hide") return false
+				if (!v.costrictCodeModeGroup?.split(",").includes(costrictCodeMode!)) return false
 			}
 
 			return true

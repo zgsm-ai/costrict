@@ -15,7 +15,7 @@ export const handleNewTask = async (params: { prompt?: string } | null | undefin
 	}
 
 	if (!prompt) {
-		await vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
+		await vscode.commands.executeCommand(`${Package.commandIDPrefix}.SidebarProvider.focus`)
 		return
 	}
 

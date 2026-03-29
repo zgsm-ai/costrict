@@ -304,7 +304,7 @@ describe("App", () => {
 		mockUseExtensionState.mockReturnValue(
 			createExtensionState({
 				apiConfiguration: {
-					apiProvider: "zgsm",
+					apiProvider: "costrict",
 				},
 			}),
 		)
@@ -319,7 +319,7 @@ describe("App", () => {
 		mockUseExtensionState.mockReturnValue(
 			createExtensionState({
 				apiConfiguration: {
-					apiProvider: "zgsm",
+					apiProvider: "costrict",
 				},
 				setDidHydrateSClitate,
 			}),
@@ -344,7 +344,7 @@ describe("App", () => {
 		mockUseExtensionState.mockReturnValue(
 			createExtensionState({
 				apiConfiguration: {
-					apiProvider: "zgsm",
+					apiProvider: "costrict",
 				},
 				didHydrateCliState: true,
 			}),

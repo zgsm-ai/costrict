@@ -23,7 +23,7 @@ import { getGitStatus } from "../../utils/git"
 import { Task } from "../task/Task"
 import { formatReminderSection } from "./reminder"
 import { getShell, getWindowsTerminalInfo } from "../../utils/shell"
-import { getOperatingSystem } from "../../utils/zgsmUtils"
+import { getOperatingSystem } from "../../utils/costrictUtils"
 import { defaultLang } from "../../utils/language"
 
 export async function getEnvironmentDetails(cline: Task, includeFileDetails: boolean = false) {
@@ -277,7 +277,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 
 	const alwaysIncludeFileDetails =
 		Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.ALWAYS_INCLUDE_FILE_DETAILS) ??
-		apiConfiguration?.apiProvider === "zgsm"
+		apiConfiguration?.apiProvider === "costrict"
 
 	if (includeFileDetails || alwaysIncludeFileDetails) {
 		details += `\n\n# Current Workspace Directory (${cline.cwd.toPosix()}) Files${alwaysIncludeFileDetails ? " (Directory Tree KPT Format: Use 1 to represent files and objects to represent directories)" : ""}\n`

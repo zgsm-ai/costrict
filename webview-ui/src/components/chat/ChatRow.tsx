@@ -85,7 +85,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getJumpLine } from "@/utils/path-mentions"
-import { useZgsmUserInfo } from "@/hooks/useZgsmUserInfo"
+import { useCostrictUserInfo } from "@/hooks/useCostrictUserInfo"
 import { format } from "date-fns"
 import { PathTooltip } from "../ui/PathTooltip"
 import { ReviewTaskStatus } from "@roo/codeReview"
@@ -228,7 +228,7 @@ export const ChatRowContent = ({
 		enableCheckpoints,
 		currentTaskItem,
 	} = useExtensionState()
-	const { logoPic, userInfo } = useZgsmUserInfo(apiConfiguration?.zgsmAccessToken)
+	const { logoPic, userInfo } = useCostrictUserInfo(apiConfiguration?.costrictAccessToken)
 	const { info: model } = useSelectedModel(apiConfiguration)
 	const [showCopySuccess, setShowCopySuccess] = useState(false)
 	const [isEditing, setIsEditing] = useState(false)
@@ -1434,7 +1434,7 @@ export const ChatRowContent = ({
 											: undefined
 									}
 									additionalContent={
-										apiConfiguration.apiProvider === "zgsm" && (
+										apiConfiguration.apiProvider === "costrict" && (
 											<>
 												<br />
 												<br />
@@ -1520,13 +1520,13 @@ export const ChatRowContent = ({
 							deleteMessageTs={deleteMessageTs}
 							type="api_req_retry_delayed"
 							code={code}
-							message={apiConfiguration.apiProvider === "zgsm" ? message.text || "" : body}
+							message={apiConfiguration.apiProvider === "costrict" ? message.text || "" : body}
 							docsURL={docsURL}
 							errorDetails={rawError}
 							additionalContent={
 								!message?.metadata?.isRateLimit &&
 								!message?.metadata?.isRateLimitRetry &&
-								apiConfiguration.apiProvider === "zgsm" ? (
+								apiConfiguration.apiProvider === "costrict" ? (
 									<>
 										<br />
 										<br />

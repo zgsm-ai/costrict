@@ -51,7 +51,7 @@ export class CommitService {
 					progress.report({ increment: 80 })
 
 					// Get configuration from VSCode settings
-					const config = vscode.workspace.getConfiguration("zgsm.commit")
+					const config = vscode.workspace.getConfiguration("costrict.commit")
 					const useConventionalCommits = config.get<boolean>("useConventionalCommits", true)
 					const commitModelId = config.get<string>("commitModelId", "")
 					const maxLength = config.get<number>("maxLength", 150)

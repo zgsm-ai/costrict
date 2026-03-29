@@ -52,10 +52,10 @@ function createMockModels() {
 	}
 }
 
-// Use real getModelId — it reads zgsmModelId from ProviderSettings
+// Use real getModelId — it reads costrictModelId from ProviderSettings
 const baseConfig: ProviderSettings = {
-	apiProvider: "zgsm",
-	zgsmModelId: "primary-model",
+	apiProvider: "costrict",
+	costrictModelId: "primary-model",
 }
 
 describe("ModelFallbackManager", () => {
@@ -268,8 +268,8 @@ describe("ModelFallbackManager", () => {
 			expect(handler).toBeDefined()
 			expect(buildApiHandler).toHaveBeenCalledWith(
 				expect.objectContaining({
-					apiProvider: "zgsm",
-					zgsmModelId: "fallback-model-a",
+					apiProvider: "costrict",
+					costrictModelId: "fallback-model-a",
 				}),
 			)
 		})

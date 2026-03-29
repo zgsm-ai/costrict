@@ -128,7 +128,7 @@ vi.mock("vscode", async (importOriginal) => ({
 			extensionPath: "/mock/extension/path",
 			extensionUri: { fsPath: "/mock/extension/path", path: "/mock/extension/path", scheme: "file" },
 			packageJSON: {
-				name: "zgsm",
+				name: "costrict",
 				publisher: "zgsm-ai",
 				version: "2.0.27",
 			},
@@ -2513,7 +2513,7 @@ describe("ClineProvider - Router Models", () => {
 		await messageHandler({ type: "requestRouterModels" })
 
 		// Verify getModels was called for each provider with correct options
-		// Provider order: zgsm (first), openrouter, requesty, vercel-ai-gateway, litellm (conditional)
+		// Provider order: costrict (first), openrouter, requesty, vercel-ai-gateway, litellm (conditional)
 		expect(getModels).toHaveBeenCalledWith({ provider: "openrouter" })
 		expect(getModels).toHaveBeenCalledWith({ provider: "requesty", apiKey: "requesty-key" })
 		expect(getModels).toHaveBeenCalledWith({ provider: "unbound" })
@@ -2526,7 +2526,7 @@ describe("ClineProvider - Router Models", () => {
 
 		// Verify ZGSM models message is sent first
 		expect(mockPostMessage).toHaveBeenCalledWith({
-			type: "zgsmModels",
+			type: "costrictModels",
 			openAiModels: ["model-1", "model-2"],
 			fullResponseData: [mockModels["model-1"], mockModels["model-2"]],
 		})
@@ -2535,7 +2535,7 @@ describe("ClineProvider - Router Models", () => {
 		expect(mockPostMessage).toHaveBeenCalledWith({
 			type: "routerModels",
 			routerModels: {
-				zgsm: mockModels,
+				costrict: mockModels,
 				openrouter: mockModels,
 				requesty: mockModels,
 				unbound: mockModels,
@@ -2568,9 +2568,9 @@ describe("ClineProvider - Router Models", () => {
 		const { getModels } = await import("../../../api/providers/fetchers/modelCache")
 
 		// Mock some providers to succeed and others to fail
-		// Provider order in source: zgsm, openrouter, requesty, vercel-ai-gateway, litellm (conditional)
+		// Provider order in source: costrict, openrouter, requesty, vercel-ai-gateway, litellm (conditional)
 		vi.mocked(getModels)
-			.mockResolvedValueOnce(mockModels) // zgsm success (first call)
+			.mockResolvedValueOnce(mockModels) // costrict success (first call)
 			.mockResolvedValueOnce(mockModels) // openrouter success
 			.mockRejectedValueOnce(new Error("Requesty API error")) // requesty fail
 			.mockResolvedValueOnce(mockModels) // unbound success
@@ -2581,7 +2581,7 @@ describe("ClineProvider - Router Models", () => {
 
 		// Verify ZGSM models message is sent first
 		expect(mockPostMessage).toHaveBeenCalledWith({
-			type: "zgsmModels",
+			type: "costrictModels",
 			openAiModels: ["model-1"],
 			fullResponseData: [mockModels["model-1"]],
 		})
@@ -2590,7 +2590,7 @@ describe("ClineProvider - Router Models", () => {
 		expect(mockPostMessage).toHaveBeenCalledWith({
 			type: "routerModels",
 			routerModels: {
-				zgsm: mockModels,
+				costrict: mockModels,
 				openrouter: mockModels,
 				requesty: {},
 				unbound: mockModels,
@@ -2671,7 +2671,7 @@ describe("ClineProvider - Router Models", () => {
 		}
 		const { getModels } = await import("../../../api/providers/fetchers/modelCache")
 		vi.mocked(getModels)
-			.mockResolvedValueOnce(mockModels) // zgsm success (first call)
+			.mockResolvedValueOnce(mockModels) // costrict success (first call)
 			.mockResolvedValue(mockModels) // other providers success
 
 		await messageHandler({ type: "requestRouterModels" })
@@ -2685,7 +2685,7 @@ describe("ClineProvider - Router Models", () => {
 
 		// Verify ZGSM models message is sent first
 		expect(mockPostMessage).toHaveBeenCalledWith({
-			type: "zgsmModels",
+			type: "costrictModels",
 			openAiModels: ["model-1"],
 			fullResponseData: [mockModels["model-1"]],
 		})
@@ -2694,7 +2694,7 @@ describe("ClineProvider - Router Models", () => {
 		expect(mockPostMessage).toHaveBeenCalledWith({
 			type: "routerModels",
 			routerModels: {
-				zgsm: mockModels,
+				costrict: mockModels,
 				openrouter: mockModels,
 				requesty: mockModels,
 				unbound: mockModels,

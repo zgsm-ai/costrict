@@ -243,7 +243,7 @@ vi.mock("../core/webview/ClineProvider", async () => {
 			{
 				// Static method used by extension.ts
 				getVisibleInstance: vi.fn().mockReturnValue(mockInstance),
-				sideBarId: "zgsm.SidebarProvider",
+				sideBarId: "costrict.SidebarProvider",
 			},
 		),
 	}

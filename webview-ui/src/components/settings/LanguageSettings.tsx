@@ -3,7 +3,7 @@ import { useAppTranslation } from "@/i18n/TranslationContext"
 
 import type { Language } from "@roo-code/types"
 
-import { ZGSM_LANGUAGES as LANGUAGES } from "@roo/language"
+import { COSTRICT_LANGUAGES as LANGUAGES } from "@roo/language"
 
 import { cn } from "@src/lib/utils"
 import {

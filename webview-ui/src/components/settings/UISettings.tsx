@@ -123,7 +123,7 @@ export const UISettings = ({
 					</SearchableSetting>
 
 					{/* Show Speed Info Setting */}
-					{apiConfiguration?.apiProvider === "zgsm" && (
+					{apiConfiguration?.apiProvider === "costrict" && (
 						<SearchableSetting
 							settingId="ui-show-speed-info"
 							section="ui"

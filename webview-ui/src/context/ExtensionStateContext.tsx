@@ -26,7 +26,7 @@ import {
 import { findLastIndex } from "@roo/array"
 
 import { checkExistKey } from "@roo/checkExistApiConfig"
-import { Mode, defaultModeSlug, defaultPrompts, ZgsmCodeMode } from "@roo/modes"
+import { Mode, defaultModeSlug, defaultPrompts, CostrictCodeMode } from "@roo/modes"
 import { CustomSupportPrompts } from "@roo/support-prompt"
 import { experimentDefault } from "@roo/experiments"
 
@@ -96,8 +96,8 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setTtsEnabled: (value: boolean) => void
 	setTtsSpeed: (value: number) => void
 	setEnableCheckpoints: (value: boolean) => void
-	setUseZgsmCustomConfig: (value: boolean) => void
-	setZgsmCodebaseIndexEnabled: (value: boolean) => void
+	setUseCostrictCustomConfig: (value: boolean) => void
+	setCostrictCodebaseIndexEnabled: (value: boolean) => void
 	checkpointTimeout: number
 	setCheckpointTimeout: (value: number) => void
 	setWriteDelayMs: (value: number) => void
@@ -111,7 +111,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setListApiConfigMeta: (value: ProviderSettingsEntry[]) => void
 	mode: Mode
 	setMode: (value: Mode) => void
-	setZgsmCodeMode: (value: ZgsmCodeMode) => void
+	setCostrictCodeMode: (value: CostrictCodeMode) => void
 	setCustomModePrompts: (value: CustomModePrompts) => void
 	setCustomSupportPrompts: (value: CustomSupportPrompts) => void
 	enhancementApiConfigId?: string
@@ -237,9 +237,9 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		ttsEnabled: false,
 		ttsSpeed: 1.0,
 		enableCheckpoints: true,
-		useZgsmCustomConfig: false,
-		zgsmCodebaseIndexEnabled: false,
-		zgsmCodeMode: "vibe",
+		useCostrictCustomConfig: false,
+		costrictCodebaseIndexEnabled: false,
+		costrictCodeMode: "vibe",
 		checkpointTimeout: DEFAULT_CHECKPOINT_TIMEOUT_SECONDS, // Default to 15 seconds
 		language: (window as any).defaultLanguage || "en", // Default language code
 		writeDelayMs: 1000,
@@ -520,7 +520,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 					}
 					break
 				}
-				case "zgsmNotices": {
+				case "costrictNotices": {
 					// Full replacement of notices (全量替换)
 					if (message.notices !== undefined) {
 						setNotices(message.notices)
@@ -648,9 +648,10 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setTtsEnabled: (value) => setState((prevState) => ({ ...prevState, ttsEnabled: value })),
 		setTtsSpeed: (value) => setState((prevState) => ({ ...prevState, ttsSpeed: value })),
 		setEnableCheckpoints: (value) => setState((prevState) => ({ ...prevState, enableCheckpoints: value })),
-		setUseZgsmCustomConfig: (value) => setState((prevState) => ({ ...prevState, useZgsmCustomConfig: value })),
-		setZgsmCodebaseIndexEnabled: (value) =>
-			setState((prevState) => ({ ...prevState, zgsmCodebaseIndexEnabled: value })),
+		setUseCostrictCustomConfig: (value) =>
+			setState((prevState) => ({ ...prevState, useCostrictCustomConfig: value })),
+		setCostrictCodebaseIndexEnabled: (value) =>
+			setState((prevState) => ({ ...prevState, costrictCodebaseIndexEnabled: value })),
 		setCheckpointTimeout: (value) => setState((prevState) => ({ ...prevState, checkpointTimeout: value })),
 		setWriteDelayMs: (value) => setState((prevState) => ({ ...prevState, writeDelayMs: value })),
 		setTerminalOutputPreviewSize: (value) =>
@@ -665,7 +666,8 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setCurrentApiConfigName: (value) => setState((prevState) => ({ ...prevState, currentApiConfigName: value })),
 		setListApiConfigMeta,
 		setMode: (value: Mode) => setState((prevState) => ({ ...prevState, mode: value })),
-		setZgsmCodeMode: (value: ZgsmCodeMode) => setState((prevState) => ({ ...prevState, zgsmCodeMode: value })),
+		setCostrictCodeMode: (value: CostrictCodeMode) =>
+			setState((prevState) => ({ ...prevState, costrictCodeMode: value })),
 		setCustomModePrompts: (value) => setState((prevState) => ({ ...prevState, customModePrompts: value })),
 		setCustomSupportPrompts: (value) => setState((prevState) => ({ ...prevState, customSupportPrompts: value })),
 		setEnhancementApiConfigId: (value) =>

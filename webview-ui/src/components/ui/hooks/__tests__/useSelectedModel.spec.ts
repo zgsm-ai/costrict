@@ -396,7 +396,7 @@ describe("useSelectedModel", () => {
 			const wrapper = createWrapper()
 			const { result } = renderHook(() => useSelectedModel(), { wrapper })
 
-			expect(result.current.provider).toBe("zgsm")
+			expect(result.current.provider).toBe("costrict")
 			expect(result.current.id).toBe("Auto")
 		})
 	})

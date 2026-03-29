@@ -47,7 +47,7 @@ export class ListFilesTool extends BaseTool<"list_files"> {
 			} = (await task.providerRef.deref()?.getState()) ?? {}
 			const alwaysIncludeFileDetails =
 				Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.ALWAYS_INCLUDE_FILE_DETAILS) ??
-				apiConfiguration?.apiProvider === "zgsm"
+				apiConfiguration?.apiProvider === "costrict"
 			const [files, didHitLimit] = await listFiles(
 				absolutePath,
 				recursive || false,

@@ -7,8 +7,8 @@ import {
 	azureOpenAiDefaultApiVersion,
 	DEEP_SEEK_DEFAULT_TEMPERATURE,
 	OPENAI_AZURE_AI_INFERENCE_PATH,
-	zgsmDefaultModelId,
-	zgsmModelsConfig as zgsmModels,
+	costrictDefaultModelId,
+	costrictModelsConfig as costrictModels,
 	// TOOL_PROTOCOL,
 	ClineApiReqCancelReason,
 } from "@roo-code/types"
@@ -24,7 +24,7 @@ import { getModelParams } from "../transform/model-params"
 
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
-import { ZgsmAuthConfig, ZgsmAuthService } from "../../core/costrict/auth"
+import { CostrictAuthConfig, CostrictAuthService } from "../../core/costrict/auth"
 import { getClientId } from "../../utils/getClientId"
 import { getWorkspacePath } from "../../utils/path"
 import { getApiRequestTimeout } from "./utils/timeout-config"
@@ -43,10 +43,10 @@ import { liteToolContractPrompt } from "../../core/prompts/tools/lite-descriptio
 const autoModeModelId = "Auto"
 const isDev = process.env.NODE_ENV === "development"
 
-export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandler {
+export class CostrictAiHandler extends BaseProvider implements SingleCompletionHandler {
 	protected options: ApiHandlerOptions
 	private client: OpenAI
-	private readonly providerName = "zgsm"
+	private readonly providerName = "costrict"
 	private baseURL: string
 	private chatType?: "user" | "system"
 	private modelInfo = {} as ModelInfo
@@ -58,8 +58,8 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		super()
 		this.options = options
 		this.logger = createLogger(Package.outputChannel)
-		this.baseURL = `${this.options.zgsmBaseUrl?.trim() || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}/chat-rag/api/v1`
-		const apiKey = options.zgsmAccessToken || "not-provided"
+		this.baseURL = `${this.options.costrictBaseUrl?.trim() || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}/chat-rag/api/v1`
+		const apiKey = options.costrictAccessToken || "not-provided"
 		const isAzureAiInference = this._isAzureAiInference(this.baseURL)
 		const urlHost = this._getUrlHost(this.baseURL)
 		const isAzureOpenAi = urlHost === "azure.com" || urlHost.endsWith(".azure.com") || options.openAiUseAzure
@@ -110,18 +110,18 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const workflowModes = ["strict", "plan"] as Array<string | undefined>
 		await this.updateModelInfo()
 		const fromWorkflow =
-			metadata?.zgsmWorkflowMode ||
+			metadata?.costrictWorkflowMode ||
 			workflowModes.includes(metadata?.mode) ||
 			workflowModes.includes(metadata?.rooTaskMode) ||
 			workflowModes.includes(metadata?.parentTaskMode) ||
-			workflowModes.includes(metadata?.zgsmCodeMode)
+			workflowModes.includes(metadata?.costrictCodeMode)
 		this.apiResponseRenderModeInfo = getApiResponseRenderMode()
 		if (("review" === metadata?.mode || "security-review" === metadata?.mode) && this.client) {
 			this.client.maxRetries = 1
 		}
 		// 1. Cache calculation results and configuration
 		const { info: modelInfo, reasoning, id: modelId } = this.getModel()
-		const modelUrl = this.baseURL || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+		const modelUrl = this.baseURL || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 		const enabledR1Format = this.options.openAiR1FormatEnabled ?? false
 		const isNative = true
 
@@ -147,7 +147,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		}
 
 		try {
-			const tokens = await ZgsmAuthService.getInstance()?.getTokens()
+			const tokens = await CostrictAuthService.getInstance()?.getTokens()
 			if (this.client) {
 				this.client.apiKey = tokens?.access_token || "not-provided"
 			}
@@ -178,10 +178,10 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					metadata,
 					isNative,
 				)
-				requestOptions.extra_body.prompt_mode = fromWorkflow ? (metadata?.zgsmCodeMode ?? "vibe") : "vibe"
-				const isAuto = this.options.zgsmModelId === autoModeModelId
+				requestOptions.extra_body.prompt_mode = fromWorkflow ? (metadata?.costrictCodeMode ?? "vibe") : "vibe"
+				const isAuto = this.options.costrictModelId === autoModeModelId
 				let stream: any
-				let selectedLLM: string | undefined = this.options.zgsmModelId
+				let selectedLLM: string | undefined = this.options.costrictModelId
 				let selectReason: string | undefined
 				let requestIdTimestamp: number | undefined
 				let responseIdTimestamp: number | undefined
@@ -337,17 +337,17 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		return {
 			"Accept-Language": metadata?.language || "en",
 			...COSTRICT_DEFAULT_HEADERS,
-			...(this.options.useZgsmCustomConfig && isDebug() ? (this.options.openAiHeaders ?? {}) : {}),
+			...(this.options.useCostrictCustomConfig && isDebug() ? (this.options.openAiHeaders ?? {}) : {}),
 			"x-quota-identity": chatType || "system",
 			"X-Request-ID": requestId,
 			"x-user-id": metadata?.userId || "",
-			"zgsm-task-id": metadata?.taskId || "",
-			"zgsm-request-id": requestId,
-			"zgsm-client-id": clientId,
-			"zgsm-provider": metadata?.provider,
+			"costrict-task-id": metadata?.taskId || "",
+			"costrict-request-id": requestId,
+			"costrict-client-id": clientId,
+			"costrict-provider": metadata?.provider,
 			"x-costrict-idea": getEditorType(),
-			"zgsm-project-path": encodeURI(workspacePath),
-			"zgsm-prompt-tags": metadata?.promptTags || "",
+			"costrict-project-path": encodeURI(workspacePath),
+			"costrict-prompt-tags": metadata?.promptTags || "",
 			"x-caller": ["review", "security-review"].includes(metadata?.mode || "") ? "review-checker" : "chat",
 		}
 	}
@@ -557,7 +557,11 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				(chunk) => {
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 					isDev &&
-						this.logger.info(`[ResponseID ${this.options.zgsmModelId} fake tool call]:`, requestId, chunk)
+						this.logger.info(
+							`[ResponseID ${this.options.costrictModelId} fake tool call]:`,
+							requestId,
+							chunk,
+						)
 					return {
 						type: chunk.matched ? "fake_tool_call" : "text",
 						text: chunk.data,
@@ -598,7 +602,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			yield {
 				type: "automodel",
 				text: selectReason ? ` (${selectReason})` : "",
-				originModelId: this.options.zgsmModelId,
+				originModelId: this.options.costrictModelId,
 				selectedLLM,
 			}
 		}
@@ -691,7 +695,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 							// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 							isDev &&
 								this.logger.info(
-									`[ResponseID ${this.options.zgsmModelId} sse rendering]:`,
+									`[ResponseID ${this.options.costrictModelId} sse rendering]:`,
 									requestId,
 									processedChunk.text?.substring(0, 100),
 								)
@@ -705,7 +709,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 					isDev &&
 						this.logger.info(
-							`[ResponseID ${this.options.zgsmModelId} sse rendering chunk]:`,
+							`[ResponseID ${this.options.costrictModelId} sse rendering chunk]:`,
 							requestId,
 							JSON.stringify(chunk),
 						)
@@ -716,7 +720,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 								// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 								isDev &&
 									this.logger.warn(
-										`[ResponseID ${this.options.zgsmModelId} sse "${key} -> reasoning_content":`,
+										`[ResponseID ${this.options.costrictModelId} sse "${key} -> reasoning_content":`,
 										requestId,
 										reasoning_content,
 									)
@@ -805,7 +809,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 			}
 
 			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-			isDev && this.logger.info(`[ResponseID ${this.options.zgsmModelId} sse render end]:`, requestId)
+			isDev && this.logger.info(`[ResponseID ${this.options.costrictModelId} sse render end]:`, requestId)
 
 			// Process usage metrics
 			if (lastUsage) {
@@ -850,7 +854,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				isDev &&
 					this.logger.warn(
-						`[ResponseID ${this.options.zgsmModelId} sse "toolCall arguments":`,
+						`[ResponseID ${this.options.costrictModelId} sse "toolCall arguments":`,
 						requestId,
 						JSON.stringify(toolCall),
 					)
@@ -876,34 +880,34 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 
 	async updateModelInfo() {
 		try {
-			const id = this.options.zgsmModelId ?? zgsmDefaultModelId
+			const id = this.options.costrictModelId ?? costrictDefaultModelId
 			const info =
 				(
 					await getModels({
-						provider: "zgsm",
-						baseUrl: `${this.options.zgsmBaseUrl?.trim() || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}`,
-						apiKey: this.options.zgsmAccessToken,
+						provider: "costrict",
+						baseUrl: `${this.options.costrictBaseUrl?.trim() || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}`,
+						apiKey: this.options.costrictAccessToken,
 					})
-				)[id] ?? zgsmModels.default
+				)[id] ?? costrictModels.default
 
 			this.modelInfo = info
 		} catch (error) {
 			this.logger.error(`[updateModelInfo] ${error.message}`)
-			this.modelInfo = zgsmModels.default
+			this.modelInfo = costrictModels.default
 		}
 	}
 
 	override getModel() {
-		const id = this?.options?.zgsmModelId ?? zgsmDefaultModelId
+		const id = this?.options?.costrictModelId ?? costrictDefaultModelId
 		const defaultInfo = this.modelInfo
 		let info =
-			this.options.useZgsmCustomConfig && isDebug()
+			this.options.useCostrictCustomConfig && isDebug()
 				? {
 						...defaultInfo,
-						...(this.options.zgsmAiCustomModelInfo ?? {}),
+						...(this.options.costrictAiCustomModelInfo ?? {}),
 					}
 				: defaultInfo
-		const params = getModelParams({ format: "zgsm", modelId: id, model: info, settings: this.options })
+		const params = getModelParams({ format: "costrict", modelId: id, model: info, settings: this.options })
 
 		if (info.id !== id) {
 			info.id = id
@@ -1163,7 +1167,7 @@ export class ZgsmAiHandler extends BaseProvider implements SingleCompletionHandl
 		const isAutoMode = modelInfo.id === "Auto" || modelInfo.id === "auto"
 
 		// Only add max_completion_tokens if includeMaxTokens is true
-		if (this.options.useZgsmCustomConfig && isDebug()) {
+		if (this.options.useCostrictCustomConfig && isDebug()) {
 			const maxTokens = this.options.modelMaxTokens || modelInfo.maxTokens
 			// Use user-configured modelMaxTokens if available, otherwise fall back to model's default maxTokens
 			// Using max_completion_tokens as max_tokens is deprecated

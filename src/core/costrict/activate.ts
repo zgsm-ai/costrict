@@ -22,7 +22,7 @@ import {
 	printLogo,
 	loadLocalLanguageExtensions,
 } from "./base/common"
-import { ZgsmAuthApi, ZgsmAuthCommands, ZgsmAuthService, ZgsmAuthStorage } from "./auth"
+import { CostrictAuthApi, CostrictAuthCommands, CostrictAuthService, CostrictAuthStorage } from "./auth"
 import { initCodeReview, disposeGitCommitListener, CodeReviewService } from "./code-review"
 import { initTelemetry } from "./telemetry"
 import { initErrorCodeManager } from "./error-code"
@@ -33,13 +33,13 @@ import {
 	connectIPC,
 	disconnectIPC,
 	onCloseWindow,
-	onZgsmLogout,
-	onZgsmTokensUpdate,
+	onCostrictLogout,
+	onCostrictTokensUpdate,
 	startIPCServer,
 	stopIPCServer,
 } from "./auth/ipc"
 import { generateNewSessionClientId, getClientId } from "../../utils/getClientId"
-import ZgsmCodebaseIndexManager, { zgsmCodebaseIndexManager } from "./codebase-index"
+import CostrictCodebaseIndexManager, { costrictCodebaseIndexManager } from "./codebase-index"
 import { workspaceEventMonitor } from "./codebase-index/workspace-event-monitor"
 import { initGitCheckoutDetector } from "./codebase-index/git-checkout-detector"
 import { writeCostrictAccessToken } from "./codebase-index/utils"
@@ -56,20 +56,20 @@ const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
  */
 async function initialize(provider: ClineProvider, logger: ILogger) {
 	const oldDebug = provider.getValue("debug")
-	const oldEnabled = provider.getValue("zgsmCodebaseIndexEnabled")
+	const oldEnabled = provider.getValue("costrictCodebaseIndexEnabled")
 	if (oldEnabled == null) {
-		await provider.setValue("zgsmCodebaseIndexEnabled", false)
+		await provider.setValue("costrictCodebaseIndexEnabled", false)
 	}
 	updateDefaultDebug(oldDebug ?? false)
 	//
-	ZgsmAuthStorage.setProvider(provider)
-	ZgsmAuthApi.setProvider(provider)
-	ZgsmAuthService.setProvider(provider)
-	ZgsmAuthCommands.setProvider(provider)
+	CostrictAuthStorage.setProvider(provider)
+	CostrictAuthApi.setProvider(provider)
+	CostrictAuthService.setProvider(provider)
+	CostrictAuthCommands.setProvider(provider)
 
 	//
-	zgsmCodebaseIndexManager.setProvider(provider)
-	zgsmCodebaseIndexManager.setLogger(logger)
+	costrictCodebaseIndexManager.setProvider(provider)
+	costrictCodebaseIndexManager.setLogger(logger)
 	workspaceEventMonitor.setProvider(provider)
 	workspaceEventMonitor.setLogger(logger)
 
@@ -103,16 +103,16 @@ export async function activate(
 	}
 	const completionStatusBar = CompletionStatusBar.getInstance()
 
-	const zgsmAuthService = ZgsmAuthService.getInstance()
-	context.subscriptions.push(zgsmAuthService)
+	const costrictAuthService = CostrictAuthService.getInstance()
+	context.subscriptions.push(costrictAuthService)
 	context.subscriptions.push(
-		onZgsmTokensUpdate((tokens: { state: string; access_token: string; refresh_token: string }) => {
-			zgsmAuthService.saveTokens(tokens)
+		onCostrictTokensUpdate((tokens: { state: string; access_token: string; refresh_token: string }) => {
+			costrictAuthService.saveTokens(tokens)
 			provider.log("Auth tokens refreshed from another window")
 		}),
-		onZgsmLogout((sessionId: string) => {
+		onCostrictLogout((sessionId: string) => {
 			if (generateNewSessionClientId() === sessionId) return
-			zgsmAuthService.logout(true)
+			costrictAuthService.logout(true)
 			provider.log(`logout from other window`)
 		}),
 		onCloseWindow((sessionId: string) => {
@@ -120,21 +120,21 @@ export async function activate(
 			vscode.commands.executeCommand("workbench.action.closeWindow")
 		}),
 	)
-	const zgsmAuthCommands = ZgsmAuthCommands.getInstance()
-	context.subscriptions.push(zgsmAuthCommands)
+	const costrictAuthCommands = CostrictAuthCommands.getInstance()
+	context.subscriptions.push(costrictAuthCommands)
 
-	zgsmAuthCommands.registerCommands(context)
+	costrictAuthCommands.registerCommands(context)
 
-	provider.setZgsmAuthCommands(zgsmAuthCommands)
+	provider.setCostrictAuthCommands(costrictAuthCommands)
 	let loginTip = () => {}
 	/**
 	 * Check login status when plugin starts
 	 */
 	try {
-		const isLoggedIn = await zgsmAuthService.checkLoginStatusOnStartup()
+		const isLoggedIn = await costrictAuthService.checkLoginStatusOnStartup()
 
 		if (isLoggedIn) {
-			zgsmAuthService.getTokens().then(async (tokens) => {
+			costrictAuthService.getTokens().then(async (tokens) => {
 				if (!tokens) {
 					return
 				}
@@ -142,16 +142,16 @@ export async function activate(
 				void writeCostrictAccessToken(tokens.access_token, tokens.refresh_token)
 					.then(async () => {
 						const { apiConfiguration } = await provider.getState()
-						if (apiConfiguration.apiProvider !== "zgsm") {
+						if (apiConfiguration.apiProvider !== "costrict") {
 							return
 						}
 
 						setTimeout(() => {
 							void (async () => {
 								try {
-									await zgsmCodebaseIndexManager.ensureInitialized("activate")
-									await zgsmCodebaseIndexManager.syncToken()
-									if (apiConfiguration.zgsmCodebaseIndexEnabled) {
+									await costrictCodebaseIndexManager.ensureInitialized("activate")
+									await costrictCodebaseIndexManager.syncToken()
+									if (apiConfiguration.costrictCodebaseIndexEnabled) {
 										await workspaceEventMonitor.initialize()
 									}
 								} catch (error) {
@@ -167,13 +167,13 @@ export async function activate(
 							`Failed to persist auth token for codebase index startup: ${error instanceof Error ? error.message : String(error)}`,
 						)
 					})
-				zgsmAuthService.startTokenRefresh(tokens.refresh_token, getClientId(), tokens.state)
-				zgsmAuthService.updateUserInfo(tokens.access_token)
+				costrictAuthService.startTokenRefresh(tokens.refresh_token, getClientId(), tokens.state)
+				costrictAuthService.updateUserInfo(tokens.access_token)
 			})
 			// Start token refresh timer
 		} else {
 			loginTip = () => {
-				zgsmAuthService.getTokens().then(async (tokens) => {
+				costrictAuthService.getTokens().then(async (tokens) => {
 					if (!tokens) {
 						getPanel()?.webview.postMessage({
 							type: "showReauthConfirmationDialog",
@@ -226,8 +226,8 @@ export async function activate(
 		context.subscriptions.push(configChanged)
 	}
 
-	// Get zgsmRefreshToken without webview resolve
-	const tokens = await ZgsmAuthStorage.getInstance().getTokens()
+	// Get costrictRefreshToken without webview resolve
+	const tokens = await CostrictAuthStorage.getInstance().getTokens()
 	if (isVscodePlatform) {
 		if (tokens?.access_token) {
 			// CompletionStatusBar.initByConfig()
@@ -264,7 +264,7 @@ export async function deactivate() {
 	void getTerminalManager().dispose()
 
 	// Stop periodic health checks
-	void ZgsmCodebaseIndexManager.getInstance().stopHealthCheck()
+	void CostrictCodebaseIndexManager.getInstance().stopHealthCheck()
 
 	// Stop periodic notice fetching
 	void NotificationService.getInstance().stopPeriodicFetch()
@@ -273,9 +273,9 @@ export async function deactivate() {
 	void disposeGitCommitListener()
 
 	// Dispose code review service (saves history)
-	void await CodeReviewService.getInstance().dispose()
+	void (await CodeReviewService.getInstance().dispose())
 
-	// ZgsmCodebaseIndexManager.getInstance().stopExistingClient()
+	// CostrictCodebaseIndexManager.getInstance().stopExistingClient()
 	// Clean up IPC connections
 	void disconnectIPC()
 	void stopIPCServer()

@@ -45,7 +45,7 @@
 		"roo code",
 		"roocode",
 		"costrict",
-		"zgsm",
+		"costrict",
 		"shenma",
 		"诸葛神码",
 		"诸葛",
@@ -76,17 +76,17 @@
 		"viewsContainers": {
 			"activitybar": [
 				{
-					"id": "zgsm-ActivityBar",
+					"id": "costrict-ActivityBar",
 					"title": "%views.activitybar.title%",
 					"icon": "assets/images/shenma_robot_logo_big.png"
 				}
 			]
 		},
 		"views": {
-			"zgsm-ActivityBar": [
+			"costrict-ActivityBar": [
 				{
 					"type": "webview",
-					"id": "zgsm.SidebarProvider",
+					"id": "costrict.SidebarProvider",
 					"name": "%views.sidebar.name%",
 					"icon": "assets/images/shenma_robot_logo_big.png"
 				}
@@ -94,248 +94,248 @@
 		},
 		"commands": [
 			{
-				"command": "zgsm-completion.shortKeyCut",
+				"command": "costrict-completion.shortKeyCut",
 				"title": "%command.shortKeyCut.title%",
 				"shortTitle": "%command.shortKeyCut.title%"
 			},
 			{
-				"command": "zgsm.openNewButtonClicked",
+				"command": "costrict.openNewButtonClicked",
 				"title": "%command.newTask.title%",
 				"icon": "assets/images/shenma_robot_logo_big.png"
 			},
 			{
-				"command": "zgsm.plusButtonClicked",
+				"command": "costrict.plusButtonClicked",
 				"title": "%command.newTask.title%",
 				"icon": "$(edit)"
 			},
 			{
-				"command": "zgsm.historyButtonClicked",
+				"command": "costrict.historyButtonClicked",
 				"title": "%command.history.title%",
 				"icon": "$(history)"
 			},
 			{
-				"command": "zgsm.marketplaceButtonClicked",
+				"command": "costrict.marketplaceButtonClicked",
 				"title": "%command.marketplace.title%",
 				"icon": "$(extensions)"
 			},
 			{
-				"command": "zgsm.popoutButtonClicked",
+				"command": "costrict.popoutButtonClicked",
 				"title": "%command.openInEditor.title%",
 				"icon": "$(link-external)"
 			},
 			{
-				"command": "zgsm.cloudButtonClicked",
+				"command": "costrict.cloudButtonClicked",
 				"title": "%command.cloud.title%",
 				"icon": "$(account)"
 			},
 			{
-				"command": "zgsm.settingsButtonClicked",
+				"command": "costrict.settingsButtonClicked",
 				"title": "%command.settings.title%",
 				"icon": "$(settings-gear)"
 			},
 			{
-				"command": "zgsm.openInNewTab",
+				"command": "costrict.openInNewTab",
 				"title": "%command.openInNewTab.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.newTask",
+				"command": "costrict.newTask",
 				"title": "%command.newTask.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.terminalAddToContext",
+				"command": "costrict.terminalAddToContext",
 				"title": "%command.terminal.addToContext.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "zgsm.terminalFixCommand",
+				"command": "costrict.terminalFixCommand",
 				"title": "%command.terminal.fixCommand.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "zgsm.terminalExplainCommand",
+				"command": "costrict.terminalExplainCommand",
 				"title": "%command.terminal.explainCommand.title%",
 				"category": "Terminal"
 			},
 			{
-				"command": "zgsm.setCustomStoragePath",
+				"command": "costrict.setCustomStoragePath",
 				"title": "%command.setCustomStoragePath.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.importSettings",
+				"command": "costrict.importSettings",
 				"title": "%command.importSettings.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.focusInput",
+				"command": "costrict.focusInput",
 				"title": "%command.focusInput.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.acceptInput",
+				"command": "costrict.acceptInput",
 				"title": "%command.acceptInput.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.codeReview",
+				"command": "costrict.codeReview",
 				"title": "%command.codeReview.title%"
 			},
 			{
-				"command": "zgsm.reviewFilesAndFolders",
+				"command": "costrict.reviewFilesAndFolders",
 				"title": "%command.codeReview.title%"
 			},
 			{
-				"command": "zgsm.securityReviewCode",
+				"command": "costrict.securityReviewCode",
 				"title": "%command.securityReview.title%"
 			},
 			{
-				"command": "zgsm.securityFilesAndFolders",
+				"command": "costrict.securityFilesAndFolders",
 				"title": "%command.securityReview.title%"
 			},
 			{
-				"command": "zgsm.reviewCommit",
+				"command": "costrict.reviewCommit",
 				"title": "%command.reviewCommit.title%",
 				"icon": "assets/images/reviewLogo.png"
 			},
 			{
-				"command": "zgsm.coworkflow.runTaskJetbrains",
+				"command": "costrict.coworkflow.runTaskJetbrains",
 				"title": "runTaskJetbrains"
 			},
 			{
-				"command": "zgsm.coworkflow.runAllTasksJetbrains",
+				"command": "costrict.coworkflow.runAllTasksJetbrains",
 				"title": "runAllTasksJetbrains"
 			},
 			{
-				"command": "zgsm.coworkflow.retryTaskJetbrains",
+				"command": "costrict.coworkflow.retryTaskJetbrains",
 				"title": "retryTaskJetbrains"
 			},
 			{
-				"command": "zgsm.coworkflow.updateSectionJetbrains",
+				"command": "costrict.coworkflow.updateSectionJetbrains",
 				"title": "updateSectionJetbrains"
 			},
 			{
-				"command": "zgsm.coworkflow.runTestJetbrains",
+				"command": "costrict.coworkflow.runTestJetbrains",
 				"title": "runTestJetbrains"
 			},
 			{
-				"command": "zgsm.coworkflow.syncToDesignJetbrains",
+				"command": "costrict.coworkflow.syncToDesignJetbrains",
 				"title": "syncToDesignJetbrains"
 			},
 			{
-				"command": "zgsm.coworkflow.syncToTasksJetbrains",
+				"command": "costrict.coworkflow.syncToTasksJetbrains",
 				"title": "syncToTasksJetbrains"
 			},
 			{
-				"command": "zgsm.codeReviewJetbrains",
+				"command": "costrict.codeReviewJetbrains",
 				"title": "%command.codeReview.title%"
 			},
 			{
-				"command": "zgsm.reviewFilesAndFoldersJetbrains",
+				"command": "costrict.reviewFilesAndFoldersJetbrains",
 				"title": "%command.codeReview.title%"
 			},
 			{
-				"command": "zgsm.securityFilesAndFoldersJetbrains",
+				"command": "costrict.securityFilesAndFoldersJetbrains",
 				"title": "%command.securityReview.title%"
 			},
 			{
-				"command": "zgsm.askReviewSuggestionWithAIJetbrains",
+				"command": "costrict.askReviewSuggestionWithAIJetbrains",
 				"title": "%command.codeReview.title%"
 			},
 			{
-				"command": "zgsm.acceptIssueJetbrains",
+				"command": "costrict.acceptIssueJetbrains",
 				"title": "%command.codeReview.title%"
 			},
 			{
-				"command": "zgsm.rejectIssueJetbrains",
+				"command": "costrict.rejectIssueJetbrains",
 				"title": "%command.codeReview.title%"
 			},
 			{
-				"command": "zgsm.acceptIssue",
+				"command": "costrict.acceptIssue",
 				"title": "Accept",
 				"icon": "$(check)"
 			},
 			{
-				"command": "zgsm.rejectIssue",
+				"command": "costrict.rejectIssue",
 				"title": "Reject",
 				"icon": "$(circle-slash)"
 			},
 			{
-				"command": "zgsm.explainCode",
+				"command": "costrict.explainCode",
 				"title": "%command.explainCode.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.fixCode",
+				"command": "costrict.fixCode",
 				"title": "%command.fixCode.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.askReviewSuggestionWithAI",
+				"command": "costrict.askReviewSuggestionWithAI",
 				"title": "%command.askReviewSuggestionWithAI.title%",
 				"icon": "$(sparkle)"
 			},
 			{
-				"command": "zgsm.improveCode",
+				"command": "costrict.improveCode",
 				"title": "%command.improveCode.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.addToContext",
+				"command": "costrict.addToContext",
 				"title": "%command.addToContext.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.view.issue",
+				"command": "costrict.view.issue",
 				"title": "%command.view.issue.title%"
 			},
 			{
-				"command": "zgsm.addFileToContext",
+				"command": "costrict.addFileToContext",
 				"title": "%command.addFileToContext.title%"
 			},
 			{
-				"command": "zgsm.view.userHelperDoc",
+				"command": "costrict.view.userHelperDoc",
 				"title": "%command.view.userHelperDoc.title%"
 			},
 			{
-				"command": "zgsm.toggleAutoApprove",
+				"command": "costrict.toggleAutoApprove",
 				"title": "%command.toggleAutoApprove.title%",
 				"category": "%configuration.title%"
 			},
 			{
-				"command": "zgsm.generateCommitMessage",
+				"command": "costrict.generateCommitMessage",
 				"title": "%command.generateCommitMessage.title%",
 				"category": "%configuration.title%",
 				"icon": "assets/images/commitLogo.png"
 			},
 			{
-				"command": "zgsm.coworkflow.updateSection",
+				"command": "costrict.coworkflow.updateSection",
 				"title": "Update Section",
 				"category": "Coworkflow"
 			},
 			{
-				"command": "zgsm.coworkflow.runTask",
+				"command": "costrict.coworkflow.runTask",
 				"title": "Run Task",
 				"category": "Coworkflow"
 			},
 			{
-				"command": "zgsm.coworkflow.retryTask",
+				"command": "costrict.coworkflow.retryTask",
 				"title": "Retry Task",
 				"category": "Coworkflow"
 			},
 			{
-				"command": "zgsm.coworkflow.refreshCodeLens",
+				"command": "costrict.coworkflow.refreshCodeLens",
 				"title": "Refresh CodeLens",
 				"category": "Coworkflow"
 			},
 			{
-				"command": "zgsm.coworkflow.refreshDecorations",
+				"command": "costrict.coworkflow.refreshDecorations",
 				"title": "Refresh Decorations",
 				"category": "Coworkflow"
 			},
 			{
-				"command": "zgsm.coworkflow.runTest",
+				"command": "costrict.coworkflow.runTest",
 				"title": "Generate Test Case",
 				"category": "Coworkflow"
 			}
@@ -343,183 +343,183 @@
 		"menus": {
 			"editor/context": [
 				{
-					"submenu": "zgsm",
+					"submenu": "costrict",
 					"group": "0_chatGpt@1"
 				}
 			],
 			"explorer/context": [
 				{
-					"submenu": "zgsm.explorerSubmenu",
+					"submenu": "costrict.explorerSubmenu",
 					"group": "1_modification@1"
 				}
 			],
-			"zgsm.explorerSubmenu": [
+			"costrict.explorerSubmenu": [
 				{
-					"command": "zgsm.addFileToContext",
-					"group": "zgsm.explorerSubmenu@1"
+					"command": "costrict.addFileToContext",
+					"group": "costrict.explorerSubmenu@1"
 				},
 				{
-					"command": "zgsm.reviewFilesAndFolders",
-					"group": "zgsm.explorerSubmenu@2",
+					"command": "costrict.reviewFilesAndFolders",
+					"group": "costrict.explorerSubmenu@2",
 					"when": "!explorerResourceIsFolder"
 				},
 				{
-					"command": "zgsm.securityFilesAndFolders",
-					"group": "zgsm.explorerSubmenu@3",
+					"command": "costrict.securityFilesAndFolders",
+					"group": "costrict.explorerSubmenu@3",
 					"when": "!explorerResourceIsFolder"
 				}
 			],
-			"zgsm": [
+			"costrict": [
 				{
-					"command": "zgsm.addToContext",
-					"group": "zgsm@1"
+					"command": "costrict.addToContext",
+					"group": "costrict@1"
 				},
 				{
-					"command": "zgsm.explainCode",
-					"group": "zgsm@2"
+					"command": "costrict.explainCode",
+					"group": "costrict@2"
 				},
 				{
-					"command": "zgsm.fixCode",
-					"group": "zgsm@3"
+					"command": "costrict.fixCode",
+					"group": "costrict@3"
 				},
 				{
-					"command": "zgsm.improveCode",
-					"group": "zgsm@4"
+					"command": "costrict.improveCode",
+					"group": "costrict@4"
 				},
 				{
-					"command": "zgsm.codeReview",
-					"group": "zgsm@5",
+					"command": "costrict.codeReview",
+					"group": "costrict@5",
 					"when": "editorHasSelection && workbenchState != 'empty'"
 				},
 				{
-					"command": "zgsm.securityReviewCode",
-					"group": "zgsm@6",
+					"command": "costrict.securityReviewCode",
+					"group": "costrict@6",
 					"when": "editorHasSelection && workbenchState != 'empty'"
 				},
 				{
-					"command": "zgsm.view.issue",
+					"command": "costrict.view.issue",
 					"group": "zissue@1"
 				}
 			],
 			"terminal/context": [
 				{
-					"submenu": "zgsm.terminalMenu",
+					"submenu": "costrict.terminalMenu",
 					"group": "2"
 				}
 			],
-			"zgsm.terminalMenu": [
+			"costrict.terminalMenu": [
 				{
-					"command": "zgsm.terminalAddToContext",
+					"command": "costrict.terminalAddToContext",
 					"group": "1_actions@1"
 				},
 				{
-					"command": "zgsm.terminalFixCommand",
+					"command": "costrict.terminalFixCommand",
 					"group": "1_actions@2"
 				},
 				{
-					"command": "zgsm.terminalExplainCommand",
+					"command": "costrict.terminalExplainCommand",
 					"group": "1_actions@3"
 				}
 			],
 			"view/title": [
 				{
-					"command": "zgsm.marketplaceButtonClicked",
+					"command": "costrict.marketplaceButtonClicked",
 					"group": "navigation@1",
 					"when": "false"
 				},
 				{
-					"command": "zgsm.settingsButtonClicked",
+					"command": "costrict.settingsButtonClicked",
 					"group": "navigation@2",
-					"when": "view == zgsm.SidebarProvider"
+					"when": "view == costrict.SidebarProvider"
 				},
 				{
-					"command": "zgsm.cloudButtonClicked",
+					"command": "costrict.cloudButtonClicked",
 					"group": "navigation@3",
-					"when": "view == zgsm.SidebarProvider"
+					"when": "view == costrict.SidebarProvider"
 				},
 				{
-					"command": "zgsm.view.userHelperDoc",
+					"command": "costrict.view.userHelperDoc",
 					"group": "overflow@2",
-					"when": "view == zgsm.SidebarProvider"
+					"when": "view == costrict.SidebarProvider"
 				},
 				{
-					"command": "zgsm.view.issue",
+					"command": "costrict.view.issue",
 					"group": "overflow@3",
-					"when": "view == zgsm.SidebarProvider"
+					"when": "view == costrict.SidebarProvider"
 				},
 				{
-					"command": "zgsm.popoutButtonClicked",
+					"command": "costrict.popoutButtonClicked",
 					"group": "overflow@2",
-					"when": "view == zgsm.SidebarProvider"
+					"when": "view == costrict.SidebarProvider"
 				}
 			],
 			"editor/title": [
 				{
-					"command": "zgsm.openNewButtonClicked",
+					"command": "costrict.openNewButtonClicked",
 					"group": "navigation@1",
-					"when": "activeWebviewPanelId != zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId != costrict.TabPanelProvider"
 				},
 				{
-					"command": "zgsm.settingsButtonClicked",
+					"command": "costrict.settingsButtonClicked",
 					"group": "navigation@2",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == costrict.TabPanelProvider"
 				},
 				{
-					"command": "zgsm.cloudButtonClicked",
+					"command": "costrict.cloudButtonClicked",
 					"group": "navigation@3",
 					"when": "false"
 				},
 				{
-					"command": "zgsm.marketplaceButtonClicked",
+					"command": "costrict.marketplaceButtonClicked",
 					"group": "navigation@4",
 					"when": "false"
 				},
 				{
-					"command": "zgsm.historyButtonClicked",
+					"command": "costrict.historyButtonClicked",
 					"group": "overflow@1",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == costrict.TabPanelProvider"
 				},
 				{
-					"command": "zgsm.popoutButtonClicked",
+					"command": "costrict.popoutButtonClicked",
 					"group": "overflow@3",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == costrict.TabPanelProvider"
 				},
 				{
-					"command": "zgsm.view.userHelperDoc",
+					"command": "costrict.view.userHelperDoc",
 					"group": "overflow@4",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == costrict.TabPanelProvider"
 				},
 				{
-					"command": "zgsm.view.issue",
+					"command": "costrict.view.issue",
 					"group": "overflow@5",
-					"when": "activeWebviewPanelId == zgsm.TabPanelProvider"
+					"when": "activeWebviewPanelId == costrict.TabPanelProvider"
 				}
 			],
 			"comments/commentThread/title": [
 				{
-					"command": "zgsm.acceptIssue",
+					"command": "costrict.acceptIssue",
 					"group": "navigation@1",
 					"when": "commentThread == CostrictCodeReview"
 				},
 				{
-					"command": "zgsm.rejectIssue",
+					"command": "costrict.rejectIssue",
 					"group": "navigation@2",
 					"when": "commentThread == CostrictCodeReview"
 				},
 				{
-					"command": "zgsm.askReviewSuggestionWithAI",
+					"command": "costrict.askReviewSuggestionWithAI",
 					"group": "navigation@3",
 					"when": "commentThread == CostrictCodeReview"
 				}
 			],
 			"scm/title": [
 				{
-					"command": "zgsm.generateCommitMessage",
+					"command": "costrict.generateCommitMessage",
 					"group": "navigation",
 					"when": "scmProvider == git"
 				},
 				{
-					"command": "zgsm.reviewCommit",
+					"command": "costrict.reviewCommit",
 					"group": "navigation",
 					"when": "scmProvider == git"
 				}
@@ -527,7 +527,7 @@
 		},
 		"keybindings": [
 			{
-				"command": "zgsm.addToContext",
+				"command": "costrict.addToContext",
 				"key": "cmd+l",
 				"mac": "cmd+l",
 				"win": "ctrl+l",
@@ -535,14 +535,14 @@
 				"when": "editorTextFocus && editorHasSelection"
 			},
 			{
-				"command": "zgsm.toggleAutoApprove",
+				"command": "costrict.toggleAutoApprove",
 				"key": "cmd+alt+a",
 				"mac": "cmd+alt+a",
 				"win": "ctrl+alt+a",
 				"linux": "ctrl+alt+a"
 			},
 			{
-				"command": "zgsm-completion.shortKeyCut",
+				"command": "costrict-completion.shortKeyCut",
 				"key": "alt+a",
 				"mac": "alt+a",
 				"win": "alt+a",
@@ -552,19 +552,19 @@
 		],
 		"submenus": [
 			{
-				"id": "zgsm.contextMenu",
+				"id": "costrict.contextMenu",
 				"label": "%views.contextMenu.label%"
 			},
 			{
-				"id": "zgsm",
+				"id": "costrict",
 				"label": "%extension.displayName%"
 			},
 			{
-				"id": "zgsm.terminalMenu",
+				"id": "costrict.terminalMenu",
 				"label": "%views.terminalMenu.label%"
 			},
 			{
-				"id": "zgsm.explorerSubmenu",
+				"id": "costrict.explorerSubmenu",
 				"label": "%extension.displayName%"
 			}
 		],
@@ -669,7 +669,7 @@
 						}
 					}
 				},
-				"zgsm.allowedCommands": {
+				"costrict.allowedCommands": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -681,7 +681,7 @@
 					],
 					"description": "%commands.allowedCommands.description%"
 				},
-				"zgsm.deniedCommands": {
+				"costrict.deniedCommands": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -689,14 +689,14 @@
 					"default": [],
 					"description": "%commands.deniedCommands.description%"
 				},
-				"zgsm.commandExecutionTimeout": {
+				"costrict.commandExecutionTimeout": {
 					"type": "number",
 					"default": 0,
 					"minimum": 0,
 					"maximum": 600,
 					"description": "%commands.commandExecutionTimeout.description%"
 				},
-				"zgsm.commandTimeoutAllowlist": {
+				"costrict.commandTimeoutAllowlist": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -704,12 +704,12 @@
 					"default": [],
 					"description": "%commands.commandTimeoutAllowlist.description%"
 				},
-				"zgsm.preventCompletionWithOpenTodos": {
+				"costrict.preventCompletionWithOpenTodos": {
 					"type": "boolean",
 					"default": false,
 					"description": "%commands.preventCompletionWithOpenTodos.description%"
 				},
-				"zgsm.vsCodeLmModelSelector": {
+				"costrict.vsCodeLmModelSelector": {
 					"type": "object",
 					"properties": {
 						"vendor": {
@@ -723,29 +723,29 @@
 					},
 					"description": "%settings.vsCodeLmModelSelector.description%"
 				},
-				"zgsm.customStoragePath": {
+				"costrict.customStoragePath": {
 					"type": "string",
 					"default": "",
 					"description": "%settings.customStoragePath.description%"
 				},
-				"zgsm.enableCodeActions": {
+				"costrict.enableCodeActions": {
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.enableCodeActions.description%"
 				},
-				"zgsm.autoImportSettingsPath": {
+				"costrict.autoImportSettingsPath": {
 					"type": "string",
 					"default": "",
 					"description": "%settings.autoImportSettingsPath.description%"
 				},
-				"zgsm.maximumIndexedFilesForFileSearch": {
+				"costrict.maximumIndexedFilesForFileSearch": {
 					"type": "number",
 					"default": 10000,
 					"minimum": 5000,
 					"maximum": 500000,
 					"description": "%settings.maximumIndexedFilesForFileSearch.description%"
 				},
-				"zgsm.useAgentRules": {
+				"costrict.useAgentRules": {
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.useAgentRules.description%"
@@ -758,14 +758,14 @@
 						"experimental"
 					]
 				},
-				"zgsm.apiRequestTimeout": {
+				"costrict.apiRequestTimeout": {
 					"type": "number",
 					"default": 600,
 					"minimum": 0,
 					"maximum": 3600,
 					"description": "%settings.apiRequestTimeout.description%"
 				},
-				"zgsm.apiResponseRenderMode": {
+				"costrict.apiResponseRenderMode": {
 					"type": "string",
 					"enum": [
 						"noLimit",
@@ -776,36 +776,36 @@
 					"default": "fast",
 					"description": "%settings.apiResponseRenderMode.description%"
 				},
-				"zgsm.newTaskRequireTodos": {
+				"costrict.newTaskRequireTodos": {
 					"type": "boolean",
 					"default": false,
 					"description": "%settings.newTaskRequireTodos.description%"
 				},
-				"zgsm.codeIndex.embeddingBatchSize": {
+				"costrict.codeIndex.embeddingBatchSize": {
 					"type": "number",
 					"default": 60,
 					"minimum": 1,
 					"maximum": 200,
 					"description": "%settings.codeIndex.embeddingBatchSize.description%"
 				},
-				"zgsm.commit.useConventionalCommits": {
+				"costrict.commit.useConventionalCommits": {
 					"type": "boolean",
 					"default": true,
 					"description": "%settings.commit.useConventionalCommits.description%"
 				},
-				"zgsm.commit.commitModelId": {
+				"costrict.commit.commitModelId": {
 					"type": "string",
 					"default": "",
 					"description": "%settings.commit.commitModelId.description%"
 				},
-				"zgsm.commit.maxLength": {
+				"costrict.commit.maxLength": {
 					"type": "number",
 					"default": 72,
 					"minimum": 20,
 					"maximum": 300,
 					"description": "%settings.commit.maxLength.description%"
 				},
-				"zgsm.commit.language": {
+				"costrict.commit.language": {
 					"type": "string",
 					"enum": [
 						"auto",
@@ -816,24 +816,24 @@
 					"default": "auto",
 					"description": "%settings.commit.language.description%"
 				},
-				"zgsm.debug": {
+				"costrict.debug": {
 					"type": "boolean",
 					"default": false,
 					"description": "%settings.debug.description%"
 				},
-				"zgsm.debugProxy.enabled": {
+				"costrict.debugProxy.enabled": {
 					"type": "boolean",
 					"default": false,
 					"description": "%settings.debugProxy.enabled.description%",
 					"markdownDescription": "%settings.debugProxy.enabled.description%"
 				},
-				"zgsm.debugProxy.serverUrl": {
+				"costrict.debugProxy.serverUrl": {
 					"type": "string",
 					"default": "http://127.0.0.1:8888",
 					"description": "%settings.debugProxy.serverUrl.description%",
 					"markdownDescription": "%settings.debugProxy.serverUrl.description%"
 				},
-				"zgsm.debugProxy.tlsInsecure": {
+				"costrict.debugProxy.tlsInsecure": {
 					"type": "boolean",
 					"default": false,
 					"description": "%settings.debugProxy.tlsInsecure.description%",

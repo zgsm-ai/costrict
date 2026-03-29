@@ -25,8 +25,8 @@ import { useAppTranslation } from "@/i18n/TranslationContext"
 import { SetCachedStateField } from "./types"
 import { useEvent } from "react-use"
 
-interface ZgsmCodebaseSettingsProps {
-	setCachedStateField?: SetCachedStateField<"zgsmCodebaseIndexEnabled">
+interface CostrictCodebaseSettingsProps {
+	setCachedStateField?: SetCachedStateField<"costrictCodebaseIndexEnabled">
 	isActiveTab: boolean
 }
 
@@ -87,23 +87,23 @@ const mapIndexStatusInfoToIndexStatus = (statusInfo: IndexStatusInfo, t: (key: s
 	}
 }
 
-export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmCodebaseSettingsProps) => {
+export const CostrictCodebaseSettings = ({ isActiveTab, setCachedStateField }: CostrictCodebaseSettingsProps) => {
 	const { t } = useAppTranslation()
-	const { zgsmCodebaseIndexEnabled, apiConfiguration, cwd } = useExtensionState()
+	const { costrictCodebaseIndexEnabled, apiConfiguration, cwd } = useExtensionState()
 	// Polling related states
 	const pollingIntervalId = useRef<NodeJS.Timeout | null>(null)
 	const isPollingActive = useRef<boolean>(false)
 
-	// Check if in pending enable state - only when API provider is not zgsm
+	// Check if in pending enable state - only when API provider is not costrict
 	const isPendingEnable = useMemo(
-		() => apiConfiguration?.apiProvider !== "zgsm" || !cwd,
+		() => apiConfiguration?.apiProvider !== "costrict" || !cwd,
 		[apiConfiguration?.apiProvider, cwd],
 	)
 
 	// Use useMemo to avoid unnecessary state updates
 	const shouldDisableAll = useMemo(
-		() => isPendingEnable || !zgsmCodebaseIndexEnabled,
-		[isPendingEnable, zgsmCodebaseIndexEnabled],
+		() => isPendingEnable || !costrictCodebaseIndexEnabled,
+		[isPendingEnable, costrictCodebaseIndexEnabled],
 	)
 
 	const [semanticIndex, setSemanticIndex] = useState<IndexStatus>({
@@ -148,7 +148,7 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 		// Get status every 5 seconds
 		pollingIntervalId.current = setInterval(() => {
 			vscode.postMessage({
-				type: "zgsmPollCodebaseIndexStatus",
+				type: "costrictPollCodebaseIndexStatus",
 			})
 		}, 5000)
 	}, [])
@@ -166,10 +166,10 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 	// Handle messages from extension
 	useEffect(() => {
 		// 1. Get build status once when page is opened
-		if (zgsmCodebaseIndexEnabled && !isPendingEnable && isActiveTab) {
+		if (costrictCodebaseIndexEnabled && !isPendingEnable && isActiveTab) {
 			// Get status immediately
 			vscode.postMessage({
-				type: "zgsmPollCodebaseIndexStatus",
+				type: "costrictPollCodebaseIndexStatus",
 			})
 		}
 
@@ -179,7 +179,7 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 			stopPolling()
 		}
 	}, [
-		zgsmCodebaseIndexEnabled,
+		costrictCodebaseIndexEnabled,
 		isPendingEnable,
 		startPolling,
 		stopPolling,
@@ -200,12 +200,12 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 
 		// If switching from on to off state, confirmation is needed
 		if (!e.target._checked) {
-			vscode.postMessage({ type: "showZgsmCodebaseDisableConfirmDialog" })
+			vscode.postMessage({ type: "showCostrictCodebaseDisableConfirmDialog" })
 			return
 		}
 
 		// Send message to extension
-		vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: e.target._checked })
+		vscode.postMessage({ type: "costrictCodebaseIndexEnabled", bool: e.target._checked })
 	}, [])
 
 	const handleRebuildSemanticIndex = useCallback(() => {
@@ -213,7 +213,7 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 
 		// Send rebuild message to extension
 		vscode.postMessage({
-			type: "zgsmRebuildCodebaseIndex",
+			type: "costrictRebuildCodebaseIndex",
 			values: {
 				type: "embedding",
 			},
@@ -228,7 +228,7 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 
 		// Send rebuild message to extension
 		vscode.postMessage({
-			type: "zgsmRebuildCodebaseIndex",
+			type: "costrictRebuildCodebaseIndex",
 			values: {
 				type: "codegraph",
 			},
@@ -498,8 +498,8 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 				if (shouldStopPolling(embedding, codegraph)) {
 					stopPolling()
 				}
-			} else if (message.type === "zgsmCodebaseIndexEnabled" && setCachedStateField) {
-				setCachedStateField("zgsmCodebaseIndexEnabled", message.payload)
+			} else if (message.type === "costrictCodebaseIndexEnabled" && setCachedStateField) {
+				setCachedStateField("costrictCodebaseIndexEnabled", message.payload)
 			}
 		},
 		[setCachedStateField, shouldStopPolling, startPolling, stopPolling, t],
@@ -511,7 +511,7 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 		? !cwd
 			? t("settings:codebase.semanticIndex.codebaseIndexDisabled")
 			: t("settings:codebase.general.onlyCostrictProviderSupport")
-		: !zgsmCodebaseIndexEnabled
+		: !costrictCodebaseIndexEnabled
 			? t("settings:codebase.general.codebaseIndexBuildDisabledHint")
 			: null
 
@@ -524,7 +524,7 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 							<TooltipTrigger asChild>
 								<div className="flex items-center gap-2">
 									<VSCodeCheckbox
-										defaultChecked={zgsmCodebaseIndexEnabled}
+										defaultChecked={costrictCodebaseIndexEnabled}
 										onClick={handleCodebaseIndexToggle}
 										disabled={isPendingEnable}
 									/>
@@ -542,13 +542,13 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 			</SectionHeader>
 
 			<Section>
-				<div className={`space-y-6 ${!zgsmCodebaseIndexEnabled ? "opacity-50" : ""}`}>
+				<div className={`space-y-6 ${!costrictCodebaseIndexEnabled ? "opacity-50" : ""}`}>
 					{renderIndexSection(
 						t("settings:codebase.semanticIndex.title"),
 						t("settings:codebase.semanticIndex.description"),
 						semanticIndex,
 						handleRebuildSemanticIndex,
-						!zgsmCodebaseIndexEnabled,
+						!costrictCodebaseIndexEnabled,
 						shouldDisableAll,
 						cwd,
 					)}
@@ -558,7 +558,7 @@ export const ZgsmCodebaseSettings = ({ isActiveTab, setCachedStateField }: ZgsmC
 						t("settings:codebase.codeIndex.description"),
 						codeIndex,
 						handleRebuildCodeIndex,
-						!zgsmCodebaseIndexEnabled,
+						!costrictCodebaseIndexEnabled,
 						shouldDisableAll,
 						cwd,
 					)}

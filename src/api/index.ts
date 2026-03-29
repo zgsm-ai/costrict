@@ -30,7 +30,7 @@ import {
 	XAIHandler,
 	LiteLLMHandler,
 	ClaudeCodeHandler,
-	ZgsmAiHandler,
+	CostrictAiHandler,
 	QwenCodeHandler,
 	SambaNovaHandler,
 	ZAiHandler,
@@ -138,8 +138,8 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 	}
 
 	switch (apiProvider) {
-		case "zgsm":
-			return new ZgsmAiHandler(options)
+		case "costrict":
+			return new CostrictAiHandler(options)
 		case "anthropic":
 			return new AnthropicHandler(options)
 		case "claude-code":

@@ -43,7 +43,7 @@ export const MODELS_BY_PROVIDER: Partial<Record<ProviderName, Record<string, Mod
 }
 
 export const PROVIDERS = [
-	{ value: "zgsm", label: "CoStrict", proxy: false },
+	{ value: "costrict", label: "CoStrict", proxy: false },
 	{ value: "gemini-cli", label: "Gemini CLI", proxy: false },
 	{ value: "human-relay", label: "Human Relay", proxy: false },
 	{ value: "openrouter", label: "OpenRouter", proxy: false },

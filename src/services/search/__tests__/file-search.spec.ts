@@ -4,7 +4,7 @@ import * as vscode from "vscode"
 // Mock Package
 vi.mock("../../../shared/package", () => ({
 	Package: {
-		name: "zgsm",
+		name: "costrict",
 		publisher: "zgsm-ai",
 		version: "1.0.0",
 		outputChannel: "CoStrict",
@@ -48,7 +48,7 @@ describe("file-search", () => {
 
 			;(vscode.workspace.getConfiguration as any).mockImplementation((section: string) => {
 				if (section === "search") return mockSearchConfig
-				if (section === "zgsm") return mockRooConfig
+				if (section === "costrict") return mockRooConfig
 				return { get: vi.fn() }
 			})
 

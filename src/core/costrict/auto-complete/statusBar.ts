@@ -11,7 +11,7 @@ interface IFailError {
 	status?: number
 	[key: string]: any
 }
-const statusBarCommand = "zgsm-statusBar.showInformationMessage"
+const statusBarCommand = "costrict-statusBar.showInformationMessage"
 export class CompletionStatusBar {
 	private static _instance: CompletionStatusBar
 	private _statusBar: vscode.StatusBarItem
@@ -43,11 +43,11 @@ export class CompletionStatusBar {
 		context.subscriptions.push(
 			vscode.commands.registerCommand(statusBarCommand, handleStatusBarClick),
 			vscode.commands.registerCommand(
-				"zgsm-completion.enable",
+				"costrict-completion.enable",
 				statusUpdateCallback(() => this.setExtensionStatus(true), true),
 			),
 			vscode.commands.registerCommand(
-				"zgsm-completion.disable",
+				"costrict-completion.disable",
 				statusUpdateCallback(() => this.setExtensionStatus(false), false),
 			),
 		)
@@ -142,6 +142,6 @@ export class CompletionStatusBar {
 	private setExtensionStatus(enabled: boolean) {
 		const config = vscode.workspace.getConfiguration()
 		const target = vscode.ConfigurationTarget.Global
-		config.update("zgsm-completion.enabled", enabled, target, false).then(console.error)
+		config.update("costrict-completion.enabled", enabled, target, false).then(console.error)
 	}
 }

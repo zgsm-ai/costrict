@@ -26,7 +26,7 @@ import { SearchableSetting } from "./SearchableSetting"
 import { vscode } from "@/utils/vscode"
 
 type ContextManagementSettingsProps = HTMLAttributes<HTMLDivElement> & {
-	zgsmCodebaseIndexEnabled: boolean
+	costrictCodebaseIndexEnabled: boolean
 	autoCondenseContext: boolean
 	autoCondenseContextPercent: number
 	listApiConfigMeta: any[]
@@ -65,7 +65,7 @@ type ContextManagementSettingsProps = HTMLAttributes<HTMLDivElement> & {
 }
 
 export const ContextManagementSettings = ({
-	zgsmCodebaseIndexEnabled,
+	costrictCodebaseIndexEnabled,
 	autoCondenseContext,
 	autoCondenseContextPercent,
 	listApiConfigMeta,

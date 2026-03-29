@@ -36,7 +36,7 @@ export const DEFAULT_CONSECUTIVE_MISTAKE_LIMIT = 5
  */
 
 export const dynamicProviders = [
-	"zgsm",
+	"costrict",
 	"openrouter",
 	"vercel-ai-gateway",
 	"litellm",
@@ -204,17 +204,17 @@ const apiModelIdProviderModelSchema = baseProviderSettingsSchema.extend({
 	apiModelId: z.string().optional(),
 })
 
-const zgsmSchema = apiModelIdProviderModelSchema.extend({
-	zgsmAccessToken: z.string().optional(),
-	zgsmRefreshToken: z.string().optional(),
-	zgsmState: z.string().optional(),
-	zgsmBaseUrl: z.string().optional(),
-	zgsmModelId: z.string().optional(),
-	zgsmApiKeyUpdatedAt: z.string().optional(),
-	zgsmApiKeyExpiredAt: z.string().optional(),
-	useZgsmCustomConfig: z.boolean().optional(),
-	zgsmCodebaseIndexEnabled: z.boolean().optional(),
-	zgsmAiCustomModelInfo: modelInfoSchema.nullish(),
+const costrictSchema = apiModelIdProviderModelSchema.extend({
+	costrictAccessToken: z.string().optional(),
+	costrictRefreshToken: z.string().optional(),
+	costrictState: z.string().optional(),
+	costrictBaseUrl: z.string().optional(),
+	costrictModelId: z.string().optional(),
+	costrictApiKeyUpdatedAt: z.string().optional(),
+	costrictApiKeyExpiredAt: z.string().optional(),
+	useCostrictCustomConfig: z.boolean().optional(),
+	costrictCodebaseIndexEnabled: z.boolean().optional(),
+	costrictAiCustomModelInfo: modelInfoSchema.nullish(),
 })
 
 const anthropicSchema = apiModelIdProviderModelSchema.extend({
@@ -412,7 +412,7 @@ const defaultSchema = z.object({
 })
 
 export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProvider", [
-	zgsmSchema.merge(z.object({ apiProvider: z.literal("zgsm") })),
+	costrictSchema.merge(z.object({ apiProvider: z.literal("costrict") })),
 	anthropicSchema.merge(z.object({ apiProvider: z.literal("anthropic") })),
 	claudeCodeSchema.merge(z.object({ apiProvider: z.literal("claude-code") })),
 	openRouterSchema.merge(z.object({ apiProvider: z.literal("openrouter") })),
@@ -450,7 +450,7 @@ export const providerSettingsSchema = z.object({
 	// apiProvider: providerNamesSchema.optional(),
 	// ...anthropicSchema.shape,
 	apiProvider: providerNamesWithRetiredSchema.optional(),
-	...zgsmSchema.shape,
+	...costrictSchema.shape,
 	...claudeCodeSchema.shape,
 	...anthropicSchema.shape,
 	...openRouterSchema.shape,
@@ -510,7 +510,7 @@ export const PROVIDER_SETTINGS_KEYS = providerSettingsSchema.keyof().options
  */
 
 export const modelIdKeys = [
-	"zgsmModelId",
+	"costrictModelId",
 	"apiModelId",
 	"openRouterModelId",
 	"openAiModelId",
@@ -540,7 +540,7 @@ export const isTypicalProvider = (key: unknown): key is TypicalProvider =>
 	isProviderName(key) && !isInternalProvider(key) && !isCustomProvider(key) && !isFauxProvider(key)
 
 export const modelIdKeysByProvider: Record<TypicalProvider, ModelIdKey> = {
-	zgsm: "zgsmModelId",
+	costrict: "costrictModelId",
 	anthropic: "apiModelId",
 	"claude-code": "apiModelId",
 	openrouter: "openRouterModelId",
@@ -598,7 +598,7 @@ export const getApiProtocol = (provider: ProviderName | undefined, modelId?: str
 	return "openai"
 }
 
-export interface ZgsmUserInfo {
+export interface CostrictUserInfo {
 	name?: string
 	email?: string
 	picture?: string
@@ -617,8 +617,8 @@ export const MODELS_BY_PROVIDER: Record<
 	Exclude<ProviderName, "fake-ai" | "human-relay" | "gemini-cli" | "openai">,
 	{ id: ProviderName; label: string; models: string[] }
 > = {
-	zgsm: {
-		id: "zgsm",
+	costrict: {
+		id: "costrict",
 		label: "CoStrict",
 		models: [],
 	},

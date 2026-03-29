@@ -1,5 +1,5 @@
 import i18next from "./setup"
-import { changeZgsmLanguage } from "./costrict-i18n"
+import { changeCostrictLanguage } from "./costrict-i18n"
 
 /**
  * Initialize i18next with the specified language
@@ -8,7 +8,7 @@ import { changeZgsmLanguage } from "./costrict-i18n"
  */
 export function initializeI18n(language: string): void {
 	i18next.changeLanguage(language)
-	changeZgsmLanguage()
+	changeCostrictLanguage()
 }
 
 /**
@@ -27,7 +27,7 @@ export function getCurrentLanguage(): string {
  */
 export function changeLanguage(language: string): void {
 	i18next.changeLanguage(language)
-	changeZgsmLanguage()
+	changeCostrictLanguage()
 }
 
 /**

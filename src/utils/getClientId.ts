@@ -30,8 +30,8 @@ const getClientIdFilePath = (): string => {
 	return path.join(os.homedir(), ".costrict", ".clientId")
 }
 
-// Gets .zgsm directory path
-const getZgsmDirPath = (): string => {
+// Gets .costrict directory path
+const getCostrictDirPath = (): string => {
 	return path.join(os.homedir(), ".costrict")
 }
 
@@ -80,11 +80,11 @@ export const getClientId = (): string => {
 
 		// Generate new ID
 		const newClientId = generateNewClientId()
-		const zgsmDir = getZgsmDirPath()
+		const costrictDir = getCostrictDirPath()
 
-		// Create .zgsm directory if not exists
-		if (!existsSync(zgsmDir)) {
-			mkdirSync(zgsmDir, { recursive: true })
+		// Create .costrict directory if not exists
+		if (!existsSync(costrictDir)) {
+			mkdirSync(costrictDir, { recursive: true })
 		}
 
 		// Write new ID to file and cache it

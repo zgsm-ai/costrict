@@ -18,7 +18,7 @@ import {
 } from "./types"
 import { TelemetryErrorType } from "../telemetry"
 import { TelemetryService } from "@roo-code/telemetry"
-import { ZgsmAuthService } from "../auth"
+import { CostrictAuthService } from "../auth"
 import { ILogger } from "../../../utils/logger"
 // import { getWorkspacePath } from "../../../utils/path"
 import pWaitFor from "p-wait-for"
@@ -28,8 +28,8 @@ import { t } from "../../../i18n"
  * CodebaseIndex manager implementation class (singleton pattern)
  * Responsible for managing codebase-index client initialization, version checking, upgrades and restart operations
  */
-export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
-	public static instance: ZgsmCodebaseIndexManager
+export class CostrictCodebaseIndexManager implements ICodebaseIndexManager {
+	public static instance: CostrictCodebaseIndexManager
 	public client: CodebaseIndexClient | null = null
 	private logger: ILogger | null = null
 	private clineProvider: ClineProvider | null = null
@@ -69,13 +69,13 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 
 	/**
 	 * Get singleton instance
-	 * @returns ZgsmCodebaseIndexManager instance
+	 * @returns CostrictCodebaseIndexManager instance
 	 */
-	public static getInstance(): ZgsmCodebaseIndexManager {
-		if (!ZgsmCodebaseIndexManager.instance) {
-			ZgsmCodebaseIndexManager.instance = new ZgsmCodebaseIndexManager()
+	public static getInstance(): CostrictCodebaseIndexManager {
+		if (!CostrictCodebaseIndexManager.instance) {
+			CostrictCodebaseIndexManager.instance = new CostrictCodebaseIndexManager()
 		}
-		return ZgsmCodebaseIndexManager.instance
+		return CostrictCodebaseIndexManager.instance
 	}
 
 	/**
@@ -161,8 +161,8 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 				}
 				return
 			}
-			if (state === "needZgsm") {
-				this.log("Only CoStrict provider supports this service", "info", "ZgsmCodebaseIndexManager")
+			if (state === "needCostrict") {
+				this.log("Only CoStrict provider supports this service", "info", "CostrictCodebaseIndexManager")
 				return
 			}
 
@@ -173,7 +173,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 			const versionInfo = await this.getLocalVersion()
 			await this.client!.startClient(versionInfo!, state !== "noUpdate")
 			this.isInitialized = true
-			// this.log("CodebaseKeeper client initialized successfully", "info", "ZgsmCodebaseIndexManager")
+			// this.log("CodebaseKeeper client initialized successfully", "info", "CostrictCodebaseIndexManager")
 
 			// Start scheduled detection
 			this.startHealthCheck()
@@ -183,7 +183,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 				error instanceof Error
 					? error.message
 					: "Unknown error occurred while initializing CodebaseKeeper client"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			throw new Error(errorMessage)
 		}
 	}
@@ -203,7 +203,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Unknown error occurred while restarting CodebaseKeeper client"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			throw new Error(errorMessage)
 		}
 	}
@@ -212,7 +212,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 	 * Check and upgrade client
 	 */
 	public async checkAndUpgradeClient(): Promise<
-		"firstInstall" | "failed" | "upgraded" | "noUpdate" | "needZgsm" | "updating"
+		"firstInstall" | "failed" | "upgraded" | "noUpdate" | "needCostrict" | "updating"
 	> {
 		try {
 			let localVersionInfo = await this.getLocalVersion()
@@ -222,7 +222,11 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 				const elapsed = Date.now() - (localVersionInfo.updateAt || 0)
 				if (localVersionInfo.status === "downloading" && elapsed <= 60_000) {
 					try {
-						this.log(`Client download operation already in progress...`, "info", "ZgsmCodebaseIndexManager")
+						this.log(
+							`Client download operation already in progress...`,
+							"info",
+							"CostrictCodebaseIndexManager",
+						)
 						await pWaitFor(
 							async () => {
 								const localVersionInfo = await this.getLocalVersion()
@@ -235,7 +239,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 							},
 						)
 					} catch (error) {
-						this.log(`Client download wait timeout`, "info", "ZgsmCodebaseIndexManager")
+						this.log(`Client download wait timeout`, "info", "CostrictCodebaseIndexManager")
 
 						return "failed"
 					}
@@ -262,23 +266,27 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 
 				if (hasUpdate) {
 					await this.client!.stopExistingClient()
-					this.log("New version detected, starting upgrade", "info", "ZgsmCodebaseIndexManager")
+					this.log("New version detected, starting upgrade", "info", "CostrictCodebaseIndexManager")
 					await this.downloadAndInstallClient(latestVersionInfo)
-					this.log("CodebaseKeeper client check and upgrade completed", "info", "ZgsmCodebaseIndexManager")
+					this.log(
+						"CodebaseKeeper client check and upgrade completed",
+						"info",
+						"CostrictCodebaseIndexManager",
+					)
 					return "upgraded"
 				} else {
 					return "noUpdate"
 				}
 			}
 		} catch (error) {
-			if (error.__NEED_ZGSM__) {
-				return "needZgsm"
+			if (error.__NEED_COSTRICT__) {
+				return "needCostrict"
 			}
 			const errorMessage =
 				error instanceof Error
 					? error.message
 					: "Unknown error occurred while checking and upgrading CodebaseKeeper client"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			return "failed"
 		}
 	}
@@ -294,9 +302,9 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 
 		const { apiConfiguration } = await this.clineProvider.getState()
 
-		if (apiConfiguration.apiProvider !== "zgsm") {
+		if (apiConfiguration.apiProvider !== "costrict") {
 			const err = new Error("Only CoStrict provider supports this service")
-			Object.assign(err, { __NEED_ZGSM__: true })
+			Object.assign(err, { __NEED_COSTRICT__: true })
 			throw err
 		}
 	}
@@ -318,7 +326,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 
 			// Check if version file exists
 			if (!fs.existsSync(versionFilePath)) {
-				this.log("Local version file does not exist", "info", "ZgsmCodebaseIndexManager")
+				this.log("Local version file does not exist", "info", "CostrictCodebaseIndexManager")
 				return
 			}
 
@@ -334,12 +342,16 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 			return versionData
 		} catch (error) {
 			if (error instanceof SyntaxError) {
-				this.log(`Local version file parsing failed: JSON format error`, "error", "ZgsmCodebaseIndexManager")
+				this.log(
+					`Local version file parsing failed: JSON format error`,
+					"error",
+					"CostrictCodebaseIndexManager",
+				)
 			} else {
 				this.log(
 					`Failed to read local version information: ${error instanceof Error ? error.message : "Unknown error"}`,
 					"error",
-					"ZgsmCodebaseIndexManager",
+					"CostrictCodebaseIndexManager",
 				)
 			}
 			return
@@ -358,13 +370,13 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 				status: "downloading",
 			})
 			const versionString = `${versionInfo?.versionId?.major}.${versionInfo?.versionId?.minor}.${versionInfo?.versionId?.micro}`
-			this.log(`Starting to download client version: ${versionString}`, "info", "ZgsmCodebaseIndexManager")
+			this.log(`Starting to download client version: ${versionString}`, "info", "CostrictCodebaseIndexManager")
 
 			const result = await this.client!.downloadAndInstallClient(versionInfo, (progress) => {
 				this.log(
 					`Download progress: ${progress.progress}%, ${progress.downloaded}/${progress.total}`,
 					"info",
-					"ZgsmCodebaseIndexManager",
+					"CostrictCodebaseIndexManager",
 				)
 			})
 
@@ -372,7 +384,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 				this.log(
 					`Client downloaded and installed successfully: ${result.filePath}`,
 					"info",
-					"ZgsmCodebaseIndexManager",
+					"CostrictCodebaseIndexManager",
 				)
 
 				// Save local version information
@@ -397,7 +409,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 				error instanceof Error
 					? error.message
 					: "Unknown error occurred while downloading and installing client"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			// Save local version information with failed status
 			await this.saveLocalVersion({
 				...versionInfo,
@@ -456,7 +468,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 			this.log(
 				`Failed to save local version information: ${error instanceof Error ? error.message : "Unknown error"}`,
 				"error",
-				"ZgsmCodebaseIndexManager",
+				"CostrictCodebaseIndexManager",
 			)
 		}
 	}
@@ -471,14 +483,14 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 	public async publishWorkspaceEvents(request: WorkspaceEventRequest): Promise<ApiResponse<number>> {
 		try {
 			await this.ensureClientInited("publishWorkspaceEvents")
-			// this.log(`Publish workspace events: ${request.workspace}`, "info", "ZgsmCodebaseIndexManager")
+			// this.log(`Publish workspace events: ${request.workspace}`, "info", "CostrictCodebaseIndexManager")
 			// Read access token
 			const token = await this.readAccessToken()
 			return await this.client!.publishWorkspaceEvents(request, token)
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Unknown error occurred while publishing workspace events"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			throw new Error(errorMessage)
 		}
 	}
@@ -494,7 +506,11 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 		this.preBuildInfo.time = Date.now()
 		try {
 			await this.ensureClientInited("triggerIndexBuild")
-			this.log(`Trigger index build: ${request.workspace} - ${request.type}`, "info", "ZgsmCodebaseIndexManager")
+			this.log(
+				`Trigger index build: ${request.workspace} - ${request.type}`,
+				"info",
+				"CostrictCodebaseIndexManager",
+			)
 
 			// Read access token
 			const token = await this.readAccessToken()
@@ -502,7 +518,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Unknown error occurred while triggering index build"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			throw new Error(errorMessage)
 		}
 	}
@@ -534,14 +550,14 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 	public async syncToken(): Promise<ApiResponse<number>> {
 		try {
 			await this.ensureClientInited("syncToken")
-			this.log("Token update", "info", "ZgsmCodebaseIndexManager")
+			this.log("Token update", "info", "CostrictCodebaseIndexManager")
 
 			// Read access token
 			const token = await this.readAccessToken()
 			return await this.client!.syncToken(token)
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : "Unknown error occurred during token update"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			throw new Error(errorMessage)
 		}
 	}
@@ -553,7 +569,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 	public async checkIgnoreFiles(request: IgnoreFilesRequest): Promise<ApiResponse<boolean>> {
 		try {
 			await this.ensureClientInited("checkIgnoreFiles")
-			this.log(`Checking ignore files: ${request.workspacePath}`, "info", "ZgsmCodebaseIndexManager")
+			this.log(`Checking ignore files: ${request.workspacePath}`, "info", "CostrictCodebaseIndexManager")
 
 			// Read access token
 			const token = await this.readAccessToken()
@@ -561,7 +577,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Unknown error occurred while checking ignore files"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			throw new Error(errorMessage)
 		}
 	}
@@ -581,14 +597,14 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 			this.log(
 				`Reusing recently completed query index status request result: ${workspace} (${now - recentRequest.timestamp}ms ago)`,
 				"info",
-				"ZgsmCodebaseIndexManager",
+				"CostrictCodebaseIndexManager",
 			)
 			return recentRequest.result
 		}
 
 		if (this.pendingIndexStatusRequests.has(requestKey)) {
 			// If there is already the same request in progress, wait for it to complete and reuse the result
-			this.log(`Reusing ongoing query index status request: ${workspace}`, "info", "ZgsmCodebaseIndexManager")
+			this.log(`Reusing ongoing query index status request: ${workspace}`, "info", "CostrictCodebaseIndexManager")
 			return await this.pendingIndexStatusRequests.get(requestKey)!
 		}
 		const requestPromise = this._getIndexStatusInternal(workspace)
@@ -623,7 +639,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 			await this.ensureClientInited("_getIndexStatusInternal")
 
 			// Add call stack information to trace call source
-			this.log(`Querying index status: ${workspace}`, "info", "ZgsmCodebaseIndexManager")
+			this.log(`Querying index status: ${workspace}`, "info", "CostrictCodebaseIndexManager")
 
 			// Read access token
 			const token = await this.readAccessToken()
@@ -631,7 +647,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Unknown error occurred while querying index status"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			throw new Error(errorMessage)
 		}
 	}
@@ -646,7 +662,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 			this.log(
 				`Toggle index function: ${request.workspace} - ${request.switch}`,
 				"info",
-				"ZgsmCodebaseIndexManager",
+				"CostrictCodebaseIndexManager",
 			)
 
 			// Read access token
@@ -655,7 +671,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : "Unknown error occurred while toggling index function"
-			this.log(errorMessage, "error", "ZgsmCodebaseIndexManager")
+			this.log(errorMessage, "error", "CostrictCodebaseIndexManager")
 			throw new Error(errorMessage)
 		}
 	}
@@ -665,8 +681,8 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 	 * @returns Access token
 	 */
 	async readAccessToken() {
-		const zgsmAuthService = ZgsmAuthService.getInstance()
-		const tokens = await zgsmAuthService.getTokens()
+		const costrictAuthService = CostrictAuthService.getInstance()
+		const tokens = await costrictAuthService.getTokens()
 		if (!tokens) {
 			throw new Error("readAccessToken failed to get access token")
 		}
@@ -687,7 +703,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 		this.healthCheckTimer = setInterval(async () => {
 			if (!this.clineProvider) return
 			const { apiConfiguration } = await this.clineProvider.getState()
-			if (!apiConfiguration || apiConfiguration.apiProvider !== "zgsm") {
+			if (!apiConfiguration || apiConfiguration.apiProvider !== "costrict") {
 				return
 			}
 			await this.performHealthCheck()
@@ -773,7 +789,7 @@ export class ZgsmCodebaseIndexManager implements ICodebaseIndexManager {
 }
 
 // Export singleton instance
-export const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
+export const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
 
 // Export interfaces and types
 export type {
@@ -797,4 +813,4 @@ export type {
 } from "./types"
 
 // Default export manager class
-export default ZgsmCodebaseIndexManager
+export default CostrictCodebaseIndexManager

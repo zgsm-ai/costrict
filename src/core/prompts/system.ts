@@ -65,7 +65,7 @@ async function generatePrompt(data: {
 	todoList?: TodoItem[]
 	modelId?: string
 	shell?: string
-	zgsmCodeMode?: string
+	costrictCodeMode?: string
 	skillsManager?: SkillsManager
 }): Promise<string> {
 	let {
@@ -81,7 +81,7 @@ async function generatePrompt(data: {
 		rooIgnoreInstructions,
 		skillsManager,
 		settings,
-		zgsmCodeMode,
+		costrictCodeMode,
 		shell,
 		modelId,
 	} = data
@@ -133,7 +133,7 @@ async function generatePrompt(data: {
 
 	// Get modes section, and skills section only if enabled for this mode
 	const [modesSection, skillsSection] = await Promise.all([
-		getModesSection(context, zgsmCodeMode, mode as string),
+		getModesSection(context, costrictCodeMode, mode as string),
 		getSkillsSection(skillsManager, mode as string),
 	])
 
@@ -176,7 +176,7 @@ ${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", 
 	shell,
 	useLitePrompts,
 })}${
-		zgsmCodeMode === "strict" && mode === "code"
+		costrictCodeMode === "strict" && mode === "code"
 			? `\nWhen you begin, update, or finish any task listed in tasks.md, reflect that change immediately using the status syntax: [-] for ongoing work, [x] for finished work. Do not delay these updates.`
 			: ""
 	}`
@@ -233,6 +233,6 @@ export const SYSTEM_PROMPT = async (
 		modelId,
 		shell,
 		skillsManager,
-		zgsmCodeMode: settings?.zgsmCodeMode,
+		costrictCodeMode: settings?.costrictCodeMode,
 	})
 }

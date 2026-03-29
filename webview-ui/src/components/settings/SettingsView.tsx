@@ -72,7 +72,7 @@ import { AutoApproveSettings } from "./AutoApproveSettings"
 import { CheckpointSettings } from "./CheckpointSettings"
 import { NotificationSettings } from "./NotificationSettings"
 import { ContextManagementSettings } from "./ContextManagementSettings"
-import { ZgsmCodebaseSettings } from "./ZgsmCodebaseSettings"
+import { CostrictCodebaseSettings } from "./CostrictCodebaseSettings"
 import { TerminalSettings } from "./TerminalSettings"
 import { ExperimentalSettings } from "./ExperimentalSettings"
 import { LanguageSettings } from "./LanguageSettings"
@@ -169,8 +169,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		autoCondenseContext,
 		autoCondenseContextPercent,
 		enableCheckpoints,
-		useZgsmCustomConfig,
-		zgsmCodebaseIndexEnabled,
+		useCostrictCustomConfig,
+		costrictCodebaseIndexEnabled,
 		checkpointTimeout,
 		experiments,
 		maxOpenTabsContext,
@@ -449,8 +449,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					experiments,
 					experimentSettings,
 					customSupportPrompts,
-					useZgsmCustomConfig: useZgsmCustomConfig ?? false,
-					zgsmCodebaseIndexEnabled: zgsmCodebaseIndexEnabled ?? false,
+					useCostrictCustomConfig: useCostrictCustomConfig ?? false,
+					costrictCodebaseIndexEnabled: costrictCodebaseIndexEnabled ?? false,
 					autoCleanup,
 					debug,
 				},
@@ -459,7 +459,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			// by the `updateSettings` message.
 
 			if (
-				apiConfiguration.useZgsmCustomConfig &&
+				apiConfiguration.useCostrictCustomConfig &&
 				apiConfiguration.includeMaxTokens === undefined &&
 				!Object.hasOwn(apiConfiguration, "includeMaxTokens")
 			) {
@@ -831,7 +831,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 										setApiConfigurationField={setApiConfigurationField}
 										errorMessage={errorMessage}
 										setErrorMessage={setErrorMessage}
-										useZgsmCustomConfig={useZgsmCustomConfig}
+										useCostrictCustomConfig={useCostrictCustomConfig}
 										setCachedStateField={setCachedStateField}
 									/>
 								</Section>
@@ -897,7 +897,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								maxWorkspaceFiles={maxWorkspaceFiles ?? 300}
 								showRooIgnoredFiles={showRooIgnoredFiles}
 								enableSubfolderRules={enableSubfolderRules}
-								zgsmCodebaseIndexEnabled={zgsmCodebaseIndexEnabled ?? false}
+								costrictCodebaseIndexEnabled={costrictCodebaseIndexEnabled ?? false}
 								maxImageFileSize={maxImageFileSize}
 								maxTotalImageSize={maxTotalImageSize}
 								profileThresholds={profileThresholds}
@@ -912,9 +912,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								setCachedStateField={setCachedStateField}
 							/>
 						)}
-						{/* ZgsmCodebase Section */}
+						{/* CostrictCodebase Section */}
 						{renderTab === "contextManagement" && (
-							<ZgsmCodebaseSettings
+							<CostrictCodebaseSettings
 								setCachedStateField={setCachedStateField}
 								isActiveTab={activeTab === "contextManagement"}
 							/>

@@ -1,8 +1,8 @@
 import { ModelInfo } from "../model.js"
 
-export const zgsmDefaultModelId = "Auto"
+export const costrictDefaultModelId = "Auto"
 
-export const zgsmModelsConfig = {
+export const costrictModelsConfig = {
 	default: {
 		maxTokens: 8192,
 		contextWindow: 128_000,

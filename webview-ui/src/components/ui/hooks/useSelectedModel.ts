@@ -18,7 +18,7 @@ import {
 	vscodeLlmModels,
 	vscodeLlmDefaultModelId,
 	getClaudeCodeModels,
-	zgsmDefaultModelId,
+	costrictDefaultModelId,
 	geminiCliDefaultModelId,
 	geminiCliModels,
 	normalizeClaudeCodeModelId,
@@ -26,7 +26,7 @@ import {
 	sambaNovaModels,
 	internationalZAiModels,
 	mainlandZAiModels,
-	zgsmModelsConfig as zgsmModels,
+	costrictModelsConfig as costrictModels,
 	fireworksModels,
 	basetenModels,
 	qwenCodeModels,
@@ -58,7 +58,7 @@ function getValidatedModelId(
 }
 
 export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
-	const provider = apiConfiguration?.apiProvider || "zgsm"
+	const provider = apiConfiguration?.apiProvider || "costrict"
 	const activeProvider: ProviderName | undefined = isRetiredProvider(provider) ? undefined : provider
 	const dynamicProvider = activeProvider && isDynamicProvider(activeProvider) ? activeProvider : undefined
 	const openRouterModelId = activeProvider === "openrouter" ? apiConfiguration?.openRouterModelId : undefined
@@ -107,8 +107,8 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 					ollamaModels: (ollamaModels.data || undefined) as ModelRecord | undefined,
 				})
 			: {
-					id: getProviderDefaultModelId(activeProvider ?? "zgsm", undefined, apiConfiguration),
-					info: getZgsmModelFeedback({ apiConfiguration }, zgsmModels.default),
+					id: getProviderDefaultModelId(activeProvider ?? "costrict", undefined, apiConfiguration),
+					info: getCostrictModelFeedback({ apiConfiguration }, costrictModels.default),
 				}
 
 	return {
@@ -128,7 +128,7 @@ export const useSelectedModel = (apiConfiguration?: ProviderSettings) => {
 	}
 }
 
-function getZgsmModelFeedback(
+function getCostrictModelFeedback(
 	config: {
 		provider?: ProviderName
 		apiConfiguration?: ProviderSettings
@@ -137,11 +137,11 @@ function getZgsmModelFeedback(
 ): ModelInfo {
 	const { apiConfiguration } = config
 	if (
-		apiConfiguration?.useZgsmCustomConfig &&
-		apiConfiguration?.zgsmAiCustomModelInfo &&
-		JSON.stringify(apiConfiguration.zgsmAiCustomModelInfo) !== "{}"
+		apiConfiguration?.useCostrictCustomConfig &&
+		apiConfiguration?.costrictAiCustomModelInfo &&
+		JSON.stringify(apiConfiguration.costrictAiCustomModelInfo) !== "{}"
 	) {
-		return apiConfiguration.zgsmAiCustomModelInfo
+		return apiConfiguration.costrictAiCustomModelInfo
 	}
 	return defaultModelInfo
 }
@@ -166,10 +166,13 @@ function getSelectedModel({
 	// this gives a better UX than showing the default model
 	const defaultModelId = getProviderDefaultModelId(provider, undefined, apiConfiguration)
 	switch (provider) {
-		case "zgsm": {
-			const id = apiConfiguration.zgsmModelId || apiConfiguration.apiModelId || zgsmDefaultModelId
-			const info = getZgsmModelFeedback({ apiConfiguration }, routerModels.zgsm[id] || zgsmModels.default)
-			// apiConfiguration?.zgsmModelId || apiConfiguration?.apiModelId || zgsmDefaultModelId
+		case "costrict": {
+			const id = apiConfiguration.costrictModelId || apiConfiguration.apiModelId || costrictDefaultModelId
+			const info = getCostrictModelFeedback(
+				{ apiConfiguration },
+				routerModels.costrict[id] || costrictModels.default,
+			)
+			// apiConfiguration?.costrictModelId || apiConfiguration?.apiModelId || costrictDefaultModelId
 			return { id, info }
 		}
 		case "openrouter": {

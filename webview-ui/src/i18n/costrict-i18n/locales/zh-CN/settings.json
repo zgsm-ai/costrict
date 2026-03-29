@@ -26,12 +26,12 @@
 		}
 	},
 	"providers": {
-		"zgsm": "CoStrict",
-		"zgsmBaseUrl": "CoStrict 基础 URL",
-		"zgsmApiKey": "CoStrict API 密钥",
-		"getZgsmApiKey": "登录 CoStrict",
-		"getZgsmApiKeyAgain": "重新登录",
-		"zgsmDefaultBaseUrl": "默认: {{zgsmBaseUrl}}",
+		"costrict": "CoStrict",
+		"costrictBaseUrl": "CoStrict 基础 URL",
+		"costrictApiKey": "CoStrict API 密钥",
+		"getCostrictApiKey": "登录 CoStrict",
+		"getCostrictApiKeyAgain": "重新登录",
+		"costrictDefaultBaseUrl": "默认: {{costrictBaseUrl}}",
 		"lmStudio": {
 			"description": "LM Studio允许您在本地计算机上运行模型。有关如何入门的说明，请参阅他们的<a>快速入门指南</a>。您还需要启动LM Studio的<b>本地服务器</b>功能才能在此扩展中使用它。<span>注意：</span>CoStrict 使用复杂的提示，最适合与Claude模型配合使用。功能较弱的模型可能无法按预期工作。"
 		},
@@ -41,7 +41,7 @@
 		"customModel": {
 			"capabilities": "配置您的自定义OpenAI兼容模型的功能和定价。在指定模型功能时要小心，因为它们会影响 CoStrict 的表现。"
 		},
-		"useZgsmCustomConfig": "使用自定义配置 (debug 已开启)",
+		"useCostrictCustomConfig": "使用自定义配置 (debug 已开启)",
 		"geminiCli": {
 			"projectIdDescription": "为企业或非免费套餐访问指定您的 Google Cloud 项目 ID。如使用个人账号并希望自动发现项目，请留空。如果您遇到 API 错误，建议填写项目ID。"
 		},
@@ -150,7 +150,7 @@
 		"automaticFetch": "扩展会自动获取<serviceLink>{{serviceName}}</serviceLink>上可用的最新模型列表。如果您不确定选择哪个模型，CoStrict 最适合与<defaultModelLink>{{defaultModelId}}</defaultModelLink>配合使用。您也可以尝试搜索\"免费\"以查找当前可用的免费选项。"
 	},
 	"footer": {
-		"feedback": "如果您有任何问题或反馈，请随时在<zgsmGithubLink>github.com/zgsm-ai/costrict</zgsmGithubLink>上提出问题",
+		"feedback": "如果您有任何问题或反馈，请随时在<costrictGithubLink>github.com/zgsm-ai/costrict</costrictGithubLink>上提出问题",
 		"telemetry": {
 			"description": "通过发送匿名使用数据和错误报告来帮助改进 CoStrict。不会发送代码、提示或个人信息。有关更多详情，请参阅我们的隐私政策。"
 		}

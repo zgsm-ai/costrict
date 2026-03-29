@@ -14,7 +14,7 @@ vi.mock("vscode", () => ({
 // Mock Package module
 vi.mock("../../../shared/package", () => ({
 	Package: {
-		name: "zgsm",
+		name: "costrict",
 		publisher: "zgsm-ai",
 		version: "1.0.0",
 		outputChannel: "CoStrict",
@@ -563,7 +563,7 @@ describe("newTaskTool", () => {
 			})
 
 			// Verify that VSCode configuration was accessed correctly
-			expect(mockGetConfiguration).toHaveBeenCalledWith("zgsm")
+			expect(mockGetConfiguration).toHaveBeenCalledWith("costrict")
 			expect(mockGet).toHaveBeenCalledWith("newTaskRequireTodos", false)
 		})
 

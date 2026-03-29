@@ -4,7 +4,7 @@ import { Check, X } from "lucide-react"
 
 import { type ModeConfig, type CustomModePrompts, TelemetryEventName } from "@roo-code/types"
 
-import { type Mode, filterModesByZgsmCodeMode, getAllModes, defaultModeSlug } from "@roo/modes"
+import { type Mode, filterModesByCostrictCodeMode, getAllModes, defaultModeSlug } from "@roo/modes"
 
 import { vscode } from "@/utils/vscode"
 import { telemetryClient } from "@/utils/TelemetryClient"
@@ -52,7 +52,7 @@ export const ModeSelector = ({
 	const scrollContainerRef = React.useRef<HTMLDivElement>(null)
 	const lastNotifiedInvalidModeRef = React.useRef<string | null>(null)
 	const portalContainer = useRooPortal("costrict-portal")
-	const { hasOpenedModeSelector, setHasOpenedModeSelector, zgsmCodeMode, apiConfiguration } = useExtensionState()
+	const { hasOpenedModeSelector, setHasOpenedModeSelector, costrictCodeMode, apiConfiguration } = useExtensionState()
 	const { t } = useAppTranslation()
 	const trackModeSelectorOpened = React.useCallback(() => {
 		// Track telemetry every time the mode selector is opened.
@@ -66,7 +66,7 @@ export const ModeSelector = ({
 	}, [hasOpenedModeSelector, setHasOpenedModeSelector])
 
 	// Keep the full mode list separate from the provider-filtered list.
-	// During zgsm mode switches, `zgsmCodeMode` and `mode` can update in separate ticks.
+	// During costrict mode switches, `costrictCodeMode` and `mode` can update in separate ticks.
 	// Treating a temporarily filtered-out mode as "invalid" causes ModeSwitch transitions
 	// like plan <-> strict to be forced back to the default code mode.
 	const allModes = React.useMemo(() => {
@@ -79,8 +79,8 @@ export const ModeSelector = ({
 	}, [customModes, t, customModePrompts])
 
 	const modes = React.useMemo(() => {
-		return filterModesByZgsmCodeMode(allModes, zgsmCodeMode || "vibe", apiConfiguration?.apiProvider)
-	}, [allModes, zgsmCodeMode, apiConfiguration?.apiProvider])
+		return filterModesByCostrictCodeMode(allModes, costrictCodeMode || "vibe", apiConfiguration?.apiProvider)
+	}, [allModes, costrictCodeMode, apiConfiguration?.apiProvider])
 
 	// Find the selected mode from the full list first so transient filter changes don't
 	// misreport a valid mode as missing while ModeSwitch is syncing both states.
@@ -89,11 +89,11 @@ export const ModeSelector = ({
 	}, [allModes, value])
 
 	// Notify parent only when the current mode truly doesn't exist anymore (for example,
-	// after a workspace switch deleted a custom mode). A mode hidden by the current zgsm
+	// after a workspace switch deleted a custom mode). A mode hidden by the current costrict
 	// filter is still valid and should not be forced back to the default mode.
 	React.useEffect(() => {
 		if (
-			apiConfiguration?.apiProvider === "zgsm" &&
+			apiConfiguration?.apiProvider === "costrict" &&
 			["quick-explore", "task-check", "subcoding", "review", "security-review"].includes(value)
 		)
 			return
@@ -242,7 +242,7 @@ export const ModeSelector = ({
 
 	return (
 		<Popover open={open} onOpenChange={onOpenChange} data-testid="mode-selector-root">
-			<StandardTooltip content={`${title}${title ? ` (${zgsmCodeMode})` : ""}`}>
+			<StandardTooltip content={`${title}${title ? ` (${costrictCodeMode})` : ""}`}>
 				<PopoverTrigger
 					disabled={
 						disabled ||
@@ -270,7 +270,7 @@ export const ModeSelector = ({
 					) : (
 						<span className="truncate bg-vscode-input-background">
 							{selectedMode?.name || t("chat:selectMode")}
-							{selectedMode?.name ? ` (${zgsmCodeMode})` : ""}
+							{selectedMode?.name ? ` (${costrictCodeMode})` : ""}
 						</span>
 					)}
 				</PopoverTrigger>

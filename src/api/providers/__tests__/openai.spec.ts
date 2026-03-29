@@ -111,7 +111,7 @@ describe("OpenAiHandler", () => {
 				baseURL: expect.any(String),
 				apiKey: expect.any(String),
 				defaultHeaders: {
-					"HTTP-Referer": "https://github.com/zgsm-ai/zgsm",
+					"HTTP-Referer": "https://github.com/zgsm-ai/costrict",
 					"X-Costrict-Version": `${Package.version}`,
 					"X-Title": "Costrict",
 				},

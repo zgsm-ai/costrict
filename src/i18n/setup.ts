@@ -1,6 +1,6 @@
 import i18next from "i18next"
-import { zgsmTranslations, mergeLanguageResources } from "./costrict-i18n/setup"
-import { ZGSM_LANGUAGES } from "../shared/language"
+import { costrictTranslations, mergeLanguageResources } from "./costrict-i18n/setup"
+import { COSTRICT_LANGUAGES } from "../shared/language"
 
 // Build translations object
 const translations: Record<string, Record<string, any>> = {}
@@ -20,7 +20,7 @@ if (!isTestEnv) {
 		try {
 			// Find all language directories
 			const languageDirs = fs.readdirSync(localesDir, { withFileTypes: true })
-			const ALLOW_LANGUAGES = Object.keys(ZGSM_LANGUAGES)
+			const ALLOW_LANGUAGES = Object.keys(COSTRICT_LANGUAGES)
 
 			const languages = languageDirs
 				.filter(
@@ -73,7 +73,7 @@ if (!isTestEnv) {
 }
 
 // Merge CoStrict translations
-const mergedTranslations = mergeLanguageResources(translations, zgsmTranslations)
+const mergedTranslations = mergeLanguageResources(translations, costrictTranslations)
 // console.log(`Merged translations:`, mergedTranslations)
 
 // Initialize i18next with configuration

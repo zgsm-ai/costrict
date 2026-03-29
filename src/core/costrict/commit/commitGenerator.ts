@@ -3,13 +3,13 @@ import { exec } from "child_process"
 import { promisify } from "util"
 import { spawn } from "child_process"
 import type { GitDiffInfo, CommitMessageSuggestion, CommitGenerationOptions } from "./types"
-import { ZgsmAuthStorage } from "../auth"
+import { CostrictAuthStorage } from "../auth"
 import { ProviderSettings } from "@roo-code/types"
 import type { ClineProvider } from "../../webview/ClineProvider"
 import { t } from "../../../i18n"
 import { singleCompletionHandler } from "../../../utils/single-completion-handler"
 import { truncateOutput } from "../../../integrations/misc/extract-text"
-import { excludedFileExtensions } from "../../../utils/zgsmUtils"
+import { excludedFileExtensions } from "../../../utils/costrictUtils"
 
 const execAsync = promisify(exec)
 
@@ -281,7 +281,7 @@ export class CommitMessageGenerator {
 		options: CommitGenerationOptions,
 	): Promise<CommitMessageSuggestion> {
 		// Get authentication tokens
-		const tokens = await ZgsmAuthStorage.getInstance().getTokens()
+		const tokens = await CostrictAuthStorage.getInstance().getTokens()
 
 		// Get language configuration
 		let lang = this.getCommitLanguage(options)
@@ -640,7 +640,7 @@ Rules:
 		}
 
 		// Get from VSCode configuration
-		const config = vscode.workspace.getConfiguration("zgsm.commit")
+		const config = vscode.workspace.getConfiguration("costrict.commit")
 		const configuredLanguage = config.get<string>("language", "auto")
 
 		if (configuredLanguage !== "auto") {

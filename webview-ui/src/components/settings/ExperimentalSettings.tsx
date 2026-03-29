@@ -101,7 +101,7 @@ export const ExperimentalSettings = ({
 									experimentKey={config[0]}
 									enabled={
 										experiments[EXPERIMENT_IDS[config[0] as keyof typeof EXPERIMENT_IDS]] ??
-										apiConfiguration?.apiProvider === "zgsm"
+										apiConfiguration?.apiProvider === "costrict"
 									}
 									onChange={(enabled) =>
 										setExperimentEnabled(
@@ -115,10 +115,10 @@ export const ExperimentalSettings = ({
 						if (config[0] === "SMART_MISTAKE_DETECTION") {
 							const smartMistakeEnabled =
 								experiments[EXPERIMENT_IDS[config[0] as keyof typeof EXPERIMENT_IDS]] ??
-								apiConfiguration?.apiProvider === "zgsm"
+								apiConfiguration?.apiProvider === "costrict"
 							const smartMistakeDetectionConfig = experimentSettings?.smartMistakeDetectionConfig ?? {}
 							return (
-								apiConfiguration?.apiProvider === "zgsm" && (
+								apiConfiguration?.apiProvider === "costrict" && (
 									<SearchableSetting
 										key={config[0]}
 										settingId={`experimental-${config[0].toLowerCase()}`}
@@ -174,7 +174,7 @@ export const ExperimentalSettings = ({
 									experimentKey={config[0]}
 									enabled={
 										experiments[EXPERIMENT_IDS[config[0] as keyof typeof EXPERIMENT_IDS]] ??
-										apiConfiguration?.apiProvider === "zgsm"
+										apiConfiguration?.apiProvider === "costrict"
 									}
 									onChange={(enabled) =>
 										setExperimentEnabled(

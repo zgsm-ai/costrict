@@ -8,8 +8,8 @@ import {
 	type ModelInfo,
 	type ReasoningEffort,
 	azureOpenAiDefaultApiVersion,
-	zgsmModelsConfig as zgsmModels,
-	zgsmDefaultModelId,
+	costrictModelsConfig as costrictModels,
+	costrictDefaultModelId,
 	OrganizationAllowList,
 	ExtensionMessage,
 } from "@roo-code/types"
@@ -35,12 +35,12 @@ type OpenAICompatibleProps = {
 	setApiConfigurationField: (field: keyof ProviderSettings, value: ProviderSettings[keyof ProviderSettings]) => void
 	organizationAllowList: OrganizationAllowList
 	modelValidationError?: string
-	useZgsmCustomConfig?: boolean
-	setCachedStateField: SetCachedStateField<"useZgsmCustomConfig">
+	useCostrictCustomConfig?: boolean
+	setCachedStateField: SetCachedStateField<"useCostrictCustomConfig">
 	refetchRouterModels?: () => void
 }
 
-export const ZgsmAI = ({
+export const CostrictAI = ({
 	apiConfiguration,
 	debug,
 	fromWelcomeView,
@@ -48,7 +48,7 @@ export const ZgsmAI = ({
 	setCachedStateField,
 	organizationAllowList,
 	modelValidationError,
-	useZgsmCustomConfig,
+	useCostrictCustomConfig,
 	refetchRouterModels,
 }: OpenAICompatibleProps) => {
 	const { t } = useAppTranslation()
@@ -112,17 +112,17 @@ export const ZgsmAI = ({
 	}, [customHeaders, setApiConfigurationField])
 
 	useEffect(() => {
-		// Set the default value only when useZgsmCustomConfig is first enabled and includeMaxTokens has never been set before.
+		// Set the default value only when useCostrictCustomConfig is first enabled and includeMaxTokens has never been set before.
 		// Use ref to track whether includeMaxTokens has been explicitly set by the user, avoiding overriding the user's explicit selection.
 		if (
-			useZgsmCustomConfig &&
+			useCostrictCustomConfig &&
 			!includeMaxTokensInitializedRef.current &&
 			apiConfiguration?.includeMaxTokens === undefined
 		) {
 			setApiConfigurationField("includeMaxTokens", true)
 			includeMaxTokensInitializedRef.current = true
 		}
-	}, [useZgsmCustomConfig, apiConfiguration?.includeMaxTokens, setApiConfigurationField])
+	}, [useCostrictCustomConfig, apiConfiguration?.includeMaxTokens, setApiConfigurationField])
 
 	// Marked as initialized when the user manually modifies includeMaxTokens.
 	useEffect(() => {
@@ -138,7 +138,7 @@ export const ZgsmAI = ({
 		) =>
 			(event: E | Event) => {
 				const val = transform(event as E)
-				if (field === "zgsmBaseUrl" && isValidUrl(val as string)) {
+				if (field === "costrictBaseUrl" && isValidUrl(val as string)) {
 					setApiConfigurationField(field, (val as string)?.trim().replace(/\/$/, ""))
 				} else {
 					setApiConfigurationField(field, val)
@@ -151,10 +151,12 @@ export const ZgsmAI = ({
 		const message: ExtensionMessage = event.data
 
 		switch (message.type) {
-			case "zgsmModels": {
+			case "costrictModels": {
 				const { fullResponseData = [] } = message
 				setOpenAiModels(
-					Object.fromEntries(fullResponseData.map((item) => [item.id, { ...(item ?? zgsmModels.default) }])),
+					Object.fromEntries(
+						fullResponseData.map((item) => [item.id, { ...(item ?? costrictModels.default) }]),
+					),
 				)
 				break
 			}
@@ -166,19 +168,19 @@ export const ZgsmAI = ({
 	return (
 		<>
 			<VSCodeTextField
-				value={apiConfiguration?.zgsmBaseUrl?.trim() || ""}
+				value={apiConfiguration?.costrictBaseUrl?.trim() || ""}
 				type="url"
-				onInput={handleInputChange("zgsmBaseUrl")}
-				placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
-					zgsmBaseUrl: (window as any).COSTRICT_BASE_URL,
+				onInput={handleInputChange("costrictBaseUrl")}
+				placeholder={t("settings:providers.costrictDefaultBaseUrl", {
+					costrictBaseUrl: (window as any).COSTRICT_BASE_URL,
 				})}
 				className="w-full">
-				<label className="block font-medium mb-1">{t("settings:providers.zgsmBaseUrl")}</label>
+				<label className="block font-medium mb-1">{t("settings:providers.costrictBaseUrl")}</label>
 			</VSCodeTextField>
 			{!fromWelcomeView && (
 				<>
 					<VSCodeLink
-						className={`forced-color-adjust-none ${apiConfiguration.zgsmAccessToken ? "hidden" : ""}`}
+						className={`forced-color-adjust-none ${apiConfiguration.costrictAccessToken ? "hidden" : ""}`}
 						href="#"
 						onClick={(e) => {
 							e.preventDefault()
@@ -193,11 +195,11 @@ export const ZgsmAI = ({
 					<ModelPicker
 						apiConfiguration={apiConfiguration}
 						setApiConfigurationField={setApiConfigurationField}
-						defaultModelId={zgsmDefaultModelId}
+						defaultModelId={costrictDefaultModelId}
 						models={openAiModels}
-						modelIdKey="zgsmModelId"
-						serviceName="zgsm"
-						serviceUrl={apiConfiguration.zgsmBaseUrl?.trim() || ""}
+						modelIdKey="costrictModelId"
+						serviceName="costrict"
+						serviceUrl={apiConfiguration.costrictBaseUrl?.trim() || ""}
 						organizationAllowList={organizationAllowList}
 						errorMessage={modelValidationError}
 					/>
@@ -205,7 +207,7 @@ export const ZgsmAI = ({
 						variant="outline"
 						disabled={refetchingModels}
 						onClick={() => {
-							vscode.postMessage({ type: "flushRouterModels", text: "zgsm" })
+							vscode.postMessage({ type: "flushRouterModels", text: "costrict" })
 							setRefetchingModels(true)
 							refetchRouterModels?.()
 							delay(() => {
@@ -220,19 +222,19 @@ export const ZgsmAI = ({
 					{debug && (
 						<div>
 							<VSCodeCheckbox
-								checked={useZgsmCustomConfig}
+								checked={useCostrictCustomConfig}
 								onChange={(e: any) => {
-									setCachedStateField("useZgsmCustomConfig", e.target.checked)
+									setCachedStateField("useCostrictCustomConfig", e.target.checked)
 								}}>
 								<label className="block font-medium mb-1">
-									{t("settings:providers.useZgsmCustomConfig")}
+									{t("settings:providers.useCostrictCustomConfig")}
 								</label>
 							</VSCodeCheckbox>
 						</div>
 					)}
 				</>
 			)}
-			{!fromWelcomeView && useZgsmCustomConfig && debug && (
+			{!fromWelcomeView && useCostrictCustomConfig && debug && (
 				<>
 					<R1FormatSetting
 						onChange={handleInputChange("openAiR1FormatEnabled", noTransform)}
@@ -328,10 +330,10 @@ export const ZgsmAI = ({
 								setApiConfigurationField("enableReasoningEffort", checked)
 
 								if (!checked) {
-									const { reasoningEffort: _, ...zgsmAiCustomModelInfo } =
-										apiConfiguration.zgsmAiCustomModelInfo || zgsmModels.default
+									const { reasoningEffort: _, ...costrictAiCustomModelInfo } =
+										apiConfiguration.costrictAiCustomModelInfo || costrictModels.default
 
-									setApiConfigurationField("zgsmAiCustomModelInfo", zgsmAiCustomModelInfo)
+									setApiConfigurationField("costrictAiCustomModelInfo", costrictAiCustomModelInfo)
 								}
 							}}>
 							{t("settings:providers.setReasoningLevel")}
@@ -340,21 +342,21 @@ export const ZgsmAI = ({
 							<ThinkingBudget
 								apiConfiguration={{
 									...apiConfiguration,
-									reasoningEffort: apiConfiguration.zgsmAiCustomModelInfo?.reasoningEffort,
+									reasoningEffort: apiConfiguration.costrictAiCustomModelInfo?.reasoningEffort,
 								}}
 								setApiConfigurationField={(field, value) => {
 									if (field === "reasoningEffort") {
-										const zgsmAiCustomModelInfo =
-											apiConfiguration.zgsmAiCustomModelInfo || zgsmModels.default
+										const costrictAiCustomModelInfo =
+											apiConfiguration.costrictAiCustomModelInfo || costrictModels.default
 
-										setApiConfigurationField("zgsmAiCustomModelInfo", {
-											...zgsmAiCustomModelInfo,
+										setApiConfigurationField("costrictAiCustomModelInfo", {
+											...costrictAiCustomModelInfo,
 											reasoningEffort: value as ReasoningEffort,
 										})
 									}
 								}}
 								modelInfo={{
-									...(apiConfiguration.zgsmAiCustomModelInfo || zgsmModels.default),
+									...(apiConfiguration.costrictAiCustomModelInfo || costrictModels.default),
 									supportsReasoningEffort: ["low", "medium", "high", "xhigh"],
 								}}
 							/>
@@ -368,14 +370,14 @@ export const ZgsmAI = ({
 						<div>
 							<VSCodeTextField
 								value={
-									apiConfiguration?.zgsmAiCustomModelInfo?.maxTokens?.toString() ||
-									zgsmModels.default.maxTokens?.toString() ||
+									apiConfiguration?.costrictAiCustomModelInfo?.maxTokens?.toString() ||
+									costrictModels.default.maxTokens?.toString() ||
 									""
 								}
 								type="text"
 								style={{
 									borderColor: (() => {
-										const value = apiConfiguration?.zgsmAiCustomModelInfo?.maxTokens
+										const value = apiConfiguration?.costrictAiCustomModelInfo?.maxTokens
 
 										if (!value) {
 											return "var(--vscode-input-border)"
@@ -386,11 +388,11 @@ export const ZgsmAI = ({
 											: "var(--vscode-errorForeground)"
 									})(),
 								}}
-								onInput={handleInputChange("zgsmAiCustomModelInfo", (e) => {
+								onInput={handleInputChange("costrictAiCustomModelInfo", (e) => {
 									const value = parseInt((e.target as HTMLInputElement).value)
 
 									return {
-										...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
+										...(apiConfiguration?.costrictAiCustomModelInfo || costrictModels.default),
 										maxTokens: isNaN(value) ? undefined : value,
 									}
 								})}
@@ -408,14 +410,14 @@ export const ZgsmAI = ({
 						<div>
 							<VSCodeTextField
 								value={
-									apiConfiguration?.zgsmAiCustomModelInfo?.contextWindow?.toString() ||
-									zgsmModels.default.contextWindow?.toString() ||
+									apiConfiguration?.costrictAiCustomModelInfo?.contextWindow?.toString() ||
+									costrictModels.default.contextWindow?.toString() ||
 									""
 								}
 								type="text"
 								style={{
 									borderColor: (() => {
-										const value = apiConfiguration?.zgsmAiCustomModelInfo?.contextWindow
+										const value = apiConfiguration?.costrictAiCustomModelInfo?.contextWindow
 
 										if (!value) {
 											return "var(--vscode-input-border)"
@@ -426,13 +428,13 @@ export const ZgsmAI = ({
 											: "var(--vscode-errorForeground)"
 									})(),
 								}}
-								onInput={handleInputChange("zgsmAiCustomModelInfo", (e) => {
+								onInput={handleInputChange("costrictAiCustomModelInfo", (e) => {
 									const value = (e.target as HTMLInputElement).value
 									const parsed = parseInt(value)
 
 									return {
-										...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
-										contextWindow: isNaN(parsed) ? zgsmModels.default.contextWindow : parsed,
+										...(apiConfiguration?.costrictAiCustomModelInfo || costrictModels.default),
+										contextWindow: isNaN(parsed) ? costrictModels.default.contextWindow : parsed,
 									}
 								})}
 								placeholder={t("settings:placeholders.numbers.contextWindow")}
@@ -450,12 +452,12 @@ export const ZgsmAI = ({
 							<div className="flex items-center gap-1">
 								<Checkbox
 									checked={
-										apiConfiguration?.zgsmAiCustomModelInfo?.supportsImages ??
-										zgsmModels.default.supportsImages
+										apiConfiguration?.costrictAiCustomModelInfo?.supportsImages ??
+										costrictModels.default.supportsImages
 									}
-									onChange={handleInputChange("zgsmAiCustomModelInfo", (checked) => {
+									onChange={handleInputChange("costrictAiCustomModelInfo", (checked) => {
 										return {
-											...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
+											...(apiConfiguration?.costrictAiCustomModelInfo || costrictModels.default),
 											supportsImages: checked,
 										}
 									})}>
@@ -478,10 +480,10 @@ export const ZgsmAI = ({
 						<div>
 							<div className="flex items-center gap-1">
 								<Checkbox
-									checked={apiConfiguration?.zgsmAiCustomModelInfo?.supportsPromptCache ?? false}
-									onChange={handleInputChange("zgsmAiCustomModelInfo", (checked) => {
+									checked={apiConfiguration?.costrictAiCustomModelInfo?.supportsPromptCache ?? false}
+									onChange={handleInputChange("costrictAiCustomModelInfo", (checked) => {
 										return {
-											...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
+											...(apiConfiguration?.costrictAiCustomModelInfo || costrictModels.default),
 											supportsPromptCache: checked,
 										}
 									})}>
@@ -504,14 +506,14 @@ export const ZgsmAI = ({
 						<div>
 							<VSCodeTextField
 								value={
-									apiConfiguration?.zgsmAiCustomModelInfo?.inputPrice?.toString() ??
-									zgsmModels.default.inputPrice?.toString() ??
+									apiConfiguration?.costrictAiCustomModelInfo?.inputPrice?.toString() ??
+									costrictModels.default.inputPrice?.toString() ??
 									""
 								}
 								type="text"
 								style={{
 									borderColor: (() => {
-										const value = apiConfiguration?.zgsmAiCustomModelInfo?.inputPrice
+										const value = apiConfiguration?.costrictAiCustomModelInfo?.inputPrice
 
 										if (!value && value !== 0) {
 											return "var(--vscode-input-border)"
@@ -522,13 +524,13 @@ export const ZgsmAI = ({
 											: "var(--vscode-errorForeground)"
 									})(),
 								}}
-								onChange={handleInputChange("zgsmAiCustomModelInfo", (e) => {
+								onChange={handleInputChange("costrictAiCustomModelInfo", (e) => {
 									const value = (e.target as HTMLInputElement).value
 									const parsed = parseFloat(value)
 
 									return {
-										...(apiConfiguration?.zgsmAiCustomModelInfo ?? zgsmModels.default),
-										inputPrice: isNaN(parsed) ? zgsmModels.default.inputPrice : parsed,
+										...(apiConfiguration?.costrictAiCustomModelInfo ?? costrictModels.default),
+										inputPrice: isNaN(parsed) ? costrictModels.default.inputPrice : parsed,
 									}
 								})}
 								placeholder={t("settings:placeholders.numbers.inputPrice")}
@@ -551,14 +553,14 @@ export const ZgsmAI = ({
 						<div>
 							<VSCodeTextField
 								value={
-									apiConfiguration?.zgsmAiCustomModelInfo?.outputPrice?.toString() ||
-									zgsmModels.default.outputPrice?.toString() ||
+									apiConfiguration?.costrictAiCustomModelInfo?.outputPrice?.toString() ||
+									costrictModels.default.outputPrice?.toString() ||
 									""
 								}
 								type="text"
 								style={{
 									borderColor: (() => {
-										const value = apiConfiguration?.zgsmAiCustomModelInfo?.outputPrice
+										const value = apiConfiguration?.costrictAiCustomModelInfo?.outputPrice
 
 										if (!value && value !== 0) {
 											return "var(--vscode-input-border)"
@@ -569,13 +571,13 @@ export const ZgsmAI = ({
 											: "var(--vscode-errorForeground)"
 									})(),
 								}}
-								onChange={handleInputChange("zgsmAiCustomModelInfo", (e) => {
+								onChange={handleInputChange("costrictAiCustomModelInfo", (e) => {
 									const value = (e.target as HTMLInputElement).value
 									const parsed = parseFloat(value)
 
 									return {
-										...(apiConfiguration?.zgsmAiCustomModelInfo || zgsmModels.default),
-										outputPrice: isNaN(parsed) ? zgsmModels.default.outputPrice : parsed,
+										...(apiConfiguration?.costrictAiCustomModelInfo || costrictModels.default),
+										outputPrice: isNaN(parsed) ? costrictModels.default.outputPrice : parsed,
 									}
 								})}
 								placeholder={t("settings:placeholders.numbers.outputPrice")}
@@ -595,17 +597,19 @@ export const ZgsmAI = ({
 							</VSCodeTextField>
 						</div>
 
-						{apiConfiguration?.zgsmAiCustomModelInfo?.supportsPromptCache && (
+						{apiConfiguration?.costrictAiCustomModelInfo?.supportsPromptCache && (
 							<>
 								<div>
 									<VSCodeTextField
 										value={
-											apiConfiguration?.zgsmAiCustomModelInfo?.cacheReadsPrice?.toString() ?? "0"
+											apiConfiguration?.costrictAiCustomModelInfo?.cacheReadsPrice?.toString() ??
+											"0"
 										}
 										type="text"
 										style={{
 											borderColor: (() => {
-												const value = apiConfiguration?.zgsmAiCustomModelInfo?.cacheReadsPrice
+												const value =
+													apiConfiguration?.costrictAiCustomModelInfo?.cacheReadsPrice
 
 												if (!value && value !== 0) {
 													return "var(--vscode-input-border)"
@@ -616,12 +620,13 @@ export const ZgsmAI = ({
 													: "var(--vscode-errorForeground)"
 											})(),
 										}}
-										onChange={handleInputChange("zgsmAiCustomModelInfo", (e) => {
+										onChange={handleInputChange("costrictAiCustomModelInfo", (e) => {
 											const value = (e.target as HTMLInputElement).value
 											const parsed = parseFloat(value)
 
 											return {
-												...(apiConfiguration?.zgsmAiCustomModelInfo ?? zgsmModels.default),
+												...(apiConfiguration?.costrictAiCustomModelInfo ??
+													costrictModels.default),
 												cacheReadsPrice: isNaN(parsed) ? 0 : parsed,
 											}
 										})}
@@ -646,12 +651,14 @@ export const ZgsmAI = ({
 								<div>
 									<VSCodeTextField
 										value={
-											apiConfiguration?.zgsmAiCustomModelInfo?.cacheWritesPrice?.toString() ?? "0"
+											apiConfiguration?.costrictAiCustomModelInfo?.cacheWritesPrice?.toString() ??
+											"0"
 										}
 										type="text"
 										style={{
 											borderColor: (() => {
-												const value = apiConfiguration?.zgsmAiCustomModelInfo?.cacheWritesPrice
+												const value =
+													apiConfiguration?.costrictAiCustomModelInfo?.cacheWritesPrice
 
 												if (!value && value !== 0) {
 													return "var(--vscode-input-border)"
@@ -662,12 +669,13 @@ export const ZgsmAI = ({
 													: "var(--vscode-errorForeground)"
 											})(),
 										}}
-										onChange={handleInputChange("zgsmAiCustomModelInfo", (e) => {
+										onChange={handleInputChange("costrictAiCustomModelInfo", (e) => {
 											const value = (e.target as HTMLInputElement).value
 											const parsed = parseFloat(value)
 
 											return {
-												...(apiConfiguration?.zgsmAiCustomModelInfo ?? zgsmModels.default),
+												...(apiConfiguration?.costrictAiCustomModelInfo ??
+													costrictModels.default),
 												cacheWritesPrice: isNaN(parsed) ? 0 : parsed,
 											}
 										})}
@@ -694,7 +702,9 @@ export const ZgsmAI = ({
 
 						<Button
 							variant="secondary"
-							onClick={() => setApiConfigurationField("zgsmAiCustomModelInfo", zgsmModels.default)}>
+							onClick={() =>
+								setApiConfigurationField("costrictAiCustomModelInfo", costrictModels.default)
+							}>
 							{t("settings:providers.customModel.resetDefaults")}
 						</Button>
 					</div>

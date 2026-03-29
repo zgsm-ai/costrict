@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import * as dotenvx from "@dotenvx/dotenvx"
 import * as fs from "fs"
 import * as path from "path"
-import * as ZgsmCore from "./core/costrict"
+import * as CostrictCore from "./core/costrict"
 
 // Load environment variables from .env file
 // The extension-level .env is optional (not shipped in production builds).
@@ -43,7 +43,7 @@ import { McpServerManager } from "./services/mcp/McpServerManager"
 import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { API } from "./extension/api"
-import { ZgsmAuthConfig } from "./core/costrict/auth/index"
+import { CostrictAuthConfig } from "./core/costrict/auth/index"
 
 import {
 	handleUri,
@@ -132,7 +132,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	extensionContext = context
 	outputChannel = createLogger(Package.outputChannel).channel
 	context.subscriptions.push(outputChannel)
-	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
+	outputChannel.appendLine(`${Package.commandIDPrefix} extension activated - ${JSON.stringify(Package)}`)
 
 	// Kick off non-critical startup tasks in the background so activation can continue.
 	void initializeNetworkProxy(context, outputChannel).catch((error) => {
@@ -395,14 +395,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Register the 'User Manual' command
 	context.subscriptions.push(
 		vscode.commands.registerCommand(getCommand("view.userHelperDoc"), () => {
-			vscode.env.openExternal(vscode.Uri.parse(`${ZgsmAuthConfig.getInstance().getDefaultSite()}`))
+			vscode.env.openExternal(vscode.Uri.parse(`${CostrictAuthConfig.getInstance().getDefaultSite()}`))
 		}),
 	)
 
 	// Register the 'Report Issue' command
 	context.subscriptions.push(
 		vscode.commands.registerCommand(getCommand("view.issue"), () => {
-			vscode.env.openExternal(vscode.Uri.parse(`${ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}/issue/`))
+			vscode.env.openExternal(
+				vscode.Uri.parse(`${CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}/issue/`),
+			)
 		}),
 	)
 
@@ -413,7 +415,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	activateCoworkflowIntegration(context)
 
 	// Allows other extensions to activate once CoStrict is ready.
-	vscode.commands.executeCommand(`${Package.name}.activationCompleted`)
+	vscode.commands.executeCommand(`${Package.commandIDPrefix}.activationCompleted`)
 
 	// Implements the `RooCodeAPI` interface.
 	const socketPath = process.env.ROO_CODE_IPC_SOCKET_PATH
@@ -471,7 +473,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	}
 
-	void ZgsmCore.activate(context, provider, outputChannel)
+	void CostrictCore.activate(context, provider, outputChannel)
 	// // Initialize background model cache refresh
 	// initializeModelCacheRefresh()
 
@@ -480,8 +482,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated.
 export async function deactivate() {
-	await ZgsmCore.deactivate()
-	outputChannel.appendLine(`${Package.name} extension deactivated`)
+	await CostrictCore.deactivate()
+	outputChannel.appendLine(`${Package.commandIDPrefix} extension deactivated`)
 
 	// if (cloudService && CloudService.hasInstance()) {
 	// 	try {

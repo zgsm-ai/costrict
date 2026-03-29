@@ -4,7 +4,7 @@ import { Trans } from "react-i18next"
 import { t } from "i18next"
 import { Settings } from "lucide-react"
 
-import type { ModeConfig, Command, ZgsmCodeMode } from "@roo-code/types"
+import type { ModeConfig, Command, CostrictCodeMode } from "@roo-code/types"
 
 import {
 	ContextMenuOptionType,
@@ -21,7 +21,7 @@ interface ContextMenuProps {
 	onSelect: (type: ContextMenuOptionType, value?: string) => void
 	searchQuery: string
 	inputValue: string
-	zgsmCodeMode: ZgsmCodeMode
+	costrictCodeMode: CostrictCodeMode
 	onMouseDown: () => void
 	selectedIndex: number
 	setSelectedIndex: (index: number) => void
@@ -36,7 +36,7 @@ interface ContextMenuProps {
 const ContextMenu: React.FC<ContextMenuProps> = ({
 	onSelect,
 	searchQuery,
-	zgsmCodeMode,
+	costrictCodeMode,
 	onMouseDown,
 	selectedIndex,
 	setSelectedIndex,
@@ -57,9 +57,9 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
 			dynamicSearchResults,
 			modes,
 			commands,
-			zgsmCodeMode,
+			costrictCodeMode,
 		)
-	}, [zgsmCodeMode, searchQuery, selectedType, queryItems, dynamicSearchResults, modes, commands])
+	}, [costrictCodeMode, searchQuery, selectedType, queryItems, dynamicSearchResults, modes, commands])
 
 	useEffect(() => {
 		if (menuRef.current) {

@@ -11,13 +11,13 @@ import {
 	AlertDialogTitle,
 } from "@src/components/ui"
 
-interface ZgsmCodebaseDisableConfirmDialogProps {
+interface CostrictCodebaseDisableConfirmDialogProps {
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	onConfirm: () => void
 }
 
-export const ZgsmCodebaseDisableConfirmDialog: React.FC<ZgsmCodebaseDisableConfirmDialogProps> = ({
+export const CostrictCodebaseDisableConfirmDialog: React.FC<CostrictCodebaseDisableConfirmDialogProps> = ({
 	open,
 	onOpenChange,
 	onConfirm,

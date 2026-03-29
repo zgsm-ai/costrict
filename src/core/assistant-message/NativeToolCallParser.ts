@@ -334,7 +334,7 @@ export class NativeToolCallParser {
 	 * Finalize a streaming tool call.
 	 * Parses the complete JSON and returns the final ToolUse or McpToolUse.
 	 */
-	public static finalizeStreamingToolCall(id: string, isZgsm?: boolean): ToolUse | McpToolUse | null {
+	public static finalizeStreamingToolCall(id: string, isCostrict?: boolean): ToolUse | McpToolUse | null {
 		const toolCall = this.streamingToolCalls.get(id)
 		if (!toolCall) {
 			return null
@@ -347,11 +347,11 @@ export class NativeToolCallParser {
 				id: toolCall.id,
 				name: toolCall.name as ToolName,
 				arguments:
-					(toolCall.name as ToolName) === "ask_multiple_choice" && isZgsm
+					(toolCall.name as ToolName) === "ask_multiple_choice" && isCostrict
 						? fixAskMultipleChoiceFinalToolUseResult(toolCall.argumentsAccumulator)
 						: toolCall.argumentsAccumulator,
 			},
-			isZgsm,
+			isCostrict,
 		)
 		// Clean up streaming state
 		this.streamingToolCalls.delete(id)
@@ -774,7 +774,7 @@ export class NativeToolCallParser {
 			name: TName
 			arguments: string
 		},
-		isZgsm?: boolean,
+		isCostrict?: boolean,
 	): ToolUse<TName> | McpToolUse | null {
 		// Check if this is a dynamic MCP tool (mcp--serverName--toolName)
 		// Also handle models that output underscores instead of hyphens (mcp__serverName__toolName)
@@ -824,7 +824,7 @@ export class NativeToolCallParser {
 			const normalizedArgs: Record<string, any> = {}
 			for (const [key, value] of Object.entries(args)) {
 				let _key = key
-				if (isZgsm && _key.includes("<arg_key>")) {
+				if (isCostrict && _key.includes("<arg_key>")) {
 					_key = (key.split("<arg_key>").pop() as string) ?? _key
 					console.log(`${toolCall.name}|${toolCall.id}: ${key} -> ${_key}`)
 				}

@@ -1,5 +1,5 @@
 import { getClientId } from "../../../utils/getClientId"
-import { ZgsmAuthApi, ZgsmAuthConfig } from "../auth"
+import { CostrictAuthApi, CostrictAuthConfig } from "../auth"
 import { PackageInfoResponse, VersionInfo } from "./types"
 
 /**
@@ -14,8 +14,8 @@ export class PackageInfoApi {
 	 * @throws Throws error when API call fails
 	 */
 	async getPackageInfo(versionInfo: VersionInfo): Promise<PackageInfoResponse> {
-		const { zgsmBaseUrl } = await ZgsmAuthApi.getInstance().getApiConfiguration()
-		const baseUrl = zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+		const { costrictBaseUrl } = await CostrictAuthApi.getInstance().getApiConfiguration()
+		const baseUrl = costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 		const url = `${baseUrl}/costrict${versionInfo.infoUrl}`
 
 		try {
@@ -23,7 +23,7 @@ export class PackageInfoApi {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"zgsm-request-id": getClientId(),
+					"costrict-request-id": getClientId(),
 				},
 			})
 

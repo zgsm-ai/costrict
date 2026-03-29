@@ -25,7 +25,7 @@ import {
 	basetenDefaultModelId,
 	bedrockDefaultModelId,
 	vertexDefaultModelId,
-	zgsmDefaultModelId,
+	costrictDefaultModelId,
 	geminiCliDefaultModelId,
 	sambaNovaDefaultModelId,
 	internationalZAiDefaultModelId,
@@ -95,7 +95,7 @@ import {
 	Vertex,
 	VSCodeLM,
 	XAI,
-	ZgsmAI,
+	CostrictAI,
 	ZAi,
 	Fireworks,
 	VercelAiGateway,
@@ -133,8 +133,8 @@ export interface ApiOptionsProps {
 	fromWelcomeView?: boolean
 	errorMessage: string | undefined
 	setErrorMessage: React.Dispatch<React.SetStateAction<string | undefined>>
-	useZgsmCustomConfig?: boolean
-	setCachedStateField: SetCachedStateField<"useZgsmCustomConfig">
+	useCostrictCustomConfig?: boolean
+	setCachedStateField: SetCachedStateField<"useCostrictCustomConfig">
 }
 
 const ApiOptions = ({
@@ -144,12 +144,12 @@ const ApiOptions = ({
 	fromWelcomeView,
 	errorMessage,
 	setErrorMessage,
-	useZgsmCustomConfig,
+	useCostrictCustomConfig,
 	setCachedStateField,
 }: ApiOptionsProps) => {
 	const { t } = useAppTranslation()
 	const {
-		setZgsmCodeMode,
+		setCostrictCodeMode,
 		organizationAllowList,
 		claudeCodeIsAuthenticated /* cloudIsAuthenticated */,
 		debug,
@@ -186,7 +186,7 @@ const ApiOptions = ({
 		300,
 		[customHeaders, apiConfiguration?.openAiHeaders, setApiConfigurationField],
 	)
-	const apiModelIdKey = apiConfiguration.apiProvider === "zgsm" ? "zgsmModelId" : "apiModelId"
+	const apiModelIdKey = apiConfiguration.apiProvider === "costrict" ? "costrictModelId" : "apiModelId"
 
 	const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false)
 	const [showProviderChangeWarning, setShowProviderChangeWarning] = useState(false)
@@ -252,14 +252,14 @@ const ApiOptions = ({
 	// stops typing.
 	useDebounce(
 		() => {
-			if (selectedProvider === "zgsm") {
+			if (selectedProvider === "costrict") {
 				// Use our custom headers state to build the headers object.
 				const headerObject = convertHeadersToObject(customHeaders)
 				vscode.postMessage({
 					type: "requestRouterModels",
 					values: {
-						baseUrl: apiConfiguration?.zgsmBaseUrl?.trim(),
-						apiKey: apiConfiguration?.zgsmAccessToken,
+						baseUrl: apiConfiguration?.costrictBaseUrl?.trim(),
+						apiKey: apiConfiguration?.costrictAccessToken,
 						customHeaders: {}, // Reserved for any additional headers
 						openAiHeaders: headerObject,
 					},
@@ -406,7 +406,7 @@ const ApiOptions = ({
 				roo: { field: "apiModelId", default: rooDefaultModelId },
 				"vercel-ai-gateway": { field: "vercelAiGatewayModelId", default: vercelAiGatewayDefaultModelId },
 				openai: { field: "openAiModelId" },
-				zgsm: { field: "zgsmModelId", default: zgsmDefaultModelId },
+				costrict: { field: "costrictModelId", default: costrictDefaultModelId },
 				ollama: { field: "ollamaModelId" },
 				lmstudio: { field: "lmStudioModelId" },
 			}
@@ -426,8 +426,8 @@ const ApiOptions = ({
 
 	const executeProviderChange = useCallback(
 		async (value: ProviderName) => {
-			// Show confirmation dialog when switching from zgsm to other providers
-			if (!fromWelcomeView && selectedProvider === "zgsm" && value !== "zgsm") {
+			// Show confirmation dialog when switching from costrict to other providers
+			if (!fromWelcomeView && selectedProvider === "costrict" && value !== "costrict") {
 				setPendingProviderChange(value)
 				setShowProviderChangeWarning(true)
 				return
@@ -442,9 +442,9 @@ const ApiOptions = ({
 	const handleProviderChangeConfirm = useCallback(() => {
 		if (pendingProviderChange) {
 			onProviderChange(pendingProviderChange)
-			setZgsmCodeMode("vibe")
+			setCostrictCodeMode("vibe")
 			vscode.postMessage({
-				type: "zgsmCodeMode",
+				type: "costrictCodeMode",
 				text: "vibe",
 			})
 			vscode.postMessage({
@@ -454,7 +454,7 @@ const ApiOptions = ({
 			setPendingProviderChange(null)
 			setShowProviderChangeWarning(false)
 		}
-	}, [pendingProviderChange, onProviderChange, setZgsmCodeMode])
+	}, [pendingProviderChange, onProviderChange, setCostrictCodeMode])
 
 	const modelValidationError = useMemo(() => {
 		return getModelValidationError(apiConfiguration, routerModels, organizationAllowList)
@@ -483,7 +483,7 @@ const ApiOptions = ({
 
 	// const defaultProtocol =
 	// 	selectedModelInfo?.defaultToolProtocol ??
-	// 	(selectedProvider === "zgsm" ? TOOL_PROTOCOL.XML : TOOL_PROTOCOL.NATIVE)
+	// 	(selectedProvider === "costrict" ? TOOL_PROTOCOL.XML : TOOL_PROTOCOL.NATIVE)
 	// const showToolProtocolSelector = selectedModelInfo?.supportsNativeTools ?? true
 	// Convert providers to SearchableSelect options
 	const providerOptions = useMemo(() => {
@@ -517,10 +517,9 @@ const ApiOptions = ({
 			value,
 			label,
 		}))
-
 		// Pin "costrict" to the top if not on welcome screen
 		if (!fromWelcomeView) {
-			const costrictIndex = options.findIndex((opt) => opt.value === "zgsm")
+			const costrictIndex = options.findIndex((opt) => opt.value === "costrict")
 			if (costrictIndex > 0) {
 				const [rooOption] = options.splice(costrictIndex, 1)
 				options.unshift(rooOption)
@@ -532,13 +531,9 @@ const ApiOptions = ({
 			options.push(...filteredOptions)
 
 			const openRouterIndex = options.findIndex((opt) => opt.value === "openrouter")
-			const zgsmIndex = options.findIndex((opt) => opt.value === "zgsm")
+			const costrictIndex = options.findIndex((opt) => opt.value === "costrict")
 			if (openRouterIndex > 0) {
-				options.splice(zgsmIndex, 1)
-			}
-			if (openRouterIndex > 0) {
-				const [openRouterOption] = options.splice(openRouterIndex, 1)
-				options.unshift(openRouterOption)
+				options.splice(costrictIndex, 1)
 			}
 		}
 
@@ -579,15 +574,15 @@ const ApiOptions = ({
 				</div>
 			) : (
 				<>
-					{!fromWelcomeView && selectedProvider === "zgsm" && (
-						<ZgsmAI
+					{!fromWelcomeView && selectedProvider === "costrict" && (
+						<CostrictAI
 							debug={debug}
 							fromWelcomeView={fromWelcomeView}
 							apiConfiguration={apiConfiguration}
 							setApiConfigurationField={setApiConfigurationField}
 							organizationAllowList={organizationAllowList}
 							modelValidationError={modelValidationError}
-							useZgsmCustomConfig={useZgsmCustomConfig}
+							useCostrictCustomConfig={useCostrictCustomConfig}
 							setCachedStateField={setCachedStateField}
 							refetchRouterModels={refetchRouterModels}
 						/>

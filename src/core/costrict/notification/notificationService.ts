@@ -2,7 +2,7 @@ import axios from "axios"
 import * as vscode from "vscode"
 import type { INotice, INoticesResponse } from "@roo-code/types"
 import { ClineProvider } from "../../webview/ClineProvider"
-import { ZgsmAuthConfig } from "../auth"
+import { CostrictAuthConfig } from "../auth"
 import { t } from "../../../i18n"
 import { getClientId } from "../../../utils/getClientId"
 
@@ -75,10 +75,10 @@ export class NotificationService {
 			throw new Error("NotificationService not initialized")
 		}
 		const { language, apiConfiguration } = await this.provider.getState()
-		const baseUrl = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+		const baseUrl = apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 		const response = await axios.get(`${baseUrl}/costrict-static/announcement/announcement_${language}.json`, {
 			headers: {
-				"zgsm-request-id": getClientId(),
+				"costrict-request-id": getClientId(),
 			},
 		})
 		return response.data
@@ -97,7 +97,7 @@ export class NotificationService {
 		const alwaysNotices = notices.filter((notice) => notice.type === "always")
 		if (alwaysNotices.length > 0) {
 			await this.provider.postMessageToWebview({
-				type: "zgsmNotices",
+				type: "costrictNotices",
 				notices: alwaysNotices,
 			})
 		}

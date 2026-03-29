@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { vscode } from "@/utils/vscode"
 import { ExtensionStateContextProvider } from "@/context/ExtensionStateContext"
 
-import { ZgsmCodebaseSettings, type IndexStatusInfo } from "../ZgsmCodebaseSettings"
+import { CostrictCodebaseSettings, type IndexStatusInfo } from "../CostrictCodebaseSettings"
 
 // Mock vscode API
 vi.mock("@/utils/vscode", () => ({
@@ -109,7 +109,7 @@ vi.mock("react-use", () => ({
 
 interface TestProps {
 	apiConfiguration?: any
-	zgsmCodebaseIndexEnabled?: boolean
+	costrictCodebaseIndexEnabled?: boolean
 }
 
 const renderZgsmCodebaseSettings = (props: TestProps = {}) => {
@@ -129,15 +129,15 @@ const renderZgsmCodebaseSettings = (props: TestProps = {}) => {
 
 	// Set up mock return values
 	mockUseExtensionState.mockReturnValue({
-		zgsmCodebaseIndexEnabled: props.zgsmCodebaseIndexEnabled ?? false,
-		apiConfiguration: props.apiConfiguration ?? { apiProvider: "zgsm" },
+		costrictCodebaseIndexEnabled: props.costrictCodebaseIndexEnabled ?? false,
+		apiConfiguration: props.apiConfiguration ?? { apiProvider: "costrict" },
 		cwd: "/test/path", // Add cwd to prevent checkbox from being disabled
 	})
 
 	return render(
 		<QueryClientProvider client={queryClient}>
 			<ExtensionStateContextProvider>
-				<ZgsmCodebaseSettings {...defaultProps} />
+				<CostrictCodebaseSettings {...defaultProps} />
 			</ExtensionStateContextProvider>
 		</QueryClientProvider>,
 	)
@@ -213,15 +213,15 @@ describe("ZgsmCodebaseSettings", () => {
 	})
 
 	describe("Checkbox behavior", () => {
-		it("shows checkbox checked when zgsmCodebaseIndexEnabled is true", () => {
-			renderZgsmCodebaseSettings({ zgsmCodebaseIndexEnabled: true })
+		it("shows checkbox checked when costrictCodebaseIndexEnabled is true", () => {
+			renderZgsmCodebaseSettings({ costrictCodebaseIndexEnabled: true })
 
 			const checkbox = screen.getByTestId("vscode-checkbox")
 			expect(checkbox).toBeChecked()
 		})
 
-		it("shows checkbox unchecked when zgsmCodebaseIndexEnabled is false", () => {
-			renderZgsmCodebaseSettings({ zgsmCodebaseIndexEnabled: false })
+		it("shows checkbox unchecked when costrictCodebaseIndexEnabled is false", () => {
+			renderZgsmCodebaseSettings({ costrictCodebaseIndexEnabled: false })
 
 			const checkbox = screen.getByTestId("vscode-checkbox")
 			expect(checkbox).not.toBeChecked()
@@ -230,7 +230,7 @@ describe("ZgsmCodebaseSettings", () => {
 		it("disables checkbox when apiProvider is not zgsm", () => {
 			renderZgsmCodebaseSettings({
 				apiConfiguration: { apiProvider: "openai" },
-				zgsmCodebaseIndexEnabled: false,
+				costrictCodebaseIndexEnabled: false,
 			})
 
 			const checkbox = screen.getByTestId("vscode-checkbox")
@@ -239,8 +239,8 @@ describe("ZgsmCodebaseSettings", () => {
 
 		it("enables checkbox when apiProvider is zgsm", () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: false,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: false,
 			})
 
 			const checkbox = screen.getByTestId("vscode-checkbox")
@@ -248,7 +248,7 @@ describe("ZgsmCodebaseSettings", () => {
 		})
 
 		it("sends enable message when checkbox is checked", () => {
-			renderZgsmCodebaseSettings({ zgsmCodebaseIndexEnabled: false })
+			renderZgsmCodebaseSettings({ costrictCodebaseIndexEnabled: false })
 
 			const checkbox = screen.getByTestId("vscode-checkbox")
 
@@ -261,24 +261,24 @@ describe("ZgsmCodebaseSettings", () => {
 			fireEvent.click(checkbox, mockEvent)
 
 			expect(vscode.postMessage).toHaveBeenCalledWith({
-				type: "zgsmCodebaseIndexEnabled",
+				type: "costrictCodebaseIndexEnabled",
 				bool: true,
 			})
 		})
 
 		it("shows confirmation dialog when disabling", () => {
-			renderZgsmCodebaseSettings({ zgsmCodebaseIndexEnabled: true })
+			renderZgsmCodebaseSettings({ costrictCodebaseIndexEnabled: true })
 
 			const checkbox = screen.getByTestId("vscode-checkbox")
 			fireEvent.click(checkbox)
 
 			expect(vscode.postMessage).toHaveBeenCalledWith({
-				type: "showZgsmCodebaseDisableConfirmDialog",
+				type: "showCostrictCodebaseDisableConfirmDialog",
 			})
 		})
 
 		it("does not show confirmation dialog when enabling", () => {
-			renderZgsmCodebaseSettings({ zgsmCodebaseIndexEnabled: false })
+			renderZgsmCodebaseSettings({ costrictCodebaseIndexEnabled: false })
 
 			const checkbox = screen.getByTestId("vscode-checkbox")
 
@@ -291,7 +291,7 @@ describe("ZgsmCodebaseSettings", () => {
 			fireEvent.click(checkbox, mockEvent)
 
 			expect(vscode.postMessage).toHaveBeenCalledWith({
-				type: "zgsmCodebaseIndexEnabled",
+				type: "costrictCodebaseIndexEnabled",
 				bool: true,
 			})
 		})
@@ -301,7 +301,7 @@ describe("ZgsmCodebaseSettings", () => {
 		it("shows pending enable message when not using zgsm provider", () => {
 			renderZgsmCodebaseSettings({
 				apiConfiguration: { apiProvider: "openai" },
-				zgsmCodebaseIndexEnabled: false,
+				costrictCodebaseIndexEnabled: false,
 			})
 
 			// Use getAllByText and check the first element to avoid issues with multiple identical text elements
@@ -315,8 +315,8 @@ describe("ZgsmCodebaseSettings", () => {
 
 		it("shows index details when enabled and using zgsm provider", () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// Initially shows pending status
@@ -327,8 +327,8 @@ describe("ZgsmCodebaseSettings", () => {
 
 		it("updates index status when receiving status response", async () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// Simulate receiving status update
@@ -364,8 +364,8 @@ describe("ZgsmCodebaseSettings", () => {
 
 		it("shows running status with progress", async () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			const statusInfo = createIndexStatusInfo({
@@ -397,8 +397,8 @@ describe("ZgsmCodebaseSettings", () => {
 
 		it("shows failed status with error details", async () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			const statusInfo = createIndexStatusInfo({
@@ -441,8 +441,8 @@ describe("ZgsmCodebaseSettings", () => {
 	describe("Rebuild functionality", () => {
 		it("sends rebuild message for semantic index", () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// Find and click rebuild button for semantic index
@@ -452,7 +452,7 @@ describe("ZgsmCodebaseSettings", () => {
 			fireEvent.click(semanticRebuildButton)
 
 			expect(vscode.postMessage).toHaveBeenCalledWith({
-				type: "zgsmRebuildCodebaseIndex",
+				type: "costrictRebuildCodebaseIndex",
 				values: {
 					type: "embedding",
 				},
@@ -461,8 +461,8 @@ describe("ZgsmCodebaseSettings", () => {
 
 		it("sends rebuild message for code index", () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// Find and click rebuild button for code index
@@ -472,7 +472,7 @@ describe("ZgsmCodebaseSettings", () => {
 			fireEvent.click(codeRebuildButton)
 
 			expect(vscode.postMessage).toHaveBeenCalledWith({
-				type: "zgsmRebuildCodebaseIndex",
+				type: "costrictRebuildCodebaseIndex",
 				values: {
 					type: "codegraph",
 				},
@@ -485,8 +485,8 @@ describe("ZgsmCodebaseSettings", () => {
 
 			try {
 				renderZgsmCodebaseSettings({
-					apiConfiguration: { apiProvider: "zgsm" },
-					zgsmCodebaseIndexEnabled: true,
+					apiConfiguration: { apiProvider: "costrict" },
+					costrictCodebaseIndexEnabled: true,
 				})
 
 				const statusInfo = createIndexStatusInfo({
@@ -538,8 +538,8 @@ describe("ZgsmCodebaseSettings", () => {
 	describe("Failed files handling", () => {
 		it("shows failed files popover when there are failed files", async () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			const statusInfo = createIndexStatusInfo({
@@ -601,8 +601,8 @@ describe("ZgsmCodebaseSettings", () => {
 			})
 
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			const statusInfo = createIndexStatusInfo({
@@ -654,8 +654,8 @@ describe("ZgsmCodebaseSettings", () => {
 
 		it("opens failed file when clicked", async () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			const statusInfo = createIndexStatusInfo({
@@ -714,8 +714,8 @@ describe("ZgsmCodebaseSettings", () => {
 	describe("Ignore file editing", () => {
 		it("sends open file message for .coignore when edit button is clicked", () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// Check if the component renders by looking for specific content
@@ -761,8 +761,8 @@ describe("ZgsmCodebaseSettings", () => {
 			vi.clearAllMocks() // Clear any previous calls
 
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// In the refactored component, polling might not start automatically on mount
@@ -779,8 +779,8 @@ describe("ZgsmCodebaseSettings", () => {
 
 		it("does not start polling when component mounts with disabled state", () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: false,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: false,
 			})
 
 			// In the refactored component, polling behavior might have changed
@@ -797,7 +797,7 @@ describe("ZgsmCodebaseSettings", () => {
 		it("does not start polling when apiProvider is not zgsm", () => {
 			renderZgsmCodebaseSettings({
 				apiConfiguration: { apiProvider: "openai" },
-				zgsmCodebaseIndexEnabled: true,
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// In the refactored component, polling behavior might have changed
@@ -815,8 +815,8 @@ describe("ZgsmCodebaseSettings", () => {
 			vi.clearAllMocks()
 
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// In the refactored component, polling behavior might have changed
@@ -849,8 +849,8 @@ describe("ZgsmCodebaseSettings", () => {
 			vi.clearAllMocks()
 
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// In the refactored component, polling behavior might have changed
@@ -885,8 +885,8 @@ describe("ZgsmCodebaseSettings", () => {
 			vi.clearAllMocks()
 
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: false,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: false,
 			})
 
 			// First check if component is rendered
@@ -914,15 +914,15 @@ describe("ZgsmCodebaseSettings", () => {
 			fireEvent.click(checkbox, mockEvent)
 
 			expect(vscode.postMessage).toHaveBeenCalledWith({
-				type: "zgsmCodebaseIndexEnabled",
+				type: "costrictCodebaseIndexEnabled",
 				bool: true,
 			})
 		})
 
 		it("shows disable confirmation dialog when toggling from enabled to disabled", () => {
 			renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			// First check if component is rendered
@@ -950,7 +950,7 @@ describe("ZgsmCodebaseSettings", () => {
 			fireEvent.click(checkbox, mockEvent)
 
 			expect(vscode.postMessage).toHaveBeenCalledWith({
-				type: "showZgsmCodebaseDisableConfirmDialog",
+				type: "showCostrictCodebaseDisableConfirmDialog",
 			})
 		})
 	})
@@ -958,8 +958,8 @@ describe("ZgsmCodebaseSettings", () => {
 	describe("Component lifecycle", () => {
 		it("cleans up polling on unmount", () => {
 			const { unmount } = renderZgsmCodebaseSettings({
-				apiConfiguration: { apiProvider: "zgsm" },
-				zgsmCodebaseIndexEnabled: true,
+				apiConfiguration: { apiProvider: "costrict" },
+				costrictCodebaseIndexEnabled: true,
 			})
 
 			unmount()
