@@ -12,6 +12,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
+import { sanitizeArguments } from "../audit/sanitize.js"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 
@@ -28,6 +29,7 @@ export class EditTool extends BaseTool<"edit"> {
 	async execute(params: EditParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { file_path: relPath, old_string: oldString, new_string: newString, replace_all: replaceAll } = params
 		const { askApproval, handleError, pushToolResult } = callbacks
+		const executionStartTime = Date.now()
 
 		try {
 			// Validate required parameters
@@ -224,6 +226,24 @@ export class EditTool extends BaseTool<"edit"> {
 			}
 
 			task.didEditFile = true
+
+			// Record file change audit event
+			const executionDurationMs = Date.now() - executionStartTime
+			const sanitizedParams = sanitizeArguments({
+				file_path: relPath,
+				old_string: oldString,
+				new_string: newString,
+			})
+			const addedLines = newString.split("\n").length
+			const removedLines = oldString.split("\n").length
+			const auditEvent = task.auditLogger?.createFileChangeEvent({
+				filePath: relPath,
+				changeType: "modify",
+				toolName: "edit",
+				approvalDecision: "auto_approved",
+				diffStats: { added: addedLines, removed: removedLines },
+			})
+			if (auditEvent) task.auditLogger?.record(auditEvent)
 
 			// Get the formatted response message
 			const message = await task.diffViewProvider.pushToolWriteResult(task, task.cwd, false)

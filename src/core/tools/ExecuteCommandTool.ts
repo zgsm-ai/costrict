@@ -21,6 +21,7 @@ import { t } from "../../i18n"
 import { getTaskDirectoryPath } from "../../utils/storage"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import { isJetbrainsPlatform } from "../../utils/platform"
+import { sanitizeCommand, summarizeResult } from "../audit/sanitize.js"
 
 class ShellIntegrationError extends Error {}
 
@@ -45,6 +46,8 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 	async execute(params: ExecuteCommandParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { command, cwd: customCwd, timeout: timeoutSeconds } = params
 		const { handleError, pushToolResult, askApproval } = callbacks
+		const executionStartTime = Date.now()
+		let result: ToolResponse | undefined
 
 		try {
 			if (!command) {
@@ -109,13 +112,14 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 			}
 
 			try {
-				const [rejected, result] = await executeCommandInTerminal(task, options)
+				const [rejected, cmdResult] = await executeCommandInTerminal(task, options)
+				result = cmdResult
 
 				if (rejected) {
 					task.didRejectTool = true
 				}
 
-				pushToolResult(result)
+				pushToolResult(cmdResult)
 			} catch (error: unknown) {
 				const status: CommandExecutionStatus = { executionId, status: "fallback" }
 				provider?.postMessageToWebview({ type: "commandExecutionStatus", text: JSON.stringify(status) })
@@ -125,22 +129,66 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 				task.supersedePendingAsk()
 
 				if (error instanceof ShellIntegrationError) {
-					const [rejected, result] = await executeCommandInTerminal(task, {
+					const [rejected, cmdResult] = await executeCommandInTerminal(task, {
 						...options,
 						terminalShellIntegrationDisabled: true,
 					})
+					result = cmdResult
 
 					if (rejected) {
 						task.didRejectTool = true
 					}
 
-					pushToolResult(result)
+					pushToolResult(cmdResult)
 				} else if ((error as any)["__IS_ESRCH__"]) {
+					result = (error as any).message
 					pushToolResult((error as any).message)
 				} else {
+					result = `Command failed to execute in terminal due to a shell integration error.`
 					pushToolResult(`Command failed to execute in terminal due to a shell integration error.`)
 				}
 			}
+
+			// Record command execution audit event
+			const sanitizedCommand = sanitizeCommand(canonicalCommand)
+			const workingDir = customCwd
+				? path.isAbsolute(customCwd)
+					? customCwd
+					: path.resolve(task.cwd, customCwd)
+				: task.cwd
+			const executionDurationMs = Date.now() - executionStartTime
+			let exitCode: number | undefined
+			let outputSizeBytes: number | undefined
+			let outputTruncated = false
+			let outputArtifactId: string | undefined
+
+			if (result !== undefined) {
+				if (typeof result === "string") {
+					outputSizeBytes = Buffer.byteLength(result, "utf8")
+					const exitCodeMatch = result.match(/\[exit code: (\d+)\]/)
+					if (exitCodeMatch) {
+						exitCode = parseInt(exitCodeMatch[1], 10)
+					}
+				} else if ("totalBytes" in result) {
+					outputSizeBytes = (result as { totalBytes?: number }).totalBytes
+					outputTruncated = (result as { truncated?: boolean }).truncated ?? false
+					outputArtifactId = (result as { artifactPath?: string }).artifactPath?.split("/").pop()
+				}
+			}
+
+			const success = exitCode === 0
+			const auditEvent = task.auditLogger?.createCommandExecutionEvent({
+				command: sanitizedCommand,
+				cwd: workingDir,
+				approvalDecision: "auto_approved",
+				exitCode,
+				outputSizeBytes,
+				outputTruncated,
+				outputArtifactId,
+				executionDurationMs,
+				success,
+			})
+			if (auditEvent) task.auditLogger?.record(auditEvent)
 
 			return
 		} catch (error) {

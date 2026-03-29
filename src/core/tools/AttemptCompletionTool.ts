@@ -201,6 +201,11 @@ export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 		// This ensures the latest stats are captured regardless of throttle timer.
 		task.emitFinalTokenUsageUpdate()
 
+		// Finalize audit logging for task completion
+		task.auditLogger?.finalizeTaskCompletion().catch((error) => {
+			console.error(`[AttemptCompletionTool] Failed to finalize audit log:`, error)
+		})
+
 		TelemetryService.instance.captureTaskCompleted(task.taskId)
 		task.emit(RooCodeEventName.TaskCompleted, task.taskId, task.getTokenUsage(), task.toolUsage)
 	}

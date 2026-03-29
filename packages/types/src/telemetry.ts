@@ -79,6 +79,14 @@ export enum TelemetryEventName {
 	TELEMETRY_SETTINGS_CHANGED = "Telemetry Settings Changed",
 	MODEL_CACHE_EMPTY_RESPONSE = "Model Cache Empty Response",
 	READ_FILE_LEGACY_FORMAT_USED = "Read File Legacy Format Used",
+
+	// Audit events
+	TOOL_EXECUTION_AUDIT = "Tool Execution Audit",
+	COMMAND_EXECUTION_AUDIT = "Command Execution Audit",
+	USER_APPROVAL_AUDIT = "User Approval Audit",
+	MCP_TOOL_AUDIT = "MCP Tool Audit",
+	FILE_CHANGE_AUDIT = "File Change Audit",
+	AUTO_APPROVAL_AUDIT = "Auto Approval Audit",
 }
 
 /**
@@ -210,6 +218,13 @@ export const rooCodeTelemetryEventSchema = z.discriminatedUnion("type", [
 			TelemetryEventName.MODE_SETTINGS_CHANGED,
 			TelemetryEventName.CUSTOM_MODE_CREATED,
 			TelemetryEventName.READ_FILE_LEGACY_FORMAT_USED,
+			// Audit events
+			TelemetryEventName.TOOL_EXECUTION_AUDIT,
+			TelemetryEventName.COMMAND_EXECUTION_AUDIT,
+			TelemetryEventName.USER_APPROVAL_AUDIT,
+			TelemetryEventName.MCP_TOOL_AUDIT,
+			TelemetryEventName.FILE_CHANGE_AUDIT,
+			TelemetryEventName.AUTO_APPROVAL_AUDIT,
 		]),
 		properties: telemetryPropertiesSchema,
 	}),

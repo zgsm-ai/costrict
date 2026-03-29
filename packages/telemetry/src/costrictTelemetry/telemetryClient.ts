@@ -27,6 +27,13 @@ export class CostrictTelemetryClient extends BaseTelemetryClient {
 					TelemetryEventName.CODE_REJECT,
 					TelemetryEventName.CODE_TAB_COMPLETION,
 					TelemetryEventName.ERROR,
+					// Audit events
+					TelemetryEventName.TOOL_EXECUTION_AUDIT,
+					TelemetryEventName.COMMAND_EXECUTION_AUDIT,
+					TelemetryEventName.USER_APPROVAL_AUDIT,
+					TelemetryEventName.MCP_TOOL_AUDIT,
+					TelemetryEventName.FILE_CHANGE_AUDIT,
+					TelemetryEventName.AUTO_APPROVAL_AUDIT,
 				],
 			},
 			debug,

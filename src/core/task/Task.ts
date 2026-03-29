@@ -5,6 +5,8 @@ import crypto from "crypto"
 import { v7 as uuidv7 } from "uuid"
 import EventEmitter from "events"
 
+import { AuditLogger } from "../audit/AuditLogger.js"
+import { sanitizeString, truncateForAudit } from "../audit/sanitize.js"
 import { SmartMistakeDetector, MistakeType } from "./SmartMistakeDetector"
 import { AskIgnoredError } from "./AskIgnoredError"
 
@@ -445,6 +447,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	private smartMistakeDetector?: SmartMistakeDetector
 	private useSmartMistakeDetection: boolean = true
 
+	// Audit Logger
+	private _auditLogger: AuditLogger | null = null
+
 	constructor({
 		provider,
 		apiConfiguration,
@@ -521,6 +526,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.consecutiveMistakeLimit = consecutiveMistakeLimit ?? DEFAULT_CONSECUTIVE_MISTAKE_LIMIT
 		this.providerRef = new WeakRef(provider)
 		this.globalStoragePath = provider.context.globalStorageUri.fsPath
+		// Initialize audit logger for this task
+		AuditLogger.create(this.taskId, this.globalStoragePath, this.workspacePath)
+			.then((logger) => {
+				this._auditLogger = logger
+			})
+			.catch((error) => {
+				console.error(`[Task#${this.taskId}] Failed to initialize AuditLogger:`, String(error))
+			})
 		this.diffViewProvider = new DiffViewProvider(this.cwd, this)
 		this.enableCheckpoints = enableCheckpoints
 		this.checkpointTimeout = checkpointTimeout
@@ -1419,6 +1432,35 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const provider = this.providerRef.deref()
 		const state = provider ? await provider.getState() : undefined
 		const approval = await checkAutoApproval({ state, ask: type, text, isProtected })
+
+		// Infer rule category from ask type for audit logging
+		const ruleCategoryMap: Record<string, string> = {
+			approval: "tool",
+			command: "alwaysAllowExecute",
+			mcp: "alwaysAllowMcp",
+			mode_switch: "alwaysAllowModeSwitch",
+			subtask: "alwaysAllowSubtasks",
+			followup: "alwaysAllowFollowupQuestions",
+		}
+		const ruleCategory = ruleCategoryMap[type] ?? type
+
+		// Record auto-approval audit event for non-user decisions
+		if (approval.decision !== "ask") {
+			const auditEvent = this._auditLogger?.createAutoApprovalEvent({
+				askType: type,
+				targetDescription: truncateForAudit(sanitizeString(text || ""), 300),
+				ruleCategory,
+				ruleMatched: `${ruleCategory} auto-approved`,
+				decision:
+					approval.decision === "approve"
+						? "auto_approved"
+						: approval.decision === "timeout"
+							? "auto_approved"
+							: "auto_denied",
+				autoApproveTimeoutMs: approval.decision === "timeout" ? approval.timeout : undefined,
+			})
+			if (auditEvent) this._auditLogger?.record(auditEvent)
+		}
 
 		if (approval.decision === "approve") {
 			this.approveAsk()
@@ -2425,6 +2467,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		this.clineMessages
 			.filter((msg) => msg.type === "ask" && msg.ask === "followup" && !msg.isAnswered)
 			.forEach((msg) => (msg.isAnswered = true))
+		// Finalize audit logging before disposal
+		try {
+			await this._auditLogger?.finalizeTaskAbort()
+		} catch (error) {
+			console.error(`Error finalizing audit log on abort for task ${this.taskId}.${this.instanceId}:`, error)
+		}
 		try {
 			this.dispose() // Call the centralized dispose method
 		} catch (error) {
@@ -2448,6 +2496,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this.cancelCurrentRequest()
 		} catch (error) {
 			console.error("Error cancelling current request:", error)
+		}
+
+		// Dispose audit logger
+		try {
+			this._auditLogger?.dispose()
+		} catch (error) {
+			console.error("Error disposing audit logger:", error)
 		}
 
 		// Remove provider profile change listener
@@ -5168,6 +5223,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			this._messageManager = new MessageManager(this)
 		}
 		return this._messageManager
+	}
+
+	get auditLogger(): AuditLogger | null {
+		return this._auditLogger
 	}
 
 	/**

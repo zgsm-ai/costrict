@@ -17,6 +17,7 @@ import { convertNewFileToUnifiedDiff, computeDiffStats, sanitizeUnifiedDiff } fr
 import type { ToolUse } from "../../shared/tools"
 import { TelemetryService } from "@roo-code/telemetry"
 import { getLanguage } from "../../utils/file"
+import { sanitizeArguments, summarizeResult } from "../audit/sanitize.js"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 
@@ -30,6 +31,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 
 	async execute(params: WriteToFileParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { pushToolResult, handleError, askApproval } = callbacks
+		const executionStartTime = Date.now()
 		const relPath = params?.path || ""
 		let newContent = params?.content || ""
 
@@ -184,6 +186,21 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			}
 
 			task.didEditFile = true
+
+			// Record file write audit event
+			const executionDurationMs = Date.now() - executionStartTime
+			const sanitizedParams = sanitizeArguments({ path: relPath, content: newContent })
+			const changeType = fileExists ? "modify" : "create"
+			const diffStats = { added: changedLines, removed: 0 }
+			const auditEvent = task.auditLogger?.createFileChangeEvent({
+				filePath: relPath,
+				changeType: changeType as "create" | "modify" | "delete",
+				toolName: "write_to_file",
+				approvalDecision: "auto_approved",
+				diffStats,
+				language,
+			})
+			if (auditEvent) task.auditLogger?.record(auditEvent)
 
 			const message = await task.diffViewProvider.pushToolWriteResult(task, task.cwd, !fileExists)
 

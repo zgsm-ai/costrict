@@ -274,6 +274,79 @@ export class TelemetryService {
 		return this.isReady && this.clients.some((client) => client.isTelemetryEnabled())
 	}
 
+	// ============ Audit Event Helpers ============
+
+	public captureToolExecutionAudit(
+		taskId: string,
+		params: {
+			toolName: string
+			approvalDecision: string
+			success: boolean
+			durationMs?: number
+		},
+	): void {
+		this.captureEvent(TelemetryEventName.TOOL_EXECUTION_AUDIT, { taskId, ...params })
+	}
+
+	public captureCommandExecutionAudit(
+		taskId: string,
+		params: {
+			commandHash: string
+			approvalDecision: string
+			exitCode?: number
+			success: boolean
+			durationMs?: number
+		},
+	): void {
+		this.captureEvent(TelemetryEventName.COMMAND_EXECUTION_AUDIT, { taskId, ...params })
+	}
+
+	public captureUserApprovalAudit(
+		taskId: string,
+		params: {
+			askType: string
+			decision: string
+			responseTimeMs?: number
+		},
+	): void {
+		this.captureEvent(TelemetryEventName.USER_APPROVAL_AUDIT, { taskId, ...params })
+	}
+
+	public captureMcpToolAudit(
+		taskId: string,
+		params: {
+			mcpServerName: string
+			mcpToolName: string
+			approvalDecision: string
+			success: boolean
+		},
+	): void {
+		this.captureEvent(TelemetryEventName.MCP_TOOL_AUDIT, { taskId, ...params })
+	}
+
+	public captureFileChangeAudit(
+		taskId: string,
+		params: {
+			filePath: string
+			changeType: string
+			toolName: string
+			approvalDecision: string
+		},
+	): void {
+		this.captureEvent(TelemetryEventName.FILE_CHANGE_AUDIT, { taskId, ...params })
+	}
+
+	public captureAutoApprovalAudit(
+		taskId: string,
+		params: {
+			askType: string
+			ruleCategory: string
+			decision: string
+		},
+	): void {
+		this.captureEvent(TelemetryEventName.AUTO_APPROVAL_AUDIT, { taskId, ...params })
+	}
+
 	public async shutdown(): Promise<void> {
 		if (!this.isReady) {
 			return

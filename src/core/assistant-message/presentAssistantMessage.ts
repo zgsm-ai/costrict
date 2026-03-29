@@ -13,6 +13,7 @@ import type { ToolResponse, ToolUse, McpToolUse } from "../../shared/tools"
 
 import { AskIgnoredError } from "../task/AskIgnoredError"
 import { Task } from "../task/Task"
+import { summarizeResult, sanitizeString, truncateForAudit } from "../audit/sanitize.js"
 
 import { listFilesTool } from "../tools/ListFilesTool"
 import { readFileTool } from "../tools/ReadFileTool"
@@ -211,6 +212,7 @@ export async function presentAssistantMessage(cline: Task) {
 				progressStatus?: ToolProgressStatus,
 				isProtected?: boolean,
 			) => {
+				const askStartTime = Date.now()
 				const { response, text, images } = await cline.ask(
 					type,
 					partialMessage,
@@ -218,6 +220,20 @@ export async function presentAssistantMessage(cline: Task) {
 					progressStatus,
 					isProtected || false,
 				)
+				const responseTimeMs = Date.now() - askStartTime
+
+				// Record user approval audit event
+				const decision = response === "yesButtonClicked" ? "user_approved" : "user_denied"
+				const targetDesc = `[mcp_tool: ${sanitizeString(mcpBlock.serverName)}/${sanitizeString(mcpBlock.toolName)}]`
+				const auditEvent = cline.auditLogger?.createUserApprovalEvent({
+					askType: type,
+					targetDescription: targetDesc,
+					decision,
+					userFeedback: truncateForAudit(sanitizeString(text || ""), 500),
+					hasFeedbackImages: !!images && images.length > 0,
+					responseTimeMs,
+				})
+				if (auditEvent) cline.auditLogger?.record(auditEvent)
 
 				if (response !== "yesButtonClicked") {
 					if (text) {
@@ -555,6 +571,7 @@ export async function presentAssistantMessage(cline: Task) {
 				progressStatus?: ToolProgressStatus,
 				isProtected?: boolean,
 			) => {
+				const askStartTime = Date.now()
 				const { response, text, images } = await cline.ask(
 					type,
 					partialMessage,
@@ -562,6 +579,20 @@ export async function presentAssistantMessage(cline: Task) {
 					progressStatus,
 					isProtected || false,
 				)
+				const responseTimeMs = Date.now() - askStartTime
+
+				// Record user approval audit event
+				const decision = response === "yesButtonClicked" ? "user_approved" : "user_denied"
+				const targetDesc = truncateForAudit(sanitizeString(partialMessage || toolDescription() || ""), 300)
+				const auditEvent = cline.auditLogger?.createUserApprovalEvent({
+					askType: type,
+					targetDescription: targetDesc,
+					decision,
+					userFeedback: truncateForAudit(sanitizeString(text || ""), 500),
+					hasFeedbackImages: !!images && images.length > 0,
+					responseTimeMs,
+				})
+				if (auditEvent) cline.auditLogger?.record(auditEvent)
 
 				if (response !== "yesButtonClicked") {
 					// Handle both messageResponse and noButtonClicked with text.
