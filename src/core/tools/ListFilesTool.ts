@@ -45,13 +45,13 @@ export class ListFilesTool extends BaseTool<"list_files"> {
 				experiments,
 				maxWorkspaceFiles = MAX_WORKSPACE_FILES,
 			} = (await task.providerRef.deref()?.getState()) ?? {}
-			const alwaysIncludeFileDetails =
-				Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.ALWAYS_INCLUDE_FILE_DETAILS) ??
+			const useKPTtree =
+				Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.USE_KPT_TREE) ??
 				apiConfiguration?.apiProvider === "costrict"
 			const [files, didHitLimit] = await listFiles(
 				absolutePath,
 				recursive || false,
-				(alwaysIncludeFileDetails ? 2 : 1) * maxWorkspaceFiles,
+				(useKPTtree ? 2 : 1) * maxWorkspaceFiles,
 			)
 
 			const result = formatResponse.formatFilesList(
@@ -61,7 +61,7 @@ export class ListFilesTool extends BaseTool<"list_files"> {
 				task.rooIgnoreController,
 				showRooIgnoredFiles,
 				task.rooProtectedController,
-				alwaysIncludeFileDetails,
+				useKPTtree,
 			)
 
 			const sharedMessageProps: ClineSayTool = {

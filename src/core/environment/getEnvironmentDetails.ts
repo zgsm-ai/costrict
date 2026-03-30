@@ -275,12 +275,12 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 	details += `<name>${modeDetails.name}</name>\n`
 	details += `<model>${modelId}</model>\n`
 
-	const alwaysIncludeFileDetails =
-		Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.ALWAYS_INCLUDE_FILE_DETAILS) ??
-		apiConfiguration?.apiProvider === "costrict"
+	const useKPTtree =
+		apiConfiguration?.apiProvider === "costrict" &&
+		(Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.USE_KPT_TREE) ?? true)
 
-	if (includeFileDetails || alwaysIncludeFileDetails) {
-		details += `\n\n# Current Workspace Directory (${cline.cwd.toPosix()}) Files${alwaysIncludeFileDetails ? " (Directory Tree KPT Format: Use 1 to represent files and objects to represent directories)" : ""}\n`
+	if (includeFileDetails) {
+		details += `\n\n# Current Workspace Directory (${cline.cwd.toPosix()}) Files${useKPTtree ? " (Directory Tree KPT Format: Use 1 to represent files and objects to represent directories)" : ""}\n`
 		const isDesktop = arePathsEqual(cline.cwd, path.join(os.homedir(), "Desktop"))
 
 		if (isDesktop) {
@@ -294,11 +294,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 			if (maxFiles === 0) {
 				details += "(Workspace files context disabled. Use list_files to explore if needed.)"
 			} else {
-				const [files, didHitLimit] = await listFiles(
-					cline.cwd,
-					true,
-					(alwaysIncludeFileDetails ? 2 : 1) * maxFiles,
-				)
+				const [files, didHitLimit] = await listFiles(cline.cwd, true, (useKPTtree ? 2 : 1) * maxFiles)
 				const { showRooIgnoredFiles = false } = state ?? {}
 
 				const result = formatResponse.formatFilesList(
@@ -308,7 +304,7 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 					cline.rooIgnoreController,
 					showRooIgnoredFiles,
 					undefined,
-					alwaysIncludeFileDetails,
+					useKPTtree,
 				)
 
 				details += result

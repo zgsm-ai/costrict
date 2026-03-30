@@ -147,6 +147,7 @@ const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000 // 5 seconds
 const FORCED_CONTEXT_REDUCTION_PERCENT = 75 // Keep 75% of context (remove 25%) on context window errors
 const MAX_CONTEXT_WINDOW_RETRIES = 3 // Maximum retries for context window errors
+const SUPPLEMENTAL_FILE_DETAILS_INTERVAL = 4
 
 export interface TaskOptions extends CreateTaskOptions {
 	provider: ClineProvider
@@ -332,6 +333,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// LLM Messages & Chat Messages
 	apiConversationHistory: ApiMessage[] = []
 	clineMessages: ClineMessage[] = []
+	private lastFileDetailsUserMessageCount = 0
 
 	// Ask
 	private askResponse?: ClineAskResponse
@@ -1167,6 +1169,37 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			console.error("Failed to save API conversation history:", error)
 			return false
 		}
+	}
+
+	private getUserMessageCountForNextTurn(): number {
+		return this.apiConversationHistory.filter((message) => message.role === "user").length + 1
+	}
+
+	private async shouldAttachSupplementalFileDetails(): Promise<boolean> {
+		const provider = this.providerRef.deref()
+		const state = await provider?.getState()
+		const experimentsConfig = state?.experiments ?? {}
+		const apiConfiguration = state?.apiConfiguration
+
+		const useKptTree =
+			apiConfiguration?.apiProvider === "costrict" &&
+			(experiments.isEnabled(experimentsConfig, EXPERIMENT_IDS.USE_KPT_TREE) ?? true)
+
+		if (!useKptTree) {
+			return false
+		}
+
+		const currentUserMessageCount = this.getUserMessageCountForNextTurn()
+		if (currentUserMessageCount <= 1) {
+			return false
+		}
+
+		const turnsSinceLastFileDetails = currentUserMessageCount - this.lastFileDetailsUserMessageCount
+		return turnsSinceLastFileDetails >= SUPPLEMENTAL_FILE_DETAILS_INTERVAL
+	}
+
+	private markFileDetailsAttachedForCurrentTurn(): void {
+		this.lastFileDetailsUserMessageCount = this.getUserMessageCountForNextTurn()
 	}
 
 	/**
@@ -2764,7 +2797,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				}
 			}
 
-			const environmentDetails = await getEnvironmentDetails(this, currentIncludeFileDetails)
+			const shouldAttachSupplementalFileDetails =
+				!currentIncludeFileDetails && (await this.shouldAttachSupplementalFileDetails())
+			const includeFileDetailsForTurn = currentIncludeFileDetails || shouldAttachSupplementalFileDetails
+			const environmentDetails = await getEnvironmentDetails(this, includeFileDetailsForTurn)
+			if (includeFileDetailsForTurn) {
+				this.markFileDetailsAttachedForCurrentTurn()
+			}
 
 			// Remove any existing environment_details blocks before adding fresh ones.
 			// This prevents duplicate environment details when resuming tasks,

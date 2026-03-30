@@ -94,7 +94,7 @@ export const ExperimentalSettings = ({
 								</SearchableSetting>
 							)
 						}
-						if (config[0] === "ALWAYS_INCLUDE_FILE_DETAILS") {
+						if (config[0] === "USE_KPT_TREE") {
 							return (
 								<ExperimentalFeature
 									key={config[0]}

@@ -137,9 +137,9 @@
 			"next": "下一个结果",
 			"close": "关闭搜索"
 		},
-		"ALWAYS_INCLUDE_FILE_DETAILS": {
+		"USE_KPT_TREE": {
 			"name": "目录详情增强",
-			"description": "启用后，CoStrict 将始终包含项目目录详细信息。"
+			"description": "启用后，CoStrict 将优化目录详细信息。"
 		},
 		"COMMIT_REVIEW": {
 			"name": "Commit 审查",

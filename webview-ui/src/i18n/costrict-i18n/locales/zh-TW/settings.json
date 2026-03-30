@@ -129,9 +129,9 @@
 			"next": "下一個結果",
 			"close": "關閉搜尋"
 		},
-		"ALWAYS_INCLUDE_FILE_DETAILS": {
-			"name": "目錄信息增強",
-			"description": "啟用後，CoStrict 將始終包含項目目錄詳細信息。"
+		"USE_KPT_TREE": {
+			"name": "目錄詳情增強",
+			"description": "啟用後,CoStrict 將優化目錄詳細信息。"
 		},
 		"COMMIT_REVIEW": {
 			"name": "Commit 審查",

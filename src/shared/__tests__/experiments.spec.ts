@@ -21,7 +21,7 @@ describe("experiments", () => {
 				preventFocusDisruption: false,
 				imageGeneration: false,
 				chatSearch: false,
-				alwaysIncludeFileDetails: false,
+				useKPTtree: false,
 				useLitePrompts: false,
 				runSlashCommand: false,
 				customTools: false,
@@ -33,7 +33,7 @@ describe("experiments", () => {
 		it("returns true when experiment is enabled", () => {
 			const experiments: Record<ExperimentId, boolean> = {
 				chatSearch: false,
-				alwaysIncludeFileDetails: false,
+				useKPTtree: false,
 				commitReview: false,
 				useLitePrompts: false,
 				preventFocusDisruption: true,
@@ -48,7 +48,7 @@ describe("experiments", () => {
 		it("returns false when experiment is not present", () => {
 			const experiments: Record<ExperimentId, boolean> = {
 				chatSearch: false,
-				alwaysIncludeFileDetails: false,
+				useKPTtree: false,
 				commitReview: false,
 				useLitePrompts: false,
 				preventFocusDisruption: false,

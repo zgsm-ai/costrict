@@ -137,9 +137,9 @@
 			"next": "Next result",
 			"close": "Close search"
 		},
-		"ALWAYS_INCLUDE_FILE_DETAILS": {
-			"name": "Enable Directory Details",
-			"description": "When enabled, CoStrict will include directory details in the context window."
+		"USE_KPT_TREE": {
+			"name": "Directory Details Enhancement",
+			"description": "When enabled, CoStrict will optimize directory details."
 		},
 		"COMMIT_REVIEW": {
 			"name": "Commit Review",
