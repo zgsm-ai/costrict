@@ -82,7 +82,7 @@ export function startIPCServer(): Promise<void> {
 		})
 
 		testSocket.on("error", (err: NodeJS.ErrnoException) => {
-			if (err.code === "ECONNREFUSED" || err.code === "ENOENT") {
+			if (err.code === "ECONNREFUSED" || err.code === "ENOENT" || err.code === "ENOTSOCK") {
 				// No server running, or stale socket. Start a new one.
 				createServer()
 			} else {

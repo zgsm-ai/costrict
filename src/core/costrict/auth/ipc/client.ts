@@ -69,7 +69,7 @@ export function connectIPC() {
 			client = null
 		}
 		// Retry on most errors with exponential backoff
-		if (err.code === "ECONNREFUSED" || err.code === "ENOENT") {
+		if (err.code === "ECONNREFUSED" || err.code === "ENOENT" || err.code === "ENOTSOCK") {
 			// Server not ready or socket not created yet - retry with backoff
 			scheduleRetry()
 		} else if (err.code === "EACCES") {

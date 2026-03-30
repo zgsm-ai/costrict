@@ -5,9 +5,9 @@ describe("getObjectiveSection", () => {
 		const objective = getObjectiveSection()
 
 		// Check that all numbered items are present
-		expect(objective).toContain("1. Analyze the user's task")
+		expect(objective).toContain("1. Analyze the user's message")
 		expect(objective).toContain("2. Work through these goals sequentially")
-		expect(objective).toContain("3. Remember, you have extensive capabilities")
+		expect(objective).toContain("3. Before calling a tool")
 		expect(objective).toContain("4. Once you've completed the user's task")
 		expect(objective).toContain("5. The user may provide feedback")
 	})
@@ -16,8 +16,8 @@ describe("getObjectiveSection", () => {
 		const objective = getObjectiveSection()
 
 		expect(objective).toContain("Before calling a tool, do some analysis")
-		expect(objective).toContain("analyze the file structure provided in environment_details")
-		expect(objective).toContain("think about which of the provided tools is the most relevant")
+		expect(objective).toContain("check the file structure provided in environment_details")
+		expect(objective).toContain("which of the provided tools is the most relevant")
 	})
 
 	it("should include parameter inference guidance", () => {

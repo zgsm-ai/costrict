@@ -12,7 +12,7 @@ export function getLiteSharedToolUseSection(): string {
 
 TOOL USE
 
-You have access to tools. You must call at least one tool per response. Use multiple tools when needed to complete tasks faster.`
+You have access to tools. You must call at least one tool per response. For simple questions or conversational replies, use attempt_completion directly — do not use other tools first.`
 }
 
 /**
@@ -56,8 +56,8 @@ OBJECTIVE
 
 Work through tasks iteratively and methodically:
 
-1. Analyze the task and set clear, prioritized goals
-2. Use tools sequentially to accomplish each goal
+1. For simple questions or conversational replies, use attempt_completion directly with your answer as the result
+2. For tasks requiring tool use: set clear, prioritized goals and work through them sequentially
 3. Use attempt_completion to present final results
 4. Incorporate feedback if provided, but avoid pointless back-and-forth`
 }
