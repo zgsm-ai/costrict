@@ -197,7 +197,7 @@ export function getProxyConfig(): ProxyConfig {
 		}
 	}
 
-	const config = vscode.workspace.getConfiguration(Package.name)
+	const config = vscode.workspace.getConfiguration(Package.commandIDPrefix)
 	const enabled = Boolean(config.get<unknown>("debugProxy.enabled"))
 	const rawServerUrl = config.get<unknown>("debugProxy.serverUrl")
 	const serverUrl = typeof rawServerUrl === "string" && rawServerUrl.trim() ? rawServerUrl.trim() : defaultServerUrl

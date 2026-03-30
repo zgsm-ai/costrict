@@ -88,7 +88,6 @@ import { getJumpLine } from "@/utils/path-mentions"
 import { useCostrictUserInfo } from "@/hooks/useCostrictUserInfo"
 import { format } from "date-fns"
 import { PathTooltip } from "../ui/PathTooltip"
-import { ReviewTaskStatus } from "@roo/codeReview"
 import { RandomLoadingMessage, RandomLoadingMessageLanguage } from "@/components/chat/RandomLoadingMessage"
 import { OpenMarkdownPreviewButton } from "./OpenMarkdownPreviewButton"
 
@@ -221,7 +220,6 @@ export const ChatRowContent = ({
 		mode,
 		apiConfiguration,
 		clineMessages,
-		reviewTask,
 		showSpeedInfo,
 		language,
 		collapseMarkdownWithoutScroll,
@@ -462,23 +460,7 @@ export const ChatRowContent = ({
 							<RandomLoadingMessage language={language as RandomLoadingMessageLanguage} />
 						</span>
 					) : (
-						<span style={{ color: successColor, fontWeight: "bold" }}>
-							{t("chat:taskCompleted")}{" "}
-							{reviewTask?.status === ReviewTaskStatus.COMPLETED && (
-								<a
-									href="javascript:void(0)"
-									onClick={(e) => {
-										e.stopPropagation()
-										vscode.postMessage({
-											type: "switchTab",
-											tab: "codeReview",
-										})
-									}}
-									style={{ color: "inherit", textDecoration: "underline" }}>
-									{t("chat:subtasks.viewSubtask")}
-								</a>
-							)}
-						</span>
+						<span style={{ color: successColor, fontWeight: "bold" }}>{t("chat:taskCompleted")}</span>
 					),
 				]
 			case "api_req_rate_limit_wait":
@@ -565,7 +547,6 @@ export const ChatRowContent = ({
 		isLast,
 		isStreaming,
 		language,
-		reviewTask?.status,
 		apiReqCancelReason,
 		cost,
 		apiRequestFailedMessage,

@@ -19,7 +19,9 @@ export async function autoImportSettings(
 ): Promise<void> {
 	try {
 		// Get the auto-import settings path from VSCode settings
-		const settingsPath = vscode.workspace.getConfiguration(Package.name).get<string>("autoImportSettingsPath")
+		const settingsPath = vscode.workspace
+			.getConfiguration(Package.commandIDPrefix)
+			.get<string>("autoImportSettingsPath")
 
 		if (!settingsPath || settingsPath.trim() === "") {
 			outputChannel.appendLine("[AutoImport] No auto-import settings path specified, skipping auto-import")

@@ -4137,10 +4137,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					terminalShellIntegrationDisabled,
 					todoListEnabled: apiConfiguration?.todoListEnabled ?? true,
 					useAgentRules:
-						vscode.workspace.getConfiguration(Package.name).get<boolean>("useAgentRules") ?? true,
+						vscode.workspace.getConfiguration(Package.commandIDPrefix).get<boolean>("useAgentRules") ??
+						true,
 					enableSubfolderRules: enableSubfolderRules ?? false,
 					newTaskRequireTodos: vscode.workspace
-						.getConfiguration(Package.name)
+						.getConfiguration(Package.commandIDPrefix)
 						.get<boolean>("newTaskRequireTodos", false),
 					isStealthModel: modelInfo?.isStealthModel,
 					costrictCodeMode,

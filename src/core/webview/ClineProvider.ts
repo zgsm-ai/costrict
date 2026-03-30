@@ -2488,7 +2488,8 @@ export class ClineProvider
 				: []
 
 			// Get workspace configuration commands
-			const workspaceCommands = vscode.workspace.getConfiguration(Package.name).get<string[]>(configKey) || []
+			const workspaceCommands =
+				vscode.workspace.getConfiguration(Package.commandIDPrefix).get<string[]>(configKey) || []
 
 			// Validate and sanitize workspace commands
 			const validWorkspaceCommands = Array.isArray(workspaceCommands)
@@ -3396,19 +3397,19 @@ export class ClineProvider
 
 			if (configuration.allowedCommands) {
 				await vscode.workspace
-					.getConfiguration(Package.name)
+					.getConfiguration(Package.commandIDPrefix)
 					.update("allowedCommands", configuration.allowedCommands, vscode.ConfigurationTarget.Global)
 			}
 
 			if (configuration.deniedCommands) {
 				await vscode.workspace
-					.getConfiguration(Package.name)
+					.getConfiguration(Package.commandIDPrefix)
 					.update("deniedCommands", configuration.deniedCommands, vscode.ConfigurationTarget.Global)
 			}
 
 			if (configuration.commandExecutionTimeout !== undefined) {
 				await vscode.workspace
-					.getConfiguration(Package.name)
+					.getConfiguration(Package.commandIDPrefix)
 					.update(
 						"commandExecutionTimeout",
 						configuration.commandExecutionTimeout,

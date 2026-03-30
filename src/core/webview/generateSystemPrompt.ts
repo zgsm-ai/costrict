@@ -57,10 +57,11 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 		{
 			terminalShellIntegrationDisabled,
 			todoListEnabled: apiConfiguration?.todoListEnabled ?? true,
-			useAgentRules: vscode.workspace.getConfiguration(Package.name).get<boolean>("useAgentRules") ?? true,
+			useAgentRules:
+				vscode.workspace.getConfiguration(Package.commandIDPrefix).get<boolean>("useAgentRules") ?? true,
 			enableSubfolderRules: enableSubfolderRules ?? false,
 			newTaskRequireTodos: vscode.workspace
-				.getConfiguration(Package.name)
+				.getConfiguration(Package.commandIDPrefix)
 				.get<boolean>("newTaskRequireTodos", false),
 			isStealthModel: modelInfo?.isStealthModel,
 		},

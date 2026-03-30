@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest"
-import { getOperatingSystem } from "../../utils/costrictUtils"
+import { getOperatingSystem } from "../costrictUtils"
 
 describe("getOperatingSystem", () => {
 	test("应该返回操作系统名称", () => {

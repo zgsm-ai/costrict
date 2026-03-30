@@ -80,12 +80,12 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 
 			// Get command execution timeout from VSCode configuration (in seconds)
 			const commandExecutionTimeoutSeconds = vscode.workspace
-				.getConfiguration(Package.name)
+				.getConfiguration(Package.commandIDPrefix)
 				.get<number>("commandExecutionTimeout", 0)
 
 			// Get command timeout allowlist from VSCode configuration
 			const commandTimeoutAllowlist = vscode.workspace
-				.getConfiguration(Package.name)
+				.getConfiguration(Package.commandIDPrefix)
 				.get<string[]>("commandTimeoutAllowlist", [])
 
 			// Check if command matches any prefix in the allowlist

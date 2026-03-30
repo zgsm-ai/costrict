@@ -117,7 +117,10 @@ export async function executeRipgrepForFiles(
 ): Promise<{ path: string; type: "file" | "folder"; label?: string }[]> {
 	// Get limit from configuration if not provided
 	const effectiveLimit =
-		limit ?? vscode.workspace.getConfiguration(Package.name).get<number>("maximumIndexedFilesForFileSearch", 10000)
+		limit ??
+		vscode.workspace
+			.getConfiguration(Package.commandIDPrefix)
+			.get<number>("maximumIndexedFilesForFileSearch", 10000)
 
 	const args = [
 		"--files",
