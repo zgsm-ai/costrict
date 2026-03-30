@@ -33,7 +33,11 @@ ${allModes
 		}
 
 		// Original costrictCodeMode filtering logic mode.apiProvider
-		if (!mode.costrictCodeModeGroup || (mode.apiProvider === "costrict" && mode.costrictCodeModeGroup === "hide"))
+		if (
+			!mode.costrictCodeModeGroup ||
+			(mode.apiProvider === "costrict" &&
+				["quick-explore", "task-check", "subcoding", "review", "security-review"].includes(mode.slug))
+		)
 			return true
 		if (mode.costrictCodeModeGroup)
 			return mode.costrictCodeModeGroup.split(",").includes(costrictCodeMode ?? "vibe")
