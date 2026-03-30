@@ -1478,7 +1478,7 @@ export class ClineProvider
 					isJetbrainsPlatform: ${isJetbrainsPlatform()},
 					"ANTHROPIC_MODEL": "${process.env.ANTHROPIC_MODEL}",
 					"ANTHROPIC_BASE_URL": "${process.env.ANTHROPIC_BASE_URL}",
-					"COSTRICT_BASE_URL": "${CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}",
+					"COSTRICT_BASE_URL": "${apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}",
 					"defaultLanguage": "${language}",
 				})
 			</script>
@@ -1594,7 +1594,7 @@ export class ClineProvider
 					isJetbrainsPlatform: ${isJetbrainsPlatform()},
 					"ANTHROPIC_MODEL": "${process.env.ANTHROPIC_MODEL}",
 					"ANTHROPIC_BASE_URL": "${process.env.ANTHROPIC_BASE_URL}",
-					"COSTRICT_BASE_URL": "${CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}",
+					"COSTRICT_BASE_URL": "${apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}",
 					"defaultLanguage": "${language}",
 				})
 			</script>

@@ -1144,7 +1144,7 @@ export const webviewMessageHandler = async (
 			} as GetModelsOptions
 
 			if (opt.provider === "costrict") {
-				opt.baseUrl = apiConfiguration?.costrictBaseUrl
+				opt.baseUrl = apiConfiguration?.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 				opt.apiKey = apiConfiguration?.costrictAccessToken
 				opt.openAiHeaders = apiConfiguration?.openAiHeaders
 			}
@@ -2118,7 +2118,7 @@ export const webviewMessageHandler = async (
 				if (message.apiConfiguration.apiProvider === "costrict") {
 					await provider.providerSettingsManager.saveMergeConfig(
 						{
-							costrictBaseUrl: message.apiConfiguration.costrictBaseUrl,
+							costrictBaseUrl: message.apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl(),
 						},
 						(name, { apiProvider }) => {
 							return apiProvider === "costrict" && name !== message.text

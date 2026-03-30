@@ -39,7 +39,7 @@ export function validateApiConfiguration(
 function validateModelsAndKeysProvided(apiConfiguration: ProviderSettings): string | undefined {
 	switch (apiConfiguration.apiProvider) {
 		case "costrict":
-			return validateCostrictBaseUrl(apiConfiguration.costrictBaseUrl)
+			return validateCostrictBaseUrl(apiConfiguration.costrictBaseUrl || (window as any).COSTRICT_BASE_URL)
 		case "openrouter":
 			if (!apiConfiguration.openRouterApiKey) {
 				return i18next.t("settings:validation.apiKey")

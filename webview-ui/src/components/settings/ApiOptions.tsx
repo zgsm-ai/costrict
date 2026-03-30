@@ -258,7 +258,7 @@ const ApiOptions = ({
 				vscode.postMessage({
 					type: "requestRouterModels",
 					values: {
-						baseUrl: apiConfiguration?.costrictBaseUrl?.trim(),
+						baseUrl: apiConfiguration?.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL,
 						apiKey: apiConfiguration?.costrictAccessToken,
 						customHeaders: {}, // Reserved for any additional headers
 						openAiHeaders: headerObject,

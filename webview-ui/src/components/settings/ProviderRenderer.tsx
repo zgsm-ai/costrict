@@ -109,7 +109,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				vscode.postMessage({
 					type: "requestRouterModels",
 					values: {
-						baseUrl: apiConfiguration?.costrictBaseUrl?.trim(),
+						baseUrl: apiConfiguration?.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL,
 						apiKey: apiConfiguration?.costrictAccessToken,
 						customHeaders: {}, // Reserved for any additional headers
 						openAiHeaders: headerObject,
@@ -159,7 +159,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				modelIdKey: "costrictModelId",
 				serviceName: "costrict",
 				defaultModelId: apiConfiguration.costrictModelId || costrictDefaultModelId,
-				serviceUrl: apiConfiguration.costrictBaseUrl?.trim() || "",
+				serviceUrl: apiConfiguration.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL,
 				models: openAiModels ?? {},
 			},
 			openrouter: {

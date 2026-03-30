@@ -168,7 +168,7 @@ export const CostrictAI = ({
 	return (
 		<>
 			<VSCodeTextField
-				value={apiConfiguration?.costrictBaseUrl?.trim() || ""}
+				value={apiConfiguration?.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}
 				type="url"
 				onInput={handleInputChange("costrictBaseUrl")}
 				placeholder={t("settings:providers.costrictDefaultBaseUrl", {
@@ -199,7 +199,7 @@ export const CostrictAI = ({
 						models={openAiModels}
 						modelIdKey="costrictModelId"
 						serviceName="costrict"
-						serviceUrl={apiConfiguration.costrictBaseUrl?.trim() || ""}
+						serviceUrl={apiConfiguration.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}
 						organizationAllowList={organizationAllowList}
 						errorMessage={modelValidationError}
 					/>
