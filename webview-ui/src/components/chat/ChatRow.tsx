@@ -1783,7 +1783,9 @@ export const ChatRowContent = ({
 							/>
 						)
 					}
-
+					if (isNoAssistantMessagesError && apiConfiguration.apiProvider === "costrict") {
+						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
+					}
 					if (isNoAssistantMessagesError) {
 						return (
 							<ErrorRow

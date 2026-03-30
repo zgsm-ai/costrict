@@ -103,12 +103,16 @@ export class ErrorCodeManager {
 		costrictApiKeyExpiredAt: string
 		costrictApiKeyUpdatedAt: string
 		isOldModeLoginState: boolean
+		expTimestamp: number
+		iatTimestamp: number
 	} {
 		if (!costrictAccessToken) {
 			return {
 				costrictApiKeyExpiredAt: "",
 				costrictApiKeyUpdatedAt: "",
 				isOldModeLoginState: false,
+				expTimestamp: 0,
+				iatTimestamp: 0,
 			}
 		}
 
@@ -118,6 +122,8 @@ export class ErrorCodeManager {
 				costrictApiKeyExpiredAt: new Date(exp * 1000).toLocaleString(),
 				costrictApiKeyUpdatedAt: new Date(iat * 1000).toLocaleString(),
 				isOldModeLoginState: !universal_id,
+				expTimestamp: exp * 1000,
+				iatTimestamp: iat * 1000,
 			}
 		} catch (error) {
 			console.error("Failed to decode ZGSM access token:", error)
@@ -125,6 +131,8 @@ export class ErrorCodeManager {
 				costrictApiKeyExpiredAt: "",
 				costrictApiKeyUpdatedAt: "",
 				isOldModeLoginState: false,
+				expTimestamp: 0,
+				iatTimestamp: 0,
 			}
 		}
 	}
@@ -146,18 +154,23 @@ export class ErrorCodeManager {
 		const { code, headers } = error
 		const requestId = (headers && headers?.get?.("x-request-id")) ?? null
 		const { apiConfiguration, errorCode } = await this.provider.getState()
-		const { costrictApiKeyExpiredAt, costrictApiKeyUpdatedAt, isOldModeLoginState } = this.parseCostrictTokenInfo(
-			apiConfiguration.costrictAccessToken,
-		)
+		const { costrictApiKeyExpiredAt, costrictApiKeyUpdatedAt, isOldModeLoginState, expTimestamp } =
+			this.parseCostrictTokenInfo(apiConfiguration.costrictAccessToken)
+		const now = Date.now()
+		const isAuthServiceError = expTimestamp > 0 && expTimestamp > now
 		const defaultError = {
 			401: {
 				message: isOldModeLoginState
 					? t("apiErrors:status.old_mode_token")
-					: t("apiErrors:status.401", {
-							exp: costrictApiKeyExpiredAt || "-",
-							iat: costrictApiKeyUpdatedAt || "-",
-						}),
-				solution: t("apiErrors:solution.401"),
+					: isAuthServiceError
+						? t("apiErrors:status.401_auth_service_error")
+						: t("apiErrors:status.401", {
+								exp: costrictApiKeyExpiredAt || "-",
+								iat: costrictApiKeyUpdatedAt || "-",
+							}),
+				solution: isAuthServiceError
+					? t("apiErrors:solution.401_auth_service_error")
+					: t("apiErrors:solution.401"),
 			},
 			400: { message: rawError || t("apiErrors:status.400"), solution: t("apiErrors:solution.400") },
 			403: { message: rawError || t("apiErrors:status.403"), solution: t("apiErrors:solution.403") },
