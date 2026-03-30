@@ -67,6 +67,7 @@ async function generatePrompt(data: {
 	shell?: string
 	costrictCodeMode?: string
 	skillsManager?: SkillsManager
+	useLitePrompts?: boolean
 }): Promise<string> {
 	let {
 		context,
@@ -84,6 +85,7 @@ async function generatePrompt(data: {
 		costrictCodeMode,
 		shell,
 		modelId,
+		useLitePrompts,
 	} = data
 
 	if (!context) {
@@ -91,8 +93,6 @@ async function generatePrompt(data: {
 	}
 	shell = shell || getShell(settings?.terminalShellIntegrationDisabled)
 
-	// Check if lite prompts experiment is enabled
-	const useLitePrompts = experimentsUtil.isEnabled(experiments ?? {}, EXPERIMENT_IDS.USE_LITE_PROMPTS)
 	// Get the full mode config to ensure we have the role definition (used for groups, etc.)
 	const modeConfig = getModeBySlug(mode, customModeConfigs) || modes.find((m) => m.slug === mode) || modes[0]
 	const { roleDefinition, baseInstructions } = getModeSelection(
@@ -230,5 +230,6 @@ export const SYSTEM_PROMPT = async (
 		shell,
 		skillsManager,
 		costrictCodeMode: settings?.costrictCodeMode,
+		useLitePrompts
 	})
 }
