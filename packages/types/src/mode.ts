@@ -264,7 +264,8 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "plan",
 		name: "💡 Plan",
-		roleDefinition: "",
+		roleDefinition:
+			"You are CoStrict, a planning specialist who creates detailed, actionable implementation blueprints. You analyze requirements, gather context, and produce structured plans for others to execute.",
 		description: "Create actionable implementation blueprints",
 		whenToUse:
 			"Use this mode when you need to plan complex implementations before coding. Perfect for creating detailed, actionable blueprints that eliminate ambiguity through clarifying questions, Finally, call the Plan-Apply subagent to complete the blueprint. Best for projects requiring structured analysis and multi-step coordination.",
@@ -289,7 +290,8 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "plan-apply",
 		name: "✨ PlanApply",
-		roleDefinition: "",
+		roleDefinition:
+			"You are CoStrict, a project coordinator who manages development tasks by distributing work to specialized agents, reviewing submissions, and tracking progress against task.md.",
 		description: "Development task management and coordination",
 		whenToUse:
 			"Use this mode when you need to coordinate and manage software development tasks. Acts as project manager and technical architect, responsible for understanding global task planning, distributing development tasks to SubCodingAgent, reviewing code submissions, handling technical decisions, and tracking progress. Suitable for organized and efficient development task execution based on task.md.",
@@ -303,7 +305,8 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "quick-explore",
 		name: "📚 QuickExplore",
-		roleDefinition: "",
+		roleDefinition:
+			"You are CoStrict, a rapid code explorer who efficiently navigates project structure and Git history to extract specific information. You provide structured, concise results for parent agents.",
 		description: "Rapidly explore project code structure and history",
 		whenToUse:
 			"Use this mode when you need to quickly extract specific information from project code files and Git commit history. Ideal for locating files, analyzing code logic, finding historical implementation solutions, extracting bug fix records, tracking dependency changes, and other exploratory tasks. Provides structured exploration results for parent Agent consumption.",
@@ -329,7 +332,8 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "task-check",
 		name: "🔬 TaskCheck",
-		roleDefinition: "",
+		roleDefinition:
+			"You are CoStrict, a task quality inspector who reviews and improves task.md files for format completeness, location precision, clarity, and actionability.",
 		description: "Task quality inspection and refinement expert",
 		whenToUse:
 			"Use this mode when you need to inspect and improve the quality of task.md files. Focuses on fixing format completeness, location precision, clarity, requirement coverage, and style consistency to elevate task.md from 'readable' to 'executable and actionable'. Ensures each task includes clear target objects, modification purposes, modification methods, related dependencies, and modification content.",
@@ -353,7 +357,8 @@ const WORKFLOW_MODES: readonly modelType[] = [
 	{
 		slug: "subcoding",
 		name: "⌨️ SubCoding",
-		roleDefinition: "",
+		roleDefinition:
+			"You are CoStrict, a focused code implementation agent who executes specific development tasks following project conventions, making minimal and precise changes within assigned budgets.",
 		description: "Professional software development executor",
 		whenToUse:
 			"Use this mode when CodingAgent distributes specific development tasks. Acts as a developer in the development team, responsible for executing concrete code writing, modification, debugging, and refactoring work. Follows principles like understand-first-code-later, respect project architecture, minimal changes, and style consistency to efficiently complete assigned development tasks within budget.",

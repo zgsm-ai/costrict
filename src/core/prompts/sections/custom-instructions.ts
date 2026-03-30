@@ -452,9 +452,13 @@ export async function addCustomInstructions(
 	// Add language preference if provided
 	if (options.language) {
 		const languageName = isLanguage(options.language) ? LANGUAGES[options.language] : options.language
-		sections.push(
-			`Language Preference:\nYou should always speak and think in the "${languageName}" (${options.language}) language unless the user gives you instructions below to do otherwise.`,
-		)
+		if (options.language === "zh-CN" || options.language === "zh-TW") {
+			sections.push(
+				`Language Preference:\nYou should always speak and think in the "${languageName}" (${options.language}) language unless the user gives you instructions below to do otherwise.`,
+			)
+		} else {
+			sections.push(`Language: ${languageName} (${options.language})`)
+		}
 	}
 
 	// Add global instructions first

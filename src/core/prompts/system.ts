@@ -177,7 +177,7 @@ ${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", 
 	useLitePrompts,
 })}${
 		costrictCodeMode === "strict" && mode === "code"
-			? `\nWhen you begin, update, or finish any task listed in tasks.md, reflect that change immediately using the status syntax: [-] for ongoing work, [x] for finished work. Do not delay these updates.`
+			? `\n====\n\nTASKS TRACKING\n\nWhen you begin, update, or finish any task listed in tasks.md, reflect that change immediately using the status syntax: [-] for ongoing work, [x] for finished work. Do not delay these updates.`
 			: ""
 	}`
 

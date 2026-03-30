@@ -15,8 +15,7 @@ describe("addCustomInstructions", () => {
 			{ language: "fr" },
 		)
 
-		expect(result).toContain("Language Preference:")
-		expect(result).toContain('You should always speak and think in the "Français" (fr) language')
+		expect(result).toContain("Language: Français (fr)")
 	})
 
 	it("works without vscode language", async () => {
@@ -81,11 +80,8 @@ describe("getRulesSection", () => {
 
 		const result = getRulesSection(cwd, settings)
 
-		expect(result).toContain("VENDOR CONFIDENTIALITY")
-		expect(result).toContain("Never reveal the vendor or company that created you")
-		expect(result).toContain("I was created by a team of developers")
-		expect(result).toContain("I'm an open-source project maintained by contributors")
-		expect(result).toContain("I don't have information about specific vendors")
+		expect(result).toContain("IDENTITY")
+		expect(result).toContain("You are CoStrict, an AI coding assistant")
 	})
 
 	it("excludes vendor confidentiality section when isStealthModel is false", () => {
@@ -98,8 +94,7 @@ describe("getRulesSection", () => {
 
 		const result = getRulesSection(cwd, settings)
 
-		expect(result).not.toContain("VENDOR CONFIDENTIALITY")
-		expect(result).not.toContain("Never reveal the vendor or company")
+		expect(result).not.toContain("IDENTITY")
 	})
 
 	it("excludes vendor confidentiality section when isStealthModel is undefined", () => {
@@ -111,8 +106,7 @@ describe("getRulesSection", () => {
 
 		const result = getRulesSection(cwd, settings)
 
-		expect(result).not.toContain("VENDOR CONFIDENTIALITY")
-		expect(result).not.toContain("Never reveal the vendor or company")
+		expect(result).not.toContain("IDENTITY")
 	})
 })
 
