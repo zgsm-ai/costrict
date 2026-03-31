@@ -1,209 +1,162 @@
 export function getLiteReadFileDescription(): string {
 	return `## read_file
-Read file contents with line numbers. Supports text extraction from PDF and DOCX files.
-Two modes:
-- slice (default): Read lines sequentially with offset/limit
-- indentation: Extract semantic code blocks based on anchor_line
-Params fields:
-- path (REQUIRED): File path relative to workspace
-- mode (optional): Reading mode - 'slice' or 'indentation' (default: 'slice')
-- offset (optional): 1-based start line for slice mode (default: 1)
-- limit (optional): Max lines for slice mode (default: 2000)
-- indentation (optional): Object for indentation mode
-  - anchor_line (REQUIRED): 1-based line number to extract semantic block
-  - max_levels (optional): Indentation levels to include above anchor
-  - include_siblings (optional): Include sibling blocks (default: false)
-Note: When anchor_line is known, prefer indentation mode for complete code blocks. Returns up to 2000 lines by default.`
+Read a single file with line numbers. Two modes: 'slice' (default, offset/limit) and 'indentation' (extract semantic block around anchor_line, preferred when line number is known). Supports PDF/DOCX text extraction. Default 1500 lines, 1500 chars/line max.
+Params: path (REQUIRED), mode (optional: slice|indentation), offset, limit, indentation: {anchor_line, max_levels, include_siblings}`
 }
 getLiteReadFileDescription.toolname = "read_file"
 
 export function getLiteWriteToFileDescription(): string {
 	return `## write_to_file
-Create/overwrite file with content.
-Params fields: path, content(REQUIRED)`
+Create or completely overwrite a file. Auto-creates directories. MUST provide COMPLETE content — no placeholders. Prefer edit tools for modifications.
+Params: path (REQUIRED), content (REQUIRED)`
 }
 getLiteWriteToFileDescription.toolname = "write_to_file"
 
 export function getLiteSearchFilesDescription(): string {
 	return `## search_files
-Regex search in directory.
-Params fields: path (REQUIRED), regex (REQUIRED), file_pattern (REQUIRED)`
+Regex search across files in a directory with surrounding context. Uses Rust regex syntax.
+Params: path (REQUIRED), regex (REQUIRED), file_pattern (REQUIRED, glob like '*.ts')`
 }
 getLiteSearchFilesDescription.toolname = "search_files"
 
 export function getLiteListFilesDescription(): string {
 	return `## list_files
-List directory contents.
-Params fields: path (REQUIRED), recursive (REQUIRED)`
+List directory contents, optionally recursive.
+Params: path (REQUIRED), recursive (REQUIRED)`
 }
 getLiteListFilesDescription.toolname = "list_files"
 
 export function getLiteExecuteCommandDescription(): string {
 	return `## execute_command
-Execute CLI command.
-Params fields: command (REQUIRED), cwd (REQUIRED), timeout (optional: Timeout (s). Exceed → runs in background; returns current output. For long-running / non-exiting commands (e.g.,dev servers, watchers))
-`
+Execute a CLI command on the system. Prefer relative paths. Use timeout for long-running processes (dev servers, watchers) — exceeded commands run in background.
+Params: command (REQUIRED), cwd (REQUIRED), timeout (optional, seconds)`
 }
 getLiteExecuteCommandDescription.toolname = "execute_command"
 
 export function getLiteAskFollowupQuestionDescription(): string {
 	return `## ask_followup_question
-Ask user for clarification.
-Params fields: question (REQUIRED), follow_up (REQUIRED)
-- question: Clear, specific question addressing the information needed
-- follow_up: Array of 2-4 suggested responses
-  - text (REQUIRED): Suggested answer the user can pick
-  - mode (optional): Mode slug to switch to if chosen (e.g., code, architect)`
+Ask the user a question with 2-4 suggested actionable answers. May include mode switch.
+Params: question (REQUIRED), follow_up (REQUIRED: [{text, mode?}])`
 }
 getLiteAskFollowupQuestionDescription.toolname = "ask_followup_question"
 
 export function getLiteAttemptCompletionDescription(): string {
 	return `## attempt_completion
-Present final result after task completion.
-Params fields: result (REQUIRED)`
+Present final task result. Only after confirming all prior tool uses succeeded. No questions.
+Params: result (REQUIRED)`
 }
 getLiteAttemptCompletionDescription.toolname = "attempt_completion"
 
 export function getLiteBrowserActionDescription(): string {
 	return `## browser_action
-Browser interaction: screenshot, click, type, scroll.
-Params fields: action (REQUIRED), url/coordinate/size/text/path based on action`
+Interact with a browser: launch, navigate, screenshot, click, type, scroll, close.
+Params: action (REQUIRED), url/coordinate/size/text/path based on action`
 }
 getLiteBrowserActionDescription.toolname = "browser_action"
 
 export function getLiteSwitchModeDescription(): string {
 	return `## switch_mode
-Switch to different mode.
-Params fields: mode_slug (REQUIRED), reason (REQUIRED)`
+Switch to a different mode (requires user approval).
+Params: mode_slug (REQUIRED), reason (REQUIRED)`
 }
 getLiteSwitchModeDescription.toolname = "switch_mode"
 
 export function getLiteNewTaskDescription(): string {
 	return `## new_task
-Create a new task instance in the chosen mode using your provided message and initial todo list (if required).
-CRITICAL: Call alone. Gather info in a prior turn if needed.
-
-Params fields:
- - mode (REQUIRED)
- - message (REQUIRED)
- - todos (REQUIRED)`
+Create a new task in chosen mode. MUST be called alone — no other tools in same turn.
+Params: mode (REQUIRED), message (REQUIRED), todos (REQUIRED)`
 }
 getLiteNewTaskDescription.toolname = "new_task"
 
 export function getLiteUpdateTodoListDescription(): string {
 	return `## update_todo_list
-Update TODO checklist.
-Params fields: todos (REQUIRED)
-- todos: Full markdown checklist in execution order
-Format: [ ] pending, [x] completed, [-] in progress`
+Replace the entire TODO checklist. Always provide full list — system overwrites previous.
+Params: todos (REQUIRED: [ ] pending, [x] done, [-] in progress)`
 }
 getLiteUpdateTodoListDescription.toolname = "update_todo_list"
 
 export function getLiteSkillDescription(): string {
 	return `## skill
-Load and execute a skill by name. Skills provide specialized instructions for common tasks like creating MCP servers or custom modes.
-Params fields:
-- skill (REQUIRED): Name of the skill to load (e.g., create-mcp-server, create-mode)
-- args (optional): Context or arguments to pass to the skill`
+Load and execute a skill by name for specialized instructions.
+Params: skill (REQUIRED), args (optional)`
 }
 getLiteSkillDescription.toolname = "skill"
 
 export function getLiteCodebaseSearchDescription(): string {
 	return `## codebase_search
-Semantic search for relevant code.
-Params fields: query (REQUIRED), path (REQUIRED)`
+Semantic search for relevant code across the codebase.
+Params: query (REQUIRED), path (REQUIRED)`
 }
 getLiteCodebaseSearchDescription.toolname = "codebase_search"
 
 export function getLiteAccessMcpResourceDescription(): string {
 	return `## access_mcp_resource
-Access MCP server resource.
-Params fields: server_name (REQUIRED), uri (REQUIRED)`
+Access a resource (file, API response, etc.) from a connected MCP server.
+Params: server_name (REQUIRED), uri (REQUIRED)`
 }
 getLiteAccessMcpResourceDescription.toolname = "access_mcp_resource"
 
 export function getLiteGenerateImageDescription(): string {
 	return `## generate_image
-Generate image using AI.
-Params fields: prompt (REQUIRED), path (REQUIRED), image (REQUIRED)`
+Generate or edit images via AI (OpenRouter). Supports PNG, JPG, JPEG, GIF, WEBP.
+Params: prompt (REQUIRED), path (REQUIRED), image (optional, for editing)`
 }
 getLiteGenerateImageDescription.toolname = "generate_image"
 
 export function getLiteRunSlashCommandDescription(): string {
 	return `## run_slash_command
-Run a VS Code slash command.
-Params fields: command (REQUIRED), args (REQUIRED)`
+Execute a predefined slash command template.
+Params: command (REQUIRED), args (REQUIRED)`
 }
 getLiteRunSlashCommandDescription.toolname = "run_slash_command"
 
 export function getLiteReadCommandOutputDescription(): string {
 	return `## read_command_output
-Retrieve the full output from a command that was truncated in execute_command.
-Params fields: artifact_id (REQUIRED), search (optional), offset (optional), limit (optional)
-- artifact_id: The artifact filename from truncated output (e.g., "cmd-1706119234567.txt")
-- search: Optional pattern to filter lines (regex or literal, case-insensitive)
-- offset: Byte offset to start reading from (default: 0)
-- limit: Maximum bytes to return (default: 40KB)`
+Retrieve truncated command output. Read mode (offset/limit) or search mode (regex filter).
+Params: artifact_id (REQUIRED), search (optional), offset (optional, bytes), limit (optional, default 40KB)`
 }
 getLiteReadCommandOutputDescription.toolname = "read_command_output"
 
 // Native tools
 export function getLiteApplyDiffDescription(): string {
 	return `## apply_diff
-Apply precise, targeted modifications to an existing file using one or more search/replace blocks.
-Params fields: path (REQUIRED), diff (REQUIRED)
-- path: File path relative to workspace
-- diff: String containing search/replace blocks`
+Apply search/replace blocks to a file. SEARCH must exactly match existing content including whitespace. Use read_file first if unsure.
+Params: path (REQUIRED), diff (REQUIRED: SEARCH/REPLACE blocks with :start_line:)`
 }
 getLiteApplyDiffDescription.toolname = "apply_diff"
 
 export function getLiteApplyPatchDescription(): string {
 	return `## apply_patch
-Apply a patch to a file. supports creating new files, deleting files, and updating existing files with precise changes.
-Params fields: patch (REQUIRED)`
+Apply patches supporting create/delete/update files. Uses '*** Begin/End Patch' format.
+Params: patch (REQUIRED)`
 }
 getLiteApplyPatchDescription.toolname = "apply_patch"
 
 export function getLiteEditFileDescription(): string {
 	return `## edit_file
-Replace text in an existing file, or create a new file.
-Params fields: file_path (REQUIRED), old_string (REQUIRED), new_string (REQUIRED), expected_replacements (optional)`
+Replace text in a file or create new (empty old_string). Normalizes line endings; falls back to fuzzy matching. Include 3+ lines context for uniqueness. Use expected_replacements for multiple identical matches.
+Params: file_path (REQUIRED), old_string (REQUIRED), new_string (REQUIRED), expected_replacements (optional, default 1)`
 }
 getLiteEditFileDescription.toolname = "edit_file"
 
 export function getLiteAskMultipleChoiceDescription(): string {
 	return `## ask_multiple_choice
-Ask the user to select one or more options from a list of choices.
-Params fields: title (REQUIRED), questions (REQUIRED)
-- questions: Array of question objects (at least 1)
-  - id (REQUIRED): Unique identifier for the question
-  - prompt (REQUIRED): Question text to display
-  - options (REQUIRED): Array of option objects (at least 2)
-    - id (REQUIRED): Unique identifier for the option
-    - label (REQUIRED): Display text for the option
-  - allow_multiple (optional): true for multi-select, false for single-select (default: false)
-CRITICAL: Every question and every option MUST have an id field - results cannot be matched without ids.`
+Present structured multiple-choice questions. CRITICAL: every question and option MUST have an id field.
+Params: title (REQUIRED), questions (REQUIRED: [{id, prompt, options: [{id, label}], allow_multiple?}])`
 }
 getLiteAskMultipleChoiceDescription.toolname = "ask_multiple_choice"
 
 export function getLiteSearchAndReplaceDescription(): string {
 	return `## search_and_replace
-Apply precise, targeted modifications using search and replace operations.
-Params fields: path (REQUIRED), operations (REQUIRED)
-- path: File path relative to workspace
-- operations: Array of search/replace operations
-  - search (REQUIRED): Exact text to find
-  - replace (REQUIRED): Text to replace with`
+Apply search/replace operations on an existing file.
+Params: path (REQUIRED), operations (REQUIRED: [{search, replace}])`
 }
 getLiteSearchAndReplaceDescription.toolname = "search_and_replace"
 
 export function getLiteSearchReplaceDescription(): string {
 	return `## search_replace
-Replace ONE occurrence of old_string with new_string in a file.
-Params fields: file_path (REQUIRED), old_string (REQUIRED), new_string (REQUIRED)
-- file_path: Path to the file (relative or absolute)
-- old_string: Text to replace (must be unique, include 3-5 lines of context)
-- new_string: Edited text to replace with`
+Replace ONE occurrence of old_string with new_string. Must be unique — include 3-5 lines context. Separate calls for multiple instances.
+Params: file_path (REQUIRED), old_string (REQUIRED), new_string (REQUIRED)`
 }
 getLiteSearchReplaceDescription.toolname = "search_replace"
 
@@ -255,26 +208,24 @@ getLiteSearchReplaceDescription.toolname = "search_replace"
 
 export function getLiteSequentialThinkingDescription(): string {
 	return `## sequential_thinking
-结构化思考工具,支持分步骤思考、修订和分支。
+Structured thinking tool for step-by-step analysis of complex problems. Supports dynamically adjusting total steps, revising previous thoughts, and creating alternative branches. Use for multi-step problems, plans needing revision, or unclear problem scope. Recommended 5-25 steps based on complexity.
 Params fields:
-- thought (REQUIRED): 当前思考步骤的内容
-- nextThoughtNeeded (REQUIRED): 是否需要继续思考
-- thoughtNumber (REQUIRED): 当前步骤编号（从1开始）
-- totalThoughts (REQUIRED): 预计总步骤数
-- isRevision (optional): 是否是对之前思考的修订
-- revisesThought (optional): 要修订的思考编号
-- branchFromThought (optional): 从哪个思考创建分支
-- branchId (optional): 分支标识符
-- needsMoreThoughts (optional): 是否需要超出预计的更多思考`
+- thought (REQUIRED): Content of the current thinking step
+- nextThoughtNeeded (REQUIRED): Whether to continue thinking
+- thoughtNumber (REQUIRED): Current step number (starting from 1)
+- totalThoughts (REQUIRED): Estimated total steps (adjustable)
+- isRevision (optional): Whether this revises a previous thought
+- revisesThought (optional): Thought number to revise
+- branchFromThought (optional): Which thought to branch from
+- branchId (optional): Branch identifier
+- needsMoreThoughts (optional): Whether more thoughts beyond estimate are needed`
 }
 getLiteSequentialThinkingDescription.toolname = "sequential_thinking"
 
 export function getLiteFileOutlineDescription(): string {
 	return `## file_outline
-提取文件的大纲结构，显示函数、类、接口的定义。
-Params fields:
-- file_path (REQUIRED): 文件的相对路径
-- include_docstrings (optional): 是否包含文档字符串`
+Extract code structure outline (classes, functions, methods, docstrings). Supports Python, JS/TS, Go, Java, C/C++.
+Params: file_path (REQUIRED), include_docstrings (optional)`
 }
 getLiteFileOutlineDescription.toolname = "file_outline"
 
