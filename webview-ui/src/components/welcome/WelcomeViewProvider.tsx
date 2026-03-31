@@ -176,7 +176,7 @@ const WelcomeViewProvider = () => {
 									value={costrictBaseurl}
 									type="url"
 									onInput={handleInputChange}
-									placeholder={t("settings:providers.zgsmDefaultBaseUrl", {
+									placeholder={t("settings:providers.costrictDefaultBaseUrl", {
 										costrictBaseUrl: (window as any).COSTRICT_BASE_URL,
 									})}
 									className="w-full">
