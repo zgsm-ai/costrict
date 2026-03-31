@@ -14,6 +14,10 @@
 		"one": "One item",
 		"other": "{{count}} items"
 	},
+	"select": "Select",
+	"dialogs": {
+		"selectCheckpointStorageFolder": "Select Custom Storage Path"
+	},
 	"confirmation": {
 		"reset_state": "Are you sure you want to reset all state and secret storage in the extension? This cannot be undone.",
 		"fixCodebase": "Fix codebase",

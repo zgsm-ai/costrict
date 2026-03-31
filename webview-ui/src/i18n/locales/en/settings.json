@@ -696,6 +696,13 @@
 		"enable": {
 			"label": "Enable automatic checkpoints",
 			"description": "When enabled, CoStrict will automatically create checkpoints during task execution, making it easy to review changes or revert to earlier states."
+		},
+		"customStoragePath": {
+			"label": "Custom storage path",
+			"description": "Custom storage path. Leave empty to use the default location. Supports absolute paths (e.g. 'D:\\CostrictCodeStorage')",
+			"browse": "Browse",
+			"clear": "Clear",
+			"dialogTitle": "Select checkpoint storage folder"
 		}
 	},
 	"notifications": {

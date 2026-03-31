@@ -14,6 +14,10 @@
 		"one": "1个项目",
 		"other": "{{count}}个项目"
 	},
+	"select": "选择",
+	"dialogs": {
+		"selectCheckpointStorageFolder": "选择自定义存储目录"
+	},
 	"confirmation": {
 		"reset_state": "您确定要重置扩展中的所有状态和密钥存储吗？此操作无法撤消。",
 		"fixCodebase": "修复Codebase",

@@ -868,6 +868,13 @@ export const webviewMessageHandler = async (
 						await vscode.workspace
 							.getConfiguration(Package.commandIDPrefix)
 							.update("deniedCommands", newValue, vscode.ConfigurationTarget.Global)
+					} else if (key === "customStoragePath") {
+						newValue = typeof value === "string" ? value.trim() : ""
+
+						await vscode.workspace
+							.getConfiguration(Package.commandIDPrefix)
+							.update("customStoragePath", newValue, vscode.ConfigurationTarget.Global)
+						continue
 					} else if (key === "ttsEnabled") {
 						newValue = value ?? true
 						setTtsEnabled(newValue as boolean)
@@ -4465,6 +4472,38 @@ export const webviewMessageHandler = async (
 			} catch (error) {
 				const errorMessage = error instanceof Error ? error.message : String(error)
 				provider.log(`Error opening folder picker: ${errorMessage}`)
+			}
+
+			break
+		}
+
+		case "browseForCustomStoragePath": {
+			try {
+				const currentPath = vscode.workspace
+					.getConfiguration(Package.commandIDPrefix)
+					.get<string>("customStoragePath", "")
+
+				const options: vscode.OpenDialogOptions = {
+					canSelectFiles: false,
+					canSelectFolders: true,
+					canSelectMany: false,
+					openLabel: t("common:select"),
+					title: t("common:dialogs.selectCheckpointStorageFolder"),
+					defaultUri: currentPath
+						? vscode.Uri.file(currentPath)
+						: vscode.workspace.workspaceFolders?.[0]?.uri,
+				}
+
+				const result = await vscode.window.showOpenDialog(options)
+				if (result && result[0]) {
+					await provider.postMessageToWebview({
+						type: "customStoragePathSelected",
+						path: result[0].fsPath,
+					})
+				}
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : String(error)
+				provider.log(`Error opening custom storage path picker: ${errorMessage}`)
 			}
 
 			break

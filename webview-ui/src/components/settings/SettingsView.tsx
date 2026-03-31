@@ -168,6 +168,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		alwaysAllowWriteProtected,
 		autoCondenseContext,
 		autoCondenseContextPercent,
+		customStoragePath,
 		enableCheckpoints,
 		useCostrictCustomConfig,
 		costrictCodebaseIndexEnabled,
@@ -408,6 +409,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					soundVolume: soundVolume ?? 0.5,
 					ttsEnabled,
 					ttsSpeed,
+					customStoragePath: customStoragePath ?? "",
 					enableCheckpoints: enableCheckpoints ?? false,
 					checkpointTimeout: checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 					writeDelayMs,
@@ -544,12 +546,17 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		}
 	}, [])
 
-	const handleMessage = useCallback((event: MessageEvent) => {
-		const message: ExtensionMessage = event.data
-		if (message.type === "settingsUpdated") {
-			setIsSaving(false)
-		}
-	}, [])
+	const handleMessage = useCallback(
+		(event: MessageEvent) => {
+			const message: ExtensionMessage = event.data
+			if (message.type === "settingsUpdated") {
+				setIsSaving(false)
+			} else if (message.type === "customStoragePathSelected") {
+				setCachedStateField("customStoragePath", message.path ?? "")
+			}
+		},
+		[setCachedStateField],
+	)
 
 	useEffect(() => {
 		window.addEventListener("message", handleMessage)
@@ -871,6 +878,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							<CheckpointSettings
 								enableCheckpoints={enableCheckpoints}
 								checkpointTimeout={checkpointTimeout}
+								customStoragePath={customStoragePath}
 								autoCleanup={autoCleanup}
 								setCachedStateField={setCachedStateField}
 							/>

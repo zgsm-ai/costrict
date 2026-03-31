@@ -168,6 +168,8 @@ export const globalSettingsSchema = z.object({
 	 */
 	maxDiagnosticMessages: z.number().optional(),
 
+	customStoragePath: z.string().optional(),
+
 	enableCheckpoints: z.boolean().optional(),
 	checkpointTimeout: z
 		.number()

@@ -589,6 +589,13 @@
 		"enable": {
 			"label": "啟用自動檢查點",
 			"description": "啟用後，CoStrict 將在工作執行期間自動建立檢查點，方便檢視變更或回到較早的狀態。 <0>了解更多</0>"
+		},
+		"customStoragePath": {
+			"label": "自訂儲存路徑",
+			"description": "自訂儲存路徑。留空以使用預設位置。支援絕對路徑（例如：'D:\\CostrictCodeStorage'）",
+			"browse": "瀏覽",
+			"clear": "清空",
+			"dialogTitle": "選擇檢查點儲存資料夾"
 		}
 	},
 	"notifications": {

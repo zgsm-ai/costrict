@@ -129,6 +129,7 @@ export interface ExtensionMessage {
 		| "worktreeIncludeStatus"
 		| "branchWorktreeIncludeResult"
 		| "folderSelected"
+		| "customStoragePathSelected"
 		| "skills"
 		| "fileContent"
 		// CostrictCli messages
@@ -374,6 +375,7 @@ export type ExtensionState = Pick<
 
 	writeDelayMs: number
 
+	customStoragePath?: string
 	enableCheckpoints: boolean
 	checkpointTimeout: number // Timeout for checkpoint initialization in seconds (default: 15)
 	maxOpenTabsContext: number // Maximum number of VSCode open tabs to include in context (0-500)
@@ -617,6 +619,7 @@ export interface WebviewMessage {
 		| "indexCleared"
 		| "toggleWorkspaceIndexing"
 		| "setAutoEnableDefault"
+		| "browseForCustomStoragePath"
 		| "focusPanelRequest"
 		| "openExternal"
 		| "filterMarketplaceItems"

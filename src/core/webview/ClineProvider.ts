@@ -2539,6 +2539,7 @@ export class ClineProvider
 			soundEnabled,
 			ttsEnabled,
 			ttsSpeed,
+			customStoragePath,
 			enableCheckpoints,
 			useCostrictCustomConfig,
 			costrictCodebaseIndexEnabled,
@@ -2672,6 +2673,7 @@ export class ClineProvider
 			soundEnabled: soundEnabled ?? false,
 			ttsEnabled: ttsEnabled ?? false,
 			ttsSpeed: ttsSpeed ?? 1.0,
+			customStoragePath,
 			enableCheckpoints: enableCheckpoints ?? true,
 			useCostrictCustomConfig: useCostrictCustomConfig ?? false,
 			costrictCodebaseIndexEnabled: costrictCodebaseIndexEnabled ?? false,
@@ -2889,6 +2891,10 @@ export class ClineProvider
 		// 	)
 		// }
 
+		const customStoragePath = vscode.workspace
+			.getConfiguration(Package.commandIDPrefix)
+			.get<string>("customStoragePath", "")
+
 		// Return the same structure as before.
 		providerSettings.openAiHeaders = providerSettings.openAiHeaders ?? {}
 		return {
@@ -2920,6 +2926,7 @@ export class ClineProvider
 			soundEnabled: stateValues.soundEnabled ?? false,
 			ttsEnabled: stateValues.ttsEnabled ?? false,
 			ttsSpeed: stateValues.ttsSpeed ?? 1.0,
+			customStoragePath,
 			enableCheckpoints: stateValues.enableCheckpoints ?? true,
 			useCostrictCustomConfig: stateValues.useCostrictCustomConfig ?? false,
 			costrictCodebaseIndexEnabled: stateValues.costrictCodebaseIndexEnabled ?? false,
