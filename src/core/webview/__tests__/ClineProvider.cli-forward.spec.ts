@@ -102,7 +102,7 @@ async function handleCodeAction(
 		const { customSupportPrompts } = await visibleProvider.getState()
 		const { supportPrompt } = await import("../../../shared/support-prompt")
 		const prompt = supportPrompt.create(promptType as any, params, customSupportPrompts)
-		const { getTerminalManager } = await import("../../cli-wrap")
+		const { getTerminalManager } = await import("../../costrict/cli-wrap")
 		const terminalManager = getTerminalManager()
 		if (terminalManager.running) {
 			const PASTE_START = "\x1b[200~"
@@ -143,7 +143,7 @@ async function handleTerminalAction(
 		const { customSupportPrompts } = await visibleProvider.getState()
 		const { supportPrompt } = await import("../../../shared/support-prompt")
 		const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
-		const { getTerminalManager } = await import("../../cli-wrap")
+		const { getTerminalManager } = await import("../../costrict/cli-wrap")
 		const terminalManager = getTerminalManager()
 		if (terminalManager.running) {
 			const PASTE_START = "\x1b[200~"

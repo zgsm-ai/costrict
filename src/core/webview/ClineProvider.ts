@@ -118,7 +118,7 @@ import { CostrictAuthCommands, CostrictAuthConfig } from "../costrict/auth"
 import { generateNewSessionClientId, getClientId } from "../../utils/getClientId"
 import { defaultCodebaseIndexEnabled } from "../../services/code-index/constants"
 import { CodeReviewService, ReviewTargetType } from "../costrict/code-review"
-import { getTerminalManager } from "../cli-wrap"
+import { getTerminalManager } from "../costrict/cli-wrap"
 import { defaultLang } from "../../utils/language"
 import CostrictCodebaseIndexManager from "../costrict/codebase-index"
 import { sendCostrictCloseWindow } from "../costrict/auth/ipc"
@@ -1025,7 +1025,10 @@ export class ClineProvider
 		await visibleProvider.setMode(mode)
 
 		try {
-			await visibleProvider.createTask(prompt, undefined, undefined, { costrictWorkflowMode: mode })
+			await visibleProvider.createTask(prompt, undefined, undefined, {
+				costrictWorkflowMode: mode,
+				costrictWorkflowSpecScope: typeof params.scope === "string" ? params.scope : "",
+			})
 		} catch (error) {
 			if (error instanceof OrganizationAllowListViolationError) {
 				// Errors from terminal commands seem to get swallowed / ignored.
@@ -1168,6 +1171,7 @@ export class ClineProvider
 	public async createTaskWithHistoryItem(
 		historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task },
 		options?: { startTask?: boolean },
+		workflowOptions?: any,
 	) {
 		const isCliRuntime = process.env.ROO_CLI_RUNTIME === "1"
 		// CLI injects runtime provider settings from command flags/env at startup.
@@ -1307,6 +1311,7 @@ export class ClineProvider
 			startTask: options?.startTask ?? true,
 			// Preserve the status from the history item to avoid overwriting it when the task saves messages
 			initialStatus: historyItem.status,
+			...workflowOptions,
 		})
 
 		if (isRehydratingCurrentTask) {
@@ -3863,6 +3868,8 @@ export class ClineProvider
 			initialTodos,
 			initialStatus: "active",
 			startTask: false,
+			costrictWorkflowMode: parent.costrictWorkflowMode,
+			costrictWorkflowSpecScope: parent.costrictWorkflowSpecScope,
 		})
 
 		// 5) Persist parent delegation metadata BEFORE the child starts writing.
@@ -3905,6 +3912,8 @@ export class ClineProvider
 		parentTaskId: string
 		childTaskId: string
 		completionResultSummary: string
+		costrictWorkflowMode?: string
+		costrictWorkflowSpecScope?: string
 	}): Promise<void> {
 		const { parentTaskId, childTaskId, completionResultSummary } = params
 		const globalStoragePath = this.contextProxy.globalStorageUri.fsPath
@@ -4071,7 +4080,14 @@ export class ClineProvider
 
 		// 7) Reopen the parent from history as the sole active task (restores saved mode)
 		//    IMPORTANT: startTask=false to suppress resume-from-history ask scheduling
-		const parentInstance = await this.createTaskWithHistoryItem(updatedHistory, { startTask: false })
+		const parentInstance = await this.createTaskWithHistoryItem(
+			updatedHistory,
+			{ startTask: false },
+			{
+				costrictWorkflowMode: params?.costrictWorkflowMode,
+				costrictWorkflowSpecScope: params?.costrictWorkflowSpecScope,
+			},
+		)
 
 		// 8) Inject restored histories into the in-memory instance before resuming
 		if (parentInstance) {

@@ -85,7 +85,7 @@ import { MarketplaceManager, MarketplaceItemType } from "../../services/marketpl
 import { CostrictAuthConfig, CostrictAuthService, CostrictAuthStorage } from "../costrict/auth"
 import { CodeReviewService } from "../costrict/code-review"
 import { CostrictCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
-import { getTerminalManager, getCostrictCliInstallDocsUrl } from "../cli-wrap"
+import { getTerminalManager, getCostrictCliInstallDocsUrl } from "../costrict/cli-wrap"
 import { ErrorCodeManager } from "../costrict/error-code"
 import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
 import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-event-monitor"
@@ -1144,7 +1144,8 @@ export const webviewMessageHandler = async (
 			} as GetModelsOptions
 
 			if (opt.provider === "costrict") {
-				opt.baseUrl = apiConfiguration?.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
+				opt.baseUrl =
+					apiConfiguration?.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 				opt.apiKey = apiConfiguration?.costrictAccessToken
 				opt.openAiHeaders = apiConfiguration?.openAiHeaders
 			}
@@ -2118,7 +2119,9 @@ export const webviewMessageHandler = async (
 				if (message.apiConfiguration.apiProvider === "costrict") {
 					await provider.providerSettingsManager.saveMergeConfig(
 						{
-							costrictBaseUrl: message.apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl(),
+							costrictBaseUrl:
+								message.apiConfiguration.costrictBaseUrl ||
+								CostrictAuthConfig.getInstance().getDefaultApiBaseUrl(),
 						},
 						(name, { apiProvider }) => {
 							return apiProvider === "costrict" && name !== message.text

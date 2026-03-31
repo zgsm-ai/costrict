@@ -19,7 +19,7 @@ import { t } from "../i18n"
 import { EditorContext, EditorUtils } from "../integrations/editor/EditorUtils"
 import * as path from "path"
 import { handleGenerateCommitMessage } from "../core/costrict/commit"
-import { getTerminalManager } from "../core/cli-wrap"
+import { getTerminalManager } from "../core/costrict/cli-wrap"
 
 interface UriSource {
 	path: string

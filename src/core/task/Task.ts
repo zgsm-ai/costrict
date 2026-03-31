@@ -176,6 +176,7 @@ export interface TaskOptions extends CreateTaskOptions {
 export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	readonly taskId: string
 	readonly costrictWorkflowMode?: string
+	readonly costrictWorkflowSpecScope?: string
 	readonly rootTaskId?: string
 	readonly parentTaskId?: string
 	childTaskId?: string
@@ -467,6 +468,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		initialTodos,
 		workspacePath,
 		costrictWorkflowMode,
+		costrictWorkflowSpecScope,
 		initialStatus,
 	}: TaskOptions) {
 		super()
@@ -475,6 +477,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			throw new Error("Either historyItem or task/images must be provided")
 		}
 		this.costrictWorkflowMode = costrictWorkflowMode
+		this.costrictWorkflowSpecScope = costrictWorkflowSpecScope
 		if (
 			!checkpointTimeout ||
 			checkpointTimeout > MAX_CHECKPOINT_TIMEOUT_SECONDS ||
@@ -2824,7 +2827,18 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			// Add environment details as its own text block, separate from tool
 			// results.
-			let finalUserContent = [...contentWithoutEnvDetails, { type: "text" as const, text: environmentDetails }]
+			let finalUserContent = [...contentWithoutEnvDetails]
+			if (includeFileDetailsForTurn) {
+				const costrictWorkflowSpecScope =
+					this.costrictWorkflowSpecScope || this?.parentTask?.costrictWorkflowSpecScope
+				if (costrictWorkflowSpecScope) {
+					finalUserContent.push({
+						type: "text" as const,
+						text: `Task Status Update Steps:\n\n1. Before starting: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
+					})
+				}
+			}
+			finalUserContent.push({ type: "text" as const, text: environmentDetails })
 			// Only add user message to conversation history if:
 			// 1. This is the first attempt (retryAttempt === 0), AND
 			// 2. The original userContent was not empty (empty signals delegation resume where

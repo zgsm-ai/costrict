@@ -6,7 +6,7 @@
  */
 
 import * as vscode from "vscode"
-import { getTerminalManager } from "./../../core/cli-wrap"
+import { getTerminalManager } from "./cli-wrap"
 import type { ClineProvider } from "../webview/ClineProvider"
 import { registerAutoCompletionProvider, CompletionStatusBar } from "./auto-complete"
 

@@ -12,7 +12,7 @@ export function getLiteSharedToolUseSection(): string {
 
 TOOL USE
 
-You have access to tools. You must call at least one tool per response. For simple questions or conversational replies, use attempt_completion directly — do not use other tools first.`
+You have access to tools. You must call at least one tool per response. For simple questions or conversational replies, use \`attempt_completion\` tool directly — do not use other tools first.`
 }
 
 /**
@@ -56,9 +56,9 @@ OBJECTIVE
 
 Work through tasks iteratively and methodically:
 
-1. For simple questions or conversational replies, use attempt_completion directly with your answer as the result
+1. For simple questions or conversational replies, use \`attempt_completion\` tool directly with your answer as the result
 2. For tasks requiring tool use: set clear, prioritized goals and work through them sequentially
-3. Use attempt_completion to present final results
+3. Use \`attempt_completion\` tool to present final results
 4. Incorporate feedback if provided, but avoid pointless back-and-forth`
 }
 
@@ -82,7 +82,7 @@ RULES
 - Use relative paths from base directory
 - Read before edit
 - Tools are sequential; confirm after each use
-- Use attempt_completion for final results
+- Use \`attempt_completion\` tool for final results
 - Be direct and technical, not conversational
 `
 	}
@@ -106,7 +106,7 @@ RULES
 - All tools (including MCP) are sequential; wait for user confirmation after each use
 - Assume success if terminal output is missing
 - Skip read_file if file content is already provided
-- Use ask_followup_question only when necessary; provide 2–4 concrete options and prefer tools over questions
+- Use \`ask_followup_question\` tool only when necessary; provide 2–4 concrete options and prefer tools over questions
 
 ## Code & Project Context
 - Respect mode-based file restrictions (e.g. architect: "\\.md$" only)
@@ -116,7 +116,7 @@ RULES
 ## Responses & Output
 - Be direct and technical; avoid conversational fillers ("Great", "Sure", etc.)
 - Focus on completing the task, not discussion
-- Use attempt_completion for final output; NEVER end with a question
+- Use \`attempt_completion\` tool for final output; NEVER end with a question
 
 ## Non-user Inputs
 - Analyze images using vision capabilities when present

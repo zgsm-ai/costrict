@@ -97,6 +97,7 @@ export interface CreateTaskOptions {
 	useCostrictCustomConfig?: boolean
 	costrictCodebaseIndexEnabled?: boolean
 	costrictWorkflowMode?: string
+	costrictWorkflowSpecScope?: string
 	/** Initial status for the task's history item (e.g., "active" for child tasks) */
 	initialStatus?: "active" | "delegated" | "completed"
 	/** Whether to start the task loop immediately (default: true).

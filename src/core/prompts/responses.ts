@@ -47,8 +47,8 @@ ${instructions}
 
 # Next Steps
 
-If you have completed the user's task, use the attempt_completion tool.
-If you require additional information from the user, use the ask_followup_question tool.
+If you have completed the user's task, use the \`attempt_completion\` tool.
+If you require additional information from the user, use the \`ask_followup_question\` tool.
 Otherwise, if you have not completed the task and do not need additional information, then proceed with the next step of the task.
 (This is an automated message, so do not respond to it conversationally.)`
 	},

@@ -176,9 +176,6 @@ When you are using compact - please focus on test output and code changes. Inclu
 %run-task-2%
 \${selectedText}
 %run-task-3%
-
-# Reminder: 
-When you begin, update, or finish task in \`\${scope}/tasks.md\`, reflect that change immediately using the status syntax: [-] for ongoing work, [x] for finished work. Do not delay these updates.
 `,
 	},
 	WORKFLOW_TASK_RETRY: {
@@ -187,9 +184,6 @@ When you begin, update, or finish task in \`\${scope}/tasks.md\`, reflect that c
 %run-task-2%
 \${selectedText}
 %run-task-3%
-
-# Reminder: 
-When you begin, update, or finish any task listed in \`\${scope}/tasks.md\`, reflect that change immediately using the status syntax: [-] for ongoing work, [x] for finished work. Do not delay these updates.
 `,
 	},
 	WORKFLOW_TASK_RUN_TESTS: {

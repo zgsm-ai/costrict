@@ -1,10 +1,10 @@
 import { execSync, type ExecSyncOptionsWithStringEncoding } from "child_process"
 
-import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
-import { getWorkspacePath } from "../../utils/path"
-import { isJetbrainsPlatform } from "../../utils/platform"
+import { getIdeaShellEnvWithUpdatePath } from "../../../utils/ideaShellEnvLoader"
+import { getWorkspacePath } from "../../../utils/path"
+import { isJetbrainsPlatform } from "../../../utils/platform"
 import { getContextSyncService } from "./contextSync"
-import { getShell } from "../../utils/shell"
+import { getShell } from "../../../utils/shell"
 
 const COSTRICT_CLI_INSTALL_DOCS_URL = "https://docs.costrict.ai/en/cli/guide/installation"
 

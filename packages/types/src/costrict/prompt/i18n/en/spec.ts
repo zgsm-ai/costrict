@@ -7,7 +7,7 @@ const prompt: PromptComponent = {
 
 ## Core Objectives
 
-Complete feature development systematically through **three rigorous phases** to ensure high-quality delivery.
+Complete feature development systematically through **three rigorous subphases** to ensure high-quality delivery.
 
 ## Phase Overview
 
