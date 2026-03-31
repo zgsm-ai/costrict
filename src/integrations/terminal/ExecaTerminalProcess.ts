@@ -102,7 +102,7 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 
 			await this.terminal.setActiveStream(stream, Promise.resolve(this.pid))
 			let outputCount = 0
-			delay(3_000).then(() => {
+			delay(1500).then(() => {
 				if (this.aborted || outputCount > 0) {
 					return
 				}
@@ -120,7 +120,10 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 
 				const now = Date.now()
 
-				if (this.isListening && (now - this.lastEmitTime_ms > 1000 || this.lastEmitTime_ms === 0 || outputCount <= 3)) {
+				if (
+					this.isListening &&
+					(now - this.lastEmitTime_ms > 1000 || this.lastEmitTime_ms === 0 || outputCount <= 3)
+				) {
 					this.emitRemainingBufferIfListening()
 					this.lastEmitTime_ms = now
 				}

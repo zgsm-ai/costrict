@@ -226,13 +226,16 @@ export const ErrorRow = memo(
 					<div
 						className="font-sm text-vscode-editor-foreground flex items-center justify-between cursor-pointer"
 						onClick={handleToggleExpand}>
-						<div className="flex items-center gap-2 flex-grow  text-vscode-errorForeground">
-							<MessageCircleWarning className="w-4" />
+						<div
+							className={`flex items-center gap-2 flex-grow ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "opacity-80"}`}>
+							<MessageCircleWarning
+								className={`w-4 ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "opacity-80"}`}
+							/>
 							<span className="text-vscode-errorForeground font-bold grow cursor-pointer">
 								{errorTitle}
 							</span>
 						</div>
-						<div className="flex items-center transition-opacity opacity-0 group-hover:opacity-100">
+						<div className="flex items-center">
 							{showCopyButton && (
 								<VSCodeButton
 									appearance="icon"

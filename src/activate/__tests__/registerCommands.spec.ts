@@ -13,7 +13,7 @@ const mockTerminalManager = {
 	write: vi.fn(),
 }
 
-vi.mock("../../core/cli-wrap", () => ({
+vi.mock("../../core/costrict/cli-wrap", () => ({
 	getTerminalManager: () => mockTerminalManager,
 }))
 

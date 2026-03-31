@@ -73,7 +73,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				baseURL: this.baseURL,
 				apiKey,
 				timeout,
-				maxRetries: 0,
+				maxRetries: 1,
 				defaultHeaders: COSTRICT_DEFAULT_HEADERS,
 				defaultQuery: { "api-version": this.options.azureApiVersion || "2024-05-01-preview" },
 			})
@@ -84,7 +84,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				baseURL: this.baseURL,
 				apiKey,
 				timeout,
-				maxRetries: 0,
+				maxRetries: 1,
 				apiVersion: this.options.azureApiVersion || azureOpenAiDefaultApiVersion,
 				defaultHeaders: COSTRICT_DEFAULT_HEADERS,
 			})
@@ -93,7 +93,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				baseURL: this.baseURL,
 				apiKey,
 				timeout,
-				maxRetries: 0,
+				maxRetries: 1,
 				defaultHeaders: COSTRICT_DEFAULT_HEADERS,
 			})
 		}
@@ -117,7 +117,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 			workflowModes.includes(metadata?.costrictCodeMode)
 		this.apiResponseRenderModeInfo = getApiResponseRenderMode()
 		if (("review" === metadata?.mode || "security-review" === metadata?.mode) && this.client) {
-			this.client.maxRetries = 1
+			this.client.maxRetries = 2
 		}
 		// 1. Cache calculation results and configuration
 		const { info: modelInfo, reasoning, id: modelId } = this.getModel()

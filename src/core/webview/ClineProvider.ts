@@ -153,8 +153,8 @@ export class ClineProvider
 	// Used in package.json as the view's id. This value cannot be changed due
 	// to how VSCode caches views based on their id, and updating the id would
 	// break existing instances of the extension.
-	public static readonly sideBarId = `${Package.commandIDPrefix}.SidebarProvider`
-	public static readonly tabPanelId = `${Package.commandIDPrefix}.TabPanelProvider`
+	public static readonly sideBarId = `${Package?.commandIDPrefix || "costrict"}.SidebarProvider`
+	public static readonly tabPanelId = `${Package?.commandIDPrefix || "costrict"}.TabPanelProvider`
 	private static activeInstances: Set<ClineProvider> = new Set()
 	private disposables: vscode.Disposable[] = []
 	private webviewDisposables: vscode.Disposable[] = []
@@ -2891,9 +2891,8 @@ export class ClineProvider
 		// 	)
 		// }
 
-		const customStoragePath = vscode.workspace
-			.getConfiguration(Package.commandIDPrefix)
-			.get<string>("customStoragePath", "")
+		const customStoragePath =
+			vscode.workspace.getConfiguration(Package.commandIDPrefix)?.get<string>("customStoragePath", "") ?? ""
 
 		// Return the same structure as before.
 		providerSettings.openAiHeaders = providerSettings.openAiHeaders ?? {}

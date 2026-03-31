@@ -28,7 +28,7 @@ describe("getObjectiveSection", () => {
 			"determine if the user has directly provided or given enough information to infer a value",
 		)
 		expect(objective).toContain("DO NOT invoke the tool (not even with fillers for the missing params)")
-		expect(objective).toContain("ask_followup_question tool")
+		expect(objective).toContain("`ask_followup_question` tool")
 	})
 
 	it("should include guidance about not engaging in back and forth conversations", () => {

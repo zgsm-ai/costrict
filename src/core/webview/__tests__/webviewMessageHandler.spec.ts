@@ -49,8 +49,7 @@ const mockTerminalManager = {
 	resize: vi.fn(),
 	stop: vi.fn(),
 }
-
-vi.mock("../../cli-wrap", () => ({
+vi.mock("../../costrict/cli-wrap", () => ({
 	getTerminalManager: vi.fn(() => mockTerminalManager),
 	getCostrictCliInstallDocsUrl: vi.fn(() => "https://docs.costrict.ai/en/cli/guide/installation"),
 }))
@@ -112,15 +111,17 @@ vi.mock("vscode", async (importOriginal) => ({
 			},
 		}),
 		all: [],
-	},
-	window: {
-		showInformationMessage: vi.fn(),
-		showErrorMessage: vi.fn(),
-		createTextEditorDecorationType: vi.fn(),
-		createOutputChannel: () => ({
-			appendLine: vi.fn(),
-			show: vi.fn(),
-		}),
+		window: {
+			showInformationMessage: vi.fn().mockResolvedValue(undefined),
+			showErrorMessage: vi.fn().mockResolvedValue(undefined),
+			createTextEditorDecorationType: vi.fn(),
+			createOutputChannel: () => ({
+				appendLine: vi.fn(),
+				show: vi.fn(),
+			}),
+			onDidChangeActiveTextEditor: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+		},
+		onDidChangeActiveTextEditor: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 	},
 	workspace: {
 		workspaceFolders: [{ uri: { fsPath: "/mock/workspace" } }],
@@ -686,7 +687,8 @@ describe("webviewMessageHandler - deleteCustomMode", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		vi.mocked(getWorkspacePath).mockReturnValue("/mock/workspace")
-		vi.mocked(vscode.window.showErrorMessage).mockResolvedValue(undefined)
+		;(vscode.window as any).showInformationMessage = vi.fn().mockResolvedValue(undefined)
+		;(vscode.window as any).showErrorMessage = vi.fn().mockResolvedValue(undefined)
 		vi.mocked(ensureSettingsDirectoryExists).mockResolvedValue("/mock/global/storage/.roo")
 	})
 
@@ -1083,6 +1085,9 @@ describe("webviewMessageHandler - requestCommands", () => {
 describe("webviewMessageHandler - downloadErrorDiagnostics", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+
+		// Mock showErrorMessage for error assertions
+		;(vscode.window as any).showErrorMessage = vi.fn().mockResolvedValue(undefined)
 
 		// Ensure contextProxy has a globalStorageUri for the handler
 		;(mockClineProvider as any).contextProxy.globalStorageUri = { fsPath: "/mock/global/storage" }

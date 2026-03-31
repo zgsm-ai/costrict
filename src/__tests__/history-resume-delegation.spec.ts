@@ -129,6 +129,10 @@ describe("History resume delegation - parent metadata transitions", () => {
 				completedByChildId: "child-1",
 			}),
 			{ startTask: false },
+			expect.objectContaining({
+				costrictWorkflowMode: undefined,
+				costrictWorkflowSpecScope: undefined,
+			}),
 		)
 	})
 
@@ -651,6 +655,10 @@ describe("History resume delegation - parent metadata transitions", () => {
 				completedByChildId: "child-rpd02",
 			}),
 			{ startTask: false },
+			expect.objectContaining({
+				costrictWorkflowMode: undefined,
+				costrictWorkflowSpecScope: undefined,
+			}),
 		)
 		expect(parentInstance.resumeAfterDelegation).toHaveBeenCalledTimes(1)
 	})

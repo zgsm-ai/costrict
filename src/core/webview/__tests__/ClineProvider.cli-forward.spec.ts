@@ -43,7 +43,7 @@ vi.mock("../../../shared/support-prompt", () => ({
 	},
 }))
 
-vi.mock("../../cli-wrap", () => ({
+vi.mock("../../costrict/cli-wrap", () => ({
 	getTerminalManager: vi.fn(() => ({
 		get running() {
 			return mockTerminalRunningRef.value

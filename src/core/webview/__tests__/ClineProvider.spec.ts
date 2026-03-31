@@ -28,6 +28,17 @@ import { MessageManager } from "../../message-manager"
 // Mock setup must come before imports.
 vi.mock("../../prompts/sections/custom-instructions")
 
+// Mock Package module
+vi.mock("../../shared/package", () => ({
+	Package: {
+		name: "zgsm",
+		publisher: "zgsm-ai",
+		version: "1.0.0",
+		outputChannel: "CoStrict",
+		commandIDPrefix: "costrict",
+	},
+}))
+
 vi.mock("p-wait-for", () => ({
 	__esModule: true,
 	default: vi.fn().mockResolvedValue(undefined),
@@ -160,10 +171,10 @@ vi.mock("vscode", async (importOriginal) => ({
 		}),
 	},
 	workspace: {
-		getConfiguration: vi.fn().mockReturnValue({
+		getConfiguration: vi.fn().mockImplementation(() => ({
 			get: vi.fn().mockReturnValue([]),
 			update: vi.fn(),
-		}),
+		})),
 		onDidChangeConfiguration: vi.fn().mockImplementation(() => ({
 			dispose: vi.fn(),
 		})),

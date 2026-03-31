@@ -264,7 +264,7 @@ describe("mergeExtensionState", () => {
 			imageGeneration: false,
 			runSlashCommand: false,
 			customTools: false,
-			alwaysIncludeFileDetails: false,
+			useKPTtree: false,
 			commitReview: false,
 			useLitePrompts: false,
 			smartMistakeDetection: false,

@@ -168,13 +168,19 @@ describe("autoImportSettings", () => {
 		// Reset fs mock
 		vi.mocked(fsPromises.readFile).mockReset()
 		vi.mocked(fileExistsAtPath).mockReset()
-		vi.mocked(vscode.workspace.getConfiguration).mockReset()
+		vi.mocked(vscode.workspace.getConfiguration).mockReturnValue({
+			get: vi.fn().mockReturnValue(""),
+			update: vi.fn(),
+			has: vi.fn(),
+			inspect: vi.fn(),
+		} as any)
 		vi.mocked(vscode.window.showInformationMessage).mockReset()
 		vi.mocked(vscode.window.showWarningMessage).mockReset()
 	})
 
 	afterEach(() => {
-		vi.restoreAllMocks()
+		// Note: We don't call vi.restoreAllMocks() here because it affects other test files
+		// that also use vscode mocks. Instead, we just reset the mocks in beforeEach.
 	})
 
 	it("should skip auto-import when no settings path is specified", async () => {

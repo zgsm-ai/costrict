@@ -1772,6 +1772,12 @@ export const ChatRowContent = ({
 					const isNoToolsUsedError = message.text === "MODEL_NO_TOOLS_USED"
 					const isNoAssistantMessagesError = message.text === "MODEL_NO_ASSISTANT_MESSAGES"
 
+					if (
+						(isNoAssistantMessagesError || isNoToolsUsedError) &&
+						apiConfiguration.apiProvider === "costrict"
+					) {
+						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
+					}
 					if (isNoToolsUsedError) {
 						return (
 							<ErrorRow
@@ -1783,9 +1789,7 @@ export const ChatRowContent = ({
 							/>
 						)
 					}
-					if (isNoAssistantMessagesError && apiConfiguration.apiProvider === "costrict") {
-						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
-					}
+
 					if (isNoAssistantMessagesError) {
 						return (
 							<ErrorRow

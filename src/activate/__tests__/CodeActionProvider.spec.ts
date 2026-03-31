@@ -110,7 +110,7 @@ describe("CodeActionProvider", () => {
 			const actions = provider.provideCodeActions(mockDocument, mockRange, mockContext)
 
 			expect(actions).toEqual([])
-			expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith("zgsm")
+			expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith("costrict")
 			expect(mockGet).toHaveBeenCalledWith("enableCodeActions", true)
 		})
 
