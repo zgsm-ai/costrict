@@ -2,7 +2,12 @@ import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
-import type { MultipleChoiceData, MultipleChoiceQuestion, MultipleChoiceOption } from "@roo-code/types"
+import {
+	multipleChoiceDataSchema,
+	type MultipleChoiceData,
+	type MultipleChoiceQuestion,
+	type MultipleChoiceOption,
+} from "@roo-code/types"
 import { t } from "../../i18n"
 
 interface AskMultipleChoiceParams {
@@ -29,10 +34,74 @@ export class AskMultipleChoiceTool extends BaseTool<"ask_multiple_choice"> {
 		const { title, questions } = params
 		const { handleError, pushToolResult } = callbacks
 
+		const recordInvalidParamError = async (paramName: string, guidance: string): Promise<void> => {
+			task.consecutiveMistakeCount++
+			task.recordToolError("ask_multiple_choice")
+			task.didToolFailInCurrentTurn = true
+			await task.say("error", guidance)
+			pushToolResult(formatResponse.toolError(guidance))
+		}
+
 		try {
+			const validationResult = multipleChoiceDataSchema.safeParse({ title, questions })
+
+			if (!validationResult.success) {
+				const issuePaths = validationResult.error.issues.map((issue) => issue.path.join("."))
+
+				if (issuePaths.includes("questions")) {
+					await recordInvalidParamError(
+						"questions",
+						"Invalid 'questions' for ask_multiple_choice: it must be a non-empty array with at least one question. Retry with questions: [{ id, prompt, options }].",
+					)
+					return
+				}
+
+				if (issuePaths.some((path) => /questions\.\d+\.options(?:\.\d+)?$/.test(path))) {
+					await recordInvalidParamError(
+						"questions.options",
+						"Invalid 'questions[].options' for ask_multiple_choice: each question must include at least two options. Retry with options: [{ id, label }, { id, label }].",
+					)
+					return
+				}
+
+				if (issuePaths.some((path) => /questions\.\d+\.id$/.test(path))) {
+					await recordInvalidParamError(
+						"questions.id",
+						"Invalid 'questions[].id' for ask_multiple_choice: every question must include a unique string id. Retry with questions: [{ id: 'question_id', prompt, options }].",
+					)
+					return
+				}
+
+				if (issuePaths.some((path) => /questions\.\d+\.prompt$/.test(path))) {
+					await recordInvalidParamError(
+						"questions.prompt",
+						"Invalid 'questions[].prompt' for ask_multiple_choice: every question must include prompt text. Retry with questions: [{ id, prompt: 'Your question', options }].",
+					)
+					return
+				}
+
+				if (issuePaths.some((path) => /questions\.\d+\.options\.\d+\.id$/.test(path))) {
+					await recordInvalidParamError(
+						"questions.options.id",
+						"Invalid 'questions[].options[].id' for ask_multiple_choice: every option must include a unique string id. Retry with options: [{ id: 'option_id', label: 'Option label' }].",
+					)
+					return
+				}
+
+				if (issuePaths.some((path) => /questions\.\d+\.options\.\d+\.label$/.test(path))) {
+					await recordInvalidParamError(
+						"questions.options.label",
+						"Invalid 'questions[].options[].label' for ask_multiple_choice: every option must include display text in label. Retry with options: [{ id, label: 'Option label' }].",
+					)
+					return
+				}
+
+				throw new Error(validationResult.error.issues.map((issue) => issue.message).join("; "))
+			}
+
 			const multipleChoiceData: MultipleChoiceData = {
-				title,
-				questions,
+				title: validationResult.data.title,
+				questions: validationResult.data.questions,
 			}
 
 			task.consecutiveMistakeCount = 0
