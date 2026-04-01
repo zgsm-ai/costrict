@@ -2,6 +2,11 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.6.1]
+
+- Add repository URL to API requests for better tracking and context (PR #1101)
+- Fix known issues
+
 ## [2.6.0]
 
 - **BREAKING**: Rename provider namespace from "zgsm" to "costrict" across entire codebase (PR #1091)

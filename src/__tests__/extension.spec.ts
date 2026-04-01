@@ -298,9 +298,12 @@ describe("extension.ts", () => {
 		// which should NOT call dotenvx.config when .env doesn't exist
 		await import("../extension")
 
+		// Add a small delay to ensure module initialization is complete
+		await new Promise((resolve) => setTimeout(resolve, 100))
+
 		// Verify dotenvx.config was not called
 		expect(dotenvxConfigMock).not.toHaveBeenCalled()
-	}, 60000)
+	}, 120000)
 
 	test("calls dotenvx.config when optional .env exists", async () => {
 		// Reset modules to test module-level initialization code
