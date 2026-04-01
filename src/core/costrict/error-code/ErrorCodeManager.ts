@@ -83,7 +83,7 @@ export class ErrorCodeManager {
 			const baseUrl = apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 			const response = await axios.get(`${baseUrl}/costrict-static/error-code/error_codes_${language}.json`, {
 				headers: {
-					"costrict-request-id": getClientId(),
+					"zgsm-request-id": getClientId(),
 				},
 			})
 			return response.data

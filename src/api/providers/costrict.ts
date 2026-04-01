@@ -27,6 +27,7 @@ import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from ".
 import { CostrictAuthConfig, CostrictAuthService } from "../../core/costrict/auth"
 import { getClientId } from "../../utils/getClientId"
 import { getWorkspacePath } from "../../utils/path"
+import { getGitRepositoryInfo } from "../../utils/git"
 import { getApiRequestTimeout } from "./utils/timeout-config"
 import { getApiResponseRenderMode, renderModes } from "./utils/response-render-config"
 import { createLogger, ILogger } from "../../utils/logger"
@@ -53,6 +54,29 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 	private apiResponseRenderModeInfo = renderModes.fast
 	private logger: ILogger
 	private abortController?: AbortController
+
+	// Cache git repo URL per workspace path to avoid repeated file reads
+	private static cachedRepoUrl: string | undefined
+	private static cachedRepoWorkspacePath: string | undefined
+
+	/**
+	 * Get git remote URL for the current workspace (cached).
+	 * Re-reads only when workspace path changes.
+	 */
+	private async getGitRepoUrl(): Promise<string | undefined> {
+		const workspacePath = getWorkspacePath()
+		if (CostrictAiHandler.cachedRepoWorkspacePath === workspacePath) {
+			return CostrictAiHandler.cachedRepoUrl
+		}
+		try {
+			const gitInfo = await getGitRepositoryInfo(workspacePath)
+			CostrictAiHandler.cachedRepoUrl = gitInfo.repositoryUrl
+			CostrictAiHandler.cachedRepoWorkspacePath = workspacePath
+		} catch {
+			CostrictAiHandler.cachedRepoUrl = undefined
+		}
+		return CostrictAiHandler.cachedRepoUrl
+	}
 
 	constructor(options: ApiHandlerOptions) {
 		super()
@@ -136,6 +160,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		// 2. Cache async call results
 		const cachedClientId = getClientId()
 		const cachedWorkspacePath = getWorkspacePath()
+		const cachedRepoUrl = await this.getGitRepoUrl()
 
 		// 3. Pre-build headers to avoid repeated creation
 		const _headers = this.buildHeaders(metadata, requestId, cachedClientId, cachedWorkspacePath, this.chatType)
@@ -177,6 +202,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 					modelInfo,
 					metadata,
 					isNative,
+					cachedRepoUrl,
 				)
 				requestOptions.extra_body.prompt_mode = fromWorkflow ? (metadata?.costrictCodeMode ?? "vibe") : "vibe"
 				const isAuto = this.options.costrictModelId === autoModeModelId
@@ -341,13 +367,13 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 			"x-quota-identity": chatType || "system",
 			"X-Request-ID": requestId,
 			"x-user-id": metadata?.userId || "",
-			"costrict-task-id": metadata?.taskId || "",
-			"costrict-request-id": requestId,
-			"costrict-client-id": clientId,
-			"costrict-provider": metadata?.provider,
+			"zgsm-task-id": metadata?.taskId || "",
+			"zgsm-request-id": requestId,
+			"zgsm-client-id": clientId,
+			"zgsm-provider": metadata?.provider,
 			"x-costrict-idea": getEditorType(),
-			"costrict-project-path": encodeURI(workspacePath),
-			"costrict-prompt-tags": metadata?.promptTags || "",
+			"zgsm-project-path": encodeURI(workspacePath),
+			"zgsm-prompt-tags": metadata?.promptTags || "",
 			"x-caller": ["review", "security-review"].includes(metadata?.mode || "") ? "review-checker" : "chat",
 		}
 	}
@@ -450,6 +476,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		modelInfo: ModelInfo,
 		metadata?: ApiHandlerCreateMessageMetadata,
 		isNative?: boolean,
+		repoUrl?: string,
 	): OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming & { extra_body: any } {
 		let requestOptions: OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming & { extra_body: any } = {
 			model: modelInfo.id,
@@ -473,6 +500,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		requestOptions.extra_body = {
 			mode: metadata?.mode,
 			promptTags: metadata?.promptTags,
+			repo: repoUrl,
 		}
 
 		this.addMaxTokensIfNeeded(requestOptions, modelInfo)

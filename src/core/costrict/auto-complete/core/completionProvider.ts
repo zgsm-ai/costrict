@@ -230,7 +230,7 @@ export class CompletionProvider {
 		const headers = {
 			...COSTRICT_DEFAULT_HEADERS,
 			"X-Request-ID": input.completionId,
-			"costrict-client-id": clientId,
+			"zgsm-client-id": clientId,
 		}
 		const { prefix, suffix } = input.promptOptions
 		if (!this.serverHostInfo.port || !this.serverHostInfo.protocol) {

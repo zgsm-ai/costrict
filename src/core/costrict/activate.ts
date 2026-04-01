@@ -56,10 +56,24 @@ const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
  */
 async function initialize(provider: ClineProvider, logger: ILogger) {
 	const oldDebug = provider.getValue("debug")
+	const codeMode = provider.getValue("costrictCodeMode")
 	const oldEnabled = provider.getValue("costrictCodebaseIndexEnabled")
 	if (oldEnabled == null) {
 		await provider.setValue("costrictCodebaseIndexEnabled", false)
 	}
+
+	switch (codeMode) {
+		case "plan":
+			await provider.setValue("mode", codeMode)
+			break
+		case "strict":
+			await provider.setValue("mode", codeMode)
+			break
+		default:
+			await provider.setValue("mode", "code")
+			break
+	}
+
 	updateDefaultDebug(oldDebug ?? false)
 	//
 	CostrictAuthStorage.setProvider(provider)

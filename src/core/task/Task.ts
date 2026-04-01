@@ -2834,7 +2834,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				if (costrictWorkflowSpecScope) {
 					finalUserContent.push({
 						type: "text" as const,
-						text: `Task Status Update Steps:\n\n1. Before starting: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
+						text: `Task Status Update Steps:\n\n1. Before task starting: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
+					})
+				} else if (state?.costrictCodeMode === "strict" && state?.mode === "code") {
+					const costrictWorkflowSpecScope = `\${workspaceFolder}/.cospec/{feature-name}/`
+					finalUserContent.push({
+						type: "text" as const,
+						text: `Task Status Update Steps:\n\n1. Before task starting: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
 					})
 				}
 			}

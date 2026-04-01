@@ -31,7 +31,7 @@ export class VersionApi {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"costrict-request-id": getClientId(),
+					"zgsm-request-id": getClientId(),
 				},
 			})
 

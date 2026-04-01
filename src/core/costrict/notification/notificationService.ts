@@ -78,7 +78,7 @@ export class NotificationService {
 		const baseUrl = apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 		const response = await axios.get(`${baseUrl}/costrict-static/announcement/announcement_${language}.json`, {
 			headers: {
-				"costrict-request-id": getClientId(),
+				"zgsm-request-id": getClientId(),
 			},
 		})
 		return response.data
