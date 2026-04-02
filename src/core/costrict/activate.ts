@@ -6,7 +6,7 @@
  */
 
 import * as vscode from "vscode"
-import { getTerminalManager } from "./cli-wrap"
+import { getTerminalManager, cleanupStaleProcesses } from "./cli-wrap"
 import type { ClineProvider } from "../webview/ClineProvider"
 import { registerAutoCompletionProvider, CompletionStatusBar } from "./auto-complete"
 
@@ -104,6 +104,13 @@ export async function activate(
 	const isJetbrains = isJetbrainsPlatform()
 	const isVscodePlatform = !isJetbrains && !isCliPatform()
 	const logger = createLogger(Package.outputChannel)
+
+	// Clean up any stale CoStrict CLI processes from previous sessions
+	void cleanupStaleProcesses(context)
+
+	// Set extension context for terminal manager (needed for port tracking)
+	getTerminalManager().setExtensionContext(context)
+
 	initErrorCodeManager(provider)
 	initGitCheckoutDetector(context, logger)
 	await initialize(provider, logger)

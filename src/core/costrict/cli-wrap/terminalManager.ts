@@ -5,8 +5,161 @@ import { getWorkspacePath } from "../../../utils/path"
 import { isJetbrainsPlatform } from "../../../utils/platform"
 import { getContextSyncService } from "./contextSync"
 import { getShell } from "../../../utils/shell"
+import * as vscode from "vscode"
 
 const COSTRICT_CLI_INSTALL_DOCS_URL = "https://docs.costrict.ai/en/cli/guide/installation"
+
+// Workspace storage key for tracking CLI ports across sessions
+const COSTRICT_CLI_PORTS_KEY = "costrictCliPorts"
+
+/**
+ * Find the PID of the process listening on a given port.
+ * Returns the PID, or null if no process is found.
+ */
+function findPidByPort(port: number): number | null {
+	try {
+		if (process.platform === "win32") {
+			const result = execSync(`netstat -ano | findstr :${port} | findstr LISTENING`, {
+				encoding: "utf-8",
+				stdio: ["pipe", "pipe", "ignore"],
+			})
+			const line = result.trim().split("\n").find((l) => l.trim())
+			if (line) {
+				const parts = line.trim().split(/\s+/)
+				const pid = parseInt(parts[parts.length - 1], 10)
+				if (pid && !isNaN(pid)) {
+					return pid
+				}
+			}
+		} else {
+			const result = execSync(`lsof -ti:${port} -sTCP:LISTEN`, {
+				encoding: "utf-8",
+				stdio: ["pipe", "pipe", "ignore"],
+			})
+			const pid = parseInt(result.trim().split("\n")[0], 10)
+			if (!isNaN(pid)) {
+				return pid
+			}
+		}
+	} catch {
+		// No process found on this port
+	}
+	return null
+}
+
+/**
+ * Check if a given PID belongs to a CoStrict CLI (cs) process.
+ */
+function isCsProcess(pid: number): boolean {
+	try {
+		if (process.platform === "win32") {
+			const result = execSync(`wmic process where ProcessId=${pid} get CommandLine /format:list`, {
+				encoding: "utf-8",
+				stdio: ["pipe", "pipe", "ignore"],
+			})
+			return /\bcs(\.exe|\.cmd)?\b/i.test(result)
+		} else {
+			// Read /proc/<pid>/cmdline first (Linux), fall back to ps (macOS)
+			try {
+				const cmdline = execSync(`cat /proc/${pid}/cmdline`, {
+					encoding: "utf-8",
+					stdio: ["pipe", "pipe", "ignore"],
+				})
+				return /\bcs\b/.test(cmdline)
+			} catch {
+				const result = execSync(`ps -p ${pid} -o comm=`, {
+					encoding: "utf-8",
+					stdio: ["pipe", "pipe", "ignore"],
+				})
+				return /\bcs\b/.test(result.trim())
+			}
+		}
+	} catch {
+		return false
+	}
+}
+
+/**
+ * Clean up any stale CoStrict CLI processes from previous sessions.
+ * This should be called during extension activation.
+ *
+ * For each recorded port:
+ * 1. Find the PID currently listening on that port
+ * 2. Verify the PID is actually a cs process (avoid killing unrelated programs)
+ * 3. Kill only if both checks pass
+ */
+export async function cleanupStaleProcesses(context: vscode.ExtensionContext): Promise<void> {
+	try {
+		const ports: number[] = context.workspaceState.get<number[]>(COSTRICT_CLI_PORTS_KEY) || []
+		if (ports.length === 0) {
+			return
+		}
+
+		console.log(`[TerminalManager] Checking ${ports.length} ports from previous sessions`)
+
+		let cleanedCount = 0
+		for (const port of ports) {
+			const pid = findPidByPort(port)
+			if (!pid) {
+				continue
+			}
+			if (!isCsProcess(pid)) {
+				console.log(`[TerminalManager] Port ${port} is occupied by non-cs process (pid ${pid}), skipping`)
+				continue
+			}
+			try {
+				if (process.platform === "win32") {
+					execSync(`taskkill /F /T /PID ${pid}`, { stdio: "ignore" })
+				} else {
+					process.kill(pid, "SIGKILL")
+				}
+				console.log(`[TerminalManager] Killed stale cs process ${pid} on port ${port}`)
+				cleanedCount++
+			} catch {
+				// Process may have exited between check and kill
+			}
+		}
+
+		if (cleanedCount > 0) {
+			console.log(`[TerminalManager] Cleaned up ${cleanedCount} stale CoStrict CLI processes`)
+		}
+
+		await context.workspaceState.update(COSTRICT_CLI_PORTS_KEY, [])
+	} catch (error) {
+		console.error(`[TerminalManager] Error cleaning up stale processes:`, error)
+	}
+}
+
+/**
+ * Record a port for cleanup tracking.
+ */
+async function recordPort(context: vscode.ExtensionContext, port: number): Promise<void> {
+	try {
+		const ports: number[] = context.workspaceState.get<number[]>(COSTRICT_CLI_PORTS_KEY) || []
+		if (!ports.includes(port)) {
+			ports.push(port)
+			await context.workspaceState.update(COSTRICT_CLI_PORTS_KEY, ports)
+		}
+	} catch {
+		// Ignore errors
+	}
+}
+
+/**
+ * Remove a port from cleanup tracking.
+ */
+async function removePort(context: vscode.ExtensionContext, port: number): Promise<void> {
+	try {
+		const ports: number[] = context.workspaceState.get<number[]>(COSTRICT_CLI_PORTS_KEY) || []
+		const index = ports.indexOf(port)
+		if (index > -1) {
+			ports.splice(index, 1)
+			await context.workspaceState.update(COSTRICT_CLI_PORTS_KEY, ports)
+		}
+	} catch {
+		// Ignore errors
+	}
+}
 
 export type CostrictCliErrorKind = "missing-cli" | "start-failed" | "startup-timeout"
 
@@ -70,6 +223,7 @@ export class TerminalManager {
 	private isRunning = false
 	private port: number | null = null
 	private exitHandler: (() => void) | null = null
+	private extensionContext: vscode.ExtensionContext | null = null
 
 	private constructor() {}
 
@@ -78,6 +232,10 @@ export class TerminalManager {
 			TerminalManager.instance = new TerminalManager()
 		}
 		return TerminalManager.instance
+	}
+
+	setExtensionContext(context: vscode.ExtensionContext) {
+		this.extensionContext = context
 	}
 
 	setMessageSender(sender: MessageSender) {
@@ -199,6 +357,11 @@ export class TerminalManager {
 
 			this.isRunning = true
 
+			// Record port for cleanup tracking
+			if (this.extensionContext && this.port) {
+				void recordPort(this.extensionContext, this.port)
+			}
+
 			// Register exit handler to kill PTY child process if Node.js exits unexpectedly
 			this.exitHandler = () => {
 				try {
@@ -208,6 +371,8 @@ export class TerminalManager {
 				}
 			}
 			process.on("exit", this.exitHandler)
+			process.on("SIGTERM", this.exitHandler)
+			process.on("SIGINT", this.exitHandler)
 
 			// Start syncing editor context to CLI
 			getContextSyncService().start()
@@ -219,6 +384,10 @@ export class TerminalManager {
 
 			// Handle process exit
 			this.ptyProcess.onExit(({ exitCode }: { exitCode: number }) => {
+				// Remove port from tracking
+				if (this.extensionContext && this.port) {
+					void removePort(this.extensionContext, this.port)
+				}
 				this.isRunning = false
 				this.ptyProcess = null
 				this.port = null
@@ -307,9 +476,16 @@ export class TerminalManager {
 	}
 
 	async stop(signal?: string): Promise<void> {
+		// Remove port from tracking
+		if (this.extensionContext && this.port) {
+			void removePort(this.extensionContext, this.port)
+		}
+
 		// Remove exit handler to avoid dangling reference
 		if (this.exitHandler) {
 			process.removeListener("exit", this.exitHandler)
+			process.removeListener("SIGTERM", this.exitHandler)
+			process.removeListener("SIGINT", this.exitHandler)
 			this.exitHandler = null
 		}
 
