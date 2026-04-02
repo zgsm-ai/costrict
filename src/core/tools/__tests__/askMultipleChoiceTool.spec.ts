@@ -60,6 +60,43 @@ describe("askMultipleChoiceTool", () => {
 		expect(toolResult).toContain("<question_id>q1</question_id>")
 	})
 
+	it("should include custom answer text in selected_options", async () => {
+		mockCline.ask.mockResolvedValue({
+			text: '{"q1":{"selectedOptionIds":["a"],"customAnswer":"Use SQLite for local dev"}}',
+			images: [],
+		})
+
+		const block: ToolUse<"ask_multiple_choice"> = {
+			type: "tool_use",
+			name: "ask_multiple_choice",
+			params: {
+				title: "Choose one",
+			},
+			nativeArgs: {
+				title: "Choose one",
+				questions: [
+					{
+						id: "q1",
+						prompt: "Select an option",
+						options: [
+							{ id: "a", label: "A (Recommended)" },
+							{ id: "b", label: "B" },
+						],
+					},
+				],
+			},
+			partial: false,
+		}
+
+		await askMultipleChoiceTool.handle(mockCline, block, {
+			askApproval: vi.fn(),
+			handleError: vi.fn(),
+			pushToolResult: mockPushToolResult,
+		})
+
+		expect(toolResult).toContain("A (Recommended), Use SQLite for local dev")
+	})
+
 	describe("parameter validation", () => {
 		it("should reject empty questions", async () => {
 			const block: ToolUse<"ask_multiple_choice"> = {

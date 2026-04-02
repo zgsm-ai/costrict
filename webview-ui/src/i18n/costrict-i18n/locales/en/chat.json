@@ -158,7 +158,11 @@
 		"userSkipped": "Skipped",
 		"userConfirmed": "Confirmed",
 		"skipHint": "If none of the options meet your needs, <code>you can directly describe your requirements in the input box below; </code><code>click \"Skip\" to skip this questionnaire</code>",
-		"loading": "Preparing questions..."
+		"loading": "Preparing questions...",
+		"autoSelectCountdown": "Auto-selecting the recommended options in {{countdown}}s…",
+		"customAnswer": "Type your own answer",
+		"customAnswerPlaceholder": "Enter your own answer",
+		"customAnswerRequired": "Please enter a custom answer before confirming"
 	},
 	"markdown": {
 		"expandPrompt": "Click to expand",

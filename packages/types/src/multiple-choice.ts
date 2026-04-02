@@ -39,11 +39,21 @@ export interface MultipleChoiceOption {
 }
 
 /**
+ * Interface for a single question response in multiple choice form
+ */
+export interface MultipleChoiceQuestionResponse {
+	/** Selected predefined option ids */
+	selectedOptionIds: string[]
+	/** Optional custom answer entered by the user */
+	customAnswer?: string
+}
+
+/**
  * Interface for multiple choice response
  * Maps question IDs to arrays of selected option IDs
  */
 export interface MultipleChoiceResponse {
-	[questionId: string]: string[]
+	[questionId: string]: MultipleChoiceQuestionResponse | string[]
 }
 
 /**
@@ -73,4 +83,3 @@ export const multipleChoiceDataSchema = z.object({
 })
 
 export type MultipleChoiceDataType = z.infer<typeof multipleChoiceDataSchema>
-

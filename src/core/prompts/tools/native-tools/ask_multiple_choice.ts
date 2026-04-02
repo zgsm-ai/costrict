@@ -1,6 +1,6 @@
 import type OpenAI from "openai"
 
-const ASK_MULTIPLE_CHOICE_DESCRIPTION = `Interrupts the current workflow to present structured multiple-choice questions to the user. Forces selection from predefined options (no free-text). Use this tool when you need explicit user decisions or to resolve ambiguity before proceeding.
+const ASK_MULTIPLE_CHOICE_DESCRIPTION = `Interrupts the current workflow to present structured multiple-choice questions to the user. Use this tool when you need explicit user decisions or to resolve ambiguity before proceeding.
 
 Use this tool when:
 - You need to choose between mutually exclusive options (e.g., architecture patterns, frameworks).
@@ -8,22 +8,23 @@ Use this tool when:
 - You want to collect multiple related decisions in a single interaction.
 
 CRITICAL: Every question and every option MUST have an id field - results cannot be matched without ids.
+CRITICAL: For each question, put the recommended option first and append " (Recommended)" to that option's label.
 
 Parameters:
 - title: (optional) A brief title for the decision group.
 - questions: (REQUIRED) An array of question objects (at least 1).
   - id: (REQUIRED) A unique, program-friendly identifier (slug) for the question (e.g., "framework_choice").
   - prompt: (REQUIRED) The text question to display to the user.
-  - options: (REQUIRED) An array of option objects (at least 2).
+  - options: (REQUIRED) An array of option objects (at least 2). Put the recommended option first.
     - id: (REQUIRED) A unique, program-friendly identifier (slug) for the option (e.g., "react", "vue").
     - label: (REQUIRED) The user-facing display text.
   - allow_multiple: (optional) Set to 'true' for checkboxes (multi-select), 'false' for radio buttons (single-select). Defaults to false.
 
 Example: Simple choice
-{ "title": "Project Setup", "questions": [{ "id": "framework", "prompt": "Which framework would you like to use?", "options": [{ "id": "react", "label": "React" }, { "id": "vue", "label": "Vue.js" }], "allow_multiple": false }] }
+{ "title": "Project Setup", "questions": [{ "id": "framework", "prompt": "Which framework would you like to use?", "options": [{ "id": "react", "label": "React (Recommended)" }, { "id": "vue", "label": "Vue.js" }], "allow_multiple": false }] }
 
 Example: Multiple questions with multi-select
-{ "title": "Project Setup", "questions": [{ "id": "framework", "prompt": "Which framework would you like to use?", "options": [{ "id": "react", "label": "React" }, { "id": "vue", "label": "Vue.js" }], "allow_multiple": false }, { "id": "features", "prompt": "Select additional features:", "options": [{ "id": "typescript", "label": "TypeScript" }, { "id": "linting", "label": "ESLint + Prettier" }], "allow_multiple": true }] }`
+{ "title": "Project Setup", "questions": [{ "id": "framework", "prompt": "Which framework would you like to use?", "options": [{ "id": "react", "label": "React (Recommended)" }, { "id": "vue", "label": "Vue.js" }], "allow_multiple": false }, { "id": "features", "prompt": "Select additional features:", "options": [{ "id": "typescript", "label": "TypeScript (Recommended)" }, { "id": "linting", "label": "ESLint + Prettier" }], "allow_multiple": true }] }`
 
 const TITLE_PARAMETER_DESCRIPTION = `Optional brief title for this group of decisions`
 

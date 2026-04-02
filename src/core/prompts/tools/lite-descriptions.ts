@@ -141,7 +141,7 @@ getLiteEditFileDescription.toolname = "edit_file"
 
 export function getLiteAskMultipleChoiceDescription(): string {
 	return `## ask_multiple_choice
-Present structured multiple-choice questions. CRITICAL: every question and option MUST have an id field.
+Present structured multiple-choice questions. CRITICAL: every question and option MUST have an id field. Put the recommended option first for each question and append " (Recommended)" to its label.
 Params: title (REQUIRED), questions (REQUIRED: [{id, prompt, options: [{id, label}], allow_multiple?}])`
 }
 getLiteAskMultipleChoiceDescription.toolname = "ask_multiple_choice"

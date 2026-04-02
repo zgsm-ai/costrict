@@ -7,8 +7,23 @@ import {
 	type MultipleChoiceData,
 	type MultipleChoiceQuestion,
 	type MultipleChoiceOption,
+	type MultipleChoiceQuestionResponse,
+	type MultipleChoiceResponse,
 } from "@roo-code/types"
 import { t } from "../../i18n"
+
+function normalizeQuestionResponse(response: MultipleChoiceResponse[string]): MultipleChoiceQuestionResponse {
+	if (Array.isArray(response)) {
+		return {
+			selectedOptionIds: response,
+		}
+	}
+
+	return {
+		selectedOptionIds: Array.isArray(response?.selectedOptionIds) ? response.selectedOptionIds : [],
+		customAnswer: typeof response?.customAnswer === "string" ? response.customAnswer.trim() : undefined,
+	}
+}
 
 interface AskMultipleChoiceParams {
 	title?: string
@@ -108,7 +123,7 @@ export class AskMultipleChoiceTool extends BaseTool<"ask_multiple_choice"> {
 			const { text, images } = await task.ask("multiple_choice", JSON.stringify(multipleChoiceData), false)
 
 			// Parse user response
-			let userResponse: Record<string, string[]> | { __skipped: boolean } = {}
+			let userResponse: MultipleChoiceResponse | { __skipped: boolean } = {}
 			try {
 				userResponse = JSON.parse(text || "{}")
 			} catch (error) {
@@ -128,16 +143,21 @@ export class AskMultipleChoiceTool extends BaseTool<"ask_multiple_choice"> {
 			// Format response for LLM
 			const responseLines: string[] = ["<answers>"]
 			for (const question of questions) {
-				const selectedOptions = (userResponse as Record<string, string[]>)[question.id] || []
-				const selectedLabels = selectedOptions
-					.map((optId) => {
-						const option = question.options.find((o) => o.id === optId)
-						return option ? option.label : optId
-					})
-					.join(", ")
+				const normalizedResponse = normalizeQuestionResponse(
+					(userResponse as MultipleChoiceResponse)[question.id],
+				)
+				const selectedLabels = normalizedResponse.selectedOptionIds.map((optId) => {
+					const option = question.options.find((o) => o.id === optId)
+					return option ? option.label : optId
+				})
+
+				const responseParts = [...selectedLabels]
+				if (normalizedResponse.customAnswer) {
+					responseParts.push(normalizedResponse.customAnswer)
+				}
 
 				responseLines.push(
-					`<answer><question_id>${question.id}</question_id><selected_options>${selectedLabels || "No selection"}</selected_options></answer>`,
+					`<answer><question_id>${question.id}</question_id><selected_options>${responseParts.join(", ") || "No selection"}</selected_options></answer>`,
 				)
 			}
 			responseLines.push("</answers>")

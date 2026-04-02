@@ -161,7 +161,11 @@
 		"userSkipped": "已跳过",
 		"userConfirmed": "已确认",
 		"skipHint": "如果选项都不满足您的需求，<code>可以在下方输入框直接说明您的需求；</code><code>点击\"跳过\"，将跳过此问卷</code>",
-		"loading": "准备问题中..."
+		"loading": "准备问题中...",
+		"autoSelectCountdown": "{{countdown}}秒后自动选择推荐选项…",
+		"customAnswer": "输入自定义答案",
+		"customAnswerPlaceholder": "请输入你的答案",
+		"customAnswerRequired": "请输入自定义答案后再确认"
 	},
 	"markdown": {
 		"expandPrompt": "点击展开",
