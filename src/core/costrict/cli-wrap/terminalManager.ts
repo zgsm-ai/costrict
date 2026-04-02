@@ -69,6 +69,7 @@ export class TerminalManager {
 	private messageSender: MessageSender | null = null
 	private isRunning = false
 	private port: number | null = null
+	private exitHandler: (() => void) | null = null
 
 	private constructor() {}
 
@@ -198,6 +199,16 @@ export class TerminalManager {
 
 			this.isRunning = true
 
+			// Register exit handler to kill PTY child process if Node.js exits unexpectedly
+			this.exitHandler = () => {
+				try {
+					this.ptyProcess?.kill()
+				} catch {
+					// Ignore errors, process may have already exited
+				}
+			}
+			process.on("exit", this.exitHandler)
+
 			// Start syncing editor context to CLI
 			getContextSyncService().start()
 
@@ -211,10 +222,20 @@ export class TerminalManager {
 				this.isRunning = false
 				this.ptyProcess = null
 				this.port = null
+				// Clean up exit handler to avoid dangling listener
+				if (this.exitHandler) {
+					process.removeListener("exit", this.exitHandler)
+					this.exitHandler = null
+				}
 				this.sendToWebview({ type: "CostrictCliExit", exitCode })
 			})
 		} catch (error) {
 			this.port = null
+			// Clean up exit handler if it was registered before the error
+			if (this.exitHandler) {
+				process.removeListener("exit", this.exitHandler)
+				this.exitHandler = null
+			}
 			const errorMessage = error instanceof Error ? error.message : String(error)
 			const errorCode = error && typeof error === "object" ? (error as NodeJS.ErrnoException).code : undefined
 			const errorKind =
@@ -286,6 +307,12 @@ export class TerminalManager {
 	}
 
 	async stop(signal?: string): Promise<void> {
+		// Remove exit handler to avoid dangling reference
+		if (this.exitHandler) {
+			process.removeListener("exit", this.exitHandler)
+			this.exitHandler = null
+		}
+
 		// Stop syncing editor context
 		getContextSyncService().stop()
 
