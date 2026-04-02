@@ -5,9 +5,9 @@ import { formatResponse } from "../prompts/responses"
 import { t } from "../../i18n"
 import type { ToolUse } from "../../shared/tools"
 import { toolNamesMatch } from "../../utils/mcp-name"
-import { sanitizeArguments, summarizeResult } from "../audit/sanitize.js"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface UseMcpToolParams {
 	server_name: string
@@ -29,7 +29,6 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 
 	async execute(params: UseMcpToolParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { askApproval, handleError, pushToolResult } = callbacks
-		const executionStartTime = Date.now()
 
 		try {
 			// Validate parameters
@@ -77,20 +76,6 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 				executionId,
 				pushToolResult,
 			)
-
-			// Record MCP tool execution audit event
-			const executionDurationMs = Date.now() - executionStartTime
-			const sanitizedArgs = sanitizeArguments(parsedArguments ?? {})
-			const resultSummary = summarizeResult("MCP tool executed", 200)
-			const auditEvent = task.auditLogger?.createMcpToolEvent({
-				mcpServerName: serverName,
-				mcpToolName: resolvedToolName,
-				arguments: sanitizedArgs,
-				approvalDecision: "auto_approved",
-				resultSummary,
-				success: true,
-			})
-			if (auditEvent) task.auditLogger?.record(auditEvent)
 		} catch (error) {
 			await handleError("executing MCP tool", error as Error)
 		}
@@ -105,7 +90,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 			arguments: params.arguments,
 		} satisfies ClineAskUseMcpServer)
 
-		await task.ask("use_mcp_server", partialMessage, true).catch(() => {})
+		await safeAsk(task, "use_mcp_server", partialMessage, true)
 	}
 
 	private async validateParams(

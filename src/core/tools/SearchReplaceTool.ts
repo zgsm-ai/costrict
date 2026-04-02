@@ -14,6 +14,7 @@ import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface SearchReplaceParams {
 	file_path: string
@@ -271,7 +272,7 @@ export class SearchReplaceTool extends BaseTool<"search_replace"> {
 			isOutsideWorkspace,
 		}
 
-		await task.ask("tool", JSON.stringify(sharedMessageProps), block.partial).catch(() => {})
+		await safeAsk(task, "tool", JSON.stringify(sharedMessageProps), block.partial)
 	}
 }
 

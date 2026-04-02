@@ -5,6 +5,7 @@ import { formatResponse } from "../prompts/responses"
 import { defaultModeSlug, getModeBySlug } from "../../shared/modes"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface SwitchModeParams {
 	mode_slug: string
@@ -80,7 +81,7 @@ export class SwitchModeTool extends BaseTool<"switch_mode"> {
 			reason: reason ?? "",
 		})
 
-		await task.ask("tool", partialMessage, block.partial).catch(() => {})
+		await safeAsk(task, "tool", partialMessage, block.partial)
 	}
 }
 

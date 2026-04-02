@@ -4,6 +4,7 @@ import { getCommand, getCommandNames } from "../../services/command/commands"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
+import { safeAsk } from "./helpers/taskCommunication"
 import { getModeBySlug } from "../../shared/modes"
 import {
 	buildSkillApprovalMessage,
@@ -146,7 +147,7 @@ export class RunSlashCommandTool extends BaseTool<"run_slash_command"> {
 			args: args,
 		})
 
-		await task.ask("tool", partialMessage, block.partial).catch(() => {})
+		await safeAsk(task, "tool", partialMessage, block.partial)
 	}
 }
 

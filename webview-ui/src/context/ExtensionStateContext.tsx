@@ -366,42 +366,42 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 			const message: ExtensionMessage = event.data
 			switch (message.type) {
 				case "state": {
-					const newState = message.state ?? {}
+					const newState: Partial<ExtensionState> = message.state ?? {}
 					setState((prevState) => mergeExtensionState(prevState, newState))
 
 					setShowWelcome(!checkExistKey(newState.apiConfiguration))
 					setDidHydrateState(true)
 					// Update alwaysAllowFollowupQuestions if present in state message
-					if ((newState as any).alwaysAllowFollowupQuestions !== undefined) {
-						setAlwaysAllowFollowupQuestions((newState as any).alwaysAllowFollowupQuestions)
+					if (newState.alwaysAllowFollowupQuestions !== undefined) {
+						setAlwaysAllowFollowupQuestions(newState.alwaysAllowFollowupQuestions)
 					}
 					// Update followupAutoApproveTimeoutMs if present in state message
-					if ((newState as any).followupAutoApproveTimeoutMs !== undefined) {
-						setFollowupAutoApproveTimeoutMs((newState as any).followupAutoApproveTimeoutMs)
+					if (newState.followupAutoApproveTimeoutMs !== undefined) {
+						setFollowupAutoApproveTimeoutMs(newState.followupAutoApproveTimeoutMs)
 					}
 					// Update includeTaskHistoryInEnhance if present in state message
-					if ((newState as any).includeTaskHistoryInEnhance !== undefined) {
-						setIncludeTaskHistoryInEnhance((newState as any).includeTaskHistoryInEnhance)
+					if (newState.includeTaskHistoryInEnhance !== undefined) {
+						setIncludeTaskHistoryInEnhance(newState.includeTaskHistoryInEnhance)
 					}
 					// Update language if present in state message
 					if (newState.language !== undefined) {
 						setState((prevState) => ({ ...prevState, language: newState.language }))
 					}
 					// Update includeCurrentTime if present in state message
-					if ((newState as any).includeCurrentTime !== undefined) {
-						setIncludeCurrentTime((newState as any).includeCurrentTime)
+					if (newState.includeCurrentTime !== undefined) {
+						setIncludeCurrentTime(newState.includeCurrentTime)
 					}
 					// Update includeCurrentCost if present in state message
-					if ((newState as any).includeCurrentCost !== undefined) {
-						setIncludeCurrentCost((newState as any).includeCurrentCost)
+					if (newState.includeCurrentCost !== undefined) {
+						setIncludeCurrentCost(newState.includeCurrentCost)
 					}
 					// Update autoCleanup if present in state message
-					if ((newState as any).autoCleanup !== undefined) {
-						setState((prevState) => ({ ...prevState, autoCleanup: (newState as any).autoCleanup }))
+					if (newState.autoCleanup !== undefined) {
+						setState((prevState) => ({ ...prevState, autoCleanup: newState.autoCleanup }))
 					}
 					// Update debug if present in state message
-					if ((newState as any).debug !== undefined) {
-						setState((prevState) => ({ ...prevState, debug: (newState as any).debug }))
+					if (newState.debug !== undefined) {
+						setState((prevState) => ({ ...prevState, debug: newState.debug }))
 					}
 					// Handle marketplace data if present in state message
 					if (newState.marketplaceItems !== undefined) {

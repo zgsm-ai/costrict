@@ -9,6 +9,7 @@ import { VectorStoreSearchResult } from "../../services/code-index/interfaces"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface CodebaseSearchParams {
 	query: string
@@ -139,7 +140,7 @@ Code Chunk: ${result.codeChunk}
 			isOutsideWorkspace: false,
 		}
 
-		await task.ask("tool", JSON.stringify(sharedMessageProps), block.partial).catch(() => {})
+		await safeAsk(task, "tool", JSON.stringify(sharedMessageProps), block.partial)
 	}
 }
 

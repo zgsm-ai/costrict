@@ -86,14 +86,18 @@ export class ProviderSettingsManager {
 	}
 
 	public generateId() {
-		return Math.random().toString(36).substring(2, 15)
+		return crypto.randomUUID()
 	}
 
 	// Synchronize readConfig/writeConfig operations to avoid data loss.
 	private _lock = Promise.resolve()
 	private lock<T>(cb: () => Promise<T>) {
-		const next = this._lock.then(cb)
-		this._lock = next.catch(() => {}) as Promise<void>
+		const next = this._lock.then(cb).catch((error) => {
+			console.error("[ProviderSettingsManager] Lock callback error:", error)
+			this._lock = Promise.resolve() // Reset to healthy state so subsequent operations aren't blocked
+			throw error
+		})
+		this._lock = next.then(() => {}).catch(() => {}) as Promise<void>
 		return next
 	}
 

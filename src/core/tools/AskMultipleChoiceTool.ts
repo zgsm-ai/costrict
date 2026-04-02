@@ -2,6 +2,7 @@ import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
+import { safeAsk } from "./helpers/taskCommunication"
 import type { MultipleChoiceData, MultipleChoiceQuestion, MultipleChoiceOption } from "@roo-code/types"
 import { t } from "../../i18n"
 
@@ -85,7 +86,7 @@ export class AskMultipleChoiceTool extends BaseTool<"ask_multiple_choice"> {
 		const questions: string | undefined = block.params.questions
 
 		// During partial streaming, show partial progress
-		await task.ask("multiple_choice", questions ?? "", block.partial).catch(() => {})
+		await safeAsk(task, "multiple_choice", questions ?? "", block.partial)
 	}
 }
 

@@ -1,4 +1,4 @@
-import { getClientId } from "./../../../src/utils/getClientId"
+import { generateAnonymousClientId } from "./generateAnonymousClientId"
 import { PostHog } from "posthog-node"
 import * as vscode from "vscode"
 
@@ -24,11 +24,11 @@ import { BaseTelemetryClient } from "./BaseTelemetryClient"
  */
 export class PostHogTelemetryClient extends BaseTelemetryClient {
 	private client: PostHog
-	private distinctId: string = getClientId()
+	private distinctId: string
 	// Git repository properties that should be filtered out
 	private readonly gitPropertyNames = ["repositoryUrl", "repositoryName", "defaultBranch"]
 
-	constructor(debug = false) {
+	constructor(distinctId?: string, debug = false) {
 		super(
 			{
 				type: "exclude",
@@ -37,6 +37,7 @@ export class PostHogTelemetryClient extends BaseTelemetryClient {
 			debug,
 		)
 
+		this.distinctId = distinctId ?? generateAnonymousClientId()
 		this.client = new PostHog(process.env.POSTHOG_API_KEY || "", { host: "https://ph.roocode.com" })
 	}
 

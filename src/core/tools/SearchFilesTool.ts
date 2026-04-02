@@ -9,6 +9,7 @@ import { regexSearchFiles } from "../../services/ripgrep"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface SearchFilesParams {
 	path: string
@@ -88,7 +89,7 @@ export class SearchFilesTool extends BaseTool<"search_files"> {
 		}
 
 		const partialMessage = JSON.stringify({ ...sharedMessageProps, content: "" } satisfies ClineSayTool)
-		await task.ask("tool", partialMessage, block.partial).catch(() => {})
+		await safeAsk(task, "tool", partialMessage, block.partial)
 	}
 }
 

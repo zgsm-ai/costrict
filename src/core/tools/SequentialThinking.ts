@@ -7,6 +7,7 @@ import { Task } from "../task/Task"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk, safeSay } from "./helpers/taskCommunication"
 
 /**
  * 思考步骤数据结构
@@ -239,7 +240,7 @@ export class SequentialThinkingTool extends BaseTool<"sequential_thinking"> {
 		if (thought && thoughtNumber !== undefined && totalThoughts !== undefined) {
 			// During partial streaming, show a preview of the thought
 			const preview = `💭 Thought ${thoughtNumber}/${totalThoughts}\n\n${thought}`
-			await task.say("text", preview).catch(() => {})
+			await safeSay(task, "text", preview)
 		}
 	}
 }

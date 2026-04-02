@@ -54,7 +54,7 @@ import {
 } from "@roo-code/types"
 import { aggregateTaskCostsRecursive, type AggregatedCosts } from "./aggregateTaskCosts"
 import { TelemetryService } from "@roo-code/telemetry"
-import { CloudService, getRooCodeApiUrl } from "@roo-code/cloud"
+import { CloudService } from "@roo-code/cloud"
 
 import { Package } from "../../shared/package"
 import { findLast } from "../../shared/array"
@@ -502,6 +502,9 @@ export class ClineProvider
 	 */
 	private async syncCloudProfiles() {
 		try {
+			if (!CloudService.hasInstance()) {
+				return
+			}
 			const settings = CloudService.instance.getOrganizationSettings()
 
 			if (!settings?.providerProfiles) {

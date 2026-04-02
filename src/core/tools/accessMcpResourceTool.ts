@@ -5,6 +5,7 @@ import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface AccessMcpResourceParams {
 	server_name: string
@@ -93,7 +94,7 @@ export class AccessMcpResourceTool extends BaseTool<"access_mcp_resource"> {
 			uri: uri,
 		} satisfies ClineAskUseMcpServer)
 
-		await task.ask("use_mcp_server", partialMessage, block.partial).catch(() => {})
+		await safeAsk(task, "use_mcp_server", partialMessage, block.partial)
 	}
 }
 

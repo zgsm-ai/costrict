@@ -2,6 +2,7 @@ import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
+import { safeAsk } from "./helpers/taskCommunication"
 import {
 	buildSkillApprovalMessage,
 	buildSkillResult,
@@ -90,7 +91,7 @@ export class SkillTool extends BaseTool<"skill"> {
 			args: args,
 		})
 
-		await task.ask("tool", partialMessage, block.partial).catch(() => {})
+		await safeAsk(task, "tool", partialMessage, block.partial)
 	}
 }
 

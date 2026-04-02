@@ -35,6 +35,7 @@ import {
 	ImageMemoryTracker,
 } from "./helpers/imageHelpers"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -658,7 +659,7 @@ export class ReadFileTool extends BaseTool<"read_file"> {
 			...sharedMessageProps,
 			content: undefined,
 		} satisfies ClineSayTool)
-		await task.ask("tool", partialMessage, block.partial).catch(() => {})
+		await safeAsk(task, "tool", partialMessage, block.partial)
 	}
 
 	/**

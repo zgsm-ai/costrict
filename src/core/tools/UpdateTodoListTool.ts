@@ -1,6 +1,7 @@
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 import type { ToolUse } from "../../shared/tools"
 import cloneDeep from "clone-deep"
 import crypto from "crypto"
@@ -102,7 +103,7 @@ export class UpdateTodoListTool extends BaseTool<"update_todo_list"> {
 			tool: "updateTodoList",
 			todos: todos,
 		})
-		await task.ask("tool", approvalMsg, block.partial).catch(() => {})
+		await safeAsk(task, "tool", approvalMsg, block.partial)
 	}
 }
 

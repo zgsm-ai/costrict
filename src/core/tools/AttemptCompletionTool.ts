@@ -10,6 +10,7 @@ import type { ToolUse } from "../../shared/tools"
 import { t } from "../../i18n"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface AttemptCompletionParams {
 	result: string
@@ -186,10 +187,10 @@ export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 
 		if (command) {
 			if (lastMessage && lastMessage.ask === "command") {
-				await task.ask("command", command ?? "", block.partial).catch(() => {})
+				await safeAsk(task, "command", command ?? "", block.partial)
 			} else {
 				await task.say("completion_result", result ?? "", undefined, false)
-				await task.ask("command", command ?? "", block.partial).catch(() => {})
+				await safeAsk(task, "command", command ?? "", block.partial)
 			}
 		} else {
 			await task.say("completion_result", result ?? "", undefined, block.partial)
@@ -200,11 +201,6 @@ export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 		// Force final token usage update before emitting TaskCompleted.
 		// This ensures the latest stats are captured regardless of throttle timer.
 		task.emitFinalTokenUsageUpdate()
-
-		// Finalize audit logging for task completion
-		task.auditLogger?.finalizeTaskCompletion().catch((error) => {
-			console.error(`[AttemptCompletionTool] Failed to finalize audit log:`, error)
-		})
 
 		TelemetryService.instance.captureTaskCompleted(task.taskId)
 		task.emit(RooCodeEventName.TaskCompleted, task.taskId, task.getTokenUsage(), task.toolUsage)

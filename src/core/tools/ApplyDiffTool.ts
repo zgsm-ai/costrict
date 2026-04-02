@@ -21,9 +21,9 @@ import { CodeReviewService } from "../costrict/code-review"
 import { computeDiffStats, sanitizeUnifiedDiff } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
 import { getAppName } from "../../utils/getAppName"
-import { sanitizeArguments } from "../audit/sanitize.js"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface ApplyDiffParams {
 	path: string
@@ -35,7 +35,6 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 
 	async execute(params: ApplyDiffParams, task: Task, callbacks: ToolCallbacks): Promise<void> {
 		const { askApproval, handleError, pushToolResult } = callbacks
-		const executionStartTime = Date.now()
 		let { path: relPath, diff: diffContent } = params
 
 		if (diffContent && !task.api.getModel().id.includes("claude")) {
@@ -275,19 +274,6 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 			// Get the formatted response message
 			const message = await task.diffViewProvider.pushToolWriteResult(task, task.cwd, !fileExists)
 
-			// Record file change audit event
-			const executionDurationMs = Date.now() - executionStartTime
-			const sanitizedParams = sanitizeArguments({ path: relPath, diff: diffContent })
-			const auditEvent = task.auditLogger?.createFileChangeEvent({
-				filePath: relPath,
-				changeType: "modify",
-				toolName: "apply_diff",
-				approvalDecision: "auto_approved",
-				diffStats,
-				language: fileLanguage,
-			})
-			if (auditEvent) task.auditLogger?.record(auditEvent)
-
 			// Check for single SEARCH/REPLACE block warning
 			const searchBlocks = (diffContent.match(/<<<<<<< SEARCH/g) || []).length
 			const singleBlockNotice =
@@ -342,7 +328,7 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 			return
 		}
 
-		await task.ask("tool", JSON.stringify(sharedMessageProps), block.partial, toolProgressStatus).catch(() => {})
+		await safeAsk(task, "tool", JSON.stringify(sharedMessageProps), block.partial, toolProgressStatus)
 	}
 }
 

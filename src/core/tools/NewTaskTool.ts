@@ -8,6 +8,7 @@ import { formatResponse } from "../prompts/responses"
 import { parseMarkdownChecklist } from "./UpdateTodoListTool"
 import { Package } from "../../shared/package"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 import type { ToolUse } from "../../shared/tools"
 
 interface NewTaskParams {
@@ -151,7 +152,7 @@ export class NewTaskTool extends BaseTool<"new_task"> {
 			todos: todos,
 		})
 
-		await task.ask("tool", partialMessage, block.partial).catch(() => {})
+		await safeAsk(task, "tool", partialMessage, block.partial)
 	}
 }
 

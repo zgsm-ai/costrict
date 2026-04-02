@@ -12,6 +12,7 @@ import { EXPERIMENT_IDS, experiments as Experiments } from "../../shared/experim
 import { MAX_WORKSPACE_FILES } from "@roo-code/types"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface ListFilesParams {
 	path: string
@@ -98,7 +99,7 @@ export class ListFilesTool extends BaseTool<"list_files"> {
 		}
 
 		const partialMessage = JSON.stringify({ ...sharedMessageProps, content: "" } satisfies ClineSayTool)
-		await task.ask("tool", partialMessage, block.partial).catch(() => {})
+		await safeAsk(task, "tool", partialMessage, block.partial)
 	}
 }
 

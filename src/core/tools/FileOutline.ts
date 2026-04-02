@@ -16,6 +16,7 @@ import { loadScmQuery, detectLanguageFromFilename } from "./util/scm-loader"
 import { Query } from "web-tree-sitter"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface FileOutlineParams {
 	file_path: string
@@ -355,17 +356,15 @@ export class FileOutlineTool extends BaseTool<"file_outline"> {
 			const isOutsideWorkspace = isPathOutsideWorkspace(absolutePath)
 			const readablePath = getReadablePath(task.cwd, filePath)
 
-			await task
-				.ask(
-					"tool",
-					JSON.stringify({
-						tool: "file_outline",
-						path: readablePath,
-						isOutsideWorkspace,
-					}),
-					block.partial,
-				)
-				.catch(() => {})
+			await task.ask(
+				"tool",
+				JSON.stringify({
+					tool: "file_outline",
+					path: readablePath,
+					isOutsideWorkspace,
+				}),
+				block.partial,
+			)
 		}
 	}
 }

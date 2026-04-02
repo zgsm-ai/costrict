@@ -8,6 +8,7 @@ import type { ClineProvider } from "../../webview/ClineProvider"
 import { getParams, retryWrapper } from "../../../utils/zgsmUtils"
 import { joinUrl } from "../../../utils/joinUrl"
 import { ZgsmAuthStatus, ZgsmAuthTokens, ZgsmLoginState, LoginTokenResponse } from "./types"
+import crypto from "crypto"
 import { generateNewSessionClientId, getClientId } from "../../../utils/getClientId"
 import { sendZgsmLogout } from "./ipc/client"
 import { CompletionStatusBar } from "../auto-complete"
@@ -376,7 +377,7 @@ export class ZgsmAuthService {
 	 * Generate random string
 	 */
 	private generateRandomString(): string {
-		return Math.random().toString(36).substring(2) + Date.now().toString(36)
+		return crypto.randomBytes(32).toString("hex")
 	}
 
 	/**

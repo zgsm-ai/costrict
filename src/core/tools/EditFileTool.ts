@@ -14,6 +14,7 @@ import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { safeAsk } from "./helpers/taskCommunication"
 
 interface EditFileParams {
 	file_path: string
@@ -167,7 +168,7 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			}
 
 			// Finalize the existing partial tool ask row so the UI doesn't get stuck in a spinner state.
-			await task.ask("tool", JSON.stringify(sharedMessageProps), false).catch(() => {})
+			await safeAsk(task, "tool", JSON.stringify(sharedMessageProps), false)
 		}
 
 		const recordFailureForPathAndMaybeEscalate = async (relPath: string, formattedError: string): Promise<void> => {
@@ -521,7 +522,7 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			isOutsideWorkspace,
 		}
 
-		await task.ask("tool", JSON.stringify(sharedMessageProps), block.partial).catch(() => {})
+		await safeAsk(task, "tool", JSON.stringify(sharedMessageProps), block.partial)
 	}
 }
 
