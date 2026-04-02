@@ -282,6 +282,30 @@ describe("webviewMessageHandler - image mentions", () => {
 			false,
 		)
 	})
+
+	it("should forward dedicated multipleChoiceResponse ask payloads", async () => {
+		const mockHandleWebviewAskResponse = vi.fn()
+		vi.mocked(mockClineProvider.getCurrentTask).mockReturnValue({
+			cwd: "/mock/workspace",
+			rooIgnoreController: undefined,
+			handleWebviewAskResponse: mockHandleWebviewAskResponse,
+		} as any)
+
+		await webviewMessageHandler(mockClineProvider, {
+			type: "askResponse",
+			askResponse: "multipleChoiceResponse",
+			text: '{"q1":{"selectedOptionIds":["a"]}}',
+			images: [],
+		})
+
+		expect(mockHandleWebviewAskResponse).toHaveBeenCalledWith(
+			"multipleChoiceResponse",
+			'{"q1":{"selectedOptionIds":["a"]}}',
+			["data:image/png;base64,from-mention"],
+			"system",
+			false,
+		)
+	})
 })
 
 describe("webviewMessageHandler - requestOllamaModels", () => {

@@ -1655,8 +1655,25 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 		}
 
-		// CoStrict: Mark the last multiple choice question as answered and save response
+		//costrict: free-form chat input should stale unresolved multiple choice asks without saving structured answers
 		if (askResponse === "messageResponse") {
+			const idx = findLastIndex(
+				this.clineMessages,
+				(msg) => msg.type === "ask" && msg.ask === "multiple_choice" && !msg.isAnswered,
+			)
+			if (idx !== -1) {
+				this.clineMessages
+					.filter((msg) => msg.type === "ask" && msg.ask === "multiple_choice")
+					.reverse()
+					.forEach((msg) => {
+						msg.isAnswered = true
+					})
+				this.saveClineMessages().catch((e) => console.error("Failed to stale multiple choice state:", e))
+			}
+		}
+
+		//costrict: persist structured multiple choice answers only through the dedicated response channel
+		if (askResponse === "multipleChoiceResponse") {
 			const idx = findLastIndex(
 				this.clineMessages,
 				(msg) => msg.type === "ask" && msg.ask === "multiple_choice" && !msg.isAnswered,

@@ -54,8 +54,22 @@ describe("MultipleChoiceForm", () => {
 				id: "q1",
 				prompt: "Pick one",
 				options: [
-					{ id: "recommended", label: "Recommended choice (Recommended)" },
+					{ id: "recommended", label: "Recommended choice", recommended: true },
 					{ id: "other", label: "Other choice" },
+				],
+			},
+		],
+	}
+
+	const noRecommendedData = {
+		title: "Questionnaire",
+		questions: [
+			{
+				id: "q1",
+				prompt: "Pick one",
+				options: [
+					{ id: "first", label: "First choice", recommended: false },
+					{ id: "second", label: "Second choice", recommended: false },
 				],
 			},
 		],
@@ -70,6 +84,19 @@ describe("MultipleChoiceForm", () => {
 		expect(onSubmit).toHaveBeenCalledWith({
 			q1: {
 				selectedOptionIds: ["recommended"],
+			},
+		})
+	})
+
+	it("falls back to the first option when no option is recommended", () => {
+		const onSubmit = vi.fn()
+		renderWithProviders(<MultipleChoiceForm data={noRecommendedData as any} onSubmit={onSubmit} />)
+
+		fireEvent.click(screen.getByRole("button", { name: "chat:multipleChoice.confirm" }))
+
+		expect(onSubmit).toHaveBeenCalledWith({
+			q1: {
+				selectedOptionIds: ["first"],
 			},
 		})
 	})
@@ -95,6 +122,25 @@ describe("MultipleChoiceForm", () => {
 		})
 	})
 
+	it("clears custom answer when a single-select question switches back to a normal option", () => {
+		const onSubmit = vi.fn()
+		renderWithProviders(<MultipleChoiceForm data={data} onSubmit={onSubmit} />)
+
+		fireEvent.click(screen.getByText("chat:multipleChoice.customAnswer"))
+		fireEvent.change(screen.getByPlaceholderText("chat:multipleChoice.customAnswerPlaceholder"), {
+			target: { value: "Custom plan" },
+		})
+		fireEvent.click(screen.getByText(/Other choice/))
+		fireEvent.click(screen.getByRole("button", { name: "chat:multipleChoice.confirm" }))
+
+		expect(onSubmit).toHaveBeenCalledWith({
+			q1: {
+				selectedOptionIds: ["other"],
+				customAnswer: undefined,
+			},
+		})
+	})
+
 	it("auto-submits default recommended selections during countdown", () => {
 		vi.useFakeTimers()
 		const onSubmit = vi.fn()
@@ -115,6 +161,62 @@ describe("MultipleChoiceForm", () => {
 				selectedOptionIds: ["recommended"],
 			},
 		})
+		vi.useRealTimers()
+	})
+
+	it("stops countdown when a normal option is clicked", () => {
+		vi.useFakeTimers()
+		const onSubmit = vi.fn()
+		renderWithProviders(<MultipleChoiceForm data={data} onSubmit={onSubmit} />, {
+			autoApprovalEnabled: true,
+			alwaysAllowFollowupQuestions: true,
+			followupAutoApproveTimeoutMs: 2000,
+		})
+
+		expect(screen.getByText(/chat:multipleChoice.autoSelectCountdown/)).toBeInTheDocument()
+		fireEvent.click(screen.getByText(/Other choice/))
+		expect(screen.queryByText(/chat:multipleChoice.autoSelectCountdown/)).not.toBeInTheDocument()
+
+		act(() => {
+			vi.advanceTimersByTime(2000)
+		})
+
+		expect(onSubmit).not.toHaveBeenCalled()
+		vi.useRealTimers()
+	})
+
+	it("hides and stops countdown when the form becomes answered or stale", () => {
+		vi.useFakeTimers()
+		const onSubmit = vi.fn()
+		const { rerender } = renderWithProviders(
+			<MultipleChoiceForm data={data} onSubmit={onSubmit} isAnswered={false} />,
+			{
+				autoApprovalEnabled: true,
+				alwaysAllowFollowupQuestions: true,
+				followupAutoApproveTimeoutMs: 2000,
+			},
+		)
+
+		expect(screen.getByText(/chat:multipleChoice.autoSelectCountdown/)).toBeInTheDocument()
+
+		rerender(
+			<TestExtensionStateProvider
+				value={{
+					autoApprovalEnabled: true,
+					alwaysAllowFollowupQuestions: true,
+					followupAutoApproveTimeoutMs: 2000,
+				}}>
+				<MultipleChoiceForm data={data} onSubmit={onSubmit} isAnswered={true} />
+			</TestExtensionStateProvider>,
+		)
+
+		expect(screen.queryByText(/chat:multipleChoice.autoSelectCountdown/)).not.toBeInTheDocument()
+
+		act(() => {
+			vi.advanceTimersByTime(2000)
+		})
+
+		expect(onSubmit).not.toHaveBeenCalled()
 		vi.useRealTimers()
 	})
 

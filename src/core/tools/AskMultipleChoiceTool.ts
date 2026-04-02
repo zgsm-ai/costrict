@@ -120,7 +120,24 @@ export class AskMultipleChoiceTool extends BaseTool<"ask_multiple_choice"> {
 			}
 
 			task.consecutiveMistakeCount = 0
-			const { text, images } = await task.ask("multiple_choice", JSON.stringify(multipleChoiceData), false)
+			const { response, text, images } = await task.ask(
+				"multiple_choice",
+				JSON.stringify(multipleChoiceData),
+				false,
+			)
+
+			//costrict: free-form chat input, including image-only messages, should pass through as normal user feedback
+			if (response === "messageResponse") {
+				const responseImages = images ?? []
+				if (text || responseImages.length > 0) {
+					if (text) {
+						task.userMessageContent.push({ type: "text", text })
+					}
+					task.userMessageContent.push(...formatResponse.imageBlocks(responseImages))
+					await task.say("user_feedback", text ?? "", responseImages)
+				}
+				return
+			}
 
 			// Parse user response
 			let userResponse: MultipleChoiceResponse | { __skipped: boolean } = {}

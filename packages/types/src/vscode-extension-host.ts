@@ -463,7 +463,13 @@ export interface Command {
  * Webview | CLI -> Extension
  */
 
-export type ClineAskResponse = "yesButtonClicked" | "noButtonClicked" | "messageResponse" | "objectResponse"
+//costrict: add a dedicated structured response channel for multiple choice form submissions
+export type ClineAskResponse =
+	| "yesButtonClicked"
+	| "noButtonClicked"
+	| "messageResponse"
+	| "objectResponse"
+	| "multipleChoiceResponse"
 
 export type AudioType = "notification" | "celebration" | "progress_loop"
 

@@ -827,6 +827,7 @@ export const webviewMessageHandler = async (
 		case "askResponse":
 			{
 				const resolved = await resolveIncomingImages({ text: message.text, images: message.images })
+				//costrict: transparently forward the dedicated multiple choice response channel to Task
 				provider
 					.getCurrentTask()
 					?.handleWebviewAskResponse(

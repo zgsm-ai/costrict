@@ -36,6 +36,8 @@ export interface MultipleChoiceOption {
 	id: string
 	/** Display text for this option */
 	label: string
+	/** Whether this option is the recommended/default choice */
+	recommended?: boolean
 }
 
 /**
@@ -62,6 +64,7 @@ export interface MultipleChoiceResponse {
 export const multipleChoiceOptionSchema = z.object({
 	id: z.string(),
 	label: z.string(),
+	recommended: z.boolean().optional(),
 })
 
 /**

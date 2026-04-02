@@ -8,7 +8,7 @@ Use this tool when:
 - You want to collect multiple related decisions in a single interaction.
 
 CRITICAL: Every question and every option MUST have an id field - results cannot be matched without ids.
-CRITICAL: For each question, put the recommended option first and append " (Recommended)" to that option's label.
+CRITICAL: For each question, put the recommended option first and set "recommended": true on that option.
 
 Parameters:
 - title: (optional) A brief title for the decision group.
@@ -18,13 +18,14 @@ Parameters:
   - options: (REQUIRED) An array of option objects (at least 2). Put the recommended option first.
     - id: (REQUIRED) A unique, program-friendly identifier (slug) for the option (e.g., "react", "vue").
     - label: (REQUIRED) The user-facing display text.
+    - recommended: (optional) Set to true only for the recommended option. Do not include recommendation text in label.
   - allow_multiple: (optional) Set to 'true' for checkboxes (multi-select), 'false' for radio buttons (single-select). Defaults to false.
 
 Example: Simple choice
-{ "title": "Project Setup", "questions": [{ "id": "framework", "prompt": "Which framework would you like to use?", "options": [{ "id": "react", "label": "React (Recommended)" }, { "id": "vue", "label": "Vue.js" }], "allow_multiple": false }] }
+{ "title": "Project Setup", "questions": [{ "id": "framework", "prompt": "Which framework would you like to use?", "options": [{ "id": "react", "label": "React", "recommended": true }, { "id": "vue", "label": "Vue.js" }], "allow_multiple": false }] }
 
 Example: Multiple questions with multi-select
-{ "title": "Project Setup", "questions": [{ "id": "framework", "prompt": "Which framework would you like to use?", "options": [{ "id": "react", "label": "React (Recommended)" }, { "id": "vue", "label": "Vue.js" }], "allow_multiple": false }, { "id": "features", "prompt": "Select additional features:", "options": [{ "id": "typescript", "label": "TypeScript (Recommended)" }, { "id": "linting", "label": "ESLint + Prettier" }], "allow_multiple": true }] }`
+{ "title": "Project Setup", "questions": [{ "id": "framework", "prompt": "Which framework would you like to use?", "options": [{ "id": "react", "label": "React", "recommended": true }, { "id": "vue", "label": "Vue.js" }], "allow_multiple": false }, { "id": "features", "prompt": "Select additional features:", "options": [{ "id": "typescript", "label": "TypeScript", "recommended": true }, { "id": "linting", "label": "ESLint + Prettier" }], "allow_multiple": true }] }`
 
 const TITLE_PARAMETER_DESCRIPTION = `Optional brief title for this group of decisions`
 
@@ -39,6 +40,8 @@ const QUESTION_OPTIONS_DESCRIPTION = `Required array of at least two option obje
 const OPTION_ID_DESCRIPTION = `Unique program-friendly identifier (slug) for this option`
 
 const OPTION_LABEL_DESCRIPTION = `User-facing display text for this option`
+
+const OPTION_RECOMMENDED_DESCRIPTION = `Set to true only for the recommended option. Do not put recommendation text in label`
 
 const ALLOW_MULTIPLE_DESCRIPTION = `Set to true for multi-select (checkboxes), false for single-select (radio buttons). Defaults to false`
 
@@ -82,6 +85,10 @@ export default {
 										label: {
 											type: "string",
 											description: OPTION_LABEL_DESCRIPTION,
+										},
+										recommended: {
+											type: "boolean",
+											description: OPTION_RECOMMENDED_DESCRIPTION,
 										},
 									},
 									required: ["id", "label"],

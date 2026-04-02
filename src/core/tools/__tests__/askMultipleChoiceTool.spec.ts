@@ -10,12 +10,13 @@ describe("askMultipleChoiceTool", () => {
 		vi.clearAllMocks()
 
 		mockCline = {
-			ask: vi.fn().mockResolvedValue({ text: '{"q1":["a"]}', images: [] }),
+			ask: vi.fn().mockResolvedValue({ response: "multipleChoiceResponse", text: '{"q1":["a"]}', images: [] }),
 			say: vi.fn().mockResolvedValue(undefined),
 			sayAndCreateMissingParamError: vi.fn().mockResolvedValue("Missing parameter error"),
 			consecutiveMistakeCount: 0,
 			recordToolError: vi.fn(),
 			didToolFailInCurrentTurn: false,
+			userMessageContent: [],
 		}
 
 		mockPushToolResult = vi.fn((result) => {
@@ -62,6 +63,7 @@ describe("askMultipleChoiceTool", () => {
 
 	it("should include custom answer text in selected_options", async () => {
 		mockCline.ask.mockResolvedValue({
+			response: "multipleChoiceResponse",
 			text: '{"q1":{"selectedOptionIds":["a"],"customAnswer":"Use SQLite for local dev"}}',
 			images: [],
 		})
@@ -79,7 +81,45 @@ describe("askMultipleChoiceTool", () => {
 						id: "q1",
 						prompt: "Select an option",
 						options: [
-							{ id: "a", label: "A (Recommended)" },
+							{ id: "a", label: "A", recommended: true },
+							{ id: "b", label: "B" },
+						],
+					},
+				],
+			} as any,
+			partial: false,
+		}
+
+		await askMultipleChoiceTool.handle(mockCline, block, {
+			askApproval: vi.fn(),
+			handleError: vi.fn(),
+			pushToolResult: mockPushToolResult,
+		})
+
+		expect(toolResult).toContain("A, Use SQLite for local dev")
+	})
+
+	it("should pass through free-form chat input instead of parsing it as multiple choice JSON", async () => {
+		mockCline.ask.mockResolvedValue({
+			response: "messageResponse",
+			text: "继续",
+			images: [],
+		})
+
+		const block: ToolUse<"ask_multiple_choice"> = {
+			type: "tool_use",
+			name: "ask_multiple_choice",
+			params: {
+				title: "Choose one",
+			},
+			nativeArgs: {
+				title: "Choose one",
+				questions: [
+					{
+						id: "q1",
+						prompt: "Select an option",
+						options: [
+							{ id: "a", label: "A" },
 							{ id: "b", label: "B" },
 						],
 					},
@@ -94,7 +134,49 @@ describe("askMultipleChoiceTool", () => {
 			pushToolResult: mockPushToolResult,
 		})
 
-		expect(toolResult).toContain("A (Recommended), Use SQLite for local dev")
+		expect(mockCline.say).toHaveBeenCalledWith("user_feedback", "继续", [])
+		expect(mockCline.userMessageContent).toEqual([{ type: "text", text: "继续" }])
+		expect(mockPushToolResult).not.toHaveBeenCalled()
+	})
+
+	it("should preserve image-only free-form chat input while multiple_choice is pending", async () => {
+		mockCline.ask.mockResolvedValue({
+			response: "messageResponse",
+			text: "",
+			images: ["data:image/png;base64,abc"],
+		})
+
+		const block: ToolUse<"ask_multiple_choice"> = {
+			type: "tool_use",
+			name: "ask_multiple_choice",
+			params: { title: "Choose one" },
+			nativeArgs: {
+				title: "Choose one",
+				questions: [
+					{
+						id: "q1",
+						prompt: "Select an option",
+						options: [
+							{ id: "a", label: "A" },
+							{ id: "b", label: "B" },
+						],
+					},
+				],
+			},
+			partial: false,
+		}
+
+		await askMultipleChoiceTool.handle(mockCline, block, {
+			askApproval: vi.fn(),
+			handleError: vi.fn(),
+			pushToolResult: mockPushToolResult,
+		})
+
+		expect(mockCline.say).toHaveBeenCalledWith("user_feedback", "", ["data:image/png;base64,abc"])
+		expect(mockCline.userMessageContent).toEqual([
+			{ type: "image", source: { type: "base64", media_type: "image/png", data: "abc" } },
+		])
+		expect(mockPushToolResult).not.toHaveBeenCalled()
 	})
 
 	describe("parameter validation", () => {

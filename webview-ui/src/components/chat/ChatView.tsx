@@ -1510,9 +1510,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		(response: MultipleChoiceResponse) => {
 			// 后端会在 handleWebviewAskResponse 中自动设置 isAnswered 和 userResponse
 			// 不需要前端处理，避免重复和耦合
+			//costrict: submit structured multiple choice answers through a dedicated response channel
 			vscode.postMessage({
 				type: "askResponse",
-				askResponse: "messageResponse",
+				askResponse: "multipleChoiceResponse",
 				text: JSON.stringify(response),
 			})
 

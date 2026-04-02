@@ -11,6 +11,10 @@ import type { MultipleChoiceData, MultipleChoiceQuestionResponse, MultipleChoice
 const DEFAULT_FOLLOWUP_TIMEOUT_MS = 60000
 const COUNTDOWN_INTERVAL_MS = 1000
 
+const getRecommendedOptionId = (question: MultipleChoiceData["questions"][number]): string | undefined => {
+	return question.options.find((option) => option.recommended)?.id ?? question.options[0]?.id
+}
+
 const createDefaultSelections = (data: MultipleChoiceData): MultipleChoiceResponse => {
 	const initialSelections: MultipleChoiceResponse = {}
 
@@ -30,9 +34,9 @@ const createDefaultSelections = (data: MultipleChoiceData): MultipleChoiceRespon
 			continue
 		}
 
-		const firstOption = question.options?.[0]
+		const recommendedOptionId = getRecommendedOptionId(question)
 		initialSelections[question.id] = {
-			selectedOptionIds: firstOption ? [firstOption.id] : [],
+			selectedOptionIds: recommendedOptionId ? [recommendedOptionId] : [],
 		}
 	}
 
@@ -63,7 +67,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 	const [submitted, setSubmitted] = useState(isAnswered)
 	const [collapsed, setCollapsed] = useState(isAnswered)
 	const [countdown, setCountdown] = useState<number | null>(null)
-	const [hasCustomInteraction, setHasCustomInteraction] = useState(false)
+	const [hasUserInteracted, setHasUserInteracted] = useState(false)
 
 	const getInitialSubmitAction = (): "confirm" | "skip" | null => {
 		if (!isAnswered || !data.userResponse) return null
@@ -77,7 +81,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 
 	useEffect(() => {
 		setSelections(createDefaultSelections(data))
-		setHasCustomInteraction(false)
+		setHasUserInteracted(false)
 	}, [data])
 
 	useEffect(() => {
@@ -89,7 +93,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 	const defaultSelections = useMemo(() => createDefaultSelections(data), [data])
 
 	useEffect(() => {
-		if (autoApprovalEnabled && !submitted && !hasCustomInteraction && data.questions.length > 0) {
+		if (autoApprovalEnabled && !isAnswered && !submitted && !hasUserInteracted && data.questions.length > 0) {
 			const timeoutMs =
 				typeof followupAutoApproveTimeoutMs === "number" && !isNaN(followupAutoApproveTimeoutMs)
 					? followupAutoApproveTimeoutMs
@@ -108,6 +112,9 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 			}, COUNTDOWN_INTERVAL_MS)
 
 			const timeoutId = window.setTimeout(() => {
+				if (isAnswered) {
+					return
+				}
 				setSubmitAction("confirm")
 				setSubmitted(true)
 				onSubmit(defaultSelections)
@@ -125,12 +132,14 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 		data.questions.length,
 		defaultSelections,
 		followupAutoApproveTimeoutMs,
-		hasCustomInteraction,
+		hasUserInteracted,
+		isAnswered,
 		onSubmit,
 		submitted,
 	])
 
 	const handleToggleOption = useCallback((questionId: string, optionId: string, allowMultiple: boolean) => {
+		setHasUserInteracted(true)
 		setSelections((prev) => {
 			const currentResponse = normalizeQuestionResponse(prev[questionId])
 			const currentSelections = currentResponse.selectedOptionIds
@@ -158,15 +167,15 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 			return {
 				...prev,
 				[questionId]: {
-					...currentResponse,
 					selectedOptionIds: [optionId],
+					customAnswer: undefined,
 				},
 			}
 		})
 	}, [])
 
 	const handleCustomToggle = useCallback((questionId: string, allowMultiple: boolean) => {
-		setHasCustomInteraction(true)
+		setHasUserInteracted(true)
 		setSelections((prev) => {
 			const currentResponse = normalizeQuestionResponse(prev[questionId])
 			const hasCustomAnswer = currentResponse.customAnswer !== undefined
@@ -182,7 +191,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 	}, [])
 
 	const handleCustomAnswerChange = useCallback((questionId: string, value: string) => {
-		setHasCustomInteraction(true)
+		setHasUserInteracted(true)
 		setSelections((prev) => ({
 			...prev,
 			[questionId]: {
@@ -363,6 +372,11 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 													</span>
 													<span className="text-[12px] text-vscode-foreground select-none leading-snug flex-1">
 														{option.label}
+														{option.recommended && (
+															<span className="ml-2 inline-flex items-center rounded-sm border border-vscode-panel-border bg-vscode-badge-background/35 px-1.5 py-px text-[10px] font-medium leading-none text-vscode-descriptionForeground align-middle">
+																{t("chat:multipleChoice.recommended")}
+															</span>
+														)}
 													</span>
 												</div>
 											)
@@ -455,7 +469,7 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 							</Button>
 						</div>
 
-						{!submitted && (
+						{!submitted && !isAnswered && (
 							<div className="text-[10px] text-vscode-descriptionForeground leading-snug opacity-75">
 								<Trans
 									i18nKey="chat:multipleChoice.skipHint"

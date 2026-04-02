@@ -69,4 +69,40 @@ describe("Task.ask queued message drain", () => {
 		expect((task as any).messageQueueService.isEmpty()).toBe(false)
 		expect((task as any).messageQueueService.messages[0]?.text).toBe("1+1=?")
 	})
+
+	it("marks unresolved multiple_choice asks answered when free-form chat input arrives", () => {
+		const task = Object.create(Task.prototype) as Task
+		;(task as any).clineMessages = [
+			{ type: "ask", ask: "multiple_choice", isAnswered: false, text: "questionnaire" },
+		]
+		;(task as any).cancelAutoApprovalTimeout = vi.fn(() => {})
+		;(task as any).checkpointSave = vi.fn(async () => {})
+		;(task as any).saveClineMessages = vi.fn(async () => {})
+		;(task as any).providerRef = { deref: () => undefined }
+		;(task as any).api = { setChatType: vi.fn() }
+		;(task as any).emit = vi.fn()
+
+		task.handleWebviewAskResponse("messageResponse", "继续")
+
+		expect((task as any).clineMessages[0].isAnswered).toBe(true)
+		expect((task as any).clineMessages[0].userResponse).toBeUndefined()
+	})
+
+	it("stores structured userResponse only for dedicated multipleChoiceResponse", () => {
+		const task = Object.create(Task.prototype) as Task
+		;(task as any).clineMessages = [
+			{ type: "ask", ask: "multiple_choice", isAnswered: false, text: "questionnaire" },
+		]
+		;(task as any).cancelAutoApprovalTimeout = vi.fn(() => {})
+		;(task as any).checkpointSave = vi.fn(async () => {})
+		;(task as any).saveClineMessages = vi.fn(async () => {})
+		;(task as any).providerRef = { deref: () => undefined }
+		;(task as any).api = { setChatType: vi.fn() }
+		;(task as any).emit = vi.fn()
+
+		task.handleWebviewAskResponse("multipleChoiceResponse", '{"q1":{"selectedOptionIds":["a"]}}')
+
+		expect((task as any).clineMessages[0].isAnswered).toBe(true)
+		expect((task as any).clineMessages[0].userResponse).toEqual({ q1: { selectedOptionIds: ["a"] } })
+	})
 })
