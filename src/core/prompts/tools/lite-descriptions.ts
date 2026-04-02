@@ -1,7 +1,7 @@
 export function getLiteReadFileDescription(): string {
 	return `## read_file
 Read a single file with line numbers. Two modes: 'slice' (default, offset/limit) and 'indentation' (extract semantic block around anchor_line, preferred when line number is known). Supports PDF/DOCX text extraction. Default 1500 lines, 1500 chars/line max.
-Params: path (REQUIRED), mode (optional: slice|indentation), offset, limit, indentation: {anchor_line, max_levels, include_siblings}`
+Params: path (REQUIRED), mode (optional: slice|indentation), offset, limit, indentation: {anchor_line?: number, max_levels?: number, include_siblings?: boolean}`
 }
 getLiteReadFileDescription.toolname = "read_file"
 
@@ -36,7 +36,7 @@ getLiteExecuteCommandDescription.toolname = "execute_command"
 export function getLiteAskFollowupQuestionDescription(): string {
 	return `## ask_followup_question
 Ask the user a question with 2-4 suggested actionable answers. May include mode switch.
-Params: question (REQUIRED), follow_up (REQUIRED: [{text, mode?}])`
+Params: question (REQUIRED), follow_up (REQUIRED: [{ text: string, mode?: string }])`
 }
 getLiteAskFollowupQuestionDescription.toolname = "ask_followup_question"
 

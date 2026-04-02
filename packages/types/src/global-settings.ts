@@ -362,7 +362,7 @@ export const EVALS_SETTINGS: RooCodeSettings = {
 
 	autoApprovalEnabled: true,
 	alwaysAllowReadOnly: true,
-	alwaysAllowReadOnlyOutsideWorkspace: false,
+	alwaysAllowReadOnlyOutsideWorkspace: true,
 	alwaysAllowWrite: true,
 	alwaysAllowWriteOutsideWorkspace: false,
 	alwaysAllowWriteProtected: false,
