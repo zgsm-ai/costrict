@@ -2,6 +2,12 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.6.2]
+
+- Prevent auto-scroll when editing text (PR #1106)
+- Add exit handler to properly kill PTY process (PR #1103)
+- Fix known issues
+
 ## [2.6.1]
 
 - Add repository URL to API requests for better tracking and context (PR #1101)
