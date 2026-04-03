@@ -164,6 +164,18 @@ describe("MultipleChoiceForm", () => {
 		vi.useRealTimers()
 	})
 
+	it("keeps the countdown outside the scroll container", () => {
+		const onSubmit = vi.fn()
+		renderWithProviders(<MultipleChoiceForm data={data} onSubmit={onSubmit} />, {
+			autoApprovalEnabled: true,
+			alwaysAllowFollowupQuestions: true,
+			followupAutoApproveTimeoutMs: 2000,
+		})
+
+		const countdown = screen.getByText(/chat:multipleChoice.autoSelectCountdown/)
+		expect(countdown.parentElement).not.toHaveClass("overflow-y-auto")
+	})
+
 	it("stops countdown when a normal option is clicked", () => {
 		vi.useFakeTimers()
 		const onSubmit = vi.fn()
@@ -182,6 +194,37 @@ describe("MultipleChoiceForm", () => {
 		})
 
 		expect(onSubmit).not.toHaveBeenCalled()
+		vi.useRealTimers()
+	})
+
+	it("calls onCancelAutoApproval when the user manually interacts or auto-approval is toggled off", () => {
+		vi.useFakeTimers()
+		const onSubmit = vi.fn()
+		const onCancelAutoApproval = vi.fn()
+		const { rerender } = renderWithProviders(
+			<MultipleChoiceForm data={data} onSubmit={onSubmit} onCancelAutoApproval={onCancelAutoApproval} />,
+			{
+				autoApprovalEnabled: true,
+				alwaysAllowFollowupQuestions: true,
+				followupAutoApproveTimeoutMs: 2000,
+			},
+		)
+
+		fireEvent.click(screen.getByText(/Other choice/))
+		expect(onCancelAutoApproval).toHaveBeenCalled()
+
+		rerender(
+			<TestExtensionStateProvider
+				value={{
+					autoApprovalEnabled: false,
+					alwaysAllowFollowupQuestions: true,
+					followupAutoApproveTimeoutMs: 2000,
+				}}>
+				<MultipleChoiceForm data={data} onSubmit={onSubmit} onCancelAutoApproval={onCancelAutoApproval} />
+			</TestExtensionStateProvider>,
+		)
+
+		expect(onCancelAutoApproval).toHaveBeenCalled()
 		vi.useRealTimers()
 	})
 
@@ -220,13 +263,13 @@ describe("MultipleChoiceForm", () => {
 		vi.useRealTimers()
 	})
 
-	it("starts countdown when only autoApprovalEnabled is true", () => {
+	it("does not start countdown when alwaysAllowFollowupQuestions is false", () => {
 		const onSubmit = vi.fn()
 		renderWithProviders(<MultipleChoiceForm data={data} onSubmit={onSubmit} />, {
 			autoApprovalEnabled: true,
 			alwaysAllowFollowupQuestions: false,
 		})
 
-		expect(screen.getByText(/chat:multipleChoice.autoSelectCountdown/)).toBeInTheDocument()
+		expect(screen.queryByText(/chat:multipleChoice.autoSelectCountdown/)).not.toBeInTheDocument()
 	})
 })

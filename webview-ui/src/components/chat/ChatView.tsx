@@ -1091,6 +1091,15 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		// Remove the 500-message limit to prevent array index shifting
 		// Virtuoso is designed to efficiently handle large lists through virtualization
 		const newVisibleMessages = modifiedMessages.filter((message) => {
+			//costrict: hide stale multiple_choice loading placeholders once a later message supersedes them
+			if (
+				message.ask === "multiple_choice" &&
+				message.partial === true &&
+				modifiedMessages.at(-1)?.ts !== message.ts
+			) {
+				return false
+			}
+
 			// Filter out checkpoint_saved messages that should be suppressed
 			if (message.say === "checkpoint_saved") {
 				// Check if this checkpoint has the suppressMessage flag set
@@ -1582,6 +1591,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const handleFollowUpUnmount = useCallback(() => {
 		vscode.postMessage({ type: "cancelAutoApproval" })
 	}, [])
+	//costrict: reuse the existing backend timeout cancellation path for multiple_choice countdown cleanup and manual interaction
+	const handleMultipleChoiceUnmount = useCallback(() => {
+		vscode.postMessage({ type: "cancelAutoApproval" })
+	}, [])
 
 	const itemContent = useCallback(
 		(index: number, messageOrGroup: ClineMessage) => {
@@ -1602,6 +1615,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					onMultipleChoiceSubmit={handleMultipleChoiceSubmit}
 					onBatchFileResponse={handleBatchFileResponse}
 					onFollowUpUnmount={handleFollowUpUnmount}
+					onMultipleChoiceUnmount={handleMultipleChoiceUnmount}
 					isFollowUpAutoApprovalPaused={isFollowUpAutoApprovalPaused}
 					isFollowUpAnswered={
 						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentFollowUpTs)
@@ -1643,6 +1657,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			handleMultipleChoiceSubmit,
 			handleBatchFileResponse,
 			handleFollowUpUnmount,
+			handleMultipleChoiceUnmount,
 			isFollowUpAutoApprovalPaused,
 			currentFollowUpTs,
 			shouldHighlight,

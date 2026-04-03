@@ -58,11 +58,17 @@ interface MultipleChoiceFormProps {
 	data: MultipleChoiceData
 	onSubmit: (response: MultipleChoiceResponse) => void
 	isAnswered?: boolean
+	onCancelAutoApproval?: () => void
 }
 
-export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: MultipleChoiceFormProps) => {
+export const MultipleChoiceForm = ({
+	data,
+	onSubmit,
+	isAnswered = false,
+	onCancelAutoApproval,
+}: MultipleChoiceFormProps) => {
 	const { t } = useAppTranslation()
-	const { autoApprovalEnabled, followupAutoApproveTimeoutMs } = useExtensionState()
+	const { autoApprovalEnabled, alwaysAllowFollowupQuestions, followupAutoApproveTimeoutMs } = useExtensionState()
 	const [selections, setSelections] = useState<MultipleChoiceResponse>(() => createDefaultSelections(data))
 	const [submitted, setSubmitted] = useState(isAnswered)
 	const [collapsed, setCollapsed] = useState(isAnswered)
@@ -93,7 +99,15 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 	const defaultSelections = useMemo(() => createDefaultSelections(data), [data])
 
 	useEffect(() => {
-		if (autoApprovalEnabled && !isAnswered && !submitted && !hasUserInteracted && data.questions.length > 0) {
+		//costrict: keep multiple_choice auto-approval enablement aligned with followup countdown gating
+		if (
+			autoApprovalEnabled &&
+			alwaysAllowFollowupQuestions &&
+			!isAnswered &&
+			!submitted &&
+			!hasUserInteracted &&
+			data.questions.length > 0
+		) {
 			const timeoutMs =
 				typeof followupAutoApproveTimeoutMs === "number" && !isNaN(followupAutoApproveTimeoutMs)
 					? followupAutoApproveTimeoutMs
@@ -121,6 +135,8 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 			}, timeoutMs)
 
 			return () => {
+				//costrict: keep backend auto-approval timeout in sync when multiple_choice countdown stops or unmounts
+				onCancelAutoApproval?.()
 				clearInterval(intervalId)
 				window.clearTimeout(timeoutId)
 			}
@@ -129,28 +145,42 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 		setCountdown(null)
 	}, [
 		autoApprovalEnabled,
+		alwaysAllowFollowupQuestions,
 		data.questions.length,
 		defaultSelections,
 		followupAutoApproveTimeoutMs,
 		hasUserInteracted,
 		isAnswered,
+		onCancelAutoApproval,
 		onSubmit,
 		submitted,
 	])
 
-	const handleToggleOption = useCallback((questionId: string, optionId: string, allowMultiple: boolean) => {
-		setHasUserInteracted(true)
-		setSelections((prev) => {
-			const currentResponse = normalizeQuestionResponse(prev[questionId])
-			const currentSelections = currentResponse.selectedOptionIds
+	const handleToggleOption = useCallback(
+		(questionId: string, optionId: string, allowMultiple: boolean) => {
+			//costrict: cancel backend auto-approval as soon as the user manually changes a multiple_choice selection
+			onCancelAutoApproval?.()
+			setHasUserInteracted(true)
+			setSelections((prev) => {
+				const currentResponse = normalizeQuestionResponse(prev[questionId])
+				const currentSelections = currentResponse.selectedOptionIds
 
-			if (allowMultiple) {
-				if (currentSelections.includes(optionId)) {
+				if (allowMultiple) {
+					if (currentSelections.includes(optionId)) {
+						return {
+							...prev,
+							[questionId]: {
+								...currentResponse,
+								selectedOptionIds: currentSelections.filter((id) => id !== optionId),
+							},
+						}
+					}
+
 					return {
 						...prev,
 						[questionId]: {
 							...currentResponse,
-							selectedOptionIds: currentSelections.filter((id) => id !== optionId),
+							selectedOptionIds: [...currentSelections, optionId],
 						},
 					}
 				}
@@ -158,48 +188,51 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 				return {
 					...prev,
 					[questionId]: {
-						...currentResponse,
-						selectedOptionIds: [...currentSelections, optionId],
+						selectedOptionIds: [optionId],
+						customAnswer: undefined,
 					},
 				}
-			}
+			})
+		},
+		[onCancelAutoApproval],
+	)
 
-			return {
+	const handleCustomToggle = useCallback(
+		(questionId: string, allowMultiple: boolean) => {
+			//costrict: cancel backend auto-approval as soon as the user manually enters the custom-answer path
+			onCancelAutoApproval?.()
+			setHasUserInteracted(true)
+			setSelections((prev) => {
+				const currentResponse = normalizeQuestionResponse(prev[questionId])
+				const hasCustomAnswer = currentResponse.customAnswer !== undefined
+
+				return {
+					...prev,
+					[questionId]: {
+						selectedOptionIds: allowMultiple ? currentResponse.selectedOptionIds : [],
+						customAnswer: hasCustomAnswer ? undefined : "",
+					},
+				}
+			})
+		},
+		[onCancelAutoApproval],
+	)
+
+	const handleCustomAnswerChange = useCallback(
+		(questionId: string, value: string) => {
+			//costrict: cancel backend auto-approval as soon as the user types a custom answer
+			onCancelAutoApproval?.()
+			setHasUserInteracted(true)
+			setSelections((prev) => ({
 				...prev,
 				[questionId]: {
-					selectedOptionIds: [optionId],
-					customAnswer: undefined,
+					...normalizeQuestionResponse(prev[questionId]),
+					customAnswer: value,
 				},
-			}
-		})
-	}, [])
-
-	const handleCustomToggle = useCallback((questionId: string, allowMultiple: boolean) => {
-		setHasUserInteracted(true)
-		setSelections((prev) => {
-			const currentResponse = normalizeQuestionResponse(prev[questionId])
-			const hasCustomAnswer = currentResponse.customAnswer !== undefined
-
-			return {
-				...prev,
-				[questionId]: {
-					selectedOptionIds: allowMultiple ? currentResponse.selectedOptionIds : [],
-					customAnswer: hasCustomAnswer ? undefined : "",
-				},
-			}
-		})
-	}, [])
-
-	const handleCustomAnswerChange = useCallback((questionId: string, value: string) => {
-		setHasUserInteracted(true)
-		setSelections((prev) => ({
-			...prev,
-			[questionId]: {
-				...normalizeQuestionResponse(prev[questionId]),
-				customAnswer: value,
-			},
-		}))
-	}, [])
+			}))
+		},
+		[onCancelAutoApproval],
+	)
 
 	const questions = useMemo(() => data?.questions || [], [data])
 	const normalizedSelections = useMemo(() => {
@@ -295,14 +328,14 @@ export const MultipleChoiceForm = ({ data, onSubmit, isAnswered = false }: Multi
 
 			{!collapsed && (
 				<>
+					{countdown !== null && !submitted && (
+						//costrict: keep the countdown visible while only the question list scrolls
+						<div className="mx-4 mt-4 text-[11px] text-vscode-descriptionForeground rounded-md border border-vscode-panel-border bg-vscode-editor-background px-3 py-2">
+							<Timer className="size-3 inline-block -mt-0.5 mr-1 animate-pulse" />
+							{t("chat:multipleChoice.autoSelectCountdown", { countdown })}
+						</div>
+					)}
 					<div className="flex flex-col gap-2.5 p-4 max-h-100 overflow-y-auto">
-						{countdown !== null && !submitted && (
-							<div className="text-[11px] text-vscode-descriptionForeground rounded-md border border-vscode-panel-border bg-vscode-editor-background px-3 py-2">
-								<Timer className="size-3 inline-block -mt-0.5 mr-1 animate-pulse" />
-								{t("chat:multipleChoice.autoSelectCountdown", { countdown })}
-							</div>
-						)}
-
 						{questions.map((question, qIndex) => {
 							const response = normalizedSelections[question.id]
 							const currentSelections = response.selectedOptionIds

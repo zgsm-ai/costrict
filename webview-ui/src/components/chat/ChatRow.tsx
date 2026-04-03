@@ -136,6 +136,7 @@ interface ChatRowProps {
 	onMultipleChoiceSubmit?: (response: MultipleChoiceResponse) => void
 	onBatchFileResponse?: (response: { [key: string]: boolean }) => void
 	onFollowUpUnmount?: () => void
+	onMultipleChoiceUnmount?: () => void
 	isFollowUpAnswered?: boolean
 	isMultipleChoiceAnswered?: boolean
 	isFollowUpAutoApprovalPaused?: boolean
@@ -204,6 +205,8 @@ export const ChatRowContent = ({
 	onSuggestionClick,
 	onMultipleChoiceSubmit,
 	onFollowUpUnmount,
+	//costrict: plumb multiple_choice auto-approval cancellation callback through ChatRowContent
+	onMultipleChoiceUnmount,
 	onBatchFileResponse,
 	isFollowUpAnswered,
 	isMultipleChoiceAnswered,
@@ -2269,6 +2272,7 @@ export const ChatRowContent = ({
 											data={multipleChoiceData}
 											onSubmit={onMultipleChoiceSubmit}
 											isAnswered={isMultipleChoiceAnswered}
+											onCancelAutoApproval={onMultipleChoiceUnmount}
 										/>
 									)
 								)}

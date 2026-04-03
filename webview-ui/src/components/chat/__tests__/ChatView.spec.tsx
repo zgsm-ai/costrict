@@ -460,6 +460,63 @@ describe("ChatView - Sound Playing Tests", () => {
 	})
 })
 
+describe("ChatView - multiple_choice loading visibility", () => {
+	beforeEach(() => vi.clearAllMocks())
+
+	it("hides stale partial multiple_choice loading rows after a later user message arrives", async () => {
+		const view = renderChatView()
+
+		const loadingTs = Date.now() - 1000
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: loadingTs - 1,
+					text: "Initial task",
+				},
+				{
+					type: "ask",
+					ask: "multiple_choice",
+					ts: loadingTs,
+					text: "partial questionnaire payload",
+					partial: true,
+				},
+			],
+		})
+
+		expect(await view.findByText(/"ask":"multiple_choice"/)).toBeInTheDocument()
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: loadingTs - 1,
+					text: "Initial task",
+				},
+				{
+					type: "ask",
+					ask: "multiple_choice",
+					ts: loadingTs,
+					text: "partial questionnaire payload",
+					partial: true,
+				},
+				{
+					type: "say",
+					say: "user_feedback",
+					ts: loadingTs + 1,
+					text: "继续",
+				},
+			],
+		})
+
+		await waitFor(() => {
+			expect(view.queryByText(/"ask":"multiple_choice"/)).not.toBeInTheDocument()
+		})
+	})
+})
+
 describe("ChatView - Focus Grabbing Tests", () => {
 	beforeEach(() => vi.clearAllMocks())
 
