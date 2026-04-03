@@ -1460,13 +1460,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		} else if (approval.decision === "deny") {
 			this.denyAsk()
 		} else if (approval.decision === "timeout") {
-			// Store the auto-approval timeout so it can be cancelled if user interacts
-			this.autoApprovalTimeoutRef = setTimeout(() => {
-				const { askResponse, text, images } = approval.fn()
-				this.handleWebviewAskResponse(askResponse, text, images)
-				this.autoApprovalTimeoutRef = undefined
-			}, approval.timeout)
-			timeouts.push(this.autoApprovalTimeoutRef)
+			delay(500).finally(() => {
+				// Store the auto-approval timeout so it can be cancelled if user interacts
+				this.autoApprovalTimeoutRef = setTimeout(() => {
+					const { askResponse, text, images } = approval.fn()
+					this.handleWebviewAskResponse(askResponse, text, images)
+					this.autoApprovalTimeoutRef = undefined
+				}, approval.timeout)
+				timeouts.push(this.autoApprovalTimeoutRef)
+			})
 		}
 
 		// The state is mutable if the message is complete and the task will
@@ -1722,8 +1724,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * Cancel any pending auto-approval timeout.
 	 * Called when user interacts (types, clicks buttons, etc.) to prevent the timeout from firing.
 	 */
-	public cancelAutoApprovalTimeout(): void {
+	public cancelAutoApprovalTimeout(cancelType?: string): void {
 		if (this.autoApprovalTimeoutRef) {
+			this.providerRef.deref()?.log(`Canceling auto-approval timeout (type: ${cancelType})`)
 			clearTimeout(this.autoApprovalTimeoutRef)
 			this.autoApprovalTimeoutRef = undefined
 			this.clineMessages

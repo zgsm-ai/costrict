@@ -1552,7 +1552,7 @@ export const webviewMessageHandler = async (
 			break
 		case "cancelAutoApproval":
 			// Cancel any pending auto-approval timeout for the current task
-			provider.getCurrentTask()?.cancelAutoApprovalTimeout()
+			provider.getCurrentTask()?.cancelAutoApprovalTimeout(message?.values?.cancelType as string)
 			await provider.postStateToWebview()
 			break
 		case "allowedCommands": {

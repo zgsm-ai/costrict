@@ -315,7 +315,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		// Only send cancel if there's actual input (user is typing)
 		// and we have a pending follow-up question
 		if (isFollowUpAutoApprovalPaused) {
-			vscode.postMessage({ type: "cancelAutoApproval" })
+			vscode.postMessage({ type: "cancelAutoApproval", values: { cancelType: 'user_input' } })
 		}
 	}, [isFollowUpAutoApprovalPaused])
 
@@ -1604,11 +1604,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	// Cancel backend auto-approval timeout when FollowUpSuggest's countdown effect cleans up.
 	// This is called when auto-approve is toggled off, a suggestion is clicked, or the component unmounts.
 	const handleFollowUpUnmount = useCallback(() => {
-		vscode.postMessage({ type: "cancelAutoApproval" })
+		vscode.postMessage({ type: "cancelAutoApproval", values: { cancelType: 'follow_up_unmount' } })
 	}, [])
 	//costrict: reuse the existing backend timeout cancellation path for multiple_choice countdown cleanup and manual interaction
 	const handleMultipleChoiceUnmount = useCallback(() => {
-		vscode.postMessage({ type: "cancelAutoApproval" })
+		vscode.postMessage({ type: "cancelAutoApproval", values: { cancelType: 'multiple_choice_unmount' } })
 	}, [])
 
 	const itemContent = useCallback(
