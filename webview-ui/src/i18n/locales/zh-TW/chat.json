@@ -344,7 +344,7 @@
 		"noAssistantMessagesDetails": "語言模型回傳了一個沒有任何文字或工具呼叫的空回應。這可能是由於 API 問題、速率限制或模型特定問題所導致。系統已自動提示模型重試。"
 	},
 	"diffError": {
-		"title": "編輯失敗"
+		"title": "編輯未成功，正在嘗試其他方案"
 	},
 	"troubleMessage": "CoStrict 遇到問題...",
 	"errorDetails": {

@@ -3,5 +3,5 @@ export function getSharedToolUseSection(): string {
 
 TOOL USE
 
-You have access to a set of tools that are executed upon the user's approval. Use the provider-native tool-calling mechanism. Do not include XML markup or examples. You must call at least one tool per assistant response. Prefer calling as many tools as are reasonably needed in a single response to reduce back-and-forth and complete tasks faster. For simple questions or conversational replies that can be answered directly, use \`attempt_completion\` tool with your answer as the result — do not use other tools first.`
+Use provider-native tool-calling. Call at least one tool per response; prefer batching multiple independent calls to reduce round-trips. For simple questions, use \`attempt_completion\` directly — do not use other tools first.`
 }

@@ -153,7 +153,7 @@
 	"forPreviousMode": "用于上一个模式",
 	"error": "错误",
 	"diffError": {
-		"title": "编辑失败"
+		"title": "编辑未成功，正在尝试其他方案"
 	},
 	"troubleMessage": "Roo遇到问题...",
 	"apiRequest": {

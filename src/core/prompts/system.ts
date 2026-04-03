@@ -150,25 +150,16 @@ async function generatePrompt(data: {
 	const shouldAddEnglishOnlyRule = language !== "zh-CN"
 
 	const basePrompt = `${roleDefinition}
-
 ${usePurePrompts ? "" : markdownFormattingSection()}
-
 ${usePurePrompts ? "" : useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}
-
 ${usePurePrompts ? "" : useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
-
 ${usePurePrompts ? "" : useLitePrompts ? getLiteObjectiveSection() : getObjectiveSection()}
-
 ${usePurePrompts || !shouldAddEnglishOnlyRule ? "" : getEnglishOnlySection()}
-
 ${disableSwitchMode ? "" : modesSection}
 ${usePurePrompts ? "" : skillsSection ? `\n${skillsSection}` : ""}
 ${usePurePrompts ? "" : useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
-
 ${usePurePrompts ? "" : useLitePrompts ? getLiteRulesSection(cwd, settings, experiments) : getRulesSection(cwd, settings, experiments)}
-
 ${usePurePrompts ? "" : getSystemInfoSection(cwd, shell)}
-
 ${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
 	language: language ?? formatLanguage(await defaultLang()),
 	rooIgnoreInstructions,
@@ -230,6 +221,6 @@ export const SYSTEM_PROMPT = async (
 		shell,
 		skillsManager,
 		costrictCodeMode: settings?.costrictCodeMode,
-		useLitePrompts
+		useLitePrompts,
 	})
 }

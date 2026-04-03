@@ -349,7 +349,7 @@
 		"proxyProvider": "You seem to be using a proxy-based provider. Make sure to check its logs and to ensure it's not rewriting CoStrict's requests."
 	},
 	"diffError": {
-		"title": "Edit Unsuccessful"
+		"title": "Edit unsuccessful, trying another approach"
 	},
 	"troubleMessage": "CoStrict is having trouble...",
 	"powershell": {

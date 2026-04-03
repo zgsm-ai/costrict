@@ -55,7 +55,7 @@ import {
 	ConsecutiveMistakeError,
 	MAX_MCP_TOOLS_THRESHOLD,
 	countEnabledMcpTools,
-	costrictModelsConfig,
+	// costrictModelsConfig,
 } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
 // import { customToolRegistry } from "@roo-code/core"
@@ -2854,13 +2854,13 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				if (costrictWorkflowSpecScope) {
 					finalUserContent.push({
 						type: "text" as const,
-						text: `Task Status Update Steps:\n\n1. Before task starting: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
+						text: `[\`task.md\` Status Update Steps]\n\n1. Before task starting or After task done: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
 					})
 				} else if (state?.costrictCodeMode === "strict" && state?.mode === "code") {
 					const costrictWorkflowSpecScope = `\${workspaceFolder}/.cospec/{feature-name}/`
 					finalUserContent.push({
 						type: "text" as const,
-						text: `Task Status Update Steps:\n\n1. Before task starting: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
+						text: `[\`task.md\` Status Update Steps]\n\n1. Before task starting or or After task done: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
 					})
 				}
 			}

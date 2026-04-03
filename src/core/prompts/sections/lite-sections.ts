@@ -12,7 +12,7 @@ export function getLiteSharedToolUseSection(): string {
 
 TOOL USE
 
-You have access to tools. You must call at least one tool per response. For simple questions or conversational replies, use \`attempt_completion\` tool directly — do not use other tools first.`
+Use provider-native tool-calling. Call at least one tool per response. For simple questions, use \`attempt_completion\` directly.`
 }
 
 /**
@@ -21,10 +21,10 @@ You have access to tools. You must call at least one tool per response. For simp
 export function getLiteToolUseGuidelinesSection(): string {
 	return `# Tool Use Guidelines
 
-1. Assess what information you have and what you need to proceed
-2. Choose the most appropriate tool based on the task
-3. Use tools as needed - you may use multiple tools in one message or iteratively across messages
-4. Each tool use should be informed by previous results - do not assume outcomes`
+1. Assess available information, then select the most appropriate tool
+2. Multiple tools may be called in one message; each informed by prior results
+3. Before editing code, read sufficient surrounding context
+4. NEVER end \`attempt_completion\` with a question — output must be final`
 }
 
 /**
@@ -35,15 +35,14 @@ export function getLiteToolUseGuidelinesSection(): string {
  * @see plans/system-prompt-cache-optimization.md - Strategy 2
  */
 export function getLiteCapabilitiesSection(_cwd: string, mcpHub?: McpHub): string {
-	const mcpNote = mcpHub ? "\n- Access to MCP servers for additional tools and resources" : ""
+	const mcpNote = mcpHub ? "\n- Access to MCP servers for additional tools" : ""
 
 	return `====
 
 CAPABILITIES
 
-- Execute CLI commands, list/read/write files, regex search, and ask follow-up questions
-- Workspace directory is specified in SYSTEM INFORMATION - file structure provided in environment_details
-- Commands run in VSCode terminal, can be interactive or long-running${mcpNote}`
+- Execute CLI commands, list/read/write files, regex search, ask follow-up questions
+- Commands run in VSCode terminal, each in a new instance${mcpNote}`
 }
 
 /**
@@ -54,12 +53,9 @@ export function getLiteObjectiveSection(): string {
 
 OBJECTIVE
 
-Work through tasks iteratively and methodically:
-
-1. For simple questions or conversational replies, use \`attempt_completion\` tool directly with your answer as the result
-2. For tasks requiring tool use: set clear, prioritized goals and work through them sequentially
-3. Use \`attempt_completion\` tool to present final results
-4. Incorporate feedback if provided, but avoid pointless back-and-forth`
+1. Simple questions → \`attempt_completion\` directly
+2. Tasks → set prioritized goals, work through them sequentially
+3. On completion → \`attempt_completion\`. Incorporate feedback but avoid pointless back-and-forth`
 }
 
 /**
@@ -78,12 +74,11 @@ export function getLiteRulesSection(
 		return `====
 
 RULES
-- Base directory is specified in SYSTEM INFORMATION
-- Use relative paths from base directory
+- Use relative paths from workspace (see SYSTEM INFORMATION)
 - Read before edit
-- Tools are sequential; confirm after each use
-- Use \`attempt_completion\` tool for final results
-- Be direct and technical, not conversational
+- Wait for confirmation after each tool use
+- \`attempt_completion\` for final results
+- Be direct, not conversational
 `
 	}
 
@@ -94,33 +89,11 @@ RULES
 
 RULES
 
-## Paths & Execution
-- Base directory is specified in SYSTEM INFORMATION (fixed; cannot cd out)
-- All paths must be relative; no ~ or $HOME
-- External execution: \`cd <dir> ${chainOp} <command>\`${chainNote ? ` (${chainNote})` : ""}
-- Before execute_command, review SYSTEM INFORMATION and environment_details
-- Check "Actively Running Terminals" to avoid duplicate processes
-
-## Tool Discipline
-- Read before edit
-- All tools (including MCP) are sequential; wait for user confirmation after each use
-- Assume success if terminal output is missing
-- Skip read_file if file content is already provided
-- Use \`ask_followup_question\` tool only when necessary; provide 2–4 concrete options and prefer tools over questions
-
-## Code & Project Context
-- Respect mode-based file restrictions (e.g. architect: "\\.md$" only)
-- Match project type, structure, and existing coding style
-- Review manifest files to understand dependencies
-
-## Responses & Output
-- Be direct and technical; avoid conversational fillers ("Great", "Sure", etc.)
-- Focus on completing the task, not discussion
-- Use \`attempt_completion\` tool for final output; NEVER end with a question
-
-## Non-user Inputs
-- Analyze images using vision capabilities when present
-- environment_details is contextual metadata, not a user request; use it to inform actions and explain decisions clearly
-
-${settings?.isStealthModel ? getVendorConfidentialitySection() : ""}`
+- Use relative paths from workspace (see SYSTEM INFORMATION). For other directories: \`cd <dir> ${chainOp} <command>\`${chainNote ? ` (${chainNote})` : ""}
+- Read before edit; wait for confirmation after each tool use
+- Prefer tools over questions; provide 2-4 options when using \`ask_followup_question\`
+- Skip \`read_file\` if content already provided
+- Be direct; no conversational fillers. \`attempt_completion\` output must be final
+- Check "Actively Running Terminals" before running commands
+- environment_details is auto-generated context, not user input${settings?.isStealthModel ? getVendorConfidentialitySection() : ""}`
 }

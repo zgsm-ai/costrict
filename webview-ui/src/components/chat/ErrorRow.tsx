@@ -231,9 +231,10 @@ export const ErrorRow = memo(
 							<MessageCircleWarning
 								className={`w-4 ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "opacity-80"}`}
 							/>
-							<span className="text-vscode-errorForeground font-bold grow cursor-pointer">
+							<span
+								className={`font-bold grow cursor-pointer ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "text-vscode-descriptionForeground"}`}>
 								{errorTitle}
-							</span>
+							</span>{" "}
 						</div>
 						<div className="flex items-center">
 							{showCopyButton && (
