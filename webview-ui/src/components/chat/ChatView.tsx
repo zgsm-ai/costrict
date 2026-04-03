@@ -255,6 +255,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		}),
 	)
 	const [currentFollowUpTs, setCurrentFollowUpTs] = useState<number | null>(-1)
+	//costrict: track multiple_choice independently so followup timestamps do not affect questionnaire answered state
+	const [currentMultipleChoiceTs, setCurrentMultipleChoiceTs] = useState<number | null>(-1)
 	const [aggregatedCostsMap, setAggregatedCostsMap] = useState<
 		Map<
 			string,
@@ -608,6 +610,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		setExpandedRows({})
 		everVisibleMessagesTsRef.current.clear()
 		setCurrentFollowUpTs(null)
+		//costrict: reset the per-questionnaire answered watermark when switching tasks
+		setCurrentMultipleChoiceTs(null)
 		setIsCondensing(false)
 	}, [task?.ts])
 
@@ -637,11 +641,20 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	}, [])
 
 	const markFollowUpAsAnswered = useCallback(() => {
-		const lastFollowUpMessage = messagesRef.current.findLast((msg: ClineMessage) =>
-			["followup", "multiple_choice"].includes(msg.ask!),
-		)
+		//costrict: only advance the followup watermark from followup asks
+		const lastFollowUpMessage = messagesRef.current.findLast((msg: ClineMessage) => msg.ask === "followup")
 		if (lastFollowUpMessage) {
 			setCurrentFollowUpTs(lastFollowUpMessage.ts)
+		}
+	}, [])
+
+	const markMultipleChoiceAsAnswered = useCallback(() => {
+		//costrict: keep multiple_choice answered state isolated from followup asks
+		const lastMultipleChoiceMessage = messagesRef.current.findLast(
+			(msg: ClineMessage) => msg.ask === "multiple_choice",
+		)
+		if (lastMultipleChoiceMessage) {
+			setCurrentMultipleChoiceTs(lastMultipleChoiceMessage.ts)
 		}
 	}, [])
 
@@ -1517,6 +1530,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const handleMultipleChoiceSubmit = useCallback(
 		(response: MultipleChoiceResponse) => {
+			//costrict: optimistically mark the current questionnaire as answered in UI before backend persistence lands
+			markMultipleChoiceAsAnswered()
 			// 后端会在 handleWebviewAskResponse 中自动设置 isAnswered 和 userResponse
 			// 不需要前端处理，避免重复和耦合
 			//costrict: submit structured multiple choice answers through a dedicated response channel
@@ -1530,7 +1545,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			setClineAsk(undefined)
 			setEnableButtons(false)
 		},
-		[], // 移除不必要的依赖
+		[markMultipleChoiceAsAnswered],
 	)
 
 	const handleSuggestionClickInRow = useCallback(
@@ -1622,7 +1637,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					}
 					// Costrict: ask_multiple_choice answered
 					isMultipleChoiceAnswered={
-						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentFollowUpTs)
+						//costrict: compare against the dedicated multiple_choice watermark instead of the followup one
+						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentMultipleChoiceTs)
 					}
 					editable={
 						messageOrGroup.type === "ask" &&
@@ -1660,6 +1676,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			handleMultipleChoiceUnmount,
 			isFollowUpAutoApprovalPaused,
 			currentFollowUpTs,
+			currentMultipleChoiceTs,
 			shouldHighlight,
 			searchResults,
 			showSearch,

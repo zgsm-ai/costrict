@@ -45,8 +45,24 @@ vi.mock("use-sound", () => ({
 
 // Mock components that use ESM dependencies
 vi.mock("../ChatRow", () => ({
-	default: function MockChatRow({ message }: { message: ClineMessage }) {
-		return <div data-testid="chat-row">{JSON.stringify(message)}</div>
+	default: function MockChatRow({
+		message,
+		isFollowUpAnswered,
+		isMultipleChoiceAnswered,
+	}: {
+		message: ClineMessage
+		isFollowUpAnswered?: boolean
+		isMultipleChoiceAnswered?: boolean
+	}) {
+		return (
+			<div
+				data-testid="chat-row"
+				data-ask={message.ask}
+				data-followup-answered={String(isFollowUpAnswered)}
+				data-multiple-choice-answered={String(isMultipleChoiceAnswered)}>
+				{JSON.stringify(message)}
+			</div>
+		)
 	},
 }))
 
@@ -514,6 +530,80 @@ describe("ChatView - multiple_choice loading visibility", () => {
 		await waitFor(() => {
 			expect(view.queryByText(/"ask":"multiple_choice"/)).not.toBeInTheDocument()
 		})
+	})
+
+	it("does not mark multiple_choice answered when only a followup is answered later", async () => {
+		const view = renderChatView()
+		const multipleChoiceTs = Date.now() - 100
+		const followupTs = multipleChoiceTs + 1
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: multipleChoiceTs - 1,
+					text: "Initial task",
+				},
+				{
+					type: "ask",
+					ask: "multiple_choice",
+					ts: multipleChoiceTs,
+					text: JSON.stringify({ questions: [] }),
+				},
+				{
+					type: "ask",
+					ask: "followup",
+					ts: followupTs,
+					text: "Need a follow-up answer",
+				},
+			],
+		})
+
+		await waitFor(() => {
+			expect(view.getAllByTestId("chat-row").length).toBeGreaterThan(0)
+		})
+
+		const rows = view.getAllByTestId("chat-row")
+		const multipleChoiceRow = rows.find((row) => row.getAttribute("data-ask") === "multiple_choice")
+		expect(multipleChoiceRow).toHaveAttribute("data-multiple-choice-answered", "false")
+	})
+
+	it("keeps followup answered state independent from multiple_choice messages", async () => {
+		const view = renderChatView()
+		const followupTs = Date.now() - 100
+		const multipleChoiceTs = followupTs + 1
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: followupTs - 1,
+					text: "Initial task",
+				},
+				{
+					type: "ask",
+					ask: "followup",
+					ts: followupTs,
+					text: "Need a follow-up answer",
+				},
+				{
+					type: "ask",
+					ask: "multiple_choice",
+					ts: multipleChoiceTs,
+					text: JSON.stringify({ questions: [] }),
+				},
+			],
+		})
+
+		await waitFor(() => {
+			expect(view.getAllByTestId("chat-row").length).toBeGreaterThan(0)
+		})
+
+		const rows = view.getAllByTestId("chat-row")
+		const followupRow = rows.find((row) => row.getAttribute("data-ask") === "followup")
+		expect(followupRow).toHaveAttribute("data-followup-answered", "false")
 	})
 })
 
