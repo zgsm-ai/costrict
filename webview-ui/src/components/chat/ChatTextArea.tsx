@@ -878,7 +878,11 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				})
 
 				highlightLayerRef.current.innerHTML = processedText
-				textAreaRef.current.scrollTop += fixHeight ? 32 : 0
+				// Auto-scroll to bottom only when cursor is at the end of text (appending),
+				// so editing at the top doesn't push the viewport down.
+				if (fixHeight && textAreaRef.current.selectionStart === textAreaRef.current.value.length) {
+					textAreaRef.current.scrollTop = textAreaRef.current.scrollHeight
+				}
 				highlightLayerRef.current.scrollTop = textAreaRef.current.scrollTop
 				highlightLayerRef.current.scrollLeft = textAreaRef.current.scrollLeft
 			},

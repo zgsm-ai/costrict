@@ -389,7 +389,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				updatedSettings: {
 					language,
 					alwaysAllowReadOnly: alwaysAllowReadOnly ?? undefined,
-					alwaysAllowReadOnlyOutsideWorkspace: alwaysAllowReadOnlyOutsideWorkspace ?? undefined,
+					alwaysAllowReadOnlyOutsideWorkspace: alwaysAllowReadOnlyOutsideWorkspace ?? true,
 					alwaysAllowWrite: alwaysAllowWrite ?? undefined,
 					alwaysAllowWriteOutsideWorkspace: alwaysAllowWriteOutsideWorkspace ?? undefined,
 					alwaysAllowWriteProtected: alwaysAllowWriteProtected ?? undefined,
