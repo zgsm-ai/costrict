@@ -590,8 +590,7 @@ describe("SYSTEM_PROMPT", () => {
 
 		// Should contain TOOL USE section with native note
 		expect(prompt).toContain("TOOL USE")
-		expect(prompt).toContain("provider-native tool-calling mechanism")
-		expect(prompt).toContain("Do not include XML markup or examples")
+		expect(prompt).toContain("Use provider-native tool-calling")
 
 		// Should NOT contain XML-style tags or examples
 		expect(prompt).not.toContain("<actual_tool_name>")

@@ -193,7 +193,6 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			cursorStyle: "block",
 			cursorBlink: true,
 			tabStopWidth: 4,
-			scrollback: 0,
 			allowProposedApi: true,
 			...getTerminalRenderOptions(),
 		})
@@ -240,7 +239,6 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 				data,
 			})
 		})
-
 		const handleCopySelection = (selection: string) => {
 			copyToClipboard(selection)
 		}
@@ -258,6 +256,22 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 		const shouldUsePasteShortcutFallback = Boolean((window as any).isJetbrainsPlatform)
 		terminal.attachCustomKeyEventHandler((event) => {
 			const key = event.key.toLowerCase()
+
+			// Shift + ↑/↓ → Page Up / Page Down
+			if (
+				event.type === "keydown" &&
+				event.shiftKey &&
+				!event.ctrlKey &&
+				!event.metaKey &&
+				!event.altKey &&
+				(key === "arrowup" || key === "arrowdown")
+			) {
+				event.preventDefault()
+				const seq = key === "arrowup" ? "\x1b[5~" : "\x1b[6~"
+				vscode.postMessage({ type: "CostrictCliInput", data: seq })
+				return false
+			}
+
 			const isCtrlZStop =
 				event.type === "keydown" &&
 				event.ctrlKey &&
@@ -346,16 +360,6 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 		clipboardTarget.addEventListener("paste", handlePaste, { capture: true })
 		clipboardTarget.addEventListener("copy", handleCopy)
 		clipboardTarget.addEventListener("cut", handleCut)
-		const handleWheel = (e: WheelEvent) => {
-			e.preventDefault()
-			// 每 100px deltaY 触发一次滚动，至少触发 1 次
-			const lines = Math.max(1, Math.round(Math.abs(e.deltaY) / 100))
-			// 上箭头: \x1b[A，下箭头: \x1b[B
-			const seq = e.deltaY < 0 ? "\x1b[A" : "\x1b[B"
-			const data = seq.repeat(lines)
-			vscode.postMessage({ type: "CostrictCliInput", data })
-		}
-		container.addEventListener("wheel", handleWheel, { passive: false })
 
 		// Handle resize
 		terminal.onResize(({ cols, rows }) => {
@@ -421,7 +425,6 @@ export const CostrictCliView = ({ isHidden }: CostrictCliViewProps) => {
 			clipboardTarget.removeEventListener("paste", handlePaste, { capture: true })
 			clipboardTarget.removeEventListener("copy", handleCopy)
 			clipboardTarget.removeEventListener("cut", handleCut)
-			container.removeEventListener("wheel", handleWheel)
 			vscode.postMessage({
 				type: "CostrictCliStop",
 			})

@@ -38,9 +38,9 @@ describe("getCapabilitiesSection", () => {
 		const result = getCapabilitiesSection(cwd)
 
 		expect(result).toContain("CAPABILITIES")
-		expect(result).toContain("execute CLI commands")
-		expect(result).toContain("list files")
-		expect(result).toContain("read and write files")
+		expect(result).toContain("Execute CLI commands")
+		expect(result).toContain("list/read/write files")
+		expect(result).toContain("regex search")
 	})
 
 	it("includes MCP reference when mcpHub is provided", () => {
@@ -64,7 +64,7 @@ describe("getRulesSection", () => {
 		const result = getRulesSection(cwd)
 
 		expect(result).toContain("RULES")
-		expect(result).toContain("project base directory")
+		expect(result).toContain("Use relative paths from the workspace directory")
 		// cwd is no longer included in RULES section - it's now in SYSTEM INFORMATION
 		// See: refactor(prompts): optimize prompt caching by extracting static sections
 		expect(result).toContain("SYSTEM INFORMATION")
@@ -160,9 +160,9 @@ describe("getRulesSection shell-aware command chaining", () => {
 		vi.spyOn(shellUtils, "getShell").mockReturnValue("/bin/bash")
 		const result = getRulesSection(cwd)
 
-		expect(result).toContain("cd (path to project) && (command")
-		expect(result).not.toContain("cd (path to project) ; (command")
-		expect(result).not.toContain("cd (path to project) & (command")
+		expect(result).toContain("cd <dir> && <command>")
+		expect(result).not.toContain("cd <dir> ; <command>")
+		expect(result).not.toContain("cd <dir> & <command>")
 	})
 
 	it("uses ; for PowerShell in command chaining example", () => {
@@ -171,7 +171,7 @@ describe("getRulesSection shell-aware command chaining", () => {
 		)
 		const result = getRulesSection(cwd)
 
-		expect(result).toContain("cd (path to project) ; (command")
+		expect(result).toContain("cd <dir> ; <command>")
 		expect(result).toContain("Note: Using `;` for PowerShell command chaining")
 	})
 
@@ -179,7 +179,7 @@ describe("getRulesSection shell-aware command chaining", () => {
 		vi.spyOn(shellUtils, "getShell").mockReturnValue("C:\\Windows\\System32\\cmd.exe")
 		const result = getRulesSection(cwd)
 
-		expect(result).toContain("cd (path to project) && (command")
+		expect(result).toContain("cd <dir> && <command>")
 		expect(result).toContain("Note: Using `&&` for cmd.exe command chaining")
 	})
 
