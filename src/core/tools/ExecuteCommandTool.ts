@@ -353,7 +353,13 @@ export async function executeCommandInTerminal(
 		},
 		onShellExecutionStarted: (pid: number | undefined) => {
 			task.currentProcessPid = pid // Save pid to task for reliable cancellation
-			const status: CommandExecutionStatus = { executionId, status: "started", pid, command }
+			const status: CommandExecutionStatus = {
+				executionId,
+				status: "started",
+				pid,
+				command,
+				agentTimeoutMs: agentTimeout,
+			}
 			provider?.postMessageToWebview({ type: "commandExecutionStatus", text: JSON.stringify(status) })
 		},
 		onShellExecutionComplete: (details: ExitCodeDetails) => {

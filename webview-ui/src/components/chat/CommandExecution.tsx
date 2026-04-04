@@ -178,15 +178,16 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 							</StandardTooltip>
 						</div>
 					)}
-					{status?.status === "backgrounded" && (
-						<div className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 font-mono text-[11px] text-amber-600">
-							{status.timeoutMs
-								? t("chat:commandExecution.backgroundedAfter", {
-										seconds: Math.round(status.timeoutMs / 1000),
-									})
-								: t("chat:commandExecution.backgrounded")}
-						</div>
-					)}
+
+					{status?.status === "started" &&
+						typeof status.agentTimeoutMs === "number" &&
+						status.agentTimeoutMs > 0 && (
+							<div className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/5 px-2 py-0.5 font-mono text-[10px] leading-none text-amber-600">
+								{t("chat:commandExecution.backgroundedPlanned", {
+									seconds: Math.round(status.agentTimeoutMs / 1000),
+								})}
+							</div>
+						)}
 				</div>
 				<div className=" flex flex-row items-center justify-between gap-2 px-1">
 					<div className="flex flex-row items-center gap-1">

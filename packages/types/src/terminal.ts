@@ -10,29 +10,35 @@ export const commandExecutionStatusSchema = z.discriminatedUnion("status", [
 		status: z.literal("started"),
 		pid: z.number().optional(),
 		command: z.string(),
+		agentTimeoutMs: z.number().optional(),
 	}),
 	z.object({
 		executionId: z.string(),
 		status: z.literal("output"),
 		output: z.string(),
+		agentTimeoutMs: z.number().optional(),
 	}),
 	z.object({
 		executionId: z.string(),
 		status: z.literal("exited"),
 		exitCode: z.number().optional(),
+		agentTimeoutMs: z.number().optional(),
 	}),
 	z.object({
 		executionId: z.string(),
 		status: z.literal("backgrounded"),
 		timeoutMs: z.number().optional(),
+		agentTimeoutMs: z.number().optional(),
 	}),
 	z.object({
 		executionId: z.string(),
 		status: z.literal("fallback"),
+		agentTimeoutMs: z.number().optional(),
 	}),
 	z.object({
 		executionId: z.string(),
 		status: z.literal("timeout"),
+		agentTimeoutMs: z.number().optional(),
 	}),
 ])
 

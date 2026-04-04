@@ -107,7 +107,7 @@
 		"tooltip": "執行此命令"
 	},
 	"proceedWhileRunning": {
-		"title": "在背景繼續",
+		"title": "轉入背景執行",
 		"tooltip": "讓此命令在背景繼續執行，之後仍會看到輸出更新"
 	},
 	"killCommand": {
@@ -292,6 +292,7 @@
 		"exitStatus": "已結束，狀態碼 {{exitCode}}",
 		"backgrounded": "在背景執行",
 		"backgroundedAfter": "{{seconds}} 秒後轉入背景",
+		"backgroundedPlanned": "約 {{seconds}} 秒後將自動轉入背景執行",
 		"manageCommands": "自動核准的命令",
 		"addToAllowed": "新增至允許清單",
 		"removeFromAllowed": "從允許清單中移除",
