@@ -1178,20 +1178,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		return this.apiConversationHistory.filter((message) => message.role === "user").length + 1
 	}
 
-	private async shouldAttachSupplementalFileDetails(): Promise<boolean> {
-		const provider = this.providerRef.deref()
-		const state = await provider?.getState()
-		const experimentsConfig = state?.experiments ?? {}
-		const apiConfiguration = state?.apiConfiguration
-
-		const useKptTree =
-			apiConfiguration?.apiProvider === "costrict" &&
-			(experiments.isEnabled(experimentsConfig, EXPERIMENT_IDS.USE_KPT_TREE) ?? true)
-
-		if (!useKptTree) {
-			return false
-		}
-
+	/**
+	 * Check if enough turns have passed since last file details attachment.
+	 * Shared frequency check for both KPT Tree and Task.md status instructions.
+	 */
+	private shouldAttachByInterval(): boolean {
 		const currentUserMessageCount = this.getUserMessageCountForNextTurn()
 		if (currentUserMessageCount <= 1) {
 			return false
@@ -1199,6 +1190,44 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 		const turnsSinceLastFileDetails = currentUserMessageCount - this.lastFileDetailsUserMessageCount
 		return turnsSinceLastFileDetails >= SUPPLEMENTAL_FILE_DETAILS_INTERVAL
+	}
+
+	/**
+	 * Check if we should attach KPT Tree file details.
+	 * Only depends on USE_KPT_TREE experiment setting.
+	 */
+	private async shouldAttachFileTree(): Promise<boolean> {
+		const provider = this.providerRef.deref()
+		const state = await provider?.getState()
+		const experimentsConfig = state?.experiments ?? {}
+
+		const useKptTree = experiments.isEnabled(experimentsConfig, EXPERIMENT_IDS.USE_KPT_TREE) ?? true
+
+		if (!useKptTree) {
+			return false
+		}
+
+		return this.shouldAttachByInterval()
+	}
+
+	/**
+	 * Check if we should attach task.md status update instructions.
+	 * Independent of KPT Tree: requires costrict provider OR strict code mode
+	 */
+	private async shouldAttachSpecTaskStatusCheckInstructions(): Promise<boolean> {
+		const provider = this.providerRef.deref()
+		const state = await provider?.getState()
+		const apiConfiguration = state?.apiConfiguration
+
+		// Apply when using costrict provider OR when in strict code mode
+		const isCostrictProvider = apiConfiguration?.apiProvider === "costrict"
+		const isStrictCodeMode = state?.costrictCodeMode === "strict" && ["code", "subcoding"].includes(state?.mode)
+
+		if (!isCostrictProvider && !isStrictCodeMode) {
+			return false
+		}
+
+		return this.shouldAttachByInterval()
 	}
 
 	private markFileDetailsAttachedForCurrentTurn(): void {
@@ -2820,13 +2849,16 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				}
 			}
 
-			const shouldAttachSupplementalFileDetails =
-				!currentIncludeFileDetails && (await this.shouldAttachSupplementalFileDetails())
-			const includeFileDetailsForTurn = currentIncludeFileDetails || shouldAttachSupplementalFileDetails
+			// Separate concerns: file tree (KPT) vs task status instructions
+			const shouldAttachFileTree = !currentIncludeFileDetails && (await this.shouldAttachFileTree())
+			const includeFileDetailsForTurn = currentIncludeFileDetails || shouldAttachFileTree
 			const environmentDetails = await getEnvironmentDetails(this, includeFileDetailsForTurn)
 			if (includeFileDetailsForTurn) {
 				this.markFileDetailsAttachedForCurrentTurn()
 			}
+
+			// Task status instructions are independent of KPT Tree
+			const shouldAttachTaskStatus = await this.shouldAttachSpecTaskStatusCheckInstructions()
 
 			// Remove any existing environment_details blocks before adding fresh ones.
 			// This prevents duplicate environment details when resuming tasks,
@@ -2848,19 +2880,21 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			// Add environment details as its own text block, separate from tool
 			// results.
 			let finalUserContent = [...contentWithoutEnvDetails]
-			if (includeFileDetailsForTurn) {
+
+			// Task status instructions - independent of KPT Tree
+			if (shouldAttachTaskStatus) {
 				const costrictWorkflowSpecScope =
 					this.costrictWorkflowSpecScope || this?.parentTask?.costrictWorkflowSpecScope
 				if (costrictWorkflowSpecScope) {
+					this.getSpecTaskStatusCheckInstructions(costrictWorkflowSpecScope)
 					finalUserContent.push({
 						type: "text" as const,
-						text: `[\`task.md\` Status Update Steps]\n\n1. Before task starting or After task done: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
+						text: this.getSpecTaskStatusCheckInstructions(costrictWorkflowSpecScope),
 					})
 				} else if (state?.costrictCodeMode === "strict" && state?.mode === "code") {
-					const costrictWorkflowSpecScope = `\${workspaceFolder}/.cospec/{feature-name}/`
 					finalUserContent.push({
 						type: "text" as const,
-						text: `[\`task.md\` Status Update Steps]\n\n1. Before task starting or or After task done: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory\n2. Mark task as \`- [-]\` (in progress) in \`tasks.md\`\n3. When done: Mark task as \`- [x]\` (completed) in \`tasks.md\`\n\n⚠️ Do not modify test files. \`tasks.md\` is for status updates only.`,
+						text: this.getSpecTaskStatusCheckInstructions(`\${workspaceFolder}/.cospec/{feature-name}/`),
 					})
 				}
 			}
@@ -5447,5 +5481,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		} catch (error) {
 			provider?.log(`Failed to update streaming status: ${error?.message}`)
 		}
+	}
+
+	getSpecTaskStatusCheckInstructions(costrictWorkflowSpecScope: string): string {
+		return `[\`task.md\` Status Update Steps]
+1. Before task starting or After task done: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory
+2. Update task Status: 
+	- When doing Mark task as \`- [-]\` (in progress) in \`tasks.md\`
+	- When done Mark task as \`- [x]\` (completed) in \`tasks.md\`
+`
 	}
 }

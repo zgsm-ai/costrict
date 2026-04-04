@@ -259,7 +259,7 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		autoApprovalEnabled: false,
 		customModes: [],
 		maxOpenTabsContext: 20,
-		maxWorkspaceFiles: 300,
+		maxWorkspaceFiles: 150,
 		cwd: "",
 		telemetrySetting: "disabled",
 		showRooIgnoredFiles: true, // Default to showing .rooignore'd files with lock symbol (current behavior).

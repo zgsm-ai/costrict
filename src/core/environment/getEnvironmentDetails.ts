@@ -30,7 +30,11 @@ export async function getEnvironmentDetails(cline: Task, includeFileDetails: boo
 	let details = ""
 	const clineProvider = cline.providerRef.deref()
 	const state = await clineProvider?.getState()
-	const { maxWorkspaceFiles = 200, terminalShellIntegrationDisabled, maxOpenTabsContext } = state ?? {}
+	const {
+		maxWorkspaceFiles = MAX_WORKSPACE_FILES,
+		terminalShellIntegrationDisabled,
+		maxOpenTabsContext,
+	} = state ?? {}
 	const shell = getShell(terminalShellIntegrationDisabled)
 	const maxTabs = maxOpenTabsContext ?? 20
 

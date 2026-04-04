@@ -24,7 +24,7 @@ import { languagesSchema } from "./vscode.js"
  */
 export const DEFAULT_WRITE_DELAY_MS = 1000
 
-export const MAX_WORKSPACE_FILES = 200
+export const MAX_WORKSPACE_FILES = 150
 
 /**
  * Terminal output preview size options for persisted command output.
