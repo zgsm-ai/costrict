@@ -54,7 +54,7 @@
 	},
 	"proceedAnyways": {
 		"title": "仍要繼續",
-		"tooltip": "在命令執行時繼續"
+		"tooltip": "繼續目前操作"
 	},
 	"save": {
 		"title": "儲存",
@@ -107,8 +107,8 @@
 		"tooltip": "執行此命令"
 	},
 	"proceedWhileRunning": {
-		"title": "執行時繼續",
-		"tooltip": "儘管有警告仍繼續執行"
+		"title": "在背景繼續",
+		"tooltip": "讓此命令在背景繼續執行，之後仍會看到輸出更新"
 	},
 	"killCommand": {
 		"title": "終止命令",
@@ -290,6 +290,8 @@
 		"running": "執行中",
 		"pid": "PID: {{pid}}",
 		"exitStatus": "已結束，狀態碼 {{exitCode}}",
+		"backgrounded": "在背景執行",
+		"backgroundedAfter": "{{seconds}} 秒後轉入背景",
 		"manageCommands": "自動核准的命令",
 		"addToAllowed": "新增至允許清單",
 		"removeFromAllowed": "從允許清單中移除",

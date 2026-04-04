@@ -62,7 +62,7 @@
 	},
 	"proceedAnyways": {
 		"title": "仍然继续",
-		"tooltip": "在命令执行时继续"
+		"tooltip": "继续当前操作"
 	},
 	"save": {
 		"title": "保存",
@@ -83,8 +83,8 @@
 		"tooltip": "执行此命令"
 	},
 	"proceedWhileRunning": {
-		"title": "强制继续",
-		"tooltip": "忽略运行中的命令并继续"
+		"title": "在后台继续",
+		"tooltip": "让该命令在后台继续运行，你之后仍会看到输出更新"
 	},
 	"killCommand": {
 		"title": "终止命令",
@@ -244,6 +244,8 @@
 		"running": "运行命令",
 		"pid": "PID: {{pid}}",
 		"exitStatus": "已退出，状态码 {{exitCode}}",
+		"backgrounded": "在后台运行",
+		"backgroundedAfter": "{{seconds}} 秒后转入后台",
 		"manageCommands": "管理命令权限",
 		"commandManagementDescription": "管理命令权限：点击 ✓ 允许自动执行，点击 ✗ 拒绝执行。可以打开/关闭模式或从列表中删除。<settingsLink>查看所有设置</settingsLink>",
 		"addToAllowed": "添加到允许列表",

@@ -54,7 +54,7 @@
 	},
 	"proceedAnyways": {
 		"title": "Proceed Anyways",
-		"tooltip": "Continue while command executes"
+		"tooltip": "Continue the current action"
 	},
 	"save": {
 		"title": "Save",
@@ -107,8 +107,8 @@
 		"tooltip": "Execute this command"
 	},
 	"proceedWhileRunning": {
-		"title": "Continue While Running",
-		"tooltip": "Keep going despite warnings"
+		"title": "Continue in Background",
+		"tooltip": "Let this command keep running in the background while you continue"
 	},
 	"killCommand": {
 		"title": "Kill Command",
@@ -287,6 +287,8 @@
 		"running": "Running",
 		"pid": "PID: {{pid}}",
 		"exitStatus": "Exited with status {{exitCode}}",
+		"backgrounded": "Running in background",
+		"backgroundedAfter": "Background after {{seconds}}s",
 		"manageCommands": "Auto-approved commands",
 		"addToAllowed": "Add to allowed list",
 		"removeFromAllowed": "Remove from allowed list",

@@ -23,6 +23,11 @@ export const commandExecutionStatusSchema = z.discriminatedUnion("status", [
 	}),
 	z.object({
 		executionId: z.string(),
+		status: z.literal("backgrounded"),
+		timeoutMs: z.number().optional(),
+	}),
+	z.object({
+		executionId: z.string(),
 		status: z.literal("fallback"),
 	}),
 	z.object({

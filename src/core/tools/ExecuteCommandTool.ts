@@ -413,6 +413,12 @@ export async function executeCommandInTerminal(
 				new Promise<void>((resolve) => {
 					agentTimeoutId = setTimeout(() => {
 						runInBackground = true
+						const status: CommandExecutionStatus = {
+							executionId,
+							status: "backgrounded",
+							timeoutMs: agentTimeout,
+						}
+						provider?.postMessageToWebview({ type: "commandExecutionStatus", text: JSON.stringify(status) })
 						process.continue()
 						task.supersedePendingAsk()
 						resolve()
