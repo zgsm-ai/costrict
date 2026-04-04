@@ -33,6 +33,11 @@ export function getGlobalCostrictDirectory(): string {
 	return path.join(homeDir, ".costrict")
 }
 
+export function getGlobalCostrictCLIDirectory(): string {
+	const configHome = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config")
+	return path.join(configHome, "costrict")
+}
+
 /**
  * Gets the global .agents directory path based on the current platform.
  * This is a shared directory for agent skills across different AI coding tools.

@@ -9,6 +9,7 @@ import {
 	getGlobalAgentsDirectory,
 	getProjectAgentsDirectoryForCwd,
 	getGlobalCostrictDirectory,
+	getGlobalCostrictCLIDirectory,
 } from "../roo-config"
 import { directoryExists, fileExists } from "../roo-config"
 import { SkillMetadata, SkillContent } from "../../shared/skills"
@@ -593,6 +594,7 @@ Add your skill instructions here.
 		const dirs: Array<{ dir: string; source: "global" | "project"; mode?: string }> = []
 		const globalRooDir = getGlobalRooDirectory()
 		const globalCostrictDir = getGlobalCostrictDirectory()
+		const globalCostrictCliDir = getGlobalCostrictCLIDirectory()
 		const globalAgentsDir = getGlobalAgentsDirectory()
 		const provider = this.providerRef.deref()
 		const projectRooDir = provider?.cwd ? path.join(provider.cwd, ".roo") : null
@@ -627,9 +629,11 @@ Add your skill instructions here.
 		// Global .roo directories (Roo-specific, higher priority than .agents)
 		dirs.push({ dir: path.join(globalRooDir, "skills"), source: "global" })
 		dirs.push({ dir: path.join(globalCostrictDir, "skills"), source: "global" })
+		dirs.push({ dir: path.join(globalCostrictCliDir, "skills"), source: "global" })
 		for (const mode of modesList) {
 			dirs.push({ dir: path.join(globalRooDir, `skills-${mode}`), source: "global", mode })
 			dirs.push({ dir: path.join(globalCostrictDir, `skills-${mode}`), source: "global", mode })
+			dirs.push({ dir: path.join(globalCostrictCliDir, `skills-${mode}`), source: "global", mode })
 		}
 
 		// Project .roo directories (highest priority)
@@ -681,11 +685,13 @@ Add your skill instructions here.
 		const globalAgentsDir = getGlobalAgentsDirectory()
 		const projectRooDir = path.join(provider.cwd, ".roo")
 		const globalCostrictDir = path.join(getGlobalCostrictDirectory(), "skills")
+		const globalCostrictCliDir = path.join(getGlobalCostrictCLIDirectory(), "skills")
 		const projectAgentsDir = getProjectAgentsDirectoryForCwd(provider.cwd)
 
 		// Watch global .roo skills directory
 		this.watchDirectory(path.join(globalRooDir, "skills"))
 		this.watchDirectory(globalCostrictDir)
+		this.watchDirectory(globalCostrictCliDir)
 
 		// Watch global .agents skills directory
 		this.watchDirectory(path.join(globalAgentsDir, "skills"))
@@ -704,6 +710,7 @@ Add your skill instructions here.
 			this.watchDirectory(path.join(projectRooDir, `skills-${mode}`))
 			// .costrict mode-specific
 			this.watchDirectory(path.join(getGlobalCostrictDirectory(), `skills-${mode}`))
+			this.watchDirectory(path.join(getGlobalCostrictCLIDirectory(), `skills-${mode}`))
 			// .agents mode-specific
 			this.watchDirectory(path.join(globalAgentsDir, `skills-${mode}`))
 			this.watchDirectory(path.join(projectAgentsDir, `skills-${mode}`))
