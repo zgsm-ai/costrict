@@ -20,6 +20,7 @@ RULES
 - Base directory is specified in SYSTEM INFORMATION
 - Use relative paths from base directory
 - Read files before editing
+- Before generating commands, check Current Shell and use shell-compatible syntax
 - Wait for user confirmation after each tool use
 - Use \`attempt_completion\` tool to present final results
 - Be direct and technical, not conversational
@@ -33,7 +34,9 @@ RULES
 
 RULES
 
+- Before generating or executing any command, check the Current Shell in SYSTEM INFORMATION and environment_details, then use syntax, chaining, quoting, and utilities compatible with that shell.
 - Use relative paths from the workspace directory (see SYSTEM INFORMATION). No \`~\` or \`$HOME\`. For commands in other directories: \`cd <dir> ${chainOp} <command>\`.${chainNote ? ` ${chainNote}` : ""}
+- Do not emit shell-incompatible syntax or assume bash/Unix utilities are available when the Current Shell is PowerShell or cmd.exe unless availability is explicitly confirmed.
 - Some modes restrict editable files. Editing a restricted file will be rejected with a FileRestrictionError specifying allowed patterns.
 - Ensure changes are compatible with the existing codebase and follow the project's coding standards.
 - Use \`ask_followup_question\` only when additional details are needed. Provide 2-4 specific, actionable suggested answers. Prefer using tools to find answers yourself.

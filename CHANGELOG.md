@@ -2,6 +2,16 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.6.3]
+
+- Improve command background execution UX (PR #1114, #1115)
+- Add support for costrict CLI skills/commands (PR #1112)
+- Refactor task module: separate file tree and status check logic (PR #1113)
+- Refactor CLI: improve terminal scroll and navigation experience (PR #1111)
+- Refactor auto-approval: enhance timeout with delay and cancel types (PR #1109)
+- Add question tool v2 for enhanced interaction (PR #1108)
+- Fix known issues
+
 ## [2.6.2]
 
 - Prevent auto-scroll when editing text (PR #1106)

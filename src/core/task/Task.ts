@@ -147,7 +147,7 @@ const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000 // 5 seconds
 const FORCED_CONTEXT_REDUCTION_PERCENT = 75 // Keep 75% of context (remove 25%) on context window errors
 const MAX_CONTEXT_WINDOW_RETRIES = 3 // Maximum retries for context window errors
-const SUPPLEMENTAL_FILE_DETAILS_INTERVAL = 4
+const SUPPLEMENTAL_DETAILS_INTERVAL = 4
 
 export interface TaskOptions extends CreateTaskOptions {
 	provider: ClineProvider
@@ -334,7 +334,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	// LLM Messages & Chat Messages
 	apiConversationHistory: ApiMessage[] = []
 	clineMessages: ClineMessage[] = []
-	private lastFileDetailsUserMessageCount = 0
+	private lastFileTreeUserMessageCount = 0
+	private lastSpecTaskStatusUserMessageCount = 0
 
 	// Ask
 	private askResponse?: ClineAskResponse
@@ -1179,17 +1180,29 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 
 	/**
-	 * Check if enough turns have passed since last file details attachment.
-	 * Shared frequency check for both KPT Tree and Task.md status instructions.
+	 * Check if enough turns have passed since the last file tree attachment.
 	 */
-	private shouldAttachByInterval(): boolean {
+	private shouldAttachFileTreeByInterval(messageCountLimit = 1): boolean {
 		const currentUserMessageCount = this.getUserMessageCountForNextTurn()
-		if (currentUserMessageCount <= 1) {
+		if (currentUserMessageCount <= messageCountLimit) {
 			return false
 		}
 
-		const turnsSinceLastFileDetails = currentUserMessageCount - this.lastFileDetailsUserMessageCount
-		return turnsSinceLastFileDetails >= SUPPLEMENTAL_FILE_DETAILS_INTERVAL
+		const turnsSinceLastFileTree = currentUserMessageCount - this.lastFileTreeUserMessageCount
+		return turnsSinceLastFileTree >= SUPPLEMENTAL_DETAILS_INTERVAL - 1
+	}
+
+	/**
+	 * Check if enough turns have passed since the last spec task status prompt attachment.
+	 */
+	private shouldAttachSpecTaskStatusByInterval(messageCountLimit = 1): boolean {
+		const currentUserMessageCount = this.getUserMessageCountForNextTurn()
+		if (currentUserMessageCount <= messageCountLimit) {
+			return false
+		}
+
+		const turnsSinceLastSpecTaskStatus = currentUserMessageCount - this.lastSpecTaskStatusUserMessageCount
+		return turnsSinceLastSpecTaskStatus >= (SUPPLEMENTAL_DETAILS_INTERVAL)
 	}
 
 	/**
@@ -1207,7 +1220,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			return false
 		}
 
-		return this.shouldAttachByInterval()
+		return this.shouldAttachFileTreeByInterval()
 	}
 
 	/**
@@ -1227,11 +1240,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			return false
 		}
 
-		return this.shouldAttachByInterval()
+		return this.shouldAttachSpecTaskStatusByInterval()
 	}
 
-	private markFileDetailsAttachedForCurrentTurn(): void {
-		this.lastFileDetailsUserMessageCount = this.getUserMessageCountForNextTurn()
+	private markFileTreeAttachedForCurrentTurn(): void {
+		this.lastFileTreeUserMessageCount = this.getUserMessageCountForNextTurn()
+	}
+
+	private markSpecTaskStatusAttachedForCurrentTurn(): void {
+		this.lastSpecTaskStatusUserMessageCount = this.getUserMessageCountForNextTurn()
 	}
 
 	/**
@@ -2853,13 +2870,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			const shouldAttachFileTree = !currentIncludeFileDetails && (await this.shouldAttachFileTree())
 			const includeFileDetailsForTurn = currentIncludeFileDetails || shouldAttachFileTree
 			const environmentDetails = await getEnvironmentDetails(this, includeFileDetailsForTurn)
-			if (includeFileDetailsForTurn) {
-				this.markFileDetailsAttachedForCurrentTurn()
-			}
-
-			// Task status instructions are independent of KPT Tree
-			const shouldAttachTaskStatus = await this.shouldAttachSpecTaskStatusCheckInstructions()
-
+			// Task status instructions follow their own cadence and are independent of KPT Tree
+			const shouldAttachTaskStatus = currentIncludeFileDetails || await this.shouldAttachSpecTaskStatusCheckInstructions()
+			let taskStatusAttached = false
 			// Remove any existing environment_details blocks before adding fresh ones.
 			// This prevents duplicate environment details when resuming tasks,
 			// where the old user message content may already contain environment details from the previous session.
@@ -2886,16 +2899,17 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				const costrictWorkflowSpecScope =
 					this.costrictWorkflowSpecScope || this?.parentTask?.costrictWorkflowSpecScope
 				if (costrictWorkflowSpecScope) {
-					this.getSpecTaskStatusCheckInstructions(costrictWorkflowSpecScope)
 					finalUserContent.push({
 						type: "text" as const,
 						text: this.getSpecTaskStatusCheckInstructions(costrictWorkflowSpecScope),
 					})
-				} else if (state?.costrictCodeMode === "strict" && state?.mode === "code") {
+					taskStatusAttached = true
+				} else if (["code", "subcoding"].includes(currentMode)) {
 					finalUserContent.push({
 						type: "text" as const,
-						text: this.getSpecTaskStatusCheckInstructions(`\${workspaceFolder}/.cospec/{feature-name}/`),
+						text: this.getSpecTaskStatusCheckInstructions(`\${workspaceFolder}/.cospec/{feature-name}`),
 					})
+					taskStatusAttached = true
 				}
 			}
 			finalUserContent.push({ type: "text" as const, text: environmentDetails })
@@ -2909,6 +2923,12 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			const shouldAddUserMessage =
 				((currentItem.retryAttempt ?? 0) === 0 && !isEmptyUserContent) || currentItem.userMessageWasRemoved
 			if (shouldAddUserMessage) {
+				if (includeFileDetailsForTurn) {
+					this.markFileTreeAttachedForCurrentTurn()
+				}
+				if (shouldAttachTaskStatus && taskStatusAttached) {
+					this.markSpecTaskStatusAttachedForCurrentTurn()
+				}
 				await this.addToApiConversationHistory({ role: "user", content: finalUserContent })
 				TelemetryService.instance.captureConversationMessage(this.taskId, "user")
 			}
@@ -5484,11 +5504,19 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	}
 
 	getSpecTaskStatusCheckInstructions(costrictWorkflowSpecScope: string): string {
-		return `[\`task.md\` Status Update Steps]
-1. Before task starting or After task done: Read \`tasks.md\` in \`${costrictWorkflowSpecScope}\` directory
-2. Update task Status: 
-	- When doing Mark task as \`- [-]\` (in progress) in \`tasks.md\`
-	- When done Mark task as \`- [x]\` (completed) in \`tasks.md\`
-`
+  return `
+
+[Task Tracking Reminder]
+
+After completing your current task, update \`tasks.md\` (in \`${costrictWorkflowSpecScope}\`):
+
+- Mark the task as \`- [x]\` if it is completed
+- If the task was not previously marked as \`- [-]\`, you may update it directly to \`- [x]\`
+
+- If you notice a few recently completed tasks not marked as \`- [x]\`, update them as well
+
+Only update tasks you are certain about. Do not guess or bulk modify.
+
+`;
 	}
 }
