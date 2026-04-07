@@ -132,7 +132,7 @@ export class InlineCompletionProvider implements InlineCompletionItemProvider {
 		this.completionStatusBar.complete()
 		const autocompleteItem = new InlineCompletionItem(result.completion, new Range(position, position), {
 			title: "Log Autocomplete Outcome",
-			command: "zgsm-completion.logAutocompleteOutcome",
+			command: "costrict-completion.logAutocompleteOutcome",
 			arguments: [result.completionId, this.completionProvider],
 		})
 		// 返回 InlineCompletionItem
@@ -223,7 +223,7 @@ export class InlineCompletionProvider implements InlineCompletionItemProvider {
 
 	private async isProviderSupported(): Promise<boolean> {
 		const { apiConfiguration } = await this.provider.getState()
-		return apiConfiguration.apiProvider === "zgsm"
+		return apiConfiguration.apiProvider === "costrict"
 	}
 
 	private _setupActiveTextEditorChangeListener(): void {

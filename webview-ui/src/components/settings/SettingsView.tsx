@@ -72,7 +72,7 @@ import { AutoApproveSettings } from "./AutoApproveSettings"
 import { CheckpointSettings } from "./CheckpointSettings"
 import { NotificationSettings } from "./NotificationSettings"
 import { ContextManagementSettings } from "./ContextManagementSettings"
-import { ZgsmCodebaseSettings } from "./ZgsmCodebaseSettings"
+import { CostrictCodebaseSettings } from "./CostrictCodebaseSettings"
 import { TerminalSettings } from "./TerminalSettings"
 import { ExperimentalSettings } from "./ExperimentalSettings"
 import { LanguageSettings } from "./LanguageSettings"
@@ -168,9 +168,10 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		alwaysAllowWriteProtected,
 		autoCondenseContext,
 		autoCondenseContextPercent,
+		customStoragePath,
 		enableCheckpoints,
-		useZgsmCustomConfig,
-		zgsmCodebaseIndexEnabled,
+		useCostrictCustomConfig,
+		costrictCodebaseIndexEnabled,
 		checkpointTimeout,
 		experiments,
 		maxOpenTabsContext,
@@ -214,9 +215,10 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		includeCurrentCost,
 		maxGitStatusFiles,
 		autoCleanup,
-		experimentSettings,
 		debug,
 	} = cachedState
+
+	const experimentSettings = cachedState.experimentSettings ?? {}
 
 	const apiConfiguration = useMemo(() => cachedState.apiConfiguration ?? {}, [cachedState.apiConfiguration])
 
@@ -368,19 +370,12 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 
 	const setSmartMistakeDetectionConfig = useCallback((config: SmartMistakeDetectionConfig) => {
 		setCachedState((prevState) => {
-			const currentConfig = prevState.experimentSettings?.smartMistakeDetectionConfig || {}
-			if (isEqual(currentConfig, config)) {
-				return prevState
+			const newExperimentSettings = {
+				...(prevState.experimentSettings ?? {}),
+				smartMistakeDetectionConfig: config,
 			}
-
 			setChangeDetected(true)
-			return {
-				...prevState,
-				experimentSettings: {
-					...prevState.experimentSettings,
-					smartMistakeDetectionConfig: config,
-				},
-			}
+			return { ...prevState, experimentSettings: newExperimentSettings }
 		})
 	}, [])
 
@@ -394,7 +389,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 				updatedSettings: {
 					language,
 					alwaysAllowReadOnly: alwaysAllowReadOnly ?? undefined,
-					alwaysAllowReadOnlyOutsideWorkspace: alwaysAllowReadOnlyOutsideWorkspace ?? undefined,
+					alwaysAllowReadOnlyOutsideWorkspace: alwaysAllowReadOnlyOutsideWorkspace ?? true,
 					alwaysAllowWrite: alwaysAllowWrite ?? undefined,
 					alwaysAllowWriteOutsideWorkspace: alwaysAllowWriteOutsideWorkspace ?? undefined,
 					alwaysAllowWriteProtected: alwaysAllowWriteProtected ?? undefined,
@@ -414,6 +409,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					soundVolume: soundVolume ?? 0.5,
 					ttsEnabled,
 					ttsSpeed,
+					customStoragePath: customStoragePath ?? "",
 					enableCheckpoints: enableCheckpoints ?? false,
 					checkpointTimeout: checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 					writeDelayMs,
@@ -428,7 +424,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					terminalOutputPreviewSize: terminalOutputPreviewSize ?? "medium",
 					mcpEnabled,
 					maxOpenTabsContext: Math.min(Math.max(0, maxOpenTabsContext ?? 20), 500),
-					maxWorkspaceFiles: Math.min(Math.max(0, maxWorkspaceFiles ?? 200), 500),
+					maxWorkspaceFiles: Math.min(Math.max(0, maxWorkspaceFiles ?? 150), 500),
 					showRooIgnoredFiles: showRooIgnoredFiles ?? true,
 					enableSubfolderRules: enableSubfolderRules ?? false,
 					maxImageFileSize: maxImageFileSize ?? 5,
@@ -455,8 +451,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					experiments,
 					experimentSettings,
 					customSupportPrompts,
-					useZgsmCustomConfig: useZgsmCustomConfig ?? false,
-					zgsmCodebaseIndexEnabled: zgsmCodebaseIndexEnabled ?? false,
+					useCostrictCustomConfig: useCostrictCustomConfig ?? false,
+					costrictCodebaseIndexEnabled: costrictCodebaseIndexEnabled ?? false,
 					autoCleanup,
 					debug,
 				},
@@ -465,7 +461,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 			// by the `updateSettings` message.
 
 			if (
-				apiConfiguration.useZgsmCustomConfig &&
+				apiConfiguration.useCostrictCustomConfig &&
 				apiConfiguration.includeMaxTokens === undefined &&
 				!Object.hasOwn(apiConfiguration, "includeMaxTokens")
 			) {
@@ -550,12 +546,17 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		}
 	}, [])
 
-	const handleMessage = useCallback((event: MessageEvent) => {
-		const message: ExtensionMessage = event.data
-		if (message.type === "settingsUpdated") {
-			setIsSaving(false)
-		}
-	}, [])
+	const handleMessage = useCallback(
+		(event: MessageEvent) => {
+			const message: ExtensionMessage = event.data
+			if (message.type === "settingsUpdated") {
+				setIsSaving(false)
+			} else if (message.type === "customStoragePathSelected") {
+				setCachedStateField("customStoragePath", message.path ?? "")
+			}
+		},
+		[setCachedStateField],
+	)
 
 	useEffect(() => {
 		window.addEventListener("message", handleMessage)
@@ -837,7 +838,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 										setApiConfigurationField={setApiConfigurationField}
 										errorMessage={errorMessage}
 										setErrorMessage={setErrorMessage}
-										useZgsmCustomConfig={useZgsmCustomConfig}
+										useCostrictCustomConfig={useCostrictCustomConfig}
 										setCachedStateField={setCachedStateField}
 									/>
 								</Section>
@@ -877,6 +878,7 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 							<CheckpointSettings
 								enableCheckpoints={enableCheckpoints}
 								checkpointTimeout={checkpointTimeout}
+								customStoragePath={customStoragePath}
 								autoCleanup={autoCleanup}
 								setCachedStateField={setCachedStateField}
 							/>
@@ -900,10 +902,10 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								autoCondenseContextPercent={autoCondenseContextPercent}
 								listApiConfigMeta={listApiConfigMeta ?? []}
 								maxOpenTabsContext={maxOpenTabsContext}
-								maxWorkspaceFiles={maxWorkspaceFiles ?? 300}
+								maxWorkspaceFiles={maxWorkspaceFiles ?? 150}
 								showRooIgnoredFiles={showRooIgnoredFiles}
 								enableSubfolderRules={enableSubfolderRules}
-								zgsmCodebaseIndexEnabled={zgsmCodebaseIndexEnabled ?? false}
+								costrictCodebaseIndexEnabled={costrictCodebaseIndexEnabled ?? false}
 								maxImageFileSize={maxImageFileSize}
 								maxTotalImageSize={maxTotalImageSize}
 								profileThresholds={profileThresholds}
@@ -918,9 +920,9 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								setCachedStateField={setCachedStateField}
 							/>
 						)}
-						{/* ZgsmCodebase Section */}
+						{/* CostrictCodebase Section */}
 						{renderTab === "contextManagement" && (
-							<ZgsmCodebaseSettings
+							<CostrictCodebaseSettings
 								setCachedStateField={setCachedStateField}
 								isActiveTab={activeTab === "contextManagement"}
 							/>
@@ -984,6 +986,8 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								experiments={experiments}
 								apiConfiguration={apiConfiguration}
 								setApiConfigurationField={setApiConfigurationField}
+								experimentSettings={experimentSettings}
+								setSmartMistakeDetectionConfig={setSmartMistakeDetectionConfig}
 								imageGenerationProvider={imageGenerationProvider}
 								openRouterImageApiKey={openRouterImageApiKey as string | undefined}
 								openRouterImageGenerationSelectedModel={
@@ -992,15 +996,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								setImageGenerationProvider={setImageGenerationProvider}
 								setOpenRouterImageApiKey={setOpenRouterImageApiKey}
 								setImageGenerationSelectedModel={setImageGenerationSelectedModel}
-								setSmartMistakeDetectionConfig={setSmartMistakeDetectionConfig}
-								experimentSettings={
-									cachedState.experimentSettings || {
-										smartMistakeDetectionConfig: {
-											autoSwitchModel: false,
-											autoSwitchModelThreshold: 3,
-										},
-									}
-								}
 							/>
 						)}
 
@@ -1008,7 +1003,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 						{renderTab === "language" && (
 							<LanguageSettings language={language || "en"} setCachedStateField={setCachedStateField} />
 						)}
-
 						{/* About Section */}
 						{renderTab === "about" && (
 							<About

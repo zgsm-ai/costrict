@@ -17,6 +17,8 @@ import HistoryView from "./components/history/HistoryView"
 import SettingsView, { SettingsViewRef } from "./components/settings/SettingsView"
 import CodeReviewPage from "./components/code-review"
 import CodeReviewHistoryView from "./components/code-review/CodeReviewHistoryView"
+import CostrictCliView from "./components/costrict-cli/CostrictCliView"
+import LoadingView from "./components/LoadingView"
 import WelcomeView from "./components/welcome/WelcomeViewProvider"
 import { HumanRelayDialog } from "./components/human-relay/HumanRelayDialog"
 import { CheckpointRestoreDialog } from "./components/chat/CheckpointRestoreDialog"
@@ -27,11 +29,11 @@ import ErrorBoundary from "./components/ErrorBoundary"
 import { useAddNonInteractiveClickListener } from "./components/ui/hooks/useNonInteractiveClick"
 import { TooltipProvider } from "./components/ui/tooltip"
 import { STANDARD_TOOLTIP_DELAY, StandardTooltip } from "./components/ui/standard-tooltip"
-import { ZgsmAccountView } from "./components/cloud/ZgsmAccountView"
+import { CostrictAccountView } from "./components/cloud/CostrictAccountView"
 import { TabContent, TabList, TabTrigger } from "./components/common/Tab"
 import { cn } from "./lib/utils"
 import { ReauthConfirmationDialog } from "./components/chat/ReauthConfirmationDialog"
-import { ZgsmCodebaseDisableConfirmDialog } from "./components/settings/ZgsmCodebaseDisableConfirmDialog"
+import { CostrictCodebaseDisableConfirmDialog } from "./components/settings/CostrictCodebaseDisableConfirmDialog"
 import { useTranslation } from "react-i18next"
 import { EXPERIMENT_IDS } from "@roo/experiments"
 
@@ -39,9 +41,10 @@ type Tab =
 	| "settings"
 	| "history"
 	| "chat"
+	| "cs-cli"
 	| "marketplace"
 	| "cloud"
-	| "zgsm-account"
+	| "costrict-account"
 	| "codeReview"
 	// | "worktrees"
 	| "codeReviewHistory"
@@ -70,7 +73,7 @@ interface EditMessageDialogState {
 	images?: string[]
 }
 
-interface ZgsmCodebaseDisableConfirmDialogState {
+interface CostrictCodebaseDisableConfirmDialogState {
 	isOpen: boolean
 }
 
@@ -80,7 +83,7 @@ const MemoizedEditMessageDialog = React.memo(EditMessageDialog)
 const MemoizedReauthConfirmationDialog = React.memo(ReauthConfirmationDialog)
 const MemoizedCheckpointRestoreDialog = React.memo(CheckpointRestoreDialog)
 const MemoizedHumanRelayDialog = React.memo(HumanRelayDialog)
-const MemoizedZgsmCodebaseDisableConfirmDialog = React.memo(ZgsmCodebaseDisableConfirmDialog)
+const MemoizedCostrictCodebaseDisableConfirmDialog = React.memo(CostrictCodebaseDisableConfirmDialog)
 
 const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]>, Tab>> = {
 	chatButtonClicked: "chat",
@@ -88,7 +91,7 @@ const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]
 	historyButtonClicked: "history",
 	// marketplaceButtonClicked: "marketplace",
 	cloudButtonClicked: "cloud",
-	zgsmAccountButtonClicked: "zgsm-account",
+	costrictAccountButtonClicked: "costrict-account",
 	codeReviewButtonClicked: "codeReview",
 }
 
@@ -111,6 +114,8 @@ const App = () => {
 		hasClosedCodeReviewWelcomeTips,
 		reviewTask,
 		setReviewTask,
+		didHydrateCliState,
+		setDidHydrateSClitate,
 	} = useExtensionState()
 	const { t } = useTranslation()
 
@@ -119,7 +124,7 @@ const App = () => {
 
 	const [showAnnouncement, setShowAnnouncement] = useState(false)
 	const [tab, setTab] = useState<Tab>("chat")
-	const isChatTab = useMemo(() => ["chat", "codeReview"].includes(tab), [tab])
+	const isChatTab = useMemo(() => ["chat", "codeReview", "cs-cli"].includes(tab), [tab])
 
 	const [humanRelayDialogState, setHumanRelayDialogState] = useState<HumanRelayDialogState>({
 		isOpen: false,
@@ -146,8 +151,8 @@ const App = () => {
 		images: [],
 	})
 
-	const [zgsmCodebaseDisableConfirmDialogState, setZgsmCodebaseDisableConfirmDialogState] =
-		useState<ZgsmCodebaseDisableConfirmDialogState>({
+	const [zgsmCodebaseDisableConfirmDialogState, setCostrictCodebaseDisableConfirmDialogState] =
+		useState<CostrictCodebaseDisableConfirmDialogState>({
 			isOpen: false,
 		})
 
@@ -159,22 +164,29 @@ const App = () => {
 		(newTab: Tab) => {
 			// Only check MDM compliance if mdmCompliant is explicitly false (meaning there's an MDM policy and user is non-compliant)
 			// If mdmCompliant is undefined or true, allow tab switching
-			if (mdmCompliant === false && newTab !== "cloud" && newTab !== "zgsm-account") {
+			if (mdmCompliant === false && newTab !== "cloud" && newTab !== "costrict-account") {
 				// Notify the user that authentication is required by their organization
 				// vscode.postMessage({ type: "showMdmAuthRequiredNotification" })
 				return
 			}
 
 			setCurrentSection(undefined)
-			setCurrentMarketplaceTab(undefined)
-
+			// setCurrentMarketplaceTab(undefined)
+			if (newTab === "cs-cli" && !didHydrateCliState) {
+				setDidHydrateSClitate(true)
+			}
+			// Notify backend of active tab change so it can hibernate/wake non-CLI features
 			if (settingsRef.current?.checkUnsaveChanges) {
-				settingsRef.current.checkUnsaveChanges(() => setTab(newTab))
+				settingsRef.current.checkUnsaveChanges(() => {
+					setTab(newTab)
+					vscode.postMessage({ type: "switchTab", tab: newTab })
+				})
 			} else {
 				setTab(newTab)
+				vscode.postMessage({ type: "switchTab", tab: newTab })
 			}
 		},
-		[mdmCompliant],
+		[didHydrateCliState, mdmCompliant, setDidHydrateSClitate],
 	)
 
 	const toggleCodeReviewTips = useCallback(() => {
@@ -185,35 +197,51 @@ const App = () => {
 	}, [hasClosedCodeReviewWelcomeTips])
 
 	const [currentSection, setCurrentSection] = useState<string | undefined>(undefined)
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const [currentMarketplaceTab, setCurrentMarketplaceTab] = useState<string | undefined>(undefined)
+	// // eslint-disable-next-line @typescript-eslint/no-unused-vars
+	// const [currentMarketplaceTab, setCurrentMarketplaceTab] = useState<string | undefined>(undefined)
 
 	const onMessage = useCallback(
 		(e: MessageEvent) => {
 			const message: ExtensionMessage = e.data
 
+			// When CLI tab is active, route invoke messages to the terminal via bracketed paste
+			if (message.type === "invoke" && tab === "cs-cli") {
+				const text = message.text ?? ""
+				if (text) {
+					const PASTE_START = "\x1b[200~"
+					const PASTE_END = "\x1b[201~"
+					vscode.postMessage({ type: "CostrictCliInput", data: PASTE_START + text + PASTE_END })
+				}
+				return
+			}
+
 			if (message.type === "action" && message.action) {
 				// Handle switchTab action with tab parameter
 				if (message.action === "switchTab" && message.tab) {
 					const targetTab = message.tab as Tab
-					switchTab(targetTab)
+					// Use setTab directly instead of switchTab to avoid re-posting
+					// to the backend (which would echo back and cause an infinite loop).
+					if (targetTab === "cs-cli" && !didHydrateCliState) {
+						setDidHydrateSClitate(true)
+					}
+					setTab(targetTab)
 					// Extract targetSection from values if provided
 					const targetSection = message.values?.section as string | undefined
 					setCurrentSection(targetSection)
-					setCurrentMarketplaceTab(undefined)
+					// setCurrentMarketplaceTab(undefined)
 				} else {
 					// Handle other actions using the mapping
 					const newTab =
 						tabsByMessageAction[
-							message.action === "cloudButtonClicked" ? "zgsmAccountButtonClicked" : message.action
+							message.action === "cloudButtonClicked" ? "costrictAccountButtonClicked" : message.action
 						]
 					const section = message.values?.section as string | undefined
-					const marketplaceTab = message.values?.marketplaceTab as string | undefined
+					// const marketplaceTab = message.values?.marketplaceTab as string | undefined
 
 					if (newTab) {
 						switchTab(newTab)
 						setCurrentSection(section)
-						setCurrentMarketplaceTab(marketplaceTab)
+						// setCurrentMarketplaceTab(marketplaceTab)
 					}
 				}
 			}
@@ -245,15 +273,15 @@ const App = () => {
 				})
 			}
 
-			if (message.type === "showZgsmCodebaseDisableConfirmDialog") {
-				setZgsmCodebaseDisableConfirmDialogState({ isOpen: true })
+			if (message.type === "showCostrictCodebaseDisableConfirmDialog") {
+				setCostrictCodebaseDisableConfirmDialogState({ isOpen: true })
 			}
 
 			if (message.type === "acceptInput") {
 				chatViewRef.current?.acceptInput()
 			}
 		},
-		[switchTab],
+		[switchTab, didHydrateCliState, setDidHydrateSClitate, tab],
 	)
 
 	useEvent("message", onMessage)
@@ -311,20 +339,30 @@ const App = () => {
 	const tabs = useMemo(() => {
 		const baseTabs = [
 			{
-				label: "AGENT",
+				label: t("common:costrictCli.tabs.agent"),
 				value: "chat",
+				icon: "codicon-hubot",
 			},
 		]
 
-		if (apiConfiguration?.apiProvider === "zgsm") {
-			baseTabs.push({
-				label: "CODE REVIEW",
-				value: "codeReview",
-			})
+		if (apiConfiguration?.apiProvider === "costrict") {
+			baseTabs.push(
+				{
+					label: t("common:costrictCli.tabs.codeReview"),
+					value: "codeReview",
+					icon: "codicon-code-review",
+					// icon: "codicon-search",
+				},
+				{
+					label: t("common:costrictCli.tabs.cli"),
+					value: "cs-cli",
+					icon: "codicon-terminal",
+				},
+			)
 		}
 
 		return baseTabs
-	}, [apiConfiguration?.apiProvider])
+	}, [apiConfiguration?.apiProvider, t])
 
 	const resetTabs = useCallback(() => {
 		setTab("chat")
@@ -351,7 +389,7 @@ const App = () => {
 	}, [reviewTask.status, setReviewTask])
 
 	if (!didHydrateState) {
-		return null
+		return <LoadingView />
 	}
 
 	// Do not conditionally load ChatView, it's expensive and there's state we
@@ -379,26 +417,37 @@ const App = () => {
 					organizations={cloudOrganizations}
 				/>
 			)} */}
-			{tab === "zgsm-account" && (
-				<ZgsmAccountView apiConfiguration={apiConfiguration} onDone={() => switchTab("chat")} />
+			{tab === "costrict-account" && (
+				<CostrictAccountView apiConfiguration={apiConfiguration} onDone={() => switchTab("chat")} />
 			)}
 			{/* {tab === "worktrees" && <WorktreesView onDone={() => switchTab("chat")} />} */}
 			{tab === "codeReviewHistory" && <CodeReviewHistoryView onDone={() => switchTab("codeReview")} />}
 			<div className={`${isChatTab ? "fixed inset-0 flex flex-col" : "hidden"}`}>
 				<div className={`header flex items-center justify-between px-5 ${isChatTab ? "" : "hidden"}`}>
 					<TabList value={tab} onValueChange={(val) => switchTab(val as Tab)} className="header-left h-7">
-						{tabs.map(({ label, value }) => {
+						{tabs.map(({ label, value, icon }) => {
 							const isSelected = tab === value
-							const activeTabClass = isSelected ? "border-b border-gray-200" : ""
 
 							return (
 								<TabTrigger
 									key={value}
 									value={value}
 									isSelected={isSelected}
-									className={cn(activeTabClass, "mr-4", "cursor-pointer")}
+									className={cn(
+										"mr-4",
+										"cursor-pointer",
+										"border-none",
+										"outline-none",
+										"shadow-none",
+										"bg-transparent",
+										"no-underline",
+										isSelected && "text-vscode-focusBorder",
+									)}
 									focusNeedRing={false}>
-									{label}
+									<span className="flex items-center gap-1">
+										{icon && <i className={cn("codicon", icon)} style={{ fontSize: "14px" }}></i>}
+										{label}
+									</span>
 								</TabTrigger>
 							)
 						})}
@@ -449,13 +498,15 @@ const App = () => {
 						</div>
 					)}
 				</div>
-				<TabContent className={tab === "codeReview" ? "p-0" : ""}>
-					<ChatView
-						ref={chatViewRef}
-						isHidden={tab !== "chat"}
-						showAnnouncement={showAnnouncement}
-						hideAnnouncement={() => setShowAnnouncement(false)}
-					/>
+				<TabContent className={tab === "cs-cli" ? "p-0 overflow-hidden" : tab === "codeReview" ? "p-0" : ""}>
+					{tab !== "cs-cli" && (
+						<ChatView
+							ref={chatViewRef}
+							isHidden={tab !== "chat"}
+							showAnnouncement={showAnnouncement}
+							hideAnnouncement={() => setShowAnnouncement(false)}
+						/>
+					)}
 					{tab === "codeReview" && (
 						<CodeReviewPage
 							isHidden={tab !== "codeReview"}
@@ -465,6 +516,9 @@ const App = () => {
 								codeReviewNavigateRef.current = fn
 							}}
 						/>
+					)}
+					{apiConfiguration.apiProvider === "costrict" && didHydrateCliState && (
+						<CostrictCliView isHidden={tab !== "cs-cli"} />
 					)}
 				</TabContent>
 			</div>
@@ -539,16 +593,18 @@ const App = () => {
 				open={reauthConfirmationDialogState.isOpen}
 				onOpenChange={(open) => setReauthConfirmationDialogState((prev) => ({ ...prev, isOpen: open }))}
 				onConfirm={() => {
-					vscode.postMessage({ type: "zgsmLogin", apiConfiguration })
+					vscode.postMessage({ type: "costrictLogin", apiConfiguration })
 					setReauthConfirmationDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>
-			<MemoizedZgsmCodebaseDisableConfirmDialog
+			<MemoizedCostrictCodebaseDisableConfirmDialog
 				open={zgsmCodebaseDisableConfirmDialogState.isOpen}
-				onOpenChange={(open) => setZgsmCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: open }))}
+				onOpenChange={(open) =>
+					setCostrictCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: open }))
+				}
 				onConfirm={() => {
-					vscode.postMessage({ type: "zgsmCodebaseIndexEnabled", bool: false })
-					setZgsmCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: false }))
+					vscode.postMessage({ type: "costrictCodebaseIndexEnabled", bool: false })
+					setCostrictCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>
 		</>

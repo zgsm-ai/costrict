@@ -142,9 +142,9 @@ export async function initializeNetworkProxy(
 		context.subscriptions.push(
 			vscode.workspace.onDidChangeConfiguration((e) => {
 				if (
-					e.affectsConfiguration(`${Package.name}.debugProxy.enabled`) ||
-					e.affectsConfiguration(`${Package.name}.debugProxy.serverUrl`) ||
-					e.affectsConfiguration(`${Package.name}.debugProxy.tlsInsecure`)
+					e.affectsConfiguration(`${Package.commandIDPrefix}.debugProxy.enabled`) ||
+					e.affectsConfiguration(`${Package.commandIDPrefix}.debugProxy.serverUrl`) ||
+					e.affectsConfiguration(`${Package.commandIDPrefix}.debugProxy.tlsInsecure`)
 				) {
 					const newConfig = getProxyConfig()
 
@@ -197,7 +197,7 @@ export function getProxyConfig(): ProxyConfig {
 		}
 	}
 
-	const config = vscode.workspace.getConfiguration(Package.name)
+	const config = vscode.workspace.getConfiguration(Package.commandIDPrefix)
 	const enabled = Boolean(config.get<unknown>("debugProxy.enabled"))
 	const rawServerUrl = config.get<unknown>("debugProxy.serverUrl")
 	const serverUrl = typeof rawServerUrl === "string" && rawServerUrl.trim() ? rawServerUrl.trim() : defaultServerUrl

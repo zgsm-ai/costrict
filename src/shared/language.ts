@@ -24,7 +24,7 @@ export const LANGUAGES: Record<Language, string> = {
 	"zh-CN": "简体中文",
 	"zh-TW": "繁體中文",
 }
-export const ZGSM_LANGUAGES = {
+export const COSTRICT_LANGUAGES = {
 	en: LANGUAGES.en,
 	"zh-CN": LANGUAGES["zh-CN"],
 	"zh-TW": LANGUAGES["zh-TW"],

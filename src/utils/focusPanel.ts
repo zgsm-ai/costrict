@@ -16,7 +16,7 @@ export async function focusPanel(
 
 	if (!panel) {
 		// If no panel is open, open the sidebar
-		await vscode.commands.executeCommand(`workbench.view.extension.${Package.name}-ActivityBar`)
+		await vscode.commands.executeCommand(`workbench.view.extension.${Package.commandIDPrefix}-ActivityBar`)
 	} else if (panel === tabPanel && !panel.active) {
 		// For tab panels, use reveal to focus
 		panel.reveal(vscode.ViewColumn.Active, false)

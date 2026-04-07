@@ -251,7 +251,7 @@ export const mockExtensionContext: ExtensionContext = {
 		packageJSON: {
 			version: "1.0.0",
 			publisher: "zgsm-ai",
-			name: "zgsm",
+			name: "costrict",
 		},
 	},
 }

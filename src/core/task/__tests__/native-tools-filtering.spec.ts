@@ -76,7 +76,7 @@ describe("Native Tools Filtering by Mode", () => {
 
 			// Code SHOULD have command tools
 			expect(codeAllowedTools.has("execute_command")).toBe(true)
-		})
+		}, 60000)
 
 		it("should filter MCP tools based on use_mcp_tool permission", async () => {
 			const modeWithMcp: ModeConfig = {

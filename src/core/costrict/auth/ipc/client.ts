@@ -14,7 +14,7 @@ let retryCount = 0
 let forceRetryCount = 0
 const MAX_RETRIES = 15
 const FORCE_MAX_RETRIES = 3
-const INITIAL_RETRY_DELAY = 5000 // 5 seconds
+const INITIAL_RETRY_DELAY = 1000 // 1 second
 
 export function connectIPC() {
 	if (client && !client.destroyed) {
@@ -39,13 +39,13 @@ export function connectIPC() {
 	client.on("data", (data) => {
 		try {
 			const message = JSON.parse(data.toString())
-			if (message.type === "zgsm-tokens") {
+			if (message.type === "costrict-tokens") {
 				onTokensUpdateCallbacks.forEach((cb) => cb(message.payload))
 			}
-			if (message.type === "zgsm-logout") {
+			if (message.type === "costrict-logout") {
 				onLogoutCallbacks.forEach((cb) => cb(message.payload))
 			}
-			if (message.type === "zgsm-close-window") {
+			if (message.type === "costrict-close-window") {
 				onCloseWindowCallbacks.forEach((cb) => cb(message.payload))
 			}
 		} catch (error) {
@@ -69,7 +69,7 @@ export function connectIPC() {
 			client = null
 		}
 		// Retry on most errors with exponential backoff
-		if (err.code === "ECONNREFUSED" || err.code === "ENOENT") {
+		if (err.code === "ECONNREFUSED" || err.code === "ENOENT" || err.code === "ENOTSOCK") {
 			// Server not ready or socket not created yet - retry with backoff
 			scheduleRetry()
 		} else if (err.code === "EACCES") {
@@ -130,10 +130,10 @@ export function connectIPC() {
 	}
 }
 
-export function sendZgsmTokens(tokens: { state: string; access_token: string; refresh_token: string }) {
+export function sendCostrictTokens(tokens: { state: string; access_token: string; refresh_token: string }) {
 	if (client && !client.destroyed) {
 		try {
-			const message = JSON.stringify({ type: "zgsm-tokens", payload: tokens })
+			const message = JSON.stringify({ type: "costrict-tokens", payload: tokens })
 			client.write(message)
 		} catch (error) {
 			console.error("Failed to send tokens over IPC:", error)
@@ -143,10 +143,10 @@ export function sendZgsmTokens(tokens: { state: string; access_token: string; re
 	}
 }
 
-export function sendZgsmLogout(sessionId: string) {
+export function sendCostrictLogout(sessionId: string) {
 	if (client && !client.destroyed) {
 		try {
-			const message = JSON.stringify({ type: "zgsm-logout", payload: sessionId })
+			const message = JSON.stringify({ type: "costrict-logout", payload: sessionId })
 			client.write(message)
 		} catch (error) {
 			console.error("Failed to send tokens over IPC:", error)
@@ -155,20 +155,20 @@ export function sendZgsmLogout(sessionId: string) {
 		console.warn("IPC client not connected, cannot send tokens.")
 	}
 }
-export function sendZgsmCloseWindow(sessionId: string) {
+export function sendCostrictCloseWindow(sessionId: string) {
 	if (!client || client.destroyed) {
 		return
 	}
 
 	try {
-		const message = JSON.stringify({ type: "zgsm-close-window", payload: sessionId })
+		const message = JSON.stringify({ type: "costrict-close-window", payload: sessionId })
 		client.write(message)
 	} catch (error) {
 		console.error("Failed to send tokens over IPC:", error)
 	}
 }
 
-export function onZgsmLogout(callback: (sessionId: string) => void) {
+export function onCostrictLogout(callback: (sessionId: string) => void) {
 	onLogoutCallbacks.push(callback)
 	return {
 		dispose: () => {
@@ -192,7 +192,7 @@ export function onCloseWindow(callback: (sessionId: string) => void) {
 	}
 }
 
-export function onZgsmTokensUpdate(
+export function onCostrictTokensUpdate(
 	callback: (tokens: { state: string; access_token: string; refresh_token: string }) => void,
 ) {
 	onTokensUpdateCallbacks.push(callback)

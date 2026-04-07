@@ -9,6 +9,7 @@ import {
 	getGlobalAgentsDirectory,
 	getProjectAgentsDirectoryForCwd,
 	getGlobalCostrictDirectory,
+	getGlobalCostrictCLIDirectory,
 } from "../roo-config"
 import { directoryExists, fileExists } from "../roo-config"
 import { SkillMetadata, SkillContent } from "../../shared/skills"
@@ -147,12 +148,18 @@ export class SkillsManager {
 			}
 
 			// Parse modeSlugs from frontmatter (new format) or fall back to directory-based mode
-			// Priority: frontmatter.modeSlugs > frontmatter.mode > directory mode
+			// Priority: frontmatter.metadata.modeSlugs > frontmatter.modeSlugs > frontmatter.mode > directory mode
 			let modeSlugs: string[] | undefined
-			if (Array.isArray(frontmatter.modeSlugs)) {
+			// New format: metadata.modeSlugs
+			if (frontmatter.metadata && Array.isArray(frontmatter.metadata.modeSlugs)) {
+				modeSlugs = frontmatter.metadata.modeSlugs.filter((s: unknown) => typeof s === "string" && s.length > 0)
+			}
+			// Old format: top-level modeSlugs (for backward compatibility)
+			else if (Array.isArray(frontmatter.modeSlugs)) {
 				modeSlugs = frontmatter.modeSlugs.filter((s: unknown) => typeof s === "string" && s.length > 0)
-				if (modeSlugs.length === 0) {
-					modeSlugs = undefined // Empty array means "any mode"
+				// Empty array means "any mode"
+				if (modeSlugs?.length === 0) {
+					modeSlugs = undefined
 				}
 			} else if (typeof frontmatter.mode === "string" && frontmatter.mode.length > 0) {
 				// Legacy single mode in frontmatter
@@ -173,7 +180,7 @@ export class SkillsManager {
 				path: skillMdPath,
 				source,
 				mode: primaryMode, // Deprecated: kept for backward compatibility
-				modeSlugs, // New: array of mode slugs, undefined = any mode
+				metadata: modeSlugs ? { modeSlugs } : undefined, // New: metadata object with modeSlugs array
 			})
 		} catch (error) {
 			console.error(`Failed to load skill at ${skillDir}:`, error)
@@ -220,11 +227,12 @@ export class SkillsManager {
 	 */
 	private isSkillAvailableInMode(skill: SkillMetadata, currentMode: string): boolean {
 		// No mode restrictions = available in all modes
-		if (!skill.modeSlugs || skill.modeSlugs.length === 0) {
+		const skillModeSlugs = skill.metadata?.modeSlugs
+		if (!skillModeSlugs || skillModeSlugs.length === 0) {
 			return true
 		}
 		// Check if current mode is in the allowed modes
-		return skill.modeSlugs.includes(currentMode)
+		return skillModeSlugs.includes(currentMode)
 	}
 
 	/**
@@ -247,8 +255,8 @@ export class SkillsManager {
 
 		// Same source: mode-specific overrides generic
 		// A skill with modeSlugs (restricted) is more specific than one without (any mode)
-		const existingHasModes = existing.modeSlugs && existing.modeSlugs.length > 0
-		const newHasModes = newSkill.modeSlugs && newSkill.modeSlugs.length > 0
+		const existingHasModes = existing.metadata?.modeSlugs && existing.metadata.modeSlugs.length > 0
+		const newHasModes = newSkill.metadata?.modeSlugs && newSkill.metadata.modeSlugs.length > 0
 		if (newHasModes && !existingHasModes) return true
 		if (!newHasModes && existingHasModes) return false
 
@@ -548,13 +556,20 @@ Add your skill instructions here.
 		const { data: frontmatter, content: body } = matter(fileContent)
 
 		// Update the frontmatter with new modeSlugs
+		if (!frontmatter.metadata) {
+			frontmatter.metadata = {}
+		}
 		if (newModeSlugs && newModeSlugs.length > 0) {
-			frontmatter.modeSlugs = newModeSlugs
+			frontmatter.metadata.modeSlugs = newModeSlugs
 			// Remove legacy mode field if present
 			delete frontmatter.mode
 		} else {
 			// Empty/undefined = any mode, remove mode restrictions
-			delete frontmatter.modeSlugs
+			delete frontmatter.metadata.modeSlugs
+			// Clean up empty metadata object
+			if (Object.keys(frontmatter.metadata).length === 0) {
+				delete frontmatter.metadata
+			}
 			delete frontmatter.mode
 		}
 
@@ -579,6 +594,7 @@ Add your skill instructions here.
 		const dirs: Array<{ dir: string; source: "global" | "project"; mode?: string }> = []
 		const globalRooDir = getGlobalRooDirectory()
 		const globalCostrictDir = getGlobalCostrictDirectory()
+		const globalCostrictCliDir = getGlobalCostrictCLIDirectory()
 		const globalAgentsDir = getGlobalAgentsDirectory()
 		const provider = this.providerRef.deref()
 		const projectRooDir = provider?.cwd ? path.join(provider.cwd, ".roo") : null
@@ -613,9 +629,11 @@ Add your skill instructions here.
 		// Global .roo directories (Roo-specific, higher priority than .agents)
 		dirs.push({ dir: path.join(globalRooDir, "skills"), source: "global" })
 		dirs.push({ dir: path.join(globalCostrictDir, "skills"), source: "global" })
+		dirs.push({ dir: path.join(globalCostrictCliDir, "skills"), source: "global" })
 		for (const mode of modesList) {
 			dirs.push({ dir: path.join(globalRooDir, `skills-${mode}`), source: "global", mode })
 			dirs.push({ dir: path.join(globalCostrictDir, `skills-${mode}`), source: "global", mode })
+			dirs.push({ dir: path.join(globalCostrictCliDir, `skills-${mode}`), source: "global", mode })
 		}
 
 		// Project .roo directories (highest priority)
@@ -667,11 +685,13 @@ Add your skill instructions here.
 		const globalAgentsDir = getGlobalAgentsDirectory()
 		const projectRooDir = path.join(provider.cwd, ".roo")
 		const globalCostrictDir = path.join(getGlobalCostrictDirectory(), "skills")
+		const globalCostrictCliDir = path.join(getGlobalCostrictCLIDirectory(), "skills")
 		const projectAgentsDir = getProjectAgentsDirectoryForCwd(provider.cwd)
 
 		// Watch global .roo skills directory
 		this.watchDirectory(path.join(globalRooDir, "skills"))
 		this.watchDirectory(globalCostrictDir)
+		this.watchDirectory(globalCostrictCliDir)
 
 		// Watch global .agents skills directory
 		this.watchDirectory(path.join(globalAgentsDir, "skills"))
@@ -690,6 +710,7 @@ Add your skill instructions here.
 			this.watchDirectory(path.join(projectRooDir, `skills-${mode}`))
 			// .costrict mode-specific
 			this.watchDirectory(path.join(getGlobalCostrictDirectory(), `skills-${mode}`))
+			this.watchDirectory(path.join(getGlobalCostrictCLIDirectory(), `skills-${mode}`))
 			// .agents mode-specific
 			this.watchDirectory(path.join(globalAgentsDir, `skills-${mode}`))
 			this.watchDirectory(path.join(projectAgentsDir, `skills-${mode}`))

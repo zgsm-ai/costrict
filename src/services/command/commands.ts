@@ -6,6 +6,8 @@ import {
 	getGlobalRooDirectory,
 	getProjectRooDirectoryForCwd,
 	getProjectCostrictSpecDirectoryForCwd,
+	getGlobalCostrictDirectory,
+	getGlobalCostrictCLIDirectory,
 } from "../roo-config"
 import { getBuiltInCommands, getBuiltInCommand } from "./built-in-commands"
 
@@ -124,6 +126,21 @@ async function tryResolveSymlinkedCommand(filePath: string): Promise<string | un
 	return undefined
 }
 
+function getGlobalCommandDirectories(): string[] {
+	return [
+		path.join(getGlobalRooDirectory(), "commands"),
+		path.join(getGlobalCostrictDirectory(), "commands"),
+		path.join(getGlobalCostrictCLIDirectory(), "commands"),
+	]
+}
+
+function getProjectCommandDirectories(cwd: string): string[] {
+	return [
+		path.join(getProjectRooDirectoryForCwd(cwd), "commands"),
+		path.join(getProjectCostrictSpecDirectoryForCwd(cwd), "openspec", "commands"),
+	]
+}
+
 /**
  * Get all available commands from built-in, global, and project directories
  * Priority order: project > global > built-in (later sources override earlier ones)
@@ -138,15 +155,14 @@ export async function getCommands(cwd: string, language?: string): Promise<Comma
 	}
 
 	// Scan global commands (override built-in)
-	const globalDir = path.join(getGlobalRooDirectory(), "commands")
-	await scanCommandDirectory(globalDir, "global", commands)
+	for (const globalDir of getGlobalCommandDirectories()) {
+		await scanCommandDirectory(globalDir, "global", commands)
+	}
 
 	// Scan project commands (highest priority - override both global and built-in)
-	const projectDir = path.join(getProjectRooDirectoryForCwd(cwd), "commands")
-	await scanCommandDirectory(projectDir, "project", commands)
-
-	const projectSpecCommandsDir = path.join(getProjectCostrictSpecDirectoryForCwd(cwd), "openspec", "commands")
-	await scanCommandDirectory(projectSpecCommandsDir, "project", commands)
+	for (const projectDir of getProjectCommandDirectories(cwd)) {
+		await scanCommandDirectory(projectDir, "project", commands)
+	}
 
 	return Array.from(commands.values())
 }
@@ -157,26 +173,23 @@ export async function getCommands(cwd: string, language?: string): Promise<Comma
  */
 export async function getCommand(cwd: string, name: string, language?: string): Promise<Command | undefined> {
 	// Try to find the command directly without scanning all commands
-	const projectSpecCommandsDir = path.join(getProjectCostrictSpecDirectoryForCwd(cwd), "openspec", "commands")
-	const projectDir = path.join(getProjectRooDirectoryForCwd(cwd), "commands")
-	const globalDir = path.join(getGlobalRooDirectory(), "commands")
+	const projectDirs = getProjectCommandDirectories(cwd)
+	const globalDirs = getGlobalCommandDirectories()
 
-	// Check project directory first (highest priority)
-	const projectCommand = await tryLoadCommand(projectDir, name, "project")
-	if (projectCommand) {
-		return projectCommand
+	// Check project directories first (highest priority)
+	for (const projectDir of projectDirs) {
+		const projectCommand = await tryLoadCommand(projectDir, name, "project")
+		if (projectCommand) {
+			return projectCommand
+		}
 	}
 
-	// Check project directory first (highest priority)
-	const projectSpecCommand = await tryLoadCommand(projectSpecCommandsDir, name, "project")
-	if (projectSpecCommand) {
-		return projectSpecCommand
-	}
-
-	// Check global directory if not found in project
-	const globalCommand = await tryLoadCommand(globalDir, name, "global")
-	if (globalCommand) {
-		return globalCommand
+	// Check global directories if not found in project
+	for (const globalDir of globalDirs) {
+		const globalCommand = await tryLoadCommand(globalDir, name, "global")
+		if (globalCommand) {
+			return globalCommand
+		}
 	}
 
 	// Check built-in commands if not found in project or global (lowest priority)

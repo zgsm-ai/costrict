@@ -34,7 +34,7 @@ type ModelIdKey = keyof Pick<
 	| "unboundModelId"
 	| "openAiModelId"
 	| "litellmModelId"
-	| "zgsmModelId"
+	| "costrictModelId"
 	| "vercelAiGatewayModelId"
 	| "apiModelId"
 	| "ollamaModelId"
@@ -406,7 +406,7 @@ export const ModelPicker = ({
 								hidePricing={hidePricing}
 							/>
 						)}
-						{!hidePricing && apiConfiguration.apiProvider !== "zgsm" && (
+						{!hidePricing && apiConfiguration.apiProvider !== "costrict" && (
 							<div className="text-sm text-vscode-descriptionForeground">
 								<Trans
 									i18nKey="settings:modelPicker.automaticFetch"
@@ -417,7 +417,7 @@ export const ModelPicker = ({
 										),
 									}}
 									values={{
-										serviceName: serviceName === "zgsm" ? "Costrict" : serviceName,
+										serviceName: serviceName === "costrict" ? "Costrict" : serviceName,
 										defaultModelId,
 									}}
 								/>

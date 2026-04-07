@@ -4,15 +4,14 @@ describe("getSharedToolUseSection", () => {
 	it("should include native tool-calling instructions", () => {
 		const section = getSharedToolUseSection()
 
-		expect(section).toContain("provider-native tool-calling mechanism")
-		expect(section).toContain("Do not include XML markup or examples")
+		expect(section).toContain("provider-native tool-calling")
 	})
 
-	it("should include multiple tools per message guidance", () => {
+	it("should include batching guidance", () => {
 		const section = getSharedToolUseSection()
 
-		expect(section).toContain("You must call at least one tool per assistant response")
-		expect(section).toContain("Prefer calling as many tools as are reasonably needed")
+		expect(section).toContain("batching multiple independent calls")
+		expect(section).toContain("attempt_completion")
 	})
 
 	it("should NOT include single tool per message restriction", () => {

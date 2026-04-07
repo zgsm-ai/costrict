@@ -60,7 +60,7 @@ import { Package } from "../../shared/package"
 import { findLast } from "../../shared/array"
 import { supportPrompt, type SupportPromptType } from "../../shared/support-prompt"
 import { GlobalFileNames } from "../../shared/globalFileNames"
-import { Mode, defaultModeSlug, getModeBySlug, ZgsmCodeMode } from "../../shared/modes"
+import { Mode, defaultModeSlug, getModeBySlug, CostrictCodeMode } from "../../shared/modes"
 import { experimentDefault } from "../../shared/experiments"
 import { formatLanguage } from "../../shared/language"
 import { WebviewMessage } from "../../shared/WebviewMessage"
@@ -114,13 +114,14 @@ import {
 import { readTaskMessages } from "../task-persistence/taskMessages"
 import { getNonce } from "./getNonce"
 import { getUri } from "./getUri"
-import { ZgsmAuthCommands, ZgsmAuthConfig } from "../costrict/auth"
+import { CostrictAuthCommands, CostrictAuthConfig } from "../costrict/auth"
 import { generateNewSessionClientId, getClientId } from "../../utils/getClientId"
 import { defaultCodebaseIndexEnabled } from "../../services/code-index/constants"
 import { CodeReviewService, ReviewTargetType } from "../costrict/code-review"
+import { getTerminalManager } from "../costrict/cli-wrap"
 import { defaultLang } from "../../utils/language"
-import ZgsmCodebaseIndexManager from "../costrict/codebase-index"
-import { sendZgsmCloseWindow } from "../costrict/auth/ipc"
+import CostrictCodebaseIndexManager from "../costrict/codebase-index"
+import { sendCostrictCloseWindow } from "../costrict/auth/ipc"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { isJetbrainsPlatform } from "../../utils/platform"
 import { getAppName } from "../../utils/getAppName"
@@ -152,8 +153,8 @@ export class ClineProvider
 	// Used in package.json as the view's id. This value cannot be changed due
 	// to how VSCode caches views based on their id, and updating the id would
 	// break existing instances of the extension.
-	public static readonly sideBarId = `${Package.name}.SidebarProvider`
-	public static readonly tabPanelId = `${Package.name}.TabPanelProvider`
+	public static readonly sideBarId = `${Package?.commandIDPrefix || "costrict"}.SidebarProvider`
+	public static readonly tabPanelId = `${Package?.commandIDPrefix || "costrict"}.TabPanelProvider`
 	private static activeInstances: Set<ClineProvider> = new Set()
 	private disposables: vscode.Disposable[] = []
 	private webviewDisposables: vscode.Disposable[] = []
@@ -166,12 +167,18 @@ export class ClineProvider
 	protected skillsManager?: SkillsManager
 	private marketplaceManager: MarketplaceManager
 	private mdmService?: MdmService
-	private zgsmAuthCommands?: ZgsmAuthCommands
+	private costrictAuthCommands?: CostrictAuthCommands
 	private autoCleanupService?: AutoCleanupService
 	private taskCreationCallback: (task: Task) => void
 	private taskEventListeners: WeakMap<Task, Array<() => void>> = new WeakMap()
 	private currentWorkspacePath: string | undefined
 	private _disposed = false
+	/**
+	 * Tracks which tab is currently active in the Webview.
+	 * When "cs-cli" is active, postStateToWebview calls are suppressed to save resources.
+	 * A fresh state push is triggered when leaving the cs-cli tab.
+	 */
+	private _activeTab: string = "chat"
 
 	private recentTasksCache?: string[]
 	public readonly taskHistoryStore: TaskHistoryStore
@@ -361,7 +368,7 @@ export class ClineProvider
 	/**
 	 * Perform automatic cleanup of task history based on configured settings
 	 */
-	private async performAutoCleanup() {
+	async performAutoCleanup() {
 		if (!this.autoCleanupService) {
 			return
 		}
@@ -795,6 +802,14 @@ export class ClineProvider
 		this.customModesManager?.dispose()
 		this.taskHistoryStore.dispose()
 		this.flushGlobalStateWriteThrough()
+
+		// Stop CLI terminal process if running
+		const terminalManager = getTerminalManager()
+		if (terminalManager.running) {
+			await terminalManager.stop()
+			this.log("Stopped CLI terminal process")
+		}
+
 		this.log("Disposed all disposables")
 		ClineProvider.activeInstances.delete(this)
 
@@ -818,7 +833,7 @@ export class ClineProvider
 
 		// If no visible provider, try to show the sidebar view
 		if (!visibleProvider) {
-			await vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
+			await vscode.commands.executeCommand(`${Package.commandIDPrefix}.SidebarProvider.focus`)
 			// Wait briefly for the view to become visible
 			await delay(100)
 			visibleProvider = ClineProvider.getVisibleInstance()
@@ -859,6 +874,28 @@ export class ClineProvider
 
 		if (!visibleProvider) {
 			return
+		}
+
+		// When the CLI tab is active, forward context directly to the CLI terminal
+		if (visibleProvider.activeTab === "cs-cli") {
+			const { customSupportPrompts } = await visibleProvider.getState()
+			const prompt = supportPrompt.create(promptType as SupportPromptType, params, customSupportPrompts)
+			const terminalManager = getTerminalManager()
+			if (terminalManager.running) {
+				// Use bracketed paste mode so the Ink-based CLI receives the entire
+				// prompt as a single paste event rather than interpreting newlines
+				// as individual Enter keypresses.  Only paste, do not auto-submit.
+				const PASTE_START = "\x1b[200~"
+				const PASTE_END = "\x1b[201~"
+				await terminalManager.write(PASTE_START + prompt + PASTE_END)
+				// Ensure the webview switches to the CLI tab so the user sees the result
+				await visibleProvider.postMessageToWebview({
+					type: "action",
+					action: "switchTab",
+					tab: "cs-cli",
+				})
+				return
+			}
 		}
 
 		const { customSupportPrompts } = await visibleProvider.getState()
@@ -923,6 +960,27 @@ export class ClineProvider
 			return
 		}
 
+		// When the CLI tab is active, forward context directly to the CLI terminal
+		if (visibleProvider.activeTab === "cs-cli") {
+			const { customSupportPrompts } = await visibleProvider.getState()
+			const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
+			const terminalManager = getTerminalManager()
+			if (terminalManager.running) {
+				// Use bracketed paste mode so the Ink-based CLI receives the entire
+				// prompt as a single paste event rather than interpreting newlines
+				// as individual Enter keypresses.  Only paste, do not auto-submit.
+				const PASTE_START = "\x1b[200~"
+				const PASTE_END = "\x1b[201~"
+				await terminalManager.write(PASTE_START + prompt + PASTE_END)
+				await visibleProvider.postMessageToWebview({
+					type: "action",
+					action: "switchTab",
+					tab: "cs-cli",
+				})
+				return
+			}
+		}
+
 		const { customSupportPrompts } = await visibleProvider.getState()
 		const prompt = supportPrompt.create(promptType, params, customSupportPrompts)
 
@@ -967,7 +1025,10 @@ export class ClineProvider
 		await visibleProvider.setMode(mode)
 
 		try {
-			await visibleProvider.createTask(prompt, undefined, undefined, { zgsmWorkflowMode: mode })
+			await visibleProvider.createTask(prompt, undefined, undefined, {
+				costrictWorkflowMode: mode,
+				costrictWorkflowSpecScope: typeof params.scope === "string" ? params.scope : "",
+			})
 		} catch (error) {
 			if (error instanceof OrganizationAllowListViolationError) {
 				// Errors from terminal commands seem to get swallowed / ignored.
@@ -1090,11 +1151,6 @@ export class ClineProvider
 			this.disposables,
 		)
 
-		// Perform auto cleanup on startup if configured
-		this.performAutoCleanup().then(() => {
-			this.log("Auto cleanup check completed on startup")
-		})
-
 		// Listen for when color changes
 		const configDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
 			if (e && e.affectsConfiguration("workbench.colorTheme")) {
@@ -1115,6 +1171,7 @@ export class ClineProvider
 	public async createTaskWithHistoryItem(
 		historyItem: HistoryItem & { rootTask?: Task; parentTask?: Task },
 		options?: { startTask?: boolean },
+		workflowOptions?: any,
 	) {
 		const isCliRuntime = process.env.ROO_CLI_RUNTIME === "1"
 		// CLI injects runtime provider settings from command flags/env at startup.
@@ -1230,8 +1287,8 @@ export class ClineProvider
 			enableCheckpoints,
 			checkpointTimeout,
 			experiments,
-			useZgsmCustomConfig,
 			experimentSettings,
+			useCostrictCustomConfig,
 			cloudUserInfo,
 			taskSyncEnabled,
 		} = await this.getState()
@@ -1240,20 +1297,21 @@ export class ClineProvider
 			provider: this,
 			apiConfiguration,
 			enableCheckpoints,
-			useZgsmCustomConfig,
+			useCostrictCustomConfig,
 			checkpointTimeout,
 			consecutiveMistakeLimit: apiConfiguration.consecutiveMistakeLimit,
 			historyItem,
 			experiments,
+			experimentSettings,
 			rootTask: historyItem.rootTask,
 			parentTask: historyItem.parentTask,
 			taskNumber: historyItem.number,
 			workspacePath: historyItem.workspace,
 			onCreated: this.taskCreationCallback,
 			startTask: options?.startTask ?? true,
-			experimentSettings,
 			// Preserve the status from the history item to avoid overwriting it when the task saves messages
 			initialStatus: historyItem.status,
+			...workflowOptions,
 		})
 
 		if (isRehydratingCurrentTask) {
@@ -1425,7 +1483,7 @@ export class ClineProvider
 					isJetbrainsPlatform: ${isJetbrainsPlatform()},
 					"ANTHROPIC_MODEL": "${process.env.ANTHROPIC_MODEL}",
 					"ANTHROPIC_BASE_URL": "${process.env.ANTHROPIC_BASE_URL}",
-					"COSTRICT_BASE_URL": "${ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}",
+					"COSTRICT_BASE_URL": "${apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}",
 					"defaultLanguage": "${language}",
 				})
 			</script>
@@ -1541,7 +1599,7 @@ export class ClineProvider
 					isJetbrainsPlatform: ${isJetbrainsPlatform()},
 					"ANTHROPIC_MODEL": "${process.env.ANTHROPIC_MODEL}",
 					"ANTHROPIC_BASE_URL": "${process.env.ANTHROPIC_BASE_URL}",
-					"COSTRICT_BASE_URL": "${ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}",
+					"COSTRICT_BASE_URL": "${apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}",
 					"defaultLanguage": "${language}",
 				})
 			</script>
@@ -2031,7 +2089,7 @@ export class ClineProvider
 			return this.showTaskWithId(id)
 		}
 
-		await vscode.commands.executeCommand("zgsm.openInNewTab", id)
+		await vscode.commands.executeCommand("costrict.openInNewTab", id)
 	}
 
 	async exportTaskWithId(id: string) {
@@ -2261,7 +2319,35 @@ export class ClineProvider
 		await this.postStateToWebview()
 	}
 
-	async postStateToWebview() {
+	/**
+	 * Called by the webview message handler when the user switches tabs.
+	 * When the active tab is "cs-cli", state pushes are suppressed to conserve resources.
+	 * When the user leaves "cs-cli", a fresh state is pushed immediately so the chat UI
+	 * is fully up-to-date when it becomes visible again.
+	 */
+	public setActiveTab(tab: string): void {
+		const wasHibernating = this._activeTab === "cs-cli"
+		this._activeTab = tab
+		const isHibernating = tab === "cs-cli"
+
+		if (wasHibernating && !isHibernating) {
+			// Waking up from cs-cli: push a fresh state so the chat UI is up-to-date
+			this.postStateToWebview().catch((err) => {
+				this.log(`Failed to post state on wake from cs-cli tab: ${err}`, "error")
+			})
+		}
+	}
+
+	public get activeTab(): string {
+		return this._activeTab
+	}
+
+	async postStateToWebview(options?: { force?: boolean }) {
+		// Suppress state pushes while the cs-cli tab is active to save resources,
+		// unless this is an explicit forced hydration for a newly launched webview.
+		if (this._activeTab === "cs-cli" && !options?.force) {
+			return
+		}
 		const state = await this.getStateToPostToWebview()
 		this.clineMessagesSeq++
 		state.clineMessagesSeq = this.clineMessagesSeq
@@ -2283,6 +2369,10 @@ export class ClineProvider
 	 *   `taskHistoryUpdated` / `taskHistoryItemUpdated`.
 	 */
 	async postStateToWebviewWithoutTaskHistory(): Promise<void> {
+		// Suppress state pushes while the cs-cli tab is active to save resources
+		if (this._activeTab === "cs-cli") {
+			return
+		}
 		const state = await this.getStateToPostToWebview()
 		this.clineMessagesSeq++
 		state.clineMessagesSeq = this.clineMessagesSeq
@@ -2307,6 +2397,10 @@ export class ClineProvider
 	 *   (cloud auth, org settings, profiles, etc.) without interfering with task message streaming.
 	 */
 	async postStateToWebviewWithoutClineMessages(): Promise<void> {
+		// Suppress state pushes while the cs-cli tab is active to save resources
+		if (this._activeTab === "cs-cli") {
+			return
+		}
 		const state = await this.getStateToPostToWebview()
 		const { clineMessages: _omitMessages, taskHistory: _omitHistory, ...rest } = state
 		this.postMessageToWebview({ type: "state", state: rest })
@@ -2399,7 +2493,8 @@ export class ClineProvider
 				: []
 
 			// Get workspace configuration commands
-			const workspaceCommands = vscode.workspace.getConfiguration(Package.name).get<string[]>(configKey) || []
+			const workspaceCommands =
+				vscode.workspace.getConfiguration(Package.commandIDPrefix).get<string[]>(configKey) || []
 
 			// Validate and sanitize workspace commands
 			const validWorkspaceCommands = Array.isArray(workspaceCommands)
@@ -2444,9 +2539,10 @@ export class ClineProvider
 			soundEnabled,
 			ttsEnabled,
 			ttsSpeed,
+			customStoragePath,
 			enableCheckpoints,
-			useZgsmCustomConfig,
-			zgsmCodebaseIndexEnabled,
+			useCostrictCustomConfig,
+			costrictCodebaseIndexEnabled,
 			checkpointTimeout,
 			taskHistory,
 			soundVolume,
@@ -2463,7 +2559,7 @@ export class ClineProvider
 			currentApiConfigName,
 			listApiConfigMeta,
 			pinnedApiConfigs,
-			zgsmCodeMode,
+			costrictCodeMode,
 			mode,
 			customModePrompts,
 			customSupportPrompts,
@@ -2545,7 +2641,7 @@ export class ClineProvider
 		const currentTask = this.getCurrentTask()
 
 		if (!debug) {
-			apiConfiguration.useZgsmCustomConfig = false
+			apiConfiguration.useCostrictCustomConfig = false
 		}
 
 		return {
@@ -2555,7 +2651,7 @@ export class ClineProvider
 			debug,
 			customInstructions,
 			alwaysAllowReadOnly: alwaysAllowReadOnly ?? false,
-			alwaysAllowReadOnlyOutsideWorkspace: alwaysAllowReadOnlyOutsideWorkspace ?? false,
+			alwaysAllowReadOnlyOutsideWorkspace: alwaysAllowReadOnlyOutsideWorkspace ?? true,
 			alwaysAllowWrite: alwaysAllowWrite ?? false,
 			alwaysAllowWriteOutsideWorkspace: alwaysAllowWriteOutsideWorkspace ?? false,
 			alwaysAllowWriteProtected: alwaysAllowWriteProtected ?? false,
@@ -2577,9 +2673,10 @@ export class ClineProvider
 			soundEnabled: soundEnabled ?? false,
 			ttsEnabled: ttsEnabled ?? false,
 			ttsSpeed: ttsSpeed ?? 1.0,
+			customStoragePath,
 			enableCheckpoints: enableCheckpoints ?? true,
-			useZgsmCustomConfig: useZgsmCustomConfig ?? false,
-			zgsmCodebaseIndexEnabled: zgsmCodebaseIndexEnabled ?? false,
+			useCostrictCustomConfig: useCostrictCustomConfig ?? false,
+			costrictCodebaseIndexEnabled: costrictCodebaseIndexEnabled ?? false,
 			checkpointTimeout: checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			shouldShowAnnouncement:
 				telemetrySetting !== "disabled" && lastShownAnnouncementId !== this.latestAnnouncementId,
@@ -2600,7 +2697,7 @@ export class ClineProvider
 			listApiConfigMeta: listApiConfigMeta ?? [],
 			pinnedApiConfigs: pinnedApiConfigs ?? {},
 			mode: mode ?? defaultModeSlug,
-			zgsmCodeMode: zgsmCodeMode ?? "vibe",
+			costrictCodeMode: costrictCodeMode ?? "vibe",
 			customModePrompts: customModePrompts ?? {},
 			customSupportPrompts: customSupportPrompts ?? {},
 			enhancementApiConfigId,
@@ -2709,7 +2806,9 @@ export class ClineProvider
 
 		// Determine apiProvider with the same logic as before, while filtering retired providers.
 		const apiProvider: ProviderName =
-			stateValues.apiProvider && !isRetiredProvider(stateValues.apiProvider) ? stateValues.apiProvider : "zgsm"
+			stateValues.apiProvider && !isRetiredProvider(stateValues.apiProvider)
+				? stateValues.apiProvider
+				: "costrict"
 
 		// Build the apiConfiguration object combining state values and secrets.
 		const providerSettings = this.contextProxy.getProviderSettings()
@@ -2792,6 +2891,9 @@ export class ClineProvider
 		// 	)
 		// }
 
+		const customStoragePath =
+			vscode.workspace.getConfiguration(Package.commandIDPrefix)?.get<string>("customStoragePath", "") ?? ""
+
 		// Return the same structure as before.
 		providerSettings.openAiHeaders = providerSettings.openAiHeaders ?? {}
 		return {
@@ -2802,7 +2904,7 @@ export class ClineProvider
 			customInstructions: stateValues.customInstructions,
 			apiModelId: stateValues.apiModelId,
 			alwaysAllowReadOnly: stateValues.alwaysAllowReadOnly ?? false,
-			alwaysAllowReadOnlyOutsideWorkspace: stateValues.alwaysAllowReadOnlyOutsideWorkspace ?? false,
+			alwaysAllowReadOnlyOutsideWorkspace: stateValues.alwaysAllowReadOnlyOutsideWorkspace ?? true,
 			alwaysAllowWrite: stateValues.alwaysAllowWrite ?? false,
 			alwaysAllowWriteOutsideWorkspace: stateValues.alwaysAllowWriteOutsideWorkspace ?? false,
 			alwaysAllowWriteProtected: stateValues.alwaysAllowWriteProtected ?? false,
@@ -2823,9 +2925,10 @@ export class ClineProvider
 			soundEnabled: stateValues.soundEnabled ?? false,
 			ttsEnabled: stateValues.ttsEnabled ?? false,
 			ttsSpeed: stateValues.ttsSpeed ?? 1.0,
+			customStoragePath,
 			enableCheckpoints: stateValues.enableCheckpoints ?? true,
-			useZgsmCustomConfig: stateValues.useZgsmCustomConfig ?? false,
-			zgsmCodebaseIndexEnabled: stateValues.zgsmCodebaseIndexEnabled ?? false,
+			useCostrictCustomConfig: stateValues.useCostrictCustomConfig ?? false,
+			costrictCodebaseIndexEnabled: stateValues.costrictCodebaseIndexEnabled ?? false,
 			checkpointTimeout: stateValues.checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			soundVolume: stateValues.soundVolume,
 			writeDelayMs: stateValues.writeDelayMs ?? DEFAULT_WRITE_DELAY_MS,
@@ -2839,7 +2942,7 @@ export class ClineProvider
 			terminalZshP10k: stateValues.terminalZshP10k ?? false,
 			terminalZdotdir: stateValues.terminalZdotdir ?? false,
 			mode: stateValues.mode ?? defaultModeSlug,
-			zgsmCodeMode: stateValues.zgsmCodeMode ?? "vibe",
+			costrictCodeMode: stateValues.costrictCodeMode ?? "vibe",
 			language: stateValues.language ?? formatLanguage(await defaultLang()),
 			mcpEnabled: stateValues.mcpEnabled ?? true,
 			mcpServers: this.mcpHub?.getAllServers() ?? [],
@@ -3027,6 +3130,15 @@ export class ClineProvider
 		await this.contextProxy.setValues(values)
 	}
 
+	async fixHistory() {
+		const { getStorageBasePath } = await import("../../utils/storage.js")
+		const basePath = await getStorageBasePath(this.contextProxy.globalStorageUri.fsPath)
+		const historyIndexPath = path.join(basePath, "tasks", "_index.json")
+		await fs.rm(historyIndexPath, { force: true })
+		await delay(1000)
+		await vscode.commands.executeCommand("workbench.action.closeWindow")
+	}
+
 	async fixCodebase() {
 		let answer = await vscode.window.showInformationMessage(
 			t("common:confirmation.reset_codebase"),
@@ -3038,10 +3150,10 @@ export class ClineProvider
 			return
 		}
 		try {
-			// ZgsmCodebaseIndexManager.getInstance()
-			const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
-			await zgsmCodebaseIndexManager.stopHealthCheck()
-			await zgsmCodebaseIndexManager.stopExistingClient()
+			// CostrictCodebaseIndexManager.getInstance()
+			const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
+			await costrictCodebaseIndexManager.stopHealthCheck()
+			await costrictCodebaseIndexManager.stopExistingClient()
 
 			const codebaseHomeDir = path.join(os.homedir(), ".costrict")
 			const codebaseIndexDirs = [
@@ -3063,7 +3175,7 @@ export class ClineProvider
 				}
 			}
 
-			sendZgsmCloseWindow(generateNewSessionClientId())
+			sendCostrictCloseWindow(generateNewSessionClientId())
 			await delay(1000)
 			await vscode.commands.executeCommand("workbench.action.closeWindow")
 		} catch (error) {
@@ -3112,7 +3224,7 @@ export class ClineProvider
 		const { getStorageBasePath } = await import("../../utils/storage.js")
 		const basePath = await getStorageBasePath(this.contextProxy.globalStorageUri.fsPath)
 		const taskDir = path.join(basePath, "tasks")
-		await fs.rm(taskDir, { recursive: true, force: true })
+		await fs.rm(taskDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
 		const homeDir = os.homedir()
 		const versionDir = path.join(homeDir, ".costrict", "share")
 		const versionFilePath = path.join(versionDir, "version.json")
@@ -3296,19 +3408,19 @@ export class ClineProvider
 
 			if (configuration.allowedCommands) {
 				await vscode.workspace
-					.getConfiguration(Package.name)
+					.getConfiguration(Package.commandIDPrefix)
 					.update("allowedCommands", configuration.allowedCommands, vscode.ConfigurationTarget.Global)
 			}
 
 			if (configuration.deniedCommands) {
 				await vscode.workspace
-					.getConfiguration(Package.name)
+					.getConfiguration(Package.commandIDPrefix)
 					.update("deniedCommands", configuration.deniedCommands, vscode.ConfigurationTarget.Global)
 			}
 
 			if (configuration.commandExecutionTimeout !== undefined) {
 				await vscode.workspace
-					.getConfiguration(Package.name)
+					.getConfiguration(Package.commandIDPrefix)
 					.update(
 						"commandExecutionTimeout",
 						configuration.commandExecutionTimeout,
@@ -3362,12 +3474,12 @@ export class ClineProvider
 			task: text,
 			images,
 			experiments,
+			experimentSettings,
 			rootTask: this.clineStack.length > 0 ? this.clineStack[0] : undefined,
 			parentTask,
 			taskNumber: this.clineStack.length + 1,
 			onCreated: this.taskCreationCallback,
 			initialTodos: options.initialTodos,
-			experimentSettings,
 			// Ensure this task is present in clineStack before startTask() emits
 			// its initial state update, so state.currentTaskId is available ASAP.
 			startTask: false,
@@ -3510,8 +3622,8 @@ export class ClineProvider
 		await this.setValues({ mode })
 	}
 
-	public async setZgsmCodeMode(zgsmCodeMode: ZgsmCodeMode): Promise<void> {
-		await this.setValues({ zgsmCodeMode })
+	public async setCostrictCodeMode(costrictCodeMode: CostrictCodeMode): Promise<void> {
+		await this.setValues({ costrictCodeMode })
 		await this.postStateToWebview()
 	}
 
@@ -3590,9 +3702,9 @@ export class ClineProvider
 		}
 
 		let userInfo: { userName?: string } | undefined = {}
-		const { zgsmAccessToken } = apiConfiguration
-		if (zgsmAccessToken) {
-			const decoded = jwtDecode(zgsmAccessToken)
+		const { costrictAccessToken } = apiConfiguration
+		if (costrictAccessToken) {
+			const decoded = jwtDecode(costrictAccessToken)
 			userInfo = {
 				userName: (decoded as any).displayName || "",
 			}
@@ -3639,12 +3751,12 @@ export class ClineProvider
 	public get cwd() {
 		return this.currentWorkspacePath || getWorkspacePath()
 	}
-	public getZgsmAuthCommands() {
-		return this.zgsmAuthCommands
+	public getCostrictAuthCommands() {
+		return this.costrictAuthCommands
 	}
 
-	public setZgsmAuthCommands(zgsmAuthCommands: ZgsmAuthCommands) {
-		this.zgsmAuthCommands = zgsmAuthCommands
+	public setCostrictAuthCommands(costrictAuthCommands: CostrictAuthCommands) {
+		this.costrictAuthCommands = costrictAuthCommands
 	}
 
 	/**
@@ -3762,6 +3874,8 @@ export class ClineProvider
 			initialTodos,
 			initialStatus: "active",
 			startTask: false,
+			costrictWorkflowMode: parent.costrictWorkflowMode,
+			costrictWorkflowSpecScope: parent.costrictWorkflowSpecScope,
 		})
 
 		// 5) Persist parent delegation metadata BEFORE the child starts writing.
@@ -3804,6 +3918,8 @@ export class ClineProvider
 		parentTaskId: string
 		childTaskId: string
 		completionResultSummary: string
+		costrictWorkflowMode?: string
+		costrictWorkflowSpecScope?: string
 	}): Promise<void> {
 		const { parentTaskId, childTaskId, completionResultSummary } = params
 		const globalStoragePath = this.contextProxy.globalStorageUri.fsPath
@@ -3970,7 +4086,14 @@ export class ClineProvider
 
 		// 7) Reopen the parent from history as the sole active task (restores saved mode)
 		//    IMPORTANT: startTask=false to suppress resume-from-history ask scheduling
-		const parentInstance = await this.createTaskWithHistoryItem(updatedHistory, { startTask: false })
+		const parentInstance = await this.createTaskWithHistoryItem(
+			updatedHistory,
+			{ startTask: false },
+			{
+				costrictWorkflowMode: params?.costrictWorkflowMode,
+				costrictWorkflowSpecScope: params?.costrictWorkflowSpecScope,
+			},
+		)
 
 		// 8) Inject restored histories into the in-memory instance before resuming
 		if (parentInstance) {

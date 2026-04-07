@@ -118,6 +118,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			reviewTask,
 			automaticallyFocus,
 			ttsEnabled,
+			costrictCodeMode,
 			// lockApiConfigAcrossModes,
 		} = useExtensionState()
 		const selectedProviderModels = useMemo(() => {
@@ -490,6 +491,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								fileSearchResults,
 								allModes,
 								commands,
+								costrictCodeMode,
 							)
 							const optionsLength = options.length
 
@@ -528,6 +530,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							fileSearchResults,
 							allModes,
 							commands,
+							costrictCodeMode,
 						)[selectedMenuIndex]
 						if (
 							selectedOption &&
@@ -613,23 +616,24 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				}
 			},
 			[
-				onSend,
 				showContextMenu,
-				searchQuery,
+				handleHistoryNavigation,
 				selectedMenuIndex,
-				handleMentionSelect,
+				searchQuery,
 				selectedType,
+				queryItems,
+				fileSearchResults,
+				allModes,
+				commands,
+				costrictCodeMode,
+				handleMentionSelect,
+				enterBehavior,
+				resetHistoryNavigation,
+				onSend,
 				inputValue,
 				cursorPosition,
-				setInputValue,
 				justDeletedSpaceAfterMention,
-				queryItems,
-				allModes,
-				fileSearchResults,
-				handleHistoryNavigation,
-				resetHistoryNavigation,
-				commands,
-				enterBehavior,
+				setInputValue,
 			],
 		)
 
@@ -874,7 +878,11 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				})
 
 				highlightLayerRef.current.innerHTML = processedText
-				textAreaRef.current.scrollTop += fixHeight ? 32 : 0
+				// Auto-scroll to bottom only when cursor is at the end of text (appending),
+				// so editing at the top doesn't push the viewport down.
+				if (fixHeight && textAreaRef.current.selectionStart === textAreaRef.current.value.length) {
+					textAreaRef.current.scrollTop = textAreaRef.current.scrollHeight
+				}
 				highlightLayerRef.current.scrollTop = textAreaRef.current.scrollTop
 				highlightLayerRef.current.scrollLeft = textAreaRef.current.scrollLeft
 			},
@@ -1109,6 +1117,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									selectedType={selectedType}
 									queryItems={queryItems}
 									modes={allModes}
+									costrictCodeMode={costrictCodeMode ?? "vibe"}
 									loading={searchLoading}
 									dynamicSearchResults={fileSearchResults}
 									commands={commands}
@@ -1506,7 +1515,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								isEditMode={isEditMode}
 								isStreaming={isStreaming}
 								className="min-w-12 text-ellipsis overflow-hidden flex-shrink bg-vscode-input-background"
-								selectedProvider={apiConfiguration.apiProvider || "zgsm"}
+								selectedProvider={apiConfiguration.apiProvider || "costrict"}
 								apiConfiguration={apiConfiguration}
 								organizationAllowList={organizationAllowList}
 								setApiConfigurationField={setApiConfigurationField}

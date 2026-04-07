@@ -16,8 +16,8 @@ vi.mock("vscode", async (importOriginal) => ({
 			extensionPath: "/mock/extension/path",
 			extensionUri: { fsPath: "/mock/extension/path", path: "/mock/extension/path", scheme: "file" },
 			packageJSON: {
-				name: "zgsm",
-				publisher: "zgsm-ai",
+				name: "costrict",
+				publisher: "costrict-ai",
 				version: "2.0.27",
 			},
 		}),

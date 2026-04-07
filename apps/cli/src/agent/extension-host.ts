@@ -71,8 +71,8 @@ export interface ExtensionHostOptions {
 	provider: SupportedProvider
 	apiKey?: string
 	model: string
-	zgsmAccessToken?: string
-	zgsmModelId?: string
+	costrictAccessToken?: string
+	costrictModelId?: string
 	workspacePath: string
 	extensionPath: string
 	nonInteractive?: boolean
@@ -177,7 +177,7 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 	constructor(options: ExtensionHostOptions) {
 		super()
 		this.options = options
-		const isZgsm = this?.options?.provider === "zgsm"
+		const isCostrict = this?.options?.provider === "costrict"
 		// Mark this process as CLI runtime so extension code can apply
 		// CLI-specific behavior without affecting VS Code desktop usage.
 		this.previousCliRuntimeEnv = process.env.ROO_CLI_RUNTIME
@@ -231,8 +231,8 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 			},
 			...getProviderSettings(
 				this.options.provider,
-				isZgsm ? this.options.zgsmAccessToken : this.options.apiKey,
-				isZgsm ? this.options.zgsmModelId : this.options.model,
+				isCostrict ? this.options.costrictAccessToken : this.options.apiKey,
+				isCostrict ? this.options.costrictModelId : this.options.model,
 			),
 		}
 
@@ -453,7 +453,7 @@ export class ExtensionHost extends EventEmitter implements ExtensionHostInterfac
 		// sending webviewDidLaunch. This prevents a race condition where the
 		// webviewDidLaunch handler's first-time init sync reads default state
 		// (apiProvider: "anthropic") instead of the CLI-provided settings.
-		setRuntimeConfigValues("zgsm", this.initialSettings as Record<string, unknown>)
+		setRuntimeConfigValues("costrict", this.initialSettings as Record<string, unknown>)
 		this.sendToExtension({ type: "updateSettings", updatedSettings: this.initialSettings })
 
 		// Now trigger extension initialization. The context proxy should already

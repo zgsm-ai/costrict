@@ -46,6 +46,7 @@ export async function processUserContentMentions({
 	skillsManager,
 	currentMode = "code",
 	language,
+	mentionBudgetChars,
 }: {
 	userContent: Anthropic.Messages.ContentBlockParam[]
 	cwd: string
@@ -58,6 +59,7 @@ export async function processUserContentMentions({
 	skillsManager?: SkillLookup
 	currentMode?: string
 	language?: string
+	mentionBudgetChars?: number
 }): Promise<ProcessUserContentMentionsResult> {
 	// Track the first mode found from slash commands
 	let commandMode: string | undefined
@@ -74,6 +76,7 @@ export async function processUserContentMentions({
 					skillsManager,
 					currentMode,
 					language,
+					mentionBudgetChars,
 				)
 			: parseMentions(
 					text,
@@ -85,6 +88,8 @@ export async function processUserContentMentions({
 					maxDiagnosticMessages,
 					skillsManager,
 					currentMode,
+					language,
+					mentionBudgetChars,
 				)
 
 	// Process userContent array, which contains text and image parts.

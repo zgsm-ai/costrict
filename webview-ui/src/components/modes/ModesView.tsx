@@ -65,8 +65,7 @@ function getGroupName(group: GroupEntry): ToolGroup {
 
 const ModesView = () => {
 	const { t, i18n } = useAppTranslation()
-	const currentLanguage = i18n.language
-
+	const [currentLanguage, setCurrentLanguage] = useState(i18n.language)
 	const {
 		apiConfiguration,
 		customModePrompts,
@@ -125,11 +124,11 @@ const ModesView = () => {
 	const displayModes = (modes || [])
 		.map((m) => (localRenames[m.slug] ? { ...m, name: localRenames[m.slug] } : m))
 		.filter((m) => {
-			if (m.apiProvider != null && apiConfiguration?.apiProvider !== "zgsm") {
+			if (m.apiProvider != null && apiConfiguration?.apiProvider !== "costrict") {
 				return false
 			}
 
-			return m.zgsmCodeModeGroup !== "hide"
+			return m.costrictCodeModeGroup !== "hide"
 		})
 
 	// Direct update functions
@@ -207,6 +206,10 @@ const ModesView = () => {
 	const handleModeSwitchRef = useRef(handleModeSwitch)
 	const customModesRef = useRef(customModes)
 	const switchModeRef = useRef(switchMode)
+
+	useEffect(() => {
+		setCurrentLanguage(i18n.language)
+	}, [i18n.language])
 
 	// Update refs when dependencies change
 	useEffect(() => {
@@ -299,7 +302,7 @@ const ModesView = () => {
 	// Helper function to check if current mode is hidden
 	const isCurrentModeHidden = useCallback((): boolean => {
 		const currentMode = getCurrentMode()
-		return currentMode?.zgsmCodeModeGroup === "hide"
+		return currentMode?.costrictCodeModeGroup === "hide"
 	}, [getCurrentMode])
 
 	// Check if the current mode has rules to export
@@ -989,8 +992,7 @@ const ModesView = () => {
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
 							return (
 								customMode?.roleDefinition ??
-								prompt?.roleDefinition ??
-								getRoleDefinition(visualMode, customModes, currentLanguage)
+								(prompt?.roleDefinition || getRoleDefinition(visualMode, customModes, currentLanguage))
 							)
 						})()}
 						onChange={(e) => {
@@ -1050,8 +1052,7 @@ const ModesView = () => {
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
 							return (
 								customMode?.description ??
-								prompt?.description ??
-								getDescription(visualMode, customModes, currentLanguage)
+								(prompt?.description || getDescription(visualMode, customModes, currentLanguage))
 							)
 						})()}
 						onChange={(e) => {
@@ -1114,8 +1115,7 @@ const ModesView = () => {
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
 							return (
 								customMode?.whenToUse ??
-								prompt?.whenToUse ??
-								getWhenToUse(visualMode, customModes, currentLanguage)
+								(prompt?.whenToUse || getWhenToUse(visualMode, customModes, currentLanguage))
 							)
 						})()}
 						onChange={(e) => {
@@ -1271,8 +1271,8 @@ const ModesView = () => {
 							const prompt = customModePrompts?.[visualMode] as PromptComponent
 							return (
 								customMode?.customInstructions ??
-								prompt?.customInstructions ??
-								getCustomInstructions(visualMode, customModes, currentLanguage)
+								(prompt?.customInstructions ||
+									getCustomInstructions(visualMode, customModes, currentLanguage))
 							)
 						})()}
 						onChange={(e) => {
@@ -1356,8 +1356,8 @@ const ModesView = () => {
 										mode: currentMode.slug,
 										values: {
 											modelId:
-												apiConfiguration?.apiProvider === "zgsm"
-													? apiConfiguration?.zgsmModelId
+												apiConfiguration?.apiProvider === "costrict"
+													? apiConfiguration?.costrictModelId
 													: apiConfiguration?.apiModelId,
 										},
 									})

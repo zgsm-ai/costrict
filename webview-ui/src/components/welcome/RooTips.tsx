@@ -6,7 +6,7 @@ import { delay } from "lodash-es"
 import { vscode } from "@/utils/vscode"
 import { useCallback } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { ZgsmCodeMode } from "@roo/modes"
+import { CostrictCodeMode } from "@roo/modes"
 import SectionDivider from "@/components/common/SectionDivider"
 import { StandardTooltip } from "../ui"
 import { Button } from "@/components/ui"
@@ -15,12 +15,12 @@ const RooTips = () => {
 	const { t } = useTranslation("chat")
 	const { t: tWelcome } = useTranslation("welcome")
 	const { t: tSettings } = useTranslation("settings")
-	const { zgsmCodeMode, setZgsmCodeMode, apiConfiguration } = useExtensionState()
+	const { costrictCodeMode, setCostrictCodeMode, apiConfiguration } = useExtensionState()
 	const switchMode = useCallback(
-		(slug: ZgsmCodeMode, forceMode?: string) => {
-			setZgsmCodeMode(slug)
+		(slug: CostrictCodeMode, forceMode?: string) => {
+			setCostrictCodeMode(slug)
 			vscode.postMessage({
-				type: "zgsmCodeMode",
+				type: "costrictCodeMode",
 				text: slug,
 			})
 			vscode.postMessage({
@@ -28,7 +28,7 @@ const RooTips = () => {
 				text: forceMode || (slug === "vibe" ? "code" : "strict"),
 			})
 		},
-		[setZgsmCodeMode],
+		[setCostrictCodeMode],
 	)
 	const apiProviderCheck = useCallback(
 		(apiProvider: string) => {
@@ -37,7 +37,7 @@ const RooTips = () => {
 			}
 
 			vscode.postMessage({
-				type: "zgsmProviderTip",
+				type: "costrictProviderTip",
 				values: {
 					tipType: "info",
 					msg: tSettings("codebase.general.onlyCostrictProviderSupport"),
@@ -53,7 +53,7 @@ const RooTips = () => {
 		{
 			click: (e: any) => {
 				e.preventDefault()
-				if (!apiProviderCheck("zgsm")) {
+				if (!apiProviderCheck("costrict")) {
 					return
 				}
 
@@ -74,7 +74,7 @@ const RooTips = () => {
 		{
 			click: (e: any) => {
 				e.preventDefault()
-				if (!apiProviderCheck("zgsm")) {
+				if (!apiProviderCheck("costrict")) {
 					return
 				}
 				switchMode("strict", "testguide")
@@ -141,7 +141,7 @@ const RooTips = () => {
 			description: tWelcome("plan.description"),
 			switchMode: (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
 				e.stopPropagation()
-				if (!apiProviderCheck("zgsm")) {
+				if (!apiProviderCheck("costrict")) {
 					return
 				}
 				switchMode("plan", "plan")
@@ -154,7 +154,7 @@ const RooTips = () => {
 			description: tWelcome("strict.description"),
 			switchMode: (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
 				e.stopPropagation()
-				if (!apiProviderCheck("zgsm")) {
+				if (!apiProviderCheck("costrict")) {
 					return
 				}
 				switchMode("strict")
@@ -163,7 +163,7 @@ const RooTips = () => {
 		},
 	] as {
 		name: string
-		slug: ZgsmCodeMode
+		slug: CostrictCodeMode
 		description: string
 		switchMode: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
 		layout: "full" | "half"
@@ -193,7 +193,7 @@ const RooTips = () => {
 							onClick={provider.switchMode}
 							className={[
 								"inline-flex border border-vscode-panel-border hover:bg-secondary rounded-md py-3 px-4 flex-row cursor-pointer transition-all no-underline text-inherit",
-								zgsmCodeMode === provider.slug
+								costrictCodeMode === provider.slug
 									? "border border-vscode-focusBorder outline outline-vscode-focusBorder focus-visible:ring-vscode-focusBorder"
 									: "",
 								isFull ? "w-full" : "",

@@ -3,6 +3,8 @@ import OpenAI from "openai"
 
 import { isRetiredProvider, type ProviderSettings, type ModelInfo } from "@roo-code/types"
 
+import type { PromptTag } from "../shared/modes"
+
 import { ApiStream } from "./transform/stream"
 
 import {
@@ -28,7 +30,7 @@ import {
 	XAIHandler,
 	LiteLLMHandler,
 	ClaudeCodeHandler,
-	ZgsmAiHandler,
+	CostrictAiHandler,
 	QwenCodeHandler,
 	SambaNovaHandler,
 	ZAiHandler,
@@ -58,6 +60,8 @@ export interface ApiHandlerCreateMessageMetadata {
 	 * - Requesty: Sent in extra metadata
 	 */
 	mode?: string
+	// PromptTag
+	promptTags?: string
 	suppressPreviousResponseId?: boolean
 	onRequestHeadersReady?: (headers: Record<string, string>) => void
 	/**
@@ -134,8 +138,8 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 	}
 
 	switch (apiProvider) {
-		case "zgsm":
-			return new ZgsmAiHandler(options)
+		case "costrict":
+			return new CostrictAiHandler(options)
 		case "anthropic":
 			return new AnthropicHandler(options)
 		case "claude-code":

@@ -26,7 +26,7 @@ import { SearchableSetting } from "./SearchableSetting"
 import { vscode } from "@/utils/vscode"
 
 type ContextManagementSettingsProps = HTMLAttributes<HTMLDivElement> & {
-	zgsmCodebaseIndexEnabled: boolean
+	costrictCodebaseIndexEnabled: boolean
 	autoCondenseContext: boolean
 	autoCondenseContextPercent: number
 	listApiConfigMeta: any[]
@@ -65,7 +65,7 @@ type ContextManagementSettingsProps = HTMLAttributes<HTMLDivElement> & {
 }
 
 export const ContextManagementSettings = ({
-	zgsmCodebaseIndexEnabled,
+	costrictCodebaseIndexEnabled,
 	autoCondenseContext,
 	autoCondenseContextPercent,
 	listApiConfigMeta,
@@ -180,11 +180,11 @@ export const ContextManagementSettings = ({
 							min={0}
 							max={500}
 							step={1}
-							value={[maxWorkspaceFiles ?? 300]}
+							value={[maxWorkspaceFiles ?? 150]}
 							onValueChange={([value]) => setCachedStateField("maxWorkspaceFiles", value)}
 							data-testid="workspace-files-limit-slider"
 						/>
-						<span className="w-10">{maxWorkspaceFiles ?? 300}</span>
+						<span className="w-10">{maxWorkspaceFiles ?? 150}</span>
 					</div>
 					<div className="text-vscode-descriptionForeground text-sm mt-1">
 						{t("settings:contextManagement.workspaceFiles.description")}

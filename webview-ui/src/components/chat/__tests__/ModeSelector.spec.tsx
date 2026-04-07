@@ -16,9 +16,9 @@ vi.mock("@/context/ExtensionStateContext", () => ({
 	useExtensionState: () => ({
 		hasOpenedModeSelector: false,
 		setHasOpenedModeSelector: vi.fn(),
-		zgsmCodeMode: "vibe",
-		setZgsmCodeMode: vi.fn(),
-		apiConfiguration: { apiProvider: "zgsm" },
+		costrictCodeMode: "vibe",
+		setCostrictCodeMode: vi.fn(),
+		apiConfiguration: { apiProvider: "costrict" },
 	}),
 }))
 
@@ -276,7 +276,7 @@ describe("ModeSelector", () => {
 				description: "Code mode",
 				roleDefinition: "Role definition",
 				groups: ["read", "edit"],
-				zgsmCodeModeGroup: "vibe,plan,strict",
+				costrictCodeModeGroup: "vibe,plan,strict",
 			},
 			{
 				slug: "plan",
@@ -284,7 +284,7 @@ describe("ModeSelector", () => {
 				description: "Plan mode",
 				roleDefinition: "Role definition",
 				groups: ["read"],
-				zgsmCodeModeGroup: "plan",
+				costrictCodeModeGroup: "plan",
 			},
 		]
 

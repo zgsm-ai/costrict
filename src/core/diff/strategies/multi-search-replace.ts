@@ -81,13 +81,12 @@ export class MultiSearchReplaceDiffStrategy implements DiffStrategy {
 	}
 
 	constructor(fuzzyThreshold?: number, bufferLines?: number) {
-		// Use provided threshold or default to exact matching (1.0)
+		// Use provided threshold or default to a slightly relaxed fuzzy match (0.9)
 		// Note: fuzzyThreshold is inverted in UI (0% = 1.0, 10% = 0.9)
 		// so we use it directly here
-		this.fuzzyThreshold = fuzzyThreshold ?? 1.0
+		this.fuzzyThreshold = fuzzyThreshold ?? 0.9
 		this.bufferLines = bufferLines ?? BUFFER_LINES
 	}
-
 	private unescapeMarkers(content: string): string {
 		return content
 			.replace(/^\\<<<<<<</gm, "<<<<<<<")

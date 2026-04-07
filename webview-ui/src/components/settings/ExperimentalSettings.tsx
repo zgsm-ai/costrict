@@ -1,5 +1,6 @@
 import type { HTMLAttributes } from "react"
 import React from "react"
+import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 
 import type { Experiments, ImageGenerationProvider, SmartMistakeDetectionConfig } from "@roo-code/types"
 
@@ -18,46 +19,38 @@ import { CustomToolsSettings } from "./CustomToolsSettings"
 
 type ExperimentalSettingsProps = HTMLAttributes<HTMLDivElement> & {
 	experiments: Experiments
-	experimentSettings?: {
-		smartMistakeDetectionConfig?: {
-			autoSwitchModel?: boolean
-			autoSwitchModelThreshold?: number
-		}
-	}
 	setExperimentEnabled: SetExperimentEnabled
 	apiConfiguration?: any
 	setApiConfigurationField?: any
+	experimentSettings?: {
+		smartMistakeDetectionConfig?: SmartMistakeDetectionConfig
+	}
+	setSmartMistakeDetectionConfig?: (config: SmartMistakeDetectionConfig) => void
 	imageGenerationProvider?: ImageGenerationProvider
 	openRouterImageApiKey?: string
 	openRouterImageGenerationSelectedModel?: string
 	setImageGenerationProvider?: (provider: ImageGenerationProvider) => void
 	setOpenRouterImageApiKey?: (apiKey: string) => void
 	setImageGenerationSelectedModel?: (model: string) => void
-	setSmartMistakeDetectionConfig: (config: SmartMistakeDetectionConfig) => void
 }
 
 export const ExperimentalSettings = ({
 	experiments,
-	experimentSettings,
 	setExperimentEnabled,
 	apiConfiguration,
 	setApiConfigurationField,
+	experimentSettings,
+	setSmartMistakeDetectionConfig,
 	imageGenerationProvider,
 	openRouterImageApiKey,
 	openRouterImageGenerationSelectedModel,
 	setImageGenerationProvider,
 	setOpenRouterImageApiKey,
 	setImageGenerationSelectedModel,
-	setSmartMistakeDetectionConfig,
 	className,
 	...props
 }: ExperimentalSettingsProps) => {
 	const { t } = useAppTranslation()
-
-	const smartMistakeDetectionConfig = experimentSettings?.smartMistakeDetectionConfig || {
-		autoSwitchModel: false,
-		autoSwitchModelThreshold: 3,
-	}
 
 	return (
 		<div className={cn("flex flex-col gap-2", className)} {...props}>
@@ -101,14 +94,14 @@ export const ExperimentalSettings = ({
 								</SearchableSetting>
 							)
 						}
-						if (config[0] === "ALWAYS_INCLUDE_FILE_DETAILS") {
+						if (config[0] === "USE_KPT_TREE") {
 							return (
 								<ExperimentalFeature
 									key={config[0]}
 									experimentKey={config[0]}
 									enabled={
 										experiments[EXPERIMENT_IDS[config[0] as keyof typeof EXPERIMENT_IDS]] ??
-										apiConfiguration?.apiProvider === "zgsm"
+										apiConfiguration?.apiProvider === "costrict"
 									}
 									onChange={(enabled) =>
 										setExperimentEnabled(
@@ -120,86 +113,60 @@ export const ExperimentalSettings = ({
 							)
 						}
 						if (config[0] === "SMART_MISTAKE_DETECTION") {
+							const smartMistakeEnabled =
+								experiments[EXPERIMENT_IDS[config[0] as keyof typeof EXPERIMENT_IDS]] ??
+								apiConfiguration?.apiProvider === "costrict"
+							const smartMistakeDetectionConfig = experimentSettings?.smartMistakeDetectionConfig ?? {}
 							return (
-								apiConfiguration?.apiProvider === "zgsm" && (
+								apiConfiguration?.apiProvider === "costrict" && (
 									<SearchableSetting
 										key={config[0]}
 										settingId={`experimental-${config[0].toLowerCase()}`}
 										section="experimental"
 										label={label}>
-										<div className="flex flex-col gap-2">
-											<ExperimentalFeature
-												experimentKey={config[0]}
-												enabled={
-													experiments[
-														EXPERIMENT_IDS[config[0] as keyof typeof EXPERIMENT_IDS]
-													] ?? apiConfiguration?.apiProvider === "zgsm"
-												}
-												onChange={(enabled) =>
-													setExperimentEnabled(
-														EXPERIMENT_IDS[config[0] as keyof typeof EXPERIMENT_IDS],
-														enabled,
-													)
-												}
-											/>
-											{experiments[EXPERIMENT_IDS.SMART_MISTAKE_DETECTION] && (
-												<div className="pl-6 flex flex-col gap-2">
-													<ExperimentalFeature
-														experimentKey="AUTO_SWITCH_MODEL"
-														enabled={smartMistakeDetectionConfig.autoSwitchModel ?? false}
-														onChange={(enabled) => {
-															setSmartMistakeDetectionConfig?.({
-																autoSwitchModel: enabled,
-																autoSwitchModelThreshold:
-																	smartMistakeDetectionConfig.autoSwitchModelThreshold ??
-																	3,
-															})
-														}}
-													/>
-													{smartMistakeDetectionConfig.autoSwitchModel && (
-														<div className="pl-6 flex items-center gap-2">
-															<label className="text-sm text-vscode-foreground">
+										<ExperimentalFeature
+											experimentKey={config[0]}
+											enabled={smartMistakeEnabled}
+											onChange={(enabled) =>
+												setExperimentEnabled(
+													EXPERIMENT_IDS[config[0] as keyof typeof EXPERIMENT_IDS],
+													enabled,
+												)
+											}
+										/>
+										{smartMistakeEnabled && (
+											<div className="ml-6 mt-1">
+												<div>
+													<div className="flex items-center gap-2">
+														<VSCodeCheckbox
+															checked={
+																smartMistakeDetectionConfig.autoSwitchModel ?? false
+															}
+															onChange={(e: any) =>
+																setSmartMistakeDetectionConfig?.({
+																	...smartMistakeDetectionConfig,
+																	autoSwitchModel: e.target.checked,
+																})
+															}>
+															<span className="font-medium">
 																{t(
-																	"settings:experimental.AUTO_SWITCH_MODEL_THRESHOLD.name",
-																)}
-																:
-															</label>
-															<input
-																type="number"
-																min="1"
-																max="10"
-																value={
-																	smartMistakeDetectionConfig.autoSwitchModelThreshold ??
-																	3
-																}
-																onChange={(e) => {
-																	const value = parseInt(e.target.value)
-																	if (!isNaN(value) && value >= 1 && value <= 10) {
-																		setSmartMistakeDetectionConfig?.({
-																			autoSwitchModel:
-																				smartMistakeDetectionConfig.autoSwitchModel ??
-																				false,
-																			autoSwitchModelThreshold: value,
-																		})
-																	}
-																}}
-																className="w-16 px-2 py-1 text-sm bg-vscode-input-background border border-vscode-input-border rounded text-vscode-foreground focus:outline-none focus:border-vscode-focusBorder"
-															/>
-															<span className="text-sm text-vscode-descriptionForeground">
-																{t(
-																	"settings:experimental.AUTO_SWITCH_MODEL_THRESHOLD.description",
+																	"settings:experimental.SMART_MISTAKE_DETECTION.AUTO_SWITCH_MODEL.name",
 																)}
 															</span>
-														</div>
-													)}
+														</VSCodeCheckbox>
+													</div>
+													<p className="text-vscode-descriptionForeground text-sm mt-0">
+														{t(
+															"settings:experimental.SMART_MISTAKE_DETECTION.AUTO_SWITCH_MODEL.description",
+														)}
+													</p>
 												</div>
-											)}
-										</div>
+											</div>
+										)}{" "}
 									</SearchableSetting>
 								)
 							)
 						}
-
 						if (config[0] === "COMMIT_REVIEW") {
 							return (
 								<ExperimentalFeature
@@ -207,7 +174,7 @@ export const ExperimentalSettings = ({
 									experimentKey={config[0]}
 									enabled={
 										experiments[EXPERIMENT_IDS[config[0] as keyof typeof EXPERIMENT_IDS]] ??
-										apiConfiguration?.apiProvider === "zgsm"
+										apiConfiguration?.apiProvider === "costrict"
 									}
 									onChange={(enabled) =>
 										setExperimentEnabled(

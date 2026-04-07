@@ -65,7 +65,7 @@ export class GitCommitListener {
 			if (
 				!(
 					Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.COMMIT_REVIEW) ??
-					apiConfiguration?.apiProvider === "zgsm"
+					apiConfiguration?.apiProvider === "costrict"
 				)
 			)
 				return

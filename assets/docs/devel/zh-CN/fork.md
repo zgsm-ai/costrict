@@ -8,20 +8,20 @@ Github Forking 工作流详细步骤如下：
 
 1. Fork 远程仓库到自己的账号下
 
-访问 https://github.com/zgsm-ai/costrict，点击右上角 **Fork** 按钮。fork 后的仓库地址为：https://github.com/{{your account}}/zgsm。
+访问 https://github.com/zgsm-ai/costrict，点击右上角 **Fork** 按钮。fork 后的仓库地址为：https://github.com/{{your account}}/costrict。
 
 2. 克隆 fork 的仓库到本地
 
 ```bash
-$ git clone https://github.com/{{your account}}/zgsm
-$ cd zgsm
+$ git clone https://github.com/{{your account}}/costrict
+$ cd costrict
 $ git remote add upstream https://github.com/zgsm-ai/costrict
 $ git remote set-url --push upstream no_push # Never push to upstream main
 $ git remote -v # Confirm that your remotes make sense
-origin	https://github.com/{{your account}}/zgsm(fetch)
-origin	https://github.com/{{your account}}/zgsm(push)
-upstream	https://github.com/marmotedu/zgsm(fetch)
-upstream	https://github.com/marmotedu/zgsm(push)
+origin	https://github.com/{{your account}}/costrict (fetch)
+origin	https://github.com/{{your account}}/costrict (push)
+upstream	https://github.com/marmotedu/costrict (fetch)
+upstream	https://github.com/marmotedu/costrict (push)
 ```
 
 3. 创建功能分支

@@ -22,7 +22,7 @@ export async function run() {
 		openRouterModelId: "openai/gpt-4.1",
 	})
 
-	await vscode.commands.executeCommand("zgsm.SidebarProvider.focus")
+	await vscode.commands.executeCommand("costrict.SidebarProvider.focus")
 	await waitFor(() => api.isReady())
 
 	globalThis.api = api

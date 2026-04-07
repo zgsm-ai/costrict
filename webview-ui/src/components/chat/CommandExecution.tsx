@@ -58,6 +58,7 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 	// task message (this is the case for completed commands) or from the
 	// streaming output (this is the case for running commands).
 	const output = streamingOutput || parsedOutput
+	const isAbortable = status?.status === "started" || status?.status === "backgrounded"
 
 	// Extract command patterns from the actual command that was executed
 	const commandPatterns = useMemo<CommandPattern[]>(() => {
@@ -139,6 +140,10 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 						case "output":
 							setStreamingOutput(data.output)
 							break
+						case "backgrounded":
+							setStatus(data)
+							setIsExpanded(true)
+							break
 						case "fallback":
 							setIsExpanded(true)
 							break
@@ -173,12 +178,22 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 							</StandardTooltip>
 						</div>
 					)}
+
+					{status?.status === "started" &&
+						typeof status.agentTimeoutMs === "number" &&
+						status.agentTimeoutMs > 0 && (
+							<div className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/5 px-2 py-0.5 font-mono text-[10px] leading-none text-amber-600">
+								{t("chat:commandExecution.backgroundedPlanned", {
+									seconds: Math.round(status.agentTimeoutMs / 1000),
+								})}
+							</div>
+						)}
 				</div>
 				<div className=" flex flex-row items-center justify-between gap-2 px-1">
 					<div className="flex flex-row items-center gap-1">
-						{status?.status === "started" && (
+						{isAbortable && (
 							<div className="flex flex-row items-center gap-2 font-mono text-xs">
-								{status.pid && <div className="whitespace-nowrap">(PID: {status.pid})</div>}
+								{persistedPid && <div className="whitespace-nowrap">(PID: {persistedPid})</div>}
 								<StandardTooltip content={t("chat:commandExecution.abort")}>
 									<Button
 										variant="ghost"
@@ -187,9 +202,9 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 											vscode.postMessage({
 												type: "terminalOperation",
 												terminalOperation: "abort",
-												terminalPid: persistedPid, // Use persisted pid instead of status.pid
-												executionId: status.executionId ?? executionId,
-												terminalCommand: status.command,
+												terminalPid: persistedPid,
+												executionId: status?.executionId ?? executionId,
+												terminalCommand: command,
 											})
 										}>
 										<OctagonX className="size-4" />

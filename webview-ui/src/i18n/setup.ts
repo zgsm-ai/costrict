@@ -1,14 +1,14 @@
 import i18next from "i18next"
 import { initReactI18next } from "react-i18next"
-import { zgsmTranslations, mergeLanguageResources } from "./costrict-i18n/setup"
-import { ZGSM_LANGUAGES } from "@roo/language"
+import { costrictTranslations, mergeLanguageResources } from "./costrict-i18n/setup"
+import { COSTRICT_LANGUAGES } from "@roo/language"
 
 // Build translations object
 const translations: Record<string, Record<string, any>> = {}
 
 // Dynamically load locale files
 const localeFiles = import.meta.glob("./locales/**/*.json", { eager: true })
-const ALLOW_LANGUAGES = Object.keys(ZGSM_LANGUAGES)
+const ALLOW_LANGUAGES = Object.keys(COSTRICT_LANGUAGES)
 
 // Process all locale files
 Object.entries(localeFiles).forEach(([path, module]) => {
@@ -32,7 +32,7 @@ Object.entries(localeFiles).forEach(([path, module]) => {
 
 // console.log("Dynamically loaded translations:", Object.keys(translations))
 // Merge CoStrict translations
-const mergedTranslations = mergeLanguageResources(translations, zgsmTranslations)
+const mergedTranslations = mergeLanguageResources(translations, costrictTranslations)
 // console.log(`Merged webview-ui translations:`, mergedTranslations)
 
 // Initialize i18next for React

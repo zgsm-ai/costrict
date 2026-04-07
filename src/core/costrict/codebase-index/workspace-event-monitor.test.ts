@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { WorkspaceEventMonitor, workspaceEventMonitor, WorkspaceEventMonitorConfig } from "./workspace-event-monitor"
-import { ZgsmCodebaseIndexManager } from "./index"
+import { CostrictCodebaseIndexManager } from "./index"
 import { computeHash } from "../base/common"
 import { ILogger } from "../../../utils/logger"
 
@@ -25,8 +25,8 @@ vi.mock("vscode", async (importOriginal) => {
 				extensionPath: "/mock/extension/path",
 				extensionUri: { fsPath: "/mock/extension/path", path: "/mock/extension/path", scheme: "file" },
 				packageJSON: {
-					name: "zgsm",
-					publisher: "zgsm-ai",
+					name: "costrict",
+					publisher: "costrict-ai",
 					version: "2.0.27",
 				},
 			}),
@@ -119,7 +119,7 @@ describe("WorkspaceEventMonitor", () => {
 			retryDelayMs: 10,
 		})
 
-		// Mock ZgsmCodebaseIndexManager
+		// Mock CostrictCodebaseIndexManager
 		mockCodebaseIndexManager = {
 			publishWorkspaceEvents: vi.fn().mockResolvedValue({
 				success: true,
@@ -133,14 +133,14 @@ describe("WorkspaceEventMonitor", () => {
 				}),
 			},
 		}
-		;(ZgsmCodebaseIndexManager as any).getInstance = vi.fn().mockReturnValue(mockCodebaseIndexManager)
+		;(CostrictCodebaseIndexManager as any).getInstance = vi.fn().mockReturnValue(mockCodebaseIndexManager)
 
 		// Mock clineProvider and API configuration
 		mockClineProvider = {
 			getState: vi.fn().mockResolvedValue({
 				apiConfiguration: {
-					apiProvider: "zgsm",
-					zgsmCodebaseIndexEnabled: true,
+					apiProvider: "costrict",
+					costrictCodebaseIndexEnabled: true,
 				},
 			}),
 		}
@@ -768,11 +768,11 @@ describe("WorkspaceEventMonitor", () => {
 			expect(result).toBe(false)
 		})
 
-		it("should return false when apiProvider is not zgsm", async () => {
+		it("should return false when apiProvider is not costrict", async () => {
 			mockClineProvider.getState.mockResolvedValue({
 				apiConfiguration: {
 					apiProvider: "openai",
-					zgsmCodebaseIndexEnabled: true,
+					costrictCodebaseIndexEnabled: true,
 				},
 			})
 
@@ -781,11 +781,11 @@ describe("WorkspaceEventMonitor", () => {
 			expect(result).toBe(false)
 		})
 
-		it("should return false when zgsmCodebaseIndexEnabled is false", async () => {
+		it("should return false when costrictCodebaseIndexEnabled is false", async () => {
 			mockClineProvider.getState.mockResolvedValue({
 				apiConfiguration: {
-					apiProvider: "zgsm",
-					zgsmCodebaseIndexEnabled: false,
+					apiProvider: "costrict",
+					costrictCodebaseIndexEnabled: false,
 				},
 			})
 
@@ -805,8 +805,8 @@ describe("WorkspaceEventMonitor", () => {
 		it("should return true when all conditions are met", async () => {
 			mockClineProvider.getState.mockResolvedValue({
 				apiConfiguration: {
-					apiProvider: "zgsm",
-					zgsmCodebaseIndexEnabled: true,
+					apiProvider: "costrict",
+					costrictCodebaseIndexEnabled: true,
 				},
 			})
 

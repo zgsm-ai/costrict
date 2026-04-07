@@ -35,6 +35,10 @@
 !assets/images/**
 !assets/costrict/**
 
+# Include node-pty native module for terminal functionality.
+# node-pty is vendored into dist/node_modules/node-pty by esbuild.mjs so that
+# vsce always bundles the real files instead of a broken pnpm symlink.
+!dist/node_modules/**
 # Include bundled skills
 !bundled-skills/**
 

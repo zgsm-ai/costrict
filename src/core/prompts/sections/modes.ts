@@ -7,7 +7,7 @@ import { ensureSettingsDirectoryExists } from "../../../utils/globalContext"
 
 export async function getModesSection(
 	context: vscode.ExtensionContext,
-	zgsmCodeMode?: string,
+	costrictCodeMode?: string,
 	currentModeSlug?: string,
 ): Promise<string> {
 	// Make sure path gets created
@@ -32,14 +32,15 @@ ${allModes
 			return allowedSubagents.includes(mode.slug)
 		}
 
-		// Original zgsmCodeMode filtering logic mode.apiProvider
+		// Original costrictCodeMode filtering logic mode.apiProvider
 		if (
-			!mode.zgsmCodeModeGroup ||
-			(mode.apiProvider === "zgsm" &&
+			!mode.costrictCodeModeGroup ||
+			(mode.apiProvider === "costrict" &&
 				["quick-explore", "task-check", "subcoding", "review", "security-review"].includes(mode.slug))
 		)
 			return true
-		if (mode.zgsmCodeModeGroup) return mode.zgsmCodeModeGroup.split(",").includes(zgsmCodeMode ?? "vibe")
+		if (mode.costrictCodeModeGroup)
+			return mode.costrictCodeModeGroup.split(",").includes(costrictCodeMode ?? "vibe")
 		return true
 	})
 	.map((mode: ModeConfig) => {

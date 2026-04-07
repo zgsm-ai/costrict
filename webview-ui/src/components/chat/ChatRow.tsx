@@ -85,10 +85,9 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getJumpLine } from "@/utils/path-mentions"
-import { useZgsmUserInfo } from "@/hooks/useZgsmUserInfo"
+import { useCostrictUserInfo } from "@/hooks/useCostrictUserInfo"
 import { format } from "date-fns"
 import { PathTooltip } from "../ui/PathTooltip"
-import { ReviewTaskStatus } from "@roo/codeReview"
 import { RandomLoadingMessage, RandomLoadingMessageLanguage } from "@/components/chat/RandomLoadingMessage"
 import { OpenMarkdownPreviewButton } from "./OpenMarkdownPreviewButton"
 
@@ -137,6 +136,7 @@ interface ChatRowProps {
 	onMultipleChoiceSubmit?: (response: MultipleChoiceResponse) => void
 	onBatchFileResponse?: (response: { [key: string]: boolean }) => void
 	onFollowUpUnmount?: () => void
+	onMultipleChoiceUnmount?: () => void
 	isFollowUpAnswered?: boolean
 	isMultipleChoiceAnswered?: boolean
 	isFollowUpAutoApprovalPaused?: boolean
@@ -205,6 +205,8 @@ export const ChatRowContent = ({
 	onSuggestionClick,
 	onMultipleChoiceSubmit,
 	onFollowUpUnmount,
+	//costrict: plumb multiple_choice auto-approval cancellation callback through ChatRowContent
+	onMultipleChoiceUnmount,
 	onBatchFileResponse,
 	isFollowUpAnswered,
 	isMultipleChoiceAnswered,
@@ -221,18 +223,18 @@ export const ChatRowContent = ({
 		mode,
 		apiConfiguration,
 		clineMessages,
-		reviewTask,
 		showSpeedInfo,
 		language,
 		collapseMarkdownWithoutScroll,
 		enableCheckpoints,
 		currentTaskItem,
 	} = useExtensionState()
-	const { logoPic, userInfo } = useZgsmUserInfo(apiConfiguration?.zgsmAccessToken)
+	const { logoPic, userInfo } = useCostrictUserInfo(apiConfiguration?.costrictAccessToken)
 	const { info: model } = useSelectedModel(apiConfiguration)
 	const [showCopySuccess, setShowCopySuccess] = useState(false)
 	const [isEditing, setIsEditing] = useState(false)
 	const [editedContent, setEditedContent] = useState("")
+	const [isFeedbackExpanded, setIsFeedbackExpanded] = useState(false)
 	const [editMode, setEditMode] = useState<Mode>(mode || "code")
 	const [editImages, setEditImages] = useState<string[]>([])
 	const { copyWithFeedback } = useCopyToClipboard()
@@ -304,6 +306,7 @@ export const ChatRowContent = ({
 		selectReason,
 		isAuto,
 		originModelId,
+		isFallbackActive,
 		firstTokenLatency,
 		tokensPerSecond,
 		totalDuration,
@@ -344,6 +347,7 @@ export const ChatRowContent = ({
 				info?.selectReason,
 				info?.isAuto,
 				info?.originModelId,
+				info?.isFallbackActive,
 				calculatedFirstTokenLatency,
 				calculatedTokensPerSecond,
 				calculatedTotalDuration,
@@ -384,16 +388,29 @@ export const ChatRowContent = ({
 	const successColor = "var(--vscode-charts-green)"
 	const linkColor = "var(--vscode-textLink-foreground)"
 	const cancelledColor = "var(--vscode-descriptionForeground)"
-	const getIconSpan = (iconName: string, color: string) => (
+	const getIconSpan = ({
+		iconName,
+		color,
+		width = 16,
+		height = 16,
+	}: {
+		iconName: string
+		color: string
+		width?: number
+		height?: number
+	}) => (
 		<div
 			style={{
-				width: 16,
-				height: 16,
+				width,
+				height,
 				display: "flex",
 				alignItems: "center",
 				justifyContent: "center",
 			}}>
-			<span className={`codicon codicon-${iconName}`} style={{ color, fontSize: 16, marginBottom: "-1.5px" }} />
+			<span
+				className={`codicon codicon-${iconName}`}
+				style={{ color, fontSize: width, marginBottom: "-1.5px" }}
+			/>
 		</div>
 	)
 	const [icon, title] = useMemo(() => {
@@ -446,23 +463,7 @@ export const ChatRowContent = ({
 							<RandomLoadingMessage language={language as RandomLoadingMessageLanguage} />
 						</span>
 					) : (
-						<span style={{ color: successColor, fontWeight: "bold" }}>
-							{t("chat:taskCompleted")}{" "}
-							{reviewTask?.status === ReviewTaskStatus.COMPLETED && (
-								<a
-									href="javascript:void(0)"
-									onClick={(e) => {
-										e.stopPropagation()
-										vscode.postMessage({
-											type: "switchTab",
-											tab: "codeReview",
-										})
-									}}
-									style={{ color: "inherit", textDecoration: "underline" }}>
-									{t("chat:subtasks.viewSubtask")}
-								</a>
-							)}
-						</span>
+						<span style={{ color: successColor, fontWeight: "bold" }}>{t("chat:taskCompleted")}</span>
 					),
 				]
 			case "api_req_rate_limit_wait":
@@ -473,18 +474,18 @@ export const ChatRowContent = ({
 				return [
 					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
 						apiReqCancelReason === "user_cancelled" ? (
-							getIconSpan("error", cancelledColor)
+							getIconSpan({ iconName: "error", color: cancelledColor })
 						) : (
-							getIconSpan("error", errorColor)
+							getIconSpan({ iconName: "error", color: errorColor })
 						)
 					) : cost !== null && cost !== undefined ? (
-						getIconSpan("arrow-swap", normalColor)
+						getIconSpan({ iconName: "arrow-swap", color: normalColor })
 					) : apiRequestFailedMessage ? (
-						getIconSpan("error", errorColor)
+						getIconSpan({ iconName: "error", color: errorColor })
 					) : isLast && isStreaming ? (
 						<ProgressIndicator />
 					) : (
-						getIconSpan("arrow-swap", normalColor)
+						getIconSpan({ iconName: "arrow-swap", color: errorColor })
 					),
 					apiReqCancelReason !== null && apiReqCancelReason !== undefined ? (
 						apiReqCancelReason === "user_cancelled" ? (
@@ -549,7 +550,6 @@ export const ChatRowContent = ({
 		isLast,
 		isStreaming,
 		language,
-		reviewTask?.status,
 		apiReqCancelReason,
 		cost,
 		apiRequestFailedMessage,
@@ -1209,16 +1209,16 @@ export const ChatRowContent = ({
 	switch (message.type) {
 		case "say":
 			switch (message.say) {
-				case "auto_switch_model":
-					return (
-						<ErrorRow
-							deleteMessageTs={deleteMessageTs}
-							type="auto_switch_model"
-							message={message.text || ""}
-							expandable={true}
-							isLast={isLast}
-						/>
-					)
+				// case "auto_switch_model":
+				// 	return (
+				// 		<ErrorRow
+				// 			deleteMessageTs={deleteMessageTs}
+				// 			type="auto_switch_model"
+				// 			message={message.text || ""}
+				// 			expandable={true}
+				// 			isLast={isLast}
+				// 		/>
+				// 	)
 				case "diff_error":
 					return (
 						<ErrorRow
@@ -1319,14 +1319,29 @@ export const ChatRowContent = ({
 									isStreaming ? (
 										<ProgressIndicator />
 									) : (
-										getIconSpan("arrow-swap", normalColor)
+										getIconSpan({ iconName: "arrow-swap", color: normalColor })
 									)}
 									{title}
 									{(selectedLLM || originModelId) && !selectReason && (
-										<div
-											className="text-xs text-vscode-descriptionForeground border-vscode-dropdown-border/50 border px-1.5 py-0.5 rounded-lg"
-											title="Selected Model">
-											{isAuto ? t("chat:autoMode.selectedLLM", { selectedLLM }) : originModelId}
+										<div className="text-xs text-vscode-descriptionForeground border-vscode-dropdown-border/50 border px-1.5 py-0.5 rounded-lg">
+											{isFallbackActive
+												? originModelId
+												: isAuto
+													? t("chat:autoMode.selectedLLM", { selectedLLM })
+													: originModelId}
+											{isFallbackActive && (
+												<span
+													title={`${t("chat:autoMode.fallbackModelTooltip")} (${isAuto ? t("chat:autoMode.selectedLLM", { selectedLLM }) : originModelId})`}
+													style={{ display: "inline-flex" }}>
+													&nbsp;
+													{getIconSpan({
+														iconName: "warning",
+														color: normalColor,
+														width: 12,
+														height: 12,
+													})}
+												</span>
+											)}
 										</div>
 									)}
 								</div>
@@ -1403,7 +1418,7 @@ export const ChatRowContent = ({
 											: undefined
 									}
 									additionalContent={
-										apiConfiguration.apiProvider === "zgsm" && (
+										apiConfiguration.apiProvider === "costrict" && (
 											<>
 												<br />
 												<br />
@@ -1489,13 +1504,13 @@ export const ChatRowContent = ({
 							deleteMessageTs={deleteMessageTs}
 							type="api_req_retry_delayed"
 							code={code}
-							message={apiConfiguration.apiProvider === "zgsm" ? message.text || "" : body}
+							message={apiConfiguration.apiProvider === "costrict" ? message.text || "" : body}
 							docsURL={docsURL}
 							errorDetails={rawError}
 							additionalContent={
 								!message?.metadata?.isRateLimit &&
 								!message?.metadata?.isRateLimitRetry &&
-								apiConfiguration.apiProvider === "zgsm" ? (
+								apiConfiguration.apiProvider === "costrict" ? (
 									<>
 										<br />
 										<br />
@@ -1652,9 +1667,47 @@ export const ChatRowContent = ({
 												if (!isStreaming) {
 													handleEditClick()
 												}
-											}}
-											title={t("chat:queuedMessages.clickToEdit")}>
-											<Mention text={message.text} withShadow />
+											}}>
+											{message.text && message.text.length > 200 ? (
+												<>
+													<div
+														className="wrap-anywhere"
+														title={t("chat:queuedMessages.clickToEdit")}
+														style={{
+															wordBreak: "break-word",
+															overflowWrap: "anywhere",
+															maxHeight: !isFeedbackExpanded ? "120px" : "none",
+															overflow: !isFeedbackExpanded ? "hidden" : "auto",
+															position: "relative",
+														}}>
+														<Mention text={message.text} withShadow />
+													</div>
+													<div className={"flex gap-2 pr-1 justify-end"}>
+														{!isFeedbackExpanded && (
+															<button
+																className="text-vscode-textLink-foreground hover:underline mt-1 relative -right-12"
+																onClick={(e) => {
+																	e.stopPropagation()
+																	setIsFeedbackExpanded(true)
+																}}>
+																{t("chat:markdown.expandPrompt")}
+															</button>
+														)}
+														{isFeedbackExpanded && (
+															<button
+																className="text-vscode-textLink-foreground hover:underline mt-1 relative -right-12"
+																onClick={(e) => {
+																	e.stopPropagation()
+																	setIsFeedbackExpanded(false)
+																}}>
+																{t("chat:markdown.collapsePrompt")}
+															</button>
+														)}
+													</div>
+												</>
+											) : (
+												<Mention text={message.text} withShadow />
+											)}
 										</div>
 										<div className="flex gap-2 pr-1">
 											<div
@@ -1722,6 +1775,12 @@ export const ChatRowContent = ({
 					const isNoToolsUsedError = message.text === "MODEL_NO_TOOLS_USED"
 					const isNoAssistantMessagesError = message.text === "MODEL_NO_ASSISTANT_MESSAGES"
 
+					if (
+						(isNoAssistantMessagesError || isNoToolsUsedError) &&
+						apiConfiguration.apiProvider === "costrict"
+					) {
+						return <div className="ml-2 pl-4 pb-1">{t("chat:emptyCompletionResult")}</div>
+					}
 					if (isNoToolsUsedError) {
 						return (
 							<ErrorRow
@@ -2213,6 +2272,7 @@ export const ChatRowContent = ({
 											data={multipleChoiceData}
 											onSubmit={onMultipleChoiceSubmit}
 											isAnswered={isMultipleChoiceAnswered}
+											onCancelAutoApproval={onMultipleChoiceUnmount}
 										/>
 									)
 								)}

@@ -96,7 +96,7 @@ vi.mock("vscode", async (importOriginal) => {
 				extensionPath: "/mock/extension/path",
 				extensionUri: { fsPath: "/mock/extension/path", path: "/mock/extension/path", scheme: "file" },
 				packageJSON: {
-					name: "zgsm",
+					name: "costrict",
 					publisher: "zgsm-ai",
 					version: "2.0.27",
 				},
@@ -980,9 +980,9 @@ describe("Cline", () => {
 				// Reset the global timestamp before each test
 				Task.resetGlobalApiRequestTime()
 
-				// Import and reset ZgsmAuthService instance for testing
-				const { ZgsmAuthService } = await import("../../costrict/auth")
-				ZgsmAuthService._resetForTesting()
+				// Import and reset CostrictAuthService instance for testing
+				const { CostrictAuthService } = await import("../../costrict/auth")
+				CostrictAuthService._resetForTesting()
 
 				mockApiConfig = {
 					apiProvider: "anthropic",
@@ -1013,8 +1013,8 @@ describe("Cline", () => {
 					updateTaskHistory: vi.fn().mockResolvedValue(undefined),
 				}
 
-				// Initialize ZgsmAuthService with mock provider
-				ZgsmAuthService.setProvider(mockProvider)
+				// Initialize CostrictAuthService with mock provider
+				CostrictAuthService.setProvider(mockProvider)
 
 				// Get the mocked delay function
 				mockDelay = delay as ReturnType<typeof vi.fn>

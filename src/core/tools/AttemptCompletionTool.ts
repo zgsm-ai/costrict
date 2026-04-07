@@ -30,6 +30,8 @@ interface DelegationProvider {
 		parentTaskId: string
 		childTaskId: string
 		completionResultSummary: string
+		costrictWorkflowMode?: string
+		costrictWorkflowSpecScope?: string
 	}): Promise<void>
 }
 
@@ -50,7 +52,7 @@ export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 		}
 
 		const preventCompletionWithOpenTodos = vscode.workspace
-			.getConfiguration(Package.name)
+			.getConfiguration(Package.commandIDPrefix)
 			.get<boolean>("preventCompletionWithOpenTodos", false)
 
 		const hasIncompleteTodos = task.todoList && task.todoList.some((todo) => todo.status !== "completed")
@@ -172,6 +174,8 @@ export class AttemptCompletionTool extends BaseTool<"attempt_completion"> {
 		await provider.reopenParentFromDelegation({
 			parentTaskId: task.parentTaskId!,
 			childTaskId: task.taskId,
+			costrictWorkflowMode: task.parentTask?.costrictWorkflowMode,
+			costrictWorkflowSpecScope: task.parentTask?.costrictWorkflowSpecScope,
 			completionResultSummary: result,
 		})
 

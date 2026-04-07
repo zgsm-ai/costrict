@@ -1,13 +1,13 @@
-import { ZgsmAuthConfig } from "./authConfig"
+import { CostrictAuthConfig } from "./authConfig"
 import type { ProviderSettings } from "@roo-code/types"
 import type { ClineProvider } from "../../webview/ClineProvider"
-import { LoginTokenResponse, ZgsmLoginResponse } from "./types"
-import { getParams } from "../../../utils/zgsmUtils"
+import { LoginTokenResponse, CostrictLoginResponse } from "./types"
+import { getParams } from "../../../utils/costrictUtils"
 import { joinUrl } from "../../../utils/joinUrl"
 
-export class ZgsmAuthApi {
+export class CostrictAuthApi {
 	private static clineProvider?: ClineProvider
-	private static instance?: ZgsmAuthApi
+	private static instance?: CostrictAuthApi
 
 	loginUrl = "/oidc-auth/api/v1/plugin/login"
 	tokenUrl = "/oidc-auth/api/v1/plugin/login/token"
@@ -15,23 +15,23 @@ export class ZgsmAuthApi {
 	logoutUrl = `/oidc-auth/api/v1/plugin/logout`
 
 	public static setProvider(clineProvider: ClineProvider): void {
-		ZgsmAuthApi.clineProvider = clineProvider
+		CostrictAuthApi.clineProvider = clineProvider
 	}
 
-	public static getInstance(): ZgsmAuthApi {
-		if (!ZgsmAuthApi.instance) {
-			ZgsmAuthApi.instance = new ZgsmAuthApi()
+	public static getInstance(): CostrictAuthApi {
+		if (!CostrictAuthApi.instance) {
+			CostrictAuthApi.instance = new CostrictAuthApi()
 		}
-		return ZgsmAuthApi.instance
+		return CostrictAuthApi.instance
 	}
 
 	/**
 	 * Get API configuration
 	 */
 	async getApiConfiguration(): Promise<ProviderSettings> {
-		if (ZgsmAuthApi.clineProvider) {
+		if (CostrictAuthApi.clineProvider) {
 			try {
-				const state = await ZgsmAuthApi.clineProvider.getState()
+				const state = await CostrictAuthApi.clineProvider.getState()
 				return state.apiConfiguration
 			} catch (error) {
 				console.error("Failed to get API configuration:", error)
@@ -40,9 +40,9 @@ export class ZgsmAuthApi {
 
 		// Return default configuration
 		return {
-			apiProvider: "zgsm",
+			apiProvider: "costrict",
 			apiKey: "",
-			zgsmBaseUrl: ZgsmAuthConfig.getInstance().getDefaultLoginBaseUrl(),
+			costrictBaseUrl: CostrictAuthConfig.getInstance().getDefaultLoginBaseUrl(),
 		}
 	}
 
@@ -53,12 +53,12 @@ export class ZgsmAuthApi {
 		const apiConfig = await this.getApiConfiguration()
 
 		// Prefer using baseUrl from apiConfiguration
-		if (apiConfig.zgsmBaseUrl?.trim()) {
-			return `${apiConfig.zgsmBaseUrl}`
+		if (apiConfig.costrictBaseUrl?.trim()) {
+			return `${apiConfig.costrictBaseUrl}`
 		}
 
 		// Use default API URL
-		return ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+		return CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 	}
 
 	/**
@@ -82,7 +82,7 @@ export class ZgsmAuthApi {
 	/**
 	 * Get user login status
 	 */
-	async getUserLoginState(state: string, access_token: string): Promise<ZgsmLoginResponse> {
+	async getUserLoginState(state: string, access_token: string): Promise<CostrictLoginResponse> {
 		try {
 			const baseUrl = await this.getApiBaseUrl()
 			const params = getParams(state, [access_token ? "machine_code" : ""])
@@ -99,7 +99,7 @@ export class ZgsmAuthApi {
 			}
 
 			const data = await response.json()
-			return data as ZgsmLoginResponse
+			return data as CostrictLoginResponse
 		} catch (error) {
 			console.error("[getUserLoginState] Failed to get login status:", error)
 			throw error

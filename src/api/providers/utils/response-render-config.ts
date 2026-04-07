@@ -27,7 +27,7 @@ export function getApiResponseRenderMode() {
 		return renderModes.fast
 	}
 	const apiResponseRenderMode = vscode.workspace
-		.getConfiguration("zgsm")
+		.getConfiguration("costrict")
 		.get<string>("apiResponseRenderMode", "medium") as "fast" | "medium" | "slow" | "noLimit"
 
 	return renderModes[apiResponseRenderMode] || renderModes["fast"]

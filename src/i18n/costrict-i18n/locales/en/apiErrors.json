@@ -11,11 +11,13 @@
 		"503": "Service temporarily unavailable",
 		"504": "Gateway timeout",
 		"old_mode_token": "The old token is incompatible. Please log in again after the upgrade.",
+		"401_auth_service_error": "Authentication service temporarily unavailable",
 		"undefined": "Network connection error",
 		"unknown": "Unknown error"
 	},
 	"solution": {
 		"401": "1. Click account icon  -> Click [Re-login]\n2. Contact the administrator",
+		"401_auth_service_error": "The authentication service may be under maintenance or experiencing temporary issues. Please try again later or contact the administrator.",
 		"400": "1. End the current task and start a new one\n2. Try a different model\n3. Contact the administrator",
 		"403": "1. Check permission settings\n2. Try a different model\n3. Contact the administrator",
 		"404": "1. Check if the request path or resource exists\n2. Contact the administrator",

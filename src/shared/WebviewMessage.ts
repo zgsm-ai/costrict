@@ -1,3 +1,9 @@
 export type { WebviewMessage, WebViewMessagePayload } from "@roo-code/types"
 
-export type ClineAskResponse = "yesButtonClicked" | "noButtonClicked" | "messageResponse" | "objectResponse"
+//costrict: add a dedicated structured response channel for multiple choice form submissions
+export type ClineAskResponse =
+	| "yesButtonClicked"
+	| "noButtonClicked"
+	| "messageResponse"
+	| "objectResponse"
+	| "multipleChoiceResponse"

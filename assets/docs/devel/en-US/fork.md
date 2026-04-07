@@ -7,20 +7,20 @@ Detailed steps for GitHub Forking workflow:
 1. **Fork the remote repository to your account**
 
     Visit https://github.com/zgsm-ai/costrict, click the **Fork** button at top-right. The forked repository address will be:
-    `https://github.com/{{your_account}}/zgsm`
+    `https://github.com/{{your_account}}/costrict`
 
 2. **Clone the forked repository locally**
 
 ```bash
-$ git clone https://github.com/{{your account}}/zgsm
-$ cd zgsm
+$ git clone https://github.com/{{your account}}/costrict
+$ cd costrict
 $ git remote add upstream https://github.com/zgsm-ai/costrict
 $ git remote set-url --push upstream no_push # Never push to upstream main
 $ git remote -v # Confirm that your remotes make sense
-origin	https://github.com/{{your account}}/zgsm(fetch)
-origin	https://github.com/{{your account}}/zgsm(push)
-upstream	https://github.com/marmotedu/zgsm(fetch)
-upstream	https://github.com/marmotedu/zgsm(push)
+origin	https://github.com/{{your account}}/costrict (fetch)
+origin	https://github.com/{{your account}}/costrict (push)
+upstream	https://github.com/marmotedu/costrict (fetch)
+upstream	https://github.com/marmotedu/costrict (push)
 ```
 
 3. **Create a feature branch**

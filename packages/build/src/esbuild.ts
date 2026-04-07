@@ -289,10 +289,10 @@ function copyTypesPackage(srcDir: string, distDir: string): void {
 
 export function copyLocales(srcDir: string, distDir: string): void {
 	const destDir = path.join(distDir, "i18n", "locales")
-	const zgsmDestDir = path.join(distDir, "i18n", "costrict-i18n", "locales")
+	const costrictDestDir = path.join(distDir, "i18n", "costrict-i18n", "locales")
 	const dirs = [
 		[destDir, path.join(srcDir, "i18n", "locales")],
-		[zgsmDestDir, path.join(srcDir, "i18n", "costrict-i18n", "locales")],
+		[costrictDestDir, path.join(srcDir, "i18n", "costrict-i18n", "locales")],
 	] as Array<[string, string]>
 
 	for (const dirInfo of dirs) {

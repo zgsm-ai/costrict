@@ -17,7 +17,7 @@ export * from "./base/language"
 export * from "./commit"
 
 // Export data as a namespace to avoid conflicts
-export * as ZgsmData from "./base/data"
+export * as CostrictData from "./base/data"
 
 // Export activation functions
 export * from "./activate"

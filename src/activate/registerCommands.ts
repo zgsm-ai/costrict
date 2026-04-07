@@ -19,6 +19,7 @@ import { t } from "../i18n"
 import { EditorContext, EditorUtils } from "../integrations/editor/EditorUtils"
 import * as path from "path"
 import { handleGenerateCommitMessage } from "../core/costrict/commit"
+import { getTerminalManager } from "../core/costrict/cli-wrap"
 
 interface UriSource {
 	path: string
@@ -87,7 +88,11 @@ export const registerCommands = (options: RegisterCommandOptions) => {
 	}
 }
 
-const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOptions): Record<CommandId, any> => ({
+export const getCommandsMap = ({
+	context,
+	outputChannel,
+	provider,
+}: RegisterCommandOptions): Record<CommandId, any> => ({
 	activationCompleted: () => {},
 	cloudButtonClicked: () => {
 		const visibleProvider = getVisibleProviderOrLog(outputChannel)
@@ -122,7 +127,7 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		return openClineInNewTab({ context, outputChannel, taskId: "" })
 	},
 	openNewButtonClicked: () => {
-		vscode.commands.executeCommand(`${Package.name}.SidebarProvider.focus`)
+		vscode.commands.executeCommand(`${Package.commandIDPrefix}.SidebarProvider.focus`)
 	},
 	openInNewTab: (taskId?: string) => openClineInNewTab({ context, outputChannel, taskId }),
 	settingsButtonClicked: () => {
@@ -286,6 +291,28 @@ const getCommandsMap = ({ context, outputChannel, provider }: RegisterCommandOpt
 		}
 
 		const chatMessage = textPaths.length > 0 ? textPaths.join(" ") + " " : ""
+
+		// When the CLI tab is active, forward file paths directly to the CLI terminal
+		if (visibleProvider.activeTab === "cs-cli") {
+			const terminalManager = getTerminalManager()
+			if (terminalManager.running && chatMessage.trim().length > 0) {
+				const PASTE_START = "\x1b[200~"
+				const PASTE_END = "\x1b[201~"
+				await terminalManager.write(PASTE_START + chatMessage + PASTE_END)
+				await Promise.all([
+					visibleProvider.postMessageToWebview({
+						type: "action",
+						action: "switchTab",
+						tab: "cs-cli",
+					}),
+					visibleProvider.postMessageToWebview({
+						type: "CostrictCliToast",
+						text: "File path inserted into CoStrict CLI",
+					}),
+				])
+				return
+			}
+		}
 
 		const payload: { text: string; images?: string[] } = {
 			text: chatMessage,

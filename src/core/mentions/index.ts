@@ -31,6 +31,26 @@ export const MAX_FOLDER_FILES_TO_READ = 10
  * This is approximately 100KB which should be safe for most context windows.
  */
 export const MAX_FOLDER_CONTENT_SIZE = 100_000
+
+/**
+ * Maximum total content size (in characters) contributed by file/folder mentions
+ * in a single parsed user message. This preserves room for the rest of the prompt
+ * while still favoring original source content over summaries.
+ */
+export const MAX_MENTION_CONTEXT_CHARS = 120_000
+
+interface MentionBudgetEntry {
+	path: string
+	type: "file" | "folder"
+	status: "included" | "omitted"
+}
+
+interface MentionBudgetState {
+	usedChars: number
+	limitChars: number
+	entries: MentionBudgetEntry[]
+	budgetExceeded: boolean
+}
 export async function openMention(cwd: string, mention?: string): Promise<void> {
 	if (!mention) {
 		return
@@ -107,6 +127,77 @@ File: ${filePath}
 ${result.content}`
 }
 
+function createMentionBudgetState(limitChars: number = MAX_MENTION_CONTEXT_CHARS): MentionBudgetState {
+	return {
+		usedChars: 0,
+		limitChars,
+		entries: [],
+		budgetExceeded: false,
+	}
+}
+
+function tryAddMentionContentBlock(
+	budgetState: MentionBudgetState,
+	contentBlocks: MentionContentBlock[],
+	block: MentionContentBlock,
+): boolean {
+	if ((block.type !== "file" && block.type !== "folder") || !block.path) {
+		contentBlocks.push(block)
+		return true
+	}
+
+	const nextSize = block.content.length
+	if (budgetState.usedChars + nextSize > budgetState.limitChars) {
+		budgetState.entries.push({
+			path: block.path,
+			type: block.type,
+			status: "omitted",
+		})
+		budgetState.budgetExceeded = true
+		return false
+	}
+
+	contentBlocks.push(block)
+	budgetState.usedChars += nextSize
+	budgetState.entries.push({
+		path: block.path,
+		type: block.type,
+		status: "included",
+	})
+	return true
+}
+
+function buildMentionBudgetNotice(budgetState: MentionBudgetState): MentionContentBlock | undefined {
+	if (!budgetState.budgetExceeded) {
+		return undefined
+	}
+
+	const included = budgetState.entries.filter((entry) => entry.status === "included")
+	const omitted = budgetState.entries.filter((entry) => entry.status === "omitted")
+	if (omitted.length === 0) {
+		return undefined
+	}
+
+	const formatEntries = (entries: MentionBudgetEntry[]) => entries.map((entry) => `- @${entry.path}`).join("\n")
+
+	const sections = [
+		"[mention_budget_notice]",
+		"Some @-mentioned file or folder content was omitted to avoid overloading the initial context.",
+	]
+
+	if (included.length > 0) {
+		sections.push(`\nIncluded within budget:\n${formatEntries(included)}`)
+	}
+
+	sections.push(`\nOmitted due to budget:\n${formatEntries(omitted)}`)
+	sections.push("\nIf needed, use `read_file` or `list_files` to inspect the omitted paths.")
+
+	return {
+		type: "file",
+		content: sections.join("\n"),
+	}
+}
+
 export async function parseMentions(
 	text: string,
 	cwd: string,
@@ -118,11 +209,13 @@ export async function parseMentions(
 	skillsManager?: SkillLookup,
 	currentMode: string = "code",
 	language?: string,
+	mentionBudgetChars?: number,
 ): Promise<ParseMentionsResult> {
 	const mentions: Set<string> = new Set()
 	const validCommands: Map<string, Command> = new Map()
 	const validSkills: Map<string, SkillContent> = new Map()
 	const contentBlocks: MentionContentBlock[] = []
+	const mentionBudgetState = createMentionBudgetState(mentionBudgetChars)
 	let commandMode: string | undefined // Track mode from the first slash command that has one
 
 	// First pass: check which command mentions exist and cache the results
@@ -205,10 +298,10 @@ export async function parseMentions(
 					showRooIgnoredFiles,
 					fileContextTracker,
 				)
-				contentBlocks.push(fileResult)
+				tryAddMentionContentBlock(mentionBudgetState, contentBlocks, fileResult)
 			} catch (error) {
 				const errorMsg = error instanceof Error ? error.message : String(error)
-				contentBlocks.push({
+				tryAddMentionContentBlock(mentionBudgetState, contentBlocks, {
 					type: mention.endsWith("/") ? "folder" : "file",
 					path: mentionPath,
 					content: `[read_file for '${mentionPath}']\nError: ${errorMsg}`,
@@ -243,6 +336,11 @@ export async function parseMentions(
 				parsedText += `\n\n<terminal_output>\nError fetching terminal output: ${error.message}\n</terminal_output>`
 			}
 		}
+	}
+
+	const mentionBudgetNotice = buildMentionBudgetNotice(mentionBudgetState)
+	if (mentionBudgetNotice) {
+		contentBlocks.push(mentionBudgetNotice)
 	}
 
 	// Process valid command mentions using cached results

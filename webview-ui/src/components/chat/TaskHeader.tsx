@@ -284,10 +284,13 @@ const TaskHeader = ({
 												? "text-vscode-charts-green"
 												: percentage < 85
 													? "text-vscode-charts-yellow"
-													: "text-vscode-charts-red"	
+													: "text-vscode-charts-red"
 										return (
 											<>
-												<CircularProgress percentage={percentage} className={percentageClassName} />
+												<CircularProgress
+													percentage={percentage}
+													className={percentageClassName}
+												/>
 												<span>{percentage}%</span>
 											</>
 										)

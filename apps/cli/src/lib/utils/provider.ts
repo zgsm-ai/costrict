@@ -6,7 +6,7 @@ const envVarMap: Record<SupportedProvider, string> = {
 	anthropic: "ANTHROPIC_API_KEY",
 	"openai-native": "OPENAI_API_KEY",
 	gemini: "GOOGLE_API_KEY",
-	zgsm: "COSTRICT_API_KEY",
+	costrict: "COSTRICT_API_KEY",
 	openrouter: "OPENROUTER_API_KEY",
 	"vercel-ai-gateway": "VERCEL_AI_GATEWAY_API_KEY",
 	roo: "ROO_API_KEY",
@@ -29,9 +29,9 @@ export function getProviderSettings(
 	const config: RooCodeSettings = { apiProvider: provider }
 
 	switch (provider) {
-		case "zgsm":
-			if (apiKey) config.zgsmAccessToken = apiKey
-			if (model) config.zgsmModelId = model
+		case "costrict":
+			if (apiKey) config.costrictAccessToken = apiKey
+			if (model) config.costrictModelId = model
 			break
 		case "anthropic":
 			if (apiKey) config.apiKey = apiKey

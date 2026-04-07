@@ -151,7 +151,7 @@ vi.mock("vscode", () => ({
 			extensionPath: "/mock/extension/path",
 			extensionUri: { fsPath: "/mock/extension/path", path: "/mock/extension/path", scheme: "file" },
 			packageJSON: {
-				name: "zgsm",
+				name: "costrict",
 				publisher: "zgsm-ai",
 				version: "2.0.27",
 			},
@@ -411,9 +411,9 @@ describe("SYSTEM_PROMPT", () => {
 			undefined, // rooIgnoreInstructions
 		)
 
-		// Role definition should be after TOOL USE section (cache-optimized structure)
-		// See: refactor(prompts): optimize prompt caching by extracting static sections
-		expect(prompt.indexOf("Custom role definition")).toBeGreaterThan(prompt.indexOf("TOOL USE"))
+		// Role definition should be at the very beginning (before any static or dynamic sections)
+		// See: refactor(prompts): move role definition to prompt start
+		expect(prompt.indexOf("Custom role definition")).toBeLessThan(prompt.indexOf("TOOL USE"))
 
 		// Custom instructions should be at the bottom
 		const customInstructionsIndex = prompt.indexOf("Custom mode instructions")
@@ -446,9 +446,9 @@ describe("SYSTEM_PROMPT", () => {
 			undefined, // rooIgnoreInstructions
 		)
 
-		// Role definition from promptComponent should be after TOOL USE section (cache-optimized structure)
-		// See: refactor(prompts): optimize prompt caching by extracting static sections
-		expect(prompt.indexOf("Custom prompt role definition")).toBeGreaterThan(prompt.indexOf("TOOL USE"))
+		// Role definition from promptComponent should be at the very beginning (before any static or dynamic sections)
+		// See: refactor(prompts): move role definition to prompt start
+		expect(prompt.indexOf("Custom prompt role definition")).toBeLessThan(prompt.indexOf("TOOL USE"))
 		// Should not contain the default mode's role definition
 		expect(prompt).not.toContain(modes[0].roleDefinition)
 	})
@@ -476,9 +476,9 @@ describe("SYSTEM_PROMPT", () => {
 			undefined, // rooIgnoreInstructions
 		)
 
-		// Should use the default mode's role definition (after TOOL USE section due to cache optimization)
-		// See: refactor(prompts): optimize prompt caching by extracting static sections
-		expect(prompt.indexOf(modes[0].roleDefinition)).toBeGreaterThan(prompt.indexOf("TOOL USE"))
+		// Should use the default mode's role definition (at the beginning of the prompt)
+		// See: refactor(prompts): move role definition to prompt start
+		expect(prompt.indexOf(modes[0].roleDefinition)).toBeLessThan(prompt.indexOf("TOOL USE"))
 	})
 
 	it("should exclude update_todo_list tool when todoListEnabled is false", async () => {
@@ -590,8 +590,7 @@ describe("SYSTEM_PROMPT", () => {
 
 		// Should contain TOOL USE section with native note
 		expect(prompt).toContain("TOOL USE")
-		expect(prompt).toContain("provider-native tool-calling mechanism")
-		expect(prompt).toContain("Do not include XML markup or examples")
+		expect(prompt).toContain("Use provider-native tool-calling")
 
 		// Should NOT contain XML-style tags or examples
 		expect(prompt).not.toContain("<actual_tool_name>")

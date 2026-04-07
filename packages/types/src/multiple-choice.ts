@@ -36,6 +36,18 @@ export interface MultipleChoiceOption {
 	id: string
 	/** Display text for this option */
 	label: string
+	/** Whether this option is the recommended/default choice */
+	recommended?: boolean
+}
+
+/**
+ * Interface for a single question response in multiple choice form
+ */
+export interface MultipleChoiceQuestionResponse {
+	/** Selected predefined option ids */
+	selectedOptionIds: string[]
+	/** Optional custom answer entered by the user */
+	customAnswer?: string
 }
 
 /**
@@ -43,7 +55,7 @@ export interface MultipleChoiceOption {
  * Maps question IDs to arrays of selected option IDs
  */
 export interface MultipleChoiceResponse {
-	[questionId: string]: string[]
+	[questionId: string]: MultipleChoiceQuestionResponse | string[]
 }
 
 /**
@@ -52,6 +64,7 @@ export interface MultipleChoiceResponse {
 export const multipleChoiceOptionSchema = z.object({
 	id: z.string(),
 	label: z.string(),
+	recommended: z.boolean().optional(),
 })
 
 /**
@@ -73,4 +86,3 @@ export const multipleChoiceDataSchema = z.object({
 })
 
 export type MultipleChoiceDataType = z.infer<typeof multipleChoiceDataSchema>
-

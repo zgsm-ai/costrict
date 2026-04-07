@@ -64,7 +64,6 @@ import ChatSearch from "./ChatSearch"
 // import { Cloud } from "lucide-react"
 // import CloudAgents from "../cloud/CloudAgents"
 import { WorktreeSelector } from "./WorktreeSelector"
-import { useZgsmUserInfo } from "@/hooks/useZgsmUserInfo"
 import FileChangesPanel from "./FileChangesPanel"
 import { useScrollLifecycle } from "@src/hooks/useScrollLifecycle"
 
@@ -161,11 +160,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		// telemetrySetting,
 		soundEnabled,
 		soundVolume,
+		costrictCodeMode,
 		// cloudIsAuthenticated,
 		messageQueue = [],
 		experiments,
 		showWorktreesInHomeScreen,
-		language,
 		isStreaming = false,
 		alwaysAllowExecute = false,
 		autoApprovalEnabled,
@@ -256,6 +255,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		}),
 	)
 	const [currentFollowUpTs, setCurrentFollowUpTs] = useState<number | null>(-1)
+	//costrict: track multiple_choice independently so followup timestamps do not affect questionnaire answered state
+	const [currentMultipleChoiceTs, setCurrentMultipleChoiceTs] = useState<number | null>(-1)
 	const [aggregatedCostsMap, setAggregatedCostsMap] = useState<
 		Map<
 			string,
@@ -314,7 +315,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		// Only send cancel if there's actual input (user is typing)
 		// and we have a pending follow-up question
 		if (isFollowUpAutoApprovalPaused) {
-			vscode.postMessage({ type: "cancelAutoApproval" })
+			vscode.postMessage({ type: "cancelAutoApproval", values: { cancelType: "user_input" } })
 		}
 	}, [isFollowUpAutoApprovalPaused])
 
@@ -609,6 +610,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		setExpandedRows({})
 		everVisibleMessagesTsRef.current.clear()
 		setCurrentFollowUpTs(null)
+		//costrict: reset the per-questionnaire answered watermark when switching tasks
+		setCurrentMultipleChoiceTs(null)
 		setIsCondensing(false)
 	}, [task?.ts])
 
@@ -638,11 +641,20 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	}, [])
 
 	const markFollowUpAsAnswered = useCallback(() => {
-		const lastFollowUpMessage = messagesRef.current.findLast((msg: ClineMessage) =>
-			["followup", "multiple_choice"].includes(msg.ask!),
-		)
+		//costrict: only advance the followup watermark from followup asks
+		const lastFollowUpMessage = messagesRef.current.findLast((msg: ClineMessage) => msg.ask === "followup")
 		if (lastFollowUpMessage) {
 			setCurrentFollowUpTs(lastFollowUpMessage.ts)
+		}
+	}, [])
+
+	const markMultipleChoiceAsAnswered = useCallback(() => {
+		//costrict: keep multiple_choice answered state isolated from followup asks
+		const lastMultipleChoiceMessage = messagesRef.current.findLast(
+			(msg: ClineMessage) => msg.ask === "multiple_choice",
+		)
+		if (lastMultipleChoiceMessage) {
+			setCurrentMultipleChoiceTs(lastMultipleChoiceMessage.ts)
 		}
 	}, [])
 
@@ -1092,6 +1104,15 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		// Remove the 500-message limit to prevent array index shifting
 		// Virtuoso is designed to efficiently handle large lists through virtualization
 		const newVisibleMessages = modifiedMessages.filter((message) => {
+			//costrict: hide stale multiple_choice loading placeholders once a later message supersedes them
+			if (
+				message.ask === "multiple_choice" &&
+				message.partial === true &&
+				modifiedMessages.at(-1)?.ts !== message.ts
+			) {
+				return false
+			}
+
 			// Filter out checkpoint_saved messages that should be suppressed
 			if (message.say === "checkpoint_saved") {
 				// Check if this checkpoint has the suppressMessage flag set
@@ -1233,8 +1254,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const groupedMessages = useMemo(() => {
 		// Only filter out the launch ask and result messages - browser actions appear in chat
 		const filtered: ClineMessage[] = visibleMessages.filter((msg) => {
-			// Filter additional message types for zgsm provider
-			if (apiConfiguration?.apiProvider === "zgsm") {
+			// Filter additional message types for costrict provider
+			if (apiConfiguration?.apiProvider === "costrict") {
 				// Filter error messages
 				if (msg.say === "error") return false
 
@@ -1496,15 +1517,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const placeholderText = `${task ? t("chat:typeMessage") : t("chat:typeTask")}${placeholderTip}`
 
-	const summaryIconUri = useMemo(() => (window as any).COSTRICT_BASE_URI + "/summary_icon.webp", [])
-	const { hash } = useZgsmUserInfo(apiConfiguration?.zgsmAccessToken)
-
-	const handleOpenAnnualSummary = useCallback(() => {
-		const baseUrl = apiConfiguration?.zgsmBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL
-		const summaryUrl = `${baseUrl}/credit/manager/annual-summary${hash ? `?state=${hash}` : ""}`
-		vscode.postMessage({ type: "openExternal", url: summaryUrl })
-	}, [apiConfiguration?.zgsmBaseUrl, hash])
-
 	const switchToMode = useCallback(
 		(modeSlug: string): void => {
 			// Update local state and notify extension to sync mode change.
@@ -1518,11 +1530,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const handleMultipleChoiceSubmit = useCallback(
 		(response: MultipleChoiceResponse) => {
+			//costrict: optimistically mark the current questionnaire as answered in UI before backend persistence lands
+			markMultipleChoiceAsAnswered()
 			// 后端会在 handleWebviewAskResponse 中自动设置 isAnswered 和 userResponse
 			// 不需要前端处理，避免重复和耦合
+			//costrict: submit structured multiple choice answers through a dedicated response channel
 			vscode.postMessage({
 				type: "askResponse",
-				askResponse: "messageResponse",
+				askResponse: "multipleChoiceResponse",
 				text: JSON.stringify(response),
 			})
 
@@ -1530,7 +1545,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			setClineAsk(undefined)
 			setEnableButtons(false)
 		},
-		[], // 移除不必要的依赖
+		[markMultipleChoiceAsAnswered],
 	)
 
 	const handleSuggestionClickInRow = useCallback(
@@ -1589,7 +1604,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	// Cancel backend auto-approval timeout when FollowUpSuggest's countdown effect cleans up.
 	// This is called when auto-approve is toggled off, a suggestion is clicked, or the component unmounts.
 	const handleFollowUpUnmount = useCallback(() => {
-		vscode.postMessage({ type: "cancelAutoApproval" })
+		vscode.postMessage({ type: "cancelAutoApproval", values: { cancelType: "follow_up_unmount" } })
+	}, [])
+	//costrict: reuse the existing backend timeout cancellation path for multiple_choice countdown cleanup and manual interaction
+	const handleMultipleChoiceUnmount = useCallback(() => {
+		vscode.postMessage({ type: "cancelAutoApproval", values: { cancelType: "multiple_choice_unmount" } })
 	}, [])
 
 	const itemContent = useCallback(
@@ -1611,13 +1630,15 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					onMultipleChoiceSubmit={handleMultipleChoiceSubmit}
 					onBatchFileResponse={handleBatchFileResponse}
 					onFollowUpUnmount={handleFollowUpUnmount}
+					onMultipleChoiceUnmount={handleMultipleChoiceUnmount}
 					isFollowUpAutoApprovalPaused={isFollowUpAutoApprovalPaused}
 					isFollowUpAnswered={
 						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentFollowUpTs)
 					}
 					// Costrict: ask_multiple_choice answered
 					isMultipleChoiceAnswered={
-						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentFollowUpTs)
+						//costrict: compare against the dedicated multiple_choice watermark instead of the followup one
+						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentMultipleChoiceTs)
 					}
 					editable={
 						messageOrGroup.type === "ask" &&
@@ -1652,8 +1673,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			handleMultipleChoiceSubmit,
 			handleBatchFileResponse,
 			handleFollowUpUnmount,
+			handleMultipleChoiceUnmount,
 			isFollowUpAutoApprovalPaused,
 			currentFollowUpTs,
+			currentMultipleChoiceTs,
 			shouldHighlight,
 			searchResults,
 			showSearch,
@@ -1663,23 +1686,34 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		],
 	)
 
+	const allModes = useMemo(
+		() =>
+			getAllModes(customModes).filter((v) => {
+				if (v.costrictCodeModeGroup) {
+					if (v.costrictCodeModeGroup === "hide") return false
+					if (!v.costrictCodeModeGroup?.split(",").includes(costrictCodeMode!)) return false
+				}
+
+				return true
+			}),
+		[customModes, costrictCodeMode],
+	)
+
 	// Function to handle mode switching
 	const switchToNextMode = useCallback(() => {
-		const allModes = getAllModes(customModes)
 		const currentModeIndex = allModes.findIndex((m) => m.slug === mode)
 		const nextModeIndex = (currentModeIndex + 1) % allModes.length
 		// Update local state and notify extension to sync mode change
 		switchToMode(allModes[nextModeIndex].slug)
-	}, [mode, customModes, switchToMode])
+	}, [allModes, switchToMode, mode])
 
 	// Function to handle switching to previous mode
 	const switchToPreviousMode = useCallback(() => {
-		const allModes = getAllModes(customModes)
 		const currentModeIndex = allModes.findIndex((m) => m.slug === mode)
 		const previousModeIndex = (currentModeIndex - 1 + allModes.length) % allModes.length
 		// Update local state and notify extension to sync mode change
 		switchToMode(allModes[previousModeIndex].slug)
-	}, [mode, customModes, switchToMode])
+	}, [allModes, switchToMode, mode])
 
 	// Mode switching keyboard handler. Scroll-intent keyboard detection
 	// (PageUp, Home, ArrowUp) is handled by useScrollLifecycle.
@@ -1825,19 +1859,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							className="absolute top-2 right-3 z-10"
 						/> */}
 						<VersionIndicator onClick={() => {}} className="fixed top-10 right-6 z-10" />
-
-						{language === "zh-CN" && apiConfiguration?.zgsmAccessToken && (
-							<button
-								onClick={handleOpenAnnualSummary}
-								className="fixed top-20 right-6 z-10 cursor-pointer hover:opacity-80 transition-opacity animate-pulse"
-								aria-label="annual-summary">
-								<img
-									src={summaryIconUri}
-									alt="annual-summary"
-									className="w-22 transition-transform hover:scale-110 hover:rotate-3 active:scale-95 duration-300 ease-in-out"
-								/>
-							</button>
-						)}
 
 						<RooHero />
 						{/* {telemetrySetting === "unset" && <TelemetryBanner />} */}

@@ -3,7 +3,7 @@ import * as path from "path"
 import { EventEmitter } from "events"
 import { simpleGit, SimpleGit } from "simple-git"
 import { ILogger } from "../../../utils/logger"
-import ZgsmCodebaseIndexManager from "."
+import CostrictCodebaseIndexManager from "."
 
 export interface CheckoutEvent {
 	oldBranch: string | undefined
@@ -95,10 +95,10 @@ export function initGitCheckoutDetector(context: vscode.ExtensionContext, logger
 		oldBranch = oldBranch?.replace("refs/heads/", "")
 		// newBranch
 		try {
-			const zgsmCodebaseIndexManager = ZgsmCodebaseIndexManager.getInstance()
+			const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
 
 			// Get workspace path
-			const result = await zgsmCodebaseIndexManager.publishWorkspaceEvents({
+			const result = await costrictCodebaseIndexManager.publishWorkspaceEvents({
 				workspace: root,
 				data: [
 					{

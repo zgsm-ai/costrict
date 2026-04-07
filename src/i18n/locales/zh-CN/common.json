@@ -14,6 +14,10 @@
 		"one": "1个项目",
 		"other": "{{count}}个项目"
 	},
+	"select": "选择",
+	"dialogs": {
+		"selectCheckpointStorageFolder": "选择自定义存储目录"
+	},
 	"confirmation": {
 		"reset_state": "您确定要重置扩展中的所有状态和密钥存储吗？此操作无法撤消。",
 		"fixCodebase": "修复Codebase",
@@ -283,7 +287,6 @@
 		"errorTypeDistribution": "- 错误类型分布：\n",
 		"errorTypeItem": "  • {{type}}: {{count}} 次\n",
 		"severityDistribution": "- 严重程度分布：\n",
-		"severityItem": "  • {{severity}}: {{count}} 次\n",
-		"autoSwitchModelFailed": "自动切换模型失败，请手动选择其他模型"
+		"severityItem": "  • {{severity}}: {{count}} 次\n"
 	}
 }

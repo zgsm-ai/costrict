@@ -155,9 +155,10 @@ export const modelInfoSchema = z.object({
 
 export type ModelInfo = z.infer<typeof modelInfoSchema>
 
-export interface IZgsmModelResponseData extends ModelInfo {
+export interface ICostrictModelResponseData extends ModelInfo {
 	id?: string
 }
+
 export type ModelRecord = Record<string, ModelInfo>
 
 export type RouterModels = Record<DynamicProvider | LocalProvider, ModelRecord>

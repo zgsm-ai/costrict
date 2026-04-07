@@ -28,7 +28,7 @@ export * from "./unbound.js"
 export * from "./vertex.js"
 export * from "./vscode-llm.js"
 export * from "./xai.js"
-export * from "./zgsm.js"
+export * from "./costrict.js"
 // export * from "./doubao.js"
 export * from "./vercel-ai-gateway.js"
 export * from "./zai.js"
@@ -62,7 +62,7 @@ import { minimaxDefaultModelId } from "./minimax.js"
 
 // Import the ProviderName type from provider-settings to avoid duplication
 import type { ProviderName, ProviderSettings } from "../provider-settings.js"
-import { zgsmDefaultModelId } from "./zgsm.js"
+import { costrictDefaultModelId } from "./costrict.js"
 
 /**
  * Get the default model ID for a given provider.
@@ -75,8 +75,8 @@ export function getProviderDefaultModelId(
 	apiConfiguration?: ProviderSettings,
 ): string {
 	switch (provider) {
-		case "zgsm":
-			return apiConfiguration?.zgsmModelId || apiConfiguration?.apiModelId || zgsmDefaultModelId
+		case "costrict":
+			return apiConfiguration?.costrictModelId || apiConfiguration?.apiModelId || costrictDefaultModelId
 		case "openrouter":
 			return openRouterDefaultModelId
 		case "requesty":

@@ -13,7 +13,7 @@ export const experimentIds = [
 	"customTools",
 	"chatSearch",
 	"commitReview",
-	"alwaysIncludeFileDetails",
+	"useKPTtree",
 	"useLitePrompts",
 	"smartMistakeDetection",
 ] as const
@@ -31,14 +31,13 @@ export type ExperimentId = z.infer<typeof experimentIdsSchema>
  */
 export const smartMistakeDetectionConfigSchema = z.object({
 	autoSwitchModel: z.boolean().optional(),
-	autoSwitchModelThreshold: z.number().optional(),
 })
 
 export type SmartMistakeDetectionConfig = z.infer<typeof smartMistakeDetectionConfigSchema>
 
 export const experimentsSchema = z.object({
 	chatSearch: z.boolean().optional(),
-	alwaysIncludeFileDetails: z.boolean().optional(),
+	useKPTtree: z.boolean().optional(),
 	commitReview: z.boolean().optional(),
 	useLitePrompts: z.boolean().optional(),
 	preventFocusDisruption: z.boolean().optional(),

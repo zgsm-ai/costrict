@@ -3,7 +3,7 @@ import os from "os"
 import { exec, spawn, SpawnOptions } from "child_process"
 import path from "path"
 import { jwtDecode } from "jwt-decode"
-import { ZgsmAuthApi, ZgsmAuthConfig } from "../auth"
+import { CostrictAuthApi, CostrictAuthConfig } from "../auth"
 import { getClientId } from "../../../utils/getClientId"
 import { ILogger } from "../../../utils/logger"
 import { default as findWin32Process } from "find-process"
@@ -77,8 +77,8 @@ export const writeCostrictAccessToken = async (accessToken: string, refreshToken
 	const tokenFilePath = path.join(tokenDir, "auth.json")
 	// Write token file
 	const jwt = jwtDecode(accessToken) as any
-	const { zgsmBaseUrl } = await ZgsmAuthApi.getInstance().getApiConfiguration()
-	const baseUrl = zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+	const { costrictBaseUrl } = await CostrictAuthApi.getInstance().getApiConfiguration()
+	const baseUrl = costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 
 	const config = {
 		id: jwt.id,

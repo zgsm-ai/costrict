@@ -147,7 +147,9 @@ const mockSkills: SkillMetadata[] = [
 		description: "A project mode-specific skill",
 		path: "/workspace/.roo/skills/project-mode-skill/SKILL.md",
 		source: "project",
-		modeSlugs: ["architect"],
+		metadata: {
+			modeSlugs: ["architect"],
+		},
 	},
 	{
 		name: "global-skill",

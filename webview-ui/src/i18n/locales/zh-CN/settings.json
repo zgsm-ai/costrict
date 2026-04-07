@@ -589,6 +589,13 @@
 		"enable": {
 			"label": "启用自动存档点",
 			"description": "开启后自动创建任务存档点，方便回溯修改。"
+		},
+		"customStoragePath": {
+			"label": "自定义存储路径",
+			"description": "自定义存储路径。留空以使用默认位置。支持绝对路径（例如：'D:\\CostrictCodeStorage'）",
+			"browse": "浏览",
+			"clear": "清空",
+			"dialogTitle": "选择存档存储目录"
 		}
 	},
 	"notifications": {
@@ -899,7 +906,8 @@
 			"import": "导入",
 			"export": "导出",
 			"reset": "重置",
-			"fixCodebase": "修复Codebase"
+			"fixCodebase": "修复Codebase",
+			"fixHistory": "修复历史记录索引"
 		}
 	},
 	"thinkingBudget": {

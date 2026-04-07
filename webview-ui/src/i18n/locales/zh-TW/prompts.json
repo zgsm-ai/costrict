@@ -26,7 +26,10 @@
 			"read": "讀取檔案",
 			"edit": "編輯檔案",
 			"command": "執行命令",
-			"mcp": "使用 MCP"
+			"mcp": "使用 MCP",
+			"question": "多選互動",
+			"sequential_thinking": "鏈式思考",
+			"file_outline": "結構解析"
 		},
 		"noTools": "無"
 	},

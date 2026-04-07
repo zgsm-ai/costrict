@@ -1,9 +1,9 @@
 import type OpenAI from "openai"
 
-const EXECUTE_COMMAND_DESCRIPTION = `Request to execute a CLI command on the system. Use this when you need to perform system operations or run specific commands to accomplish any step in the user's task. You must tailor your command to the user's system and provide a clear explanation of what the command does. For command chaining, use the appropriate chaining syntax for the user's shell. Prefer to execute complex CLI commands over creating executable scripts, as they are more flexible and easier to run. Prefer relative commands and paths that avoid location sensitivity for terminal consistency.
+const EXECUTE_COMMAND_DESCRIPTION = `Request to execute a CLI command on the system. Use this when you need to perform system operations or run specific commands to accomplish any step in the user's task. You must tailor your command to the user's system and provide a clear explanation of what the command does. Before producing a command, inspect the Current Shell from SYSTEM INFORMATION or environment_details and make the command fully compatible with that shell. For command chaining, use the appropriate chaining syntax for the user's shell. If the Current Shell is PowerShell or cmd.exe, do not emit bash/Unix-specific syntax or utilities unless their availability is explicitly confirmed. Prefer to execute complex CLI commands over creating executable scripts, as they are more flexible and easier to run. Prefer relative commands and paths that avoid location sensitivity for terminal consistency.
 
 Parameters:
-- command: (required) The CLI command to execute. This should be valid for the current operating system. Ensure the command is properly formatted and does not contain any harmful instructions.
+- command: (required) The CLI command to execute. This should be valid for the current operating system and the Current Shell. Ensure the command is properly formatted and does not contain any harmful instructions.
 - cwd: (optional) The working directory to execute the command in
 - timeout: (optional) Timeout in seconds. When exceeded, the command keeps running in the background and you receive the output so far. Set this for commands that may run indefinitely, such as dev servers or file watchers, so you can proceed without waiting for them to exit.
 
@@ -19,7 +19,7 @@ Example: Using relative paths
 Example: Running a build with a timeout
 { "command": "npm run build", "cwd": null, "timeout": 30 }`
 
-const COMMAND_PARAMETER_DESCRIPTION = `Shell command to execute`
+const COMMAND_PARAMETER_DESCRIPTION = `Shell command to execute. It must be syntactically valid for the Current Shell in context`
 
 const CWD_PARAMETER_DESCRIPTION = `Optional working directory for the command, relative or absolute`
 

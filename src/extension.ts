@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import * as dotenvx from "@dotenvx/dotenvx"
 import * as fs from "fs"
 import * as path from "path"
-import * as ZgsmCore from "./core/costrict"
+import * as CostrictCore from "./core/costrict"
 
 // Load environment variables from .env file
 // The extension-level .env is optional (not shipped in production builds).
@@ -26,7 +26,7 @@ import { TelemetryService /* PostHogTelemetryClient */ } from "@roo-code/telemet
 import { customToolRegistry } from "@roo-code/core"
 
 import "./utils/path" // Necessary to have access to String.prototype.toPosix.
-import { createOutputChannelLogger, createDualLogger } from "./utils/outputChannelLogger"
+// import { createOutputChannelLogger, createDualLogger } from "./utils/outputChannelLogger"
 import { initializeNetworkProxy } from "./utils/networkProxy"
 
 import { Package } from "./shared/package"
@@ -39,11 +39,11 @@ import { claudeCodeOAuthManager } from "./integrations/claude-code/oauth"
 import { openAiCodexOAuthManager } from "./integrations/openai-codex/oauth"
 import { McpServerManager } from "./services/mcp/McpServerManager"
 // import { CodeIndexManager } from "./services/code-index/manager"
-import { MdmService } from "./services/mdm/MdmService"
+// import { MdmService } from "./services/mdm/MdmService"
 import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { API } from "./extension/api"
-import { ZgsmAuthConfig } from "./core/costrict/auth/index"
+import { CostrictAuthConfig } from "./core/costrict/auth/index"
 
 import {
 	handleUri,
@@ -59,7 +59,6 @@ import { defaultLang } from "./utils/language"
 import { createLogger } from "./utils/logger"
 import { loadIdeaShellEnvOnce } from "./utils/ideaShellEnvLoader"
 import { isJetbrainsPlatform } from "./utils/platform"
-import { installGitHubSkills } from "./services/skills/github-skills-installer"
 // import { flushModels, getModels, initializeModelCacheRefresh } from "./api/providers/fetchers/modelCache"
 
 /**
@@ -133,18 +132,24 @@ export async function activate(context: vscode.ExtensionContext) {
 	extensionContext = context
 	outputChannel = createLogger(Package.outputChannel).channel
 	context.subscriptions.push(outputChannel)
-	outputChannel.appendLine(`${Package.name} extension activated - ${JSON.stringify(Package)}`)
+	outputChannel.appendLine(`${Package.commandIDPrefix} extension activated - ${JSON.stringify(Package)}`)
 
-	// Initialize network proxy configuration early, before any network requests.
-	// When proxyUrl is configured, all HTTP/HTTPS traffic will be routed through it.
-	// Only applied in debug mode (F5).
-	await initializeNetworkProxy(context, outputChannel)
+	// Kick off non-critical startup tasks in the background so activation can continue.
+	void initializeNetworkProxy(context, outputChannel).catch((error) => {
+		outputChannel.appendLine(
+			`[NetworkProxy] Failed to initialize network proxy: ${error instanceof Error ? error.message : String(error)}`,
+		)
+	})
 
 	// Set extension path for custom tool registry to find bundled esbuild
 	customToolRegistry.setExtensionPath(context.extensionPath)
 
-	// Migrate old settings to new
-	await migrateSettings(context, outputChannel)
+	// Migrate old settings to new without blocking activation.
+	void migrateSettings(context, outputChannel).catch((error) => {
+		outputChannel.appendLine(
+			`[SettingsMigration] Failed during startup migration: ${error instanceof Error ? error.message : String(error)}`,
+		)
+	})
 	if (isJetbrainsPlatform()) {
 		setTimeout(() => {
 			loadIdeaShellEnvOnce(context)
@@ -159,11 +164,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 	console.warn("Failed to register PostHogTelemetryClient:", error)
 	// }
 
-	// Create logger for cloud services.
-	const cloudLogger = createDualLogger(createOutputChannelLogger(outputChannel))
+	// // Create logger for cloud services.
+	// const cloudLogger = createDualLogger(createOutputChannelLogger(outputChannel))
 
-	// Initialize MDM service
-	const mdmService = await MdmService.createInstance(cloudLogger)
+	// // Initialize MDM service
+	// const mdmService = await MdmService.createInstance(cloudLogger)
 
 	// Initialize i18n for internationalization support.
 	initializeI18n(context.globalState.get("language") ?? formatLanguage(await defaultLang()))
@@ -178,7 +183,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	openAiCodexOAuthManager.initialize(context, (message) => outputChannel.appendLine(message))
 
 	// Get default commands from configuration.
-	const defaultCommands = vscode.workspace.getConfiguration(Package.name).get<string[]>("allowedCommands") || []
+	const defaultCommands =
+		vscode.workspace.getConfiguration(Package.commandIDPrefix).get<string[]>("allowedCommands") || []
 
 	// Initialize global state if not already set.
 	if (!context.globalState.get("allowedCommands")) {
@@ -210,21 +216,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	// 	}
 	// }
 
-	// Install built-in skills asynchronously in background
-	// This does not block extension activation
-	outputChannel.appendLine("[BuiltinSkills] Installing bundled skills in background...")
-	void installGitHubSkills(context)
-		.then(() => {
-			outputChannel.appendLine("[BuiltinSkills] Bundled skills installed")
-		})
-		.catch((error) => {
-			outputChannel.appendLine(
-				`[BuiltinSkills] Failed to install: ${error instanceof Error ? error.message : String(error)}`,
-			)
-		})
-
 	// Initialize the provider *before* the CoStrict Cloud service.
-	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy, mdmService)
+	// const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy, mdmService)
+	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy)
 
 	// // Initialize Roo Code Cloud service.
 	// const postStateListener = () => ClineProvider.getVisibleInstance()?.postStateToWebviewWithoutClineMessages()
@@ -351,18 +345,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Check for worktree auto-open path (set when switching to a worktree)
 	await checkWorktreeAutoOpen(context, outputChannel)
 
-	// Auto-import configuration if specified in settings.
-	try {
-		await autoImportSettings(outputChannel, {
-			providerSettingsManager: provider.providerSettingsManager,
-			contextProxy: provider.contextProxy,
-			customModesManager: provider.customModesManager,
-		})
-	} catch (error) {
+	// Auto-import configuration if specified in settings, without blocking activation.
+	void autoImportSettings(outputChannel, {
+		providerSettingsManager: provider.providerSettingsManager,
+		contextProxy: provider.contextProxy,
+		customModesManager: provider.customModesManager,
+	}).catch((error) => {
 		outputChannel.appendLine(
 			`[AutoImport] Error during auto-import: ${error instanceof Error ? error.message : String(error)}`,
 		)
-	}
+	})
 
 	registerCommands({ context, outputChannel, provider })
 
@@ -404,14 +396,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Register the 'User Manual' command
 	context.subscriptions.push(
 		vscode.commands.registerCommand(getCommand("view.userHelperDoc"), () => {
-			vscode.env.openExternal(vscode.Uri.parse(`${ZgsmAuthConfig.getInstance().getDefaultSite()}`))
+			vscode.env.openExternal(vscode.Uri.parse(`${CostrictAuthConfig.getInstance().getDefaultSite()}`))
 		}),
 	)
 
 	// Register the 'Report Issue' command
 	context.subscriptions.push(
 		vscode.commands.registerCommand(getCommand("view.issue"), () => {
-			vscode.env.openExternal(vscode.Uri.parse(`${ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()}/issue/`))
+			vscode.env.openExternal(
+				vscode.Uri.parse(`${CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()}/issue/`),
+			)
 		}),
 	)
 
@@ -422,7 +416,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	activateCoworkflowIntegration(context)
 
 	// Allows other extensions to activate once CoStrict is ready.
-	vscode.commands.executeCommand(`${Package.name}.activationCompleted`)
+	vscode.commands.executeCommand(`${Package.commandIDPrefix}.activationCompleted`)
 
 	// Implements the `RooCodeAPI` interface.
 	const socketPath = process.env.ROO_CODE_IPC_SOCKET_PATH
@@ -480,7 +474,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	}
 
-	ZgsmCore.activate(context, provider, outputChannel)
+	void CostrictCore.activate(context, provider, outputChannel)
 	// // Initialize background model cache refresh
 	// initializeModelCacheRefresh()
 
@@ -489,8 +483,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated.
 export async function deactivate() {
-	await ZgsmCore.deactivate()
-	outputChannel.appendLine(`${Package.name} extension deactivated`)
+	await CostrictCore.deactivate()
+	outputChannel.appendLine(`${Package.commandIDPrefix} extension deactivated`)
 
 	// if (cloudService && CloudService.hasInstance()) {
 	// 	try {

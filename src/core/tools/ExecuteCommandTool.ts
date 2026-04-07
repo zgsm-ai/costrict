@@ -80,12 +80,12 @@ export class ExecuteCommandTool extends BaseTool<"execute_command"> {
 
 			// Get command execution timeout from VSCode configuration (in seconds)
 			const commandExecutionTimeoutSeconds = vscode.workspace
-				.getConfiguration(Package.name)
+				.getConfiguration(Package.commandIDPrefix)
 				.get<number>("commandExecutionTimeout", 0)
 
 			// Get command timeout allowlist from VSCode configuration
 			const commandTimeoutAllowlist = vscode.workspace
-				.getConfiguration(Package.name)
+				.getConfiguration(Package.commandIDPrefix)
 				.get<string[]>("commandTimeoutAllowlist", [])
 
 			// Check if command matches any prefix in the allowlist
@@ -353,7 +353,13 @@ export async function executeCommandInTerminal(
 		},
 		onShellExecutionStarted: (pid: number | undefined) => {
 			task.currentProcessPid = pid // Save pid to task for reliable cancellation
-			const status: CommandExecutionStatus = { executionId, status: "started", pid, command }
+			const status: CommandExecutionStatus = {
+				executionId,
+				status: "started",
+				pid,
+				command,
+				agentTimeoutMs: agentTimeout,
+			}
 			provider?.postMessageToWebview({ type: "commandExecutionStatus", text: JSON.stringify(status) })
 		},
 		onShellExecutionComplete: (details: ExitCodeDetails) => {
@@ -413,6 +419,12 @@ export async function executeCommandInTerminal(
 				new Promise<void>((resolve) => {
 					agentTimeoutId = setTimeout(() => {
 						runInBackground = true
+						const status: CommandExecutionStatus = {
+							executionId,
+							status: "backgrounded",
+							timeoutMs: agentTimeout,
+						}
+						provider?.postMessageToWebview({ type: "commandExecutionStatus", text: JSON.stringify(status) })
 						process.continue()
 						task.supersedePendingAsk()
 						resolve()

@@ -7,11 +7,11 @@
 /**
  * Login status interface
  */
-export interface ZgsmLoginState {
+export interface CostrictLoginState {
 	/** Login status identifier */
 	state: string
 
-	status?: ZgsmAuthStatus
+	status?: CostrictAuthStatus
 
 	/** Machine identifier */
 	machineId?: string
@@ -20,7 +20,7 @@ export interface ZgsmLoginState {
 /**
  * Authentication token interface
  */
-export interface ZgsmAuthTokens {
+export interface CostrictAuthTokens {
 	/** Access token */
 	access_token: string
 	/** Refresh token */
@@ -32,7 +32,7 @@ export interface ZgsmAuthTokens {
 /**
  * Authentication status enum
  */
-export enum ZgsmAuthStatus {
+export enum CostrictAuthStatus {
 	/** Not logged in */
 	NOT_LOGGED_IN = "not_logged_in",
 	/** Logging in */
@@ -45,16 +45,16 @@ export enum ZgsmAuthStatus {
 	TOKEN_EXPIRED = "token_expired",
 }
 
-export interface ZgsmLoginResponse {
+export interface CostrictLoginResponse {
 	success: boolean
-	data?: ZgsmLoginState
+	data?: CostrictLoginState
 	message?: string
 	code?: string
 }
 
 export interface LoginTokenResponse {
 	success: boolean
-	data?: ZgsmAuthTokens
+	data?: CostrictAuthTokens
 	message?: string
 	code?: string
 }

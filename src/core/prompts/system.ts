@@ -65,8 +65,9 @@ async function generatePrompt(data: {
 	todoList?: TodoItem[]
 	modelId?: string
 	shell?: string
-	zgsmCodeMode?: string
+	costrictCodeMode?: string
 	skillsManager?: SkillsManager
+	useLitePrompts?: boolean
 }): Promise<string> {
 	let {
 		context,
@@ -81,9 +82,10 @@ async function generatePrompt(data: {
 		rooIgnoreInstructions,
 		skillsManager,
 		settings,
-		zgsmCodeMode,
+		costrictCodeMode,
 		shell,
 		modelId,
+		useLitePrompts,
 	} = data
 
 	if (!context) {
@@ -91,8 +93,6 @@ async function generatePrompt(data: {
 	}
 	shell = shell || getShell(settings?.terminalShellIntegrationDisabled)
 
-	// Check if lite prompts experiment is enabled
-	const useLitePrompts = experimentsUtil.isEnabled(experiments ?? {}, EXPERIMENT_IDS.USE_LITE_PROMPTS)
 	// Get the full mode config to ensure we have the role definition (used for groups, etc.)
 	const modeConfig = getModeBySlug(mode, customModeConfigs) || modes.find((m) => m.slug === mode) || modes[0]
 	const { roleDefinition, baseInstructions } = getModeSelection(
@@ -133,17 +133,14 @@ async function generatePrompt(data: {
 
 	// Get modes section, and skills section only if enabled for this mode
 	const [modesSection, skillsSection] = await Promise.all([
-		getModesSection(context, zgsmCodeMode, mode as string),
+		getModesSection(context, costrictCodeMode, mode as string),
 		getSkillsSection(skillsManager, mode as string),
 	])
-
-	// Tools catalog is not included in the system prompt.
-	const toolsCatalog = ""
 
 	const usePurePrompts = modeConfig.pure === true
 
 	const disableSwitchMode = modeConfig.disableSwitchMode === true
-
+	// # Reminder: Instructions for Tool Use
 	// === Cache-optimized prompt structure ===
 	// Static sections are placed FIRST to maximize prompt cache hit rate.
 	// Dynamic content (cwd, mode, user rules) is pushed to the end.
@@ -152,37 +149,24 @@ async function generatePrompt(data: {
 	// Determine if English-only rule should be added (for non-Chinese languages)
 	const shouldAddEnglishOnlyRule = language !== "zh-CN"
 
-	const basePrompt = `${usePurePrompts ? "" : markdownFormattingSection()}
-
-${usePurePrompts ? "" : useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}${toolsCatalog}
-
+	const basePrompt = `${roleDefinition}
+${usePurePrompts ? "" : markdownFormattingSection()}
+${usePurePrompts ? "" : useLitePrompts ? getLiteSharedToolUseSection() : getSharedToolUseSection()}
 ${usePurePrompts ? "" : useLitePrompts ? getLiteToolUseGuidelinesSection() : getToolUseGuidelinesSection()}
-
 ${usePurePrompts ? "" : useLitePrompts ? getLiteObjectiveSection() : getObjectiveSection()}
-
 ${usePurePrompts || !shouldAddEnglishOnlyRule ? "" : getEnglishOnlySection()}
-
-${roleDefinition}
-
 ${disableSwitchMode ? "" : modesSection}
 ${usePurePrompts ? "" : skillsSection ? `\n${skillsSection}` : ""}
 ${usePurePrompts ? "" : useLitePrompts ? getLiteCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined) : getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
-
 ${usePurePrompts ? "" : useLitePrompts ? getLiteRulesSection(cwd, settings, experiments) : getRulesSection(cwd, settings, experiments)}
-
 ${usePurePrompts ? "" : getSystemInfoSection(cwd, shell)}
-
-${
-	usePurePrompts
-		? ""
-		: await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
-				language: language ?? formatLanguage(await defaultLang()),
-				rooIgnoreInstructions,
-				settings,
-				shell,
-				useLitePrompts,
-			})
-}`
+${await addCustomInstructions(baseInstructions, globalCustomInstructions || "", cwd, mode, {
+	language: language ?? formatLanguage(await defaultLang()),
+	rooIgnoreInstructions,
+	settings,
+	shell,
+	useLitePrompts,
+})}`
 
 	return basePrompt
 }
@@ -236,6 +220,7 @@ export const SYSTEM_PROMPT = async (
 		modelId,
 		shell,
 		skillsManager,
-		zgsmCodeMode: settings?.zgsmCodeMode,
+		costrictCodeMode: settings?.costrictCodeMode,
+		useLitePrompts,
 	})
 }

@@ -80,12 +80,12 @@ vi.mock("../../../shared/package", () => ({
 }))
 
 vi.mock("../auth", () => ({
-	ZgsmAuthConfig: {
+	CostrictAuthConfig: {
 		getInstance: vi.fn(() => ({
 			getDefaultApiBaseUrl: vi.fn(() => "https://example.test"),
 		})),
 	},
-	ZgsmAuthService: {
+	CostrictAuthService: {
 		openStatusBarLoginTip: vi.fn().mockResolvedValue(undefined),
 	},
 }))

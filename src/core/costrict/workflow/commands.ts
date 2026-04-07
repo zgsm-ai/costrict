@@ -355,6 +355,7 @@ const requirementMode = "architect"
 const designMode = "task"
 // 任务：task
 const taskMode = "code"
+const multiTasksMode = "orchestrator"
 // 测试：test
 const testMode = "test"
 
@@ -545,9 +546,9 @@ async function handleRunAllTasks(codeLens: CoworkflowCodeLens, args?: any): Prom
 			{
 				scope,
 				selectedText: allTasksContent,
-				mode: taskMode,
+				mode: multiTasksMode,
 			},
-			taskMode,
+			multiTasksMode,
 		)
 	} catch (error) {
 		handleCommandError("Run All Tasks", error, codeLens?.range)

@@ -7,6 +7,6 @@ export const updateDefaultDebug = (debug: boolean) => {
 }
 
 export const isDebug = () => {
-	const debug = vscode.workspace.getConfiguration(Package.name).get<boolean>("debug", defaultDebug)
+	const debug = vscode.workspace.getConfiguration(Package.commandIDPrefix).get<boolean>("debug", defaultDebug)
 	return debug
 }

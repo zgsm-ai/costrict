@@ -14,6 +14,10 @@
 		"one": "One item",
 		"other": "{{count}} items"
 	},
+	"select": "Select",
+	"dialogs": {
+		"selectCheckpointStorageFolder": "Select Custom Storage Path"
+	},
 	"confirmation": {
 		"reset_state": "Are you sure you want to reset all state and secret storage in the extension? This cannot be undone.",
 		"fixCodebase": "Fix codebase",
@@ -270,7 +274,6 @@
 		"errorTypeDistribution": "- Error type distribution:\n",
 		"errorTypeItem": "  • {{type}}: {{count}} times\n",
 		"severityDistribution": "- Severity distribution:\n",
-		"severityItem": "  • {{severity}}: {{count}} times\n",
-		"autoSwitchModelFailed": "Failed to automatically switch model, please manually select another model"
+		"severityItem": "  • {{severity}}: {{count}} times\n"
 	}
 }

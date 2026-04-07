@@ -18,6 +18,7 @@ vi.mock("../../../shared/package", () => ({
 		publisher: "zgsm-ai",
 		version: "1.0.0",
 		outputChannel: "CoStrict",
+		commandIDPrefix: "costrict",
 	},
 }))
 
@@ -544,7 +545,8 @@ describe("newTaskTool", () => {
 			const mockGetConfiguration = vi.fn().mockReturnValue({
 				get: mockGet,
 			} as any)
-			vi.mocked(vscode.workspace.getConfiguration).mockImplementation(mockGetConfiguration)
+			// Use spyOn to properly mock the function
+			vi.spyOn(vscode.workspace, "getConfiguration").mockImplementation(mockGetConfiguration)
 
 			const block: ToolUse<"new_task"> = {
 				type: "tool_use",
@@ -563,21 +565,23 @@ describe("newTaskTool", () => {
 			})
 
 			// Verify that VSCode configuration was accessed correctly
-			expect(mockGetConfiguration).toHaveBeenCalledWith("zgsm")
+			expect(mockGetConfiguration).toHaveBeenCalledWith("costrict")
 			expect(mockGet).toHaveBeenCalledWith("newTaskRequireTodos", false)
 		})
 
-		it("should use current Package.name value (roo-code-nightly) when accessing VSCode configuration", async () => {
+		it("should use current Package.commandIDPrefix value when accessing VSCode configuration", async () => {
 			// Arrange: capture calls to VSCode configuration and ensure we can assert the namespace
 			const mockGet = vi.fn().mockReturnValue(false)
 			const mockGetConfiguration = vi.fn().mockReturnValue({
 				get: mockGet,
 			} as any)
-			vi.mocked(vscode.workspace.getConfiguration).mockImplementation(mockGetConfiguration)
+			// Use spyOn to properly mock the function
+			vi.spyOn(vscode.workspace, "getConfiguration").mockImplementation(mockGetConfiguration)
 
-			// Mutate the mocked Package.name dynamically to simulate a different build variant
+			// Mutate the mocked Package.commandIDPrefix dynamically to simulate a different build variant
 			const pkg = await import("../../../shared/package")
-			;(pkg.Package as any).name = "roo-code-nightly"
+			const originalPrefix = pkg.Package.commandIDPrefix
+			;(pkg.Package as any).commandIDPrefix = "roo-code-nightly"
 
 			const block: ToolUse<"new_task"> = {
 				type: "tool_use",
@@ -595,9 +599,12 @@ describe("newTaskTool", () => {
 				pushToolResult: mockPushToolResult,
 			})
 
-			// Assert: configuration was read using the dynamic nightly namespace
+			// Assert: configuration was read using the dynamic commandIDPrefix namespace
 			expect(mockGetConfiguration).toHaveBeenCalledWith("roo-code-nightly")
 			expect(mockGet).toHaveBeenCalledWith("newTaskRequireTodos", false)
+
+			// Restore original value
+			;(pkg.Package as any).commandIDPrefix = originalPrefix
 		})
 	})
 

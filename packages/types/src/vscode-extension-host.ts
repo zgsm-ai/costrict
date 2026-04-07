@@ -18,14 +18,14 @@ import type { CloudUserInfo, CloudOrganizationMembership, OrganizationAllowList,
 import type { SerializedCustomToolDefinition } from "./custom-tool.js"
 import type { GitCommit } from "./git.js"
 import type { McpServer } from "./mcp.js"
-// import type { IZgsmModelResponseData, ModelRecord, RouterModels } from "./model.js"
+// import type { ICostrictModelResponseData, ModelRecord, RouterModels } from "./model.js"
 import type { INotice } from "./notification.js"
 // import type { SkillMetadata } from "./skills.js"
-import type { IZgsmModelResponseData, ModelRecord, RouterModels } from "./model.js"
+import type { ICostrictModelResponseData, ModelRecord, RouterModels } from "./model.js"
 import type { OpenAiCodexRateLimitInfo } from "./providers/openai-codex-rate-limits.js"
 import type { SkillMetadata } from "./skills.js"
 import type { WorktreeIncludeStatus } from "./worktree.js"
-
+export type CostrictCodeMode = "vibe" | "strict" | "raw" | "plan"
 /**
  * ExtensionMessage
  * Extension -> Webview | CLI
@@ -47,17 +47,17 @@ export interface ExtensionMessage {
 		| "listApiConfig"
 		| "routerModels"
 		| "openAiModels"
-		// zgsm
-		| "zgsmModels"
-		| "zgsmLogined"
+		// costrict
+		| "costrictModels"
+		| "costrictLogined"
 		| "showReauthConfirmationDialog"
-		| "zgsmCodebaseIndexEnabled"
-		| "zgsmQuotaInfo"
-		| "zgsmInviteCode"
-		| "zgsmNotices"
+		| "costrictCodebaseIndexEnabled"
+		| "costrictQuotaInfo"
+		| "costrictInviteCode"
+		| "costrictNotices"
 		| "settingsUpdated"
 		| "streamingStatusUpdated"
-		// zgsm
+		// costrict
 		| "ollamaModels"
 		| "lmStudioModels"
 		| "vsCodeLmModels"
@@ -102,7 +102,7 @@ export interface ExtensionMessage {
 		| "codebaseIndexStatusResponse"
 		| "showDeleteMessageDialog"
 		| "showEditMessageDialog"
-		| "showZgsmCodebaseDisableConfirmDialog"
+		| "showCostrictCodebaseDisableConfirmDialog"
 		| "reviewTaskUpdate"
 		| "issueStatusUpdated"
 		| "reviewHistoryResponse"
@@ -129,8 +129,18 @@ export interface ExtensionMessage {
 		| "worktreeIncludeStatus"
 		| "branchWorktreeIncludeResult"
 		| "folderSelected"
+		| "customStoragePathSelected"
 		| "skills"
 		| "fileContent"
+		// CostrictCli messages
+		| "CostrictCliOutput"
+		| "CostrictCliExit"
+		| "CostrictCliError"
+		| "CostrictCliClear"
+		| "CostrictCliPasteUnavailable"
+		| "CostrictCliRestart"
+		| "CostrictCliHttpReady"
+		| "CostrictCliToast"
 	text?: string
 	/** For fileContent: { path, content, error? } */
 	fileContent?: { path: string; content: string | null; error?: string }
@@ -146,7 +156,7 @@ export interface ExtensionMessage {
 		| "historyButtonClicked"
 		| "marketplaceButtonClicked"
 		| "cloudButtonClicked"
-		| "zgsmAccountButtonClicked"
+		| "costrictAccountButtonClicked"
 		| "didBecomeVisible"
 		| "focusInput"
 		| "switchTab"
@@ -172,7 +182,7 @@ export interface ExtensionMessage {
 	openAiModels?: string[]
 	ollamaModels?: ModelRecord
 	lmStudioModels?: ModelRecord
-	fullResponseData?: IZgsmModelResponseData[]
+	fullResponseData?: ICostrictModelResponseData[]
 	vsCodeLmModels?: { vendor?: string; family?: string; version?: string; id?: string }[]
 	mcpServers?: McpServer[]
 	commits?: GitCommit[]
@@ -212,7 +222,7 @@ export interface ExtensionMessage {
 	queuedMessages?: QueuedMessage[]
 	list?: string[] // For dismissedUpsells
 	organizationId?: string | null // For organizationSwitchResult
-	notices?: Array<INotice> // For zgsmNotices, only "always" type notices
+	notices?: Array<INotice> // For costrictNotices, only "always" type notices
 	tools?: SerializedCustomToolDefinition[] // For customToolsResult
 	skills?: SkillMetadata[] // For skills response
 	modes?: { slug: string; name: string }[] // For modes response
@@ -284,8 +294,8 @@ export interface OpenAiCodexRateLimitsMessage {
 export type ExtensionState = Pick<
 	GlobalSettings,
 	| "currentApiConfigName"
-	| "useZgsmCustomConfig"
-	| "zgsmCodebaseIndexEnabled"
+	| "useCostrictCustomConfig"
+	| "costrictCodebaseIndexEnabled"
 	| "listApiConfigMeta"
 	| "pinnedApiConfigs"
 	| "customInstructions"
@@ -365,6 +375,7 @@ export type ExtensionState = Pick<
 
 	writeDelayMs: number
 
+	customStoragePath?: string
 	enableCheckpoints: boolean
 	checkpointTimeout: number // Timeout for checkpoint initialization in seconds (default: 15)
 	maxOpenTabsContext: number // Maximum number of VSCode open tabs to include in context (0-500)
@@ -380,7 +391,7 @@ export type ExtensionState = Pick<
 	mcpEnabled: boolean
 
 	// mode: Mode
-	zgsmCodeMode?: "vibe" | "strict" | "raw" | "plan"
+	costrictCodeMode?: CostrictCodeMode
 	mode: string
 	customModes: ModeConfig[]
 	toolRequirements?: Record<string, boolean> // Map of tool names to their requirements (e.g. {"apply_diff": true})
@@ -452,7 +463,13 @@ export interface Command {
  * Webview | CLI -> Extension
  */
 
-export type ClineAskResponse = "yesButtonClicked" | "noButtonClicked" | "messageResponse" | "objectResponse"
+//costrict: add a dedicated structured response channel for multiple choice form submissions
+export type ClineAskResponse =
+	| "yesButtonClicked"
+	| "noButtonClicked"
+	| "messageResponse"
+	| "objectResponse"
+	| "multipleChoiceResponse"
 
 export type AudioType = "notification" | "celebration" | "progress_loop"
 
@@ -467,20 +484,21 @@ export interface WebviewMessage {
 	type: // costrict-start
 		| "copyApiError"
 		| "showTaskWithIdInNewTab"
-		| "zgsmDeleteProfile"
-		| "zgsmPollCodebaseIndexStatus"
-		| "zgsmCodebaseIndexEnabled"
-		| "zgsmRebuildCodebaseIndex"
-		| "zgsmLogin"
-		| "zgsmLogout"
-		| "zgsmCodeMode"
-		| "useZgsmCustomConfig"
-		| "showZgsmCodebaseDisableConfirmDialog"
-		| "fetchZgsmQuotaInfo"
-		| "zgsmProviderTip"
+		| "costrictDeleteProfile"
+		| "costrictPollCodebaseIndexStatus"
+		| "costrictCodebaseIndexEnabled"
+		| "costrictRebuildCodebaseIndex"
+		| "costrictLogin"
+		| "costrictLogout"
+		| "costrictCodeMode"
+		| "useCostrictCustomConfig"
+		| "showCostrictCodebaseDisableConfirmDialog"
+		| "fetchCostrictQuotaInfo"
+		| "costrictProviderTip"
 		| "costrictTelemetry"
-		| "fetchZgsmInviteCode"
+		| "fetchCostrictInviteCode"
 		| "fixCodebase"
+		| "fixHistory"
 		| "checkReviewSuggestion"
 		| "cancelReviewTask"
 		| "startCodereview"
@@ -607,6 +625,7 @@ export interface WebviewMessage {
 		| "indexCleared"
 		| "toggleWorkspaceIndexing"
 		| "setAutoEnableDefault"
+		| "browseForCustomStoragePath"
 		| "focusPanelRequest"
 		| "openExternal"
 		| "filterMarketplaceItems"
@@ -672,6 +691,13 @@ export interface WebviewMessage {
 		| "moveSkill"
 		| "updateSkillModes"
 		| "openSkillFile"
+		// CostrictCli messages
+		| "CostrictCliStart"
+		| "CostrictCliInput"
+		| "CostrictCliRequestPaste"
+		| "CostrictCliResize"
+		| "CostrictCliStop"
+		| "CostrictCliRestart"
 	text?: string
 	// costrict-start
 	issueId?: string
@@ -681,7 +707,18 @@ export interface WebviewMessage {
 	// costrict-end
 	taskId?: string
 	editedMessageContent?: string
-	tab?: "settings" | "history" | "mcp" | "modes" | "chat" | "marketplace" | "cloud" | "zgsm-account" | "codeReview"
+	tab?:
+		| "settings"
+		| "history"
+		| "mcp"
+		| "modes"
+		| "chat"
+		| "marketplace"
+		| "cloud"
+		| "costrict-account"
+		| "codeReview"
+		| "codeReviewHistory"
+		| "cs-cli"
 	disabled?: boolean
 	context?: string
 	dataUri?: string
@@ -723,6 +760,13 @@ export interface WebviewMessage {
 	skillModeSlugs?: string[] // For skill operations (mode restrictions)
 	/** Target mode slugs for updateSkillModes */
 	newSkillModeSlugs?: string[] // For updateSkillModes (new mode restrictions)
+	// CostrictCli fields
+	data?: string // For CostrictCliInput/CostrictCliOutput
+	cols?: number // For CostrictCliResize
+	rows?: number // For CostrictCliResize
+	exitCode?: number // For CostrictCliExit
+	ready?: boolean // For CostrictCliHttpReady
+	port?: number | null // For CostrictCliHttpReady
 	requestId?: string
 	ids?: string[]
 	terminalOperation?: "continue" | "abort"
@@ -982,6 +1026,8 @@ export interface ClineApiReqInfo {
 	selectReason?: string
 	isAuto?: boolean
 	originModelId?: string
+	/** The fallback model ID actually used when primary model fails (set by ModelFallbackManager) */
+	isFallbackActive?: boolean
 	// Raw timing data for frontend calculation
 	requestIdTimestamp?: number
 	responseIdTimestamp?: number

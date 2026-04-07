@@ -599,3 +599,22 @@ input[cmdk-input]:focus {
 	padding: 8px;
 	margin: -8px;
 }
+
+/* Costrict CLI uses Ink's own ScrollArea. Hide browser and xterm viewport scrollbars
+   so they don't reserve gutter space or drift out of sync with the PTY layout. */
+.costrict-cli-terminal,
+.costrict-cli-terminal .xterm,
+.costrict-cli-terminal .xterm-viewport {
+	overflow: hidden !important;
+}
+
+.costrict-cli-terminal .xterm-viewport {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.costrict-cli-terminal .xterm-viewport::-webkit-scrollbar {
+	display: none;
+	width: 0;
+	height: 0;
+}

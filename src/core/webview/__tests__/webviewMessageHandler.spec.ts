@@ -39,6 +39,21 @@ vi.mock("../diagnosticsHandler", () => ({
 
 import type { ModelRecord } from "@roo-code/types"
 
+const mockTerminalManager = {
+	setMessageSender: vi.fn(),
+	start: vi.fn(),
+	waitForReady: vi.fn(),
+	getPort: vi.fn(),
+	running: true,
+	write: vi.fn(),
+	resize: vi.fn(),
+	stop: vi.fn(),
+}
+vi.mock("../../costrict/cli-wrap", () => ({
+	getTerminalManager: vi.fn(() => mockTerminalManager),
+	getCostrictCliInstallDocsUrl: vi.fn(() => "https://docs.costrict.ai/en/cli/guide/installation"),
+}))
+
 import { webviewMessageHandler } from "../webviewMessageHandler"
 import type { ClineProvider } from "../ClineProvider"
 import { getModels } from "../../../api/providers/fetchers/modelCache"
@@ -90,21 +105,23 @@ vi.mock("vscode", async (importOriginal) => ({
 			extensionPath: "/mock/extension/path",
 			extensionUri: { fsPath: "/mock/extension/path", path: "/mock/extension/path", scheme: "file" },
 			packageJSON: {
-				name: "zgsm",
+				name: "costrict",
 				publisher: "zgsm-ai",
 				version: "2.0.27",
 			},
 		}),
 		all: [],
-	},
-	window: {
-		showInformationMessage: vi.fn(),
-		showErrorMessage: vi.fn(),
-		createTextEditorDecorationType: vi.fn(),
-		createOutputChannel: () => ({
-			appendLine: vi.fn(),
-			show: vi.fn(),
-		}),
+		window: {
+			showInformationMessage: vi.fn().mockResolvedValue(undefined),
+			showErrorMessage: vi.fn().mockResolvedValue(undefined),
+			createTextEditorDecorationType: vi.fn(),
+			createOutputChannel: () => ({
+				appendLine: vi.fn(),
+				show: vi.fn(),
+			}),
+			onDidChangeActiveTextEditor: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+		},
+		onDidChangeActiveTextEditor: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 	},
 	workspace: {
 		workspaceFolders: [{ uri: { fsPath: "/mock/workspace" } }],
@@ -164,7 +181,7 @@ import * as path from "path"
 import * as fsUtils from "../../../utils/fs"
 import { getWorkspacePath } from "../../../utils/path"
 import { ensureSettingsDirectoryExists } from "../../../utils/globalContext"
-import { ZgsmCodebaseIndexManager } from "../../costrict/codebase-index"
+import { CostrictCodebaseIndexManager } from "../../costrict/codebase-index"
 import { workspaceEventMonitor } from "../../costrict/codebase-index/workspace-event-monitor"
 import { generateErrorDiagnostics } from "../diagnosticsHandler"
 import type { ModeConfig } from "@roo-code/types"
@@ -185,6 +202,14 @@ import { resolveImageMentions } from "../../mentions/resolveImageMentions"
 describe("webviewMessageHandler - requestLmStudioModels", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		mockTerminalManager.setMessageSender.mockReset()
+		mockTerminalManager.start.mockReset()
+		mockTerminalManager.waitForReady.mockReset()
+		mockTerminalManager.getPort.mockReset()
+		mockTerminalManager.write.mockReset()
+		mockTerminalManager.resize.mockReset()
+		mockTerminalManager.stop.mockReset()
+		mockTerminalManager.running = true
 		mockClineProvider.getState = vi.fn().mockResolvedValue({
 			apiConfiguration: {
 				lmStudioModelId: "model-1",
@@ -252,6 +277,30 @@ describe("webviewMessageHandler - image mentions", () => {
 		expect(mockHandleWebviewAskResponse).toHaveBeenCalledWith(
 			"messageResponse",
 			"See @/img.png",
+			["data:image/png;base64,from-mention"],
+			"system",
+			false,
+		)
+	})
+
+	it("should forward dedicated multipleChoiceResponse ask payloads", async () => {
+		const mockHandleWebviewAskResponse = vi.fn()
+		vi.mocked(mockClineProvider.getCurrentTask).mockReturnValue({
+			cwd: "/mock/workspace",
+			rooIgnoreController: undefined,
+			handleWebviewAskResponse: mockHandleWebviewAskResponse,
+		} as any)
+
+		await webviewMessageHandler(mockClineProvider, {
+			type: "askResponse",
+			askResponse: "multipleChoiceResponse",
+			text: '{"q1":{"selectedOptionIds":["a"]}}',
+			images: [],
+		})
+
+		expect(mockHandleWebviewAskResponse).toHaveBeenCalledWith(
+			"multipleChoiceResponse",
+			'{"q1":{"selectedOptionIds":["a"]}}',
 			["data:image/png;base64,from-mention"],
 			"system",
 			false,
@@ -331,7 +380,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 		}
 
 		mockGetModels
-			.mockResolvedValueOnce(mockModels) // zgsm success (first call)
+			.mockResolvedValueOnce(mockModels) // costrict success (first call)
 			.mockResolvedValue(mockModels) // other providers success
 
 		await webviewMessageHandler(mockClineProvider, {
@@ -361,7 +410,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 
 		// Verify ZGSM models message is sent first
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
-			type: "zgsmModels",
+			type: "costrictModels",
 			openAiModels: ["model-1", "model-2"],
 			fullResponseData: [mockModels["model-1"], mockModels["model-2"]],
 		})
@@ -370,7 +419,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
 			type: "routerModels",
 			routerModels: {
-				zgsm: mockModels,
+				costrict: mockModels,
 				openrouter: mockModels,
 				requesty: mockModels,
 				unbound: mockModels,
@@ -438,7 +487,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 		}
 
 		mockGetModels
-			.mockResolvedValueOnce(mockModels) // zgsm success (first call)
+			.mockResolvedValueOnce(mockModels) // costrict success (first call)
 			.mockResolvedValue(mockModels) // other providers success
 
 		await webviewMessageHandler(mockClineProvider, {
@@ -448,7 +497,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 
 		// Verify LiteLLM was NOT called (but ZGSM was called first)
 		expect(mockGetModels).toHaveBeenCalledWith({
-			provider: "zgsm",
+			provider: "costrict",
 			apiKey: undefined,
 			baseUrl: "https://zgsm.sangfor.com",
 			openAiHeaders: {},
@@ -461,7 +510,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 
 		// Verify ZGSM models message is sent first
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
-			type: "zgsmModels",
+			type: "costrictModels",
 			openAiModels: ["model-1"],
 			fullResponseData: [mockModels["model-1"]],
 		})
@@ -470,7 +519,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
 			type: "routerModels",
 			routerModels: {
-				zgsm: mockModels,
+				costrict: mockModels,
 				openrouter: mockModels,
 				requesty: mockModels,
 				unbound: mockModels,
@@ -495,9 +544,9 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 		}
 
 		// Mock some providers to succeed and others to fail
-		// Provider order in source: zgsm, openrouter, requesty, vercel-ai-gateway, litellm (conditional)
+		// Provider order in source: costrict, openrouter, requesty, vercel-ai-gateway, litellm (conditional)
 		mockGetModels
-			.mockResolvedValueOnce(mockModels) // zgsm success (first call)
+			.mockResolvedValueOnce(mockModels) // costrict success (first call)
 			.mockResolvedValueOnce(mockModels) // openrouter
 			.mockRejectedValueOnce(new Error("Requesty API error")) // requesty
 			.mockResolvedValueOnce(mockModels) // unbound
@@ -508,9 +557,9 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 			type: "requestRouterModels",
 		})
 
-		// Verify zgsmModels message is sent first
+		// Verify costrictModels message is sent first
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
-			type: "zgsmModels",
+			type: "costrictModels",
 			fullResponseData: [mockModels["model-1"]],
 			openAiModels: ["model-1"],
 		})
@@ -534,7 +583,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
 			type: "routerModels",
 			routerModels: {
-				zgsm: mockModels,
+				costrict: mockModels,
 				openrouter: mockModels,
 				requesty: {},
 				unbound: mockModels,
@@ -550,9 +599,9 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 
 	it("handles Error objects and string errors correctly", async () => {
 		// Mock providers to fail with different error types
-		// Provider order in source: zgsm, openrouter, requesty, vercel-ai-gateway, litellm (conditional)
+		// Provider order in source: costrict, openrouter, requesty, vercel-ai-gateway, litellm (conditional)
 		mockGetModels
-			.mockResolvedValueOnce({}) // zgsm success (first call)
+			.mockResolvedValueOnce({}) // costrict success (first call)
 			.mockRejectedValueOnce(new Error("Structured error message")) // openrouter
 			.mockRejectedValueOnce(new Error("Requesty API error")) // requesty
 			.mockRejectedValueOnce(new Error("Unbound error")) // unbound
@@ -662,7 +711,8 @@ describe("webviewMessageHandler - deleteCustomMode", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		vi.mocked(getWorkspacePath).mockReturnValue("/mock/workspace")
-		vi.mocked(vscode.window.showErrorMessage).mockResolvedValue(undefined)
+		;(vscode.window as any).showInformationMessage = vi.fn().mockResolvedValue(undefined)
+		;(vscode.window as any).showErrorMessage = vi.fn().mockResolvedValue(undefined)
 		vi.mocked(ensureSettingsDirectoryExists).mockResolvedValue("/mock/global/storage/.roo")
 	})
 
@@ -900,21 +950,21 @@ describe("webviewMessageHandler - requestCommands", () => {
 				description: "Primary skill slug",
 				path: "/mock/.roo/skills/skill-slug-entry/SKILL.md",
 				source: "project",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 			{
 				name: "skill-slug-entry",
 				description: "Duplicate skill slug",
 				path: "/mock/.roo/skills/duplicate-skill/SKILL.md",
 				source: "global",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 			{
 				name: "another-skill-slug",
 				description: "Another skill-generated command",
 				path: "/mock/.roo/skills/another-skill-slug/SKILL.md",
 				source: "global",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 		])
 
@@ -974,14 +1024,14 @@ describe("webviewMessageHandler - requestCommands", () => {
 				description: "Deploy skill",
 				path: "/mock/.roo/skills/deploy/SKILL.md",
 				source: "global",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 			{
 				name: "skill-only",
 				description: "Skill-generated command",
 				path: "/mock/.roo/skills/skill-only/SKILL.md",
 				source: "project",
-				modeSlugs: ["code"],
+				metadata: { modeSlugs: ["code"] },
 			},
 		])
 
@@ -1060,6 +1110,9 @@ describe("webviewMessageHandler - downloadErrorDiagnostics", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 
+		// Mock showErrorMessage for error assertions
+		;(vscode.window as any).showErrorMessage = vi.fn().mockResolvedValue(undefined)
+
 		// Ensure contextProxy has a globalStorageUri for the handler
 		;(mockClineProvider as any).contextProxy.globalStorageUri = { fsPath: "/mock/global/storage" }
 
@@ -1123,7 +1176,7 @@ describe("webviewMessageHandler - codebase index toggle", () => {
 		vi.mocked(getWorkspacePath).mockReturnValue("/mock/workspace")
 		mockClineProvider.getState = vi.fn().mockResolvedValue({
 			apiConfiguration: {
-				apiProvider: "zgsm",
+				apiProvider: "costrict",
 			},
 		})
 		mockClineProvider.contextProxy.getValue = vi.fn().mockReturnValue(false)
@@ -1134,7 +1187,7 @@ describe("webviewMessageHandler - codebase index toggle", () => {
 			toggleIndexSwitch: vi.fn().mockResolvedValue({ success: true, data: true, message: "ok" }),
 			restartClient: vi.fn(),
 		}
-		vi.spyOn(ZgsmCodebaseIndexManager, "getInstance").mockReturnValue(mockCodebaseIndexManager as any)
+		vi.spyOn(CostrictCodebaseIndexManager, "getInstance").mockReturnValue(mockCodebaseIndexManager as any)
 		initializeMonitorSpy = vi.spyOn(workspaceEventMonitor, "initialize").mockResolvedValue(undefined)
 	})
 
@@ -1144,7 +1197,7 @@ describe("webviewMessageHandler - codebase index toggle", () => {
 
 	it("ensures lifecycle readiness without restarting the client when enabling indexing", async () => {
 		await webviewMessageHandler(mockClineProvider, {
-			type: "zgsmCodebaseIndexEnabled",
+			type: "costrictCodebaseIndexEnabled",
 			bool: true,
 		} as any)
 
@@ -1157,9 +1210,9 @@ describe("webviewMessageHandler - codebase index toggle", () => {
 			mockCodebaseIndexManager.toggleIndexSwitch.mock.invocationCallOrder[0],
 		)
 		expect(mockCodebaseIndexManager.restartClient).not.toHaveBeenCalled()
-		expect(mockClineProvider.contextProxy.setValue).toHaveBeenCalledWith("zgsmCodebaseIndexEnabled", true)
+		expect(mockClineProvider.contextProxy.setValue).toHaveBeenCalledWith("costrictCodebaseIndexEnabled", true)
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
-			type: "zgsmCodebaseIndexEnabled",
+			type: "costrictCodebaseIndexEnabled",
 			payload: true,
 		})
 		expect(initializeMonitorSpy).toHaveBeenCalled()
@@ -1174,17 +1227,67 @@ describe("webviewMessageHandler - codebase index toggle", () => {
 		})
 
 		await webviewMessageHandler(mockClineProvider, {
-			type: "zgsmCodebaseIndexEnabled",
+			type: "costrictCodebaseIndexEnabled",
 			bool: false,
 		} as any)
 
 		expect(mockCodebaseIndexManager.ensureInitialized).toHaveBeenCalledWith("toggleIndexSwitch")
 		expect(mockCodebaseIndexManager.restartClient).not.toHaveBeenCalled()
-		expect(mockClineProvider.contextProxy.setValue).toHaveBeenCalledWith("zgsmCodebaseIndexEnabled", true)
+		expect(mockClineProvider.contextProxy.setValue).toHaveBeenCalledWith("costrictCodebaseIndexEnabled", true)
 		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
-			type: "zgsmCodebaseIndexEnabled",
+			type: "costrictCodebaseIndexEnabled",
 			payload: true,
 		})
 		expect(initializeMonitorSpy).not.toHaveBeenCalled()
+	})
+})
+
+describe("webviewMessageHandler - CostrictCliStart", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+		mockTerminalManager.setMessageSender.mockReset()
+		mockTerminalManager.start.mockResolvedValue(undefined)
+		mockTerminalManager.waitForReady.mockResolvedValue(true)
+		mockTerminalManager.getPort.mockReturnValue(43111)
+		mockTerminalManager.running = true
+	})
+
+	it("does not post http-ready when CLI is missing and terminal never becomes running", async () => {
+		mockTerminalManager.running = false
+		mockTerminalManager.getPort.mockReturnValue(null)
+
+		await webviewMessageHandler(mockClineProvider, {
+			type: "CostrictCliStart",
+			cols: 120,
+			rows: 40,
+		} as any)
+
+		expect(mockTerminalManager.setMessageSender).toHaveBeenCalledTimes(1)
+		expect(mockTerminalManager.start).toHaveBeenCalledWith({ cols: 120, rows: 40 })
+		expect(mockTerminalManager.waitForReady).not.toHaveBeenCalled()
+		expect(mockClineProvider.postMessageToWebview).not.toHaveBeenCalledWith(
+			expect.objectContaining({ type: "CostrictCliHttpReady" }),
+		)
+	})
+
+	it("posts startup-timeout metadata without mixing it into missing-cli guidance", async () => {
+		mockTerminalManager.waitForReady.mockResolvedValue(false)
+
+		await webviewMessageHandler(mockClineProvider, {
+			type: "CostrictCliStart",
+			cols: 100,
+			rows: 30,
+		} as any)
+
+		expect(mockTerminalManager.waitForReady).toHaveBeenCalledTimes(1)
+		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
+			type: "CostrictCliHttpReady",
+			values: {
+				ready: false,
+				kind: "startup-timeout",
+				port: 43111,
+				docsUrl: "https://docs.costrict.ai/en/cli/guide/installation",
+			},
+		})
 	})
 })

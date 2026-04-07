@@ -76,7 +76,7 @@ export const SkillsSettings: React.FC = () => {
 				type: "deleteSkill",
 				skillName: skillToDelete.name,
 				source: skillToDelete.source,
-				skillModeSlugs: skillToDelete.modeSlugs,
+				skillModeSlugs: skillToDelete.metadata?.modeSlugs,
 			})
 			setDeleteDialogOpen(false)
 			setSkillToDelete(null)
@@ -93,7 +93,7 @@ export const SkillsSettings: React.FC = () => {
 			type: "openSkillFile",
 			skillName: skill.name,
 			source: skill.source,
-			skillModeSlugs: skill.modeSlugs,
+			skillModeSlugs: skill.metadata?.modeSlugs,
 		})
 	}, [])
 
@@ -101,9 +101,11 @@ export const SkillsSettings: React.FC = () => {
 	const handleOpenModeDialog = useCallback((skill: SkillMetadata) => {
 		setSkillToEditModes(skill)
 		// Initialize state from skill's current modeSlugs
-		const hasModeSlugs = skill.modeSlugs && skill.modeSlugs.length > 0
+		// modeSlugs is now in metadata.modeSlugs, not skill.modeSlugs
+		const modeSlugs = skill.metadata?.modeSlugs
+		const hasModeSlugs = modeSlugs && modeSlugs.length > 0
 		setIsAnyMode(!hasModeSlugs)
-		setSelectedModes(hasModeSlugs ? [...skill.modeSlugs!] : [])
+		setSelectedModes(hasModeSlugs ? [...modeSlugs!] : [])
 		setModeDialogOpen(true)
 	}, [])
 
@@ -166,7 +168,7 @@ export const SkillsSettings: React.FC = () => {
 		(skill: SkillMetadata) => {
 			return (
 				<div
-					key={`${skill.source}-${skill.name}-${skill.modeSlugs?.join(",") || "any"}`}
+					key={`${skill.source}-${skill.name}-${skill.metadata?.modeSlugs?.join(",") || "any"}`}
 					className="p-2.5 px-2 rounded-xl border border-transparent">
 					<div className="flex items-start justify-between gap-2 flex-col min-[400px]:flex-row overflow-hidden">
 						<div className="flex-1 min-w-0">

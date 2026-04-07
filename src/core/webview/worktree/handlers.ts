@@ -20,6 +20,9 @@ import { worktreeService, worktreeIncludeService, type CopyProgressCallback } fr
 
 import type { ClineProvider } from "../ClineProvider"
 
+const WORKTREE_LIST_CACHE_TTL_MS = 1000
+const worktreeListCache = new Map<string, { response: WorktreeListResponse; timestamp: number }>()
+
 /**
  * Generate a random alphanumeric suffix for branch/folder names.
  */
@@ -34,16 +37,41 @@ function generateRandomSuffix(length = 5): string {
 	return result
 }
 
-async function isWorkspaceSubfolder(cwd: string): Promise<boolean> {
-	const gitRoot = await worktreeService.getGitRootPath(cwd)
+function getCachedWorktreeListResponse(cwd: string): WorktreeListResponse | undefined {
+	const cached = worktreeListCache.get(cwd)
+	if (!cached) {
+		return undefined
+	}
 
-	if (!gitRoot) {
-		return false
+	if (Date.now() - cached.timestamp > WORKTREE_LIST_CACHE_TTL_MS) {
+		worktreeListCache.delete(cwd)
+		return undefined
+	}
+
+	return cached.response
+}
+
+function setCachedWorktreeListResponse(cwd: string, response: WorktreeListResponse): WorktreeListResponse {
+	worktreeListCache.set(cwd, {
+		response,
+		timestamp: Date.now(),
+	})
+	return response
+}
+
+async function getWorkspaceSubfolderStatus(cwd: string): Promise<{ isSubfolder: boolean; gitRootPath: string }> {
+	const gitRootPath = (await worktreeService.getGitRootPath(cwd)) || ""
+
+	if (!gitRootPath) {
+		return {
+			isSubfolder: false,
+			gitRootPath: "",
+		}
 	}
 
 	// Normalize paths for comparison.
 	let normalizedCwd = path.normalize(cwd)
-	let normalizedGitRoot = path.normalize(gitRoot)
+	let normalizedGitRoot = path.normalize(gitRootPath)
 
 	// On Windows, paths are case-insensitive, so convert to lowercase for consistent comparison
 	if (process.platform === "win32") {
@@ -52,7 +80,10 @@ async function isWorkspaceSubfolder(cwd: string): Promise<boolean> {
 	}
 
 	// If cwd is deeper than git root, it's a subfolder.
-	return normalizedCwd !== normalizedGitRoot && normalizedCwd.startsWith(normalizedGitRoot)
+	return {
+		isSubfolder: normalizedCwd !== normalizedGitRoot && normalizedCwd.startsWith(normalizedGitRoot),
+		gitRootPath,
+	}
 }
 
 export async function handleListWorktrees(provider: ClineProvider): Promise<WorktreeListResponse> {
@@ -85,58 +116,58 @@ export async function handleListWorktrees(provider: ClineProvider): Promise<Work
 	}
 
 	const cwd = provider.cwd
-	provider.log(`[Worktree] cwd: ${cwd}`)
+	const cachedResponse = getCachedWorktreeListResponse(cwd)
+	if (cachedResponse) {
+		return cachedResponse
+	}
 
 	const isGitRepo = await worktreeService.checkGitRepo(cwd)
-	provider.log(`[Worktree] isGitRepo: ${isGitRepo}`)
 
 	if (!isGitRepo) {
-		return {
+		return setCachedWorktreeListResponse(cwd, {
 			worktrees: [],
 			isGitRepo: false,
 			isMultiRoot: false,
 			isSubfolder: false,
 			gitRootPath: "",
 			error: "Not a git repository",
-		}
+		})
 	}
 
-	const isSubfolder = await isWorkspaceSubfolder(cwd)
-	const gitRootPath = (await worktreeService.getGitRootPath(cwd)) || ""
-	provider.log(`[Worktree] isSubfolder: ${isSubfolder}, gitRootPath: ${gitRootPath}`)
+	const { isSubfolder, gitRootPath } = await getWorkspaceSubfolderStatus(cwd)
 
 	if (isSubfolder) {
-		return {
+		return setCachedWorktreeListResponse(cwd, {
 			worktrees: [],
 			isGitRepo: true,
 			isMultiRoot: false,
 			isSubfolder: true,
 			gitRootPath,
 			error: "Worktrees are not supported when workspace is a subfolder of a git repository",
-		}
+		})
 	}
 
 	try {
 		const worktrees = await worktreeService.listWorktrees(cwd)
 
-		return {
+		return setCachedWorktreeListResponse(cwd, {
 			worktrees,
 			isGitRepo: true,
 			isMultiRoot: false,
 			isSubfolder: false,
 			gitRootPath,
-		}
+		})
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error)
 
-		return {
+		return setCachedWorktreeListResponse(cwd, {
 			worktrees: [],
 			isGitRepo: true,
 			isMultiRoot: false,
 			isSubfolder: false,
 			gitRootPath,
 			error: `Failed to list worktrees: ${errorMessage}`,
-		}
+		})
 	}
 }
 

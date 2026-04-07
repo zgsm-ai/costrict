@@ -226,13 +226,17 @@ export const ErrorRow = memo(
 					<div
 						className="font-sm text-vscode-editor-foreground flex items-center justify-between cursor-pointer"
 						onClick={handleToggleExpand}>
-						<div className="flex items-center gap-2 flex-grow  text-vscode-errorForeground">
-							<MessageCircleWarning className="w-4" />
-							<span className="text-vscode-errorForeground font-bold grow cursor-pointer">
+						<div
+							className={`flex items-center gap-2 flex-grow ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "opacity-80"}`}>
+							<MessageCircleWarning
+								className={`w-4 ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "opacity-80"}`}
+							/>
+							<span
+								className={`font-bold grow cursor-pointer ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "text-vscode-descriptionForeground"}`}>
 								{errorTitle}
-							</span>
+							</span>{" "}
 						</div>
-						<div className="flex items-center transition-opacity opacity-0 group-hover:opacity-100">
+						<div className="flex items-center">
 							{showCopyButton && (
 								<VSCodeButton
 									appearance="icon"
@@ -260,18 +264,18 @@ export const ErrorRow = memo(
 					{errorTitle && (
 						<div className={headerClassName || "flex items-center justify-between gap-2 break-words"}>
 							<MessageCircleWarning
-								className={`w-4 ${apiConfiguration.apiProvider !== "zgsm" ? "text-vscode-errorForeground" : "opacity-80"}`}
+								className={`w-4 ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "opacity-80"}`}
 							/>
 							<span
 								className={
-									apiConfiguration.apiProvider !== "zgsm"
+									apiConfiguration.apiProvider !== "costrict"
 										? "font-bold grow cursor-default"
 										: "opacity-80 font-bold grow cursor-default"
 								}>
 								{errorTitle}
 							</span>
 							<div className="flex items-center gap-2">
-								{apiConfiguration.apiProvider !== "zgsm" && docsURL && (
+								{apiConfiguration.apiProvider !== "costrict" && docsURL && (
 									<a
 										href={docsURL}
 										className="text-sm flex items-center gap-1 transition-opacity opacity-0 group-hover:opacity-100"
@@ -323,25 +327,25 @@ export const ErrorRow = memo(
 					)}
 					<div
 						className={
-							apiConfiguration.apiProvider !== "zgsm"
+							apiConfiguration.apiProvider !== "costrict"
 								? "ml-2 pl-4 mt-1 pt-0.5 border-l border-vscode-errorForeground/50"
 								: ""
 						}>
 						<p
 							className={
 								messageClassName ||
-								(apiConfiguration.apiProvider !== "zgsm"
+								(apiConfiguration.apiProvider !== "costrict"
 									? "cursor-default my-0 font-light whitespace-pre-wrap break-words text-vscode-descriptionForeground"
 									: "ml-6 my-0 whitespace-pre-wrap break-words opacity-80")
 							}
 							dangerouslySetInnerHTML={
-								apiConfiguration.apiProvider !== "zgsm"
+								apiConfiguration.apiProvider !== "costrict"
 									? undefined
 									: {
 											__html: message,
 										}
 							}>
-							{apiConfiguration.apiProvider !== "zgsm" ? (
+							{apiConfiguration.apiProvider !== "costrict" ? (
 								<>
 									{message}
 									{formattedErrorDetails && (
@@ -360,7 +364,7 @@ export const ErrorRow = memo(
 				</div>
 
 				{/* Error Details Dialog */}
-				{apiConfiguration.apiProvider !== "zgsm" && formattedErrorDetails && (
+				{apiConfiguration.apiProvider !== "costrict" && formattedErrorDetails && (
 					<Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
 						<DialogContent className="max-w-2xl">
 							<DialogHeader>

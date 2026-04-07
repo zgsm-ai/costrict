@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import * as fs from "fs"
-import { ZgsmCodebaseIndexManager } from "./index"
+import { CostrictCodebaseIndexManager } from "./index"
 import { WorkspaceEventData, WorkspaceEventRequest } from "./types"
 import { TelemetryService } from "@roo-code/telemetry"
 import { CodeBaseError } from "../telemetry/constants"
@@ -150,7 +150,7 @@ export class WorkspaceEventMonitor {
 		this.log.debug("[WorkspaceEventMonitor] VSCode close event detected")
 
 		// Send workspace close events
-		ZgsmCodebaseIndexManager.getInstance().client?.publishSyncWorkspaceEvents({
+		CostrictCodebaseIndexManager.getInstance().client?.publishSyncWorkspaceEvents({
 			workspace: this.workspaceCache,
 			data: [
 				{
@@ -640,7 +640,7 @@ export class WorkspaceEventMonitor {
 
 		while (retryCount <= maxRetries) {
 			try {
-				const response = await ZgsmCodebaseIndexManager.getInstance().publishWorkspaceEvents(request)
+				const response = await CostrictCodebaseIndexManager.getInstance().publishWorkspaceEvents(request)
 
 				if (response.success) {
 					this.log.info(`[WorkspaceEventMonitor] ${evts} events sent successfully`)
@@ -722,7 +722,7 @@ export class WorkspaceEventMonitor {
 		}
 		const { apiConfiguration } = await this.clineProvider.getState()
 
-		if (apiConfiguration.apiProvider !== "zgsm" || !apiConfiguration.zgsmCodebaseIndexEnabled) {
+		if (apiConfiguration.apiProvider !== "costrict" || !apiConfiguration.costrictCodebaseIndexEnabled) {
 			return false
 		}
 

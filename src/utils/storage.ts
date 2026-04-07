@@ -17,7 +17,7 @@ export async function getStorageBasePath(defaultPath: string): Promise<string> {
 
 	try {
 		// This is the line causing the error in tests
-		const config = vscode.workspace.getConfiguration(Package.name)
+		const config = vscode.workspace.getConfiguration(Package.commandIDPrefix)
 		customStoragePath = config.get<string>("customStoragePath", "")
 	} catch (error) {
 		console.warn("Could not access VSCode configuration - using default path")
@@ -98,7 +98,7 @@ export async function promptForCustomStoragePath(): Promise<void> {
 
 	let currentPath = ""
 	try {
-		const currentConfig = vscode.workspace.getConfiguration(Package.name)
+		const currentConfig = vscode.workspace.getConfiguration(Package.commandIDPrefix)
 		currentPath = currentConfig.get<string>("customStoragePath", "")
 	} catch (error) {
 		console.error("Could not access configuration")
@@ -133,7 +133,7 @@ export async function promptForCustomStoragePath(): Promise<void> {
 	// If user canceled the operation, result will be undefined
 	if (result !== undefined) {
 		try {
-			const currentConfig = vscode.workspace.getConfiguration(Package.name)
+			const currentConfig = vscode.workspace.getConfiguration(Package.commandIDPrefix)
 			await currentConfig.update("customStoragePath", result, vscode.ConfigurationTarget.Global)
 
 			if (result) {

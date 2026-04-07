@@ -138,7 +138,7 @@ export const AutoApproveSettings = ({
 													// Send message to open keyboard shortcuts with search for toggle command
 													vscode.postMessage({
 														type: "openKeyboardShortcuts",
-														text: `${Package.name}.toggleAutoApprove`,
+														text: `${Package.commandIDPrefix}.toggleAutoApprove`,
 													})
 												}}
 											/>

@@ -7,7 +7,7 @@ import { useExtensionState } from "@/context/ExtensionStateContext"
 import { Button } from "@/components/ui"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 
-import { IndexStatusInfo } from "@/components/settings/ZgsmCodebaseSettings"
+import { IndexStatusInfo } from "@/components/settings/CostrictCodebaseSettings"
 import { ReviewTarget } from "@roo/codeReview"
 
 interface CodebaseSyncProps {
@@ -17,7 +17,7 @@ interface CodebaseSyncProps {
 
 const CodebaseSync: React.FC<CodebaseSyncProps> = ({ onCancel, targets }) => {
 	const { t } = useAppTranslation()
-	const { zgsmCodebaseIndexEnabled } = useExtensionState()
+	const { costrictCodebaseIndexEnabled } = useExtensionState()
 	const [indexStatus, setIndexStatus] = useState<IndexStatusInfo>({
 		process: 100,
 		status: "success",
@@ -34,7 +34,7 @@ const CodebaseSync: React.FC<CodebaseSyncProps> = ({ onCancel, targets }) => {
 
 	const fetchCodebaseIndexStatus = () => {
 		vscode.postMessage({
-			type: "zgsmPollCodebaseIndexStatus",
+			type: "costrictPollCodebaseIndexStatus",
 		})
 	}
 	// Polling related functions
@@ -59,12 +59,12 @@ const CodebaseSync: React.FC<CodebaseSyncProps> = ({ onCancel, targets }) => {
 	}
 	const onContinue = () => {
 		vscode.postMessage({
-			type: "zgsmCodebaseIndexEnabled",
+			type: "costrictCodebaseIndexEnabled",
 			bool: true,
 		})
 		// Send rebuild message to extension
 		vscode.postMessage({
-			type: "zgsmRebuildCodebaseIndex",
+			type: "costrictRebuildCodebaseIndex",
 			values: {
 				type: "codegraph",
 			},
@@ -126,7 +126,7 @@ const CodebaseSync: React.FC<CodebaseSyncProps> = ({ onCancel, targets }) => {
 	}, [])
 	return (
 		<div className="flex items-center mt-5 px-5">
-			{(!zgsmCodebaseIndexEnabled || indexStatus.status === "pending") && (
+			{(!costrictCodebaseIndexEnabled || indexStatus.status === "pending") && (
 				<div className="flex flex-col gap-[26px]">
 					<div className="flex items-center">
 						<ExclamationTriangleIcon color="#FFD500" width={20} height={20} />
@@ -140,7 +140,7 @@ const CodebaseSync: React.FC<CodebaseSyncProps> = ({ onCancel, targets }) => {
 					</div>
 				</div>
 			)}
-			{zgsmCodebaseIndexEnabled && indexStatus.status === "running" && (
+			{costrictCodebaseIndexEnabled && indexStatus.status === "running" && (
 				<div className="flex items-center mb-4">
 					<div
 						className="w-4 h-4 rounded-full border-2 border-transparent animate-spin"
@@ -158,7 +158,7 @@ const CodebaseSync: React.FC<CodebaseSyncProps> = ({ onCancel, targets }) => {
 					</span>
 				</div>
 			)}
-			{zgsmCodebaseIndexEnabled && indexStatus.status === "failed" && (
+			{costrictCodebaseIndexEnabled && indexStatus.status === "failed" && (
 				<div className="flex items-center mb-4">
 					<ExclamationTriangleIcon color="#FFD500" width={20} height={20} />
 					<span className="ml-2">
@@ -171,7 +171,7 @@ const CodebaseSync: React.FC<CodebaseSyncProps> = ({ onCancel, targets }) => {
 					</span>
 				</div>
 			)}
-			{zgsmCodebaseIndexEnabled && indexStatus.status === "success" && (
+			{costrictCodebaseIndexEnabled && indexStatus.status === "success" && (
 				<div className="flex items-center mb-4">
 					<div
 						className="w-4 h-4 rounded-full border-2 border-transparent animate-spin"

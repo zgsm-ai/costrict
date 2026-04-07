@@ -47,8 +47,8 @@ ${instructions}
 
 # Next Steps
 
-If you have completed the user's task, use the attempt_completion tool.
-If you require additional information from the user, use the ask_followup_question tool.
+If you have completed the user's task, use the \`attempt_completion\` tool.
+If you require additional information from the user, use the \`ask_followup_question\` tool.
 Otherwise, if you have not completed the task and do not need additional information, then proceed with the next step of the task.
 (This is an automated message, so do not respond to it conversationally.)`
 	},
@@ -120,7 +120,7 @@ Otherwise, if you have not completed the task and do not need additional informa
 		rooIgnoreController: RooIgnoreController | undefined,
 		showRooIgnoredFiles: boolean,
 		rooProtectedController?: RooProtectedController,
-		alwaysIncludeFileDetails?: boolean,
+		useKPTtree?: boolean,
 	): string => {
 		const sorted = files
 			?.map((file) => {
@@ -179,7 +179,7 @@ Otherwise, if you have not completed the task and do not need additional informa
 				}
 			}
 		}
-		const _filesInfo = alwaysIncludeFileDetails ? `${pathsToTree(rooIgnoreParsed)}\n` : rooIgnoreParsed.join("\n")
+		const _filesInfo = useKPTtree ? `${pathsToTree(rooIgnoreParsed)}\n` : rooIgnoreParsed.join("\n")
 		// pathsToTree
 		if (didHitLimit) {
 			return `${_filesInfo}\n\n(File list truncated. Use list_files on specific subdirectories if you need to explore further.)`

@@ -37,7 +37,7 @@ jobs:
           pnpm vsix
 
           # Save VSIX contents to a temporary file to avoid broken pipe issues.
-          unzip -l bin/zgsm-${current_package_version}.vsix > /tmp/costrict-vsix-contents.txt
+          unzip -l bin/costrict-${current_package_version}.vsix > /tmp/costrict-vsix-contents.txt
 
           # Check for required files.
           grep -q "extension/package.json" /tmp/costrict-vsix-contents.txt || exit 1
@@ -63,7 +63,7 @@ jobs:
       #     OVSX_PAT: ${{ secrets.OVSX_PAT }}
       #   run: |
       #     current_package_version=$(node -p "require('./src/package.json').version")
-      #     pnpm --filter zgsm publish:marketplace
+      #     pnpm --filter costrict publish:marketplace
       #     echo "Successfully published version $current_package_version to VS Code Marketplace"
       - name: Create GitHub Release
         env:
@@ -88,5 +88,5 @@ jobs:
             --title "Release v${current_package_version}" \
             --notes "$changelog_content" \
             --target ${{ env.GIT_REF }} \
-            bin/zgsm-${current_package_version}.vsix
+            bin/costrict-${current_package_version}.vsix
           echo "Successfully created GitHub Release v${current_package_version}"

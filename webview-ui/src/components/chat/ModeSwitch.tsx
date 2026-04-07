@@ -4,7 +4,7 @@ import { cn } from "@src/lib/utils"
 import { StandardTooltip } from "@src/components/ui"
 import { useTranslation } from "react-i18next"
 import { vscode } from "@/utils/vscode"
-import { type ZgsmCodeMode } from "@roo/modes"
+import { type CostrictCodeMode } from "@roo/modes"
 import { useCallback } from "react"
 import { ExtensionState } from "@roo-code/types"
 
@@ -19,7 +19,7 @@ const mapDisplayToOriginal = (displayMode: "vibe" | "plan" | "spec"): string => 
 	return displayMode
 }
 
-const mapModeToDisplay = (mode: ExtensionState["zgsmCodeMode"]): "vibe" | "plan" | "spec" => {
+const mapModeToDisplay = (mode: ExtensionState["costrictCodeMode"]): "vibe" | "plan" | "spec" => {
 	if (mode === "vibe") return "vibe"
 	if (mode === "plan") return "plan"
 	if (mode === "strict") return "spec"
@@ -52,8 +52,8 @@ const Slider = styled.div.withConfig({
 `
 
 export const ModeSwitch = ({ isStreaming = false }: ModeSwitchProps) => {
-	const { zgsmCodeMode, setZgsmCodeMode, apiConfiguration } = useExtensionState()
-	const displayMode = mapModeToDisplay(zgsmCodeMode)
+	const { costrictCodeMode, setCostrictCodeMode, apiConfiguration } = useExtensionState()
+	const displayMode = mapModeToDisplay(costrictCodeMode)
 	const { t } = useTranslation("welcome")
 	const { t: tSettings } = useTranslation("settings")
 
@@ -64,7 +64,7 @@ export const ModeSwitch = ({ isStreaming = false }: ModeSwitchProps) => {
 			}
 
 			vscode.postMessage({
-				type: "zgsmProviderTip",
+				type: "costrictProviderTip",
 				values: {
 					tipType: "info",
 					msg: tSettings("codebase.general.onlyCostrictProviderSupport"),
@@ -77,14 +77,14 @@ export const ModeSwitch = ({ isStreaming = false }: ModeSwitchProps) => {
 	)
 	const handleModeClick = (selectedMode: "vibe" | "plan" | "spec", forceMode?: string) => {
 		if (isStreaming) return
-		if (!apiProviderCheck("zgsm")) {
+		if (!apiProviderCheck("costrict")) {
 			selectedMode = "vibe"
 		}
 		const originalMode = mapDisplayToOriginal(selectedMode)
-		setZgsmCodeMode(originalMode as ZgsmCodeMode)
+		setCostrictCodeMode(originalMode as CostrictCodeMode)
 
 		vscode.postMessage({
-			type: "zgsmCodeMode",
+			type: "costrictCodeMode",
 			text: originalMode,
 		})
 

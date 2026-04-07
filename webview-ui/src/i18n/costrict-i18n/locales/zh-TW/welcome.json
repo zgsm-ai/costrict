@@ -1,5 +1,5 @@
 {
-	"getZgsmApiKey": "登入 CoStrict",
+	"getCostrictApiKey": "登入 CoStrict",
 	"greeting": "你好，我是 CoStrict！",
 	"introduction": "<strong>CoStrict 嚴肅開發的AI智慧夥伴</strong>，開源免費，可私有化部署，重視效果可控、品質為先，提供AI Agent、AI CodeReview、AI Completion三大核心能力，登入即可體驗。",
 	"telemetry": {

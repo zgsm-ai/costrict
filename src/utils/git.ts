@@ -8,7 +8,7 @@ import { promisify } from "util"
 import type { GitRepositoryInfo, GitCommit } from "@roo-code/types"
 
 import { truncateOutput } from "../integrations/misc/extract-text"
-import { excludedFileExtensions } from "./zgsmUtils"
+import { excludedFileExtensions } from "./costrictUtils"
 
 const execAsync = promisify(exec)
 

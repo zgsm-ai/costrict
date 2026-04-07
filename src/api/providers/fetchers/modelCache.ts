@@ -19,14 +19,14 @@ import { fileExistsAtPath } from "../../../utils/fs"
 import { getOpenRouterModels } from "./openrouter"
 import { getVercelAiGatewayModels } from "./vercel-ai-gateway"
 import { getRequestyModels } from "./requesty"
-import { getZgsmModels } from "./zgsm"
+import { getCostrictModels } from "./costrict"
 import { getUnboundModels } from "./unbound"
 import { getLiteLLMModels } from "./litellm"
 import { GetModelsOptions } from "../../../shared/api"
 import { getOllamaModels } from "./ollama"
 import { getLMStudioModels } from "./lmstudio"
-import { ZgsmAuthApi, ZgsmAuthConfig } from "../../../core/costrict/auth"
-import { IZgsmModelResponseData } from "@roo-code/types"
+import { CostrictAuthApi, CostrictAuthConfig } from "../../../core/costrict/auth"
+import { ICostrictModelResponseData } from "@roo-code/types"
 import { ClineProvider } from "../../../core/webview/ClineProvider"
 // import { getRooModels } from "./roo"
 
@@ -67,13 +67,13 @@ async function fetchModelsFromProvider(options: GetModelsOptions): Promise<Model
 	let models: ModelRecord
 
 	switch (provider) {
-		case "zgsm": {
-			const _models = await getZgsmModels(
-				options.baseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl(),
-				options.apiKey || clineProvider?.getValue("zgsmAccessToken"),
+		case "costrict": {
+			const _models = await getCostrictModels(
+				options.baseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl(),
+				options.apiKey || clineProvider?.getValue("costrictAccessToken"),
 				options.openAiHeaders,
 			)
-			models = _models.reduce((acc, model: IZgsmModelResponseData) => {
+			models = _models.reduce((acc, model: ICostrictModelResponseData) => {
 				if (!model.id) {
 					return acc
 				}
@@ -143,7 +143,7 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
 
 	try {
 		if (models) {
-			if (provider === "zgsm" && JSON.stringify(models) === "{}") {
+			if (provider === "costrict" && JSON.stringify(models) === "{}") {
 				models = undefined
 			} else {
 				return models

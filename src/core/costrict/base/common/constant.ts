@@ -166,7 +166,7 @@ export function getCodelensItems() {
 		} as CodelensItem,
 		shenmaInstructSet: {
 			key: "shenmaInstructSet",
-			actionName: `$(zgsm-icon)$(chevron-down)`,
+			actionName: `$(costrict-icon)$(chevron-down)`,
 			tooltip: t("common:command.shenma_instruct_set.tip"),
 			command: getCommand("codelens_more_button"),
 			actionType: "ZGSM_EXPLAIN",
@@ -181,7 +181,7 @@ export function getCodelensItems() {
 // Initialize the constant
 export let CODELENS_FUNC = getCodelensItems()
 
-// Function to refresh the Zgsm constants when language changes
+// Function to refresh the Costrict constants when language changes
 export function refreshCodelensFunc() {
 	CODELENS_FUNC = getCodelensItems()
 }

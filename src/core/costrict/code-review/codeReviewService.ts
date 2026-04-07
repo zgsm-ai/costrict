@@ -21,7 +21,7 @@ import { ReviewTask, UpdateIssueStatusResponse } from "./types"
 import { updateIssueStatusAPI, getPrompt, reportIssue, getIssueByTaskId } from "./api"
 import { ReviewComment } from "./reviewComment"
 import { HistoryManager } from "./HistoryManager"
-import { ZgsmAuthConfig, ZgsmAuthService } from "../auth"
+import { CostrictAuthConfig, CostrictAuthService } from "../auth"
 
 import {
 	ReviewIssue,
@@ -150,7 +150,7 @@ export class CodeReviewService {
 	async checkApiProviderSupport(): Promise<boolean> {
 		const provider = this.getProvider()!
 		const { apiConfiguration } = await provider.getState()
-		if (apiConfiguration.apiProvider !== "zgsm") {
+		if (apiConfiguration.apiProvider !== "costrict") {
 			vscode.window.showInformationMessage(t("common:review.tip.api_provider_not_support"))
 			return false
 		}
@@ -171,8 +171,8 @@ export class CodeReviewService {
 			return {}
 		}
 		const { apiConfiguration, language } = await this.clineProvider.getState()
-		const apiKey = apiConfiguration.zgsmAccessToken
-		const baseURL = apiConfiguration.zgsmBaseUrl || ZgsmAuthConfig.getInstance().getDefaultApiBaseUrl()
+		const apiKey = apiConfiguration.costrictAccessToken
+		const baseURL = apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 		return {
 			baseURL,
 			headers: {
@@ -196,7 +196,7 @@ export class CodeReviewService {
 			progress: 0,
 			error: t("common:review.tip.login_expired"),
 		})
-		await ZgsmAuthService.openStatusBarLoginTip({
+		await CostrictAuthService.openStatusBarLoginTip({
 			errorTitle: t("common:review.statusbar.login_expired"),
 		})
 		this.recordReviewError(CodeReviewErrorType.AuthError as TelemetryErrorType)

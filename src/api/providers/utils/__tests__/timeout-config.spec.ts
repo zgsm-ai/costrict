@@ -24,13 +24,13 @@ describe("getApiRequestTimeout", () => {
 	})
 
 	it("should return default timeout of 600000ms when no configuration is set", () => {
-		mockGetConfig.mockReturnValue(600)
+		mockGetConfig.mockReturnValue(300)
 
 		const timeout = getApiRequestTimeout()
 
-		expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith("zgsm")
-		expect(mockGetConfig).toHaveBeenCalledWith("apiRequestTimeout", 600)
-		expect(timeout).toBe(600000) // 600 seconds in milliseconds
+		expect(vscode.workspace.getConfiguration).toHaveBeenCalledWith("costrict")
+		expect(mockGetConfig).toHaveBeenCalledWith("apiRequestTimeout", 300)
+		expect(timeout).toBe(300000) // 300 seconds in milliseconds (default value from .get() fallback)
 	})
 
 	it("should return custom timeout in milliseconds", () => {
@@ -65,7 +65,7 @@ describe("getApiRequestTimeout", () => {
 
 		const timeout = getApiRequestTimeout()
 
-		expect(timeout).toBe(600000) // Should fall back to default 600 seconds
+		expect(timeout).toBe(600000) // Should fall back to default 600 seconds when config is invalid
 	})
 
 	it("should handle undefined by using default", () => {
@@ -73,7 +73,7 @@ describe("getApiRequestTimeout", () => {
 
 		const timeout = getApiRequestTimeout()
 
-		expect(timeout).toBe(600000) // Should fall back to default 600 seconds
+		expect(timeout).toBe(600000) // Should fall back to default 600 seconds when config is invalid
 	})
 
 	it("should handle NaN by using default", () => {
@@ -81,7 +81,7 @@ describe("getApiRequestTimeout", () => {
 
 		const timeout = getApiRequestTimeout()
 
-		expect(timeout).toBe(600000) // Should fall back to default 600 seconds
+		expect(timeout).toBe(600000) // Should fall back to default 600 seconds when config is invalid
 	})
 
 	it("should handle string values by using default", () => {

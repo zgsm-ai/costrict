@@ -505,9 +505,8 @@ describe("addCustomInstructions", () => {
 			{ language: "es" },
 		)
 
-		expect(result).toContain("Language Preference:")
-		expect(result).toContain("Español") // Check for language name
-		expect(result).toContain("(es)") // Check for language code in parentheses
+		expect(result).toContain("Language: Español (es)")
+		expect(result).toContain("Global Instructions:\nglobal instructions")
 		expect(result).toContain("Global Instructions:\nglobal instructions")
 		expect(result).toContain("Mode-specific Instructions:\nmode instructions")
 		expect(result).toContain("Rules from .roorules-test-mode:\nmode specific rules")
@@ -953,8 +952,7 @@ describe("addCustomInstructions", () => {
 			{ language: "xyz" }, // Unknown language code
 		)
 
-		expect(result).toContain("Language Preference:")
-		expect(result).toContain('"xyz" (xyz) language') // For unknown codes, the code is used as the name too
+		expect(result).toContain("Language: xyz (xyz)")
 		expect(result).toContain("Global Instructions:\nglobal instructions")
 	})
 
