@@ -164,6 +164,7 @@ Special thanks to our open-source partners:
 
 [![Roo Code](https://img.shields.io/badge/Roo%20Code-Repository-blue?style=flat-square)](https://github.com/RooCodeInc/Roo-Code)
 [![OpenSpec](https://img.shields.io/badge/OpenSpec-Repository-blue?style=flat-square)](https://github.com/Fission-AI/OpenSpec)
+[![OpenCode](https://img.shields.io/badge/OpenCode-Repository-blue?style=flat-square)](https://github.com/anomalyco/opencode)
 [![agents.md](https://img.shields.io/badge/agents.md-Repository-blue?style=flat-square)](https://github.com/agentsmd/agents.md)
 [![agentskills](https://img.shields.io/badge/agentskills-Repository-blue?style=flat-square)](https://github.com/agentskills/agentskills)
 

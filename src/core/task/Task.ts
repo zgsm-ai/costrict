@@ -55,6 +55,7 @@ import {
 	ConsecutiveMistakeError,
 	MAX_MCP_TOOLS_THRESHOLD,
 	countEnabledMcpTools,
+	ANTHROPIC_DEFAULT_MAX_TOKENS,
 	// costrictModelsConfig,
 } from "@roo-code/types"
 import { TelemetryService } from "@roo-code/telemetry"
@@ -109,7 +110,7 @@ import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { RooProtectedController } from "../protect/RooProtectedController"
 import { type AssistantMessageContent, presentAssistantMessage } from "../assistant-message"
 import { NativeToolCallParser } from "../assistant-message/NativeToolCallParser"
-import { manageContext, willManageContext } from "../context-management"
+import { manageContext, willManageContext, TOKEN_BUFFER_PERCENTAGE } from "../context-management"
 import { ClineProvider } from "../webview/ClineProvider"
 import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-replace"
 import {
@@ -1202,7 +1203,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 
 		const turnsSinceLastSpecTaskStatus = currentUserMessageCount - this.lastSpecTaskStatusUserMessageCount
-		return turnsSinceLastSpecTaskStatus >= (SUPPLEMENTAL_DETAILS_INTERVAL)
+		return turnsSinceLastSpecTaskStatus >= SUPPLEMENTAL_DETAILS_INTERVAL
 	}
 
 	/**
@@ -1227,16 +1228,23 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	 * Check if we should attach task.md status update instructions.
 	 * Independent of KPT Tree: requires costrict provider OR strict code mode
 	 */
-	private async shouldAttachSpecTaskStatusCheckInstructions(): Promise<boolean> {
+	private async shouldAttachSpecTaskStatusCheckInstructions(force = false): Promise<boolean> {
 		const provider = this.providerRef.deref()
 		const state = await provider?.getState()
 		const apiConfiguration = state?.apiConfiguration
 
-		// Apply when using costrict provider OR when in strict code mode
+		// Apply when using costrict provider AND when in strict code mode
 		const isCostrictProvider = apiConfiguration?.apiProvider === "costrict"
-		const isStrictCodeMode = state?.costrictCodeMode === "strict" && ["code", "subcoding"].includes(state?.mode)
+		const isStrictCodeMode = state?.costrictCodeMode === "strict"
+		const isStrictCodeEditAgent = isStrictCodeMode && ["code", "subcoding"].includes(state?.mode)
 
-		if (!isCostrictProvider && !isStrictCodeMode) {
+		if (!isCostrictProvider || !isStrictCodeMode) {
+			return false
+		}
+
+		if (isStrictCodeMode && force) return true
+
+		if (!isStrictCodeEditAgent) {
 			return false
 		}
 
@@ -2835,7 +2843,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 
 			const provider = this.providerRef.deref()
 			const state = provider ? await provider.getState() : undefined
-
 			const showRooIgnoredFiles = state?.showRooIgnoredFiles ?? false
 			const includeDiagnosticMessages = state?.includeDiagnosticMessages ?? true
 			const maxDiagnosticMessages = state?.maxDiagnosticMessages ?? 50
@@ -2852,6 +2859,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				skillsManager: provider?.getSkillsManager(),
 				currentMode,
 				language: state?.language,
+				mentionBudgetChars: this.getMentionBudgetChars(),
 			})
 
 			// Switch mode if specified in a slash command's frontmatter
@@ -2871,7 +2879,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			const includeFileDetailsForTurn = currentIncludeFileDetails || shouldAttachFileTree
 			const environmentDetails = await getEnvironmentDetails(this, includeFileDetailsForTurn)
 			// Task status instructions follow their own cadence and are independent of KPT Tree
-			const shouldAttachTaskStatus = currentIncludeFileDetails || await this.shouldAttachSpecTaskStatusCheckInstructions()
+			const shouldAttachTaskStatus =
+				await this.shouldAttachSpecTaskStatusCheckInstructions(currentIncludeFileDetails)
 			let taskStatusAttached = false
 			// Remove any existing environment_details blocks before adding fresh ones.
 			// This prevents duplicate environment details when resuming tasks,
@@ -2885,7 +2894,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					const isEnvironmentDetailsBlock =
 						block.text.trim().startsWith("<environment_details>") &&
 						block.text.trim().endsWith("</environment_details>")
-					return !isEnvironmentDetailsBlock
+					const isTaskTrackingReminder = block.text.includes("[Task Tracking Reminder]")
+					return !isEnvironmentDetailsBlock && !isTaskTrackingReminder
 				}
 				return true
 			})
@@ -2922,12 +2932,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			const isEmptyUserContent = currentUserContent.length === 0
 			const shouldAddUserMessage =
 				((currentItem.retryAttempt ?? 0) === 0 && !isEmptyUserContent) || currentItem.userMessageWasRemoved
+
+			if (shouldAttachTaskStatus && taskStatusAttached) {
+				this.markSpecTaskStatusAttachedForCurrentTurn()
+			}
+
 			if (shouldAddUserMessage) {
 				if (includeFileDetailsForTurn) {
 					this.markFileTreeAttachedForCurrentTurn()
-				}
-				if (shouldAttachTaskStatus && taskStatusAttached) {
-					this.markSpecTaskStatusAttachedForCurrentTurn()
 				}
 				await this.addToApiConversationHistory({ role: "user", content: finalUserContent })
 				TelemetryService.instance.captureConversationMessage(this.taskId, "user")
@@ -5503,8 +5515,29 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 	}
 
+	getMentionBudgetChars() {
+		// Calculate dynamic mention budget based on remaining context window
+		const modelInfo = this.api.getModel().info
+		const contextWindow = modelInfo.contextWindow
+
+		const maxTokens = getModelMaxOutputTokens({
+			modelId: this.api.getModel().id,
+			model: modelInfo,
+			settings: this.apiConfiguration,
+		})
+		const reservedTokens = Math.max(
+			maxTokens || 0,
+			modelInfo.maxTokens || 0,
+			this.apiConfiguration.modelMaxTokens || 0,
+			ANTHROPIC_DEFAULT_MAX_TOKENS,
+		)
+		const allowedTokens = contextWindow * (1 - TOKEN_BUFFER_PERCENTAGE) - reservedTokens
+		// Convert tokens to characters (rough estimation: 1 token ≈ 4 characters)
+		return Math.max(16_000, Math.floor(allowedTokens * 4 * 0.9))
+	}
+
 	getSpecTaskStatusCheckInstructions(costrictWorkflowSpecScope: string): string {
-  return `
+		return `
 
 [Task Tracking Reminder]
 
@@ -5517,6 +5550,6 @@ After completing your current task, update \`tasks.md\` (in \`${costrictWorkflow
 
 Only update tasks you are certain about. Do not guess or bulk modify.
 
-`;
+`
 	}
 }

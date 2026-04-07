@@ -99,7 +99,7 @@ const prompt: PromptComponent = {
 | 无文件 | 需求明确阶段 |
 | 只有requirements.md | 架构设计阶段 |
 | 有design.md | 任务规划阶段 |
-| 有tasks.md | 代码实现阶段 |
+| 有tasks.md | 代码实现阶段（开始编码后需要及时更新 tasks.md 对应任务完成的状态）|
 
 ---
 

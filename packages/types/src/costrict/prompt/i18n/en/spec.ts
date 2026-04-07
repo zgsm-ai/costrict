@@ -99,7 +99,7 @@ Intelligent navigation based on \`.cospec/{feature-name}/\` directory status:
 | No files | Requirements Clarification Phase |
 | Only requirements.md | Architectural Design Phase |
 | Has design.md | Task Planning Phase |
-| Has tasks.md | Code Implementation Phase |
+| Has tasks.md | Code Implementation Phase (Start coding after timely update tasks.md corresponding task completion status) |
 
 ---
 

@@ -173,6 +173,7 @@ English | [简体中文](./README.zh-CN.md)
 
 [![Roo Code](https://img.shields.io/badge/Roo%20Code-仓库-blue?style=flat-square)](https://github.com/RooCodeInc/Roo-Code)
 [![OpenSpec](https://img.shields.io/badge/OpenSpec-仓库-blue?style=flat-square)](https://github.com/Fission-AI/OpenSpec)
+[![OpenCode](https://img.shields.io/badge/OpenCode-仓库-blue?style=flat-square)](https://github.com/anomalyco/opencode)
 [![agents.md](https://img.shields.io/badge/agents.md-仓库-blue?style=flat-square)](https://github.com/agentsmd/agents.md)
 [![agentskills](https://img.shields.io/badge/agentskills-仓库-blue?style=flat-square)](https://github.com/agentskills/agentskills)
 
