@@ -41,7 +41,9 @@ export const dynamicProviders = [
 	"vercel-ai-gateway",
 	"litellm",
 	"requesty",
-	/*"roo",*/ "unbound",
+	// "roo",
+	"unbound",
+	"poe",
 ] as const
 
 export type DynamicProvider = (typeof dynamicProviders)[number]
@@ -331,6 +333,11 @@ const deepSeekSchema = apiModelIdProviderModelSchema.extend({
 	deepSeekApiKey: z.string().optional(),
 })
 
+const poeSchema = apiModelIdProviderModelSchema.extend({
+	poeApiKey: z.string().optional(),
+	poeBaseUrl: z.string().optional(),
+})
+
 const moonshotSchema = apiModelIdProviderModelSchema.extend({
 	moonshotBaseUrl: z
 		.union([z.literal("https://api.moonshot.ai/v1"), z.literal("https://api.moonshot.cn/v1")])
@@ -428,6 +435,7 @@ export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProv
 	openAiNativeSchema.merge(z.object({ apiProvider: z.literal("openai-native") })),
 	mistralSchema.merge(z.object({ apiProvider: z.literal("mistral") })),
 	deepSeekSchema.merge(z.object({ apiProvider: z.literal("deepseek") })),
+	poeSchema.merge(z.object({ apiProvider: z.literal("poe") })),
 	moonshotSchema.merge(z.object({ apiProvider: z.literal("moonshot") })),
 	minimaxSchema.merge(z.object({ apiProvider: z.literal("minimax") })),
 	requestySchema.merge(z.object({ apiProvider: z.literal("requesty") })),
@@ -466,6 +474,7 @@ export const providerSettingsSchema = z.object({
 	...openAiNativeSchema.shape,
 	...mistralSchema.shape,
 	...deepSeekSchema.shape,
+	...poeSchema.shape,
 	...moonshotSchema.shape,
 	...minimaxSchema.shape,
 	...requestySchema.shape,
@@ -556,6 +565,7 @@ export const modelIdKeysByProvider: Record<TypicalProvider, ModelIdKey> = {
 	moonshot: "apiModelId",
 	minimax: "apiModelId",
 	deepseek: "apiModelId",
+	poe: "apiModelId",
 	"qwen-code": "apiModelId",
 	requesty: "requestyModelId",
 	unbound: "unboundModelId",
@@ -695,6 +705,7 @@ export const MODELS_BY_PROVIDER: Record<
 	baseten: { id: "baseten", label: "Baseten", models: Object.keys(basetenModels) },
 
 	// Dynamic providers; models pulled from remote APIs.
+	poe: { id: "poe", label: "Poe", models: [] },
 	litellm: { id: "litellm", label: "LiteLLM", models: [] },
 	openrouter: { id: "openrouter", label: "OpenRouter", models: [] },
 	requesty: { id: "requesty", label: "Requesty", models: [] },

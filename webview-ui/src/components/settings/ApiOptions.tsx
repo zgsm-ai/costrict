@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react"
 import { convertHeadersToObject } from "./utils/headers"
 import { useDebounce } from "react-use"
-// import { VSCodeLink, VSCodeButton } from "@vscode/webview-ui-toolkit/react"
+import { VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import { ExternalLinkIcon } from "@radix-ui/react-icons"
 
 import {
@@ -10,6 +10,7 @@ import {
 	isRetiredProvider,
 	DEFAULT_CONSECUTIVE_MISTAKE_LIMIT,
 	openRouterDefaultModelId,
+	poeDefaultModelId,
 	requestyDefaultModelId,
 	litellmDefaultModelId,
 	openAiNativeDefaultModelId,
@@ -87,6 +88,7 @@ import {
 	OpenAICompatible,
 	OpenAICodex,
 	OpenRouter,
+	Poe,
 	QwenCode,
 	Requesty,
 	// Roo,
@@ -283,7 +285,10 @@ const ApiOptions = ({
 				vscode.postMessage({ type: "requestLmStudioModels" })
 			} else if (selectedProvider === "vscode-lm") {
 				vscode.postMessage({ type: "requestVsCodeLmModels" })
-			} else if (selectedProvider === "litellm" /* || selectedProvider === "roo" */) {
+			} else if (
+				selectedProvider === "litellm" /* || selectedProvider === "roo" */ ||
+				selectedProvider === "poe"
+			) {
 				vscode.postMessage({ type: "requestRouterModels" })
 			}
 		},
@@ -297,6 +302,8 @@ const ApiOptions = ({
 			apiConfiguration?.lmStudioBaseUrl,
 			apiConfiguration?.litellmBaseUrl,
 			apiConfiguration?.litellmApiKey,
+			apiConfiguration?.poeApiKey,
+			apiConfiguration?.poeBaseUrl,
 			customHeaders,
 		],
 	)
@@ -403,6 +410,7 @@ const ApiOptions = ({
 							: internationalZAiDefaultModelId,
 				},
 				fireworks: { field: "apiModelId", default: fireworksDefaultModelId },
+				poe: { field: "apiModelId", default: poeDefaultModelId },
 				roo: { field: "apiModelId", default: rooDefaultModelId },
 				"vercel-ai-gateway": { field: "vercelAiGatewayModelId", default: vercelAiGatewayDefaultModelId },
 				openai: { field: "openAiModelId" },
@@ -808,7 +816,15 @@ const ApiOptions = ({
 							setApiConfigurationField={setApiConfigurationField}
 						/>
 					)}
-
+					{selectedProvider === "poe" && (
+						<Poe
+							apiConfiguration={apiConfiguration}
+							setApiConfigurationField={setApiConfigurationField}
+							organizationAllowList={organizationAllowList}
+							modelValidationError={modelValidationError}
+							simplifySettings={fromWelcomeView}
+						/>
+					)}
 					{/* {selectedProvider === "roo" && (
 						<Roo
 							apiConfiguration={apiConfiguration}
@@ -906,6 +922,17 @@ const ApiOptions = ({
 									}
 									onChange={(value) => setApiConfigurationField("consecutiveMistakeLimit", value)}
 								/>
+								{selectedProvider === "poe" && (
+									<VSCodeTextField
+										value={apiConfiguration?.poeBaseUrl || ""}
+										onInput={handleInputChange("poeBaseUrl")}
+										placeholder="https://api.poe.com/v1"
+										className="w-full">
+										<label className="block font-medium mb-1">
+											{t("settings:providers.poeBaseUrl")}
+										</label>
+									</VSCodeTextField>
+								)}
 								{selectedProvider === "openrouter" &&
 									openRouterModelProviders &&
 									Object.keys(openRouterModelProviders).length > 0 && (

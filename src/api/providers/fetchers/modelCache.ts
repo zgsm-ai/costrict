@@ -29,6 +29,7 @@ import { CostrictAuthApi, CostrictAuthConfig } from "../../../core/costrict/auth
 import { ICostrictModelResponseData } from "@roo-code/types"
 import { ClineProvider } from "../../../core/webview/ClineProvider"
 // import { getRooModels } from "./roo"
+import { getPoeModels } from "./poe"
 
 const memoryCache = new NodeCache({ stdTTL: 5 * 60, checkperiod: 5 * 60 })
 
@@ -114,6 +115,9 @@ async function fetchModelsFromProvider(options: GetModelsOptions): Promise<Model
 		// 	models = await getRooModels(rooBaseUrl, options.apiKey)
 		// 	break
 		// }
+		case "poe":
+			models = await getPoeModels(options.apiKey, options.baseUrl)
+			break
 		default: {
 			// Ensures router is exhaustively checked if RouterName is a strict union.
 			const exhaustiveCheck: never | "roo" = provider

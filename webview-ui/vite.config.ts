@@ -109,6 +109,7 @@ export default defineConfig(({ mode }) => {
 			outDir,
 			emptyOutDir: true,
 			reportCompressedSize: false,
+			target: "es2022",
 			// Generate complete source maps with original TypeScript sources
 			sourcemap: mode !== "production",
 			// Ensure source maps are properly included in the build
