@@ -1,38 +1,21 @@
-import { BaseTelemetryClient } from "../BaseTelemetryClient"
-import { createLogger, ILogger } from "../../../../src/utils/logger"
-import { Package } from "../../../../src/shared/package"
-import { type TelemetryEvent, TelemetryEventName } from "@roo-code/types"
+import { createLogger } from "@roo-code/logger"
+import { type TelemetryEvent } from "@roo-code/types"
 import { TelemetryControlResponse } from "./types"
 import { MetricsRecorder } from "./metricsRecorder"
-import { ClineProvider } from "../../../../src/core/webview/ClineProvider"
-import { v7 as uuidv7 } from "uuid"
+import { BaseCostrictApiClient } from "./baseCostrictApiClient"
 import * as os from "os"
 import * as path from "path"
 import * as fs from "fs"
 
-export class CostrictTelemetryClient extends BaseTelemetryClient {
-	private endpoint: string
-	private logger: ILogger
+export class CostrictTelemetryClient extends BaseCostrictApiClient {
 	private reportIntervalMinutes: number = 20
 	private reportTimer: ReturnType<typeof setInterval> | null = null
 	private metricsRecorder: MetricsRecorder
 	private hasFetchedControlConfig: boolean = false
 
 	constructor(endpoint: string, debug = false) {
-		super(
-			{
-				type: "include",
-				events: [
-					TelemetryEventName.CODE_ACCEPT,
-					TelemetryEventName.CODE_REJECT,
-					TelemetryEventName.CODE_TAB_COMPLETION,
-					TelemetryEventName.ERROR,
-				],
-			},
-			debug,
-		)
-		this.endpoint = endpoint
-		this.logger = createLogger(Package.outputChannel)
+		super(endpoint, debug)
+		this.logger = createLogger()
 		this.metricsRecorder = new MetricsRecorder()
 		this.cleanupLegacyTelemetryDir()
 	}
@@ -91,15 +74,6 @@ export class CostrictTelemetryClient extends BaseTelemetryClient {
 				`[CostrictTelemetryClient#fetchTelemetryControl] Error: ${error instanceof Error ? error.message : String(error)}`,
 			)
 			return null
-		}
-	}
-	private async getHeaders() {
-		const provider = this.providerRef?.deref() as unknown as ClineProvider
-		const { apiConfiguration } = await provider.getState()
-		const { costrictAccessToken } = apiConfiguration
-		return {
-			Authorization: `Bearer ${costrictAccessToken}`,
-			"X-Request-ID": uuidv7(),
 		}
 	}
 
@@ -180,9 +154,5 @@ export class CostrictTelemetryClient extends BaseTelemetryClient {
 			// 然后取消轮询定时器
 			this.stopReportTimer()
 		}
-	}
-
-	public async captureException(_error: Error, _additionalProperties?: Record<string, unknown>): Promise<void> {
-		// todo - exception capture
 	}
 }

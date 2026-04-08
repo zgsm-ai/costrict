@@ -21,6 +21,7 @@ import { CodeReviewService } from "../costrict/code-review"
 import { computeDiffStats, sanitizeUnifiedDiff } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
 import { getAppName } from "../../utils/getAppName"
+import { getRawTaskReporter } from "../costrict/telemetry"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 
@@ -263,6 +264,11 @@ export class ApplyDiffTool extends BaseTool<"apply_diff"> {
 			})
 
 			// Used to determine if we should wait for busy terminal to update before sending api request
+			getRawTaskReporter()?.captureDiffEntry(task.taskId, {
+				label: relPath,
+				before: originalContent,
+				after: diffResult.content,
+			})
 			task.didEditFile = true
 			let partFailHint = ""
 

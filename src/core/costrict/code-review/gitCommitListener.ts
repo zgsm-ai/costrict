@@ -4,6 +4,7 @@ import type { CodeReviewService } from "./codeReviewService"
 import { t } from "../../../i18n"
 import { EXPERIMENT_IDS, experiments as Experiments } from "../../../shared/experiments"
 import { ReviewTargetType } from "../../../shared/codeReview"
+import { getRawCommitReporter } from "../telemetry"
 
 export class GitCommitListener {
 	private lastSeenCommitHash: string | undefined
@@ -60,17 +61,7 @@ export class GitCommitListener {
 
 			if (!provider) return
 
-			const { experiments = {}, apiConfiguration } = await provider.getState()
-
-			if (
-				!(
-					Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.COMMIT_REVIEW) ??
-					apiConfiguration?.apiProvider === "costrict"
-				)
-			)
-				return
-
-			this.handleNewCommit(repo)
+			await this.handleNewCommit(repo)
 		})
 		this.disposables.push(disposable)
 	}
@@ -78,18 +69,33 @@ export class GitCommitListener {
 	private async handleNewCommit(repo: Repository): Promise<void> {
 		try {
 			const commit = await repo.getCommit("HEAD")
-			await this.processNewCommit(commit)
+			await this.processNewCommit(commit, repo)
 		} catch (error) {
 			console.error("Failed to handle new commit:", error)
 		}
 	}
 
-	private async processNewCommit(commit: any): Promise<void> {
+	private async processNewCommit(commit: any, repo: Repository): Promise<void> {
 		if (commit.hash === this.lastSeenCommitHash) {
 			return
 		}
 
 		this.lastSeenCommitHash = commit.hash
+		const provider = this.reviewService.getProvider()
+		if (provider) {
+			void getRawCommitReporter()?.reportCommit(repo, commit, provider)
+		}
+
+		const { experiments = {}, apiConfiguration } = await provider!.getState()
+
+		if (
+			!(
+				Experiments.isEnabled(experiments ?? {}, EXPERIMENT_IDS.COMMIT_REVIEW) ??
+				apiConfiguration?.apiProvider === "costrict"
+			)
+		) {
+			return
+		}
 		await this.context.globalState.update("lastSeenCommitHash", commit.hash)
 
 		const message = t("common:review.tip.new_commit_notification", { commitMessage: commit.message })

@@ -112,6 +112,7 @@ import {
 import { isJetbrainsPlatform } from "../../utils/platform"
 import { showFileDiffFromGitStatus } from "../../utils/costrictUtils"
 import { ReviewTargetType } from "../../shared/codeReview"
+import { getRawTaskReporter } from "../costrict/telemetry"
 
 let webviewDidLaunchTimer: NodeJS.Timeout | undefined
 
@@ -960,6 +961,11 @@ export const webviewMessageHandler = async (
 			// Clear task resets the current session. Delegation flows are
 			// handled via metadata; parent resumption occurs through
 			// reopenParentFromDelegation, not via finishSubTask.
+			const task = provider.getCurrentTask()
+			if (task) {
+				void getRawTaskReporter()?.reportTaskSummary(task)
+			}
+
 			await provider.clearTask()
 			await provider.postStateToWebview()
 			break

@@ -11,10 +11,12 @@ import { RecordSource } from "../context-tracking/FileContextTrackerTypes"
 import { fileExistsAtPath } from "../../utils/fs"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
+import { getRawTaskReporter } from "../costrict/telemetry"
 import { BaseTool, ToolCallbacks } from "./BaseTool"
 import type { ToolUse } from "../../shared/tools"
 import { parsePatch, ParseError, processAllHunks } from "./apply-patch"
 import type { ApplyPatchFileChange } from "./apply-patch"
+import { readFileWithEncodingDetection } from "../../utils/encoding"
 
 interface ApplyPatchParams {
 	patch: string
@@ -88,7 +90,7 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			// Process each hunk
 			const readFile = async (filePath: string): Promise<string> => {
 				const absolutePath = path.resolve(task.cwd, filePath)
-				return await fs.readFile(absolutePath, "utf8")
+				return await readFileWithEncodingDetection(absolutePath)
 			}
 
 			let changes: ApplyPatchFileChange[]
@@ -222,6 +224,11 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 
 		// Track file edit operation
 		await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+		getRawTaskReporter()?.captureDiffEntry(task.taskId, {
+			label: relPath,
+			before: "",
+			after: newContent,
+		})
 		task.didEditFile = true
 
 		const message = await task.diffViewProvider.pushToolWriteResult(task, task.cwd, true)
@@ -273,6 +280,12 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 		}
 
 		// Delete the file
+		let originalContent = ""
+		try {
+			originalContent = await readFileWithEncodingDetection(absolutePath)
+		} catch {
+			originalContent = ""
+		}
 		try {
 			await fs.unlink(absolutePath)
 		} catch (error) {
@@ -282,6 +295,11 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			return
 		}
 
+		getRawTaskReporter()?.captureDiffEntry(task.taskId, {
+			label: relPath,
+			before: originalContent,
+			after: "",
+		})
 		task.didEditFile = true
 		pushToolResult(`Successfully deleted ${relPath}`)
 		task.processQueuedMessages()
@@ -431,6 +449,11 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			}
 
 			await task.fileContextTracker.trackFileContext(change.movePath, "roo_edited" as RecordSource)
+			getRawTaskReporter()?.captureDiffEntry(task.taskId, {
+				label: change.movePath,
+				before: originalContent,
+				after: newContent,
+			})
 		} else {
 			// Save changes to the same file
 			if (isPreventFocusDisruptionEnabled) {
@@ -440,6 +463,11 @@ export class ApplyPatchTool extends BaseTool<"apply_patch"> {
 			}
 
 			await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
+			getRawTaskReporter()?.captureDiffEntry(task.taskId, {
+				label: relPath,
+				before: originalContent,
+				after: newContent,
+			})
 		}
 
 		task.didEditFile = true

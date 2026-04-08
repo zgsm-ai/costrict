@@ -878,6 +878,7 @@
 		"@roo-code/cloud": "workspace:^",
 		"@roo-code/core": "workspace:^",
 		"@roo-code/ipc": "workspace:^",
+		"@roo-code/logger": "workspace:^",
 		"@roo-code/telemetry": "workspace:^",
 		"@roo-code/types": "workspace:^",
 		"@vscode/codicons": "^0.0.45",

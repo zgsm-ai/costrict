@@ -16,6 +16,7 @@ import pWaitFor from "p-wait-for"
 import { serializeError } from "serialize-error"
 import { parseJSON } from "partial-json"
 import { Package } from "../../shared/package"
+import { getRawTaskReporter } from "../costrict/telemetry"
 // import { formatToolInvocation } from "../tools/helpers/toolResultFormatting"
 
 import {
@@ -2923,6 +2924,9 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				}
 			}
 			finalUserContent.push({ type: "text" as const, text: environmentDetails })
+			const rawTaskReporter = getRawTaskReporter()
+			const rawRequestContent = this.stringifyContentBlocks(finalUserContent)
+			rawTaskReporter?.onRequestStarted(this, rawRequestContent)
 			// Only add user message to conversation history if:
 			// 1. This is the first attempt (retryAttempt === 0), AND
 			// 2. The original userContent was not empty (empty signals delegation resume where
@@ -2943,6 +2947,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				}
 				await this.addToApiConversationHistory({ role: "user", content: finalUserContent })
 				TelemetryService.instance.captureConversationMessage(this.taskId, "user")
+				void rawTaskReporter?.reportUserConversation(this, rawRequestContent)
 			}
 
 			// Since we sent off a placeholder api_req_started message to update the
@@ -3631,6 +3636,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								})
 						if (streamingFailedMessage) {
 							streamingFailedMessage = `${t("common:interruption.streamTerminatedByProvider")}: ${streamingFailedMessage}`
+							getRawTaskReporter()?.captureRequestError(this.taskId, cancelReason, streamingFailedMessage)
 						}
 
 						// Clean up partial state
@@ -4005,6 +4011,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					this.assistantMessageSavedToHistory = true
 
 					TelemetryService.instance.captureConversationMessage(this.taskId, "assistant")
+					void getRawTaskReporter()?.reportAssistantConversation(
+						this,
+						this.stringifyContentBlocks(assistantContent),
+					)
 				}
 
 				// Present any partial blocks that were just completed.
@@ -4104,6 +4114,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					if (this.consecutiveNoAssistantMessagesCount >= 2) {
 						await this.say("error", "MODEL_NO_ASSISTANT_MESSAGES")
 					}
+					getRawTaskReporter()?.captureRequestError(
+						this.taskId,
+						"MODEL_NO_ASSISTANT_MESSAGES",
+						streamingFailedMessage || "The language model did not provide any assistant messages.",
+					)
 
 					// IMPORTANT: We already added the user message to
 					// apiConversationHistory at line 1876. Since the assistant failed to respond,
@@ -4779,6 +4794,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			userId: id,
 			onRequestHeadersReady: (headers: Record<string, string>) => {
 				this.lastApiRequestHeaders = headers
+				getRawTaskReporter()?.captureRequestHeaders(this.taskId, headers)
 			},
 			onPerformanceTiming:
 				!showSpeedInfo || apiConfiguration?.apiProvider !== "costrict"
@@ -4796,6 +4812,11 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							)
 							if (lastApiReqIndex >= 0 && this.clineMessages[lastApiReqIndex]) {
 								const existingData = JSON.parse(this.clineMessages[lastApiReqIndex].text || "{}")
+								const ttftMs =
+									timing.requestIdTimestamp != null && timing.responseIdTimestamp != null
+										? Math.max(0, timing.responseIdTimestamp - timing.requestIdTimestamp)
+										: undefined
+								getRawTaskReporter()?.onFirstToken(this.taskId, ttftMs)
 								this.clineMessages[lastApiReqIndex].text = JSON.stringify({
 									...existingData,
 									requestIdTimestamp: timing.requestIdTimestamp,
@@ -5005,6 +5026,15 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 					if (requestId && !_requestId) {
 						headerText = `\n\nRequestId: ${requestId}\n\n` + headerText
 					}
+					const effectiveRequestId = _requestId || requestId
+					const rawError = effectiveRequestId
+						? ErrorCodeManager.getInstance().getRawError(effectiveRequestId)
+						: undefined
+					getRawTaskReporter()?.captureRequestError(
+						this.taskId,
+						rawError?.code ? String(rawError.code) : undefined,
+						rawError?.message || headerText,
+					)
 				}
 			}
 
@@ -5513,6 +5543,38 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		} catch (error) {
 			provider?.log(`Failed to update streaming status: ${error?.message}`)
 		}
+	}
+
+	private stringifyContentBlocks(content: Anthropic.ContentBlockParam[]): string {
+		return content
+			.map((block) => {
+				if (block.type === "text") {
+					return block.text
+				}
+				if (block.type === "tool_use") {
+					return `[tool_use:${block.name}] ${JSON.stringify(block.input)}`
+				}
+				if (block.type === "tool_result") {
+					const renderedContent =
+						typeof block.content === "string"
+							? block.content
+							: Array.isArray(block.content)
+								? block.content
+										.map((item) => (typeof item === "string" ? item : JSON.stringify(item)))
+										.join("\n")
+								: JSON.stringify(block.content)
+					return `[tool_result:${block.tool_use_id}] ${renderedContent}`
+				}
+				if (block.type === "image") {
+					return "[image]"
+				}
+				if (block.type === "document") {
+					return "[document]"
+				}
+				return JSON.stringify(block)
+			})
+			.filter(Boolean)
+			.join("\n\n")
 	}
 
 	getMentionBudgetChars() {
