@@ -59,6 +59,7 @@ const ReviewHistoryItem: React.FC<ReviewHistoryItemProps> = ({
 		if (cached) {
 			setIssues(cached)
 			setIsLoading(false)
+			hasLoadedRef.current = true
 			return
 		}
 		return subscribe(reviewTaskId, (newIssues) => {
