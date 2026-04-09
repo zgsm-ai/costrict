@@ -330,9 +330,12 @@ describe("SettingsView - Sound Settings", () => {
 		vi.clearAllMocks()
 	})
 
-	it("initializes with tts disabled by default", () => {
+	it("initializes with tts disabled by default", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the notifications tab
 		activateTab("notifications")
@@ -388,9 +391,12 @@ describe("SettingsView - Sound Settings", () => {
 		)
 	})
 
-	it("toggles sound setting and sends message to VSCode", () => {
+	it("toggles sound setting and sends message to VSCode", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the notifications tab
 		activateTab("notifications")
@@ -416,9 +422,12 @@ describe("SettingsView - Sound Settings", () => {
 		)
 	})
 
-	it("shows tts slider when sound is enabled", () => {
+	it("shows tts slider when sound is enabled", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the notifications tab
 		activateTab("notifications")
@@ -434,9 +443,12 @@ describe("SettingsView - Sound Settings", () => {
 		expect(speedSlider).toHaveValue("1")
 	})
 
-	it("shows volume slider when sound is enabled", () => {
+	it("shows volume slider when sound is enabled", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the notifications tab
 		activateTab("notifications")
@@ -452,9 +464,12 @@ describe("SettingsView - Sound Settings", () => {
 		expect(volumeSlider).toHaveValue("0.5")
 	})
 
-	it("updates speed and sends message to VSCode when slider changes", () => {
+	it("updates speed and sends message to VSCode when slider changes", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the notifications tab
 		activateTab("notifications")
@@ -483,9 +498,12 @@ describe("SettingsView - Sound Settings", () => {
 		)
 	})
 
-	it("updates volume and sends message to VSCode when slider changes", () => {
+	it("updates volume and sends message to VSCode when slider changes", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the notifications tab
 		activateTab("notifications")
@@ -532,9 +550,12 @@ describe("SettingsView - Allowed Commands", () => {
 		vi.clearAllMocks()
 	})
 
-	it("shows allowed commands section when alwaysAllowExecute is enabled", () => {
+	it("shows allowed commands section when alwaysAllowExecute is enabled", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the autoApprove tab
 		activateTab("autoApprove")
@@ -548,9 +569,12 @@ describe("SettingsView - Allowed Commands", () => {
 		expect(within(content).getByTestId("command-input")).toBeInTheDocument()
 	})
 
-	it("adds new command to the list", () => {
+	it("adds new command to the list", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the autoApprove tab
 		activateTab("autoApprove")
@@ -579,9 +603,12 @@ describe("SettingsView - Allowed Commands", () => {
 		})
 	})
 
-	it("removes command from the list", () => {
+	it("removes command from the list", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the autoApprove tab
 		activateTab("autoApprove")
@@ -629,9 +656,12 @@ describe("SettingsView - Allowed Commands", () => {
 		// 	expect(screen.getByTestId("api-config-management")).toBeInTheDocument()
 		// })
 
-		it("shows unsaved changes dialog when clicking Done with unsaved changes", () => {
+		it("shows unsaved changes dialog when clicking Done with unsaved changes", async () => {
 			// Render once and get the activateTab helper
 			const { activateTab, getSettingsContent } = renderSettingsView()
+
+			// Wait for initial state hydration to complete
+			await new Promise((resolve) => setTimeout(resolve, 50))
 
 			// Activate the notifications tab
 			activateTab("notifications")
@@ -656,9 +686,12 @@ describe("SettingsView - Duplicate Commands", () => {
 		vi.clearAllMocks()
 	})
 
-	it("prevents duplicate commands", () => {
+	it("prevents duplicate commands", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the autoApprove tab
 		activateTab("autoApprove")
@@ -685,9 +718,12 @@ describe("SettingsView - Duplicate Commands", () => {
 		expect(commands).toHaveLength(1)
 	})
 
-	it("saves allowed commands when clicking Save", () => {
+	it("saves allowed commands when clicking Save", async () => {
 		// Render once and get the activateTab helper
 		const { activateTab, getSettingsContent } = renderSettingsView()
+
+		// Wait for initial state hydration to complete
+		await new Promise((resolve) => setTimeout(resolve, 50))
 
 		// Activate the autoApprove tab
 		activateTab("autoApprove")

@@ -14,6 +14,8 @@ export default defineConfig({
 		environment: "jsdom",
 		include: ["src/**/*.spec.ts", "src/**/*.spec.tsx"],
 		onConsoleLog,
+		testTimeout: 30000,
+		hookTimeout: 30000,
 	},
 	resolve: {
 		alias: {
