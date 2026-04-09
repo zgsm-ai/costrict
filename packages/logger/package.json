@@ -1,6 +1,6 @@
 {
-	"name": "@roo-code/telemetry",
-	"description": "CoStrict telemetry service and clients.",
+	"name": "@roo-code/logger",
+	"description": "VS Code-backed logger utilities for CoStrict.",
 	"version": "0.0.0",
 	"type": "module",
 	"exports": {
@@ -15,13 +15,6 @@
 		"check-types": "tsc --noEmit",
 		"test": "vitest run",
 		"clean": "rimraf .turbo"
-	},
-	"dependencies": {
-		"@roo-code/logger": "workspace:^",
-		"@roo-code/types": "workspace:^",
-		"posthog-node": "^5.0.0",
-		"uuid": "^11.1.0",
-		"zod": "^3.25.61"
 	},
 	"devDependencies": {
 		"@roo-code/config-eslint": "workspace:^",

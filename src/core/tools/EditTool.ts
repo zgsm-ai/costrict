@@ -12,8 +12,10 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
+import { getRawTaskReporter } from "../costrict/telemetry"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { readFileWithEncodingDetection } from "../../utils/encoding"
 
 interface EditParams {
 	file_path: string
@@ -89,7 +91,7 @@ export class EditTool extends BaseTool<"edit"> {
 
 			let fileContent: string
 			try {
-				fileContent = await fs.readFile(absolutePath, "utf8")
+				fileContent = await readFileWithEncodingDetection(absolutePath)
 				// Normalize line endings to LF for consistent matching
 				fileContent = fileContent.replace(/\r\n/g, "\n")
 			} catch (error) {
@@ -222,6 +224,11 @@ export class EditTool extends BaseTool<"edit"> {
 			if (relPath) {
 				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
 			}
+			getRawTaskReporter()?.captureDiffEntry(task.taskId, {
+				label: relPath,
+				before: fileContent,
+				after: newContent,
+			})
 
 			task.didEditFile = true
 

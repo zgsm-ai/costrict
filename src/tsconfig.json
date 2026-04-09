@@ -1,5 +1,9 @@
 {
 	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@roo-code/logger": ["../packages/logger/src/index.ts"]
+		},
 		"types": ["vitest/globals"],
 		"esModuleInterop": true,
 		"experimentalDecorators": true,

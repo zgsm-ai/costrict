@@ -17,8 +17,10 @@ import { convertNewFileToUnifiedDiff, computeDiffStats, sanitizeUnifiedDiff } fr
 import type { ToolUse } from "../../shared/tools"
 import { TelemetryService } from "@roo-code/telemetry"
 import { getLanguage } from "../../utils/file"
+import { getRawTaskReporter } from "../costrict/telemetry"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { readFileWithEncodingDetection } from "../../utils/encoding"
 
 interface WriteToFileParams {
 	path: string
@@ -118,7 +120,7 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 				task.diffViewProvider.editType = fileExists ? "modify" : "create"
 				if (fileExists) {
 					const absolutePath = path.resolve(task.cwd, relPath)
-					task.diffViewProvider.originalContent = await fs.readFile(absolutePath, "utf-8")
+					task.diffViewProvider.originalContent = await readFileWithEncodingDetection(absolutePath)
 				} else {
 					task.diffViewProvider.originalContent = ""
 				}
@@ -182,6 +184,11 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			if (relPath) {
 				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
 			}
+			getRawTaskReporter()?.captureDiffEntry(task.taskId, {
+				label: relPath,
+				before: task.diffViewProvider.originalContent || "",
+				after: newContent,
+			})
 
 			task.didEditFile = true
 

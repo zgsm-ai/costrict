@@ -12,8 +12,10 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { EXPERIMENT_IDS, experiments } from "../../shared/experiments"
 import { sanitizeUnifiedDiff, computeDiffStats } from "../diff/stats"
 import type { ToolUse } from "../../shared/tools"
+import { getRawTaskReporter } from "../costrict/telemetry"
 
 import { BaseTool, ToolCallbacks } from "./BaseTool"
+import { readFileWithEncodingDetection } from "../../utils/encoding"
 
 interface EditFileParams {
 	file_path: string
@@ -231,7 +233,7 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			// Read file or determine if creating new
 			if (fileExists) {
 				try {
-					currentContent = await fs.readFile(absolutePath, "utf8")
+					currentContent = await readFileWithEncodingDetection(absolutePath)
 					originalEol = detectLineEnding(currentContent)
 					// Normalize line endings to LF for matching
 					currentContentLF = normalizeToLF(currentContent)
@@ -453,6 +455,11 @@ export class EditFileTool extends BaseTool<"edit_file"> {
 			if (relPath) {
 				await task.fileContextTracker.trackFileContext(relPath, "roo_edited" as RecordSource)
 			}
+			getRawTaskReporter()?.captureDiffEntry(task.taskId, {
+				label: relPath,
+				before: currentContent ?? "",
+				after: newContent,
+			})
 
 			task.didEditFile = true
 
