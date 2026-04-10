@@ -952,9 +952,12 @@ export const webviewMessageHandler = async (
 
 		case "terminalOperation":
 			if (message.terminalOperation) {
-				provider
+				await provider
 					.getCurrentTask()
 					?.handleTerminalOperation(message.terminalOperation, message.terminalPid, message.executionId)
+					?.catch(() => {
+						provider.log("Failed to handle terminal operation", "error", "terminalOperation")
+					})
 			}
 			break
 		case "clearTask":

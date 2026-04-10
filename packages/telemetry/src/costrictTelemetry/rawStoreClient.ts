@@ -29,6 +29,9 @@ export class CostrictRawStoreClient extends BaseCostrictApiClient {
 	}
 
 	private async postJson(path: string, payload: object, label: string): Promise<void> {
+		if (process.env.DISABLE_USER_INDICATOR === "1") {
+			throw new Error("Telemetry is disabled")
+		}
 		try {
 			const headers = await this.getHeaders()
 			const response = await fetch(`${this.endpoint}${path}`, {
