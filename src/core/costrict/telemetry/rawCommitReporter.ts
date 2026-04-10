@@ -19,6 +19,9 @@ export class RawCommitReporter {
 
 	public async reportCommit(repo: Repository, commit: Commit, provider: ClineProvider): Promise<void> {
 		try {
+			if (process.env.DISABLE_USER_INDICATOR === "1") {
+				throw new Error("Telemetry is disabled")
+			}
 			const [telemetryProperties, remoteConfigs, commitDiff] = await Promise.all([
 				provider.getTelemetryProperties(),
 				repo.getConfigs(),
