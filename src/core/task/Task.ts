@@ -327,6 +327,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	terminalProcess?: RooTerminalProcess
 	currentProcessPid?: number // Persisted PID for reliable process cancellation
 	persistedTerminalProcess?: RooTerminalProcess // Persisted process reference for continue operation
+	currentTerminalExecutionId?: string // Track active executionId to guard against stale abort requests
 
 	// Editing
 	diffViewProvider: DiffViewProvider
@@ -1881,7 +1882,17 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		if (terminalOperation === "continue") {
 			_process?.continue()
 		} else if (terminalOperation === "abort") {
+			// If the caller identifies a specific execution, validate it matches the
+			// currently active one. This prevents a stale command card's Stop button
+			// from killing a newer command that started after the card was rendered.
+			if (executionId && this.currentTerminalExecutionId && executionId !== this.currentTerminalExecutionId) {
+				console.warn(
+					`[Task#handleTerminalOperation] Ignoring abort for stale executionId=${executionId}, current=${this.currentTerminalExecutionId}`,
+				)
+				return
+			}
 			_process?.abort()
+			this.currentTerminalExecutionId = undefined
 		}
 	}
 

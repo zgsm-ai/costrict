@@ -955,8 +955,8 @@ export const webviewMessageHandler = async (
 				await provider
 					.getCurrentTask()
 					?.handleTerminalOperation(message.terminalOperation, message.terminalPid, message.executionId)
-					?.catch(() => {
-						provider.log("Failed to handle terminal operation", "error", "terminalOperation")
+					?.catch((err) => {
+						provider.log(`Failed to handle terminal operation: ${err.message}`, "error", "terminalOperation")
 					})
 			}
 			break

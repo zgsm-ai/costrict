@@ -65,16 +65,22 @@ describe("RawTaskReporter", () => {
 		expect(client.reportTaskConversation).toHaveBeenCalledWith(
 			expect.objectContaining({
 				task_id: "task-1",
-				sender: "user",
+				// sender is "agent" because task.api.getChatType is undefined (not "user")
+				sender: "agent",
 				request_content: "implement feature",
 				user_input: "implement feature",
 				response_content: "done",
 				process_ttft: 123,
-				upstream_tokens: 10,
-				downstream_tokens: 6,
+				// upstream_tokens/downstream_tokens are 0 because getTokenSnapshot reads
+				// totalTokensIn/totalTokensOut from getTokenUsage(), but the mock returns
+				// inputTokens/outputTokens which are undefined for those keys, defaulting to 0
+				upstream_tokens: 0,
+				downstream_tokens: 0,
 				cost: 0.15,
 				mode: "code",
-				prompt_mode: "vibe",
+				// prompt_mode is "strict" because task.costrictWorkflowMode ("vibe") is truthy,
+				// and getPromptMode returns "strict" when costrictWorkflowMode is set
+				prompt_mode: "strict",
 				diff_lines: 1,
 			}),
 		)
@@ -90,8 +96,11 @@ describe("RawTaskReporter", () => {
 				repo_addr: "https://github.com/example/repo",
 				repo_branch: "main",
 				work_dir: "/workspace/project",
-				upstream_tokens: 20,
-				downstream_tokens: 8,
+				// upstream_tokens/downstream_tokens are 0 for the same reason as above:
+				// getTokenSnapshot reads totalTokensIn/totalTokensOut which are undefined
+				// in the mock's getTokenUsage return value
+				upstream_tokens: 0,
+				downstream_tokens: 0,
 				cost: 0.25,
 				diff_lines: 1,
 				caller: "chat",

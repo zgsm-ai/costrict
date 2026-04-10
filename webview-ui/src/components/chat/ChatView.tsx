@@ -307,7 +307,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		return !!(inputValue && inputValue?.trim().length > 0 && clineAsk === "followup")
 	}, [inputValue, clineAsk])
 	const isAutoCommandRuning = useMemo(
-		() => alwaysAllowExecute && autoApprovalEnabled && clineAsk === "command",
+		// Include 'command_output' so the Stop button stays active while a command
+		// is actively running and producing output (ask transitions from "command"
+		// to "command_output" once execution begins).
+		() => alwaysAllowExecute && autoApprovalEnabled && (clineAsk === "command" || clineAsk === "command_output"),
 		[alwaysAllowExecute, autoApprovalEnabled, clineAsk],
 	)
 	// Cancel auto-approval timeout when user starts typing
@@ -965,8 +968,11 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					}
 					break
 				case "command_output":
+					// Do NOT optimistically clear UI state here. If we clear clineAsk/enableButtons
+					// before the backend confirms the abort and pushes a new state, the UI will
+					// freeze permanently (no button, no input). Let the backend drive the transition.
 					vscode.postMessage({ type: "terminalOperation", terminalOperation: "abort" })
-					break
+					return
 			}
 			setSendingDisabled(true)
 			setClineAsk(undefined)
@@ -974,7 +980,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		},
 		[isStreaming, clineAsk, startNewTask, userFeedback],
 	)
-
 	const { info: model } = useSelectedModel(apiConfiguration)
 
 	const selectImages = useCallback(() => vscode.postMessage({ type: "selectImages" }), [])

@@ -219,7 +219,6 @@ export class ExecaTerminalProcess extends BaseTerminalProcess {
 				try {
 					process.kill(this.pid, "SIGKILL")
 				} catch (e) {
-					// "error"
 					if (e.code === "ESRCH") {
 						const error = new Error(
 							t("common:errors.command_esrch", { pid: this.pid, command: this.command }),

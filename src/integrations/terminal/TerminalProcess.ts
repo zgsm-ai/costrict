@@ -281,10 +281,10 @@ export class TerminalProcess extends BaseTerminalProcess {
 	}
 
 	public override abort() {
-		if (this.isListening) {
-			// Send SIGINT using CTRL+C
-			this.terminal.terminal.sendText("\x03")
-		}
+		// Always send SIGINT regardless of isListening state.
+		// After continue() sets isListening=false, the terminal process may still
+		// be running in the background; we must be able to interrupt it at any time.
+		this.terminal.terminal.sendText("\x03")
 	}
 
 	public override hasUnretrievedOutput(): boolean {
