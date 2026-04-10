@@ -2,6 +2,14 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.6.6]
+
+- Fix prevent stale abort requests from killing newly started commands (#1126)
+- Fix terminal abort logic to ensure background processes can still be interrupted after continue (#1126)
+- Fix Stop button not available during auto-approved command execution (#1126)
+- Fix UI freeze on command output interruption, switch to backend-driven state transitions (#1126)
+- Fix known issues
+
 ## [2.6.5]
 
 - Add raw telemetry reporting for Costrict tasks and commits
