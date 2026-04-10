@@ -31,9 +31,10 @@ interface CommandExecutionProps {
 	text?: string
 	icon?: JSX.Element | null
 	title?: JSX.Element | null
+	onCommandStop?: () => void
 }
 
-export const CommandExecution = ({ executionId, text, icon, title }: CommandExecutionProps) => {
+export const CommandExecution = ({ executionId, text, icon, title, onCommandStop }: CommandExecutionProps) => {
 	const {
 		// terminalShellIntegrationDisabled = false,
 		allowedCommands = [],
@@ -198,7 +199,7 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 									<Button
 										variant="ghost"
 										size="icon"
-										onClick={() =>
+										onClick={() => {
 											vscode.postMessage({
 												type: "terminalOperation",
 												terminalOperation: "abort",
@@ -206,7 +207,8 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 												executionId: status?.executionId ?? executionId,
 												terminalCommand: command,
 											})
-										}>
+											onCommandStop?.()
+										}}>
 										<OctagonX className="size-4" />
 									</Button>
 								</StandardTooltip>

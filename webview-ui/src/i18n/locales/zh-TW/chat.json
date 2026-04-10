@@ -286,7 +286,7 @@
 	},
 	"commandOutput": "命令輸出",
 	"commandExecution": {
-		"abort": "中止",
+		"abort": "終止",
 		"running": "執行中",
 		"pid": "PID: {{pid}}",
 		"exitStatus": "已結束，狀態碼 {{exitCode}}",
@@ -298,7 +298,7 @@
 		"removeFromAllowed": "從允許清單中移除",
 		"addToDenied": "新增至拒絕清單",
 		"removeFromDenied": "從拒絕清單中移除",
-		"abortCommand": "中止命令執行",
+		"abortCommand": "終止命令執行",
 		"expandOutput": "展開輸出",
 		"collapseOutput": "摺疊輸出",
 		"expandManagement": "展開命令管理部分",

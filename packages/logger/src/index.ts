@@ -29,6 +29,7 @@ export interface LoggerOptions {
  * Injectable / replaceable logger interface for easy unit test mocking
  */
 export interface ILogger {
+	readonly channel: vscode.OutputChannel
 	debug(message: unknown, ...args: unknown[]): void
 	info(message: unknown, ...args: unknown[]): void
 	warn(message: unknown, ...args: unknown[]): void
@@ -46,7 +47,7 @@ const loggerRegistry = new Map<string, ChannelLogger>()
  * Factory function: Get (or create) VS Code Logger instance.
  * Always returns the same instance for loggers with the same name.
  */
-export function createLogger(name: string = DEFAULT_LOGGER_NAME, options: LoggerOptions = {}): ChannelLogger {
+export function createLogger(name: string = DEFAULT_LOGGER_NAME, options: LoggerOptions = {}): ILogger {
 	const cached = loggerRegistry.get(name)
 	if (cached) {
 		return cached

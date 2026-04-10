@@ -146,14 +146,15 @@ describe("WorkspaceEventMonitor", () => {
 		}
 		monitor.setProvider(mockClineProvider as any)
 
-		// Mock logger
-		mockLogger = {
-			info: vi.fn(),
-			warn: vi.fn(),
-			error: vi.fn(),
-			debug: vi.fn(),
-			dispose: vi.fn(),
-		}
+				// Mock logger
+				mockLogger = {
+					channel: {} as any,
+					info: vi.fn(),
+					warn: vi.fn(),
+					error: vi.fn(),
+					debug: vi.fn(),
+					dispose: vi.fn(),
+				}
 		monitor.setLogger(mockLogger)
 
 		// Replace the ignoreController instance

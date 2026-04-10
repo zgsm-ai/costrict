@@ -137,6 +137,7 @@ interface ChatRowProps {
 	onBatchFileResponse?: (response: { [key: string]: boolean }) => void
 	onFollowUpUnmount?: () => void
 	onMultipleChoiceUnmount?: () => void
+	onCommandStop?: () => void
 	isFollowUpAnswered?: boolean
 	isMultipleChoiceAnswered?: boolean
 	isFollowUpAutoApprovalPaused?: boolean
@@ -207,6 +208,7 @@ export const ChatRowContent = ({
 	onFollowUpUnmount,
 	//costrict: plumb multiple_choice auto-approval cancellation callback through ChatRowContent
 	onMultipleChoiceUnmount,
+	onCommandStop,
 	onBatchFileResponse,
 	isFollowUpAnswered,
 	isMultipleChoiceAnswered,
@@ -2127,6 +2129,7 @@ export const ChatRowContent = ({
 							executionId={message.ts.toString()}
 							text={message.text}
 							icon={icon}
+							onCommandStop={onCommandStop}
 							title={title}
 						/>
 					)
