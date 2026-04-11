@@ -2,6 +2,14 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.7.0]
+
+- Optimize performance
+- Optimize ChatView component rendering
+- Refactor provider settings to support custom values via ContextProxy
+- Fix CodeReviewService createTask mode parameter passing
+- Fix known issues
+
 ## [2.6.6]
 
 - Fix prevent stale abort requests from killing newly started commands (#1126)
@@ -35,31 +43,4 @@
 - Refactor CLI: improve terminal scroll and navigation experience (PR #1111)
 - Refactor auto-approval: enhance timeout with delay and cancel types (PR #1109)
 - Add question tool v2 for enhanced interaction (PR #1108)
-- Fix known issues
-
-## [2.6.2]
-
-- Prevent auto-scroll when editing text (PR #1106)
-- Add exit handler to properly kill PTY process (PR #1103)
-- Fix known issues
-
-## [2.6.1]
-
-- Add repository URL to API requests for better tracking and context (PR #1101)
-- Fix known issues
-
-## [2.6.0]
-
-- **BREAKING**: Rename provider namespace from "zgsm" to "costrict" across entire codebase (PR #1091)
-- Update prompts to v6 with role definitions for workflow modes and simplified prompt sections (PR #1092, #1093, #1094, #1095, #1096)
-- Add custom storage path option for checkpoints (PR #1097)
-- Add fixHistory to reset task history index (PR #1089)
-- Add workflow spec scope and migrate cli-wrap module
-- Optimize agent workflow by enabling direct completion for simple queries
-- Rename experimental setting alwaysIncludeFileDetails to useKPTtree and enhance logic
-- Add fallback to default base URL for provider configuration
-- Add auth service error handling and token timestamp
-- Update tool descriptions for improved clarity
-- Update mocks and snapshots for costrict namespace migration (PR #1098)
-- Update internationalization support across multiple languages
 - Fix known issues

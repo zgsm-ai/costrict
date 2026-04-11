@@ -70,6 +70,7 @@ describe("Task token usage throttling", () => {
 		vi.useFakeTimers()
 
 		// Mock provider
+		// Mock provider
 		mockProvider = {
 			context: {
 				globalStorageUri: { fsPath: "/test/path" },
@@ -78,9 +79,10 @@ describe("Task token usage throttling", () => {
 			log: vi.fn(),
 			postStateToWebview: vi.fn().mockResolvedValue(undefined),
 			postStateToWebviewWithoutTaskHistory: vi.fn().mockResolvedValue(undefined),
+			postMessageToWebview: vi.fn().mockResolvedValue(undefined),
 			updateTaskHistory: vi.fn().mockResolvedValue(undefined),
+			off: vi.fn(),
 		}
-
 		// Mock API configuration
 		mockApiConfiguration = {
 			apiProvider: "anthropic",
@@ -222,41 +224,40 @@ describe("Task token usage throttling", () => {
 			task.toolUsage, // toolUsage
 		)
 	})
-
-	test("abortTask waits for final task history update to finish", async () => {
-		const updateTaskHistoryDeferred = (() => {
-			let resolve: (() => void) | undefined
-			const promise = new Promise<void>((res) => {
-				resolve = res
-			})
-			return { promise, resolve: resolve! }
-		})()
-
-		mockProvider.updateTaskHistory.mockImplementation(() => updateTaskHistoryDeferred.promise)
-
-		await (task as any).addToClineMessages({
-			ts: Date.now(),
-			type: "say",
-			say: "text",
-			text: "Message before abort",
+test("abortTask waits for final task history update to finish", async () => {
+	const updateTaskHistoryDeferred = (() => {
+		let resolve: (() => void) | undefined
+		const promise = new Promise<void>((res) => {
+			resolve = res
 		})
+		return { promise, resolve: resolve! }
+	})()
 
-		const abortPromise = task.abortTask()
-		await Promise.resolve()
-
-		let resolved = false
-		abortPromise.then(() => {
-			resolved = true
-		})
-
-		await Promise.resolve()
-		expect(resolved).toBe(false)
-
-		updateTaskHistoryDeferred.resolve()
-		await abortPromise
-		expect(resolved).toBe(true)
-		expect(mockProvider.updateTaskHistory).toHaveBeenCalled()
+	await (task as any).addToClineMessages({
+		ts: Date.now(),
+		type: "say",
+		say: "text",
+		text: "Message before abort",
 	})
+
+	mockProvider.updateTaskHistory.mockImplementation(() => updateTaskHistoryDeferred.promise)
+
+	const abortPromise = task.abortTask()
+	await Promise.resolve()
+
+	let resolved = false
+	abortPromise.then(() => {
+		resolved = true
+	})
+
+	await Promise.resolve()
+	expect(resolved).toBe(false)
+
+	updateTaskHistoryDeferred.resolve()
+	await abortPromise
+	expect(resolved).toBe(true)
+	expect(mockProvider.updateTaskHistory).toHaveBeenCalled()
+})
 
 	test("should force final emission on task abort", async () => {
 		const emitSpy = vi.spyOn(task, "emit")
@@ -295,24 +296,35 @@ describe("Task token usage throttling", () => {
 	})
 
 	test("should recompute token usage when an existing message is updated in place", async () => {
-		await (task as any).addToClineMessages({
+		// getTokenUsage uses clineMessages.slice(1), so add a dummy first message
+		task.clineMessages.push({
 			ts: Date.now(),
 			type: "say",
 			say: "text",
-			text: "short",
-			partial: true,
+			text: "Task description",
+		})
+
+		// Add the api_req_started message with initial token values
+		task.clineMessages.push({
+			ts: Date.now() + 1,
+			type: "say",
+			say: "api_req_started",
+			text: JSON.stringify({ tokensIn: 100, tokensOut: 50, cacheWrites: 0, cacheReads: 0, cost: 0.01 }),
 		})
 
 		const initialUsage = task.getTokenUsage()
+		expect(initialUsage.totalTokensIn).toBe(100)
+		expect(initialUsage.totalTokensOut).toBe(50)
+
 		const lastMessage = task.clineMessages.at(-1)
 		expect(lastMessage).toBeDefined()
 
-		lastMessage!.text = "short message expanded into a much longer body for token recomputation coverage"
+		lastMessage!.text = JSON.stringify({ tokensIn: 200, tokensOut: 100, cacheWrites: 0, cacheReads: 0, cost: 0.02 })
 		await (task as any).updateClineMessage(lastMessage!)
 
 		const updatedUsage = task.getTokenUsage()
 		expect(updatedUsage).not.toEqual(initialUsage)
-		expect(updatedUsage.contextTokens).toBeGreaterThan(initialUsage.contextTokens)
+		expect(updatedUsage.totalTokensIn).toBeGreaterThan(initialUsage.totalTokensIn)
 	})
 
 	test("should update tokenUsageSnapshot when throttled emission occurs", async () => {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { RawTaskReporter } from "./rawTaskReporter"
 
@@ -21,8 +21,17 @@ vi.mock("../../../shared/package", () => ({
 }))
 
 describe("RawTaskReporter", () => {
+	const originalDisableUserIndicator = process.env.DISABLE_USER_INDICATOR
+
 	beforeEach(() => {
+		delete process.env.DISABLE_USER_INDICATOR
 		vi.clearAllMocks()
+	})
+
+	afterEach(() => {
+		if (originalDisableUserIndicator !== undefined) {
+			process.env.DISABLE_USER_INDICATOR = originalDisableUserIndicator
+		}
 	})
 
 	it("stores request context without immediately emitting a separate user conversation payload", async () => {

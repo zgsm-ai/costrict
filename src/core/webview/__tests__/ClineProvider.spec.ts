@@ -27,6 +27,22 @@ import { MessageManager } from "../../message-manager"
 
 // Mock setup must come before imports.
 vi.mock("../../prompts/sections/custom-instructions")
+vi.mock("../../../i18n", () => ({
+	t: vi.fn((key: string) => {
+		const map: Record<string, string> = {
+			"common:answers.yes": "Yes",
+			"common:confirmation.reset_state": "Reset state?",
+			"common:confirmation.reset_codebase": "Reset codebase?",
+		}
+		if (map[key]) return map[key]
+		// i18next strips namespace prefix when returning fallback
+		const colonIdx = key.indexOf(":")
+		return colonIdx >= 0 ? key.substring(colonIdx + 1) : key
+	}),
+	initializeI18n: vi.fn(),
+	getCurrentLanguage: vi.fn(() => "en"),
+	changeLanguage: vi.fn(),
+}))
 
 // Mock Package module
 vi.mock("../../shared/package", () => ({
@@ -44,13 +60,20 @@ vi.mock("p-wait-for", () => ({
 	default: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock("fs/promises", () => ({
-	mkdir: vi.fn().mockResolvedValue(undefined),
-	writeFile: vi.fn().mockResolvedValue(undefined),
-	readFile: vi.fn().mockResolvedValue(""),
-	unlink: vi.fn().mockResolvedValue(undefined),
-	rmdir: vi.fn().mockResolvedValue(undefined),
-}))
+vi.mock("fs/promises", () => {
+	const mock = {
+		mkdir: vi.fn().mockResolvedValue(undefined),
+		writeFile: vi.fn().mockResolvedValue(undefined),
+		readFile: vi.fn().mockResolvedValue(""),
+		unlink: vi.fn().mockResolvedValue(undefined),
+		rmdir: vi.fn().mockResolvedValue(undefined),
+		rm: vi.fn().mockResolvedValue(undefined),
+	}
+	return {
+		...mock,
+		default: mock,
+	}
+})
 
 vi.mock("axios", () => ({
 	default: {
@@ -76,6 +99,7 @@ vi.mock("../../../utils/storage", () => ({
 	getSettingsDirectoryPath: vi.fn().mockResolvedValue("/test/settings/path"),
 	getTaskDirectoryPath: vi.fn().mockResolvedValue("/test/task/path"),
 	getGlobalStoragePath: vi.fn().mockResolvedValue("/test/storage/path"),
+	getStorageBasePath: vi.fn().mockResolvedValue("/test/storage/path"),
 }))
 
 vi.mock("@modelcontextprotocol/sdk/types.js", () => ({
@@ -199,6 +223,11 @@ vi.mock("vscode", async (importOriginal) => ({
 		Development: 2,
 		Test: 3,
 	},
+	ConfigurationTarget: {
+		Global: 1,
+		Workspace: 2,
+		WorkspaceFolder: 3,
+	},
 	RelativePattern: vi.fn().mockImplementation((base, pattern) => ({ base, pattern })),
 	version: "1.85.0",
 }))
@@ -241,6 +270,7 @@ vi.mock("../../task/Task", () => ({
 		setRootTask: vi.fn(),
 		taskId: options?.historyItem?.id || "test-task-id",
 		emit: vi.fn(),
+		start: vi.fn(),
 	})),
 }))
 
@@ -371,6 +401,7 @@ describe("ClineProvider", () => {
 				setRootTask: vi.fn(),
 				taskId: options?.historyItem?.id || "test-task-id",
 				emit: vi.fn(),
+				start: vi.fn(),
 			}
 
 			Object.defineProperty(task, "messageManager", {
@@ -437,6 +468,7 @@ describe("ClineProvider", () => {
 		const mockCustomModesManager = {
 			updateCustomMode: vi.fn().mockResolvedValue(undefined),
 			getCustomModes: vi.fn().mockResolvedValue([]),
+			resetCustomModes: vi.fn().mockResolvedValue(undefined),
 			dispose: vi.fn(),
 		}
 
@@ -1062,6 +1094,9 @@ describe("ClineProvider", () => {
 		const first = await provider.getState()
 		expect(first.customModes).toHaveLength(1)
 
+		// resetState shows a modal confirmation; mock the user clicking "Yes"
+		;(vscode.window.showInformationMessage as any).mockResolvedValue("Yes")
+
 		await provider.resetState()
 		const second = await provider.getState()
 		expect(second.customModes).toEqual([])
@@ -1070,6 +1105,9 @@ describe("ClineProvider", () => {
 	})
 
 	test("getState reuses cached merged command lists between calls", async () => {
+		// Pre-cache customStoragePath so getCachedCustomStoragePath doesn't call getConfiguration
+		;(provider as any).cachedCustomStoragePath = ""
+
 		const getConfigurationMock = vi.mocked(vscode.workspace.getConfiguration)
 		const allowedGet = vi
 			.fn()
@@ -1082,8 +1120,8 @@ describe("ClineProvider", () => {
 				}) as any,
 		)
 
-		await provider.getState()
-		await provider.getState()
+		await provider.getStateToPostToWebview()
+		await provider.getStateToPostToWebview()
 
 		expect(allowedGet).toHaveBeenCalledWith("allowedCommands")
 		expect(allowedGet).toHaveBeenCalledWith("deniedCommands")
@@ -1092,6 +1130,9 @@ describe("ClineProvider", () => {
 	})
 
 	test("createTask invalidates cached merged command lists when commands change", async () => {
+		// Pre-cache customStoragePath so getCachedCustomStoragePath doesn't call getConfiguration
+		;(provider as any).cachedCustomStoragePath = ""
+
 		const getConfigurationMock = vi.mocked(vscode.workspace.getConfiguration)
 		const configUpdate = vi.fn().mockResolvedValue(undefined)
 		const configGet = vi
@@ -1108,7 +1149,7 @@ describe("ClineProvider", () => {
 				}) as any,
 		)
 
-		await provider.getState()
+		await provider.getStateToPostToWebview()
 		await provider.createTask(
 			undefined,
 			undefined,
@@ -1119,7 +1160,7 @@ describe("ClineProvider", () => {
 				deniedCommands: ["global-deny"],
 			},
 		)
-		const state = await provider.getState()
+		const state = await provider.getStateToPostToWebview()
 
 		expect(state.allowedCommands).toEqual(["global-allow", "workspace-allow-2"])
 		expect(state.deniedCommands).toEqual(["global-deny", "workspace-deny-2"])
@@ -1133,6 +1174,9 @@ describe("ClineProvider", () => {
 	})
 
 	test("workspace configuration cache is reused until invalidated", async () => {
+		// Pre-cache customStoragePath so getCachedCustomStoragePath doesn't call getConfiguration
+		;(provider as any).cachedCustomStoragePath = ""
+
 		const getConfigurationMock = vi.mocked(vscode.workspace.getConfiguration)
 		const configGet = vi
 			.fn()
@@ -1145,8 +1189,8 @@ describe("ClineProvider", () => {
 				}) as any,
 		)
 
-		await provider.getState()
-		await provider.getState()
+		await provider.getStateToPostToWebview()
+		await provider.getStateToPostToWebview()
 
 		expect(getConfigurationMock).toHaveBeenCalledTimes(2)
 		expect(configGet).toHaveBeenCalledTimes(2)
@@ -1160,13 +1204,16 @@ describe("ClineProvider", () => {
 			affectsConfiguration: (section: string) => section === "costrict.allowedCommands",
 		} as any)
 
-		const state = await provider.getState()
+		const state = await provider.getStateToPostToWebview()
 		expect(state.allowedCommands).toEqual(["workspace-allow-2"])
 		expect(getConfigurationMock).toHaveBeenCalledTimes(3)
 		expect(configGet).toHaveBeenCalledTimes(3)
 	})
 
 	test("workspace configuration change invalidates cached merged commands", async () => {
+		// Pre-cache customStoragePath so getCachedCustomStoragePath doesn't call getConfiguration
+		;(provider as any).cachedCustomStoragePath = ""
+
 		const getConfigurationMock = vi.mocked(vscode.workspace.getConfiguration)
 		const configGet = vi
 			.fn()
@@ -1183,7 +1230,7 @@ describe("ClineProvider", () => {
 		)
 
 		await provider.resolveWebviewView(mockWebviewView)
-		await provider.getState()
+		await provider.getStateToPostToWebview()
 
 		const onDidChangeConfiguration = vi.mocked(vscode.workspace.onDidChangeConfiguration)
 		const listener = onDidChangeConfiguration.mock.calls.at(-1)?.[0]
@@ -1191,7 +1238,7 @@ describe("ClineProvider", () => {
 			affectsConfiguration: (section: string) => section === "costrict.allowedCommands",
 		} as any)
 
-		const state = await provider.getState()
+		const state = await provider.getStateToPostToWebview()
 		expect(state.allowedCommands).toEqual(["workspace-allow-2"])
 		expect(state.deniedCommands).toEqual(["workspace-deny"])
 		expect(configGet).toHaveBeenCalledTimes(3)
@@ -2292,6 +2339,9 @@ describe("ClineProvider", () => {
 				]),
 				dispose: vi.fn(),
 			} as any
+
+			// Clear cached custom modes so the new mock is used
+			;(provider as any).cachedCustomModes = undefined
 
 			// Test updating a custom mode
 			await messageHandler({
