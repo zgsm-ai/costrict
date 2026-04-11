@@ -1354,44 +1354,66 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		// }
 	}
 
-	private async saveClineMessages(): Promise<boolean> {
-		try {
-			await saveTaskMessages({
-				messages: structuredClone(this.clineMessages),
-				taskId: this.taskId,
-				globalStoragePath: this.globalStoragePath,
-			})
+	/**
+	 * Throttled save function to reduce serialization overhead during streaming.
+	 * Uses debounce with maxWait to ensure:
+	 * - Immediate first save (leading: true)
+	 * - At most one save per interval during rapid updates (maxWait)
+	 * - Final state is saved when updates stop (trailing: true)
+	 */
+	private debouncedSaveClineMessages = debounce(
+		async (): Promise<boolean> => {
+			try {
+				await saveTaskMessages({
+					messages: structuredClone(this.clineMessages),
+					taskId: this.taskId,
+					globalStoragePath: this.globalStoragePath,
+				})
 
-			if (this._taskApiConfigName === undefined) {
-				await this.taskApiConfigReady
+				if (this._taskApiConfigName === undefined) {
+					await this.taskApiConfigReady
+				}
+
+				const { historyItem, tokenUsage } = await taskMetadata({
+					taskId: this.taskId,
+					rootTaskId: this.rootTaskId,
+					parentTaskId: this.parentTaskId,
+					taskNumber: this.taskNumber,
+					messages: this.clineMessages,
+					globalStoragePath: this.globalStoragePath,
+					workspace: this.cwd,
+					mode: this._taskMode || defaultModeSlug,
+					apiConfigName: this._taskApiConfigName,
+					initialStatus: this.initialStatus,
+				})
+
+				// Emit token/tool usage updates using debounced function
+				this.debouncedEmitTokenUsage(tokenUsage, this.toolUsage)
+
+				await this.providerRef.deref()?.updateTaskHistory(historyItem)
+				return true
+			} catch (error) {
+				console.error("Failed to save CoStrict messages:", error)
+				return false
 			}
+		},
+		100, // 100ms debounce interval
+		{ leading: true, trailing: true, maxWait: 100 },
+	)
 
-			const { historyItem, tokenUsage } = await taskMetadata({
-				taskId: this.taskId,
-				rootTaskId: this.rootTaskId,
-				parentTaskId: this.parentTaskId,
-				taskNumber: this.taskNumber,
-				messages: this.clineMessages,
-				globalStoragePath: this.globalStoragePath,
-				workspace: this.cwd,
-				mode: this._taskMode || defaultModeSlug, // Use the task's own mode, not the current provider mode.
-				apiConfigName: this._taskApiConfigName, // Use the task's own provider profile, not the current provider profile.
-				initialStatus: this.initialStatus,
-			})
+	private async saveClineMessages(): Promise<boolean> {
+		// Use the debounced version to reduce serialization overhead during streaming,
+		// but still await the underlying persistence/updateTaskHistory work when callers
+		// need a durable final state (for example during abort/dispose flows).
+		return (await this.debouncedSaveClineMessages()) ?? true
+	}
 
-			// Emit token/tool usage updates using debounced function
-			// The debounce with maxWait ensures:
-			// - Immediate first emit (leading: true)
-			// - At most one emit per interval during rapid updates (maxWait)
-			// - Final state is emitted when updates stop (trailing: true)
-			this.debouncedEmitTokenUsage(tokenUsage, this.toolUsage)
-
-			await this.providerRef.deref()?.updateTaskHistory(historyItem)
-			return true
-		} catch (error) {
-			console.error("Failed to save CoStrict messages:", error)
-			return false
-		}
+	/**
+	 * Flush any pending debounced save operations immediately.
+	 * Used when the task is being disposed or when we need to ensure data is persisted.
+	 */
+	private async flushDebouncedSaveClineMessages(): Promise<boolean> {
+		return (await this.debouncedSaveClineMessages.flush()) ?? true
 	}
 
 	private findMessageByTimestamp(ts: number): ClineMessage | undefined {
@@ -2554,6 +2576,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		}
 		// Save the countdown message in the automatic retry or other content.
 		try {
+			// Flush any pending debounced saves before saving final state
+			await this.flushDebouncedSaveClineMessages()
 			// Save the countdown message in the automatic retry or other content.
 			await this.saveClineMessages()
 		} catch (error) {
@@ -2582,6 +2606,14 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 		} catch (error) {
 			console.error("Error removing provider profile change listener:", error)
+		}
+
+		// Clear mistake tracking Maps to prevent memory leaks
+		try {
+			this.consecutiveMistakeCountForApplyDiff.clear()
+			this.consecutiveMistakeCountForEditFile.clear()
+		} catch (error) {
+			console.error("Error clearing mistake tracking maps:", error)
 		}
 
 		// Dispose message queue and remove event listeners.
@@ -5247,8 +5279,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 	public async checkpointDiff(options: CheckpointDiffOptions) {
 		return checkpointDiff(this, options)
 	}
-
-	// Metrics
 
 	public combineMessages(messages: ClineMessage[]) {
 		return combineApiRequests(combineCommandSequences(messages))

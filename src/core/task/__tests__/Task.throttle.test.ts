@@ -223,6 +223,41 @@ describe("Task token usage throttling", () => {
 		)
 	})
 
+	test("abortTask waits for final task history update to finish", async () => {
+		const updateTaskHistoryDeferred = (() => {
+			let resolve: (() => void) | undefined
+			const promise = new Promise<void>((res) => {
+				resolve = res
+			})
+			return { promise, resolve: resolve! }
+		})()
+
+		mockProvider.updateTaskHistory.mockImplementation(() => updateTaskHistoryDeferred.promise)
+
+		await (task as any).addToClineMessages({
+			ts: Date.now(),
+			type: "say",
+			say: "text",
+			text: "Message before abort",
+		})
+
+		const abortPromise = task.abortTask()
+		await Promise.resolve()
+
+		let resolved = false
+		abortPromise.then(() => {
+			resolved = true
+		})
+
+		await Promise.resolve()
+		expect(resolved).toBe(false)
+
+		updateTaskHistoryDeferred.resolve()
+		await abortPromise
+		expect(resolved).toBe(true)
+		expect(mockProvider.updateTaskHistory).toHaveBeenCalled()
+	})
+
 	test("should force final emission on task abort", async () => {
 		const emitSpy = vi.spyOn(task, "emit")
 
@@ -257,6 +292,27 @@ describe("Task token usage throttling", () => {
 
 		// TaskTokenUsageUpdated should come before TaskAborted
 		expect(tokenUsageUpdateIndex).toBeLessThan(taskAbortedIndex)
+	})
+
+	test("should recompute token usage when an existing message is updated in place", async () => {
+		await (task as any).addToClineMessages({
+			ts: Date.now(),
+			type: "say",
+			say: "text",
+			text: "short",
+			partial: true,
+		})
+
+		const initialUsage = task.getTokenUsage()
+		const lastMessage = task.clineMessages.at(-1)
+		expect(lastMessage).toBeDefined()
+
+		lastMessage!.text = "short message expanded into a much longer body for token recomputation coverage"
+		await (task as any).updateClineMessage(lastMessage!)
+
+		const updatedUsage = task.getTokenUsage()
+		expect(updatedUsage).not.toEqual(initialUsage)
+		expect(updatedUsage.contextTokens).toBeGreaterThan(initialUsage.contextTokens)
 	})
 
 	test("should update tokenUsageSnapshot when throttled emission occurs", async () => {

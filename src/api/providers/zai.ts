@@ -52,7 +52,7 @@ export class ZAiHandler extends BaseOpenAiCompatibleProvider<string> {
 	) {
 		const { id: modelId, info } = this.getModel()
 
-		// Check if this is a model with thinking support (e.g. GLM-4.7, GLM-5)
+		// Check if this is a model with thinking support (e.g. GLM-4.7, GLM-5, GLM-5.1)
 		const isThinkingModel = Array.isArray(info.supportsReasoningEffort)
 
 		if (isThinkingModel) {

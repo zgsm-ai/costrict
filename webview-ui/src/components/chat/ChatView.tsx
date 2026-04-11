@@ -1667,22 +1667,25 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		vscode.postMessage({ type: "cancelAutoApproval", values: { cancelType: "multiple_choice_unmount" } })
 	}, [])
 
+	const hasCheckpoint = useMemo(
+		() => modifiedMessages.some((message) => message.say === "checkpoint_saved"),
+		[modifiedMessages],
+	)
+	const lastModifiedMessage = modifiedMessages.at(-1)
+
 	const itemContent = useCallback(
 		(index: number, messageOrGroup: ClineMessage) => {
-			const hasCheckpoint = modifiedMessages.some((message) => message.say === "checkpoint_saved")
-
-			// regular message
 			return (
 				<ChatRow
 					key={messageOrGroup.ts}
 					message={messageOrGroup}
 					isExpanded={expandedRows[messageOrGroup.ts] || false}
-					onToggleExpand={toggleRowExpansion} // This was already stabilized
-					lastModifiedMessage={modifiedMessages.at(-1)} // Original direct access
-					isLast={index === groupedMessages.length - 1} // Original direct access
+					onToggleExpand={toggleRowExpansion}
+					lastModifiedMessage={lastModifiedMessage}
+					isLast={index === groupedMessages.length - 1}
 					onHeightChange={handleRowHeightChange}
 					isStreaming={isStreamingState}
-					onSuggestionClick={handleSuggestionClickInRow} // This was already stabilized
+					onSuggestionClick={handleSuggestionClickInRow}
 					onMultipleChoiceSubmit={handleMultipleChoiceSubmit}
 					onBatchFileResponse={handleBatchFileResponse}
 					onFollowUpUnmount={handleFollowUpUnmount}
@@ -1691,9 +1694,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					isFollowUpAnswered={
 						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentFollowUpTs)
 					}
-					// Costrict: ask_multiple_choice answered
 					isMultipleChoiceAnswered={
-						//costrict: compare against the dedicated multiple_choice watermark instead of the followup one
 						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentMultipleChoiceTs)
 					}
 					editable={
@@ -1720,9 +1721,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			)
 		},
 		[
-			modifiedMessages,
 			expandedRows,
 			toggleRowExpansion,
+			lastModifiedMessage,
 			groupedMessages.length,
 			handleRowHeightChange,
 			isStreamingState,
@@ -1734,13 +1735,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			isFollowUpAutoApprovalPaused,
 			currentFollowUpTs,
 			currentMultipleChoiceTs,
+			enableButtons,
+			primaryButtonText,
 			shouldHighlight,
 			searchResults,
 			showSearch,
 			searchQuery,
+			hasCheckpoint,
 			handleCommandStop,
-			enableButtons,
-			primaryButtonText,
 		],
 	)
 

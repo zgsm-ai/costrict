@@ -637,6 +637,210 @@ describe("ClineProvider", () => {
 		expect(mockPostMessage).not.toHaveBeenCalled()
 	})
 
+	test("postStateToWebview batches multiple calls into a single state push", async () => {
+		vi.useFakeTimers()
+		await provider.resolveWebviewView(mockWebviewView)
+
+		const getStateSpy = vi.spyOn(provider, "getStateToPostToWebview").mockResolvedValue({
+			...(await provider.getState()),
+			clineMessages: [],
+			taskHistory: [],
+		} as any)
+
+		mockPostMessage.mockClear()
+
+		const first = provider.postStateToWebview()
+		const second = provider.postStateToWebview()
+		const third = provider.postStateToWebview()
+
+		expect(getStateSpy).not.toHaveBeenCalled()
+		expect(mockPostMessage).not.toHaveBeenCalled()
+
+		await vi.advanceTimersByTimeAsync(16)
+		await Promise.all([first, second, third])
+
+		expect(getStateSpy).toHaveBeenCalledTimes(1)
+		expect(mockPostMessage).toHaveBeenCalledTimes(1)
+		expect(mockPostMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "state",
+				state: expect.objectContaining({ clineMessagesSeq: 1 }),
+			}),
+		)
+
+		vi.useRealTimers()
+	})
+
+	test("postStateToWebview force mode bypasses batching", async () => {
+		vi.useFakeTimers()
+		await provider.resolveWebviewView(mockWebviewView)
+
+		const getStateSpy = vi.spyOn(provider, "getStateToPostToWebview").mockResolvedValue({
+			...(await provider.getState()),
+			clineMessages: [],
+			taskHistory: [],
+		} as any)
+
+		mockPostMessage.mockClear()
+
+		await provider.postStateToWebview({ force: true })
+
+		expect(getStateSpy).toHaveBeenCalledTimes(1)
+		expect(mockPostMessage).toHaveBeenCalledTimes(1)
+		expect(mockPostMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "state",
+				state: expect.objectContaining({ clineMessagesSeq: 1 }),
+			}),
+		)
+
+		vi.useRealTimers()
+	})
+
+	test("dispose rejects a pending batched state push", async () => {
+		vi.useFakeTimers()
+		await provider.resolveWebviewView(mockWebviewView)
+
+		const pendingPush = provider.postStateToWebview()
+		await provider.dispose()
+
+		await expect(pendingPush).rejects.toThrow("Provider disposed")
+		expect(mockPostMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: "state" }))
+
+		vi.useRealTimers()
+	})
+
+	test("postStateToWebviewWithoutTaskHistory omits taskHistory from the payload", async () => {
+		await provider.resolveWebviewView(mockWebviewView)
+
+		vi.spyOn(provider, "getStateToPostToWebview").mockResolvedValue({
+			...(await provider.getState()),
+			clineMessages: [{ ts: 1, type: "say", say: "text", text: "hello" }] as any,
+			taskHistory: [{ id: "task-1", ts: 1, task: "Task 1" }] as any,
+		} as any)
+
+		mockPostMessage.mockClear()
+		await provider.postStateToWebviewWithoutTaskHistory()
+
+		expect(mockPostMessage).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "state",
+				state: expect.objectContaining({
+					clineMessagesSeq: 1,
+					clineMessages: expect.any(Array),
+				}),
+			}),
+		)
+		const sentState = (mockPostMessage.mock.calls as Array<[any]>).find(
+			(call: [any]) => call[0]?.type === "state",
+		)?.[0]?.state
+		expect(sentState).not.toHaveProperty("taskHistory")
+	})
+
+	test("getStateToPostToWebview can omit taskHistory for lightweight state pushes", async () => {
+		const state = await provider.getStateToPostToWebview({ includeTaskHistory: false })
+		expect(state.taskHistory).toEqual([])
+	})
+
+	test("getStateToPostToWebview can omit clineMessages for lightweight state pushes", async () => {
+		const state = await provider.getStateToPostToWebview({ includeClineMessages: false })
+		expect(state.clineMessages).toEqual([])
+	})
+
+	test("getStateToPostToWebview can omit current task details for lightweight state pushes", async () => {
+		const mockCline = new Task(defaultTaskOptions)
+		Object.defineProperty(mockCline, "taskId", { value: "lightweight-task", writable: true })
+		;(mockCline as any).todoList = [{ id: "todo-1", content: "Todo", status: "pending" }]
+		;(mockCline as any).messageQueueService = { messages: [{ role: "user", content: "queued" }] }
+		await provider.addClineToStack(mockCline)
+		await provider.updateTaskHistory(
+			{
+				id: "lightweight-task",
+				number: 1,
+				ts: Date.now(),
+				task: "Lightweight task",
+				tokensIn: 0,
+				tokensOut: 0,
+				totalCost: 0,
+			},
+			{ broadcast: false },
+		)
+
+		const state = await provider.getStateToPostToWebview({
+			includeClineMessages: false,
+			includeCurrentTaskDetails: false,
+		})
+		expect(state.currentTaskId).toBe("lightweight-task")
+		expect(state.currentTaskItem).toBeUndefined()
+		expect(state.currentTaskTodos).toEqual([])
+		expect(state.messageQueue).toBeUndefined()
+	})
+
+	test("postStateToWebviewWithoutClineMessages still includes currentTaskTodos for todo sync", async () => {
+		await provider.resolveWebviewView(mockWebviewView)
+		vi.spyOn(provider as any, "checkMdmCompliance").mockReturnValue(true)
+		;(provider as any).mdmService = { requiresCloudAuth: vi.fn().mockReturnValue(false) }
+
+		const mockCline = new Task(defaultTaskOptions)
+		Object.defineProperty(mockCline, "taskId", { value: "todo-sync-task", writable: true })
+		;(mockCline as any).todoList = [
+			{ id: "todo-1", content: "First", status: "completed" },
+			{ id: "todo-2", content: "Last", status: "completed" },
+		]
+		await provider.addClineToStack(mockCline)
+		await provider.updateTaskHistory(
+			{
+				id: "todo-sync-task",
+				number: 1,
+				ts: Date.now(),
+				task: "Todo sync task",
+				tokensIn: 0,
+				tokensOut: 0,
+				totalCost: 0,
+			},
+			{ broadcast: false },
+		)
+
+		mockPostMessage.mockClear()
+		await provider.postStateToWebviewWithoutClineMessages()
+
+		const sentState = (mockPostMessage.mock.calls as Array<[any]>).find(
+			(call: [any]) => call[0]?.type === "state",
+		)?.[0]?.state
+		expect(sentState).toBeDefined()
+		expect(sentState).not.toHaveProperty("clineMessages")
+		expect(sentState).not.toHaveProperty("taskHistory")
+		expect(sentState.currentTaskTodos).toEqual([
+			expect.objectContaining({ id: "todo-1", status: "completed" }),
+			expect.objectContaining({ id: "todo-2", status: "completed" }),
+		])
+	})
+
+	test("postStateToWebviewWithoutClineMessages omits both clineMessages and taskHistory", async () => {
+		await provider.resolveWebviewView(mockWebviewView)
+		vi.spyOn(provider as any, "checkMdmCompliance").mockReturnValue(true)
+		;(provider as any).mdmService = { requiresCloudAuth: vi.fn().mockReturnValue(false) }
+
+		vi.spyOn(provider, "getStateToPostToWebview").mockResolvedValue({
+			...(await provider.getState()),
+			clineMessages: [{ ts: 1, type: "say", say: "text", text: "hello" }] as any,
+			taskHistory: [{ id: "task-1", ts: 1, task: "Task 1" }] as any,
+		} as any)
+
+		mockPostMessage.mockClear()
+		await provider.postStateToWebviewWithoutClineMessages()
+
+		const sentState = (mockPostMessage.mock.calls as Array<[any]>).find(
+			(call: [any]) => call[0]?.type === "state",
+		)?.[0]?.state
+		expect(sentState).toBeDefined()
+		expect(sentState).not.toHaveProperty("clineMessages")
+		expect(sentState).not.toHaveProperty("taskHistory")
+		expect(mockPostMessage).not.toHaveBeenCalledWith(
+			expect.objectContaining({ type: "action", action: "cloudButtonClicked" }),
+		)
+	})
+
 	test("dispose is idempotent — second call is a no-op", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 
@@ -801,6 +1005,248 @@ describe("ClineProvider", () => {
 
 		// verify current cline instance is the last one added
 		expect(provider.getCurrentTask()).toBe(mockCline2)
+	})
+
+	test("getState reuses cached custom modes between calls", async () => {
+		const customModesManager = provider.customModesManager as any
+		customModesManager.getCustomModes.mockResolvedValue([
+			{ slug: "cached-mode", name: "Cached Mode", roleDefinition: "role", groups: ["read"] },
+		])
+
+		const first = await provider.getState()
+		const second = await provider.getState()
+
+		expect(first.customModes).toHaveLength(1)
+		expect(second.customModes).toHaveLength(1)
+		expect(customModesManager.getCustomModes).toHaveBeenCalledTimes(1)
+	})
+
+	test("createTask refreshes cached custom modes when configuration provides custom modes", async () => {
+		const customModesManager = provider.customModesManager as any
+		customModesManager.getCustomModes
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([
+				{ slug: "injected-mode", name: "Injected Mode", roleDefinition: "role", groups: ["read"] },
+			])
+
+		await provider.getState()
+		await provider.createTask(
+			undefined,
+			undefined,
+			undefined,
+			{},
+			{
+				customModes: [
+					{ slug: "injected-mode", name: "Injected Mode", roleDefinition: "role", groups: ["read"] as const },
+				],
+			},
+		)
+
+		const state = await provider.getState()
+		expect(state.customModes).toEqual([expect.objectContaining({ slug: "injected-mode", name: "Injected Mode" })])
+		expect(customModesManager.updateCustomMode).toHaveBeenCalledWith(
+			"injected-mode",
+			expect.objectContaining({ slug: "injected-mode" }),
+		)
+		expect(customModesManager.getCustomModes).toHaveBeenCalledTimes(2)
+	})
+
+	test("resetState clears cached custom modes", async () => {
+		const customModesManager = provider.customModesManager as any
+		customModesManager.getCustomModes
+			.mockResolvedValueOnce([
+				{ slug: "stale-mode", name: "Stale Mode", roleDefinition: "role", groups: ["read"] },
+			])
+			.mockResolvedValueOnce([])
+
+		const first = await provider.getState()
+		expect(first.customModes).toHaveLength(1)
+
+		await provider.resetState()
+		const second = await provider.getState()
+		expect(second.customModes).toEqual([])
+		expect(customModesManager.resetCustomModes).toHaveBeenCalled()
+		expect(customModesManager.getCustomModes).toHaveBeenCalledTimes(2)
+	})
+
+	test("getState reuses cached merged command lists between calls", async () => {
+		const getConfigurationMock = vi.mocked(vscode.workspace.getConfiguration)
+		const allowedGet = vi
+			.fn()
+			.mockImplementation((key: string) => (key === "allowedCommands" ? ["workspace-allow"] : []))
+		getConfigurationMock.mockImplementation(
+			() =>
+				({
+					get: allowedGet,
+					update: vi.fn(),
+				}) as any,
+		)
+
+		await provider.getState()
+		await provider.getState()
+
+		expect(allowedGet).toHaveBeenCalledWith("allowedCommands")
+		expect(allowedGet).toHaveBeenCalledWith("deniedCommands")
+		expect(allowedGet).toHaveBeenCalledTimes(2)
+		expect(getConfigurationMock).toHaveBeenCalledTimes(2)
+	})
+
+	test("createTask invalidates cached merged command lists when commands change", async () => {
+		const getConfigurationMock = vi.mocked(vscode.workspace.getConfiguration)
+		const configUpdate = vi.fn().mockResolvedValue(undefined)
+		const configGet = vi
+			.fn()
+			.mockImplementationOnce((key: string) => (key === "allowedCommands" ? ["workspace-allow"] : []))
+			.mockImplementationOnce((key: string) => (key === "deniedCommands" ? ["workspace-deny"] : []))
+			.mockImplementationOnce((key: string) => (key === "allowedCommands" ? ["workspace-allow-2"] : []))
+			.mockImplementationOnce((key: string) => (key === "deniedCommands" ? ["workspace-deny-2"] : []))
+		getConfigurationMock.mockImplementation(
+			() =>
+				({
+					get: configGet,
+					update: configUpdate,
+				}) as any,
+		)
+
+		await provider.getState()
+		await provider.createTask(
+			undefined,
+			undefined,
+			undefined,
+			{},
+			{
+				allowedCommands: ["global-allow"],
+				deniedCommands: ["global-deny"],
+			},
+		)
+		const state = await provider.getState()
+
+		expect(state.allowedCommands).toEqual(["global-allow", "workspace-allow-2"])
+		expect(state.deniedCommands).toEqual(["global-deny", "workspace-deny-2"])
+		expect(configUpdate).toHaveBeenCalledWith(
+			"allowedCommands",
+			["global-allow"],
+			vscode.ConfigurationTarget.Global,
+		)
+		expect(configUpdate).toHaveBeenCalledWith("deniedCommands", ["global-deny"], vscode.ConfigurationTarget.Global)
+		expect(configGet).toHaveBeenCalledTimes(4)
+	})
+
+	test("workspace configuration cache is reused until invalidated", async () => {
+		const getConfigurationMock = vi.mocked(vscode.workspace.getConfiguration)
+		const configGet = vi
+			.fn()
+			.mockImplementation((key: string) => (key === "allowedCommands" ? ["workspace-allow"] : []))
+		getConfigurationMock.mockImplementation(
+			() =>
+				({
+					get: configGet,
+					update: vi.fn(),
+				}) as any,
+		)
+
+		await provider.getState()
+		await provider.getState()
+
+		expect(getConfigurationMock).toHaveBeenCalledTimes(2)
+		expect(configGet).toHaveBeenCalledTimes(2)
+
+		await provider.resolveWebviewView(mockWebviewView)
+		const onDidChangeConfiguration = vi.mocked(vscode.workspace.onDidChangeConfiguration)
+		const listener = onDidChangeConfiguration.mock.calls.at(-1)?.[0]
+		configGet.mockImplementation((key: string) => (key === "allowedCommands" ? ["workspace-allow-2"] : []))
+
+		await listener?.({
+			affectsConfiguration: (section: string) => section === "costrict.allowedCommands",
+		} as any)
+
+		const state = await provider.getState()
+		expect(state.allowedCommands).toEqual(["workspace-allow-2"])
+		expect(getConfigurationMock).toHaveBeenCalledTimes(3)
+		expect(configGet).toHaveBeenCalledTimes(3)
+	})
+
+	test("workspace configuration change invalidates cached merged commands", async () => {
+		const getConfigurationMock = vi.mocked(vscode.workspace.getConfiguration)
+		const configGet = vi
+			.fn()
+			.mockImplementationOnce((key: string) => (key === "allowedCommands" ? ["workspace-allow"] : []))
+			.mockImplementationOnce((key: string) => (key === "deniedCommands" ? ["workspace-deny"] : []))
+			.mockImplementationOnce((key: string) => (key === "allowedCommands" ? ["workspace-allow-2"] : []))
+			.mockImplementationOnce((key: string) => (key === "deniedCommands" ? ["workspace-deny-2"] : []))
+		getConfigurationMock.mockImplementation(
+			() =>
+				({
+					get: configGet,
+					update: vi.fn(),
+				}) as any,
+		)
+
+		await provider.resolveWebviewView(mockWebviewView)
+		await provider.getState()
+
+		const onDidChangeConfiguration = vi.mocked(vscode.workspace.onDidChangeConfiguration)
+		const listener = onDidChangeConfiguration.mock.calls.at(-1)?.[0]
+		await listener?.({
+			affectsConfiguration: (section: string) => section === "costrict.allowedCommands",
+		} as any)
+
+		const state = await provider.getState()
+		expect(state.allowedCommands).toEqual(["workspace-allow-2"])
+		expect(state.deniedCommands).toEqual(["workspace-deny"])
+		expect(configGet).toHaveBeenCalledTimes(3)
+	})
+
+	test("getState derives apiConfiguration from the same state snapshot without mutating provider settings", async () => {
+		provider.contextProxy.setValue("apiProvider", "requesty" as any)
+		provider.contextProxy.setValue("requestyApiKey", "requesty-key" as any)
+		provider.contextProxy.setValue("openAiHeaders", undefined as any)
+
+		const getValuesSpy = vi.spyOn(provider.contextProxy, "getValues")
+		const getProviderSettingsSpy = vi.spyOn(provider.contextProxy, "getProviderSettings")
+
+		const state = await provider.getState()
+
+		expect(state.apiConfiguration.apiProvider).toBe("requesty")
+		expect(state.apiConfiguration.requestyApiKey).toBe("requesty-key")
+		expect(state.apiConfiguration.openAiHeaders).toEqual({})
+		expect(getValuesSpy).toHaveBeenCalledTimes(1)
+		expect(getProviderSettingsSpy).not.toHaveBeenCalled()
+
+		const secondState = await provider.getState()
+		expect(secondState.apiConfiguration.openAiHeaders).toEqual({})
+	})
+
+	test("getState reuses cached customStoragePath between calls and refreshes on configuration change", async () => {
+		const getConfigurationMock = vi.mocked(vscode.workspace.getConfiguration)
+		const configGet = vi.fn().mockReturnValue("/tmp/costrict-storage")
+		getConfigurationMock.mockImplementation(
+			() =>
+				({
+					get: configGet,
+					update: vi.fn(),
+				}) as any,
+		)
+
+		const first = await provider.getState()
+		const second = await provider.getState()
+
+		expect(first.customStoragePath).toBe("/tmp/costrict-storage")
+		expect(second.customStoragePath).toBe("/tmp/costrict-storage")
+		expect(configGet).toHaveBeenCalledTimes(1)
+
+		await provider.resolveWebviewView(mockWebviewView)
+		const onDidChangeConfiguration = vi.mocked(vscode.workspace.onDidChangeConfiguration)
+		const listener = onDidChangeConfiguration.mock.calls.at(-1)?.[0]
+		configGet.mockReturnValue("/tmp/costrict-storage-2")
+
+		await listener?.({
+			affectsConfiguration: (section: string) => section === "costrict.customStoragePath",
+		} as any)
+
+		const third = await provider.getState()
+		expect(third.customStoragePath).toBe("/tmp/costrict-storage-2")
+		expect(configGet).toHaveBeenCalledTimes(2)
 	})
 
 	test("getState returns correct initial state", async () => {
