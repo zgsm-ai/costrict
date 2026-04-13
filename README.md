@@ -58,7 +58,7 @@ _Free • Open Source • Private Deployment_
     </td>
     <td align="center" width="33%">
       <b>JetBrains Plugin</b><br><br>
-      <a href="https://github.com/zgsm-ai/costrict-jetbrains-agent">
+      <a href="https://github.com/zgsm-sangfor/costrict-for-jetbrains">
         <img src="https://img.shields.io/badge/GitHub-Repository-informational?style=for-the-badge" alt="JetBrains Repo">
       </a>
       <a href="https://costrict.ai/download">

@@ -58,7 +58,7 @@ English | [简体中文](./README.zh-CN.md)
     </td>
     <td align="center" width="33%">
       <b>JetBrains 插件</b><br><br>
-      <a href="https://github.com/zgsm-ai/costrict-jetbrains-agent">
+      <a href="https://github.com/zgsm-sangfor/costrict-for-jetbrains">
         <img src="https://img.shields.io/badge/GitHub-仓库-informational?style=for-the-badge" alt="JetBrains 仓库">
       </a>
       <a href="https://costrict.ai/download">
