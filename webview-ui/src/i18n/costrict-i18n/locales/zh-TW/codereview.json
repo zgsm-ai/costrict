@@ -13,14 +13,6 @@
 		"noData": "沒有找到審查歷史",
 		"done": "完成"
 	},
-	"codebase": {
-		"syncTips": "當前codebase索引同步功能被關閉，無法運行代碼審查，是否開啟codebase索引並繼續代碼審查？",
-		"syncConfirm": "確定開啟並繼續",
-		"syncCancel": "取消",
-		"running": "代碼索引構建中，Code Review即將開始 {{progress}}%",
-		"failed": "當前codebase索引構建失敗，無法進行代碼審查，請前往<settingsLink>設置 > 上下文 > codebase</settingsLink>模塊查看失敗原因後重試。",
-		"success": "代碼索引構建成功，開始進行 Code Review"
-	},
 	"codeReviewContent": {
 		"severity": {
 			"high": "高",

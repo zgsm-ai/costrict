@@ -13,14 +13,6 @@
 		"noData": "没有找到审查历史",
 		"done": "完成"
 	},
-	"codebase": {
-		"syncTips": "当前codebase索引同步功能被关闭，无法运行代码审查，是否开启codebase索引并继续代码审查？",
-		"syncConfirm": "确定开启并继续",
-		"syncCancel": "取消",
-		"running": "代码索引构建中，Code Review即将开始 {{progress}}%",
-		"failed": "当前codebase索引构建失败，无法进行代码审查，请前往<settingsLink>设置 > 上下文 > codebase</settingsLink>模块查看失败原因后重试。",
-		"success": "代码索引构建成功，开始进行 Code Review"
-	},
 	"codeReviewContent": {
 		"severity": {
 			"high": "高",

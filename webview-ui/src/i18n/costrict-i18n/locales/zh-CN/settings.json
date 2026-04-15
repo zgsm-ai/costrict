@@ -169,61 +169,13 @@
 	},
 	"providerChangeWarning": {
 		"title": "确定从 CoStrict 切换到其他提供商？",
-		"description": "代码补全、代码审查、Codebase等高级功能将不可用",
+		"description": "代码补全、代码审查等高级功能将不可用",
 		"cancelButton": "取消",
 		"confirmButton": "继续"
 	},
 	"codebase": {
-		"semanticIndex": {
-			"enableToShowDetails": "启用后显示详细信息",
-			"fileCount": "文件数",
-			"lastUpdatedTime": "最新更新时间",
-			"buildProgress": "构建进度",
-			"pendingEnable": "待启用",
-			"syncing": "同步中...",
-			"pendingSync": "待同步",
-			"syncSuccess": "同步成功",
-			"syncFailed": "同步失败",
-			"syncFailedFiles": "同步失败详情",
-			"viewDetails": "查看详情",
-			"syncFailedFilesTitle": "同步失败文件数量",
-			"failedFileList": "失败文件列表:",
-			"copy": "复制",
-			"noFailedFiles": "暂无失败文件信息",
-			"rebuild": "重新构建",
-			"onlyCostrictProviderSupport": "仅 CoStrict 提供商支持此服务",
-			"codebaseIndexDisabled": "Codebase 索引构建已禁用：未找到工作空间文件夹",
-			"title": "语义索引构建",
-			"description": "为提高代码补全等功能效果，系统会自动将相关语义索引同步构建上传，方便模型对上下文进行分析理解。"
-		},
-		"codeIndex": {
-			"title": "代码索引构建",
-			"description": "为保证代码审查功能的正常使用，系统会自动将相关代码索引同步构建上传，方便模型对上下文进行分析理解。"
-		},
-		"ignoreFileSettings": {
-			"title": "Ignore文件设置",
-			"description": "无需同步上传的索引文件可添加到.coignore文件中",
-			"edit": "编辑"
-		},
-		"confirmDialog": {
-			"title": "确定要禁用 Codebase 索引构建功能吗？",
-			"description": "禁用后将导致以下影响：",
-			"impact1": "代码补全效果降低",
-			"impact2": "代码生成效果降低",
-			"impact3": "代码审查功能无法正常使用",
-			"impact4": "模型无法对整个项目进行有效分析",
-			"cancel": "取消",
-			"confirm": "确认"
-		},
 		"general": {
-			"indexBuildFailed": "索引构建失败",
-			"codebaseIndexBuild": "Codebase索引构建",
-			"codebaseIndexBuildDisabledHint": "未开启索引构建时，CoStrict 服务仍会正常启动，但不会自动构建索引。",
 			"onlyCostrictProviderSupport": "仅 CoStrict 提供商支持此服务"
-		},
-		"errors": {
-			"failedToDisableCodebaseIndex": "Failed to disable codebase index:",
-			"failedToCopyToClipboard": "Failed to copy to clipboard:"
 		}
 	},
 	"autoMode": {

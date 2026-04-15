@@ -169,61 +169,13 @@
 	},
 	"providerChangeWarning": {
 		"title": "確定從 CoStrict 切換到其他提供商？",
-		"description": "代碼補全、代碼審查、Codebase等高級功能將不可用",
+		"description": "代碼補全、代碼審查等高級功能將不可用",
 		"cancelButton": "取消",
 		"confirmButton": "繼續"
 	},
 	"codebase": {
-		"semanticIndex": {
-			"enableToShowDetails": "啟用後顯示詳細資訊",
-			"fileCount": "檔案數",
-			"lastUpdatedTime": "最新更新時間",
-			"buildProgress": "建置進度",
-			"pendingEnable": "待啟用",
-			"syncing": "同步中...",
-			"pendingSync": "待同步",
-			"syncSuccess": "同步成功",
-			"syncFailed": "同步失敗",
-			"syncFailedFiles": "同步失敗詳情",
-			"viewDetails": "查看詳情",
-			"syncFailedFilesTitle": "同步失敗檔案數量",
-			"failedFileList": "失敗檔案列表:",
-			"copy": "複製",
-			"noFailedFiles": "暫無失敗檔案資訊",
-			"rebuild": "重新建置",
-			"onlyCostrictProviderSupport": "僅 CoStrict 提供商支援此服務",
-			"codebaseIndexDisabled": "Codebase 索引建置已禁用: 未找到工作空間資料夾",
-			"title": "語義索引建置",
-			"description": "為提高代碼補全等功能效果，系統會自動將相關語義索引同步建置上傳，方便模型對上下文進行分析理解。"
-		},
-		"codeIndex": {
-			"title": "代碼索引建置",
-			"description": "為保證代碼審查功能的正常使用，系統會自動將相關代碼索引同步建置上傳，方便模型對上下文進行分析理解。"
-		},
-		"ignoreFileSettings": {
-			"title": "Ignore檔案設定",
-			"description": "無需同步上傳的索引檔案可添加到.coignore檔案中",
-			"edit": "編輯"
-		},
-		"confirmDialog": {
-			"title": "確定要禁用 Codebase 索引建置功能嗎？",
-			"description": "禁用後將導致以下影響：",
-			"impact1": "代碼補全效果降低",
-			"impact2": "代碼生成效果降低",
-			"impact3": "代碼審查功能無法正常使用",
-			"impact4": "模型無法對整個項目進行有效分析",
-			"cancel": "取消",
-			"confirm": "確認"
-		},
 		"general": {
-			"indexBuildFailed": "索引建置失敗",
-			"codebaseIndexBuild": "Codebase索引建置",
-			"codebaseIndexBuildDisabledHint": "未開啟索引建置時，CoStrict 服務仍會正常啟動，但不會自動建置索引。",
 			"onlyCostrictProviderSupport": "僅 CoStrict 提供商支援此服務"
-		},
-		"errors": {
-			"failedToDisableCodebaseIndex": "Failed to disable codebase index:",
-			"failedToCopyToClipboard": "Failed to copy to clipboard:"
 		}
 	},
 	"autoMode": {

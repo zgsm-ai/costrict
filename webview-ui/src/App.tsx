@@ -33,7 +33,6 @@ import { CostrictAccountView } from "./components/cloud/CostrictAccountView"
 import { TabContent, TabList, TabTrigger } from "./components/common/Tab"
 import { cn } from "./lib/utils"
 import { ReauthConfirmationDialog } from "./components/chat/ReauthConfirmationDialog"
-import { CostrictCodebaseDisableConfirmDialog } from "./components/settings/CostrictCodebaseDisableConfirmDialog"
 import { useTranslation } from "react-i18next"
 import { EXPERIMENT_IDS } from "@roo/experiments"
 
@@ -73,17 +72,12 @@ interface EditMessageDialogState {
 	images?: string[]
 }
 
-interface CostrictCodebaseDisableConfirmDialogState {
-	isOpen: boolean
-}
-
 // Memoize dialog components to prevent unnecessary re-renders
 const MemoizedDeleteMessageDialog = React.memo(DeleteMessageDialog)
 const MemoizedEditMessageDialog = React.memo(EditMessageDialog)
 const MemoizedReauthConfirmationDialog = React.memo(ReauthConfirmationDialog)
 const MemoizedCheckpointRestoreDialog = React.memo(CheckpointRestoreDialog)
 const MemoizedHumanRelayDialog = React.memo(HumanRelayDialog)
-const MemoizedCostrictCodebaseDisableConfirmDialog = React.memo(CostrictCodebaseDisableConfirmDialog)
 
 const tabsByMessageAction: Partial<Record<NonNullable<ExtensionMessage["action"]>, Tab>> = {
 	chatButtonClicked: "chat",
@@ -150,11 +144,6 @@ const App = () => {
 		hasCheckpoint: false,
 		images: [],
 	})
-
-	const [zgsmCodebaseDisableConfirmDialogState, setCostrictCodebaseDisableConfirmDialogState] =
-		useState<CostrictCodebaseDisableConfirmDialogState>({
-			isOpen: false,
-		})
 
 	const settingsRef = useRef<SettingsViewRef>(null)
 	const chatViewRef = useRef<ChatViewRef>(null)
@@ -271,10 +260,6 @@ const App = () => {
 					hasCheckpoint: message.hasCheckpoint || false,
 					images: message.images || [],
 				})
-			}
-
-			if (message.type === "showCostrictCodebaseDisableConfirmDialog") {
-				setCostrictCodebaseDisableConfirmDialogState({ isOpen: true })
 			}
 
 			if (message.type === "acceptInput") {
@@ -595,16 +580,6 @@ const App = () => {
 				onConfirm={() => {
 					vscode.postMessage({ type: "costrictLogin", apiConfiguration })
 					setReauthConfirmationDialogState((prev) => ({ ...prev, isOpen: false }))
-				}}
-			/>
-			<MemoizedCostrictCodebaseDisableConfirmDialog
-				open={zgsmCodebaseDisableConfirmDialogState.isOpen}
-				onOpenChange={(open) =>
-					setCostrictCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: open }))
-				}
-				onConfirm={() => {
-					vscode.postMessage({ type: "costrictCodebaseIndexEnabled", bool: false })
-					setCostrictCodebaseDisableConfirmDialogState((prev) => ({ ...prev, isOpen: false }))
 				}}
 			/>
 		</>

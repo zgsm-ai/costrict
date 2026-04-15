@@ -215,7 +215,6 @@ const costrictSchema = apiModelIdProviderModelSchema.extend({
 	costrictApiKeyUpdatedAt: z.string().optional(),
 	costrictApiKeyExpiredAt: z.string().optional(),
 	useCostrictCustomConfig: z.boolean().optional(),
-	costrictCodebaseIndexEnabled: z.boolean().optional(),
 	costrictAiCustomModelInfo: modelInfoSchema.nullish(),
 })
 

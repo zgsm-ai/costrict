@@ -39,10 +39,7 @@ import {
 	stopIPCServer,
 } from "./auth/ipc"
 import { generateNewSessionClientId, getClientId } from "../../utils/getClientId"
-import CostrictCodebaseIndexManager, { costrictCodebaseIndexManager } from "./codebase-index"
-import { workspaceEventMonitor } from "./codebase-index/workspace-event-monitor"
-import { initGitCheckoutDetector } from "./codebase-index/git-checkout-detector"
-import { writeCostrictAccessToken } from "./codebase-index/utils"
+import { writeCostrictAccessToken } from "./utils"
 import { getPanel } from "../../activate/registerCommands"
 import { t } from "../../i18n"
 import prettyBytes from "pretty-bytes"
@@ -57,10 +54,6 @@ const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
 async function initialize(provider: ClineProvider, logger: ILogger) {
 	const oldDebug = provider.getValue("debug")
 	const codeMode = provider.getValue("costrictCodeMode")
-	const oldEnabled = provider.getValue("costrictCodebaseIndexEnabled")
-	if (oldEnabled == null) {
-		await provider.setValue("costrictCodebaseIndexEnabled", false)
-	}
 
 	switch (codeMode) {
 		case "plan":
@@ -80,13 +73,6 @@ async function initialize(provider: ClineProvider, logger: ILogger) {
 	CostrictAuthApi.setProvider(provider)
 	CostrictAuthService.setProvider(provider)
 	CostrictAuthCommands.setProvider(provider)
-
-	//
-	costrictCodebaseIndexManager.setProvider(provider)
-	costrictCodebaseIndexManager.setLogger(logger)
-	workspaceEventMonitor.setProvider(provider)
-	workspaceEventMonitor.setLogger(logger)
-
 	//
 	printLogo()
 	initLangSetting()
@@ -112,7 +98,6 @@ export async function activate(
 	getTerminalManager().setExtensionContext(context)
 
 	initErrorCodeManager(provider)
-	initGitCheckoutDetector(context, logger)
 	await initialize(provider, logger)
 	// Start IPC server in background – never block extension activation.
 	void startIPCServer()
@@ -160,34 +145,11 @@ export async function activate(
 					return
 				}
 				provider.log(`Login status detected at plugin startup: valid (${tokens.state})`)
-				void writeCostrictAccessToken(tokens.access_token, tokens.refresh_token)
-					.then(async () => {
-						const { apiConfiguration } = await provider.getState()
-						if (apiConfiguration.apiProvider !== "costrict") {
-							return
-						}
-
-						setTimeout(() => {
-							void (async () => {
-								try {
-									await costrictCodebaseIndexManager.ensureInitialized("activate")
-									await costrictCodebaseIndexManager.syncToken()
-									if (apiConfiguration.costrictCodebaseIndexEnabled) {
-										await workspaceEventMonitor.initialize()
-									}
-								} catch (error) {
-									provider.log(
-										`Deferred codebase index startup failed: ${error instanceof Error ? error.message : String(error)}`,
-									)
-								}
-							})()
-						}, 3000)
-					})
-					.catch((error) => {
-						provider.log(
-							`Failed to persist auth token for codebase index startup: ${error instanceof Error ? error.message : String(error)}`,
-						)
-					})
+				void writeCostrictAccessToken(tokens.access_token, tokens.refresh_token).catch((error) => {
+					provider.log(
+						`Failed to persist auth token: ${error instanceof Error ? error.message : String(error)}`,
+					)
+				})
 				costrictAuthService.startTokenRefresh(tokens.refresh_token, getClientId(), tokens.state)
 				costrictAuthService.updateUserInfo(tokens.access_token)
 			})
@@ -284,9 +246,6 @@ export async function deactivate() {
 	// Dispose CLI terminal manager to kill any running PTY process
 	void getTerminalManager().dispose()
 
-	// Stop periodic health checks
-	void CostrictCodebaseIndexManager.getInstance().stopHealthCheck()
-
 	// Stop periodic notice fetching
 	void NotificationService.getInstance().stopPeriodicFetch()
 
@@ -296,12 +255,9 @@ export async function deactivate() {
 	// Dispose code review service (saves history)
 	void (await CodeReviewService.getInstance().dispose())
 
-	// CostrictCodebaseIndexManager.getInstance().stopExistingClient()
 	// Clean up IPC connections
 	void disconnectIPC()
 	void stopIPCServer()
-	// Clean up workspace event monitoring
-	void workspaceEventMonitor.handleVSCodeClose()
 
 	// Currently no specific cleanup needed
 	loggerDeactivate()

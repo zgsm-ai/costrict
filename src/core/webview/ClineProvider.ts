@@ -120,7 +120,6 @@ import { defaultCodebaseIndexEnabled } from "../../services/code-index/constants
 import { CodeReviewService, ReviewTargetType } from "../costrict/code-review"
 import { getTerminalManager } from "../costrict/cli-wrap"
 import { defaultLang } from "../../utils/language"
-import CostrictCodebaseIndexManager from "../costrict/codebase-index"
 import { sendCostrictCloseWindow } from "../costrict/auth/ipc"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { isJetbrainsPlatform } from "../../utils/platform"
@@ -2677,7 +2676,6 @@ export class ClineProvider
 			customStoragePath,
 			enableCheckpoints,
 			useCostrictCustomConfig,
-			costrictCodebaseIndexEnabled,
 			checkpointTimeout,
 			taskHistory,
 			soundVolume,
@@ -2820,7 +2818,6 @@ export class ClineProvider
 			customStoragePath,
 			enableCheckpoints: enableCheckpoints ?? true,
 			useCostrictCustomConfig: useCostrictCustomConfig ?? false,
-			costrictCodebaseIndexEnabled: costrictCodebaseIndexEnabled ?? false,
 			checkpointTimeout: checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			shouldShowAnnouncement:
 				telemetrySetting !== "disabled" && lastShownAnnouncementId !== this.latestAnnouncementId,
@@ -3082,7 +3079,6 @@ export class ClineProvider
 			customStoragePath,
 			enableCheckpoints: stateValues.enableCheckpoints ?? true,
 			useCostrictCustomConfig: stateValues.useCostrictCustomConfig ?? false,
-			costrictCodebaseIndexEnabled: stateValues.costrictCodebaseIndexEnabled ?? false,
 			checkpointTimeout: stateValues.checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			soundVolume: stateValues.soundVolume,
 			writeDelayMs: stateValues.writeDelayMs ?? DEFAULT_WRITE_DELAY_MS,
@@ -3304,11 +3300,6 @@ export class ClineProvider
 			return
 		}
 		try {
-			// CostrictCodebaseIndexManager.getInstance()
-			const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
-			await costrictCodebaseIndexManager.stopHealthCheck()
-			await costrictCodebaseIndexManager.stopExistingClient()
-
 			const codebaseHomeDir = path.join(os.homedir(), ".costrict")
 			const codebaseIndexDirs = [
 				path.join(codebaseHomeDir, "bin"),

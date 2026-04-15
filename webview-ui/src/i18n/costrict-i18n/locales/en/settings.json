@@ -169,61 +169,13 @@
 	},
 	"providerChangeWarning": {
 		"title": "Are you sure you want to switch from CoStrict to another provider?",
-		"description": "Advanced features such as code completion, code review, Codebase will not be available",
+		"description": "Advanced features such as code completion, code review will not be available",
 		"cancelButton": "Cancel",
 		"confirmButton": "Continue"
 	},
 	"codebase": {
-		"semanticIndex": {
-			"enableToShowDetails": "Details will be shown after enabling",
-			"fileCount": "File Count",
-			"lastUpdatedTime": "Last Updated",
-			"buildProgress": "Build Progress",
-			"pendingEnable": "Pending Enable",
-			"syncing": "Syncing...",
-			"pendingSync": "Pending Sync",
-			"syncSuccess": "Sync Success",
-			"syncFailed": "Sync Failed",
-			"syncFailedFiles": "Sync Failed Details",
-			"viewDetails": "View Details",
-			"syncFailedFilesTitle": "Number of Sync Failed Files",
-			"failedFileList": "Failed Files List:",
-			"copy": "Copy",
-			"noFailedFiles": "No failed files information",
-			"rebuild": "Rebuild",
-			"onlyCostrictProviderSupport": "Only CoStrict provider supports this service",
-			"codebaseIndexDisabled": "Codebase index build is disabled: No workspace folder found",
-			"title": "Semantic Index Build",
-			"description": "To improve code completion and other features, the system automatically builds and uploads semantic indexes for model context analysis and understanding."
-		},
-		"codeIndex": {
-			"title": "Code Index Build",
-			"description": "To ensure proper functioning of code review features, the system automatically builds and uploads code indexes for model context analysis and understanding."
-		},
-		"ignoreFileSettings": {
-			"title": "Ignore File Settings",
-			"description": "Add index files that don't need to be synchronized and uploaded to the .coignore file",
-			"edit": "Edit"
-		},
-		"confirmDialog": {
-			"title": "Are you sure you want to disable the Codebase index build feature?",
-			"description": "Disabling will result in the following impacts:",
-			"impact1": "Reduced code completion effectiveness",
-			"impact2": "Reduced code generation effectiveness",
-			"impact3": "Code review features will not work properly",
-			"impact4": "Model cannot effectively analyze the entire project",
-			"cancel": "Cancel",
-			"confirm": "Confirm"
-		},
 		"general": {
-			"indexBuildFailed": "Index build failed",
-			"codebaseIndexBuild": "Codebase Index Build",
-			"codebaseIndexBuildDisabledHint": "When index building is disabled, the CoStrict service will still start normally, but indexes will not be built automatically.",
 			"onlyCostrictProviderSupport": "Only CoStrict provider supports this service"
-		},
-		"errors": {
-			"failedToDisableCodebaseIndex": "Failed to disable codebase index:",
-			"failedToCopyToClipboard": "Failed to copy to clipboard:"
 		}
 	},
 	"autoMode": {

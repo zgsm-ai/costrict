@@ -97,7 +97,6 @@ export interface ExtensionStateContextType extends ExtensionState {
 	setTtsSpeed: (value: number) => void
 	setEnableCheckpoints: (value: boolean) => void
 	setUseCostrictCustomConfig: (value: boolean) => void
-	setCostrictCodebaseIndexEnabled: (value: boolean) => void
 	checkpointTimeout: number
 	setCheckpointTimeout: (value: number) => void
 	setWriteDelayMs: (value: number) => void
@@ -238,7 +237,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		ttsSpeed: 1.0,
 		enableCheckpoints: true,
 		useCostrictCustomConfig: false,
-		costrictCodebaseIndexEnabled: false,
 		costrictCodeMode: "vibe",
 		checkpointTimeout: DEFAULT_CHECKPOINT_TIMEOUT_SECONDS, // Default to 15 seconds
 		language: (window as any).defaultLanguage || "en", // Default language code
@@ -652,8 +650,6 @@ export const ExtensionStateContextProvider: React.FC<{ children: React.ReactNode
 		setEnableCheckpoints: (value) => setState((prevState) => ({ ...prevState, enableCheckpoints: value })),
 		setUseCostrictCustomConfig: (value) =>
 			setState((prevState) => ({ ...prevState, useCostrictCustomConfig: value })),
-		setCostrictCodebaseIndexEnabled: (value) =>
-			setState((prevState) => ({ ...prevState, costrictCodebaseIndexEnabled: value })),
 		setCheckpointTimeout: (value) => setState((prevState) => ({ ...prevState, checkpointTimeout: value })),
 		setWriteDelayMs: (value) => setState((prevState) => ({ ...prevState, writeDelayMs: value })),
 		setTerminalOutputPreviewSize: (value) =>

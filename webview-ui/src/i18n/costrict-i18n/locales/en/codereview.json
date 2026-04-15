@@ -13,14 +13,6 @@
 		"noData": "No review history found",
 		"done": "Done"
 	},
-	"codebase": {
-		"syncTips": "The codebase index synchronization feature is disabled, and code review cannot be run. Do you want to enable codebase index synchronization and continue code review?",
-		"syncConfirm": "Enable and continue",
-		"syncCancel": "Cancel",
-		"running": "Code index building in progress, Code Review will start soon {{progress}}%",
-		"failed": "The codebase index building failed, and code review cannot be performed. Please go to <settingsLink>Settings > Context > Codebase</settingsLink> module to check the failure reason and try again.",
-		"success": "Code index building success, start Code Review"
-	},
 	"codeReviewContent": {
 		"severity": {
 			"high": "High",

@@ -6,7 +6,7 @@ import { COSTRICT_DEFAULT_HEADERS } from "../../../../shared/headers"
 import { getClientId } from "../../../../utils/getClientId"
 import { AutocompleteDebouncer } from "../utils/autocompleteDebouncer"
 import { AutocompleteLoggingService } from "../utils/autocompleteLoggingService"
-import { getWellKnownConfig } from "../../codebase-index/utils"
+import { getWellKnownConfig } from "../../utils"
 import { TextAcceptanceAction } from "../utils/autocompleteLoggingService"
 
 export interface AutoCompleteInput {
