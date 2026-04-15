@@ -1016,7 +1016,7 @@
 			"import": "Import",
 			"export": "Export",
 			"reset": "Reset",
-			"fixCodebase": "Fix codebase",
+			"updateAutocomplete": "Update Autocomplete",
 			"fixHistory": "Fix history index"
 		}
 	},

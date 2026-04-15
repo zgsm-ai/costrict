@@ -489,7 +489,7 @@ export interface WebviewMessage {
 		| "costrictProviderTip"
 		| "costrictTelemetry"
 		| "fetchCostrictInviteCode"
-		| "fixCodebase"
+		| "updateAutocomplete"
 		| "fixHistory"
 		| "checkReviewSuggestion"
 		| "cancelReviewTask"

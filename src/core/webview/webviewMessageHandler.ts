@@ -1145,8 +1145,8 @@ export const webviewMessageHandler = async (
 		case "resetState":
 			await provider.resetState()
 			break
-		case "fixCodebase":
-			await provider.fixCodebase()
+		case "updateAutocomplete":
+			await provider.updateAutocomplete()
 			break
 		case "fixHistory":
 			await provider.fixHistory()

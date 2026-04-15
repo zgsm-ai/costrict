@@ -3289,9 +3289,9 @@ export class ClineProvider
 		await vscode.commands.executeCommand("workbench.action.closeWindow")
 	}
 
-	async fixCodebase() {
+	async updateAutocomplete() {
 		let answer = await vscode.window.showInformationMessage(
-			t("common:confirmation.reset_codebase"),
+			t("common:confirmation.update_autocomplete"),
 			{ modal: true },
 			t("common:answers.yes"),
 		)
@@ -3300,23 +3300,21 @@ export class ClineProvider
 			return
 		}
 		try {
-			const codebaseHomeDir = path.join(os.homedir(), ".costrict")
+			const costrictHomeDir = path.join(os.homedir(), ".costrict")
 			const codebaseIndexDirs = [
-				path.join(codebaseHomeDir, "bin"),
-				path.join(codebaseHomeDir, "cache"),
-				path.join(codebaseHomeDir, "logs"),
-				path.join(codebaseHomeDir, "package"),
-				path.join(codebaseHomeDir, "run"),
-				path.join(codebaseHomeDir, "share"),
+				path.join(costrictHomeDir, "bin"),
+				path.join(costrictHomeDir, "cache"),
+				path.join(costrictHomeDir, "logs"),
+				path.join(costrictHomeDir, "package"),
+				path.join(costrictHomeDir, "run"),
+				path.join(costrictHomeDir, "share"),
 			]
 
-			for (const codebaseIndexDir of codebaseIndexDirs) {
+			for (const subdir of codebaseIndexDirs) {
 				try {
-					await fs.rm(codebaseIndexDir, { recursive: true, force: true })
+					await fs.rm(subdir, { recursive: true, force: true })
 				} catch (error) {
-					this.log(
-						`Failed to remove ${codebaseIndexDir}: ${error instanceof Error ? error.message : String(error)}`,
-					)
+					this.log(`Failed to remove ${subdir}: ${error instanceof Error ? error.message : String(error)}`)
 				}
 			}
 
@@ -3325,7 +3323,7 @@ export class ClineProvider
 			await vscode.commands.executeCommand("workbench.action.closeWindow")
 		} catch (error) {
 			vscode.window.showErrorMessage(
-				`Failed to reset codebase: ${error instanceof Error ? error.message : String(error)}`,
+				`Failed to update autocomplete: ${error instanceof Error ? error.message : String(error)}`,
 			)
 		}
 	}

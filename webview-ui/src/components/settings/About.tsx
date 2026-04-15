@@ -171,10 +171,10 @@ export const About = ({ telemetrySetting, setTelemetrySetting, debug, setDebug, 
 						</Button>
 						<Button
 							variant="destructive"
-							onClick={() => vscode.postMessage({ type: "fixCodebase" })}
+							onClick={() => vscode.postMessage({ type: "updateAutocomplete" })}
 							className="w-28">
 							<TriangleAlert className="p-0.5" />
-							<span className="text-xs">{t("settings:footer.settings.fixCodebase")}</span>
+							<span className="text-xs">{t("settings:footer.settings.updateAutocomplete")}</span>
 						</Button>
 						<Button
 							variant="destructive"
