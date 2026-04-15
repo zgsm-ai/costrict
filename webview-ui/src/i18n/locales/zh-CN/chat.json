@@ -240,7 +240,7 @@
 	},
 	"commandOutput": "命令输出",
 	"commandExecution": {
-		"abort": "中止",
+		"abort": "终止",
 		"running": "运行命令",
 		"pid": "PID: {{pid}}",
 		"exitStatus": "已退出，状态码 {{exitCode}}",
@@ -253,7 +253,7 @@
 		"removeFromAllowed": "从允许列表中删除",
 		"addToDenied": "添加到拒绝列表",
 		"removeFromDenied": "从拒绝列表中删除",
-		"abortCommand": "中止命令执行",
+		"abortCommand": "终止命令执行",
 		"expandOutput": "展开输出",
 		"collapseOutput": "折叠输出",
 		"expandManagement": "展开命令管理部分",

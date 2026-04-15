@@ -368,6 +368,36 @@ describe("mergeExtensionState", () => {
 			expect(result.clineMessagesSeq).toBe(4)
 		})
 
+		it("restores currentTaskItem from taskHistoryItemUpdated after a lightweight state cleared it", () => {
+			const prevTaskItem = { id: "task-1", ts: 1, task: "Task 1" } as any
+			const prevState: ExtensionState = {
+				...baseState,
+				currentTaskId: "task-1",
+				currentTaskItem: prevTaskItem,
+				taskHistory: [prevTaskItem],
+			}
+
+			const lightweightState = mergeExtensionState(prevState, {
+				currentTaskId: "task-1",
+				currentTaskItem: undefined,
+			})
+
+			expect(lightweightState.currentTaskItem).toBeUndefined()
+
+			const updatedTaskItem = { ...prevTaskItem, tokensIn: 123, ts: 2 } as any
+			const recoveredState = {
+				...lightweightState,
+				taskHistory: [updatedTaskItem],
+				currentTaskItem:
+					lightweightState.currentTaskItem?.id === updatedTaskItem.id ||
+					lightweightState.currentTaskId === updatedTaskItem.id
+						? updatedTaskItem
+						: lightweightState.currentTaskItem,
+			}
+
+			expect(recoveredState.currentTaskItem).toEqual(updatedTaskItem)
+		})
+
 		it("preserves clineMessages when newState does not include them (cloud event path)", () => {
 			const existingMessages = [makeMessage(1, "hello"), makeMessage(2, "world")]
 

@@ -181,6 +181,15 @@ export class ClineProvider
 	private _activeTab: string = "chat"
 
 	private recentTasksCache?: string[]
+	private cachedCustomModes?: Awaited<ReturnType<CustomModesManager["getCustomModes"]>>
+	private cachedWorkspaceCommandLists?: Partial<Record<"allowedCommands" | "deniedCommands", string[]>>
+	private cachedMergedCommands?: Partial<
+		Record<
+			"allowedCommands" | "deniedCommands",
+			{ globalStateCommands: string[]; workspaceCommands: string[]; mergedCommands: string[] }
+		>
+	>
+	private cachedCustomStoragePath?: string
 	public readonly taskHistoryStore: TaskHistoryStore
 	private taskHistoryStoreInitialized = false
 	private globalStateWriteThroughTimer: ReturnType<typeof setTimeout> | null = null
@@ -197,6 +206,14 @@ export class ClineProvider
 	 * Used by the frontend to reject stale state that arrives out-of-order.
 	 */
 	private clineMessagesSeq = 0
+
+	/**
+	 * Batching mechanism for postStateToWebview to reduce serialization overhead
+	 * during streaming. Multiple calls within 16ms are batched into a single state push.
+	 */
+	private pendingStatePush: { resolve: (() => void) | null; reject: ((reason?: any) => void) | null } | null = null
+	private statePushFrameId: ReturnType<typeof setTimeout> | null = null
+	private static readonly STATE_PUSH_BATCH_MS = 16 // 1 frame at 60fps
 
 	public isViewLaunched = false
 	public settingsImportedAt?: number
@@ -803,6 +820,16 @@ export class ClineProvider
 		this.taskHistoryStore.dispose()
 		this.flushGlobalStateWriteThrough()
 
+		// Clear any pending state push to prevent memory leaks
+		if (this.statePushFrameId) {
+			clearTimeout(this.statePushFrameId)
+			this.statePushFrameId = null
+		}
+		if (this.pendingStatePush) {
+			this.pendingStatePush.reject?.(new Error("Provider disposed"))
+			this.pendingStatePush = null
+		}
+
 		// Stop CLI terminal process if running
 		const terminalManager = getTerminalManager()
 		if (terminalManager.running) {
@@ -1153,7 +1180,18 @@ export class ClineProvider
 
 		// Listen for when color changes
 		const configDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
-			if (e && e.affectsConfiguration("workbench.colorTheme")) {
+			if (e?.affectsConfiguration(`${Package.commandIDPrefix}.allowedCommands`)) {
+				delete this.cachedMergedCommands?.allowedCommands
+				delete this.cachedWorkspaceCommandLists?.allowedCommands
+			}
+			if (e?.affectsConfiguration(`${Package.commandIDPrefix}.deniedCommands`)) {
+				delete this.cachedMergedCommands?.deniedCommands
+				delete this.cachedWorkspaceCommandLists?.deniedCommands
+			}
+			if (e?.affectsConfiguration(`${Package.commandIDPrefix}.customStoragePath`)) {
+				this.cachedCustomStoragePath = undefined
+			}
+			if (e?.affectsConfiguration("workbench.colorTheme")) {
 				// Sends latest theme name to webview
 				await this.postMessageToWebview({ type: "theme", text: JSON.stringify(await getTheme()) })
 			}
@@ -2342,22 +2380,48 @@ export class ClineProvider
 		return this._activeTab
 	}
 
-	async postStateToWebview(options?: { force?: boolean }) {
+	async postStateToWebview(options?: { force?: boolean }): Promise<void> {
 		// Suppress state pushes while the cs-cli tab is active to save resources,
 		// unless this is an explicit forced hydration for a newly launched webview.
 		if (this._activeTab === "cs-cli" && !options?.force) {
 			return
 		}
-		const state = await this.getStateToPostToWebview()
-		this.clineMessagesSeq++
-		state.clineMessagesSeq = this.clineMessagesSeq
-		this.postMessageToWebview({ type: "state", state })
 
-		// // Check MDM compliance and send user to account tab if not compliant
-		// // Only redirect if there's an actual MDM policy requiring authentication
-		// if (this.mdmService?.requiresCloudAuth() && !this.checkMdmCompliance()) {
-		// 	await this.postMessageToWebview({ type: "action", action: "cloudButtonClicked" })
-		// }
+		// If force is true, execute immediately without batching
+		if (options?.force) {
+			const state = await this.getStateToPostToWebview()
+			this.clineMessagesSeq++
+			state.clineMessagesSeq = this.clineMessagesSeq
+			this.postMessageToWebview({ type: "state", state })
+			return
+		}
+
+		// Batching: if there's already a pending state push, just return
+		// The pending timeout will execute the state push soon
+		if (this.pendingStatePush) {
+			return
+		}
+
+		// Create a new pending state push with a timeout
+		return new Promise((resolve, reject) => {
+			this.pendingStatePush = { resolve, reject }
+
+			this.statePushFrameId = setTimeout(async () => {
+				this.statePushFrameId = null
+				const pending = this.pendingStatePush
+				this.pendingStatePush = null
+
+				try {
+					const state = await this.getStateToPostToWebview()
+					this.clineMessagesSeq++
+					state.clineMessagesSeq = this.clineMessagesSeq
+					await this.postMessageToWebview({ type: "state", state })
+					pending?.resolve?.()
+				} catch (error) {
+					pending?.reject?.(error)
+				}
+			}, ClineProvider.STATE_PUSH_BATCH_MS)
+		})
 	}
 
 	/**
@@ -2373,11 +2437,10 @@ export class ClineProvider
 		if (this._activeTab === "cs-cli") {
 			return
 		}
-		const state = await this.getStateToPostToWebview()
+		const state = await this.buildStateForWebview({ includeTaskHistory: false })
 		this.clineMessagesSeq++
 		state.clineMessagesSeq = this.clineMessagesSeq
-		const { taskHistory: _omit, ...rest } = state
-		this.postMessageToWebview({ type: "state", state: rest })
+		this.postMessageToWebview({ type: "state", state })
 
 		// // Preserve existing MDM redirect behavior
 		// if (this.mdmService?.requiresCloudAuth() && !this.checkMdmCompliance()) {
@@ -2401,14 +2464,74 @@ export class ClineProvider
 		if (this._activeTab === "cs-cli") {
 			return
 		}
-		const state = await this.getStateToPostToWebview()
-		const { clineMessages: _omitMessages, taskHistory: _omitHistory, ...rest } = state
-		this.postMessageToWebview({ type: "state", state: rest })
+		const state = await this.buildStateForWebview({ includeClineMessages: false, includeTaskHistory: false })
+		this.postMessageToWebview({ type: "state", state })
 
 		// Preserve existing MDM redirect behavior
 		if (this.mdmService?.requiresCloudAuth() && !this.checkMdmCompliance()) {
 			await this.postMessageToWebview({ type: "action", action: "cloudButtonClicked" })
 		}
+	}
+
+	private async buildStateForWebview(options?: {
+		includeTaskHistory?: boolean
+		includeClineMessages?: boolean
+	}): Promise<Partial<ExtensionState> & Pick<ExtensionState, "version">> {
+		const { includeTaskHistory = true, includeClineMessages = true } = options ?? {}
+		const state = await this.getStateToPostToWebview({
+			includeTaskHistory,
+			includeClineMessages,
+			includeCurrentTaskDetails: includeClineMessages,
+			includeCurrentTaskTodos: true,
+		})
+
+		if (includeTaskHistory && includeClineMessages) {
+			return state
+		}
+
+		const nextState: Partial<ExtensionState> & Pick<ExtensionState, "version"> = { ...state }
+		if (!includeTaskHistory) {
+			delete nextState.taskHistory
+		}
+		if (!includeClineMessages) {
+			delete nextState.clineMessages
+		}
+		return nextState
+	}
+
+	private async getCachedCustomModes(
+		forceRefresh = false,
+	): Promise<Awaited<ReturnType<CustomModesManager["getCustomModes"]>>> {
+		if (!forceRefresh && this.cachedCustomModes) {
+			return this.cachedCustomModes
+		}
+
+		const customModes = await this.customModesManager.getCustomModes()
+		this.cachedCustomModes = customModes
+		return this.cachedCustomModes
+	}
+
+	private getCachedWorkspaceCommandList(configKey: "allowedCommands" | "deniedCommands"): string[] {
+		const cachedWorkspaceCommands = this.cachedWorkspaceCommandLists?.[configKey]
+		if (cachedWorkspaceCommands) {
+			return cachedWorkspaceCommands
+		}
+
+		const workspaceCommands =
+			vscode.workspace.getConfiguration(Package.commandIDPrefix).get<string[]>(configKey) || []
+		this.cachedWorkspaceCommandLists ??= {}
+		this.cachedWorkspaceCommandLists[configKey] = workspaceCommands
+		return workspaceCommands
+	}
+
+	private getCachedCustomStoragePath(): string {
+		if (this.cachedCustomStoragePath !== undefined) {
+			return this.cachedCustomStoragePath
+		}
+
+		this.cachedCustomStoragePath =
+			vscode.workspace.getConfiguration(Package.commandIDPrefix)?.get<string>("customStoragePath", "") ?? ""
+		return this.cachedCustomStoragePath
 	}
 
 	/**
@@ -2487,33 +2610,45 @@ export class ClineProvider
 		globalStateCommands?: string[],
 	): string[] {
 		try {
-			// Validate and sanitize global state commands
-			const validGlobalCommands = Array.isArray(globalStateCommands)
-				? globalStateCommands.filter((cmd) => typeof cmd === "string" && cmd.trim().length > 0)
-				: []
+			const sanitizeCommands = (commands: unknown): string[] =>
+				Array.isArray(commands)
+					? commands.filter((cmd): cmd is string => typeof cmd === "string" && cmd.trim().length > 0)
+					: []
+			const hasSameCommands = (left: string[], right: string[]) =>
+				left.length === right.length && left.every((value, index) => value === right[index])
 
-			// Get workspace configuration commands
-			const workspaceCommands =
-				vscode.workspace.getConfiguration(Package.commandIDPrefix).get<string[]>(configKey) || []
+			const validGlobalCommands = sanitizeCommands(globalStateCommands)
+			const validWorkspaceCommands = sanitizeCommands(this.getCachedWorkspaceCommandList(configKey))
+			const cached = this.cachedMergedCommands?.[configKey]
 
-			// Validate and sanitize workspace commands
-			const validWorkspaceCommands = Array.isArray(workspaceCommands)
-				? workspaceCommands.filter((cmd) => typeof cmd === "string" && cmd.trim().length > 0)
-				: []
+			if (
+				cached &&
+				hasSameCommands(cached.globalStateCommands, validGlobalCommands) &&
+				hasSameCommands(cached.workspaceCommands, validWorkspaceCommands)
+			) {
+				return cached.mergedCommands
+			}
 
-			// Combine and deduplicate commands
-			// Global state takes precedence over workspace configuration
 			const mergedCommands = [...new Set([...validGlobalCommands, ...validWorkspaceCommands])]
-
+			this.cachedMergedCommands ??= {}
+			this.cachedMergedCommands[configKey] = {
+				globalStateCommands: [...validGlobalCommands],
+				workspaceCommands: [...validWorkspaceCommands],
+				mergedCommands,
+			}
 			return mergedCommands
 		} catch (error) {
 			console.error(`Error merging ${commandType} commands:`, error)
-			// Return empty array as fallback to prevent crashes
 			return []
 		}
 	}
 
-	async getStateToPostToWebview(): Promise<ExtensionState> {
+	async getStateToPostToWebview(options?: {
+		includeTaskHistory?: boolean
+		includeClineMessages?: boolean
+		includeCurrentTaskDetails?: boolean
+		includeCurrentTaskTodos?: boolean
+	}): Promise<ExtensionState> {
 		// Ensure the store is initialized before reading task history
 		await this.taskHistoryStore.initialized
 
@@ -2609,7 +2744,7 @@ export class ClineProvider
 			debug,
 			hasClosedCodeReviewWelcomeTips,
 			lockApiConfigAcrossModes,
-		} = await this.getState()
+		} = await this.buildBaseState({ includeTaskHistory: options?.includeTaskHistory ?? true })
 
 		// let cloudOrganizations: CloudOrganizationMembership[] = []
 
@@ -2639,6 +2774,7 @@ export class ClineProvider
 		const mergedDeniedCommands = this.mergeDeniedCommands(deniedCommands)
 		const cwd = this.cwd
 		const currentTask = this.getCurrentTask()
+		const filteredTaskHistory = (taskHistory ?? []).filter((item: HistoryItem) => item.ts && item.task)
 
 		if (!debug) {
 			apiConfiguration.useCostrictCustomConfig = false
@@ -2665,11 +2801,19 @@ export class ClineProvider
 			autoCondenseContextPercent: autoCondenseContextPercent ?? 100,
 			uriScheme: vscode.env.uriScheme,
 			currentTaskId: currentTask?.taskId,
-			currentTaskItem: currentTask?.taskId ? this.taskHistoryStore.get(currentTask.taskId) : undefined,
-			clineMessages: currentTask?.clineMessages || [],
-			currentTaskTodos: currentTask?.todoList || [],
-			messageQueue: currentTask?.messageQueueService?.messages,
-			taskHistory: this.taskHistoryStore.getAll().filter((item: HistoryItem) => item.ts && item.task),
+			currentTaskItem:
+				options?.includeCurrentTaskDetails === false || !currentTask?.taskId
+					? undefined
+					: this.taskHistoryStore.get(currentTask.taskId),
+			clineMessages: options?.includeClineMessages === false ? [] : currentTask?.clineMessages || [],
+			currentTaskTodos:
+				options?.includeCurrentTaskTodos === false ||
+				(options?.includeCurrentTaskTodos === undefined && options?.includeCurrentTaskDetails === false)
+					? []
+					: currentTask?.todoList || [],
+			messageQueue:
+				options?.includeCurrentTaskDetails === false ? undefined : currentTask?.messageQueueService?.messages,
+			taskHistory: filteredTaskHistory,
 			soundEnabled: soundEnabled ?? false,
 			ttsEnabled: ttsEnabled ?? false,
 			ttsSpeed: ttsSpeed ?? 1.0,
@@ -2801,8 +2945,20 @@ export class ClineProvider
 			"clineMessages" | "renderContext" | "hasOpenedModeSelector" | "version" | "shouldShowAnnouncement"
 		>
 	> {
+		return this.buildBaseState()
+	}
+
+	private async buildBaseState(options?: {
+		includeTaskHistory?: boolean
+	}): Promise<
+		Omit<
+			ExtensionState,
+			"clineMessages" | "renderContext" | "hasOpenedModeSelector" | "version" | "shouldShowAnnouncement"
+		>
+	> {
+		const { includeTaskHistory = true } = options ?? {}
 		const stateValues = this.contextProxy.getValues()
-		const customModes = await this.customModesManager.getCustomModes()
+		const customModes = await this.getCachedCustomModes()
 
 		// Determine apiProvider with the same logic as before, while filtering retired providers.
 		const apiProvider: ProviderName =
@@ -2810,12 +2966,12 @@ export class ClineProvider
 				? stateValues.apiProvider
 				: "costrict"
 
-		// Build the apiConfiguration object combining state values and secrets.
-		const providerSettings = this.contextProxy.getProviderSettings()
-
-		// Ensure apiProvider is set properly if not already in state
-		if (!providerSettings.apiProvider) {
-			providerSettings.apiProvider = apiProvider
+		// Build the apiConfiguration object from the current state snapshot.
+		const providerSettings = this.contextProxy.getProviderSettingsFromValues(stateValues)
+		const apiConfiguration: ProviderSettings = {
+			...providerSettings,
+			apiProvider: providerSettings.apiProvider || apiProvider,
+			openAiHeaders: providerSettings.openAiHeaders ?? {},
 		}
 
 		let organizationAllowList = ORGANIZATION_ALLOW_ALL
@@ -2891,15 +3047,13 @@ export class ClineProvider
 		// 	)
 		// }
 
-		const customStoragePath =
-			vscode.workspace.getConfiguration(Package.commandIDPrefix)?.get<string>("customStoragePath", "") ?? ""
+		const customStoragePath = this.getCachedCustomStoragePath()
 
 		// Return the same structure as before.
-		providerSettings.openAiHeaders = providerSettings.openAiHeaders ?? {}
 		return {
 			debug: stateValues.debug ?? false,
 			autoCleanup: stateValues.autoCleanup ?? DEFAULT_AUTO_CLEANUP_SETTINGS,
-			apiConfiguration: providerSettings,
+			apiConfiguration,
 			lastShownAnnouncementId: stateValues.lastShownAnnouncementId,
 			customInstructions: stateValues.customInstructions,
 			apiModelId: stateValues.apiModelId,
@@ -2919,7 +3073,7 @@ export class ClineProvider
 			allowedMaxCost: stateValues.allowedMaxCost,
 			autoCondenseContext: stateValues.autoCondenseContext ?? true,
 			autoCondenseContextPercent: stateValues.autoCondenseContextPercent ?? 100,
-			taskHistory: this.taskHistoryStore.getAll(),
+			taskHistory: includeTaskHistory ? this.taskHistoryStore.getAll() : [],
 			allowedCommands: stateValues.allowedCommands,
 			deniedCommands: stateValues.deniedCommands,
 			soundEnabled: stateValues.soundEnabled ?? false,
@@ -3213,6 +3367,7 @@ export class ClineProvider
 		await this.contextProxy.resetAllState()
 		await this.providerSettingsManager.resetAllConfigs()
 		await this.customModesManager.resetCustomModes()
+		this.cachedCustomModes = undefined
 		await this.removeClineFromStack()
 		await this.postStateToWebview()
 		await this.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
@@ -3407,12 +3562,16 @@ export class ClineProvider
 			await this.setValues(configuration)
 
 			if (configuration.allowedCommands) {
+				delete this.cachedMergedCommands?.allowedCommands
+				delete this.cachedWorkspaceCommandLists?.allowedCommands
 				await vscode.workspace
 					.getConfiguration(Package.commandIDPrefix)
 					.update("allowedCommands", configuration.allowedCommands, vscode.ConfigurationTarget.Global)
 			}
 
 			if (configuration.deniedCommands) {
+				delete this.cachedMergedCommands?.deniedCommands
+				delete this.cachedWorkspaceCommandLists?.deniedCommands
 				await vscode.workspace
 					.getConfiguration(Package.commandIDPrefix)
 					.update("deniedCommands", configuration.deniedCommands, vscode.ConfigurationTarget.Global)
@@ -3434,12 +3593,13 @@ export class ClineProvider
 
 			// Register custom modes so the CustomModesManager knows about them.
 			// setValues writes to global state, but the manager overwrites that
-			// when it merges .roomodes + global settings on refresh.  Persisting
-			// via updateCustomMode ensures modes survive the merge cycle.
+			// when it merges .roomodes + global settings on refresh.
+			// Persisting via updateCustomMode ensures modes survive the merge cycle.
 			if (configuration.customModes?.length) {
 				for (const mode of configuration.customModes) {
 					await this.customModesManager.updateCustomMode(mode.slug, mode)
 				}
+				await this.getCachedCustomModes(true)
 			}
 		}
 
@@ -3606,7 +3766,7 @@ export class ClineProvider
 
 	public async getModes(): Promise<{ slug: string; name: string }[]> {
 		try {
-			const customModes = await this.customModesManager.getCustomModes()
+			const customModes = await this.getCachedCustomModes()
 			return [...DEFAULT_MODES, ...customModes].map(({ slug, name }) => ({ slug, name }))
 		} catch (error) {
 			return DEFAULT_MODES.map(({ slug, name }) => ({ slug, name }))

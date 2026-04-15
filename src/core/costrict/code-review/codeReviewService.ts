@@ -252,9 +252,15 @@ export class CodeReviewService {
 		})
 		this.prevMode = (await provider.getMode()) ?? defaultModeSlug
 		const taskMode = options?.mode ?? "review"
-		const task = await provider.createTask(message, undefined, undefined, {
-			costrictWorkflowMode: taskMode,
-		})
+		const task = await provider.createTask(
+			message,
+			undefined,
+			undefined,
+			{
+				costrictWorkflowMode: taskMode,
+			},
+			{ mode: taskMode },
+		)
 		const trackedTaskId = task.taskId
 		let trackedTask: Task = task
 		let completionHandled = false

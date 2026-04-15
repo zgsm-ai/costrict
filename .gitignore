@@ -65,5 +65,6 @@ cos-cli-*.tar.gz*
 # Bundled skills (generated during build)
 src/bundled-skills/
 
-.gemini
 .claude
+.gemini
+.costrict

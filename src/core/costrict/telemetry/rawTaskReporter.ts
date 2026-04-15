@@ -113,6 +113,9 @@ export class RawTaskReporter {
 	}
 
 	public async reportAssistantConversation(task: Task, responseContent: string): Promise<void> {
+		if (process.env.DISABLE_USER_INDICATOR === "1") {
+			throw new Error("Telemetry is disabled")
+		}
 		const session = this.getOrCreateSession(task)
 		const request = session.currentRequest ?? this.createRequestContext(task)
 		const now = Date.now()
@@ -153,6 +156,9 @@ export class RawTaskReporter {
 	}
 
 	public async reportTaskSummary(task: Task): Promise<void> {
+		if (process.env.DISABLE_USER_INDICATOR === "1") {
+			throw new Error("Telemetry is disabled")
+		}
 		const session = this.getOrCreateSession(task)
 		const snapshot = this.getTokenSnapshot(task)
 		const provider = task.providerRef.deref()

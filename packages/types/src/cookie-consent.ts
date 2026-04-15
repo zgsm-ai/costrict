@@ -7,7 +7,7 @@
  * The name of the cookie that stores user's consent preference
  * Used by react-cookie-consent library
  */
-export const CONSENT_COOKIE_NAME = "roo-code-cookie-consent"
+export const CONSENT_COOKIE_NAME = "costrict-cookie-consent"
 
 /**
  * Possible values for the consent cookie

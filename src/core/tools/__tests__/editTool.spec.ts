@@ -50,24 +50,45 @@ vi.mock("../../../utils/pathUtils", () => ({
 
 vi.mock("../../../utils/path", () => ({
 	getReadablePath: vi.fn().mockReturnValue("test/path.txt"),
+	getWorkspacePath: vi.fn().mockReturnValue("/test/workspace"),
+}))
+
+vi.mock("../../../utils/encoding", () => ({
+	readFileWithEncodingDetection: vi.fn(async (filePath: string) => {
+		// Delegate to the already-mocked fs.readFile which returns string content
+		const { default: fs } = await import("fs/promises")
+		const content = await fs.readFile(filePath)
+		return typeof content === "string" ? content : String(content)
+	}),
 }))
 
 vi.mock("../../diff/stats", () => ({
 	sanitizeUnifiedDiff: vi.fn((diff: string) => diff),
 	computeDiffStats: vi.fn(() => ({ additions: 1, deletions: 1 })),
 }))
-
-vi.mock("vscode", () => ({
-	window: {
-		showWarningMessage: vi.fn().mockResolvedValue(undefined),
-	},
-	env: {
-		openExternal: vi.fn(),
-	},
-	Uri: {
-		parse: vi.fn(),
-	},
-}))
+vi.mock("vscode", async (importOriginal) => {
+	const original = await importOriginal<typeof import("vscode")>()
+	return {
+		...original,
+		window: {
+			...original.window,
+			showWarningMessage: vi.fn().mockResolvedValue(undefined),
+		},
+		env: {
+			...original.env,
+			openExternal: vi.fn(),
+		},
+		Uri: {
+			...original.Uri,
+			parse: vi.fn(),
+		},
+		extensions: {
+			getExtension: vi.fn().mockReturnValue({
+				extensionUri: { fsPath: "/home/test", path: "/home/test", scheme: "file" },
+			}),
+		},
+	}
+})
 
 describe("editTool", () => {
 	// Test data

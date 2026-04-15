@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { RawCommitReporter } from "./rawCommitReporter"
 
@@ -15,8 +15,17 @@ vi.mock("../auth", () => ({
 }))
 
 describe("RawCommitReporter", () => {
+	const originalDisableUserIndicator = process.env.DISABLE_USER_INDICATOR
+
 	beforeEach(() => {
+		delete process.env.DISABLE_USER_INDICATOR
 		vi.clearAllMocks()
+	})
+
+	afterEach(() => {
+		if (originalDisableUserIndicator !== undefined) {
+			process.env.DISABLE_USER_INDICATOR = originalDisableUserIndicator
+		}
 	})
 
 	it("builds and reports a commit payload with repo metadata, comment, and diff summary", async () => {

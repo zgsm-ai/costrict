@@ -634,6 +634,23 @@ describe("ClineProvider Task History Synchronization", () => {
 	})
 
 	describe("task history includes all workspaces", () => {
+		it("reads taskHistory from taskHistoryStore and filters invalid items", async () => {
+			await provider.resolveWebviewView(mockWebviewView)
+
+			const validItem = createHistoryItem({ id: "from-store", task: "From store", ts: Date.now() })
+			const invalidItem = { id: "invalid", task: "", ts: Date.now() } as HistoryItem
+
+			const getAllSpy = vi.spyOn(provider.taskHistoryStore, "getAll").mockReturnValue([validItem, invalidItem])
+			const getStateSpy = vi.spyOn(provider, "getState")
+
+			const state = await provider.getStateToPostToWebview()
+
+			expect(getAllSpy).toHaveBeenCalled()
+			expect(getStateSpy).not.toHaveBeenCalled()
+			expect(state.taskHistory).toHaveLength(1)
+			expect(state.taskHistory[0].id).toBe("from-store")
+		})
+
 		it("getStateToPostToWebview returns tasks from all workspaces", async () => {
 			await provider.resolveWebviewView(mockWebviewView)
 

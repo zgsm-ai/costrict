@@ -79,6 +79,9 @@ export interface ChatViewRef {
 
 export const MAX_IMAGES_PER_MESSAGE = 20 // This is the Anthropic limit.
 
+// Delay before resetting button text after command stop to ensure smooth UI transition
+const BUTTON_RESET_DELAY = 500
+
 // Button text keys - store translation keys instead of translated values
 // This ensures React Compiler doesn't cache stale translations
 type PrimaryButtonKey =
@@ -172,7 +175,6 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	// Show a WarningRow when the user sends a message with a retired provider.
 	const [showRetiredProviderWarning, setShowRetiredProviderWarning] = useState(false)
-
 	// When the provider changes, clear the retired-provider warning.
 	const providerName = apiConfiguration?.apiProvider
 	useEffect(() => {
@@ -240,7 +242,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const prevExpandedRowsRef = useRef<Record<number, boolean>>()
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const lastTtsRef = useRef<string>("")
-	const [wasStreaming, setWasStreaming] = useState<boolean>(false)
+	const commandStopTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+	// const [wasStreaming, setWasStreaming] = useState<boolean>(false)
 	const [checkpointWarning, setCheckpointWarning] = useState<
 		{ type: "WAIT_TIMEOUT" | "INIT_TIMEOUT"; timeout: number } | undefined
 	>(undefined)
@@ -267,7 +270,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			}
 		>
 	>(new Map())
-
+	const isStreamingState = useMemo(
+		() => isStreaming && primaryButtonTextKey !== "chat:resumeTask.title",
+		[isStreaming, primaryButtonTextKey],
+	)
 	// Compute translated button text and tooltips at render time
 	// This ensures translations update correctly when language changes
 	const primaryButtonText = primaryButtonTextKey ? t(primaryButtonTextKey) : undefined
@@ -307,7 +313,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		return !!(inputValue && inputValue?.trim().length > 0 && clineAsk === "followup")
 	}, [inputValue, clineAsk])
 	const isAutoCommandRuning = useMemo(
-		() => alwaysAllowExecute && autoApprovalEnabled && clineAsk === "command",
+		// Include 'command_output' so the Stop button stays active while a command
+		// is actively running and producing output (ask transitions from "command"
+		// to "command_output" once execution begins).
+		() => alwaysAllowExecute && autoApprovalEnabled && (clineAsk === "command" || clineAsk === "command_output"),
 		[alwaysAllowExecute, autoApprovalEnabled, clineAsk],
 	)
 	// Cancel auto-approval timeout when user starts typing
@@ -689,12 +698,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 				// Queue message if:
 				// - Task is busy (sendingDisabled)
-				// - API request in progress (isStreaming)
+				// - API request in progress (isStreamingState)
 				// - Queue has items (preserve message order during drain)
 				// - Command is running (command_output) - user's message should be queued for AI, not sent to terminal
 				if (
 					sendingDisabled ||
-					isStreaming ||
+					isStreamingState ||
 					messageQueue.length > 0 ||
 					clineAskRef.current === "command_output"
 				) {
@@ -767,7 +776,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		[
 			apiConfiguration.apiProvider,
 			sendingDisabled,
-			isStreaming,
+			isStreamingState,
 			messageQueue.length,
 			handleChatReset,
 			markFollowUpAsAnswered,
@@ -819,12 +828,15 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		vscode.postMessage({ type: "cancelTask" })
 		setDidClickCancel(true)
 		setTimeout(() => {
-			if (!isStreaming) return
+			if (!isStreamingState) return
 
-			vscode.postMessage({ type: "cancelTask" })
-			setDidClickCancel(true)
-		}, 150)
-	}, [setDidClickCancel, isStreaming])
+			setPrimaryButtonText("chat:resumeTask.title")
+			setSecondaryButtonText("chat:terminate.title")
+			setSendingDisabled(false)
+			setClineAsk("resume_task")
+			setEnableButtons(true)
+		}, 100)
+	}, [isStreamingState])
 
 	// Handle enqueue button click from textarea
 	const handleEnqueueCurrentMessage = useCallback(() => {
@@ -924,12 +936,31 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 			const trimmedInput = text?.trim()
 
-			if (isStreaming) {
+			// Handle terminal operations first — when a command is actively running
+			// (command_output), the user's intent is to abort/kill the command,
+			// not to cancel the entire task.
+			if (clineAsk === "command_output") {
+				vscode.postMessage({ type: "terminalOperation", terminalOperation: "abort" })
+				setSendingDisabled(true)
+				setClineAsk(undefined)
+				setEnableButtons(false)
+				// Clear any existing timeout to prevent memory leaks
+				if (commandStopTimeoutRef.current) {
+					clearTimeout(commandStopTimeoutRef.current)
+				}
+				commandStopTimeoutRef.current = setTimeout(() => {
+					setPrimaryButtonText(undefined)
+					setSecondaryButtonText(undefined)
+					commandStopTimeoutRef.current = null
+				}, BUTTON_RESET_DELAY)
+				return
+			}
+
+			if (isStreamingState) {
 				vscode.postMessage({ type: "cancelTask" })
 				setDidClickCancel(true)
 				return
 			}
-
 			switch (clineAsk) {
 				case "api_req_failed":
 				case "mistake_limit_reached":
@@ -964,17 +995,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						}
 					}
 					break
-				case "command_output":
-					vscode.postMessage({ type: "terminalOperation", terminalOperation: "abort" })
-					break
+				// Note: command_output is already handled above before isStreamingState check
 			}
 			setSendingDisabled(true)
 			setClineAsk(undefined)
 			setEnableButtons(false)
 		},
-		[isStreaming, clineAsk, startNewTask, userFeedback],
+		[isStreamingState, clineAsk, startNewTask, userFeedback],
 	)
-
 	const { info: model } = useSelectedModel(apiConfiguration)
 
 	const selectImages = useCallback(() => vscode.postMessage({ type: "selectImages" }), [])
@@ -1247,9 +1275,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			}
 		}
 
-		// Update previous value.
-		setWasStreaming(isStreaming)
-	}, [isStreaming, lastMessage, wasStreaming, messages.length])
+		// // Update previous value.
+		// setWasStreaming(isStreamingState)
+	}, [isStreamingState, lastMessage, messages.length])
 
 	const groupedMessages = useMemo(() => {
 		// Only filter out the launch ask and result messages - browser actions appear in chat
@@ -1483,7 +1511,12 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 	const scrollToMessage = useCallback(
 		(messageIndex?: number) => {
 			if (messageIndex === undefined || messageIndex < 0 || messageIndex >= groupedMessages.length) return
-			if (virtuosoRef.current && messageIndex >= 0 && messageIndex < groupedMessages.length && !isStreaming) {
+			if (
+				virtuosoRef.current &&
+				messageIndex >= 0 &&
+				messageIndex < groupedMessages.length &&
+				!isStreamingState
+			) {
 				virtuosoRef.current.scrollToIndex({
 					index: messageIndex,
 					behavior: "smooth",
@@ -1493,7 +1526,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				// disableAutoScrollRef.current = true
 			}
 		},
-		[groupedMessages.length, isStreaming],
+		[groupedMessages.length, isStreamingState],
 	)
 
 	// Scroll when user toggles certain rows.
@@ -1511,7 +1544,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		if (isHidden || !task) {
 			setCheckpointWarning(undefined)
 		}
-	}, [modifiedMessages.length, isStreaming, isHidden, task])
+	}, [modifiedMessages.length, isStreamingState, isHidden, task])
 
 	const placeholderTip = `\n(${t("chat:addContext")}${shouldDisableImages ? `, ${t("chat:dragFiles")}` : `, ${t("chat:dragFilesImages")}`})`
 
@@ -1548,6 +1581,29 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		[markMultipleChoiceAsAnswered],
 	)
 
+	const handleCommandStop = useCallback(() => {
+		setSendingDisabled(true)
+		setClineAsk(undefined)
+		setEnableButtons(false)
+		// Clear any existing timeout to prevent memory leaks
+		if (commandStopTimeoutRef.current) {
+			clearTimeout(commandStopTimeoutRef.current)
+		}
+		commandStopTimeoutRef.current = setTimeout(() => {
+			setPrimaryButtonText(undefined)
+			setSecondaryButtonText(undefined)
+			commandStopTimeoutRef.current = null
+		}, BUTTON_RESET_DELAY)
+	}, [])
+
+	// Cleanup timeout on component unmount
+	useEffect(() => {
+		return () => {
+			if (commandStopTimeoutRef.current) {
+				clearTimeout(commandStopTimeoutRef.current)
+			}
+		}
+	}, [])
 	const handleSuggestionClickInRow = useCallback(
 		(suggestion: SuggestionItem, event?: React.MouseEvent) => {
 			// Mark that user has responded if this is a manual click (not auto-approval)
@@ -1611,22 +1667,25 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		vscode.postMessage({ type: "cancelAutoApproval", values: { cancelType: "multiple_choice_unmount" } })
 	}, [])
 
+	const hasCheckpoint = useMemo(
+		() => modifiedMessages.some((message) => message.say === "checkpoint_saved"),
+		[modifiedMessages],
+	)
+	const lastModifiedMessage = modifiedMessages.at(-1)
+
 	const itemContent = useCallback(
 		(index: number, messageOrGroup: ClineMessage) => {
-			const hasCheckpoint = modifiedMessages.some((message) => message.say === "checkpoint_saved")
-
-			// regular message
 			return (
 				<ChatRow
 					key={messageOrGroup.ts}
 					message={messageOrGroup}
 					isExpanded={expandedRows[messageOrGroup.ts] || false}
-					onToggleExpand={toggleRowExpansion} // This was already stabilized
-					lastModifiedMessage={modifiedMessages.at(-1)} // Original direct access
-					isLast={index === groupedMessages.length - 1} // Original direct access
+					onToggleExpand={toggleRowExpansion}
+					lastModifiedMessage={lastModifiedMessage}
+					isLast={index === groupedMessages.length - 1}
 					onHeightChange={handleRowHeightChange}
-					isStreaming={isStreaming}
-					onSuggestionClick={handleSuggestionClickInRow} // This was already stabilized
+					isStreaming={isStreamingState}
+					onSuggestionClick={handleSuggestionClickInRow}
 					onMultipleChoiceSubmit={handleMultipleChoiceSubmit}
 					onBatchFileResponse={handleBatchFileResponse}
 					onFollowUpUnmount={handleFollowUpUnmount}
@@ -1635,9 +1694,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					isFollowUpAnswered={
 						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentFollowUpTs)
 					}
-					// Costrict: ask_multiple_choice answered
 					isMultipleChoiceAnswered={
-						//costrict: compare against the dedicated multiple_choice watermark instead of the followup one
 						messageOrGroup.isAnswered === true || messageOrGroup.ts <= Number(currentMultipleChoiceTs)
 					}
 					editable={
@@ -1659,16 +1716,17 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					searchResults={searchResults}
 					searchQuery={searchQuery}
 					hasCheckpoint={hasCheckpoint}
+					onCommandStop={handleCommandStop}
 				/>
 			)
 		},
 		[
-			modifiedMessages,
 			expandedRows,
 			toggleRowExpansion,
+			lastModifiedMessage,
 			groupedMessages.length,
 			handleRowHeightChange,
-			isStreaming,
+			isStreamingState,
 			handleSuggestionClickInRow,
 			handleMultipleChoiceSubmit,
 			handleBatchFileResponse,
@@ -1677,12 +1735,14 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 			isFollowUpAutoApprovalPaused,
 			currentFollowUpTs,
 			currentMultipleChoiceTs,
+			enableButtons,
+			primaryButtonText,
 			shouldHighlight,
 			searchResults,
 			showSearch,
 			searchQuery,
-			enableButtons,
-			primaryButtonText,
+			hasCheckpoint,
+			handleCommandStop,
 		],
 	)
 
@@ -1839,7 +1899,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						todos={latestTodos}
 						lastUserFeedbackIndex={groupedMessages.findIndex((msg) => msg.ts === lastUserFeedback?.ts)}
 						lastUserFeedback={lastUserFeedback?.text || ""}
-						isStreaming={isStreaming}
+						isStreaming={isStreamingState}
 						scrollToMessage={scrollToMessage}
 					/>
 
@@ -2036,11 +2096,10 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				isAutoCommandRuning={isAutoCommandRuning}
 				onStopCommand={() => {
 					handleSecondaryButtonClick(inputValue, selectedImages)
-					vscode.postMessage({ type: "terminalOperation", terminalOperation: "abort" })
 				}}
 				modeShortcutText={modeShortcutText}
 				hoverPreviewMap={hoverPreviewMap}
-				isStreaming={isStreaming}
+				isStreaming={isStreamingState}
 				onStop={handleStopTask}
 				onEnqueueMessage={handleEnqueueCurrentMessage}
 			/>

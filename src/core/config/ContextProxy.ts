@@ -421,8 +421,10 @@ export class ContextProxy {
 	 */
 
 	public getProviderSettings(): ProviderSettings {
-		const values = this.getValues()
+		return this.getProviderSettingsFromValues(this.getValues())
+	}
 
+	public getProviderSettingsFromValues(values: RooCodeSettings): ProviderSettings {
 		// Sanitize invalid/removed apiProvider values before parsing
 		// This handles cases where a user had a provider selected that was later removed
 		// from the extension (e.g., "glama"). We sanitize here to avoid repeated

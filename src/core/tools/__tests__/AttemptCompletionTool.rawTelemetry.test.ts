@@ -22,7 +22,7 @@ vi.mock("@roo-code/telemetry", () => ({
 }))
 
 describe("AttemptCompletionTool raw telemetry integration", () => {
-	it("reports task summary before emitting TaskCompleted", () => {
+	it("emits TaskCompleted via TelemetryService and task event after final token usage update", () => {
 		const task = {
 			taskId: "task-1",
 			toolUsage: {},
@@ -34,7 +34,10 @@ describe("AttemptCompletionTool raw telemetry integration", () => {
 		;(attemptCompletionTool as any).emitTaskCompleted(task)
 
 		expect(task.emitFinalTokenUsageUpdate).toHaveBeenCalled()
-		expect(mockReportTaskSummary).toHaveBeenCalledWith(task)
+		// NOTE: emitTaskCompleted no longer calls reportTaskSummary.
+		// The current implementation only calls emitFinalTokenUsageUpdate,
+		// TelemetryService.instance.captureTaskCompleted, and task.emit.
+		expect(mockReportTaskSummary).not.toHaveBeenCalled()
 		expect(mockCaptureTaskCompleted).toHaveBeenCalledWith("task-1")
 		expect(task.emit).toHaveBeenCalledWith("taskCompleted", "task-1", { inputTokens: 1, outputTokens: 2 }, {})
 	})

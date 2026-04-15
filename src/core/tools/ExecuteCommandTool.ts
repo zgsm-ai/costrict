@@ -400,6 +400,7 @@ export async function executeCommandInTerminal(
 	const process = terminal.runCommand(command, callbacks)
 	task.terminalProcess = process
 	task.persistedTerminalProcess = process // Keep a persistent reference for continue operation
+	task.currentTerminalExecutionId = executionId // Track active executionId for abort validation
 
 	// Dual-timeout logic:
 	// - Agent timeout: transitions the command to background (continues running)
@@ -555,6 +556,7 @@ function clearTerminalProcess(task: Task) {
 
 	if (!isJetbrainsPlatform() && task) {
 		task.terminalProcess = undefined
+		task.currentTerminalExecutionId = undefined
 		return
 	}
 
