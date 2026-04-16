@@ -224,6 +224,7 @@ export class SkillsManager {
 	 * Check if a skill is available in the given mode.
 	 * - modeSlugs undefined or empty = available in all modes ("Any mode")
 	 * - modeSlugs with values = available only if mode is in the array
+	 * - Subtask modes (e.g. subreview) also match their parent mode's skills
 	 */
 	private isSkillAvailableInMode(skill: SkillMetadata, currentMode: string): boolean {
 		// No mode restrictions = available in all modes
@@ -232,7 +233,19 @@ export class SkillsManager {
 			return true
 		}
 		// Check if current mode is in the allowed modes
-		return skillModeSlugs.includes(currentMode)
+		if (skillModeSlugs.includes(currentMode)) {
+			return true
+		}
+		// Subtask modes inherit skills from their parent modes (found via taskMode field)
+		return this.getParentModeSlugs(currentMode).some((slug) => skillModeSlugs.includes(slug))
+	}
+
+	/**
+	 * Find all parent mode slugs for a subtask mode.
+	 * Returns slugs of modes whose taskMode field matches the given slug.
+	 */
+	getParentModeSlugs(subtaskSlug: string): string[] {
+		return modes.filter((mode) => mode.taskMode === subtaskSlug).map((mode) => mode.slug)
 	}
 
 	/**

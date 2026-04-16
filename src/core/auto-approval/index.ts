@@ -7,11 +7,36 @@ import {
 	isNonBlockingAsk,
 } from "@roo-code/types"
 
+import path from "path"
+import os from "os"
+
 import { ClineAskResponse } from "../../shared/WebviewMessage"
 
 import { isWriteToolAction, isReadOnlyToolAction } from "./tools"
 import { isMcpToolAlwaysAllowed } from "./mcp"
 import { getCommandDecision } from "./commands"
+
+/**
+ * Get all global skill directory prefixes.
+ * Files inside these directories are considered safe to read without approval.
+ */
+function getSkillDirectoryPrefixes(): string[] {
+	const homeDir = os.homedir()
+	return [
+		path.join(homeDir, ".costrict", "skills"),
+		path.join(homeDir, ".roo", "skills"),
+		path.join(homeDir, ".agents", "skills"),
+		path.join(process.env.XDG_CONFIG_HOME || path.join(homeDir, ".config"), "costrict", "skills"),
+	]
+}
+
+/**
+ * Check if a file path is inside any known skill directory.
+ */
+function isInsideSkillDirectory(filePath: string): boolean {
+	const normalized = path.resolve(filePath).toLowerCase()
+	return getSkillDirectoryPrefixes().some((prefix) => normalized.startsWith(prefix.toLowerCase()))
+}
 
 // We have auto-approval actions for different categories.
 export type AutoApprovalState =
@@ -166,6 +191,10 @@ export async function checkAutoApproval({
 		const isOutsideWorkspace = !!tool.isOutsideWorkspace
 
 		if (isReadOnlyToolAction(tool)) {
+			// Auto-approve reads from skill directories (user-installed instruction files)
+			if (isOutsideWorkspace && tool.content && isInsideSkillDirectory(tool.content)) {
+				return { decision: "approve" }
+			}
 			return state.alwaysAllowReadOnly === true &&
 				(!isOutsideWorkspace || state.alwaysAllowReadOnlyOutsideWorkspace === true)
 				? { decision: "approve" }
