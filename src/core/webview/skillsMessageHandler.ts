@@ -199,7 +199,7 @@ export async function handleOpenSkillFile(provider: ClineProvider, message: Webv
 			throw new Error(t("skills:errors.skill_not_found", { name: skillName }))
 		}
 
-		openFile(skill.path)
+		openFile(message?.values?.path || skill.path)
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error)
 		provider.log(`Error opening skill file: ${errorMessage}`)
