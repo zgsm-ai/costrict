@@ -84,11 +84,9 @@ const ALLOWED_VSCODE_SETTINGS = new Set(["terminal.integrated.inheritEnv"])
 import { MarketplaceManager, MarketplaceItemType } from "../../services/marketplace"
 import { CostrictAuthConfig, CostrictAuthService, CostrictAuthStorage } from "../costrict/auth"
 import { CodeReviewService } from "../costrict/code-review"
-import { CostrictCodebaseIndexManager, IndexSwitchRequest, IndexStatusInfo } from "../costrict/codebase-index"
 import { getTerminalManager, getCostrictCliInstallDocsUrl } from "../costrict/cli-wrap"
 import { ErrorCodeManager } from "../costrict/error-code"
-import { writeCostrictAccessToken } from "../costrict/codebase-index/utils"
-import { workspaceEventMonitor } from "../costrict/codebase-index/workspace-event-monitor"
+import { writeCostrictRuntimeAuth } from "../costrict/runtime-config"
 import { fetchCostrictQuotaInfo, fetchCostrictInviteCode } from "../../api/providers/fetchers/costrict"
 import { initNotificationService } from "../costrict/notification"
 import { installGitHubSkills } from "../../services/skills/github-skills-installer"
@@ -611,10 +609,6 @@ export const webviewMessageHandler = async (
 			}
 			break
 		}
-		case "showCostrictCodebaseDisableConfirmDialog": {
-			await provider.postMessageToWebview({ type: "showCostrictCodebaseDisableConfirmDialog" })
-			break
-		}
 		case "checkReviewSuggestion":
 			await CodeReviewService.getInstance().setActiveIssue(message.issueId!)
 			break
@@ -956,7 +950,11 @@ export const webviewMessageHandler = async (
 					.getCurrentTask()
 					?.handleTerminalOperation(message.terminalOperation, message.terminalPid, message.executionId)
 					?.catch((err) => {
-						provider.log(`Failed to handle terminal operation: ${err.message}`, "error", "terminalOperation")
+						provider.log(
+							`Failed to handle terminal operation: ${err.message}`,
+							"error",
+							"terminalOperation",
+						)
 					})
 			}
 			break
@@ -1146,9 +1144,6 @@ export const webviewMessageHandler = async (
 			break
 		case "resetState":
 			await provider.resetState()
-			break
-		case "fixCodebase":
-			await provider.fixCodebase()
 			break
 		case "fixHistory":
 			await provider.fixHistory()
@@ -2163,7 +2158,7 @@ export const webviewMessageHandler = async (
 				}
 				await provider.upsertProviderProfile(message.text, message.apiConfiguration)
 				if (message.apiConfiguration?.costrictAccessToken && message.apiConfiguration?.costrictRefreshToken) {
-					writeCostrictAccessToken(
+					writeCostrictRuntimeAuth(
 						message.apiConfiguration?.costrictAccessToken,
 						message.apiConfiguration?.costrictRefreshToken,
 					)
@@ -3220,72 +3215,6 @@ export const webviewMessageHandler = async (
 			// }
 			break
 		}
-		case "costrictPollCodebaseIndexStatus": {
-			try {
-				const { apiConfiguration } = await provider.getState()
-
-				if (apiConfiguration?.apiProvider !== "costrict") {
-					provider.log(
-						"Only CoStrict provider supports this service",
-						"error",
-						"CostrictCodebaseIndexManager",
-					)
-					return
-				}
-
-				// Get current workspace path
-				const workspacePath = getWorkspacePath()
-				if (!workspacePath) {
-					provider.postMessageToWebview({
-						type: "codebaseIndexStatusResponse",
-						payload: {
-							success: false,
-							error: "No workspace folder open",
-						},
-					})
-					return
-				}
-
-				// Call CostrictCodebaseIndexManager.getIndexStatus()
-				const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
-				await costrictCodebaseIndexManager.ensureInitialized("getIndexStatus")
-				const response = await costrictCodebaseIndexManager.getIndexStatus(workspacePath)
-				const errorCodeManager = ErrorCodeManager.getInstance()
-
-				const updateFailedReason = (item: IndexStatusInfo) => {
-					if (item.status === "failed") {
-						item.failedReason = errorCodeManager.getErrorMessageByCode(item.failedReason).message
-					}
-				}
-
-				if (response?.data?.codegraph) {
-					updateFailedReason(response.data.codegraph)
-				}
-				if (response?.data?.embedding) {
-					updateFailedReason(response.data.embedding)
-				}
-
-				await provider.postMessageToWebview({
-					type: "codebaseIndexStatusResponse",
-					payload: {
-						workspace: workspacePath,
-						status: response.data,
-					},
-				})
-			} catch (error) {
-				provider.log(
-					`Error polling codebase index status: ${error instanceof Error ? error.message : String(error)}`,
-				)
-				await provider.postMessageToWebview({
-					type: "codebaseIndexStatusResponse",
-					payload: {
-						success: false,
-						error: error instanceof Error ? error.message : String(error),
-					},
-				})
-			}
-			break
-		}
 		case "focusPanelRequest": {
 			// Execute the focusPanel command to focus the WebView
 			await vscode.commands.executeCommand(getCommand("focusPanel"))
@@ -3645,155 +3574,6 @@ export const webviewMessageHandler = async (
 					text: text,
 				})
 			}
-			break
-		}
-		case "costrictCodebaseIndexEnabled": {
-			try {
-				// Get current workspace path
-				const workspacePath = getWorkspacePath()
-				if (!workspacePath) {
-					provider.log("Unable to get workspace path", "error", "CostrictCodebaseIndexManager")
-					break
-				}
-
-				const oldEnabled = getGlobalState("costrictCodebaseIndexEnabled")
-
-				if (oldEnabled === message.bool) return
-
-				const { apiConfiguration } = await provider.getState()
-
-				if (apiConfiguration?.apiProvider !== "costrict") {
-					provider.log(
-						"Only CoStrict provider supports this service",
-						"error",
-						"CostrictCodebaseIndexManager",
-					)
-					return
-				}
-				// Get switch status from message.bool
-				const isEnabled = message.bool
-				if (isEnabled === undefined) {
-					provider.log(
-						"costrictCodebaseIndexEnabled message missing bool parameter",
-						"error",
-						"CostrictCodebaseIndexManager",
-					)
-					vscode.window.showErrorMessage("Codebase index switch status is invalid")
-					break
-				}
-
-				// Build IndexSwitchRequest object
-				const switchRequest: IndexSwitchRequest = {
-					workspace: workspacePath,
-					switch: isEnabled ? "on" : "off",
-				}
-
-				// Ensure the local client lifecycle is ready before updating the workspace switch.
-				const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
-				await costrictCodebaseIndexManager.ensureInitialized("toggleIndexSwitch")
-				const result = await costrictCodebaseIndexManager.toggleIndexSwitch(switchRequest)
-
-				if (result.success) {
-					// Save state to global storage
-					await updateGlobalState("costrictCodebaseIndexEnabled", isEnabled)
-
-					provider.log(
-						`Codebase index feature has been ${isEnabled ? "enabled" : "disabled"}: ${workspacePath}`,
-						"info",
-						"CostrictCodebaseIndexManager",
-					)
-					await provider.postMessageToWebview({
-						type: "costrictCodebaseIndexEnabled",
-						payload: isEnabled,
-					})
-					if (isEnabled) {
-						await workspaceEventMonitor.initialize()
-					}
-				} else {
-					await updateGlobalState("costrictCodebaseIndexEnabled", oldEnabled)
-
-					provider.log(
-						`Codebase index switch operation failed: ${result.message}`,
-						"error",
-						"CostrictCodebaseIndexManager",
-					)
-					await provider.postMessageToWebview({
-						type: "costrictCodebaseIndexEnabled",
-						payload: oldEnabled,
-					})
-				}
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error
-						? error.message
-						: "Unknown error occurred during codebase index switch operation"
-				provider.log(errorMessage, "error", "CostrictCodebaseIndexManager")
-			} finally {
-				// Update UI status
-				await provider.postStateToWebview()
-			}
-			break
-		}
-		case "costrictRebuildCodebaseIndex": {
-			try {
-				const { apiConfiguration } = await provider.getState()
-
-				if (apiConfiguration?.apiProvider !== "costrict") {
-					provider.log(
-						"Only CoStrict provider supports this service",
-						"error",
-						"CostrictCodebaseIndexManager",
-					)
-					return
-				}
-				const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
-
-				// Get workspace path
-				const workspacePath = getWorkspacePath() || ""
-				const rebuildType = message.values?.type || "all"
-				const path = message.values?.path || workspacePath
-
-				// Build IndexBuildRequest
-				const indexBuildRequest = {
-					workspace: workspacePath,
-					path: path,
-					type: rebuildType,
-				}
-
-				// Call CostrictCodebaseIndexManager.triggerIndexBuild()
-				await costrictCodebaseIndexManager.ensureInitialized("triggerIndexBuild")
-				const result = await costrictCodebaseIndexManager.triggerIndexBuild(indexBuildRequest)
-
-				if (result.success) {
-					provider.log(
-						`Successfully triggered index rebuild: ${rebuildType}`,
-						"info",
-						"CostrictCodebaseIndexManager",
-					)
-				} else {
-					provider.log(
-						`Failed to trigger index rebuild: ${result.message}`,
-						"error",
-						"CostrictCodebaseIndexManager",
-					)
-				}
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : "Unknown error occurred when triggering index rebuild"
-				provider.log(errorMessage, "error", "CostrictCodebaseIndexManager")
-			} finally {
-				await provider.postStateToWebview()
-			}
-			break
-		}
-		case "startCodereview": {
-			try {
-				const { targets } = message.values ?? {}
-				if (targets && targets.length) {
-					const reviewInstance = CodeReviewService.getInstance()
-					reviewInstance.startReview(targets)
-				}
-			} catch (err) {}
 			break
 		}
 		case "getReviewFiles": {

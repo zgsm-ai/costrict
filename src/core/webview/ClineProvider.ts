@@ -120,8 +120,6 @@ import { defaultCodebaseIndexEnabled } from "../../services/code-index/constants
 import { CodeReviewService, ReviewTargetType } from "../costrict/code-review"
 import { getTerminalManager } from "../costrict/cli-wrap"
 import { defaultLang } from "../../utils/language"
-import CostrictCodebaseIndexManager from "../costrict/codebase-index"
-import { sendCostrictCloseWindow } from "../costrict/auth/ipc"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { isJetbrainsPlatform } from "../../utils/platform"
 import { getAppName } from "../../utils/getAppName"
@@ -2677,7 +2675,6 @@ export class ClineProvider
 			customStoragePath,
 			enableCheckpoints,
 			useCostrictCustomConfig,
-			costrictCodebaseIndexEnabled,
 			checkpointTimeout,
 			taskHistory,
 			soundVolume,
@@ -2820,7 +2817,6 @@ export class ClineProvider
 			customStoragePath,
 			enableCheckpoints: enableCheckpoints ?? true,
 			useCostrictCustomConfig: useCostrictCustomConfig ?? false,
-			costrictCodebaseIndexEnabled: costrictCodebaseIndexEnabled ?? false,
 			checkpointTimeout: checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			shouldShowAnnouncement:
 				telemetrySetting !== "disabled" && lastShownAnnouncementId !== this.latestAnnouncementId,
@@ -3082,7 +3078,6 @@ export class ClineProvider
 			customStoragePath,
 			enableCheckpoints: stateValues.enableCheckpoints ?? true,
 			useCostrictCustomConfig: stateValues.useCostrictCustomConfig ?? false,
-			costrictCodebaseIndexEnabled: stateValues.costrictCodebaseIndexEnabled ?? false,
 			checkpointTimeout: stateValues.checkpointTimeout ?? DEFAULT_CHECKPOINT_TIMEOUT_SECONDS,
 			soundVolume: stateValues.soundVolume,
 			writeDelayMs: stateValues.writeDelayMs ?? DEFAULT_WRITE_DELAY_MS,
@@ -3291,52 +3286,6 @@ export class ClineProvider
 		await fs.rm(historyIndexPath, { force: true })
 		await delay(1000)
 		await vscode.commands.executeCommand("workbench.action.closeWindow")
-	}
-
-	async fixCodebase() {
-		let answer = await vscode.window.showInformationMessage(
-			t("common:confirmation.reset_codebase"),
-			{ modal: true },
-			t("common:answers.yes"),
-		)
-
-		if (answer !== t("common:answers.yes")) {
-			return
-		}
-		try {
-			// CostrictCodebaseIndexManager.getInstance()
-			const costrictCodebaseIndexManager = CostrictCodebaseIndexManager.getInstance()
-			await costrictCodebaseIndexManager.stopHealthCheck()
-			await costrictCodebaseIndexManager.stopExistingClient()
-
-			const codebaseHomeDir = path.join(os.homedir(), ".costrict")
-			const codebaseIndexDirs = [
-				path.join(codebaseHomeDir, "bin"),
-				path.join(codebaseHomeDir, "cache"),
-				path.join(codebaseHomeDir, "logs"),
-				path.join(codebaseHomeDir, "package"),
-				path.join(codebaseHomeDir, "run"),
-				path.join(codebaseHomeDir, "share"),
-			]
-
-			for (const codebaseIndexDir of codebaseIndexDirs) {
-				try {
-					await fs.rm(codebaseIndexDir, { recursive: true, force: true })
-				} catch (error) {
-					this.log(
-						`Failed to remove ${codebaseIndexDir}: ${error instanceof Error ? error.message : String(error)}`,
-					)
-				}
-			}
-
-			sendCostrictCloseWindow(generateNewSessionClientId())
-			await delay(1000)
-			await vscode.commands.executeCommand("workbench.action.closeWindow")
-		} catch (error) {
-			vscode.window.showErrorMessage(
-				`Failed to reset codebase: ${error instanceof Error ? error.message : String(error)}`,
-			)
-		}
 	}
 
 	// dev

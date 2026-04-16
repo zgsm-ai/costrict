@@ -95,7 +95,6 @@ export interface CreateTaskOptions {
 	experiments?: Record<string, boolean>
 	initialTodos?: TodoItem[]
 	useCostrictCustomConfig?: boolean
-	costrictCodebaseIndexEnabled?: boolean
 	costrictWorkflowMode?: string
 	costrictWorkflowSpecScope?: string
 	/** Initial status for the task's history item (e.g., "active" for child tasks) */

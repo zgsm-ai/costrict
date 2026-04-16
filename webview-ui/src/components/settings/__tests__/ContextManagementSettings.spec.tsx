@@ -86,7 +86,6 @@ vi.mock("@vscode/webview-ui-toolkit/react", () => ({
 
 describe("ContextManagementSettings", () => {
 	const defaultProps = {
-		costrictCodebaseIndexEnabled: false,
 		autoCondenseContext: false,
 		autoCondenseContextPercent: 80,
 		listApiConfigMeta: [],

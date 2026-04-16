@@ -72,7 +72,6 @@ import { AutoApproveSettings } from "./AutoApproveSettings"
 import { CheckpointSettings } from "./CheckpointSettings"
 import { NotificationSettings } from "./NotificationSettings"
 import { ContextManagementSettings } from "./ContextManagementSettings"
-import { CostrictCodebaseSettings } from "./CostrictCodebaseSettings"
 import { TerminalSettings } from "./TerminalSettings"
 import { ExperimentalSettings } from "./ExperimentalSettings"
 import { LanguageSettings } from "./LanguageSettings"
@@ -171,7 +170,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 		customStoragePath,
 		enableCheckpoints,
 		useCostrictCustomConfig,
-		costrictCodebaseIndexEnabled,
 		checkpointTimeout,
 		experiments,
 		maxOpenTabsContext,
@@ -452,7 +450,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 					experimentSettings,
 					customSupportPrompts,
 					useCostrictCustomConfig: useCostrictCustomConfig ?? false,
-					costrictCodebaseIndexEnabled: costrictCodebaseIndexEnabled ?? false,
 					autoCleanup,
 					debug,
 				},
@@ -905,7 +902,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								maxWorkspaceFiles={maxWorkspaceFiles ?? 150}
 								showRooIgnoredFiles={showRooIgnoredFiles}
 								enableSubfolderRules={enableSubfolderRules}
-								costrictCodebaseIndexEnabled={costrictCodebaseIndexEnabled ?? false}
 								maxImageFileSize={maxImageFileSize}
 								maxTotalImageSize={maxTotalImageSize}
 								profileThresholds={profileThresholds}
@@ -918,13 +914,6 @@ const SettingsView = forwardRef<SettingsViewRef, SettingsViewProps>(({ onDone, t
 								customSupportPrompts={customSupportPrompts || {}}
 								setCustomSupportPrompts={setCustomSupportPromptsField}
 								setCachedStateField={setCachedStateField}
-							/>
-						)}
-						{/* CostrictCodebase Section */}
-						{renderTab === "contextManagement" && (
-							<CostrictCodebaseSettings
-								setCachedStateField={setCachedStateField}
-								isActiveTab={activeTab === "contextManagement"}
 							/>
 						)}
 

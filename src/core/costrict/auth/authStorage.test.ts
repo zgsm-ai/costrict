@@ -11,42 +11,25 @@ vi.mock("./ipc/client", () => ({
 	sendCostrictTokens: vi.fn(),
 }))
 
-vi.mock("../codebase-index", () => ({
-	costrictCodebaseIndexManager: {
-		ensureInitialized: vi.fn().mockResolvedValue(undefined),
-		syncToken: vi.fn().mockResolvedValue({ success: true, data: 1, message: "ok" }),
-	},
-}))
-
-vi.mock("../codebase-index/workspace-event-monitor", () => ({
-	workspaceEventMonitor: {
-		initialize: vi.fn().mockResolvedValue(undefined),
-	},
-}))
-
-vi.mock("../codebase-index/utils", () => ({
-	writeCostrictAccessToken: vi.fn().mockResolvedValue(undefined),
+vi.mock("../runtime-config", () => ({
+	ensureCompletionRuntimeReady: vi.fn().mockResolvedValue(undefined),
+	writeCostrictRuntimeAuth: vi.fn().mockResolvedValue(undefined),
+	ensureCostrictRuntimeInstalled: vi.fn().mockResolvedValue("noUpdate"),
+	getRuntimeBinaryPath: vi.fn(() => "/tmp/home/.costrict/bin/costrict"),
+	getRuntimeProcessName: vi.fn(() => "costrict"),
 }))
 
 import { CostrictAuthStorage } from "./authStorage"
-import { costrictCodebaseIndexManager } from "../codebase-index"
-import { workspaceEventMonitor } from "../codebase-index/workspace-event-monitor"
-import { writeCostrictAccessToken } from "../codebase-index/utils"
+import { ensureCompletionRuntimeReady, writeCostrictRuntimeAuth } from "../runtime-config"
 
 type MockProviderState = {
 	currentApiConfigName: string
 	apiConfiguration: {
 		apiProvider: string
-		costrictCodebaseIndexEnabled: boolean
 		costrictAccessToken: string
 		costrictRefreshToken: string
 		costrictState: string
 	}
-}
-
-const flushAsyncWork = async () => {
-	await Promise.resolve()
-	await Promise.resolve()
 }
 
 describe("CostrictAuthStorage.saveTokens", () => {
@@ -58,11 +41,10 @@ describe("CostrictAuthStorage.saveTokens", () => {
 		state: "new-state",
 	}
 
-	const buildState = (enabled: boolean): MockProviderState => ({
+	const buildState = (): MockProviderState => ({
 		currentApiConfigName: "costrict-profile",
 		apiConfiguration: {
 			apiProvider: "costrict",
-			costrictCodebaseIndexEnabled: enabled,
 			costrictAccessToken: "old-access-token",
 			costrictRefreshToken: "old-refresh-token",
 			costrictState: "old-state",
@@ -74,7 +56,7 @@ describe("CostrictAuthStorage.saveTokens", () => {
 		;(CostrictAuthStorage as any).instance = undefined
 
 		mockProvider = {
-			getState: vi.fn().mockResolvedValue(buildState(false)),
+			getState: vi.fn().mockResolvedValue(buildState()),
 			providerSettingsManager: {
 				saveMergeConfig: vi.fn().mockResolvedValue(undefined),
 			},
@@ -85,24 +67,19 @@ describe("CostrictAuthStorage.saveTokens", () => {
 		CostrictAuthStorage.setProvider(mockProvider)
 	})
 
-	it("initializes and syncs the client even when workspace indexing is disabled", async () => {
+	it("persists shared runtime auth after saving tokens", async () => {
 		await CostrictAuthStorage.getInstance().saveTokens(newTokens as any)
-		await flushAsyncWork()
 
-		expect(writeCostrictAccessToken).toHaveBeenCalledWith(newTokens.access_token, newTokens.refresh_token)
-		expect(costrictCodebaseIndexManager.ensureInitialized).toHaveBeenCalledWith("saveTokens")
-		expect(costrictCodebaseIndexManager.syncToken).toHaveBeenCalledTimes(1)
-		expect(workspaceEventMonitor.initialize).not.toHaveBeenCalled()
+		expect(writeCostrictRuntimeAuth).toHaveBeenCalledWith(newTokens.access_token, newTokens.refresh_token)
+		expect(ensureCompletionRuntimeReady).toHaveBeenCalledTimes(1)
 	})
 
-	it("keeps the workspace monitor gated by the workspace toggle", async () => {
-		mockProvider.getState.mockResolvedValue(buildState(true))
+	it("persists shared runtime auth regardless of legacy codebase toggle state", async () => {
+		mockProvider.getState.mockResolvedValue(buildState())
 
 		await CostrictAuthStorage.getInstance().saveTokens(newTokens as any)
-		await flushAsyncWork()
 
-		expect(costrictCodebaseIndexManager.ensureInitialized).toHaveBeenCalledWith("saveTokens")
-		expect(costrictCodebaseIndexManager.syncToken).toHaveBeenCalledTimes(1)
-		expect(workspaceEventMonitor.initialize).toHaveBeenCalledTimes(1)
+		expect(writeCostrictRuntimeAuth).toHaveBeenCalledWith(newTokens.access_token, newTokens.refresh_token)
+		expect(ensureCompletionRuntimeReady).toHaveBeenCalledTimes(1)
 	})
 })
