@@ -383,6 +383,26 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		apiProvider: "costrict",
 	},
 	{
+		slug: "subreview",
+		name: "🔍 Sub Review",
+		roleDefinition:
+			"You are a security code review executor. Follow the assigned task objectives precisely to perform code security reviews.",
+		whenToUse:
+			"Use this mode as a subtask executor for security review tasks. It handles specific audit objectives delegated by the parent security-review task, such as scanning individual files for vulnerabilities or analyzing specific code patterns.",
+		description: "Subtask executor mode for security review, performing targeted security reviews",
+		groups: [
+			"read",
+			["edit", { fileRegex: "\\.(md|json)$", description: "Markdown and JSON files only" }],
+			"command",
+			"mcp",
+		],
+		disableSwitchMode: true,
+		pure: true,
+		costrictCodeModeGroup: "hide",
+		source: "project",
+		apiProvider: "costrict",
+	},
+	{
 		slug: "security-review",
 		name: "🔒 Security Review",
 		roleDefinition:
@@ -399,7 +419,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		],
 		disableSwitchMode: true,
 		costrictCodeModeGroup: "hide",
-		taskMode: "task",
+		taskMode: "subreview",
 		source: "project",
 		apiProvider: "costrict",
 	},

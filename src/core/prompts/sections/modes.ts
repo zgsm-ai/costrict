@@ -36,7 +36,9 @@ ${allModes
 		if (
 			!mode.costrictCodeModeGroup ||
 			(mode.apiProvider === "costrict" &&
-				["quick-explore", "task-check", "subcoding", "review", "security-review"].includes(mode.slug))
+				["quick-explore", "task-check", "subcoding", "review", "security-review", "subreview"].includes(
+					mode.slug,
+				))
 		)
 			return true
 		if (mode.costrictCodeModeGroup)

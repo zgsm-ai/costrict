@@ -175,7 +175,7 @@
 			"get_review_result_failed": "Unable to obtain review results, please try again",
 			"no_changed_files": "No changed files, please ensure that the current workspace is a git repository and has changed files.",
 			"new_commit_notification": "You committed: {{commitMessage}}, whether to perform review?",
-			"auto_execute_with_default_config": "Execute with default configuration without re-confirmation during the process"
+			"auto_execute_with_default_config": "Please use the Security Review skill to perform the code review. Use default configuration throughout the process without re-confirmation. Always respond and write files in English."
 		},
 		"statusbar": {
 			"login_expired": "Failed to get login information. Please log in again to use the code review."

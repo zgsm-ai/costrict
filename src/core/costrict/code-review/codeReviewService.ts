@@ -186,7 +186,7 @@ export class CodeReviewService {
 	}
 
 	private getRestoreMode(mode: string): Mode {
-		return mode === "review" || mode === "security-review" ? "code" : mode
+		return mode === "review" || mode === "security-review" || mode === "subreview" ? "code" : mode
 	}
 
 	public async handleAuthError() {
