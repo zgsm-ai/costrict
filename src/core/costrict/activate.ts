@@ -23,10 +23,10 @@ import {
 	loadLocalLanguageExtensions,
 } from "./base/common"
 import { CostrictAuthApi, CostrictAuthCommands, CostrictAuthService, CostrictAuthStorage } from "./auth"
-import { initCodeReview, disposeGitCommitListener, CodeReviewService } from "./code-review"
+import { initCodeReview, disposeGitCommitListener } from "./code-review"
 import { initTelemetry } from "./telemetry"
 import { initErrorCodeManager } from "./error-code"
-import { NotificationService } from "./notification"
+import { initNotificationService, NotificationService } from "./notification"
 import { Package } from "../../shared/package"
 import { createLogger, ILogger, deactivate as loggerDeactivate } from "../../utils/logger"
 import {
@@ -39,10 +39,7 @@ import {
 	stopIPCServer,
 } from "./auth/ipc"
 import { generateNewSessionClientId, getClientId } from "../../utils/getClientId"
-import CostrictCodebaseIndexManager, { costrictCodebaseIndexManager } from "./codebase-index"
-import { workspaceEventMonitor } from "./codebase-index/workspace-event-monitor"
-import { initGitCheckoutDetector } from "./codebase-index/git-checkout-detector"
-import { writeCostrictAccessToken } from "./codebase-index/utils"
+import { ensureCompletionRuntimeReady, writeCostrictRuntimeAuth } from "./runtime-config"
 import { getPanel } from "../../activate/registerCommands"
 import { t } from "../../i18n"
 import prettyBytes from "pretty-bytes"
@@ -57,10 +54,6 @@ const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
 async function initialize(provider: ClineProvider, logger: ILogger) {
 	const oldDebug = provider.getValue("debug")
 	const codeMode = provider.getValue("costrictCodeMode")
-	const oldEnabled = provider.getValue("costrictCodebaseIndexEnabled")
-	if (oldEnabled == null) {
-		await provider.setValue("costrictCodebaseIndexEnabled", false)
-	}
 
 	switch (codeMode) {
 		case "plan":
@@ -75,19 +68,12 @@ async function initialize(provider: ClineProvider, logger: ILogger) {
 	}
 
 	updateDefaultDebug(oldDebug ?? false)
-	//
+	// void logger
 	CostrictAuthStorage.setProvider(provider)
 	CostrictAuthApi.setProvider(provider)
 	CostrictAuthService.setProvider(provider)
 	CostrictAuthCommands.setProvider(provider)
 
-	//
-	costrictCodebaseIndexManager.setProvider(provider)
-	costrictCodebaseIndexManager.setLogger(logger)
-	workspaceEventMonitor.setProvider(provider)
-	workspaceEventMonitor.setLogger(logger)
-
-	//
 	printLogo()
 	initLangSetting()
 	loadLocalLanguageExtensions()
@@ -105,16 +91,11 @@ export async function activate(
 	const isVscodePlatform = !isJetbrains && !isCliPatform()
 	const logger = createLogger(Package.outputChannel)
 
-	// Clean up any stale CoStrict CLI processes from previous sessions
 	void cleanupStaleProcesses(context)
-
-	// Set extension context for terminal manager (needed for port tracking)
 	getTerminalManager().setExtensionContext(context)
 
 	initErrorCodeManager(provider)
-	initGitCheckoutDetector(context, logger)
 	await initialize(provider, logger)
-	// Start IPC server in background – never block extension activation.
 	void startIPCServer()
 		.then(() => connectIPC())
 		.catch((err) => console.error("IPC startup failed:", err))
@@ -145,12 +126,9 @@ export async function activate(
 	context.subscriptions.push(costrictAuthCommands)
 
 	costrictAuthCommands.registerCommands(context)
-
 	provider.setCostrictAuthCommands(costrictAuthCommands)
+
 	let loginTip = () => {}
-	/**
-	 * Check login status when plugin starts
-	 */
 	try {
 		const isLoggedIn = await costrictAuthService.checkLoginStatusOnStartup()
 
@@ -160,38 +138,16 @@ export async function activate(
 					return
 				}
 				provider.log(`Login status detected at plugin startup: valid (${tokens.state})`)
-				void writeCostrictAccessToken(tokens.access_token, tokens.refresh_token)
-					.then(async () => {
-						const { apiConfiguration } = await provider.getState()
-						if (apiConfiguration.apiProvider !== "costrict") {
-							return
-						}
-
-						setTimeout(() => {
-							void (async () => {
-								try {
-									await costrictCodebaseIndexManager.ensureInitialized("activate")
-									await costrictCodebaseIndexManager.syncToken()
-									if (apiConfiguration.costrictCodebaseIndexEnabled) {
-										await workspaceEventMonitor.initialize()
-									}
-								} catch (error) {
-									provider.log(
-										`Deferred codebase index startup failed: ${error instanceof Error ? error.message : String(error)}`,
-									)
-								}
-							})()
-						}, 3000)
-					})
+				void writeCostrictRuntimeAuth(tokens.access_token, tokens.refresh_token)
+					.then(() => ensureCompletionRuntimeReady())
 					.catch((error) => {
 						provider.log(
-							`Failed to persist auth token for codebase index startup: ${error instanceof Error ? error.message : String(error)}`,
+							`Failed to prepare completion runtime on startup: ${error instanceof Error ? error.message : String(error)}`,
 						)
 					})
 				costrictAuthService.startTokenRefresh(tokens.refresh_token, getClientId(), tokens.state)
 				costrictAuthService.updateUserInfo(tokens.access_token)
 			})
-			// Start token refresh timer
 		} else {
 			loginTip = () => {
 				costrictAuthService.getTokens().then(async (tokens) => {
@@ -200,25 +156,23 @@ export async function activate(
 							type: "showReauthConfirmationDialog",
 							messageTs: new Date().getTime(),
 						})
-						return
 					}
 				})
 			}
 		}
 	} catch (error) {
-		provider.log("Failed to check login status at startup: " + error.message)
+		provider.log("Failed to check login status at startup: " + (error as Error).message)
 	}
+
 	initCodeReview(context, provider, outputChannel)
 	initTelemetry(provider)
 
 	if (!isCliPatform()) {
 		context.subscriptions.push(
-			// Register codelens related commands
 			vscode.commands.registerTextEditorCommand(
 				codeLensCallBackCommand.command,
 				codeLensCallBackCommand.callback(context),
 			),
-			// Construct instruction set
 			vscode.commands.registerTextEditorCommand(
 				codeLensCallBackMoreCommand.command,
 				codeLensCallBackMoreCommand.callback(context),
@@ -227,31 +181,22 @@ export async function activate(
 	}
 
 	if (isVscodePlatform) {
-		context.subscriptions.push(
-			// Register function header menu
-			vscode.languages.registerCodeLensProvider("*", new CostrictCodeLensProvider()),
-		)
-		// Listen for configuration changes
+		context.subscriptions.push(vscode.languages.registerCodeLensProvider("*", new CostrictCodeLensProvider()))
 		const configChanged = vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration(configCompletion)) {
-				// Code completion settings changed
 				updateCompletionConfig()
 			}
 			if (e.affectsConfiguration(configCodeLens)) {
-				// Function Quick Commands settings changed
 				updateCodelensConfig()
 			}
-			// CompletionStatusBar.initByConfig()
 			completionStatusBar.setEnableState()
 		})
 		context.subscriptions.push(configChanged)
 	}
 
-	// Get costrictRefreshToken without webview resolve
 	const tokens = await CostrictAuthStorage.getInstance().getTokens()
 	if (isVscodePlatform) {
 		if (tokens?.access_token) {
-			// CompletionStatusBar.initByConfig()
 			completionStatusBar.setEnableState()
 		} else {
 			completionStatusBar.fail({
@@ -259,6 +204,8 @@ export async function activate(
 			})
 		}
 	}
+
+	await initNotificationService(provider)
 	provider.getState().then((state) => {
 		const size = (state.taskHistory || []).reduce((p, c) => p + Number(c.size), 0)
 		if (size > HISTORY_WARN_SIZE) {
@@ -281,28 +228,10 @@ export async function activate(
  * Deactivation function for ZGSM
  */
 export async function deactivate() {
-	// Dispose CLI terminal manager to kill any running PTY process
 	void getTerminalManager().dispose()
-
-	// Stop periodic health checks
-	void CostrictCodebaseIndexManager.getInstance().stopHealthCheck()
-
-	// Stop periodic notice fetching
 	void NotificationService.getInstance().stopPeriodicFetch()
-
-	// Dispose git commit listener
 	void disposeGitCommitListener()
-
-	// Dispose code review service (saves history)
-	void (await CodeReviewService.getInstance().dispose())
-
-	// CostrictCodebaseIndexManager.getInstance().stopExistingClient()
-	// Clean up IPC connections
 	void disconnectIPC()
 	void stopIPCServer()
-	// Clean up workspace event monitoring
-	void workspaceEventMonitor.handleVSCodeClose()
-
-	// Currently no specific cleanup needed
 	loggerDeactivate()
 }

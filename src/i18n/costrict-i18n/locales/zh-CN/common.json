@@ -175,7 +175,7 @@
 			"get_review_result_failed": "暂时无法获取审查结果，请重试",
 			"no_changed_files": "没有变更文件，请确保当前工作空间是 git 仓库，并且有变更文件。",
 			"new_commit_notification": "你提交了：{{commitMessage}}，是否进行 review ？",
-			"auto_execute_with_default_config": "过程中无需再次确认均按默认动作执行"
+			"auto_execute_with_default_config": "请使用 Security Review 技能包进行代码审查，过程中无需再次确认均按默认动作执行，全程请使用中文进行回答与文件写入。"
 		},
 		"statusbar": {
 			"login_expired": "获取登录信息失败，请重新登录以使用 Code Review 功能"

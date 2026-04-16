@@ -3,9 +3,7 @@ import type { CostrictAuthTokens, CostrictLoginState } from "./types"
 import type { ClineProvider } from "../../webview/ClineProvider"
 import { sendCostrictTokens } from "./ipc/client"
 import { getClientId } from "../../../utils/getClientId"
-import { costrictCodebaseIndexManager } from "../codebase-index"
-import { workspaceEventMonitor } from "../codebase-index/workspace-event-monitor"
-import { writeCostrictAccessToken } from "../codebase-index/utils"
+import { ensureCompletionRuntimeReady, writeCostrictRuntimeAuth } from "../runtime-config"
 
 export class CostrictAuthStorage {
 	private static clineProvider?: ClineProvider
@@ -65,17 +63,13 @@ export class CostrictAuthStorage {
 
 		sendCostrictTokens(tokens)
 
-		// Reinitialize codebase-index client independently from the workspace index toggle.
-		writeCostrictAccessToken(tokens.access_token, tokens.refresh_token).then(async () => {
-			if (state?.apiConfiguration?.apiProvider !== "costrict") {
-				return
-			}
-			await costrictCodebaseIndexManager.ensureInitialized("saveTokens")
-			await costrictCodebaseIndexManager.syncToken()
-			if (state.apiConfiguration.costrictCodebaseIndexEnabled) {
-				await workspaceEventMonitor.initialize()
-			}
-		})
+		void writeCostrictRuntimeAuth(tokens.access_token, tokens.refresh_token)
+			.then(() => ensureCompletionRuntimeReady())
+			.catch((error) => {
+				CostrictAuthStorage.clineProvider?.log(
+					`[CostrictLoginManager] failed to prepare completion runtime: ${error instanceof Error ? error.message : String(error)}`,
+				)
+			})
 	}
 
 	/**

@@ -156,7 +156,6 @@ export interface TaskOptions extends CreateTaskOptions {
 	apiConfiguration: ProviderSettings
 	enableCheckpoints?: boolean
 	useCostrictCustomConfig?: boolean
-	costrictCodebaseIndexEnabled?: boolean
 	checkpointTimeout?: number
 	consecutiveMistakeLimit?: number
 	task?: string

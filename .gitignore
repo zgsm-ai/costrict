@@ -66,5 +66,5 @@ cos-cli-*.tar.gz*
 src/bundled-skills/
 
 .claude
-.gemini
 .costrict
+.gemini

@@ -1491,7 +1491,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							modeShortcutText={modeShortcutText}
 							isStreaming={isStreaming}
 							isReviewing={
-								["review", "security-review"].includes(mode) &&
+								["review", "security-review", "subreview"].includes(mode) &&
 								reviewTask.status === ReviewTaskStatus.RUNNING
 							}
 							customModes={customModes}

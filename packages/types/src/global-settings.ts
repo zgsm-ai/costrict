@@ -113,7 +113,6 @@ export const globalSettingsSchema = z.object({
 	customCondensingPrompt: z.string().optional(),
 	// costrict
 	useCostrictCustomConfig: z.boolean().optional(),
-	costrictCodebaseIndexEnabled: z.boolean().optional(),
 	costrictCodeMode: z.union([z.literal("vibe"), z.literal("strict"), z.literal("raw"), z.literal("plan")]).optional(),
 
 	autoApprovalEnabled: z.boolean().optional(),

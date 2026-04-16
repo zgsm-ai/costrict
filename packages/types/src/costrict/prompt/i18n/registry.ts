@@ -8,6 +8,7 @@ import {
 	spec as zhCNSpec,
 	subcoding as zhCNSubcoding,
 	securityReview as zhCNSecurityReview,
+	subReview as zhCNSubReview,
 	taskCheck as zhCNTaskCheck,
 	task as zhCNTask,
 	design as zhCNDesign,
@@ -21,6 +22,7 @@ import {
 	spec as enSpec,
 	subcoding as enSubcoding,
 	securityReview as enSecurityReview,
+	subReview as enSubReview,
 	taskCheck as enTaskCheck,
 	task as enTask,
 	design as enDesign,
@@ -42,6 +44,7 @@ const registry: PromptRegistry = {
 		design: zhCNDesign,
 		review: zhCNReview,
 		"security-review": zhCNSecurityReview,
+		subreview: zhCNSubReview,
 	},
 	"zh-TW": {
 		plan: zhCNPlan,
@@ -55,6 +58,7 @@ const registry: PromptRegistry = {
 		design: zhCNDesign,
 		review: zhCNReview,
 		"security-review": zhCNSecurityReview,
+		subreview: zhCNSubReview,
 	},
 	en: {
 		plan: enPlan,
@@ -68,6 +72,7 @@ const registry: PromptRegistry = {
 		design: enDesign,
 		review: enReview,
 		"security-review": enSecurityReview,
+		subreview: enSubReview,
 	},
 	// Future model dimension: simply append "zh-CN_claude": { ... }
 }

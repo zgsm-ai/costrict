@@ -23,7 +23,6 @@
 		"src/services/glob/__mocks__/list-files.ts",
 		"webview-ui/src/__mocks__/vscode.ts",
 		"webview-ui/src/components/cloud/CloudAccountSwitcher.tsx",
-		"webview-ui/src/components/code-review/CodebaseSync.tsx",
 		"webview-ui/src/components/common/__mocks__/CodeBlock.tsx",
 		"webview-ui/src/components/common/__mocks__/MarkdownBlock.tsx",
 		"webview-ui/src/components/common/TelemetryBanner.tsx",

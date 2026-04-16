@@ -9,6 +9,7 @@ import projectWiki from "./project-wiki.js"
 import generateRules from "./generate-rules.js"
 import review from "./review.js"
 import securityReview from "./security-review.js"
+import subReview from "./subreview.js"
 
 // Import subtask templates
 import projectBasicAnalyze from "./wiki-subtasks/01_project-basic-analyze-agent.js"
@@ -26,6 +27,7 @@ export {
 	spec,
 	subcoding,
 	securityReview,
+	subReview,
 	taskCheck,
 	requirements,
 	task,

@@ -169,13 +169,7 @@ export const About = ({ telemetrySetting, setTelemetrySetting, debug, setDebug, 
 							<TriangleAlert className="p-0.5" />
 							{t("settings:footer.settings.reset")}
 						</Button>
-						<Button
-							variant="destructive"
-							onClick={() => vscode.postMessage({ type: "fixCodebase" })}
-							className="w-28">
-							<TriangleAlert className="p-0.5" />
-							<span className="text-xs">{t("settings:footer.settings.fixCodebase")}</span>
-						</Button>
+
 						<Button
 							variant="destructive"
 							onClick={() => vscode.postMessage({ type: "fixHistory" })}

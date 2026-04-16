@@ -32,7 +32,6 @@ vi.mock("../../../i18n", () => ({
 		const map: Record<string, string> = {
 			"common:answers.yes": "Yes",
 			"common:confirmation.reset_state": "Reset state?",
-			"common:confirmation.reset_codebase": "Reset codebase?",
 		}
 		if (map[key]) return map[key]
 		// i18next strips namespace prefix when returning fallback

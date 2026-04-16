@@ -94,6 +94,9 @@ export const SkillsSettings: React.FC = () => {
 			skillName: skill.name,
 			source: skill.source,
 			skillModeSlugs: skill.metadata?.modeSlugs,
+			values: {
+				path: skill.path,
+			},
 		})
 	}, [])
 
