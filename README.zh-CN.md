@@ -1,5 +1,11 @@
 <div align="center">
 
+[![公告横幅](https://img.shields.io/badge/🌟_我们正在探索有趣的东西，敬请期待!-2563EB?style=for-the-badge)](https://costrict.ai)
+
+</div>
+
+<div align="center">
+
 <img src="https://img.shields.io/badge/版本-latest-blue?style=flat-square" alt="Version">
 <img src="https://img.shields.io/badge/许可证-Apache%202.0-green?style=flat-square" alt="License">
 <img src="https://img.shields.io/badge/平台-VS%20Code%20%7C%20JetBrains-orange?style=flat-square" alt="Platform">

@@ -1,5 +1,11 @@
 <div align="center">
 
+[![Announcement Banner](https://img.shields.io/badge/🌟_We_are_exploring_some_interesting_things,_please_keep_following_us!-2563EB?style=for-the-badge)](https://costrict.ai)
+
+</div>
+
+<div align="center">
+
 <img src="https://img.shields.io/badge/version-latest-blue?style=flat-square" alt="Version">
 <img src="https://img.shields.io/badge/license-Apache%202.0-green?style=flat-square" alt="License">
 <img src="https://img.shields.io/badge/platform-VS%20Code%20%7C%20JetBrains-orange?style=flat-square" alt="Platform">
