@@ -1,6 +1,6 @@
 // pnpm --filter @roo-code/vscode-webview test src/components/settings/__tests__/SettingsView.spec.tsx
 
-import { render, screen, fireEvent, within } from "@/utils/test-utils"
+import { render, screen, fireEvent, within, waitFor } from "@/utils/test-utils"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 import { vscode } from "@/utils/vscode"
@@ -12,8 +12,12 @@ vi.mock("@src/utils/vscode", () => ({ vscode: { postMessage: vi.fn() } }))
 
 vi.mock("../ApiConfigManager", () => ({
 	__esModule: true,
-	default: ({ currentApiConfigName }: any) => (
-		<div data-testid="api-config-management">
+	default: ({ currentApiConfigName, listApiConfigMeta, organizationAllowList }: any) => (
+		<div
+			data-testid="api-config-management"
+			data-current-config={currentApiConfigName}
+			data-config-count={listApiConfigMeta?.length ?? 0}
+			data-org-allow-all={organizationAllowList?.allowAll === true ? "true" : "false"}>
 			<span>Current config: {currentApiConfigName}</span>
 		</div>
 	),
@@ -324,6 +328,36 @@ const renderSettingsView = () => {
 
 	return { onDone, activateTab, getSettingsContent }
 }
+
+describe("SettingsView - Provider Profiles", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it("renders ApiConfigManager with current profile metadata and organization allow list", async () => {
+		renderSettingsView()
+
+		mockPostMessage({
+			currentApiConfigName: "team-profile",
+			listApiConfigMeta: [
+				{ id: "cfg-1", name: "default" },
+				{ id: "cfg-2", name: "team-profile" },
+			],
+			organizationAllowList: {
+				allowAll: true,
+				providers: {},
+			},
+		})
+
+		await waitFor(() => {
+			const manager = screen.getByTestId("api-config-management")
+			expect(manager).toBeInTheDocument()
+			expect(manager).toHaveAttribute("data-current-config", "team-profile")
+			expect(manager).toHaveAttribute("data-config-count", "2")
+			expect(manager).toHaveAttribute("data-org-allow-all", "true")
+		})
+	})
+})
 
 describe("SettingsView - Sound Settings", () => {
 	beforeEach(() => {

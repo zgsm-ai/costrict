@@ -27,7 +27,7 @@ import { StandardTooltip } from "@src/components/ui"
 
 import Thumbnails from "../common/Thumbnails"
 import { ModeSelector } from "./ModeSelector"
-// import { ApiConfigSelector } from "./ApiConfigSelector"
+import { ApiConfigSelector } from "./ApiConfigSelector"
 import { AutoApproveDropdown } from "./AutoApproveDropdown"
 import { MAX_IMAGES_PER_MESSAGE } from "./ChatView"
 import ContextMenu from "./ContextMenu"
@@ -75,7 +75,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			inputValue = "",
 			isAutoCommandRuning = false,
 			setInputValue,
-			// selectApiConfigDisabled,
+			selectApiConfigDisabled,
 			placeholderText,
 			selectedImages,
 			setSelectedImages,
@@ -101,12 +101,12 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			filePaths,
 			openedTabs,
 			currentApiConfigName,
-			// listApiConfigMeta,
+			listApiConfigMeta,
 			customModes,
 			customModePrompts,
 			cwd,
-			// pinnedApiConfigs,
-			// togglePinnedApiConfig,
+			pinnedApiConfigs,
+			togglePinnedApiConfig,
 			taskHistory,
 			clineMessages,
 			commands,
@@ -119,7 +119,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			automaticallyFocus,
 			ttsEnabled,
 			costrictCodeMode,
-			// lockApiConfigAcrossModes,
+			lockApiConfigAcrossModes,
 		} = useExtensionState()
 		const selectedProviderModels = useMemo(() => {
 			if (!apiConfiguration?.apiProvider) return []
@@ -159,14 +159,14 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			[apiConfiguration, currentApiConfigName],
 		)
 
-		// // Find the ID and display text for the currently selected API configuration.
-		// const { currentConfigId, displayName } = useMemo(() => {
-		// 	const currentConfig = listApiConfigMeta?.find((config) => config.name === currentApiConfigName)
-		// 	return {
-		// 		currentConfigId: currentConfig?.id || "",
-		// 		displayName: currentApiConfigName || "", // Use the name directly for display.
-		// 	}
-		// }, [listApiConfigMeta, currentApiConfigName])
+		// Find the ID and display text for the currently selected API configuration.
+		const { currentConfigId, displayName } = useMemo(() => {
+			const currentConfig = listApiConfigMeta?.find((config) => config.name === currentApiConfigName)
+			return {
+				currentConfigId: currentConfig?.id || "",
+				displayName: currentApiConfigName || "",
+			}
+		}, [listApiConfigMeta, currentApiConfigName])
 
 		const [gitCommits, setGitCommits] = useState<any[]>([])
 		const [showDropdown, setShowDropdown] = useState(false)
@@ -1036,15 +1036,15 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			[setMode],
 		)
 
-		// // Helper function to handle API config change
-		// const handleApiConfigChange = useCallback((value: string) => {
-		// 	vscode.postMessage({ type: "loadApiConfigurationById", text: value })
-		// }, [])
+		// Helper function to handle API config change
+		const handleApiConfigChange = useCallback((value: string) => {
+			vscode.postMessage({ type: "loadApiConfigurationById", text: value })
+		}, [])
 
-		// const handleToggleLockApiConfig = useCallback(() => {
-		// 	const newValue = !lockApiConfigAcrossModes
-		// 	vscode.postMessage({ type: "lockApiConfigAcrossModes", bool: newValue })
-		// }, [lockApiConfigAcrossModes])
+		const handleToggleLockApiConfig = useCallback(() => {
+			const newValue = !lockApiConfigAcrossModes
+			vscode.postMessage({ type: "lockApiConfigAcrossModes", bool: newValue })
+		}, [lockApiConfigAcrossModes])
 
 		return (
 			<div
@@ -1450,6 +1450,25 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					<div className="absolute top-2 left-2 z-30 bg-vscode-input-background">
 						<ModeSwitch isStreaming={isStreaming} />
 					</div>
+
+					{/* Api config selector positioned at the top right to keep the bottom toolbar compact */}
+					<div
+						data-testid="api-config-topbar"
+						className="absolute top-2 right-2 z-30 flex items-center max-w-[45%]">
+						<ApiConfigSelector
+							value={currentConfigId}
+							displayName={displayName}
+							disabled={selectApiConfigDisabled}
+							title={t("chat:selectApiConfig")}
+							onChange={handleApiConfigChange}
+							iconOnly
+							listApiConfigMeta={listApiConfigMeta || []}
+							pinnedApiConfigs={pinnedApiConfigs}
+							togglePinnedApiConfig={togglePinnedApiConfig}
+							lockApiConfigAcrossModes={!!lockApiConfigAcrossModes}
+							onToggleLockApiConfig={handleToggleLockApiConfig}
+						/>
+					</div>
 				</div>
 
 				{/* {selectedImages.length > 0 && (
@@ -1497,19 +1516,6 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							customModes={customModes}
 							customModePrompts={customModePrompts}
 						/>
-						{/* <ApiConfigSelector
-							value={currentConfigId}
-							displayName={displayName}
-							disabled={selectApiConfigDisabled}
-							title={t("chat:selectApiConfig")}
-							onChange={handleApiConfigChange}
-							triggerClassName="min-w-[28px] text-ellipsis overflow-hidden flex-shrink"
-							listApiConfigMeta={listApiConfigMeta || []}
-							pinnedApiConfigs={pinnedApiConfigs}
-							togglePinnedApiConfig={togglePinnedApiConfig}
-							lockApiConfigAcrossModes={!!lockApiConfigAcrossModes}
-							onToggleLockApiConfig={handleToggleLockApiConfig}
-						/> */}
 						{apiConfiguration && (
 							<ProviderRenderer
 								isEditMode={isEditMode}

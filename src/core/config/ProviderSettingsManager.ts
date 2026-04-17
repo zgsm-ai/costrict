@@ -464,8 +464,9 @@ export class ProviderSettingsManager {
 		try {
 			return await this.lock(async () => {
 				const providerProfiles = await this.load()
+				const configToDelete = providerProfiles.apiConfigs[name]
 
-				if (!providerProfiles.apiConfigs[name]) {
+				if (!configToDelete) {
 					throw new Error(`Config '${name}' not found`)
 				}
 
@@ -473,7 +474,25 @@ export class ProviderSettingsManager {
 					throw new Error(`Cannot delete the last remaining configuration`)
 				}
 
+				const deletedConfigId = configToDelete.id
 				delete providerProfiles.apiConfigs[name]
+
+				if (providerProfiles.currentApiConfigName === name) {
+					const fallbackName = Object.keys(providerProfiles.apiConfigs)[0]
+					if (!fallbackName) {
+						throw new Error(`Cannot determine fallback configuration after deleting '${name}'`)
+					}
+					providerProfiles.currentApiConfigName = fallbackName
+				}
+
+				if (deletedConfigId && providerProfiles.modeApiConfigs) {
+					for (const [mode, configId] of Object.entries(providerProfiles.modeApiConfigs)) {
+						if (configId === deletedConfigId) {
+							delete providerProfiles.modeApiConfigs[mode]
+						}
+					}
+				}
+
 				await this.store(providerProfiles)
 			})
 		} catch (error) {

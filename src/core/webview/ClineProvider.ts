@@ -1913,6 +1913,24 @@ export class ClineProvider
 		}
 	}
 
+	async renameStickyProviderProfileInTaskHistory(oldName: string, newName: string): Promise<void> {
+		const historyItems = this.taskHistoryStore.getAll()
+		const updates = historyItems.filter((item) => item.apiConfigName === oldName)
+
+		for (const item of updates) {
+			await this.updateTaskHistory({ ...item, apiConfigName: newName }, { broadcast: false })
+		}
+	}
+
+	async clearDeletedProviderProfileFromTaskHistory(name: string): Promise<void> {
+		const historyItems = this.taskHistoryStore.getAll()
+		const updates = historyItems.filter((item) => item.apiConfigName === name)
+
+		for (const item of updates) {
+			await this.updateTaskHistory({ ...item, apiConfigName: undefined }, { broadcast: false })
+		}
+	}
+
 	async activateProviderProfile(
 		args: { name: string } | { id: string },
 		options?: { persistModeConfig?: boolean; persistTaskHistory?: boolean },

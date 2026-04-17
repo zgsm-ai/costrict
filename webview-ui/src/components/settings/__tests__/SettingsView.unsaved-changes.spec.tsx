@@ -187,9 +187,17 @@ vi.mock("../common/Tab", () => ({
 }))
 
 // Mock child components that are complex
-// Mock ApiConfigManager to not interact with props
+// Mock ApiConfigManager to expose config switching interactions
 vi.mock("../ApiConfigManager", () => ({
-	default: vi.fn(() => <div data-testid="api-config-manager">ApiConfigManager</div>),
+	default: vi.fn(({ onSelectConfig, organizationAllowList }) => (
+		<div
+			data-testid="api-config-manager"
+			data-org-allow-all={organizationAllowList?.allowAll === true ? "true" : "false"}>
+			<button data-testid="select-config-button" onClick={() => onSelectConfig("profile-2")}>
+				Select Config
+			</button>
+		</div>
+	)),
 }))
 
 vi.mock("../ApiOptions", () => ({
@@ -251,6 +259,10 @@ describe("SettingsView - Unsaved Changes Detection", () => {
 		listApiConfigMeta: [],
 		uriScheme: "vscode",
 		settingsImportedAt: undefined,
+		organizationAllowList: {
+			allowAll: true,
+			providers: {},
+		},
 		apiConfiguration: {
 			apiProvider: "openai",
 			apiModelId: "", // Empty string initially
@@ -323,6 +335,57 @@ describe("SettingsView - Unsaved Changes Detection", () => {
 			},
 		})
 		;(useExtensionState as any).mockReturnValue(defaultExtensionState)
+	})
+
+	it("passes organization allow list to ApiConfigManager", async () => {
+		render(
+			<QueryClientProvider client={queryClient}>
+				<SettingsView onDone={vi.fn()} />
+			</QueryClientProvider>,
+		)
+
+		const manager = await screen.findByTestId("api-config-manager")
+		expect(manager).toHaveAttribute("data-org-allow-all", "true")
+	})
+
+	it("prompts before switching api config when there are unsaved changes and loads after confirmation", async () => {
+		const onDone = vi.fn()
+
+		vi.mocked(ApiOptions).mockImplementation(({ setApiConfigurationField }) => {
+			const handleUserChange = () => {
+				setApiConfigurationField("apiModelId", "user-selected-model")
+			}
+
+			return (
+				<div data-testid="api-options">
+					<button onClick={handleUserChange} data-testid="change-model">
+						Change Model
+					</button>
+				</div>
+			)
+		})
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<SettingsView onDone={onDone} />
+			</QueryClientProvider>,
+		)
+
+		await waitFor(() => {
+			expect(screen.getByTestId("api-options")).toBeInTheDocument()
+		})
+
+		fireEvent.click(screen.getByTestId("change-model"))
+		fireEvent.click(screen.getByTestId("select-config-button"))
+
+		await waitFor(() => {
+			expect(screen.getByText("settings:unsavedChangesDialog.title")).toBeInTheDocument()
+		})
+
+		expect(mockPostMessage).not.toHaveBeenCalledWith({
+			type: "loadApiConfiguration",
+			text: "profile-2",
+		})
 	})
 
 	// TODO: Fix underlying issue - dialog appears even when no user changes have been made

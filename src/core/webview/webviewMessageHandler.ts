@@ -2174,6 +2174,8 @@ export const webviewMessageHandler = async (
 						break
 					}
 
+					const currentConfigName = getGlobalState("currentApiConfigName")
+
 					// Load the old configuration to get its ID.
 					const { id } = await provider.providerSettingsManager.getProfile({ name: oldName })
 
@@ -2182,10 +2184,19 @@ export const webviewMessageHandler = async (
 
 					// Delete the old configuration.
 					await provider.providerSettingsManager.deleteConfig(oldName)
+					await provider.renameStickyProviderProfileInTaskHistory(oldName, newName)
 
-					// Re-activate to update the global settings related to the
-					// currently activated provider profile.
-					await provider.activateProviderProfile({ name: newName })
+					if (currentConfigName === oldName) {
+						// Re-activate only when renaming the currently activated provider profile so
+						// currentApiConfigName, mode config, and sticky task state remain in sync.
+						await provider.activateProviderProfile({ name: newName })
+					} else {
+						await updateGlobalState(
+							"listApiConfigMeta",
+							await provider.providerSettingsManager.listConfig(),
+						)
+						await provider.postStateToWebview()
+					}
 				} catch (error) {
 					provider.log(
 						`Error rename api configuration: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
@@ -2232,10 +2243,11 @@ export const webviewMessageHandler = async (
 				}
 
 				const oldName = message.text
-
-				const newName = (await provider.providerSettingsManager.listConfig()).filter(
+				const currentConfigName = getGlobalState("currentApiConfigName")
+				const remainingConfigs = (await provider.providerSettingsManager.listConfig()).filter(
 					(c) => c.name !== oldName,
-				)[0]?.name
+				)
+				const newName = remainingConfigs[0]?.name
 
 				if (!newName) {
 					vscode.window.showErrorMessage(t("common:errors.delete_api_config"))
@@ -2244,7 +2256,17 @@ export const webviewMessageHandler = async (
 
 				try {
 					await provider.providerSettingsManager.deleteConfig(oldName)
-					await provider.activateProviderProfile({ name: newName })
+					await provider.clearDeletedProviderProfileFromTaskHistory(oldName)
+
+					if (currentConfigName === oldName) {
+						await provider.activateProviderProfile({ name: newName })
+					} else {
+						await updateGlobalState(
+							"listApiConfigMeta",
+							await provider.providerSettingsManager.listConfig(),
+						)
+						await provider.postStateToWebview()
+					}
 				} catch (error) {
 					provider.log(
 						`Error delete api configuration: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,

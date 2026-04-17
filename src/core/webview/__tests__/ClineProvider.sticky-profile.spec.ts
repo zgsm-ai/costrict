@@ -381,6 +381,64 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 			expect(mockTask.setTaskApiConfigName).toHaveBeenCalledWith("new-profile")
 		})
 
+		it("renames sticky provider profile references across task history", async () => {
+			const ts = Date.now()
+			await provider.taskHistoryStore.upsert({
+				id: "task-1",
+				ts,
+				task: "Task 1",
+				number: 1,
+				tokensIn: 0,
+				tokensOut: 0,
+				totalCost: 0,
+				apiConfigName: "old-profile",
+			})
+			await provider.taskHistoryStore.upsert({
+				id: "task-2",
+				ts: ts + 1,
+				task: "Task 2",
+				number: 2,
+				tokensIn: 0,
+				tokensOut: 0,
+				totalCost: 0,
+				apiConfigName: "other-profile",
+			})
+
+			await (provider as any).renameStickyProviderProfileInTaskHistory("old-profile", "new-profile")
+
+			expect(provider.taskHistoryStore.get("task-1")?.apiConfigName).toBe("new-profile")
+			expect(provider.taskHistoryStore.get("task-2")?.apiConfigName).toBe("other-profile")
+		})
+
+		it("clears deleted sticky provider profile references across task history", async () => {
+			const ts = Date.now()
+			await provider.taskHistoryStore.upsert({
+				id: "task-1",
+				ts,
+				task: "Task 1",
+				number: 1,
+				tokensIn: 0,
+				tokensOut: 0,
+				totalCost: 0,
+				apiConfigName: "deleted-profile",
+			})
+			await provider.taskHistoryStore.upsert({
+				id: "task-2",
+				ts: ts + 1,
+				task: "Task 2",
+				number: 2,
+				tokensIn: 0,
+				tokensOut: 0,
+				totalCost: 0,
+				apiConfigName: "other-profile",
+			})
+
+			await (provider as any).clearDeletedProviderProfileFromTaskHistory("deleted-profile")
+
+			expect(provider.taskHistoryStore.get("task-1")?.apiConfigName).toBeUndefined()
+			expect(provider.taskHistoryStore.get("task-2")?.apiConfigName).toBe("other-profile")
+		})
+
 		it("should update task's taskApiConfigName property when switching profiles", async () => {
 			// Create a mock task with initial profile
 			const mockTask = {
