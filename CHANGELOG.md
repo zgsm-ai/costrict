@@ -2,6 +2,14 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.7.2]
+
+- Optimize ContextSyncService with pause/resume mechanism for better performance
+- Add test coverage for CLI wrap components (ContextSyncService, TerminalManager)
+- Update dependencies and apply security patches including vite, drizzle-orm, and basic-ftp
+- Update API provider specifications and i18n support
+- Fix known issues
+
 ## [2.7.1]
 
 - Update docs
