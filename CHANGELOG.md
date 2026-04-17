@@ -2,6 +2,15 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.7.1]
+
+- Update docs
+- Add provider profile
+- Add security review internationalization support and subreview mode
+- Remove codebase-indexer and migrate to runtime-config
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/cb836567180a3ff1da6d082f3178b90c3bd22a70)
+- Fix known issues
+
 ## [2.7.0]
 
 - Optimize performance
