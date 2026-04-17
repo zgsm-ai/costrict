@@ -185,6 +185,7 @@
 		"cancelled": "API 請求已取消",
 		"streamingFailed": "API 串流處理失敗",
 		"rateLimitWait": "速率限制",
+		"retrying": "正在重試",
 		"errorTitle": "供應商錯誤 {{code}}",
 		"errorMessage": {
 			"400": "供應商無法按照此方式處理請求。請停止工作並嘗試其他方法。",

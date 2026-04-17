@@ -96,8 +96,9 @@ describe("VercelAiGatewayHandler", () => {
 			baseURL: "https://ai-gateway.vercel.sh/v1",
 			apiKey: mockOptions.vercelAiGatewayApiKey,
 			defaultHeaders: {
-				"HTTP-Referer": "https://github.com/zgsm-ai/costrict",
-				"X-Title": "Costrict",
+				"HTTP-Referer": "https://github.com/RooVetGit/Roo-Cline",
+				"X-Title": "Roo Code",
+				"User-Agent": expect.any(String),
 				"X-Costrict-Version": expect.any(String),
 			},
 		})

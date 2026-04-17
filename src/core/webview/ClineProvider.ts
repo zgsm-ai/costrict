@@ -119,6 +119,7 @@ import { generateNewSessionClientId, getClientId } from "../../utils/getClientId
 import { defaultCodebaseIndexEnabled } from "../../services/code-index/constants"
 import { CodeReviewService, ReviewTargetType } from "../costrict/code-review"
 import { getTerminalManager } from "../costrict/cli-wrap"
+import { getContextSyncService } from "../costrict/cli-wrap/contextSync"
 import { defaultLang } from "../../utils/language"
 import { REQUESTY_BASE_URL } from "../../shared/utils/requesty"
 import { isJetbrainsPlatform } from "../../utils/platform"
@@ -2385,10 +2386,16 @@ export class ClineProvider
 		const isHibernating = tab === "cs-cli"
 
 		if (wasHibernating && !isHibernating) {
-			// Waking up from cs-cli: push a fresh state so the chat UI is up-to-date
+			// Waking up from cs-cli: resume context sync and push a fresh state so the chat UI is up-to-date
+			getContextSyncService().resume()
 			this.postStateToWebview().catch((err) => {
 				this.log(`Failed to post state on wake from cs-cli tab: ${err}`, "error")
 			})
+		}
+
+		if (!wasHibernating && isHibernating) {
+			// Switching to cs-cli: pause context sync (not needed while cs-cli is active)
+			getContextSyncService().pause()
 		}
 	}
 

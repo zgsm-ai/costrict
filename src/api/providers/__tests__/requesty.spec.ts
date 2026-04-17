@@ -58,9 +58,10 @@ describe("RequestyHandler", () => {
 			baseURL: "https://router.requesty.ai/v1",
 			apiKey: mockOptions.requestyApiKey,
 			defaultHeaders: {
-				"HTTP-Referer": "https://github.com/zgsm-ai/costrict",
+				"HTTP-Referer": "https://github.com/RooVetGit/Roo-Cline",
+				"X-Title": "Roo Code",
+				"User-Agent": expect.any(String),
 				"X-Costrict-Version": `${Package.version}`,
-				"X-Title": "Costrict",
 			},
 		})
 	})
@@ -73,9 +74,10 @@ describe("RequestyHandler", () => {
 			baseURL: "https://custom.requesty.ai/v1",
 			apiKey: mockOptions.requestyApiKey,
 			defaultHeaders: {
-				"HTTP-Referer": "https://github.com/zgsm-ai/costrict",
+				"HTTP-Referer": "https://github.com/RooVetGit/Roo-Cline",
+				"X-Title": "Roo Code",
+				"User-Agent": expect.any(String),
 				"X-Costrict-Version": `${Package.version}`,
-				"X-Title": "Costrict",
 			},
 		})
 	})
