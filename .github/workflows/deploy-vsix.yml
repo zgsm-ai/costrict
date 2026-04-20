@@ -1,0 +1,67 @@
+name: Deploy VSIX to Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., 2.7.1). Leave empty to use current version.'
+        required: false
+        default: ''
+
+jobs:
+  deploy-to-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(node -p "require('./src/package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download VSIX from Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          gh release download "v${VERSION}" --pattern "costrict-${VERSION}.vsix" --dir bin
+
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
+
+      - name: Upload to server via SSH
+        id: upload
+        continue-on-error: true
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          SOURCE_FILE="bin/costrict-${VERSION}.vsix"
+          TARGET_PATH="/plugin/download/zgsm-${VERSION}.vsix"
+
+          echo "Uploading ${SOURCE_FILE} to ${SSH_HOST}:${TARGET_PATH}"
+
+          sshpass -p "${SSH_PASSWORD}" scp \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -P "${SSH_PORT:-22}" \
+            "${SOURCE_FILE}" \
+            "${SSH_USER}@${SSH_HOST}:${TARGET_PATH}"
+
+          echo "Upload completed successfully"
+
+      - name: Report upload status
+        if: steps.upload.outcome == 'failure'
+        run: |
+          echo "::warning::SSH upload failed. VSIX was not uploaded to server."
+          echo "Please manually upload bin/costrict-${{ steps.version.outputs.version }}.vsix to the server."
