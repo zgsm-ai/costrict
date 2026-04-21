@@ -2,6 +2,15 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.7.3]
+
+- Add previous checkpoint navigation controls
+- Add Claude Opus 4.7 model support for Vertex AI
+- Increase telemetry data limits
+- Update deploy config
+- Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/2bb826039b0ae509bf3dd4424c888e25b21c8543)
+- Fix known issues
+
 ## [2.7.2]
 
 - Optimize ContextSyncService with pause/resume mechanism for better performance
@@ -42,22 +51,4 @@
 - Fix ensure issues are loaded from cache in ReviewHistoryItem
 - Fix prevent parent task state loss during orchestrator delegation
 - Sync roocode [last commit](https://github.com/RooCodeInc/Roo-Code/commit/7adbfec2a4219911be28b564986011e1088e5a6d)
-- Fix known issues
-
-## [2.6.4]
-
-- Add mention budget system to prevent context overflow
-- Update workflow spec prompts to remind updating tasks.md status after coding
-- Update docs
-- Fix task status tracking logic
-- Fix known issues
-
-## [2.6.3]
-
-- Improve command background execution UX (PR #1114, #1115)
-- Add support for costrict CLI skills/commands (PR #1112)
-- Refactor task module: separate file tree and status check logic (PR #1113)
-- Refactor CLI: improve terminal scroll and navigation experience (PR #1111)
-- Refactor auto-approval: enhance timeout with delay and cancel types (PR #1109)
-- Add question tool v2 for enhanced interaction (PR #1108)
 - Fix known issues
