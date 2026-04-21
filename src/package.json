@@ -338,6 +338,16 @@
 				"command": "costrict.coworkflow.runTest",
 				"title": "Generate Test Case",
 				"category": "Coworkflow"
+			},
+			{
+				"command": "costrict.switchToCloudMode",
+				"title": "%command.switchToCloudMode.title%",
+				"category": "%configuration.title%"
+			},
+			{
+				"command": "costrict.switchToNormalMode",
+				"title": "%command.switchToNormalMode.title%",
+				"category": "%configuration.title%"
 			}
 		],
 		"menus": {
@@ -571,6 +581,15 @@
 		"configuration": {
 			"title": "%configuration.title%",
 			"properties": {
+				"costrict.mode": {
+					"type": "string",
+					"enum": [
+						"normal",
+						"cloud"
+					],
+					"default": "normal",
+					"description": "%settings.mode.description%"
+				},
 				"IntelligentCodeCompletion.enabled": {
 					"type": "boolean",
 					"default": true,

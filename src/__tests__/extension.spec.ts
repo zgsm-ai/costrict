@@ -19,6 +19,7 @@ vi.mock("vscode", async (importOriginal) => ({
 		}),
 		registerWebviewViewProvider: vi.fn(),
 		registerUriHandler: vi.fn(),
+		showInformationMessage: vi.fn(),
 		tabGroups: {
 			onDidChangeTabs: vi.fn(),
 		},
@@ -28,10 +29,15 @@ vi.mock("vscode", async (importOriginal) => ({
 	},
 	workspace: {
 		registerTextDocumentContentProvider: vi.fn(),
-		getConfiguration: vi.fn().mockReturnValue({
-			get: vi.fn().mockReturnValue([]),
+		getConfiguration: vi.fn().mockImplementation((section?: string) => ({
+			get: vi.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+				if (section === "costrict" && key === "mode") {
+					return defaultValue ?? "normal"
+				}
+				return defaultValue ?? []
+			}),
 			update: vi.fn().mockResolvedValue(undefined),
-		}),
+		})),
 		createFileSystemWatcher: vi.fn().mockReturnValue({
 			onDidCreate: vi.fn(),
 			onDidChange: vi.fn(),
@@ -223,6 +229,16 @@ vi.mock("../i18n", () => ({
 	t: vi.fn((key) => key),
 }))
 
+const mockActivateCostrictCloudMode = vi.fn().mockResolvedValue(undefined)
+const mockRegisterCostrictCloudModeCommands = vi.fn()
+const mockGetCostrictCloudMode = vi.fn().mockReturnValue("normal")
+
+vi.mock("../costrict-cloud/activateCloudMode", () => ({
+	activateCostrictCloudMode: mockActivateCostrictCloudMode,
+	registerCostrictCloudModeCommands: mockRegisterCostrictCloudModeCommands,
+	getCostrictCloudMode: mockGetCostrictCloudMode,
+}))
+
 // Mock ClineProvider
 vi.mock("../core/webview/ClineProvider", async () => {
 	const mockInstance = {
@@ -266,6 +282,10 @@ describe("extension.ts", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks()
+		mockActivateCostrictCloudMode.mockClear()
+		mockRegisterCostrictCloudModeCommands.mockClear()
+		mockGetCostrictCloudMode.mockReset()
+		mockGetCostrictCloudMode.mockReturnValue("normal")
 
 		mockContext = {
 			extensionPath: "/test/path",
@@ -327,6 +347,25 @@ describe("extension.ts", () => {
 		// Verify dotenvx.config was called exactly once
 		expect(dotenvxConfigMock).toHaveBeenCalledTimes(1)
 	}, 60000)
+
+	test("activates isolated costrict-cloud mode when costrict.mode is cloud", async () => {
+		mockGetCostrictCloudMode.mockReturnValue("cloud")
+
+		const { activate } = await import("../extension")
+		const { ClineProvider } = await import("../core/webview/ClineProvider")
+
+		await activate(mockContext)
+
+		expect(mockRegisterCostrictCloudModeCommands).toHaveBeenCalledWith(
+			mockContext,
+			expect.objectContaining({ appendLine: expect.any(Function) }),
+		)
+		expect(mockActivateCostrictCloudMode).toHaveBeenCalledWith(
+			mockContext,
+			expect.objectContaining({ appendLine: expect.any(Function) }),
+		)
+		expect(ClineProvider).not.toHaveBeenCalled()
+	})
 
 	//	describe("Roo model cache refresh on auth state change (ROO-202)", () => {
 	//		beforeEach(() => {

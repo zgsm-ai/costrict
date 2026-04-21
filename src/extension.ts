@@ -59,6 +59,7 @@ import { defaultLang } from "./utils/language"
 import { createLogger } from "./utils/logger"
 import { loadIdeaShellEnvOnce } from "./utils/ideaShellEnvLoader"
 import { isJetbrainsPlatform } from "./utils/platform"
+import { activateCostrictCloudMode, getCostrictCloudMode, registerCostrictCloudModeCommands } from "./costrict-cloud/activateCloudMode"
 // import { flushModels, getModels, initializeModelCacheRefresh } from "./api/providers/fetchers/modelCache"
 
 /**
@@ -133,6 +134,67 @@ export async function activate(context: vscode.ExtensionContext) {
 	outputChannel = createLogger(Package.outputChannel).channel
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(`${Package.commandIDPrefix} extension activated - ${JSON.stringify(Package)}`)
+
+	
+	registerCostrictCloudModeCommands(context, outputChannel)
+	if (getCostrictCloudMode() === "cloud") {
+		context.subscriptions.push(vscode.commands.registerCommand(`${Package.commandIDPrefix}.activationCompleted`, () => {}))
+
+		await activateCostrictCloudMode(context, outputChannel)
+		// Watch the core files and automatically reload the extension host.
+		if (process.env.NODE_ENV === "development") {
+			const watchPaths = [
+				{ path: context.extensionPath, pattern: "**/*.ts" },
+				{ path: path.join(context.extensionPath, "../packages/types"), pattern: "**/*.ts" },
+				{ path: path.join(context.extensionPath, "../packages/telemetry"), pattern: "**/*.ts" },
+				{ path: path.join(context.extensionPath, "node_modules/@roo-code/cloud"), pattern: "**/*" },
+			]
+
+			console.log(
+				`♻️♻️♻️ Core auto-reloading: Watching for changes in ${watchPaths.map(({ path }) => path).join(", ")}`,
+			)
+
+			// Create a debounced reload function to prevent excessive reloads
+			let reloadTimeout: NodeJS.Timeout | undefined
+			const DEBOUNCE_DELAY = 1_000
+
+			const debouncedReload = (uri: vscode.Uri) => {
+				if (reloadTimeout) {
+					clearTimeout(reloadTimeout)
+				}
+
+				console.log(`♻️ ${uri.fsPath} changed; scheduling reload...`)
+
+				reloadTimeout = setTimeout(() => {
+					console.log(`♻️ Reloading host after debounce delay...`)
+					vscode.commands.executeCommand("workbench.action.reloadWindow")
+				}, DEBOUNCE_DELAY)
+			}
+
+			watchPaths.forEach(({ path: watchPath, pattern }) => {
+				const relPattern = new vscode.RelativePattern(vscode.Uri.file(watchPath), pattern)
+				const watcher = vscode.workspace.createFileSystemWatcher(relPattern, false, false, false)
+
+				// Listen to all change types to ensure symlinked file updates trigger reloads.
+				watcher.onDidChange(debouncedReload)
+				watcher.onDidCreate(debouncedReload)
+				watcher.onDidDelete(debouncedReload)
+
+				context.subscriptions.push(watcher)
+			})
+
+			// Clean up the timeout on deactivation
+			context.subscriptions.push({
+				dispose: () => {
+					if (reloadTimeout) {
+						clearTimeout(reloadTimeout)
+					}
+				},
+			})
+		}
+
+		return
+	}
 
 	// Kick off non-critical startup tasks in the background so activation can continue.
 	void initializeNetworkProxy(context, outputChannel).catch((error) => {

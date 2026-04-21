@@ -42,6 +42,8 @@
 	"command.toggleAutoApprove.title": "Toggle Auto-Approve",
 	"command.generateCommitMessage.title": "Generate Commit Message With CoStrict",
 	"command.askReviewSuggestionWithAI.title": "Fix Code",
+	"command.switchToCloudMode.title": "Switch to Cloud Mode",
+	"command.switchToNormalMode.title": "Switch to Normal Mode",
 
 	"intelligentCodeCompletion.enabled.description": "Enable intelligent code completion",
 	"intelligentCodeCompletion.betaMode.description": "Enable beta features for early access. See version notes for feature list.",
@@ -54,6 +56,7 @@
 	"functionQuickCommands.quickCommandButtons.shenmaInstructSet.description": "Show <CoStrict> button with all commands above functions",
 
 	"configuration.title": "CoStrict",
+	"settings.mode.description": "CoStrict runtime mode. 'cloud' starts an isolated cs-cloud UI and requires restarting VS Code after switching.",
 	"commands.allowedCommands.description": "Commands that can be auto-executed when 'Always approve execute operations' is enabled",
 	"commands.deniedCommands.description": "Command prefixes that will be automatically denied without asking for approval. In case of conflicts with allowed commands, the longest prefix match takes precedence. Add * to deny all commands.",
 	"commands.commandExecutionTimeout.description": "Maximum time in seconds to wait for command execution to complete before timing out (0 = no timeout, 1-600s, default: 0s)",

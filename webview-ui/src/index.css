@@ -196,6 +196,37 @@
 	}
 }
 
+@layer utilities {
+	.scrollbar-cloud {
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in srgb, var(--vscode-scrollbarSlider-background, rgba(255, 255, 255, 0.18)) 82%, transparent) transparent;
+	}
+
+	.scrollbar-cloud::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	.scrollbar-cloud::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.scrollbar-cloud::-webkit-scrollbar-thumb {
+		background: color-mix(in srgb, var(--vscode-scrollbarSlider-background, rgba(255, 255, 255, 0.18)) 78%, transparent);
+		border-radius: 9999px;
+		border: 2px solid transparent;
+		background-clip: content-box;
+	}
+
+	.scrollbar-cloud::-webkit-scrollbar-thumb:hover {
+		background: color-mix(in srgb, var(--vscode-scrollbarSlider-hoverBackground, var(--vscode-scrollbarSlider-background, rgba(255, 255, 255, 0.26))) 86%, transparent);
+		background-clip: content-box;
+	}
+
+	.scrollbar-cloud::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+}
 @layer components {
 	/* Border Styles */
 	.border,
