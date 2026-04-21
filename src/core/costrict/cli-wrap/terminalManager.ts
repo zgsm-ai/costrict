@@ -378,7 +378,7 @@ export class TerminalManager {
 			process.on("SIGINT", this.exitHandler)
 
 			// Start syncing editor context to CLI
-			getContextSyncService().start()
+			getContextSyncService()?.start()
 
 			// Handle output from the process
 			this.ptyProcess.onData((data: string) => {
@@ -394,7 +394,7 @@ export class TerminalManager {
 				this.isRunning = false
 				this.ptyProcess = null
 				this.port = null
-				getContextSyncService().stop()
+				getContextSyncService()?.stop()
 				// Clean up exit handler to avoid dangling listener
 				if (this.exitHandler) {
 					process.removeListener("exit", this.exitHandler)
@@ -442,7 +442,7 @@ export class TerminalManager {
 			await new Promise((resolve) =>
 				setTimeout(() => {
 					resolve(true)
-					getContextSyncService().syncContext()
+					getContextSyncService()?.syncContext()
 				}, intervalMs),
 			)
 		}
@@ -494,7 +494,7 @@ export class TerminalManager {
 		}
 
 		// Stop syncing editor context
-		getContextSyncService().stop()
+		getContextSyncService()?.stop()
 
 		if (this.ptyProcess) {
 			try {

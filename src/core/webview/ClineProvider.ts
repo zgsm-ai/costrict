@@ -2381,21 +2381,15 @@ export class ClineProvider
 	 * is fully up-to-date when it becomes visible again.
 	 */
 	public setActiveTab(tab: string): void {
-		const wasHibernating = this._activeTab === "cs-cli"
+		if (this._activeTab === tab) return
 		this._activeTab = tab
-		const isHibernating = tab === "cs-cli"
-
-		if (wasHibernating && !isHibernating) {
-			// Waking up from cs-cli: resume context sync and push a fresh state so the chat UI is up-to-date
-			getContextSyncService().resume()
+		if (tab === "cs-cli") {
+			getContextSyncService(false)?.resume()
 			this.postStateToWebview().catch((err) => {
 				this.log(`Failed to post state on wake from cs-cli tab: ${err}`, "error")
 			})
-		}
-
-		if (!wasHibernating && isHibernating) {
-			// Switching to cs-cli: pause context sync (not needed while cs-cli is active)
-			getContextSyncService().pause()
+		} else {
+			getContextSyncService(false)?.pause()
 		}
 	}
 

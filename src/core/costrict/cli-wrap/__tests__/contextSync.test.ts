@@ -54,8 +54,8 @@ describe("ContextSyncService", () => {
 		mockDisposable.dispose.mockClear()
 		// Reset singleton between tests
 		const existing = ContextSyncService.getInstance()
-		existing.dispose()
-		service = ContextSyncService.getInstance()
+		existing?.dispose()
+		service = ContextSyncService.getInstance()!
 	})
 
 	afterEach(() => {
