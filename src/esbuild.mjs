@@ -11,6 +11,24 @@ import { networkInterfacesCompatible } from "../scripts/network-interfaces-compa
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+async function removeDirWithRetries(dirPath, retries = 5, retryDelayMs = 200) {
+	for (let attempt = 0; attempt <= retries; attempt++) {
+		try {
+			await fs.promises.rm(dirPath, { recursive: true, force: true })
+			return
+		} catch (error) {
+			const isRetryable = error?.code === "ENOTEMPTY" || error?.code === "EBUSY" || error?.code === "EPERM"
+			const isLastAttempt = attempt === retries
+
+			if (!isRetryable || isLastAttempt) {
+				throw error
+			}
+
+			await new Promise((resolve) => globalThis.setTimeout(resolve, retryDelayMs * (attempt + 1)))
+		}
+	}
+}
+
 /**
  * Copy node-pty's runtime files (lib/, package.json, prebuilds/) into dest,
  * resolving symlinks so vsce always bundles the real files.
@@ -147,7 +165,7 @@ async function main() {
 
 	if (fs.existsSync(distDir)) {
 		console.log(`[${name}] Cleaning dist directory: ${distDir}`)
-		fs.rmSync(distDir, { recursive: true, force: true })
+		await removeDirWithRetries(distDir)
 	}
 
 	/**
