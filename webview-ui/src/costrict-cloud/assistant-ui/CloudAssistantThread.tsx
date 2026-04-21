@@ -77,8 +77,8 @@ export function CloudAssistantThread({ runtime: _runtime, messages, emptyState }
 	}
 
 	return (
-		<div className="relative h-full">
-			<div ref={scrollContainerRef} className="scrollbar-cloud h-full overflow-y-auto pr-1">
+		<div className="relative h-full min-w-0">
+			<div ref={scrollContainerRef} className="scrollbar-cloud h-full overflow-x-hidden overflow-y-auto pr-1">
 				<CloudAssistantMessageRenderer
 					messages={messages}
 					emptyState={emptyState}
@@ -98,7 +98,8 @@ export function CloudAssistantThread({ runtime: _runtime, messages, emptyState }
 						size="sm"
 						className={cn(
 							"pointer-events-auto rounded-full border-vscode-panel-border/80 bg-vscode-editor-background/90 shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5",
-							hasUnreadWhileDetached && "border-vscode-focusBorder/40 bg-vscode-focusBorder/12 text-vscode-focusBorder hover:bg-vscode-focusBorder/18",
+							hasUnreadWhileDetached &&
+								"border-vscode-focusBorder/40 bg-vscode-focusBorder/12 text-vscode-focusBorder hover:bg-vscode-focusBorder/18",
 						)}
 						onClick={handleScrollToBottom}>
 						<ArrowDown className="size-4" />
