@@ -20,18 +20,22 @@ export class CostrictCloudWebviewProvider implements vscode.WebviewViewProvider 
 	public static readonly sideBarId = `${Package.commandIDPrefix}.SidebarProvider`
 
 	private view?: vscode.WebviewView
-	private readonly bridge = new CsCloudBridge()
+	private readonly bridge: CsCloudBridge
 	private eventStreamAbortController?: AbortController
 	private currentEventStreamToken = 0
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
 		private readonly outputChannel: vscode.OutputChannel,
-	) {}
+	) {
+		this.bridge = new CsCloudBridge(outputChannel)
+	}
 
 	public async resolveWebviewView(webviewView: vscode.WebviewView): Promise<void> {
 		this.view = webviewView
+		this.log("webview.resolve", { sideBarId: CostrictCloudWebviewProvider.sideBarId })
 		webviewView.onDidDispose(() => {
+			this.log("webview.dispose", { reason: "view-disposed" })
 			this.stopEventStream()
 		})
 		webviewView.webview.options = {
@@ -44,26 +48,35 @@ export class CostrictCloudWebviewProvider implements vscode.WebviewViewProvider 
 						]
 					: [vscode.Uri.joinPath(this.context.extensionUri, "webview-ui", "build")],
 		}
-		webviewView.webview.onDidReceiveMessage((message: CostrictCloudWebviewMessage | { type?: string }) => {
-			switch (message.type) {
-				case "costrict-cloud.refresh":
-					void this.postBootstrap()
-					break
-				case "costrict-cloud.request":
-					if (isCostrictCloudRequest(message)) {
-						void this.handleBridgeRequest(message)
-					}
-					break
-				case "costrict-cloud.events.start":
-					this.startEventStream()
-					break
-				case "costrict-cloud.events.stop":
-					this.stopEventStream()
-					break
-				default:
-					break
-			}
-		})
+		webviewView.webview.onDidReceiveMessage(
+			(message: CostrictCloudWebviewMessage | { type?: string; tag?: string; payload?: unknown }) => {
+				this.log("webview.inbound", message)
+				switch (message.type) {
+					case "costrict-cloud.refresh":
+						void this.postBootstrap()
+						break
+					case "costrict-cloud.request":
+						if (isCostrictCloudRequest(message)) {
+							void this.handleBridgeRequest(message)
+						} else {
+							this.log("webview.invalidRequest", message)
+						}
+						break
+					case "costrict-cloud.debugLog":
+						this.log(`webview.debug.${message.tag ?? "unknown"}`, message.payload)
+						break
+					case "costrict-cloud.events.start":
+						this.startEventStream()
+						break
+					case "costrict-cloud.events.stop":
+						this.stopEventStream()
+						break
+					default:
+						this.log("webview.unhandled", message)
+						break
+				}
+			},
+		)
 		webviewView.webview.html =
 			this.context.extensionMode === vscode.ExtensionMode.Development
 				? await this.getHMRHtmlContent(webviewView.webview)
@@ -72,11 +85,14 @@ export class CostrictCloudWebviewProvider implements vscode.WebviewViewProvider 
 	}
 
 	public async refresh(): Promise<void> {
+		this.log("provider.refresh", { source: "external" })
 		await this.postBootstrap()
 	}
 
 	private async handleBridgeRequest(message: CostrictCloudBridgeRequest): Promise<void> {
+		this.log("bridge.request.forward", message)
 		const response = await this.bridge.request(message)
+		this.log("bridge.response.received", response)
 		await this.postExtensionMessage(response)
 	}
 
@@ -89,6 +105,7 @@ export class CostrictCloudWebviewProvider implements vscode.WebviewViewProvider 
 		this.outputChannel.appendLine(
 			`[costrict-cloud] bootstrap posted (auth=${status.authenticated}, serverUrl=${status.serverUrl ?? "missing"}, healthy=${status.healthy})`,
 		)
+		this.log("bootstrap.post", message)
 		await this.postExtensionMessage(message)
 	}
 
@@ -98,15 +115,22 @@ export class CostrictCloudWebviewProvider implements vscode.WebviewViewProvider 
 		const abortController = new AbortController()
 		this.eventStreamAbortController = abortController
 		this.outputChannel.appendLine("[costrict-cloud] starting event stream")
+		this.log("events.start", { token })
 		void this.bridge.streamEvents(async (message) => {
 			if (token !== this.currentEventStreamToken) {
+				this.log("events.staleMessage", { token, currentToken: this.currentEventStreamToken, message })
 				return
 			}
+			this.log("events.forward", { token, message })
 			await this.postExtensionMessage(message)
 		}, abortController.signal)
 	}
 
 	private stopEventStream(): void {
+		this.log("events.stop", {
+			hadActiveStream: !!this.eventStreamAbortController,
+			token: this.currentEventStreamToken,
+		})
 		this.eventStreamAbortController?.abort()
 		this.eventStreamAbortController = undefined
 	}
@@ -119,7 +143,23 @@ export class CostrictCloudWebviewProvider implements vscode.WebviewViewProvider 
 			| CostrictCloudEvent
 			| CostrictCloudEventStatus,
 	): Promise<void> {
+		this.log("webview.outbound", message)
 		await this.view?.webview.postMessage(message)
+	}
+
+	private log(tag: string, payload: unknown): void {
+		this.outputChannel.appendLine(`[costrict-cloud][provider][${tag}] ${this.safeStringify(payload)}`)
+	}
+
+	private safeStringify(value: unknown): string {
+		if (typeof value === "string") {
+			return value
+		}
+		try {
+			return JSON.stringify(value, null, 2)
+		} catch (error) {
+			return `[unserializable: ${error instanceof Error ? error.message : String(error)}]`
+		}
 	}
 
 	private async renderHtml(webview: vscode.Webview): Promise<string> {

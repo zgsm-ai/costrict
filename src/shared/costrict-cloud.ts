@@ -50,6 +50,12 @@ export type CostrictCloudEventStatus = {
 	error?: string
 }
 
+export type CostrictCloudDebugLog = {
+	type: "costrict-cloud.debugLog"
+	tag: string
+	payload: unknown
+}
+
 export type CostrictCloudExtensionMessage =
 	| CostrictCloudBootstrap
 	| CostrictCloudBridgeResponse
@@ -61,3 +67,4 @@ export type CostrictCloudWebviewMessage =
 	| { type: "costrict-cloud.events.start" }
 	| { type: "costrict-cloud.events.stop" }
 	| ({ type: "costrict-cloud.request" } & CostrictCloudBridgeRequest)
+	| CostrictCloudDebugLog

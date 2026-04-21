@@ -73,14 +73,16 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 	const [agents, setAgents] = useState<CloudAgentOption[]>([])
 	const [models, setModels] = useState<CloudModelOption[]>([])
 	const [selectedAgentId, setSelectedAgentId] = useState<string>("")
-	const [selectedProviderId, setSelectedProviderId] = useState<string>("")
-	const [selectedModelId, setSelectedModelId] = useState<string>("")
+	const [selectedProviderId, setSelectedProviderId] = useState<string>("costrict")
+	const [selectedModelId, setSelectedModelId] = useState<string>("Auto")
 	const [conversationModelSelections, setConversationModelSelections] = useState<Record<string, string>>({})
 	const [conversations, setConversations] = useState<ConversationRecord[]>([])
 	const [selectedConversationId, setSelectedConversationId] = useState<string>("")
 	const [messages, setMessages] = useState<CostrictCloudMessageItem[]>([])
 	const [rawMessages, setRawMessages] = useState<unknown>(null)
-	const [messagesByConversationId, setMessagesByConversationId] = useState<Record<string, CostrictCloudMessageItem[]>>({})
+	const [messagesByConversationId, setMessagesByConversationId] = useState<
+		Record<string, CostrictCloudMessageItem[]>
+	>({})
 	const [rawMessagesByConversationId, setRawMessagesByConversationId] = useState<Record<string, unknown>>({})
 	const [conversationEventCache, setConversationEventCache] = useState<Record<string, ConversationEventCache>>({})
 	const [abortStateOverrides, setAbortStateOverrides] = useState<Record<string, "force-idle">>({})
@@ -119,7 +121,8 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 				entries.set(model.provider, {
 					id: model.provider,
 					label: model.providerLabel || model.provider,
-					description: model.providerLabel && model.providerLabel !== model.provider ? model.provider : undefined,
+					description:
+						model.providerLabel && model.providerLabel !== model.provider ? model.provider : undefined,
 					available: true,
 				})
 			}
@@ -127,25 +130,53 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 		return Array.from(entries.values()).sort((a, b) => a.label.localeCompare(b.label))
 	}, [models])
 	const effectiveSelectedProviderId =
-		models.find((model) => model.id === ((selectedConversationId ? conversationModelSelections[selectedConversationId] : "") || selectedModelId))?.provider ||
+		models.find(
+			(model) =>
+				model.id ===
+				((selectedConversationId ? conversationModelSelections[selectedConversationId] : "") ||
+					selectedModelId),
+		)?.provider ||
 		selectedProviderId ||
 		providers[0]?.id ||
 		""
 	const effectiveSelectedModelId =
 		(selectedConversationId ? conversationModelSelections[selectedConversationId] : "") || selectedModelId
 	// const effectiveSelectedModel = models.find((model) => model.id === effectiveSelectedModelId)
-	const currentMessages = selectedConversationId ? messagesByConversationId[selectedConversationId] ?? messages : messages
-	const currentRawMessages = selectedConversationId ? rawMessagesByConversationId[selectedConversationId] ?? rawMessages : rawMessages
+	const currentMessages = selectedConversationId
+		? (messagesByConversationId[selectedConversationId] ?? messages)
+		: messages
+	const currentRawMessages = selectedConversationId
+		? (rawMessagesByConversationId[selectedConversationId] ?? rawMessages)
+		: rawMessages
+
+	const emitDebugLog = useCallback((tag: string, payload: unknown) => {
+		postCostrictCloudMessage({
+			type: "costrict-cloud.debugLog",
+			tag,
+			payload,
+		})
+	}, [])
 
 	const setLoadingFlag = useCallback((target: PendingRequestTarget, value: boolean) => {
 		setLoading((current) => ({ ...current, [target]: value }))
 	}, [])
 
 	const sendRequest = useCallback(
-		(target: PendingRequestTarget, path: string, init?: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown }) => {
+		(
+			target: PendingRequestTarget,
+			path: string,
+			init?: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown },
+		) => {
 			const requestId = `${target}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 			pendingRequests.current.set(requestId, target)
 			setLoadingFlag(target, true)
+			emitDebugLog("cloudapp.sendRequest", {
+				target,
+				requestId,
+				path,
+				method: init?.method ?? "GET",
+				body: init?.body,
+			})
 			postCostrictCloudMessage({
 				type: "costrict-cloud.request",
 				requestId,
@@ -154,7 +185,7 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 				body: init?.body,
 			})
 		},
-		[setLoadingFlag],
+		[emitDebugLog, setLoadingFlag],
 	)
 
 	const refreshBootstrap = useCallback(() => {
@@ -216,8 +247,28 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 		if (effectiveSelectedProviderId) {
 			body.providerID = effectiveSelectedProviderId
 		}
+		emitDebugLog("cloudapp.createConversation", {
+			selectedAgentId,
+			selectedProviderId,
+			selectedModelId,
+			effectiveSelectedProviderId,
+			effectiveSelectedModelId,
+			selectedConversationId,
+			conversationModelSelections,
+			body,
+		})
 		sendRequest("createConversation", "/conversations", { method: "POST", body })
-	}, [effectiveSelectedModelId, effectiveSelectedProviderId, selectedAgentId, sendRequest])
+	}, [
+		conversationModelSelections,
+		effectiveSelectedModelId,
+		effectiveSelectedProviderId,
+		emitDebugLog,
+		selectedAgentId,
+		selectedConversationId,
+		selectedModelId,
+		selectedProviderId,
+		sendRequest,
+	])
 
 	const submitPrompt = useCallback(() => {
 		if (!selectedConversationId) {
@@ -242,11 +293,33 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 			modelId: effectiveSelectedModelId,
 			providerId: effectiveSelectedProviderId,
 		})
+		emitDebugLog("cloudapp.submitPrompt", {
+			selectedConversationId,
+			selectedProviderId,
+			selectedModelId,
+			effectiveSelectedProviderId,
+			effectiveSelectedModelId,
+			conversationModelSelection: selectedConversationId
+				? conversationModelSelections[selectedConversationId]
+				: undefined,
+			prompt: prompt.trim(),
+			body,
+		})
 		sendRequest("prompt", `/conversations/${selectedConversationId}/prompt`, {
 			method: "POST",
 			body,
 		})
-	}, [effectiveSelectedModelId, effectiveSelectedProviderId, prompt, selectedConversationId, sendRequest])
+	}, [
+		conversationModelSelections,
+		effectiveSelectedModelId,
+		effectiveSelectedProviderId,
+		emitDebugLog,
+		prompt,
+		selectedConversationId,
+		selectedModelId,
+		selectedProviderId,
+		sendRequest,
+	])
 
 	const submitAbort = useCallback(() => {
 		if (!selectedConversationId) {
@@ -436,7 +509,10 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 					const newId = String(conversation.id ?? "")
 					if (newId) {
 						setSelectedConversationId(newId)
-						setConversations((current) => [conversation, ...current.filter((item) => String(item.id ?? "") !== newId)])
+						setConversations((current) => [
+							conversation,
+							...current.filter((item) => String(item.id ?? "") !== newId),
+						])
 					}
 					break
 				}
@@ -509,11 +585,19 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 	)
 
 	const visiblePermissions = useMemo(
-		() => permissions.filter((item) => !selectedConversationId || !item.conversationId || item.conversationId === selectedConversationId),
+		() =>
+			permissions.filter(
+				(item) =>
+					!selectedConversationId || !item.conversationId || item.conversationId === selectedConversationId,
+			),
 		[permissions, selectedConversationId],
 	)
 	const visibleQuestions = useMemo(
-		() => questions.filter((item) => !selectedConversationId || !item.conversationId || item.conversationId === selectedConversationId),
+		() =>
+			questions.filter(
+				(item) =>
+					!selectedConversationId || !item.conversationId || item.conversationId === selectedConversationId,
+			),
 		[questions, selectedConversationId],
 	)
 
@@ -537,7 +621,16 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 			)
 		}
 		return summaries
-	}, [abortStateOverrides, conversations, conversationEventCache, messages, messagesByConversationId, permissions, questions, selectedConversationId])
+	}, [
+		abortStateOverrides,
+		conversations,
+		conversationEventCache,
+		messages,
+		messagesByConversationId,
+		permissions,
+		questions,
+		selectedConversationId,
+	])
 
 	const selectedConversationSummary = useMemo(
 		() => (selectedConversationId ? conversationSummaries.get(selectedConversationId) : undefined),
@@ -585,32 +678,51 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 		}
 	}, [conversationModelSelections, models, selectedConversationId])
 
-	const handleSelectConversation = useCallback((conversationId: string) => {
-		setSelectedConversationId(conversationId)
-		const rememberedModelId = conversationModelSelections[conversationId]
-		if (rememberedModelId) {
-			setSelectedModelId(rememberedModelId)
-			const nextModel = models.find((model) => model.id === rememberedModelId)
+	const handleSelectConversation = useCallback(
+		(conversationId: string) => {
+			setSelectedConversationId(conversationId)
+			const rememberedModelId = conversationModelSelections[conversationId]
+			if (rememberedModelId) {
+				setSelectedModelId(rememberedModelId)
+				const nextModel = models.find((model) => model.id === rememberedModelId)
+				if (nextModel?.provider) {
+					setSelectedProviderId(nextModel.provider)
+				}
+			}
+			emitDebugLog("cloudapp.handleSelectConversation", {
+				conversationId,
+				rememberedModelId,
+				selectedProviderId,
+				selectedModelId,
+			})
+		},
+		[conversationModelSelections, emitDebugLog, models, selectedModelId, selectedProviderId],
+	)
+
+	const handleSelectModel = useCallback(
+		(modelId: string) => {
+			const nextModel = models.find((model) => model.id === modelId)
+			emitDebugLog("cloudapp.handleSelectModel", {
+				modelId,
+				providerId: nextModel?.provider,
+				selectedConversationId,
+				selectedModelIdBefore: selectedModelId,
+				selectedProviderIdBefore: selectedProviderId,
+			})
+			setSelectedModelId(modelId)
 			if (nextModel?.provider) {
 				setSelectedProviderId(nextModel.provider)
 			}
-		}
-	}, [conversationModelSelections, models])
-
-	const handleSelectModel = useCallback((modelId: string) => {
-		setSelectedModelId(modelId)
-		const nextModel = models.find((model) => model.id === modelId)
-		if (nextModel?.provider) {
-			setSelectedProviderId(nextModel.provider)
-		}
-		if (!selectedConversationId) {
-			return
-		}
-		setConversationModelSelections((current) => ({
-			...current,
-			[selectedConversationId]: modelId,
-		}))
-	}, [models, selectedConversationId])
+			if (!selectedConversationId) {
+				return
+			}
+			setConversationModelSelections((current) => ({
+				...current,
+				[selectedConversationId]: modelId,
+			}))
+		},
+		[emitDebugLog, models, selectedConversationId, selectedModelId, selectedProviderId],
+	)
 
 	useEffect(() => {
 		if (!selectedConversationId || !effectiveSelectedModelId) {
@@ -620,9 +732,9 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 			current[selectedConversationId] === effectiveSelectedModelId
 				? current
 				: {
-					...current,
-					[selectedConversationId]: effectiveSelectedModelId,
-				},
+						...current,
+						[selectedConversationId]: effectiveSelectedModelId,
+					},
 		)
 	}, [effectiveSelectedModelId, selectedConversationId])
 
@@ -665,7 +777,6 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 				onLoadMessages={loadMessages}
 				onLoadInteractions={loadInteractions}
 				onPromptChange={setPrompt}
-
 				onSubmitPrompt={submitPrompt}
 				onAbortPrompt={submitAbort}
 				onQuestionAnswerChange={(interactionId, value) =>
@@ -681,14 +792,15 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 		)
 	}
 
-
 	return (
 		<div className="min-h-screen bg-vscode-editor-background text-vscode-editor-foreground">
 			<div className="mx-auto flex max-w-7xl flex-col gap-4 p-4">
 				<header className="rounded-3xl border border-vscode-panel-border bg-vscode-sideBar-background/80 p-5 shadow-sm backdrop-blur">
 					<div className="flex flex-wrap items-center justify-between gap-3">
 						<div>
-							<p className="text-xs uppercase tracking-[0.2em] text-vscode-descriptionForeground">costrict-cloud</p>
+							<p className="text-xs uppercase tracking-[0.2em] text-vscode-descriptionForeground">
+								costrict-cloud
+							</p>
 							<h1 className="mt-1 text-2xl font-semibold">CoStrict Cloud 模式</h1>
 							<p className="mt-2 max-w-3xl text-sm text-vscode-descriptionForeground">
 								该界面为独立 React CloudApp 入口，所有数据都通过 extension host 转发到本地 cs-cloud。
@@ -700,9 +812,21 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 						</Button>
 					</div>
 					<div className="mt-4 grid gap-3 md:grid-cols-4">
-						<StatusCard title="认证信息" ok={!!bootstrap?.authenticated} description="读取 ~/.costrict/share/auth.json" />
-						<StatusCard title="cs-cloud 地址" ok={!!bootstrap?.serverUrl} description={bootstrap?.serverUrl ?? "未检测到 server.url"} />
-						<StatusCard title="健康检查" ok={!!bootstrap?.healthy} description={bootstrap?.healthy ? "运行中" : "等待执行 cs-cloud start"} />
+						<StatusCard
+							title="认证信息"
+							ok={!!bootstrap?.authenticated}
+							description="读取 ~/.costrict/share/auth.json"
+						/>
+						<StatusCard
+							title="cs-cloud 地址"
+							ok={!!bootstrap?.serverUrl}
+							description={bootstrap?.serverUrl ?? "未检测到 server.url"}
+						/>
+						<StatusCard
+							title="健康检查"
+							ok={!!bootstrap?.healthy}
+							description={bootstrap?.healthy ? "运行中" : "等待执行 cs-cloud start"}
+						/>
 						<EventStatusCard status={eventStatus} error={eventStatusError} lastEventName={lastEventName} />
 					</div>
 				</header>
@@ -719,10 +843,20 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 						<div className="flex items-center justify-between gap-2">
 							<div>
 								<h2 className="text-lg font-semibold">Pending Interactions</h2>
-								<p className="text-xs text-vscode-descriptionForeground">在这里直接处理 permission / question，无需离开 Cloud 页面。</p>
+								<p className="text-xs text-vscode-descriptionForeground">
+									在这里直接处理 permission / question，无需离开 Cloud 页面。
+								</p>
 							</div>
-							<Button variant="outline" size="sm" onClick={loadInteractions} disabled={!ready || loading.permissions || loading.questions}>
-								{loading.permissions || loading.questions ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={loadInteractions}
+								disabled={!ready || loading.permissions || loading.questions}>
+								{loading.permissions || loading.questions ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<RefreshCw className="size-4" />
+								)}
 								刷新交互
 							</Button>
 						</div>
@@ -731,13 +865,14 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 								title="Permissions"
 								description="等待人工确认的权限请求"
 								icon={<ShieldAlert className="size-4" />}
-								emptyText="当前没有待处理 permission"
-							>
+								emptyText="当前没有待处理 permission">
 								{visiblePermissions.map((interaction) => (
 									<PermissionInteractionCard
 										key={interaction.id}
 										interaction={interaction}
-										disabled={interactionSubmittingId === interaction.id || loading.interactionReply}
+										disabled={
+											interactionSubmittingId === interaction.id || loading.interactionReply
+										}
 										onSelect={(optionId) => submitPermissionResponse(interaction, optionId)}
 									/>
 								))}
@@ -746,14 +881,15 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 								title="Questions"
 								description="需要用户填写回复内容的问题"
 								icon={<HelpCircle className="size-4" />}
-								emptyText="当前没有待处理 question"
-							>
+								emptyText="当前没有待处理 question">
 								{visibleQuestions.map((interaction) => (
 									<QuestionInteractionCard
 										key={interaction.id}
 										interaction={interaction}
 										value={questionAnswers[interaction.id] ?? ""}
-										disabled={interactionSubmittingId === interaction.id || loading.interactionReply}
+										disabled={
+											interactionSubmittingId === interaction.id || loading.interactionReply
+										}
 										onChange={(value) =>
 											setQuestionAnswers((current) => ({
 												...current,
@@ -776,18 +912,42 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 								<h2 className="text-lg font-semibold">Conversations</h2>
 								<p className="text-xs text-vscode-descriptionForeground">读取、创建并选择会话</p>
 							</div>
-							<Button variant="primary" size="sm" onClick={createConversation} disabled={!ready || loading.createConversation}>
-								{loading.createConversation ? <Loader2 className="size-4 animate-spin" /> : <MessageSquareText className="size-4" />}
+							<Button
+								variant="primary"
+								size="sm"
+								onClick={createConversation}
+								disabled={!ready || loading.createConversation}>
+								{loading.createConversation ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<MessageSquareText className="size-4" />
+								)}
 								新建
 							</Button>
 						</div>
 						<div className="mt-3 flex items-center gap-2">
-							<Button variant="outline" size="sm" onClick={loadConversations} disabled={!ready || loading.conversations}>
-								{loading.conversations ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={loadConversations}
+								disabled={!ready || loading.conversations}>
+								{loading.conversations ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<RefreshCw className="size-4" />
+								)}
 								刷新列表
 							</Button>
-							<Button variant="outline" size="sm" onClick={loadAgents} disabled={!ready || loading.agents}>
-								{loading.agents ? <Loader2 className="size-4 animate-spin" /> : <Bot className="size-4" />}
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={loadAgents}
+								disabled={!ready || loading.agents}>
+								{loading.agents ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<Bot className="size-4" />
+								)}
 								读取 Agents
 							</Button>
 						</div>
@@ -814,8 +974,12 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 											)}>
 											<div className="flex items-start justify-between gap-2">
 												<div className="min-w-0">
-													<div className="truncate text-sm font-medium">{conversation.title || id || "未命名会话"}</div>
-													<div className="mt-1 text-xs opacity-75">{summary?.detail || conversation.status || "unknown"}</div>
+													<div className="truncate text-sm font-medium">
+														{conversation.title || id || "未命名会话"}
+													</div>
+													<div className="mt-1 text-xs opacity-75">
+														{summary?.detail || conversation.status || "unknown"}
+													</div>
 												</div>
 												{summary ? <ConversationStatusBadge summary={summary} /> : null}
 											</div>
@@ -831,11 +995,21 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 							<div>
 								<h2 className="text-lg font-semibold">Conversation Workspace</h2>
 								<p className="text-xs text-vscode-descriptionForeground">
-									{selectedConversation ? `当前会话：${selectedConversation.title || selectedConversation.id}` : "请选择或新建一个 Conversation"}
+									{selectedConversation
+										? `当前会话：${selectedConversation.title || selectedConversation.id}`
+										: "请选择或新建一个 Conversation"}
 								</p>
 							</div>
-							<Button variant="outline" size="sm" onClick={loadMessages} disabled={!ready || !selectedConversationId || loading.messages}>
-								{loading.messages ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={loadMessages}
+								disabled={!ready || !selectedConversationId || loading.messages}>
+								{loading.messages ? (
+									<Loader2 className="size-4 animate-spin" />
+								) : (
+									<RefreshCw className="size-4" />
+								)}
 								格式化 Messages
 							</Button>
 						</div>
@@ -850,7 +1024,11 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 							/>
 							<div className="mt-3 flex justify-end">
 								<Button variant="primary" onClick={submitPrompt} disabled={!ready || loading.prompt}>
-									{loading.prompt ? <Loader2 className="size-4 animate-spin" /> : <SendHorizonal className="size-4" />}
+									{loading.prompt ? (
+										<Loader2 className="size-4 animate-spin" />
+									) : (
+										<SendHorizonal className="size-4" />
+									)}
 									发送 Prompt
 								</Button>
 							</div>
@@ -863,7 +1041,11 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 							</div>
 							<div className="space-y-4">
 								<DataPanel title="Agents 原始数据" value={agents} emptyText="尚未读取 agents" />
-								<DataPanel title="Messages 原始响应" value={currentRawMessages} emptyText="尚未读取 messages" />
+								<DataPanel
+									title="Messages 原始响应"
+									value={currentRawMessages}
+									emptyText="尚未读取 messages"
+								/>
 							</div>
 						</div>
 					</section>
@@ -879,7 +1061,8 @@ function ConversationStatusBadge({ summary }: { summary: ConversationSummary }) 
 			className={cn(
 				"inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide",
 				summary.tone === "running" && "bg-vscode-button-background/15 text-vscode-button-foreground",
-				summary.tone === "waiting" && "bg-vscode-editorWarning-foreground/15 text-vscode-editorWarning-foreground",
+				summary.tone === "waiting" &&
+					"bg-vscode-editorWarning-foreground/15 text-vscode-editorWarning-foreground",
 				summary.tone === "idle" && "bg-vscode-testing-iconPassed/15 text-vscode-testing-iconPassed",
 				summary.tone === "error" && "bg-vscode-errorForeground/15 text-vscode-errorForeground",
 			)}>
@@ -909,7 +1092,12 @@ function StatusCard({ title, ok, description }: { title: string; ok: boolean; de
 	return (
 		<div className="rounded-2xl border border-vscode-panel-border bg-vscode-editor-background p-4">
 			<div className="flex items-center gap-2 text-sm font-medium">
-				<span className={cn("inline-block size-2 rounded-full", ok ? "bg-vscode-testing-iconPassed" : "bg-vscode-errorForeground")} />
+				<span
+					className={cn(
+						"inline-block size-2 rounded-full",
+						ok ? "bg-vscode-testing-iconPassed" : "bg-vscode-errorForeground",
+					)}
+				/>
 				{title}
 			</div>
 			<p className="mt-2 text-xs text-vscode-descriptionForeground">{description}</p>
@@ -936,7 +1124,9 @@ function EventStatusCard({
 	return (
 		<div className="rounded-2xl border border-vscode-panel-border bg-vscode-editor-background p-4">
 			<div className="flex items-center gap-2 text-sm font-medium">
-				<Activity className={cn("size-4", ok ? "text-vscode-testing-iconPassed" : "text-vscode-errorForeground")} />
+				<Activity
+					className={cn("size-4", ok ? "text-vscode-testing-iconPassed" : "text-vscode-errorForeground")}
+				/>
 				实时事件流 · {statusLabel}
 			</div>
 			<p className="mt-2 text-xs text-vscode-descriptionForeground">
@@ -968,7 +1158,13 @@ function InteractionColumn({
 			</div>
 			<p className="mt-1 text-xs text-vscode-descriptionForeground">{description}</p>
 			<div className="mt-3 space-y-3">
-				{hasChildren ? children : <div className="rounded-2xl border border-dashed border-vscode-panel-border p-4 text-sm text-vscode-descriptionForeground">{emptyText}</div>}
+				{hasChildren ? (
+					children
+				) : (
+					<div className="rounded-2xl border border-dashed border-vscode-panel-border p-4 text-sm text-vscode-descriptionForeground">
+						{emptyText}
+					</div>
+				)}
 			</div>
 		</div>
 	)
@@ -989,12 +1185,19 @@ function PermissionInteractionCard({
 				<ShieldAlert className="mt-0.5 size-4 text-vscode-editorWarning-foreground" />
 				<div className="min-w-0 flex-1">
 					<div className="text-sm font-medium">{interaction.title}</div>
-					<p className="mt-1 whitespace-pre-wrap text-sm text-vscode-descriptionForeground">{interaction.description}</p>
+					<p className="mt-1 whitespace-pre-wrap text-sm text-vscode-descriptionForeground">
+						{interaction.description}
+					</p>
 				</div>
 			</div>
 			<div className="mt-3 flex flex-wrap gap-2">
 				{interaction.options.map((option) => (
-					<Button key={option.id} variant={option.kind?.startsWith("reject") ? "outline" : "primary"} size="sm" disabled={disabled} onClick={() => onSelect(option.id)}>
+					<Button
+						key={option.id}
+						variant={option.kind?.startsWith("reject") ? "outline" : "primary"}
+						size="sm"
+						disabled={disabled}
+						onClick={() => onSelect(option.id)}>
 						{disabled ? <Loader2 className="size-4 animate-spin" /> : null}
 						{option.label}
 					</Button>
@@ -1025,7 +1228,9 @@ function QuestionInteractionCard({
 				<HelpCircle className="mt-0.5 size-4 text-vscode-testing-iconQueued" />
 				<div className="min-w-0 flex-1">
 					<div className="text-sm font-medium">{interaction.title}</div>
-					<p className="mt-1 whitespace-pre-wrap text-sm text-vscode-descriptionForeground">{interaction.description}</p>
+					<p className="mt-1 whitespace-pre-wrap text-sm text-vscode-descriptionForeground">
+						{interaction.description}
+					</p>
 				</div>
 			</div>
 			<textarea

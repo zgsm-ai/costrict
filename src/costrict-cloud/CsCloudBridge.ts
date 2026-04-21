@@ -1,3 +1,5 @@
+import * as vscode from "vscode"
+
 import { checkCsCloudHealth, readCostrictAuthFile, resolveCsCloudServerUrl } from "./config"
 import {
 	buildCsCloudUrl,
@@ -14,44 +16,55 @@ export type CostrictCloudStatus = {
 }
 
 export class CsCloudBridge {
+	constructor(private readonly outputChannel?: vscode.OutputChannel) {}
+
 	async getStatus(): Promise<CostrictCloudStatus> {
 		const auth = await readCostrictAuthFile()
 		const serverUrl = await resolveCsCloudServerUrl()
 		const healthy = serverUrl ? await checkCsCloudHealth(serverUrl) : false
-		return {
+		const status = {
 			authenticated: !!auth,
 			serverUrl,
 			healthy,
 		}
+		this.log("status", status)
+		return status
 	}
 
 	async request(request: CostrictCloudBridgeRequest): Promise<CostrictCloudBridgeResponse> {
 		const requestId = request.requestId
 		try {
+			this.log("request.received", request)
 			const status = await this.getStatus()
 			if (!status.authenticated) {
-				return {
+				const response = {
 					requestId,
 					type: "costrict-cloud.response",
 					ok: false,
 					error: "未检测到 ~/.costrict/share/auth.json，请先登录 CoStrict。",
-				}
+				} satisfies CostrictCloudBridgeResponse
+				this.log("request.blocked", { reason: "unauthenticated", requestId, status, response })
+				return response
 			}
 			if (!status.serverUrl) {
-				return {
+				const response = {
 					requestId,
 					type: "costrict-cloud.response",
 					ok: false,
 					error: "未检测到 cs-cloud server.url，请先手动执行 cs-cloud start。",
-				}
+				} satisfies CostrictCloudBridgeResponse
+				this.log("request.blocked", { reason: "missing-server-url", requestId, status, response })
+				return response
 			}
 			if (!status.healthy) {
-				return {
+				const response = {
 					requestId,
 					type: "costrict-cloud.response",
 					ok: false,
 					error: "cs-cloud 健康检查失败，请确认 cs-cloud start 已成功运行。",
-				}
+				} satisfies CostrictCloudBridgeResponse
+				this.log("request.blocked", { reason: "unhealthy", requestId, status, response })
+				return response
 			}
 
 			const method = request.method ?? "GET"
@@ -71,8 +84,25 @@ export class CsCloudBridge {
 				init.body = typeof request.body === "string" ? request.body : JSON.stringify(request.body)
 			}
 
+			this.log("http.request", {
+				requestId,
+				method,
+				url,
+				headers,
+				query: request.query,
+				body: request.body,
+				timeoutMs: request.timeoutMs ?? 30_000,
+			})
+
 			const response = await fetch(url, init)
 			const data = await readResponseBody(response)
+			this.log("http.response", {
+				requestId,
+				status: response.status,
+				statusText: response.statusText,
+				ok: response.ok,
+				data,
+			})
 
 			if (!response.ok) {
 				return {
@@ -93,6 +123,10 @@ export class CsCloudBridge {
 				data,
 			}
 		} catch (error) {
+			this.log("http.error", {
+				requestId,
+				error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+			})
 			return {
 				requestId,
 				type: "costrict-cloud.response",
@@ -108,6 +142,7 @@ export class CsCloudBridge {
 	): Promise<void> {
 		const status = await this.getStatus()
 		if (!status.authenticated || !status.serverUrl || !status.healthy) {
+			this.log("sse.blocked", { reason: "not-ready", status })
 			await onEvent({
 				type: "costrict-cloud.eventStatus",
 				status: "error",
@@ -116,15 +151,29 @@ export class CsCloudBridge {
 			return
 		}
 
+		this.log("sse.status", { status: "connecting" })
 		await onEvent({ type: "costrict-cloud.eventStatus", status: "connecting" })
 
 		try {
-			const response = await fetch(buildCsCloudUrl(status.serverUrl, "/events"), {
+			const url = buildCsCloudUrl(status.serverUrl, "/events")
+			this.log("sse.connect", {
+				url,
+				headers: {
+					Accept: "text/event-stream, application/json",
+				},
+			})
+			const response = await fetch(url, {
 				method: "GET",
 				headers: {
 					Accept: "text/event-stream, application/json",
 				},
 				signal,
+			})
+
+			this.log("sse.connected", {
+				status: response.status,
+				statusText: response.statusText,
+				ok: response.ok,
 			})
 
 			if (!response.ok) {
@@ -136,10 +185,12 @@ export class CsCloudBridge {
 				return
 			}
 
+			this.log("sse.status", { status: "connected" })
 			await onEvent({ type: "costrict-cloud.eventStatus", status: "connected" })
 
 			const reader = response.body?.getReader()
 			if (!reader) {
+				this.log("sse.error", { error: "事件流响应没有可读取的 body。" })
 				await onEvent({
 					type: "costrict-cloud.eventStatus",
 					status: "error",
@@ -154,32 +205,56 @@ export class CsCloudBridge {
 			while (!signal.aborted) {
 				const { done, value } = await reader.read()
 				if (done) {
+					this.log("sse.read.complete", { done })
 					break
 				}
-				buffer += decoder.decode(value, { stream: true })
+				const decodedChunk = decoder.decode(value, { stream: true })
+				this.log("sse.raw", decodedChunk)
+				buffer += decodedChunk
 				let boundary = buffer.indexOf("\n\n")
 				while (boundary !== -1) {
 					const chunk = buffer.slice(0, boundary)
 					buffer = buffer.slice(boundary + 2)
 					const parsed = parseSseChunk(chunk)
 					if (parsed) {
+						this.log("sse.event", parsed)
 						await onEvent(parsed)
 					}
 					boundary = buffer.indexOf("\n\n")
 				}
 			}
 
+			this.log("sse.status", { status: "disconnected" })
 			await onEvent({ type: "costrict-cloud.eventStatus", status: "disconnected" })
 		} catch (error) {
 			if (signal.aborted) {
+				this.log("sse.aborted", { reason: "abort-signal" })
 				await onEvent({ type: "costrict-cloud.eventStatus", status: "disconnected" })
 				return
 			}
+			this.log("sse.error", {
+				error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+			})
 			await onEvent({
 				type: "costrict-cloud.eventStatus",
 				status: "error",
 				error: error instanceof Error ? error.message : String(error),
 			})
+		}
+	}
+
+	private log(tag: string, payload: unknown): void {
+		this.outputChannel?.appendLine(`[costrict-cloud][bridge][${tag}] ${this.safeStringify(payload)}`)
+	}
+
+	private safeStringify(value: unknown): string {
+		if (typeof value === "string") {
+			return value
+		}
+		try {
+			return JSON.stringify(value, null, 2)
+		} catch (error) {
+			return `[unserializable: ${error instanceof Error ? error.message : String(error)}]`
 		}
 	}
 }
@@ -211,7 +286,6 @@ function parseSseChunk(chunk: string): CostrictCloudEvent | null {
 		data: tryParseJson(rawData),
 	}
 }
-
 
 function tryParseJson(value: string): unknown {
 	try {

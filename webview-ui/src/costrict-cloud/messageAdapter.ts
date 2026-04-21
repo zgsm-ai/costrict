@@ -16,7 +16,7 @@
  * 这些逻辑之所以集中在这里，是因为上游消息协议仍存在多种 payload shape。
  * 一旦上游 schema 稳定，本文件应优先收缩，而不是继续承载更多 UI 业务分支。
  */
-import { adaptCsCloudInteraction } from "./cloudInteractionAdapter"
+// import { adaptCsCloudInteraction } from "./cloudInteractionAdapter"
 
 export type CostrictCloudMessageKind = "user" | "assistant" | "reasoning" | "tool" | "command" | "error" | "unknown"
 
@@ -68,7 +68,9 @@ type EventMergeResult = {
  */
 export function adaptCsCloudMessages(payload: unknown): CostrictCloudMessageItem[] {
 	const source = unwrapMessageArray(payload)
-	return source.map((item, index) => adaptMessage(item, index)).filter((item): item is CostrictCloudMessageItem => item !== null)
+	return source
+		.map((item, index) => adaptMessage(item, index))
+		.filter((item): item is CostrictCloudMessageItem => item !== null)
 }
 
 /**
@@ -172,7 +174,17 @@ function adaptMessage(input: unknown, index: number): CostrictCloudMessageItem |
 		(stepLikeEvent(type) ? firstString(properties ?? input, ["name", "title", "stepType", "step_type"]) : "")
 	const command = firstString(input, ["command", "cmd"])
 	const status = deriveStatus(input, type)
-	const timestamp = firstNumber(properties ?? info ?? input, ["created", "createdAt", "created_at", "start", "end", "ts", "timestamp", "updatedAt", "updated_at"])
+	const timestamp = firstNumber(properties ?? info ?? input, [
+		"created",
+		"createdAt",
+		"created_at",
+		"start",
+		"end",
+		"ts",
+		"timestamp",
+		"updatedAt",
+		"updated_at",
+	])
 	const conversationId = extractConversationId(input)
 	const id = extractMessageId(input, index)
 
@@ -197,7 +209,9 @@ function adaptMessage(input: unknown, index: number): CostrictCloudMessageItem |
 function adaptEventToMessage(event: { event: string; data: unknown }): CostrictCloudMessageItem | null {
 	if (isRecord(event.data)) {
 		const properties = isRecord(event.data.properties) ? event.data.properties : undefined
-		const flattened = properties ? { ...event.data, ...properties, event: event.event } : { ...event.data, event: event.event }
+		const flattened = properties
+			? { ...event.data, ...properties, event: event.event }
+			: { ...event.data, event: event.event }
 		return adaptMessage(flattened, Date.now())
 	}
 	return adaptMessage(event.data, Date.now())
@@ -218,7 +232,14 @@ function extractConversationId(input: LooseRecord): string {
 	const properties = isRecord(input.properties) ? input.properties : undefined
 	const part = properties && isRecord(properties.part) ? properties.part : undefined
 	return (
-		firstString(part ?? properties ?? input, ["conversationId", "conversation_id", "sessionId", "session_id", "sessionID", "messageID"]) ||
+		firstString(part ?? properties ?? input, [
+			"conversationId",
+			"conversation_id",
+			"sessionId",
+			"session_id",
+			"sessionID",
+			"messageID",
+		]) ||
 		firstString(input, ["conversationId", "conversation_id", "sessionId", "session_id", "sessionID", "messageID"])
 	)
 }
@@ -286,7 +307,10 @@ function extractNestedText(value: unknown): string {
 		return value
 	}
 	if (Array.isArray(value)) {
-		const joined = value.map((item) => extractNestedText(item)).filter(Boolean).join("\n\n")
+		const joined = value
+			.map((item) => extractNestedText(item))
+			.filter(Boolean)
+			.join("\n\n")
 		return joined
 	}
 	if (!isRecord(value)) {
@@ -303,7 +327,15 @@ function extractNestedText(value: unknown): string {
 		return fromParts
 	}
 
-	const nestedCandidates = [value.part, value.properties, value.message, value.output, value.result, value.data, value.payload]
+	const nestedCandidates = [
+		value.part,
+		value.properties,
+		value.message,
+		value.output,
+		value.result,
+		value.data,
+		value.payload,
+	]
 	for (const candidate of nestedCandidates) {
 		const extracted = extractNestedText(candidate)
 		if (extracted) {
@@ -456,10 +488,21 @@ function deriveFallbackContent(input: LooseRecord, kind: CostrictCloudMessageKin
 	const properties = isRecord(input.properties) ? input.properties : undefined
 	const part = properties && isRecord(properties.part) ? properties.part : undefined
 	if (kind === "tool") {
-		const tool = firstString(part ?? properties ?? input, ["toolName", "tool_name", "tool", "name", "title", "type"])
+		const tool = firstString(part ?? properties ?? input, [
+			"toolName",
+			"tool_name",
+			"tool",
+			"name",
+			"title",
+			"type",
+		])
 		const args = input.arguments ?? input.args ?? input.input ?? (properties && properties.input)
 		const result = input.result ?? input.output ?? (properties && properties.output)
-		return [tool ? `Tool: ${tool}` : "Tool call", args ? `Arguments:\n${stringifyValue(args)}` : "", result ? `Result:\n${stringifyValue(result)}` : ""]
+		return [
+			tool ? `Tool: ${tool}` : "Tool call",
+			args ? `Arguments:\n${stringifyValue(args)}` : "",
+			result ? `Result:\n${stringifyValue(result)}` : "",
+		]
 			.filter(Boolean)
 			.join("\n\n")
 	}
@@ -468,15 +511,26 @@ function deriveFallbackContent(input: LooseRecord, kind: CostrictCloudMessageKin
 		const stdout = firstString(input, ["stdout", "output"])
 		const stderr = firstString(input, ["stderr", "error_output"])
 		const exitCode = firstNumber(input, ["exitCode", "exit_code"])
-		return [command ? `$ ${command}` : "", stdout, stderr ? `stderr:\n${stderr}` : "", typeof exitCode === "number" ? `exit_code: ${exitCode}` : ""]
-			.filter(Boolean)
-			.join("\n\n") || stringifyValue(input)
+		return (
+			[
+				command ? `$ ${command}` : "",
+				stdout,
+				stderr ? `stderr:\n${stderr}` : "",
+				typeof exitCode === "number" ? `exit_code: ${exitCode}` : "",
+			]
+				.filter(Boolean)
+				.join("\n\n") || stringifyValue(input)
+		)
 	}
 	if (kind === "error") {
 		return firstString(input, ["error", "message", "text", "details"]) || stringifyValue(input)
 	}
 	if (kind === "assistant" || kind === "reasoning") {
-		return extractNestedText(part ?? properties ?? input.message ?? input.output ?? input.result ?? input.data ?? input.payload) || ""
+		return (
+			extractNestedText(
+				part ?? properties ?? input.message ?? input.output ?? input.result ?? input.data ?? input.payload,
+			) || ""
+		)
 	}
 	return stringifyValue(input)
 }
@@ -506,7 +560,9 @@ function deriveStatus(input: LooseRecord, type: string): string {
 		if (typeof exitCode === "number" && exitCode !== 0) {
 			return "failed"
 		}
-		return hasAny(properties ?? input, ["result", "output", "completed", "done", "reason"]) ? "completed" : "running"
+		return hasAny(properties ?? input, ["result", "output", "completed", "done", "reason"])
+			? "completed"
+			: "running"
 	}
 	if (type === "command_output") {
 		const exitCode = firstNumber(input, ["exitCode", "exit_code"])
@@ -585,8 +641,20 @@ function extractMetadata(input: LooseRecord, kind: CostrictCloudMessageKind): Re
 	if (typeof exitCode === "number") {
 		metadata.exitCode = exitCode
 	}
-	for (const key of ["stdout", "stderr", "arguments", "result", "output", "field", "delta", "reason", "tokens", "cost"]) {
-		const source = key in input ? input : properties && key in properties ? properties : part && key in part ? part : undefined
+	for (const key of [
+		"stdout",
+		"stderr",
+		"arguments",
+		"result",
+		"output",
+		"field",
+		"delta",
+		"reason",
+		"tokens",
+		"cost",
+	]) {
+		const source =
+			key in input ? input : properties && key in properties ? properties : part && key in part ? part : undefined
 		if (source && source[key] != null) {
 			metadata[key] = source[key]
 		}
@@ -594,7 +662,10 @@ function extractMetadata(input: LooseRecord, kind: CostrictCloudMessageKind): Re
 	return kind === "tool" || kind === "command" ? (Object.keys(metadata).length > 0 ? metadata : undefined) : undefined
 }
 
-function mergeMetadata(previous?: Record<string, unknown>, next?: Record<string, unknown>): Record<string, unknown> | undefined {
+function mergeMetadata(
+	previous?: Record<string, unknown>,
+	next?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
 	if (!previous && !next) {
 		return undefined
 	}
