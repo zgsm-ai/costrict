@@ -9,8 +9,8 @@ import { CostrictAuthService } from "../auth"
 import { buildRawDiffPayload, countPatchDiffLines } from "./rawPayloadUtils"
 import { createRawTelemetryLogger } from "./rawTelemetryLogger"
 
-const MAX_COMMIT_DIFF_LENGTH = 50_000
-const MAX_COMMIT_COMMENT_LENGTH = 150
+const MAX_COMMIT_DIFF_LENGTH = 1_000_000
+const MAX_COMMIT_COMMENT_LENGTH = 500
 
 export class RawCommitReporter {
 	private readonly logger = createRawTelemetryLogger("RawCommitReporter")
