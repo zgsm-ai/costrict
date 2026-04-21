@@ -68,3 +68,6 @@ src/bundled-skills/
 .claude
 .costrict
 .gemini
+
+# Bundled modes (generated during build)
+src/bundled-modes/
