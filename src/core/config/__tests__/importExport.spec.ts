@@ -93,15 +93,20 @@ vi.mock("fs/promises", () => ({
 	},
 }))
 
-vi.mock("os", async (importOriginal) => ({
-	...(await importOriginal()),
-	default: {
+vi.mock("os", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("os")>()
+
+	return {
+		...actual,
+		default: {
+			...actual,
+			homedir: vi.fn(() => "/mock/home"),
+			tmpdir: vi.fn(() => "/tmp"),
+		},
 		homedir: vi.fn(() => "/mock/home"),
 		tmpdir: vi.fn(() => "/tmp"),
-	},
-	homedir: vi.fn(() => "/mock/home"),
-	tmpdir: vi.fn(() => "/tmp"),
-}))
+	}
+})
 
 vi.mock("../../../utils/safeWriteJson")
 

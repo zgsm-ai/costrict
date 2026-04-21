@@ -163,6 +163,7 @@
 		"cancelled": "API请求已取消",
 		"streamingFailed": "API流式传输失败",
 		"rateLimitWait": "请求频率限制",
+		"retrying": "正在重试",
 		"errorTitle": "提供商错误 {{code}}",
 		"errorMessage": {
 			"400": "提供商无法按此方式处理请求。请停止任务并尝试不同方法。",

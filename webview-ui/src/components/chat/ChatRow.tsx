@@ -1449,10 +1449,17 @@ export const ChatRowContent = ({
 					let retryInfo, rawError, code, docsURL
 					docsURL = "costrict://settings?provider=claude-code"
 
-					if (message.text != undefined) {
-						// Check for Claude Code authentication error first
-						if (message.text.includes("Not authenticated with Claude Code")) {
-							body = t("chat:apiRequest.errorMessage.claudeCodeNotAuthenticated")
+					// Check if message is countdown-only (empty or just countdown format like "↻ 25s...")
+					const isCountdownOnly = message.text && /^↻ \d+s\.\.\.$/.test(message.text)
+					const isEmptyMessage = !message.text || message.text.trim() === ""
+
+					// If message is empty, don't show anything (error already shown in api_req_started)
+					if (isEmptyMessage) {
+						return null
+					}
+
+					if (message.text != undefined && message.text !== "" && !isCountdownOnly) {						// Check for Claude Code authentication error first
+							if (message.text.includes("Not authenticated with Claude Code")) {							body = t("chat:apiRequest.errorMessage.claudeCodeNotAuthenticated")
 							docsURL = "costrict://settings?provider=claude-code"
 						} else {
 							// Try to show richer error message for that code, if available
@@ -1501,6 +1508,29 @@ export const ChatRowContent = ({
 							</p>
 						)
 					}
+
+					// For countdown-only messages, show a simple countdown display
+					if (isCountdownOnly) {
+						const countdownMatch = message.text?.match(/↻ (\d+)s\.\.\./)
+						const countdownSeconds = countdownMatch ? parseInt(countdownMatch[1], 10) : 0
+						return (
+							<div
+								className="group text-sm transition-opacity opacity-100"
+								style={{
+									...headerStyle,
+									marginBottom: 0,
+									justifyContent: "flex-start",
+								}}>
+								<div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+									{getIconSpan({ iconName: "arrow-swap", color: normalColor })}
+									<span className="text-vscode-descriptionForeground">
+										{t("chat:apiRequest.retrying")} ↻ {countdownSeconds}s...
+									</span>
+								</div>
+							</div>
+						)
+					}
+
 					return (
 						<ErrorRow
 							deleteMessageTs={deleteMessageTs}

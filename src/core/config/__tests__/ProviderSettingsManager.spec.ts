@@ -638,6 +638,48 @@ describe("ProviderSettingsManager", () => {
 			expect(storedConfig.apiConfigs.default.id).toBeTruthy()
 		})
 
+		it("falls back currentApiConfigName and clears dangling mode mappings when deleting the active config", async () => {
+			const existingConfig: ProviderProfiles = {
+				currentApiConfigName: "test",
+				apiConfigs: {
+					default: {
+						id: "default-id",
+					},
+					test: {
+						apiProvider: "anthropic",
+						id: "test-id",
+					},
+					backup: {
+						apiProvider: "openai",
+						id: "backup-id",
+					},
+				},
+				modeApiConfigs: {
+					code: "test-id",
+					architect: "backup-id",
+					ask: "test-id",
+				},
+				migrations: {
+					rateLimitSecondsMigrated: true,
+					openAiHeadersMigrated: true,
+					consecutiveMistakeLimitMigrated: true,
+					todoListEnabledMigrated: true,
+					claudeCodeLegacySettingsMigrated: true,
+				},
+			}
+
+			mockSecrets.get.mockResolvedValue(JSON.stringify(existingConfig))
+
+			await providerSettingsManager.deleteConfig("test")
+
+			const storedConfig = JSON.parse(mockSecrets.store.mock.calls[0][1])
+			expect(storedConfig.currentApiConfigName).toBe("default")
+			expect(storedConfig.apiConfigs.test).toBeUndefined()
+			expect(storedConfig.modeApiConfigs).toEqual({
+				architect: "backup-id",
+			})
+		})
+
 		it("should throw error when trying to delete non-existent config", async () => {
 			mockSecrets.get.mockResolvedValue(
 				JSON.stringify({

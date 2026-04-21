@@ -394,6 +394,7 @@ export class TerminalManager {
 				this.isRunning = false
 				this.ptyProcess = null
 				this.port = null
+				getContextSyncService().stop()
 				// Clean up exit handler to avoid dangling listener
 				if (this.exitHandler) {
 					process.removeListener("exit", this.exitHandler)

@@ -88,6 +88,16 @@ describe("ApiConfigSelector", () => {
 		expect(trigger).toHaveTextContent("Config 1")
 	})
 
+	test("renders icon-only trigger with accessible label", () => {
+		render(<ApiConfigSelector {...defaultProps} iconOnly />)
+
+		const trigger = screen.getByTestId("dropdown-trigger")
+		expect(trigger).toBeInTheDocument()
+		expect(trigger).toHaveAttribute("aria-label", "API Config: Config 1")
+		expect(trigger).not.toHaveTextContent("Config 1")
+		expect(trigger.querySelector(".codicon-settings")).toBeInTheDocument()
+	})
+
 	test("handles disabled state correctly", () => {
 		render(<ApiConfigSelector {...defaultProps} disabled={true} />)
 

@@ -15,6 +15,7 @@ export class ContextSyncService {
 	private lastContext: { activeFile?: FileContext; openTabs: string[]; timestamp?: number }[] = []
 	private syncInterval: NodeJS.Timeout | null = null
 	private debounceTimer: NodeJS.Timeout | null = null
+	private _paused: boolean = false
 
 	private constructor() {}
 
@@ -100,6 +101,10 @@ export class ContextSyncService {
 			return
 		}
 
+		if (this._paused) {
+			return
+		}
+
 		const activeFile = getActiveFileContext()
 		// Limit to the most recent 10 tabs
 		const allTabs = getOpenTabs()
@@ -111,6 +116,26 @@ export class ContextSyncService {
 		this.debounceTimer = setTimeout(() => {
 			this.debouncedSync(port)
 		}, 500)
+	}
+
+	/**
+	 * Pause syncing without disposing event listeners.
+	 * Useful when the cs-cli tab is active and context sync is not needed.
+	 */
+	pause(): void {
+		this._paused = true
+		if (this.debounceTimer) {
+			clearTimeout(this.debounceTimer)
+			this.debounceTimer = null
+		}
+	}
+
+	/**
+	 * Resume syncing and immediately sync the latest context.
+	 */
+	resume(): void {
+		this._paused = false
+		this.syncContext()
 	}
 
 	/**
@@ -134,6 +159,7 @@ export class ContextSyncService {
 		this.disposables = []
 
 		// Reset state
+		this._paused = false
 		this.lastContext = []
 	}
 

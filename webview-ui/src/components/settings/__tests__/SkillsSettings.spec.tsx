@@ -347,7 +347,10 @@ describe("SkillsSettings", () => {
 			type: "openSkillFile",
 			skillName: "project-skill",
 			source: "project",
-			skillMode: undefined,
+			skillModeSlugs: undefined,
+			values: {
+				path: "/workspace/.roo/skills/project-skill/SKILL.md",
+			},
 		})
 	})
 

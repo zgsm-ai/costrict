@@ -185,6 +185,7 @@
 		"cancelled": "API Request Cancelled",
 		"streamingFailed": "API Streaming Failed",
 		"rateLimitWait": "Rate limiting",
+		"retrying": "Retrying",
 		"errorTitle": "Provider Error {{code}}",
 		"errorMessage": {
 			"400": "The provider couldn't process the request as made. Stop the task and try a different approach.",

@@ -5094,25 +5094,29 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 			}
 
 			// Show countdown timer with exponential backoff
+			// When header is provided (streaming failed message already shown in api_req_started),
+			// we only show countdown to avoid duplicate error display.
+			const countdownOnly = !!header
 			for (let i = finalDelay; i > 0; i--) {
 				// Check abort flag during countdown to allow early exit
 				if (this.abort) {
 					throw new Error(`[Task#${this.taskId}] Aborted during retry countdown`)
 				}
 				if (this.apiConfiguration.apiProvider === "costrict") {
-					await this.say("api_req_retry_delayed", `${headerText}\n↻ ${i}s...`, undefined, true)
+					const messageText = countdownOnly ? `↻ ${i}s...` : `${headerText}\n↻ ${i}s...`
+					await this.say("api_req_retry_delayed", messageText, undefined, true)
 				} else {
-					await this.say(
-						"api_req_retry_delayed",
-						`${headerText}<retry_timer>${i}</retry_timer>`,
-						undefined,
-						true,
-					)
+					const messageText = countdownOnly
+						? `<retry_timer>${i}</retry_timer>`
+						: `${headerText}<retry_timer>${i}</retry_timer>`
+					await this.say("api_req_retry_delayed", messageText, undefined, true)
 				}
 				await delay(1000)
 			}
 
-			await this.say("api_req_retry_delayed", headerText, undefined, false)
+			// Final message: only show header if not in countdown-only mode
+			const finalMessage = countdownOnly ? "" : headerText
+			await this.say("api_req_retry_delayed", finalMessage, undefined, false)
 		} catch (err) {
 			const message = err instanceof Error ? err.message : String(err)
 

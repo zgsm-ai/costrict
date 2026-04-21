@@ -78,7 +78,21 @@
 			"glob": ">=11.1.0",
 			"@types/react": "^18.3.23",
 			"@types/react-dom": "^18.3.5",
-			"zod": "3.25.76"
+			"zod": "3.25.76",
+			"nth-check@<2.0.1": ">=2.0.1",
+			"vite@>=6.0.0 <=6.4.0": ">=6.4.1",
+			"diff@>=6.0.0 <8.0.3": ">=8.0.3",
+			"serialize-javascript@<=7.0.2": ">=7.0.3",
+			"serialize-javascript@<7.0.5": ">=7.0.5",
+			"vite@<=6.4.1": ">=6.4.2",
+			"vite@>=6.0.0 <=6.4.1": ">=6.4.2",
+			"drizzle-orm@<0.45.2": ">=0.45.2",
+			"basic-ftp@<=5.2.1": ">=5.2.2",
+			"follow-redirects@<=1.15.11": ">=1.16.0",
+			"dompurify@<=3.3.3": ">=3.4.0",
+			"hono@<4.12.14": ">=4.12.14",
+			"basic-ftp@<=5.2.2": ">=5.3.0",
+			"protobufjs@<7.5.5": ">=7.5.5"
 		},
 		"ignoredBuiltDependencies": [
 			"protobufjs"

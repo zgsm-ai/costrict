@@ -1,6 +1,6 @@
 import { defaultModeSlug } from "@roo/modes"
 
-import { render, fireEvent, screen } from "@src/utils/test-utils"
+import { render, fireEvent, screen, within } from "@src/utils/test-utils"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
 import { vscode } from "@src/utils/vscode"
 import * as pathMentions from "@src/utils/path-mentions"
@@ -94,9 +94,19 @@ describe("ChatTextArea", () => {
 		;(useExtensionState as ReturnType<typeof vi.fn>).mockReturnValue({
 			filePaths: [],
 			openedTabs: [],
+			currentApiConfigName: "default",
+			listApiConfigMeta: [
+				{ id: "config-default", name: "default", modelId: "claude-3-opus-20240229" },
+				{ id: "config-alt", name: "backup", modelId: "gpt-4" },
+			],
+			pinnedApiConfigs: {},
+			togglePinnedApiConfig: vi.fn(),
 			apiConfiguration: {
 				apiProvider: "anthropic",
 			},
+			organizationAllowList: { allowAll: true, providers: {} },
+			reviewTask: { status: "idle" },
+			lockApiConfigAcrossModes: false,
 			taskHistory: [],
 			cwd: "/test/workspace",
 		})
@@ -1069,51 +1079,61 @@ describe("ChatTextArea", () => {
 	})
 
 	describe("selectApiConfig", () => {
-		// Helper function to get the API config dropdown - using more flexible query methods
-		const getApiConfigDropdown = () => {
-			// Try to find the dropdown button using different query methods
-			return (
-				screen.queryByTestId("dropdown-trigger") ||
-				screen.queryByRole("button", { name: /provider/i }) ||
-				screen.queryByRole("button", { name: /model/i }) ||
-				screen.queryByRole("combobox") ||
-				document.querySelector('[aria-controls^="radix-"]')
-			)
+		const getApiConfigTrigger = () => {
+			const topbar = screen.getByTestId("api-config-topbar")
+			return within(topbar).getByTestId("dropdown-trigger")
 		}
+
+		const openApiConfigDropdown = () => {
+			const trigger = getApiConfigTrigger()
+			fireEvent.click(trigger)
+			return trigger
+		}
+
+		it("should render the api config selector in the top-right toolbar", () => {
+			render(<ChatTextArea {...defaultProps} />)
+
+			const topbar = screen.getByTestId("api-config-topbar")
+			expect(topbar).toBeInTheDocument()
+			expect(within(topbar).getByTestId("dropdown-trigger")).toBeInTheDocument()
+		})
 
 		it("should be enabled independently of sendingDisabled", () => {
 			render(<ChatTextArea {...defaultProps} sendingDisabled={true} selectApiConfigDisabled={false} />)
-			const apiConfigDropdown = getApiConfigDropdown()
-
-			// If the dropdown cannot be found, skip this test
-			if (!apiConfigDropdown) {
-				console.warn("API config dropdown not found, skipping test")
-				return
-			}
+			const apiConfigDropdown = getApiConfigTrigger()
 
 			expect(apiConfigDropdown).not.toHaveAttribute("disabled")
 		})
 
 		it("should be disabled when selectApiConfigDisabled is true", () => {
 			render(<ChatTextArea {...defaultProps} sendingDisabled={true} selectApiConfigDisabled={true} />)
-			const apiConfigDropdown = getApiConfigDropdown()
+			const apiConfigDropdown = getApiConfigTrigger()
 
-			// If the dropdown cannot be found, skip this test
-			if (!apiConfigDropdown) {
-				console.warn("API config dropdown not found, skipping test")
-				return
-			}
+			expect(apiConfigDropdown).toBeDisabled()
+		})
 
-			// The component may not have implemented this feature yet, skip this test for now
-			// Or check if the component at least exists (indicating that the component can render normally)
-			expect(apiConfigDropdown).toBeTruthy()
+		it("should send loadApiConfigurationById when selecting another config", () => {
+			render(<ChatTextArea {...defaultProps} />)
+			openApiConfigDropdown()
 
-			// TODO: If the disable functionality is implemented in the future, the following checks can be restored:
-			// const isDisabled = apiConfigDropdown.hasAttribute("disabled") ||
-			//                   apiConfigDropdown.getAttribute("aria-disabled") === "true" ||
-			//                   apiConfigDropdown.classList.contains("disabled") ||
-			//                   apiConfigDropdown.classList.contains("opacity-50")
-			// expect(isDisabled).toBe(true)
+			fireEvent.click(screen.getByText("backup"))
+
+			expect(mockPostMessage).toHaveBeenCalledWith({
+				type: "loadApiConfigurationById",
+				text: "config-alt",
+			})
+		})
+
+		it("should toggle lockApiConfigAcrossModes from the selector footer", () => {
+			render(<ChatTextArea {...defaultProps} />)
+			openApiConfigDropdown()
+
+			fireEvent.click(screen.getByLabelText("chat:lockApiConfigAcrossModes"))
+
+			expect(mockPostMessage).toHaveBeenCalledWith({
+				type: "lockApiConfigAcrossModes",
+				bool: true,
+			})
 		})
 
 		describe("enter key behavior", () => {

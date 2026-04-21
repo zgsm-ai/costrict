@@ -17,6 +17,7 @@ interface ApiConfigSelectorProps {
 	title: string
 	onChange: (value: string) => void
 	triggerClassName?: string
+	iconOnly?: boolean
 	listApiConfigMeta: Array<{ id: string; name: string; modelId?: string }>
 	pinnedApiConfigs?: Record<string, boolean>
 	togglePinnedApiConfig: (id: string) => void
@@ -31,6 +32,7 @@ export const ApiConfigSelector = ({
 	title,
 	onChange,
 	triggerClassName = "",
+	iconOnly = false,
 	listApiConfigMeta,
 	pinnedApiConfigs,
 	togglePinnedApiConfig,
@@ -41,6 +43,7 @@ export const ApiConfigSelector = ({
 	const [open, setOpen] = useState(false)
 	const [searchValue, setSearchValue] = useState("")
 	const portalContainer = useRooPortal("costrict-portal")
+	const triggerLabel = iconOnly && displayName ? `${title}: ${displayName}` : title
 
 	// Create searchable items for fuzzy search.
 	const searchableItems = useMemo(
@@ -147,20 +150,25 @@ export const ApiConfigSelector = ({
 
 	return (
 		<Popover open={open} onOpenChange={setOpen} data-testid="api-config-selector-root">
-			<StandardTooltip content={title}>
+			<StandardTooltip content={triggerLabel}>
 				<PopoverTrigger
 					disabled={disabled}
 					data-testid="dropdown-trigger"
+					aria-label={triggerLabel}
 					className={cn(
-						"min-w-0 inline-flex items-center relative whitespace-nowrap px-1.5 py-1 text-xs",
-						"bg-transparent border border-[rgba(255,255,255,0.08)] rounded-md text-vscode-foreground",
-						"transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder focus-visible:ring-inset",
-						disabled
-							? "opacity-50 cursor-not-allowed"
-							: "opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer",
+						iconOnly
+							? "size-8 inline-flex items-center justify-center relative rounded-md text-sm"
+							: "min-w-0 inline-flex items-center relative whitespace-nowrap px-1.5 py-1 text-xs",
+						// "bg-transparent border border-[rgba(255,255,255,0.08)] text-vscode-foreground",
+						// "transition-all duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-vscode-focusBorder focus-visible:ring-inset",
+						disabled ? "opacity-50 cursor-not-allowed" : "opacity-90 hover:opacity-100 cursor-pointer",
 						triggerClassName,
 					)}>
-					<span className="truncate">{displayName}</span>
+					{iconOnly ? (
+						<span className="codicon codicon-settings text-sm" aria-hidden="true" />
+					) : (
+						<span className="truncate">{displayName}</span>
+					)}
 				</PopoverTrigger>
 			</StandardTooltip>
 			<PopoverContent

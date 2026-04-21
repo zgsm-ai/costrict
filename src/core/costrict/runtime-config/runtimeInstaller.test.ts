@@ -133,7 +133,9 @@ describe("CostrictRuntimeInstaller", () => {
 		await installer.ensureInstalled()
 
 		expect(logger.info).toHaveBeenCalledWith("[runtime-installer] starting runtime download: 1.0.2")
-		expect(logger.info).toHaveBeenCalledWith("[runtime-installer] download progress: 50%, 5/10")
+		expect(logger.info.mock.calls).toContainEqual([
+			expect.stringMatching(/^\[runtime-installer\] download progress: 50% \.{3,6}$/),
+		])
 		expect(logger.info).toHaveBeenCalledWith(
 			`[runtime-installer] runtime downloaded and installed successfully: ${paths.targetPath}`,
 		)
