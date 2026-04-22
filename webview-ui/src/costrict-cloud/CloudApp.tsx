@@ -444,9 +444,11 @@ const CloudApp = ({ debugMode = false }: CloudAppProps) => {
 				}
 				setMessages((current) => {
 					const result = mergeCsCloudEventIntoMessages(current, event.data, selectedConversationId)
-					if (!result.didMutate && result.shouldRefetch) {
+					if (!result.didMutate) {
 						requestMessagesRefreshFromEvent()
-						loadInteractions()
+						if (result.shouldRefetch) {
+							loadInteractions()
+						}
 					}
 					if (selectedConversationId && result.didMutate) {
 						setMessagesByConversationId((cached) => ({

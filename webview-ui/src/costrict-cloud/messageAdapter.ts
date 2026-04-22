@@ -238,9 +238,7 @@ function extractConversationId(input: LooseRecord): string {
 			"sessionId",
 			"session_id",
 			"sessionID",
-			"messageID",
-		]) ||
-		firstString(input, ["conversationId", "conversation_id", "sessionId", "session_id", "sessionID", "messageID"])
+		]) || firstString(input, ["conversationId", "conversation_id", "sessionId", "session_id", "sessionID"])
 	)
 }
 

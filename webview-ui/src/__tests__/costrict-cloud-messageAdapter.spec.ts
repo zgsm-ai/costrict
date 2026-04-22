@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { adaptCsCloudInteraction } from "../costrict-cloud/cloudInteractionAdapter"
-import {
-	adaptCsCloudMessages,
-	mergeCsCloudEventIntoMessages,
-} from "../costrict-cloud/messageAdapter"
+import { adaptCsCloudMessages, mergeCsCloudEventIntoMessages } from "../costrict-cloud/messageAdapter"
 
 describe("adaptCsCloudMessages", () => {
 	it("unwraps response envelopes and maps common message roles", () => {
@@ -190,13 +187,10 @@ describe("mergeCsCloudEventIntoMessages", () => {
 	})
 
 	it("appends new tool events without refetch", () => {
-		const result = mergeCsCloudEventIntoMessages(
-			[],
-			{
-				event: "tool_call",
-				data: { tool_call_id: "tool-1", type: "tool_call", toolName: "grep_search", arguments: { pattern: "foo" } },
-			},
-		)
+		const result = mergeCsCloudEventIntoMessages([], {
+			event: "tool_call",
+			data: { tool_call_id: "tool-1", type: "tool_call", toolName: "grep_search", arguments: { pattern: "foo" } },
+		})
 
 		expect(result.didMutate).toBe(true)
 		expect(result.messages[0]).toEqual(
@@ -266,7 +260,54 @@ describe("mergeCsCloudEventIntoMessages", () => {
 		})
 
 		expect(result.didMutate).toBe(true)
-		expect(result.messages[0]).toEqual(expect.objectContaining({ id: "part-r1", kind: "assistant", content: "用户问题", status: "streaming" }))
+		expect(result.messages[0]).toEqual(
+			expect.objectContaining({ id: "part-r1", kind: "assistant", content: "用户问题", status: "streaming" }),
+		)
+	})
+
+	it("keeps part-based streaming updates when selectedConversationId is set", () => {
+		const start = mergeCsCloudEventIntoMessages(
+			[],
+			{
+				event: "message.part.updated",
+				data: {
+					type: "message.part.updated",
+					properties: {
+						messageID: "msg-1",
+						partID: "part-r1",
+						part: {
+							id: "part-r1",
+							type: "reasoning",
+							text: "",
+						},
+					},
+				},
+			},
+			"conv-1",
+		)
+
+		const result = mergeCsCloudEventIntoMessages(
+			start.messages,
+			{
+				event: "message.part.delta",
+				data: {
+					type: "message.part.delta",
+					properties: {
+						messageID: "msg-1",
+						partID: "part-r1",
+						field: "text",
+						delta: "增量内容",
+					},
+				},
+			},
+			"conv-1",
+		)
+
+		expect(result.didMutate).toBe(true)
+		expect(result.shouldRefetch).toBe(false)
+		expect(result.messages[0]).toEqual(
+			expect.objectContaining({ id: "part-r1", kind: "assistant", content: "增量内容", status: "streaming" }),
+		)
 	})
 
 	it("treats step lifecycle as tool-like messages", () => {
@@ -299,7 +340,9 @@ describe("mergeCsCloudEventIntoMessages", () => {
 		expect(result.didMutate).toBe(true)
 		expect(result.messages[0]).toEqual(expect.objectContaining({ id: "step-1", kind: "tool", status: "completed" }))
 		expect(result.messages[0]?.toolName).toBeUndefined()
-		expect(result.messages[0]?.metadata).toEqual(expect.objectContaining({ reason: "stop", tokens: { total: 10 }, cost: 0 }))
+		expect(result.messages[0]?.metadata).toEqual(
+			expect.objectContaining({ reason: "stop", tokens: { total: 10 }, cost: 0 }),
+		)
 	})
 
 	it("finalizes streaming assistant messages on session.status completion", () => {
