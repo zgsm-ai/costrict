@@ -2,6 +2,11 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.7.4]
+
+- Add copy login URL to clipboard feature in auth service
+- Update Auto model message formatting processing for Costrict provider
+
 ## [2.7.3]
 
 - Add previous checkpoint navigation controls
