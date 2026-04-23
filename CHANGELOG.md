@@ -2,6 +2,10 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.7.5]
+
+- Fix security-review skills subdir
+
 ## [2.7.4]
 
 - Add copy login URL to clipboard feature in auth service
