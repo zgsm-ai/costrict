@@ -406,7 +406,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 						],
 					}
 				: { role: "system" as const, content: systemPrompt }
-			if (_mid?.includes("kimi") || _mid?.includes("glm") || isMiniMax || _mid?.includes("claude")) {
+			if (_mid?.includes("auto") || _mid?.includes("kimi") || _mid?.includes("glm") || isMiniMax || _mid?.includes("claude")) {
 				convertedMessages = [
 					{ role: "system", content: systemPrompt },
 					...convertToZAiFormat(messages, { mergeToolResultText: true }),
@@ -942,9 +942,9 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		}
 		const _mid = id.toLowerCase()
 		if (
-			(_mid.toLowerCase().includes("kimi") ||
-				_mid.toLowerCase().includes("minimax") ||
-				_mid.toLowerCase().includes("glm")) &&
+			(_mid?.includes("auto") || _mid?.includes("kimi") ||
+				_mid?.includes("minimax") ||
+				_mid?.includes("glm")) &&
 			info.preserveReasoning == null
 		) {
 			info.preserveReasoning = true
