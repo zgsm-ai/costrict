@@ -146,6 +146,7 @@ interface ChatRowProps {
 	searchResults?: SearchResult[]
 	searchQuery?: string
 	hasCheckpoint?: boolean
+	onJumpToPreviousCheckpoint?: () => void
 }
 
 interface ChatRowContentProps extends Omit<ChatRowProps, "onHeightChange" | "searchResults" | "searchQuery"> {
@@ -215,6 +216,7 @@ export const ChatRowContent = ({
 	// editable,
 	searchQuery,
 	isFollowUpAutoApprovalPaused,
+	onJumpToPreviousCheckpoint,
 }: ChatRowContentProps) => {
 	const { t, i18n } = useTranslation()
 
@@ -1458,8 +1460,10 @@ export const ChatRowContent = ({
 						return null
 					}
 
-					if (message.text != undefined && message.text !== "" && !isCountdownOnly) {						// Check for Claude Code authentication error first
-							if (message.text.includes("Not authenticated with Claude Code")) {							body = t("chat:apiRequest.errorMessage.claudeCodeNotAuthenticated")
+					if (message.text != undefined && message.text !== "" && !isCountdownOnly) {
+						// Check for Claude Code authentication error first
+						if (message.text.includes("Not authenticated with Claude Code")) {
+							body = t("chat:apiRequest.errorMessage.claudeCodeNotAuthenticated")
 							docsURL = "costrict://settings?provider=claude-code"
 						} else {
 							// Try to show richer error message for that code, if available
@@ -1883,6 +1887,7 @@ export const ChatRowContent = ({
 							commitHash={message.text!}
 							currentHash={currentCheckpoint}
 							checkpoint={message.checkpoint}
+							onJumpToPreviousCheckpoint={onJumpToPreviousCheckpoint}
 						/>
 					)
 				case "condense_context":

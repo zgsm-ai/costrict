@@ -1,7 +1,7 @@
 import { getDiffLines } from "../../../utils/diffLines"
 
 const DEFAULT_MAX_CONTENT_LENGTH = 20_000
-const DEFAULT_MAX_DIFF_LENGTH = 50_000
+const DEFAULT_MAX_DIFF_LENGTH = 1_000_000
 
 export function truncateRawText(
 	value: string | undefined,

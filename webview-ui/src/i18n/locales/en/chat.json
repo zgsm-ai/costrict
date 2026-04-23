@@ -136,6 +136,7 @@
 	},
 	"scrollToBottom": "Scroll to bottom of chat",
 	"about": "CoStrict is a whole AI dev team in your editor",
+	"scrollToLatestCheckpoint": "Scroll to previous checkpoint",
 	"docs": "Check our <DocsLink>docs</DocsLink> to get started",
 	"onboarding": "What would you like to do?",
 	"rooTips": {

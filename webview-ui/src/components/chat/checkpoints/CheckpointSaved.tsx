@@ -12,9 +12,16 @@ type CheckpointSavedProps = {
 	currentHash?: string
 	checkpoint?: Record<string, unknown>
 	isLast?: boolean
+	onJumpToPreviousCheckpoint?: () => void
 }
 
-export const CheckpointSaved = ({ checkpoint, currentHash, isLast, ...props }: CheckpointSavedProps) => {
+export const CheckpointSaved = ({
+	checkpoint,
+	currentHash,
+	onJumpToPreviousCheckpoint,
+	isLast,
+	...props
+}: CheckpointSavedProps) => {
 	const { t } = useTranslation()
 	const isCurrent = currentHash === props.commitHash
 	const closeTimer = useRef<number | null>(null)
@@ -62,7 +69,12 @@ export const CheckpointSaved = ({ checkpoint, currentHash, isLast, ...props }: C
 
 			{/* Keep menu visible while hovering, popover is open, or briefly after close to prevent jump */}
 			<div data-testid="checkpoint-menu-container" className={cn("h-4 -mt-2", "block")}>
-				<CheckpointMenu ts={props.ts} commitHash={props.commitHash} checkpoint={metadata} />
+				<CheckpointMenu
+					ts={props.ts}
+					commitHash={props.commitHash}
+					checkpoint={metadata}
+					onJumpToPreviousCheckpoint={onJumpToPreviousCheckpoint}
+				/>
 			</div>
 		</div>
 	)
