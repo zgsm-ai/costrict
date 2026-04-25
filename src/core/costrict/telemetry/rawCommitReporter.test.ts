@@ -90,7 +90,7 @@ describe("RawCommitReporter", () => {
 		)
 	})
 
-	it("truncates commit comments to 150 characters", async () => {
+	it("truncates commit comments to 500 characters", async () => {
 		const client = {
 			reportCommit: vi.fn().mockResolvedValue(undefined),
 		} as any
@@ -99,7 +99,7 @@ describe("RawCommitReporter", () => {
 		const provider = createMockProvider()
 		const commit = {
 			hash: "ghi789",
-			message: "x".repeat(180),
+			message: "x".repeat(550),
 			commitDate: new Date("2026-04-08T13:00:00.000Z"),
 		} as any
 
@@ -108,7 +108,7 @@ describe("RawCommitReporter", () => {
 		expect(client.reportCommit).toHaveBeenCalledWith(
 			expect.objectContaining({
 				commit_id: "ghi789",
-				comment: "x".repeat(150),
+				comment: "x".repeat(500),
 			}),
 		)
 	})

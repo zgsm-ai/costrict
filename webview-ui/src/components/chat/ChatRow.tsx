@@ -27,7 +27,7 @@ import { findMatchingResourceOrTemplate } from "@src/utils/mcp"
 import { vscode } from "@src/utils/vscode"
 import { formatPathTooltip } from "@src/utils/formatPathTooltip"
 // import { getLanguageFromPath } from "@src/utils/getLanguageFromPath"
-import { Button, StandardTooltip } from "@src/components/ui"
+import { StandardTooltip } from "@src/components/ui"
 
 import { ToolUseBlock, ToolUseBlockHeader } from "../common/ToolUseBlock"
 import UpdateTodoListToolBlock from "./UpdateTodoListToolBlock"
@@ -595,19 +595,6 @@ export const ChatRowContent = ({
 		return null
 	}, [message.type, message.ask, message.partial, message.text])
 
-	const handleCopyErrorDetail = useCallback(
-		(message: string) => {
-			vscode.postMessage({
-				type: "copyApiError",
-				values: {
-					message,
-					originModelId,
-					selectedLLM,
-				},
-			})
-		},
-		[originModelId, selectedLLM],
-	)
 
 	if (tool) {
 		const toolIcon = (name: string) => (
@@ -1421,32 +1408,13 @@ export const ChatRowContent = ({
 											? "https://github.com/cline/cline/wiki/TroubleShooting-%E2%80%90-%22PowerShell-is-not-recognized-as-an-internal-or-external-command%22"
 											: undefined
 									}
-									additionalContent={
-										apiConfiguration.apiProvider === "costrict" && (
-											<>
-												<br />
-												<br />
-												<div className="relative inline-flex">
-													<Button
-														size="sm"
-														className="ml-6"
-														onClick={() => handleCopyErrorDetail(message.text || "")}>
-														{t("chat:copy.errorDetail")}
-													</Button>
-													<div
-														className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full cursor-pointer"
-														onClick={() => handleCopyErrorDetail(message.text || "")}></div>
-												</div>
-											</>
-										)
-									}
 									errorDetails={apiReqStreamingFailedMessage}
 								/>
 							) : null}
 						</>
 					)
 				}
-				case "api_req_retry_delayed":
+				case "api_req_retry_delayed": {
 					let body = t(`chat:apiRequest.failed`)
 					let retryInfo, rawError, code, docsURL
 					docsURL = "costrict://settings?provider=claude-code"
@@ -1460,7 +1428,7 @@ export const ChatRowContent = ({
 						return null
 					}
 
-					if (message.text != undefined && message.text !== "" && !isCountdownOnly) {
+					if (!!message.text && !isCountdownOnly) {
 						// Check for Claude Code authentication error first
 						if (message.text.includes("Not authenticated with Claude Code")) {
 							body = t("chat:apiRequest.errorMessage.claudeCodeNotAuthenticated")
@@ -1487,6 +1455,8 @@ export const ChatRowContent = ({
 								}
 							} else if (message.text.indexOf("Connection error") === 0) {
 								body = t("chat:apiRequest.errorMessage.connection")
+							} else if (message.text.includes("RequestID:")) {
+								body = message.text.replace(/<retry_timer>(.*?)<\/retry_timer>/, "")?.trim()
 							} else {
 								// Non-HTTP-status-code error message - store full text as errorDetails
 								body = t("chat:apiRequest.errorMessage.unknown")
@@ -1513,61 +1483,18 @@ export const ChatRowContent = ({
 						)
 					}
 
-					// For countdown-only messages, show a simple countdown display
-					if (isCountdownOnly) {
-						const countdownMatch = message.text?.match(/↻ (\d+)s\.\.\./)
-						const countdownSeconds = countdownMatch ? parseInt(countdownMatch[1], 10) : 0
-						return (
-							<div
-								className="group text-sm transition-opacity opacity-100"
-								style={{
-									...headerStyle,
-									marginBottom: 0,
-									justifyContent: "flex-start",
-								}}>
-								<div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-									{getIconSpan({ iconName: "arrow-swap", color: normalColor })}
-									<span className="text-vscode-descriptionForeground">
-										{t("chat:apiRequest.retrying")} ↻ {countdownSeconds}s...
-									</span>
-								</div>
-							</div>
-						)
-					}
-
 					return (
 						<ErrorRow
 							deleteMessageTs={deleteMessageTs}
 							type="api_req_retry_delayed"
 							code={code}
-							message={apiConfiguration.apiProvider === "costrict" ? message.text || "" : body}
+							message={body}
 							docsURL={docsURL}
 							errorDetails={rawError}
-							additionalContent={
-								!message?.metadata?.isRateLimit &&
-								!message?.metadata?.isRateLimitRetry &&
-								apiConfiguration.apiProvider === "costrict" ? (
-									<>
-										<br />
-										<br />
-										<div className="relative inline-flex">
-											<Button
-												size="sm"
-												className="ml-6"
-												onClick={() => handleCopyErrorDetail(message.text || "")}>
-												{t("chat:copy.errorDetail")}
-											</Button>
-											<div
-												className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full cursor-pointer"
-												onClick={() => handleCopyErrorDetail(message.text || "")}></div>
-										</div>
-									</>
-								) : (
-									retryInfo
-								)
-							}
+							additionalContent={retryInfo}
 						/>
 					)
+				}
 				case "api_req_rate_limit_wait": {
 					const isWaiting = message.partial === true
 

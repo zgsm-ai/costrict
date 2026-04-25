@@ -19,8 +19,8 @@ export class ContextSyncService {
 
 	private constructor() {}
 
-	static getInstance(): ContextSyncService {
-		if (!ContextSyncService.instance) {
+	static getInstance(force = true): ContextSyncService | null {
+		if (!ContextSyncService.instance && force) {
 			ContextSyncService.instance = new ContextSyncService()
 		}
 		return ContextSyncService.instance
@@ -102,6 +102,7 @@ export class ContextSyncService {
 		}
 
 		if (this._paused) {
+			console.log(`[ContextSync] Paused, not syncing context`)
 			return
 		}
 
@@ -172,6 +173,6 @@ export class ContextSyncService {
 	}
 }
 
-export function getContextSyncService(): ContextSyncService {
-	return ContextSyncService.getInstance()
+export function getContextSyncService(force = true): ContextSyncService | null {
+	return ContextSyncService.getInstance(force)
 }

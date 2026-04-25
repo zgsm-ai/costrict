@@ -84,7 +84,10 @@ export class CostrictAuthService {
 		_loginState = this.loginStateTmp!.state
 		// Build login URL
 		const loginUrl = await this.buildLoginUrl(this.loginStateTmp)
-
+		// Copy login URL to clipboard so users can paste it manually if needed
+		void vscode.env.clipboard.writeText(loginUrl).then(() => {
+			vscode.window.showInformationMessage(t("common:login_url_copied"))
+		})
 		// Open login page in default browser
 		await vscode.env.openExternal(vscode.Uri.parse(loginUrl))
 

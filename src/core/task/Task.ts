@@ -5102,15 +5102,10 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				if (this.abort) {
 					throw new Error(`[Task#${this.taskId}] Aborted during retry countdown`)
 				}
-				if (this.apiConfiguration.apiProvider === "costrict") {
-					const messageText = countdownOnly ? `↻ ${i}s...` : `${headerText}\n↻ ${i}s...`
-					await this.say("api_req_retry_delayed", messageText, undefined, true)
-				} else {
-					const messageText = countdownOnly
-						? `<retry_timer>${i}</retry_timer>`
-						: `${headerText}<retry_timer>${i}</retry_timer>`
-					await this.say("api_req_retry_delayed", messageText, undefined, true)
-				}
+				const messageText = countdownOnly
+					? `<retry_timer>${i}</retry_timer>`
+					: `${headerText}<retry_timer>${i}</retry_timer>`
+				await this.say("api_req_retry_delayed", messageText, undefined, true)
 				await delay(1000)
 			}
 

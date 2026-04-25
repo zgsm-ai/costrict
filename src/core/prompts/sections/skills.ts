@@ -48,11 +48,11 @@ ${skillsXml}
 
 <skill_check>
 Before responding, evaluate the user request against available skill descriptions:
-- If a skill clearly applies: select the most specific one, load it via the skill tool, and follow its instructions.
+- If a skill is potentially relevant: select the most specific one, load it via the skill tool, and follow its instructions.
 - If no skill applies: proceed normally without loading any skill.
 
 Guidelines:
-- Load skills only when selected, not preemptively.
+- Skills provide structured expert knowledge and proven workflows that go beyond a mode's role definition — loading a relevant skill is strongly encouraged.
 - Do not reload a skill already present in conversation.
 - Files linked from skills must be explicitly read when needed.
 - Skill list is pre-filtered for current mode: "${currentMode}".

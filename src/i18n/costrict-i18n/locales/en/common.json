@@ -32,6 +32,7 @@
 			"enable_disable_function_quick_menu": "Enable/Disable \"Quick Menu\" and \"Auto Completion\""
 		}
 	},
+	"login_url_copied": "Login URL copied to clipboard",
 	"button": {
 		"enable_function_quick_menu": "Enable Quick Menu",
 		"disable": "Disable ",

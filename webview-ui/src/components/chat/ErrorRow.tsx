@@ -226,13 +226,9 @@ export const ErrorRow = memo(
 					<div
 						className="font-sm text-vscode-editor-foreground flex items-center justify-between cursor-pointer"
 						onClick={handleToggleExpand}>
-						<div
-							className={`flex items-center gap-2 flex-grow ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "opacity-80"}`}>
-							<MessageCircleWarning
-								className={`w-4 ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "opacity-80"}`}
-							/>
-							<span
-								className={`font-bold grow cursor-pointer ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "text-vscode-descriptionForeground"}`}>
+						<div className="flex items-center gap-2 flex-grow text-vscode-errorForeground">
+							<MessageCircleWarning className="w-4 text-vscode-errorForeground" />
+							<span className="font-bold grow cursor-pointer text-vscode-errorForeground">
 								{errorTitle}
 							</span>{" "}
 						</div>
@@ -263,19 +259,12 @@ export const ErrorRow = memo(
 				<div className="group pr-2">
 					{errorTitle && (
 						<div className={headerClassName || "flex items-center justify-between gap-2 break-words"}>
-							<MessageCircleWarning
-								className={`w-4 ${apiConfiguration.apiProvider !== "costrict" ? "text-vscode-errorForeground" : "opacity-80"}`}
-							/>
-							<span
-								className={
-									apiConfiguration.apiProvider !== "costrict"
-										? "font-bold grow cursor-default"
-										: "opacity-80 font-bold grow cursor-default"
-								}>
+							<MessageCircleWarning className="w-4 text-vscode-errorForeground" />
+							<span className="font-bold grow cursor-default text-vscode-errorForeground">
 								{errorTitle}
 							</span>
 							<div className="flex items-center gap-2">
-								{apiConfiguration.apiProvider !== "costrict" && docsURL && (
+								{docsURL && (
 									<a
 										href={docsURL}
 										className="text-sm flex items-center gap-1 transition-opacity opacity-0 group-hover:opacity-100"
@@ -325,46 +314,31 @@ export const ErrorRow = memo(
 							)}
 						</div>
 					)}
-					<div
-						className={
-							apiConfiguration.apiProvider !== "costrict"
-								? "ml-2 pl-4 mt-1 pt-0.5 border-l border-vscode-errorForeground/50"
-								: ""
+					<div className="ml-2 pl-4 mt-1 pt-0.5 border-l border-vscode-errorForeground/50">
+						<p className={
+							messageClassName ||
+							"cursor-default my-0 font-light whitespace-pre-wrap break-words text-vscode-descriptionForeground"
 						}>
-						<p
-							className={
-								messageClassName ||
-								(apiConfiguration.apiProvider !== "costrict"
-									? "cursor-default my-0 font-light whitespace-pre-wrap break-words text-vscode-descriptionForeground"
-									: "ml-6 my-0 whitespace-pre-wrap break-words opacity-80")
+							{apiConfiguration.apiProvider !== "costrict" ? <span>{message}</span>:
+								<span dangerouslySetInnerHTML={{
+									__html: message,
+								}}></span>
 							}
-							dangerouslySetInnerHTML={
-								apiConfiguration.apiProvider !== "costrict"
-									? undefined
-									: {
-											__html: message,
-										}
-							}>
-							{apiConfiguration.apiProvider !== "costrict" ? (
-								<>
-									{message}
-									{formattedErrorDetails && (
-										<button
-											onClick={() => setIsDetailsDialogOpen(true)}
-											className="cursor-pointer ml-1 text-vscode-descriptionForeground/50 hover:text-vscode-descriptionForeground hover:underline font-normal"
-											aria-label={t("chat:errorDetails.title")}>
-											{t("chat:errorDetails.link")}
-										</button>
-									)}
-								</>
-							) : null}
+							{formattedErrorDetails && (
+								<button
+									onClick={() => setIsDetailsDialogOpen(true)}
+									className="cursor-pointer ml-1 text-vscode-descriptionForeground/50 hover:text-vscode-descriptionForeground hover:underline font-normal"
+									aria-label={t("chat:errorDetails.title")}>
+									{t("chat:errorDetails.link")}
+								</button>
+							)}
 						</p>
 						{additionalContent}
 					</div>
 				</div>
 
 				{/* Error Details Dialog */}
-				{apiConfiguration.apiProvider !== "costrict" && formattedErrorDetails && (
+					{formattedErrorDetails && (
 					<Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
 						<DialogContent className="max-w-2xl">
 							<DialogHeader>

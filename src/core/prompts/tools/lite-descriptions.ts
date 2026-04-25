@@ -77,8 +77,8 @@ getLiteUpdateTodoListDescription.toolname = "update_todo_list"
 
 export function getLiteSkillDescription(): string {
 	return `## skill
-Load and execute a skill by name for specialized instructions.
-Params: skill (REQUIRED), args (optional)`
+Load and execute a skill by name. Skills provide structured expert knowledge, proven workflows, and specialized domain methodologies to tackle complex tasks more effectively.
+Params: skill (REQUIRED), args (REQUIRED, nullable)`
 }
 getLiteSkillDescription.toolname = "skill"
 
