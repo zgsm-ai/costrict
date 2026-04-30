@@ -16,7 +16,7 @@ import type { ModelInfo } from "../model.js"
 
 export type OpenAiCodexModelId = keyof typeof openAiCodexModels
 
-export const openAiCodexDefaultModelId: OpenAiCodexModelId = "gpt-5.3-codex"
+export const openAiCodexDefaultModelId: OpenAiCodexModelId = "gpt-5.5"
 
 /**
  * Models available through the Codex OAuth flow.
@@ -24,6 +24,21 @@ export const openAiCodexDefaultModelId: OpenAiCodexModelId = "gpt-5.3-codex"
  * Costs are 0 as they are covered by the subscription.
  */
 export const openAiCodexModels = {
+	"gpt-5.5": {
+		maxTokens: 128000,
+		contextWindow: 1000000,
+		includedTools: ["apply_patch"],
+		excludedTools: ["apply_diff", "write_to_file"],
+		supportsImages: true,
+		supportsPromptCache: true,
+		supportsReasoningEffort: ["low", "medium", "high", "xhigh"],
+		reasoningEffort: "medium",
+		// Subscription-based: no per-token costs
+		inputPrice: 0,
+		outputPrice: 0,
+		supportsTemperature: false,
+		description: "GPT-5.5: OpenAI's latest frontier model for agentic coding via ChatGPT subscription",
+	},
 	"gpt-5.1-codex-max": {
 		maxTokens: 128000,
 		contextWindow: 400000,
@@ -171,21 +186,6 @@ export const openAiCodexModels = {
 		outputPrice: 0,
 		supportsTemperature: false,
 		description: "GPT-5.1 Codex Mini: Faster version for coding tasks via ChatGPT subscription",
-	},
-	"gpt-5.5": {
-		maxTokens: 128000,
-		contextWindow: 1_050_000,
-		includedTools: ["apply_patch"],
-		excludedTools: ["apply_diff", "write_to_file"],
-		supportsImages: true,
-		supportsPromptCache: true,
-		supportsReasoningEffort: ["none", "low", "medium", "high", "xhigh"],
-		reasoningEffort: "none",
-		inputPrice: 0,
-		outputPrice: 0,
-		supportsVerbosity: true,
-		supportsTemperature: false,
-		description: "GPT-5.5: Most capable model via ChatGPT subscription",
 	},
 	"gpt-5.4": {
 		maxTokens: 128000,

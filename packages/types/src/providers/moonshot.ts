@@ -66,6 +66,21 @@ export const moonshotModels = {
 		description:
 			"Kimi K2.5 is the latest generation of Moonshot AI's Kimi series, featuring improved reasoning capabilities and enhanced performance across diverse tasks.",
 	},
+	"kimi-k2.6": {
+		maxTokens: 16_384,
+		contextWindow: 262_144,
+		supportsImages: true,
+		supportsPromptCache: true,
+		supportsReasoningBinary: true,
+		preserveReasoning: true,
+		inputPrice: 0.95, // $0.95 per million tokens (cache miss)
+		outputPrice: 4.0, // $4.00 per million tokens
+		cacheReadsPrice: 0.16, // $0.16 per million tokens (cache hit)
+		supportsTemperature: false,
+		defaultTemperature: 0.6,
+		description:
+			"Kimi K2.6 is Kimi's most intelligent model to date, featuring stronger and more stable long-horizon code writing capabilities and significantly enhanced autonomous execution capabilities.",
+	},
 } as const satisfies Record<string, ModelInfo>
 
 export const MOONSHOT_DEFAULT_TEMPERATURE = 0.6

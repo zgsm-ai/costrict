@@ -5,6 +5,7 @@ export type FireworksModelId =
 	| "accounts/fireworks/models/kimi-k2-instruct-0905"
 	| "accounts/fireworks/models/kimi-k2-thinking"
 	| "accounts/fireworks/models/kimi-k2p5"
+	| "accounts/fireworks/models/kimi-k2p6"
 	| "accounts/fireworks/models/minimax-m2"
 	| "accounts/fireworks/models/minimax-m2p1"
 	| "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507"
@@ -46,6 +47,15 @@ export const fireworksModels = {
 		outputPrice: 2.5,
 		description:
 			"Kimi K2 is a state-of-the-art mixture-of-experts (MoE) language model with 32 billion activated parameters and 1 trillion total parameters. Trained with the Muon optimizer, Kimi K2 achieves exceptional performance across frontier knowledge, reasoning, and coding tasks while being meticulously optimized for agentic capabilities.",
+	},
+	"accounts/fireworks/models/kimi-k2p6": {
+		maxTokens: 256000,
+		contextWindow: 262144,
+		supportsImages: true,
+		supportsPromptCache: true,
+		inputPrice: 0.95,
+		outputPrice: 4.0,
+		cacheReadsPrice: 0.16,
 	},
 	"accounts/fireworks/models/kimi-k2-thinking": {
 		maxTokens: 16000,
