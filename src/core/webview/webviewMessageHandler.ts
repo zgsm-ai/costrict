@@ -846,6 +846,14 @@ export const webviewMessageHandler = async (
 						changeLanguage(newValue as Language)
 						// Initialize subtask files for the new language.
 						await ensureProjectWikiSubtasksExists(newValue as string)
+						// Reinstall bundled skills with the new locale
+						void installGitHubSkills(provider.context, newValue as string)
+							.then(() => provider.log("[BuiltinSkills] Bundled skills reinstalled"))
+							.catch((error) =>
+								provider.log(
+									`[BuiltinSkills] Failed to reinstall: ${error instanceof Error ? error.message : String(error)}`,
+								),
+							)
 					} else if (key === "allowedCommands") {
 						const commands = value ?? []
 

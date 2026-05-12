@@ -409,17 +409,13 @@ export class CodeReviewService {
 					await resetMode()
 					options?.onTaskComplete?.()
 
-					// For security-review mode, switch to code review page if report was generated
-					if (taskMode === "security-review") {
-						// Check if we have a valid report with issues
-						const hasValidReport = this.currentTask?.taskId && this.getAllCachedIssues().length > 0
-						if (hasValidReport) {
-							provider.postMessageToWebview({
-								type: "action",
-								action: "codeReviewButtonClicked",
-							})
-						}
-						// Otherwise stay on chat/agent page
+					// Switch to code review page if report was generated
+					const hasValidReport = this.currentTask?.taskId && this.getAllCachedIssues().length > 0
+					if (hasValidReport) {
+						provider.postMessageToWebview({
+							type: "action",
+							action: "codeReviewButtonClicked",
+						})
 					}
 				}, 500)
 			}
@@ -558,19 +554,12 @@ export class CodeReviewService {
 
 		bindTaskInstance(task)
 
-		// For security-review mode, switch to chat tab instead of code review page
-		if (taskMode === "security-review") {
-			provider.postMessageToWebview({
-				type: "action",
-				action: "switchTab",
-				tab: "chat",
-			})
-		} else {
-			provider.postMessageToWebview({
-				type: "action",
-				action: "codeReviewButtonClicked",
-			})
-		}
+		// Switch to chat tab for all review tasks
+		provider.postMessageToWebview({
+			type: "action",
+			action: "switchTab",
+			tab: "chat",
+		})
 	}
 	// ===== Task Management Methods =====
 

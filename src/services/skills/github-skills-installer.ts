@@ -51,6 +51,10 @@ interface BuiltinSkillConfig {
  */
 const BUILTIN_SKILLS: readonly BuiltinSkillConfig[] = [
 	{
+		name: "review",
+		mode: "review", // Install to skills-review/ directory
+	},
+	{
 		name: "security-review",
 		mode: "security-review", // Install to skills-security-review/ directory
 	},
@@ -137,7 +141,8 @@ async function getInstalledVersion(skillDir: string): Promise<string> {
 }
 
 /**
- * Copy skill from bundled directory to user directory
+ * Copy skill from bundled directory to user directory using atomic swap.
+ * Writes to a temp directory first, then renames to avoid partial states.
  */
 async function copyBundledSkill(
 	skillName: string,
@@ -151,31 +156,22 @@ async function copyBundledSkill(
 		const skillSourceDir = path.join(bundledPath, locale, skillName)
 		await fs.access(skillSourceDir)
 
-		// Create user directory
 		await fs.mkdir(userPath, { recursive: true })
 
-		// Copy skill directory
 		const skillTargetDir = path.join(userPath, skillName)
+		const tempDir = path.join(userPath, `.tmp-${skillName}-${Date.now()}`)
 
-		// Remove old version if exists
-		if (
-			await fs
-				.access(skillTargetDir)
-				.then(() => true)
-				.catch(() => false)
-		) {
-			await fs.rm(skillTargetDir, { recursive: true, force: true })
-		}
+		// Copy to temp directory first
+		await fs.mkdir(tempDir, { recursive: true })
+		await fs.cp(skillSourceDir, tempDir, { recursive: true })
 
-		// Create target directory
-		await fs.mkdir(skillTargetDir, { recursive: true })
-
-		// Copy all files recursively without modification
-		await fs.cp(skillSourceDir, skillTargetDir, { recursive: true })
-
-		// Write .version file with commit SHA and locale
-		const versionFilePath = path.join(skillTargetDir, ".version")
+		// Write .version file into temp directory
+		const versionFilePath = path.join(tempDir, ".version")
 		await fs.writeFile(versionFilePath, `${bundledCommitSha}:${locale}`, "utf-8")
+
+		// Remove old version and rename temp to target (atomic on same filesystem)
+		await fs.rm(skillTargetDir, { recursive: true, force: true })
+		await fs.rename(tempDir, skillTargetDir)
 
 		return true
 	} catch {
