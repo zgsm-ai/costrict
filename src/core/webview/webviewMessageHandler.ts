@@ -777,13 +777,15 @@ export const webviewMessageHandler = async (
 					void ensureProjectWikiSubtasksExists(state.language ?? "en")
 				})
 
-				void installGitHubSkills(provider.context)
-					.then(() => provider.log("[BuiltinSkills] Bundled skills installed"))
-					.catch((error) =>
-						provider.log(
-							`[BuiltinSkills] Failed to install: ${error instanceof Error ? error.message : String(error)}`,
-						),
-					)
+				void provider.getState().then((state) => {
+					void installGitHubSkills(provider.context, state.language ?? "zh-CN")
+						.then(() => provider.log("[BuiltinSkills] Bundled skills installed"))
+						.catch((error) =>
+							provider.log(
+								`[BuiltinSkills] Failed to install: ${error instanceof Error ? error.message : String(error)}`,
+							),
+						)
+				})
 				// Perform auto cleanup shortly after startup so initial webview rendering is not blocked.
 				void provider?.performAutoCleanup?.().then(() => {
 					provider.log("Auto cleanup check completed on startup")
