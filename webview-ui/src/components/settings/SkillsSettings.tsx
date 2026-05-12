@@ -227,7 +227,7 @@ export const SkillsSettings: React.FC = () => {
 							components={{
 								DocsLink: (
 									<a
-										href="https://docs.costrict.ai/product-features/Skills"
+										href="https://docs.costrict.ai/product-features/skills"
 										target="_blank"
 										rel="noopener noreferrer"
 										className="text-vscode-textLink-foreground hover:underline">
