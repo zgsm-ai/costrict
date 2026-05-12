@@ -32,6 +32,7 @@
 			"enable_disable_function_quick_menu": "啟用/禁用\"快捷選單\"和\"補全\""
 		}
 	},
+	"login_url_copied": "登入連結已複製到剪貼簿",
 	"button": {
 		"enable_function_quick_menu": "啟用快捷選單",
 		"disable": "禁用",

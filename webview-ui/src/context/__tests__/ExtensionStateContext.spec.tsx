@@ -447,5 +447,18 @@ describe("mergeExtensionState", () => {
 			expect(result.clineMessages).toBe(newMessages)
 			expect(result.clineMessagesSeq).toBe(1)
 		})
+
+		it("should overwrite isStreaming when new state provides a concrete boolean value", () => {
+			const prevState: ExtensionState = {
+				...baseState,
+				isStreaming: true,
+			}
+
+			const result = mergeExtensionState(prevState, {
+				isStreaming: false,
+			})
+
+			expect(result.isStreaming).toBe(false)
+		})
 	})
 })

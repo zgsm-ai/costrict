@@ -13,4 +13,5 @@ export const Package = {
 	version: process.env.COSTRICT_PKG_VERSION || version,
 	outputChannel: process.env.COSTRICT_PKG_OUTPUT_CHANNEL || "CoStrict",
 	sha: process.env.COSTRICT_PKG_SHA,
+	buildTime: process.env.COSTRICT_PKG_BUILD_TIME,
 } as const

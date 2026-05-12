@@ -807,6 +807,21 @@ describe("ClineProvider", () => {
 		expect(state.messageQueue).toBeUndefined()
 	})
 
+	test("getStateToPostToWebview returns isStreaming from current task", async () => {
+		const mockCline = new Task(defaultTaskOptions)
+		Object.defineProperty(mockCline, "taskId", { value: "streaming-task", writable: true })
+		;(mockCline as any).isStreaming = true
+		await provider.addClineToStack(mockCline)
+
+		const state = await provider.getStateToPostToWebview()
+		expect(state.isStreaming).toBe(true)
+
+		// Simulate clearTask removing the current task
+		await provider.removeClineFromStack()
+		const stateAfterClear = await provider.getStateToPostToWebview()
+		expect(stateAfterClear.isStreaming).toBe(false)
+	})
+
 	test("postStateToWebviewWithoutClineMessages still includes currentTaskTodos for todo sync", async () => {
 		await provider.resolveWebviewView(mockWebviewView)
 		vi.spyOn(provider as any, "checkMdmCompliance").mockReturnValue(true)

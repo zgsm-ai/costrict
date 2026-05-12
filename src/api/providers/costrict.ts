@@ -40,6 +40,7 @@ import { ChatCompletionChunk } from "openai/resources/index.mjs"
 import { convertToZAiFormat } from "../transform/zai-format"
 import { isDebug } from "../../utils/getDebugState"
 import { liteToolContractPrompt } from "../../core/prompts/tools/lite-descriptions"
+import { isJetbrainsPlatform } from "../../utils/platform"
 
 const autoModeModelId = "Auto"
 const isDev = process.env.NODE_ENV === "development"
@@ -97,7 +98,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				baseURL: this.baseURL,
 				apiKey,
 				timeout,
-				maxRetries: 1,
+				maxRetries: 0,
 				defaultHeaders: COSTRICT_DEFAULT_HEADERS,
 				defaultQuery: { "api-version": this.options.azureApiVersion || "2024-05-01-preview" },
 			})
@@ -108,7 +109,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				baseURL: this.baseURL,
 				apiKey,
 				timeout,
-				maxRetries: 1,
+				maxRetries: 0,
 				apiVersion: this.options.azureApiVersion || azureOpenAiDefaultApiVersion,
 				defaultHeaders: COSTRICT_DEFAULT_HEADERS,
 			})
@@ -117,7 +118,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				baseURL: this.baseURL,
 				apiKey,
 				timeout,
-				maxRetries: 1,
+				maxRetries: 0,
 				defaultHeaders: COSTRICT_DEFAULT_HEADERS,
 			})
 		}
@@ -151,7 +152,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 
 		// Cache boolean calculation results
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
-		const isDeepseekReasoner = modelId.includes("deepseek-reasoner")
+		const isDeepseekReasoner = modelId.includes("deepseek-reasoner") || modelId.includes("deepseek-v4")
 		const isMiniMax = modelId.toLowerCase().includes("minimax")
 		const deepseekReasoner = isDeepseekReasoner || enabledR1Format
 		const isGrokXAI = this._isGrokXAI(this.baseURL)
@@ -364,6 +365,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 			"Accept-Language": metadata?.language || "en",
 			...COSTRICT_DEFAULT_HEADERS,
 			...(this.options.useCostrictCustomConfig && isDebug() ? (this.options.openAiHeaders ?? {}) : {}),
+			"User-Agent": `RooCode/3.52.1 ${isJetbrainsPlatform() ? "plugin_intellij" : "plugin_vscode"}/${Package.version}`,
 			"x-quota-identity": chatType || "system",
 			"X-Request-ID": requestId,
 			"x-user-id": metadata?.userId || "",
@@ -374,6 +376,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 			"x-costrict-idea": getEditorType(),
 			"zgsm-project-path": encodeURI(workspacePath),
 			"zgsm-prompt-tags": metadata?.promptTags || "",
+			"agent-type": metadata?.mode || "",
 			"x-caller": ["review", "security-review"].includes(metadata?.mode || "") ? "review-checker" : "chat",
 		}
 	}
@@ -406,22 +409,20 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 						],
 					}
 				: { role: "system" as const, content: systemPrompt }
-			if (_mid?.includes("kimi") || _mid?.includes("glm") || isMiniMax || _mid?.includes("claude")) {
-				convertedMessages = [
-					{ role: "system", content: systemPrompt },
-					...convertToZAiFormat(messages, { mergeToolResultText: true }),
-				]
-			} else {
-				if (_mid?.includes("qwen-2.5-vl")) {
-					if (Array.isArray(systemMessage.content)) {
-						systemMessage.content[0].text = systemMessage.content[0].text + "\n" + liteToolContractPrompt()
-					} else {
-						systemMessage.content = systemMessage.content + "\n" + liteToolContractPrompt()
-					}
+			if (_mid?.includes("qwen-2.5-vl")) {
+				if (Array.isArray(systemMessage.content)) {
+					systemMessage.content[0].text = systemMessage.content[0].text + "\n" + liteToolContractPrompt()
+				} else {
+					systemMessage.content = systemMessage.content + "\n" + liteToolContractPrompt()
 				}
 				convertedMessages = [
 					systemMessage,
 					...convertToOpenAiMessages(messages, { mergeToolResultText: isNative }),
+				]
+			} else {
+				convertedMessages = [
+					{ role: "system", content: systemPrompt },
+					...convertToZAiFormat(messages, { mergeToolResultText: true }),
 				]
 			}
 		}
@@ -942,9 +943,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		}
 		const _mid = id.toLowerCase()
 		if (
-			(_mid.toLowerCase().includes("kimi") ||
-				_mid.toLowerCase().includes("minimax") ||
-				_mid.toLowerCase().includes("glm")) &&
+			(_mid?.includes("auto") || _mid?.includes("kimi") || _mid?.includes("minimax") || _mid?.includes("glm")) &&
 			info.preserveReasoning == null
 		) {
 			info.preserveReasoning = true

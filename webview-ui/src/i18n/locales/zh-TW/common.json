@@ -154,7 +154,7 @@
 	},
 	"errors": {
 		"wait_checkpoint_long_time": "初始化檢查點已等待 {{timeout}} 秒。若不需要檢查點功能，請在 <settingsLink>[檢查點設定]</settingsLink> 中關閉。",
-		"init_checkpoint_fail_long_time": "檢查點初始化已超過 {{timeout}} 秒，因此此工作已停用檢查點。可關閉檢查點或在 <settingsLink>[檢查點設定]</settingsLink> 中延長等待時間。",
+		"init_checkpoint_fail_long_time": "檢查點初始化已超過 {{timeout}} 秒，因此此工作已停用檢查點。可能是檔案數量過多或體積過大導致的。建議在 .gitignore 或 .rooignore 中新增過濾規則以加快初始化，或前往 <settingsLink>[檢查點設定]</settingsLink> 關閉檢查點/延長檢查點等待時間。",
 		"attempt_completion_tool_failed": "無法執行 attempt_completion，因為本輪中先前的工具呼叫失敗了。請在嘗試完成前解決工具失敗問題。"
 	},
 	"tasks": {

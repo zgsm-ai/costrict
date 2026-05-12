@@ -22,6 +22,7 @@ vi.mock("@roo/package", () => ({
 	Package: {
 		version: "1.0.0",
 		sha: "abc12345",
+		buildTime: "2026-01-15T10:30:00.000Z",
 	},
 }))
 

@@ -34,20 +34,34 @@ type AboutProps = HTMLAttributes<HTMLDivElement> & {
 	setDebug?: (debug: boolean) => void
 }
 
+function formatBuildTime(isoString: string | undefined): string | undefined {
+	if (!isoString) return undefined
+	const date = new Date(isoString)
+	const year = date.getFullYear()
+	const month = String(date.getMonth() + 1).padStart(2, "0")
+	const day = String(date.getDate()).padStart(2, "0")
+	const hours = String(date.getHours()).padStart(2, "0")
+	const minutes = String(date.getMinutes()).padStart(2, "0")
+	const seconds = String(date.getSeconds()).padStart(2, "0")
+	return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`
+}
+
 export const About = ({ telemetrySetting, setTelemetrySetting, debug, setDebug, className, ...props }: AboutProps) => {
 	const { t } = useAppTranslation()
 	const [imagesBaseUri] = useState(() => {
 		const w = window as any
 		return w.COSTRICT_BASE_URI || ""
 	})
+
+	const buildTime = formatBuildTime(Package.buildTime)
+	const versionDescription = Package.sha
+		? `Version: ${Package.version} (${Package.sha.slice(0, 8)})`
+		: `Version: ${Package.version}`
+	const description = buildTime ? `${versionDescription} · Build: ${buildTime}` : versionDescription
+
 	return (
 		<div className={cn("flex flex-col gap-2", className)} {...props}>
-			<SectionHeader
-				description={
-					Package.sha
-						? `Version: ${Package.version} (${Package.sha.slice(0, 8)})`
-						: `Version: ${Package.version}`
-				}>
+			<SectionHeader description={description}>
 				<div className="flex items-center gap-2">
 					<Info className="w-4" />
 					<div>{t("settings:sections.about")}</div>

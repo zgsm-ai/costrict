@@ -58,6 +58,8 @@ export default defineConfig(({ mode }) => {
 	const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "src", "package.json"), "utf8"))
 	const gitSha = getGitSha()
 
+	const buildTime = new Date().toISOString()
+
 	const define: Record<string, any> = {
 		"process.platform": JSON.stringify(process.platform),
 		"process.env.VSCODE_TEXTMATE_DEBUG": JSON.stringify(process.env.VSCODE_TEXTMATE_DEBUG),
@@ -67,6 +69,7 @@ export default defineConfig(({ mode }) => {
 		"process.env.COSTRICT_PUBLIC_KEY": JSON.stringify(
 			process.env.COSTRICT_PUBLIC_KEY || process.env.ZGSM_PUBLIC_KEY || "",
 		),
+		"process.env.COSTRICT_PKG_BUILD_TIME": JSON.stringify(buildTime),
 		...(gitSha ? { "process.env.COSTRICT_PKG_SHA": JSON.stringify(gitSha) } : {}),
 	}
 

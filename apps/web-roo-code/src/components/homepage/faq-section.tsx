@@ -2,9 +2,8 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Link } from "lucide-react"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
 
 interface FAQItem {
 	question: string
@@ -123,7 +122,7 @@ const faqs: FAQItem[] = [
 				approval. And because CoStrict is fully open-source, it&apos;s auditable—you can review exactly how it
 				works before deploying it.{" "}
 				<a
-					href="https://roocode.com/enterprise"
+					href="https://docs.roocode.com"
 					target="_blank"
 					rel="noopener noreferrer"
 					className="text-primary underline-offset-4 hover:underline">

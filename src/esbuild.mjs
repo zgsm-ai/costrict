@@ -139,6 +139,8 @@ async function main() {
 	const minify = production
 	const sourcemap = !production // Always generate source maps for error handling.
 
+	const buildTime = new Date().toISOString()
+
 	/**
 	 * @type {import('esbuild').BuildOptions}
 	 */
@@ -153,6 +155,7 @@ async function main() {
 		define: {
 			"process.env.NODE_ENV": production ? '"production"' : '"development"',
 			"process.env.COSTRICT_PUBLIC_KEY": JSON.stringify(process.env.COSTRICT_PUBLIC_KEY || process.env.ZGSM_PUBLIC_KEY || ""),
+			"process.env.COSTRICT_PKG_BUILD_TIME": JSON.stringify(buildTime),
 		},
 		banner: {
 			js: networkInterfacesCompatible,

@@ -22,6 +22,8 @@ async function main() {
 	const gitSha = getGitSha()
 	console.log(`[${name}] gitSha: ${gitSha}`)
 
+	const buildTime = new Date().toISOString()
+
 	/**
 	 * @type {import('esbuild').BuildOptions}
 	 */
@@ -39,6 +41,7 @@ async function main() {
 			"process.env.COSTRICT_PKG_NAME": '"roo-code-nightly"',
 			"process.env.COSTRICT_PKG_VERSION": `"${overrideJson.version}"`,
 			"process.env.COSTRICT_PKG_OUTPUT_CHANNEL": '"Roo-Code-Nightly"',
+			"process.env.COSTRICT_PKG_BUILD_TIME": `"${buildTime}"`,
 			...(gitSha ? { "process.env.COSTRICT_PKG_SHA": `"${gitSha}"` } : {}),
 		},
 		banner: {

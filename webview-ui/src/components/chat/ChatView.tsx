@@ -18,6 +18,7 @@ import type {
 	ClineAsk,
 	ClineSayTool,
 	ClineMessage,
+	ClineApiReqInfo,
 	ExtensionMessage,
 	AudioType,
 	MultipleChoiceResponse,
@@ -26,6 +27,7 @@ import type {
 import { isRetiredProvider } from "@roo-code/types"
 
 import { findLast } from "@roo/array"
+import { safeJsonParse } from "@roo/core"
 import { SuggestionItem } from "@roo-code/types"
 import { combineApiRequests } from "@roo/combineApiRequests"
 import { combineCommandSequences } from "@roo/combineCommandSequences"
@@ -1141,6 +1143,20 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				return false
 			}
 
+			// Hide stale failed api_req_started messages when a newer request supersedes them
+			if (message.say === "api_req_started") {
+				const info = safeJsonParse<ClineApiReqInfo>(message.text)
+				if (info && (info.streamingFailedMessage || info.cancelReason)) {
+					const currentIndex = modifiedMessages.findIndex((m) => m.ts === message.ts)
+					const hasLaterApiReq = modifiedMessages
+						.slice(currentIndex + 1)
+						.some((m) => m.say === "api_req_started")
+					if (hasLaterApiReq) {
+						return false
+					}
+				}
+			}
+
 			// Filter out checkpoint_saved messages that should be suppressed
 			if (message.say === "checkpoint_saved") {
 				// Check if this checkpoint has the suppressMessage flag set
@@ -1174,6 +1190,13 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				if (message.say && alwaysHiddenOnceProcessedSay.includes(message.say)) return false
 				if (message.say === "text" && (message.text ?? "") === "" && (message.images?.length ?? 0) === 0) {
 					return false
+				}
+				// 新增：api_req_retry_delayed / api_req_rate_limit_wait 只保留最后一条
+				if (message.say === "api_req_retry_delayed" || message.say === "api_req_rate_limit_wait") {
+					const lastRetryOrRateLimit = modifiedMessages.filter(m =>
+						m.say === "api_req_retry_delayed" || m.say === "api_req_rate_limit_wait"
+					).at(-1)
+					return message === lastRetryOrRateLimit
 				}
 				return true
 			}
