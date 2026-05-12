@@ -7,6 +7,8 @@ import { getAssistantUIConfig, type AssistantUIConfig } from "./config"
 import { getAssistantUIStaticHtml, getAssistantUIIframeHtml, getAssistantUILoadingHtml } from "./html"
 import { CostrictAuthService } from "../../costrict/auth"
 import { CostrictAuthConfig } from "../../costrict/auth/authConfig"
+import type { AssistantUIContextMessage } from "./types"
+import { setActiveCloudProvider, onCloudUiReady, setCloudUnavailable } from "./contextBridge"
 
 export function getAssistantUIWorkspaceDirectory() {
 	return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
@@ -31,13 +33,56 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 		context.subscriptions.push(this.csCloudService)
 	}
 
+	/**
+	 * 向 Cloud UI webview 发送 context 消息。
+	 * 不直接暴露 private view 成员。
+	 */
+	public postContextMessage(message: AssistantUIContextMessage): Thenable<boolean> | undefined {
+		return this.view?.webview.postMessage(message)
+	}
+
 	async resolveWebviewView(webviewView: vscode.WebviewView) {
 		this.view = webviewView
+
+		// 注册为 active Cloud provider，获取当前 generation
+		const cloudGen = setActiveCloudProvider(this)
 
 		webviewView.webview.options = {
 			enableScripts: true,
 			localResourceRoots: [this.context.extensionUri],
 		}
+
+		// Handle dispose — 必须在所有 early return 之前注册
+		webviewView.onDidDispose(
+			() => {
+				this.view = undefined
+				setActiveCloudProvider(undefined)
+				this.dispose()
+			},
+			null,
+			this.disposables,
+		)
+
+		// Handle VS Code theme changes
+		vscode.window.onDidChangeActiveColorTheme(
+			(e) => {
+				const theme = e.kind === 1 || e.kind === 4 ? "light" : "dark"
+				webviewView.webview.postMessage({ type: "theme", theme })
+			},
+			null,
+			this.disposables,
+		)
+
+		// Handle visibility changes
+		webviewView.onDidChangeVisibility(
+			() => {
+				if (webviewView.visible) {
+					// Optional: refresh cs-cloud health or re-fetch state
+				}
+			},
+			null,
+			this.disposables,
+		)
 
 		// Handle messages from webview (e.g. openExternal from iframe)
 		webviewView.webview.onDidReceiveMessage(
@@ -49,6 +94,10 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 				token?: string
 				command?: string
 			}) => {
+				if (message.type === "ASSISTANT_UI_READY") {
+					onCloudUiReady(cloudGen)
+					return
+				}
 				if (message.type === "openExternal" && message.url) {
 					vscode.env.openExternal(vscode.Uri.parse(message.url))
 				}
@@ -67,7 +116,6 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					await this.loadContent(webviewView)
 				}
 				if (message.type === "fetchQuota" && message.baseUrl && message.token) {
-					// console.log("[sidebarProvider] received fetchQuota, proxying to", message.baseUrl)
 					try {
 						const response = await fetch(`${message.baseUrl}/quota-manager/api/v1/quota`, {
 							headers: {
@@ -75,10 +123,8 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 								"Content-Type": "application/json",
 							},
 						})
-						// console.log("[sidebarProvider] quota response status", response.status)
 						if (response.ok) {
 							const json = await response.json()
-							// console.log("[sidebarProvider] posting quotaResult", json?.data)
 							webviewView.webview.postMessage({ type: "quotaResult", data: json?.data ?? null })
 						} else {
 							webviewView.webview.postMessage({ type: "quotaResult", data: null })
@@ -94,6 +140,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 		)
 		const config = getAssistantUIConfig()
 		if (!config.enabled) {
+			setCloudUnavailable("config disabled")
 			webviewView.webview.html = this.getDisabledHtml()
 			return
 		}

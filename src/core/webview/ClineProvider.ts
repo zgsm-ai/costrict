@@ -90,6 +90,10 @@ import { OrganizationAllowListViolationError } from "../../utils/errors"
 
 import { setPanel } from "../../activate/registerCommands"
 
+import { getConfiguredUiMode } from "../../shared/uiMode"
+import type { AssistantUIContextMessage } from "../cs-cloud/extension/types"
+import { sendContextToCloudWithFocus } from "../cs-cloud/extension/contextBridge"
+
 import { t } from "../../i18n"
 
 // import { buildApiHandler } from "../../api"
@@ -903,6 +907,28 @@ export class ClineProvider
 		// Capture telemetry for code action usage
 		TelemetryService.instance.captureCodeActionUsed(promptType)
 
+		// Cloud 模式：不依赖 ClineProvider，提前分流
+		if (getConfiguredUiMode() === "cloud") {
+			if (command === "addToContext") {
+				const { pathOnly, selectedText } = supportPrompt.createPathWithSelectedText(
+					promptType as SupportPromptType,
+					params,
+					{},
+				)
+				const message: AssistantUIContextMessage = {
+					type: "assistantUIContext",
+					text: pathOnly.length > 0 ? `${pathOnly} ` : "",
+					previewText: selectedText,
+					focus: true,
+				}
+				await sendContextToCloudWithFocus(message)
+				return
+			}
+			// 其他 code action：目前 Cloud 不处理
+			return
+		}
+
+		// Classic 模式：现有逻辑不变
 		const visibleProvider = await ClineProvider.getInstance()
 
 		if (!visibleProvider) {

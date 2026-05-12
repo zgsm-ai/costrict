@@ -61,7 +61,7 @@ import { loadIdeaShellEnvOnce } from "./utils/ideaShellEnvLoader"
 import { isJetbrainsPlatform } from "./utils/platform"
 import { AssistantUISidebarProvider } from "./core/cs-cloud/extension/sidebarProvider"
 import { CsCloudService } from "./core/cs-cloud/extension/csCloudService"
-import { getConfiguredUiMode } from "./activate/registerCommands"
+import { getConfiguredUiMode } from "./shared/uiMode"
 // import { flushModels, getModels, initializeModelCacheRefresh } from "./api/providers/fetchers/modelCache"
 
 /**

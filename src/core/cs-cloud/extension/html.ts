@@ -324,6 +324,10 @@ export function getAssistantUIStaticHtml(
           const v=acquireVsCodeApi();
           window.__VSCODE_API__=v;
           window.addEventListener("message",function(e){
+            if (e.data?.type === "ASSISTANT_UI_READY") {
+              v.postMessage({ type: "ASSISTANT_UI_READY" });
+              return;
+            }
             if(e.data?.type==="FETCH_QUOTA"){
               v.postMessage({type:"fetchQuota",baseUrl:e.data.baseUrl,token:e.data.token});
             }
@@ -453,21 +457,40 @@ export function getAssistantUIIframeHtml(
         frame.addEventListener("load", function () {
           window.__ASSISTANT_UI_HIDE_LOADING__();
           if (frame.contentWindow && window.__CS_CLOUD_ACCESS_TOKEN__) {
-            frame.contentWindow.postMessage({ type: "ACCESS_TOKEN", token: window.__CS_CLOUD_ACCESS_TOKEN__ }, "*");
+            frame.contentWindow.postMessage({ type: "ACCESS_TOKEN", token: window.__CS_CLOUD_ACCESS_TOKEN__ }, frameOrigin);
           }
         });
       }
       setTimeout(window.__ASSISTANT_UI_HIDE_LOADING__, 8000);
     });
     const vscodeApi = acquireVsCodeApi();
+    const frameOrigin = new URL(window.__ASSISTANT_UI_FRAME_URL__).origin;
+    let cloudFrameReady = false;
+    const pendingFrameMessages = [];
+
+    function flushFrameMessages() {
+      const frame = document.getElementById("cloud-frame");
+      if (!frame?.contentWindow) return;
+      const msgs = pendingFrameMessages.splice(0);
+      for (const data of msgs) {
+        frame.contentWindow.postMessage(data, frameOrigin);
+      }
+    }
+
     window.addEventListener("message", function (event) {
       const frame = document.getElementById("cloud-frame");
 
       // 来自 iframe 的消息：转发给 VS Code
       if (event.source === frame?.contentWindow) {
+        if (event.data?.type === "ASSISTANT_UI_READY") {
+          cloudFrameReady = true;
+          flushFrameMessages();
+          vscodeApi.postMessage({ type: "ASSISTANT_UI_READY" });
+          return;
+        }
         if (event.data?.type === "REQUEST_ACCESS_TOKEN") {
           if (frame.contentWindow && window.__CS_CLOUD_ACCESS_TOKEN__) {
-            frame.contentWindow.postMessage({ type: "ACCESS_TOKEN", token: window.__CS_CLOUD_ACCESS_TOKEN__ }, "*");
+            frame.contentWindow.postMessage({ type: "ACCESS_TOKEN", token: window.__CS_CLOUD_ACCESS_TOKEN__ }, frameOrigin);
           }
           return;
         }
@@ -492,15 +515,23 @@ export function getAssistantUIIframeHtml(
       }
 
       // 来自 VS Code 的消息：转发给 iframe
+      if (event.data?.type === "assistantUIContext") {
+        if (cloudFrameReady && frame?.contentWindow) {
+          frame.contentWindow.postMessage(event.data, frameOrigin);
+        } else {
+          pendingFrameMessages.push(event.data);
+        }
+        return;
+      }
       if (event.data?.type === "quotaResult") {
         console.log("[iframe-wrapper] forwarding quotaResult to iframe", event.data);
         if (frame?.contentWindow) {
-          frame.contentWindow.postMessage(event.data, "*");
+          frame.contentWindow.postMessage(event.data, frameOrigin);
         }
       }
       if (event.data?.type === "theme") {
         if (frame?.contentWindow) {
-          frame.contentWindow.postMessage(event.data, "*");
+          frame.contentWindow.postMessage(event.data, frameOrigin);
         }
       }
     });

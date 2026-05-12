@@ -20,6 +20,9 @@ import { EditorContext, EditorUtils } from "../integrations/editor/EditorUtils"
 import * as path from "path"
 import { handleGenerateCommitMessage } from "../core/costrict/commit"
 import { getTerminalManager } from "../core/costrict/cli-wrap"
+import { getConfiguredUiMode, UiMode, UI_MODE_OPTIONS } from "../shared/uiMode"
+import type { AssistantUIContextMessage } from "../core/cs-cloud/extension/types"
+import { sendContextToCloudWithFocus } from "../core/cs-cloud/extension/contextBridge"
 
 interface UriSource {
 	path: string
@@ -30,42 +33,6 @@ interface UriSource {
 interface ProcessedResource {
 	type: "path" | "image"
 	content: string
-}
-
-type UiMode = "classic" | "cloud"
-
-const uiModeQuickPickItems: Array<{
-	label: string
-	description: string
-	value: UiMode
-}> = [
-	{
-		label: "Classic Mode",
-		description: "Use the current CoStrict UI and logic",
-		value: "classic",
-	},
-	{
-		label: "Cloud Mode",
-		description: "Use the Cloud UI on next launch",
-		value: "cloud",
-	},
-]
-
-export const getConfiguredUiMode = (): UiMode => {
-	const configured = vscode.workspace.getConfiguration(Package.commandIDPrefix).get<UiMode>("uiMode")
-	return configured === "cloud" ? "cloud" : "classic"
-}
-
-const promptToReloadForUiModeChange = async () => {
-	const reloadNow = await vscode.window.showInformationMessage(
-		"UI mode updated. Reload Window to apply.",
-		"Reload Now",
-		"Later",
-	)
-
-	if (reloadNow === "Reload Now") {
-		await vscode.commands.executeCommand("workbench.action.reloadWindow")
-	}
 }
 
 /**
@@ -188,7 +155,7 @@ export const getCommandsMap = ({
 	switchUiMode: async () => {
 		const currentMode = getConfiguredUiMode()
 		const selection = await vscode.window.showQuickPick(
-			uiModeQuickPickItems.map((item) => ({
+			UI_MODE_OPTIONS.map((item) => ({
 				...item,
 				detail: item.value === currentMode ? "Current mode" : undefined,
 			})),
@@ -339,6 +306,64 @@ export const getCommandsMap = ({
 		visibleProvider.postMessageToWebview({ type: "acceptInput" })
 	},
 	addFileToContext: async (...args: [UriSource] | [unknown, UriSource[]]) => {
+		// Cloud 模式：不依赖 ClineProvider，提前分流
+		if (getConfiguredUiMode() === "cloud") {
+			const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+			if (!cwd) return
+
+			let sources: (UriSource | EditorContext)[] = []
+			if (args.length > 1 && Array.isArray(args[1]) && args[1].length > 0) {
+				sources = args[1]
+			} else {
+				let singleSource: UriSource | EditorContext | undefined | null
+				if (args.length > 0) {
+					;[singleSource] = args as [UriSource]
+				} else {
+					singleSource = EditorUtils.getEditorContext()
+				}
+				if (singleSource) {
+					sources = [singleSource]
+				}
+			}
+
+			if (sources.length === 0) return
+
+			const processedResources = (
+				await Promise.all(
+					sources.map(async (source): Promise<ProcessedResource | null> => {
+						if (!(source as UriSource).path && !(source as EditorContext).filePath) {
+							return null
+						}
+						const resourceUri = vscode.Uri.parse(
+							(source as UriSource).path || path.join(cwd, (source as EditorContext).filePath),
+						)
+						return createAliasedPath(resourceUri)
+					}),
+				)
+			).filter((p): p is ProcessedResource => !!p)
+
+			if (processedResources.length === 0) return
+
+			const textPaths: string[] = []
+			const imageSources: string[] = []
+			for (const resource of processedResources) {
+				if (resource.type === "path") textPaths.push(resource.content)
+				else if (resource.type === "image") imageSources.push(resource.content)
+			}
+
+			const chatMessage = textPaths.length > 0 ? textPaths.join(" ") + " " : ""
+			const payload: AssistantUIContextMessage = {
+				type: "assistantUIContext",
+				text: chatMessage,
+				focus: true,
+			}
+			if (imageSources.length > 0) payload.images = imageSources
+
+			await sendContextToCloudWithFocus(payload)
+			return
+		}
+
+		// Classic 模式：现有逻辑不变
 		const visibleProvider = await ClineProvider.getInstance()
 		if (!visibleProvider) {
 			return
