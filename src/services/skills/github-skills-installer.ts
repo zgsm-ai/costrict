@@ -118,11 +118,15 @@ async function getBundledLocales(bundledSkillsPath: string): Promise<string[]> {
 }
 
 /**
- * Resolve locale: use preferred locale if available, fallback to first available
+ * Resolve locale: use preferred locale if available, map zh-TW to zh-CN,
+ * otherwise fallback to first available
  */
 function resolveLocale(preferredLocale: string, availableLocales: string[]): string {
 	if (availableLocales.includes(preferredLocale)) {
 		return preferredLocale
+	}
+	if (preferredLocale === "zh-TW" && availableLocales.includes("zh-CN")) {
+		return "zh-CN"
 	}
 	return availableLocales[0] || "en"
 }
