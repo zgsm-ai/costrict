@@ -9,6 +9,7 @@ import { CostrictAuthService } from "../../costrict/auth"
 import { CostrictAuthConfig } from "../../costrict/auth/authConfig"
 import type { AssistantUIContextMessage } from "./types"
 import { setActiveCloudProvider, onCloudUiReady, setCloudUnavailable } from "./contextBridge"
+import { Package } from "../../../shared/package"
 
 export function getAssistantUIWorkspaceDirectory() {
 	return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
@@ -226,6 +227,9 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 				}
 			}
 			const costrictWebUrl = CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
+			const pluginVersion = Package.version
+			const pluginSha = Package.sha
+			const pluginBuildTime = Package.buildTime
 			// 如果 vscode 里面等 accessToken 没有了，被清空了，就去 $HOME/.costrict/share/auth.json 里面找 access_token 字段
 			if (shouldUseAssistantUIIframe(this.context, getAssistantUIConfig())) {
 				webviewView.webview.html = getAssistantUIIframeHtml(
@@ -237,6 +241,9 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					accessToken ?? undefined,
 					getAssistantUIConfig().debug,
 					costrictWebUrl,
+					pluginVersion,
+					pluginSha,
+					pluginBuildTime,
 				)
 			} else {
 				webviewView.webview.html = getAssistantUIStaticHtml(
@@ -246,6 +253,9 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					workspaceDirectory,
 					accessToken ?? undefined,
 					costrictWebUrl,
+					pluginVersion,
+					pluginSha,
+					pluginBuildTime,
 				)
 			}
 		} catch (error) {

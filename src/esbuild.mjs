@@ -4,6 +4,7 @@ import * as path from "path"
 import { fileURLToPath } from "url"
 import process from "node:process"
 import * as console from "node:console"
+import { execSync } from "child_process"
 
 import { copyPaths, copyWasms, copyLocales, setupLocaleWatcher } from "@roo-code/build"
 import { networkInterfacesCompatible } from "../scripts/network-interfaces-compatible.mjs"
@@ -141,6 +142,11 @@ async function main() {
 
 	const buildTime = new Date().toISOString()
 
+	let gitSha = undefined
+	try {
+		gitSha = execSync("git rev-parse HEAD").toString().trim()
+	} catch {}
+
 	/**
 	 * @type {import('esbuild').BuildOptions}
 	 */
@@ -156,6 +162,7 @@ async function main() {
 			"process.env.NODE_ENV": production ? '"production"' : '"development"',
 			"process.env.COSTRICT_PUBLIC_KEY": JSON.stringify(process.env.COSTRICT_PUBLIC_KEY || process.env.ZGSM_PUBLIC_KEY || ""),
 			"process.env.COSTRICT_PKG_BUILD_TIME": JSON.stringify(buildTime),
+			...(gitSha ? { "process.env.COSTRICT_PKG_SHA": JSON.stringify(gitSha) } : {}),
 		},
 		banner: {
 			js: networkInterfacesCompatible,

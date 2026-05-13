@@ -10,6 +10,9 @@ export function buildAssistantUIFrameUrl(
 	debug = false,
 	accessToken?: string,
 	costrictWebUrl?: string,
+	pluginVersion?: string,
+	pluginSha?: string,
+	pluginBuildTime?: string,
 ) {
 	const url = new URL(webUrl)
 	url.searchParams.set("csCloudBaseUrl", csCloudBaseUrl)
@@ -22,6 +25,15 @@ export function buildAssistantUIFrameUrl(
 	}
 	if (costrictWebUrl) {
 		url.searchParams.set("costrictWebUrl", costrictWebUrl)
+	}
+	if (pluginVersion) {
+		url.searchParams.set("csCloudVersion", pluginVersion)
+	}
+	if (pluginSha) {
+		url.searchParams.set("csCloudSha", pluginSha)
+	}
+	if (pluginBuildTime) {
+		url.searchParams.set("csCloudBuildTime", pluginBuildTime)
 	}
 	return url.toString()
 }
@@ -268,6 +280,9 @@ export function getAssistantUIStaticHtml(
 	workspaceDirectory?: string,
 	accessToken?: string,
 	costrictWebUrl?: string,
+	pluginVersion?: string,
+	pluginSha?: string,
+	pluginBuildTime?: string,
 ): string {
 	console.log("getAssistantUIStaticHtml accessToken", accessToken)
 
@@ -286,6 +301,9 @@ export function getAssistantUIStaticHtml(
 			accessToken,
 			config.debug,
 			costrictWebUrl,
+			pluginVersion,
+			pluginSha,
+			pluginBuildTime,
 		)
 	}
 
@@ -319,6 +337,9 @@ export function getAssistantUIStaticHtml(
         window.__ASSISTANT_UI_THEME__ = ${JSON.stringify(getAssistantUITheme())}; 
         window.__CS_CLOUD_ACCESS_TOKEN__ = ${JSON.stringify(accessToken || "")};
         window.__CS_CLOUD_WEB_URL__ = ${JSON.stringify(costrictWebUrl)};
+        window.__CS_CLOUD_VERSION__ = ${JSON.stringify(pluginVersion || "")};
+        window.__CS_CLOUD_SHA__ = ${JSON.stringify(pluginSha || "")};
+        window.__CS_CLOUD_BUILD_TIME__ = ${JSON.stringify(pluginBuildTime || "")};
 
         (function(){
           const v=acquireVsCodeApi();
@@ -360,6 +381,9 @@ export function getAssistantUIIframeHtml(
 	accessToken?: string,
 	debug = false,
 	costrictWebUrl?: string,
+	pluginVersion?: string,
+	pluginSha?: string,
+	pluginBuildTime?: string,
 ): string {
 	console.log("getAssistantUIIframeHtml accessToken", accessToken)
 
@@ -371,6 +395,9 @@ export function getAssistantUIIframeHtml(
 		debug,
 		accessToken,
 		costrictWebUrl,
+		pluginVersion,
+		pluginSha,
+		pluginBuildTime,
 	)
 	const csp = [
 		"default-src 'none'",
@@ -445,6 +472,9 @@ export function getAssistantUIIframeHtml(
     window.__CS_CLOUD_ACCESS_TOKEN__ = ${JSON.stringify(accessToken || "")};
     window.__ASSISTANT_UI_FRAME_URL__ = ${JSON.stringify(frameUrl)};
     window.__ASSISTANT_UI_THEME__ = ${JSON.stringify(getAssistantUITheme())};
+    window.__CS_CLOUD_VERSION__ = ${JSON.stringify(pluginVersion || "")};
+    window.__CS_CLOUD_SHA__ = ${JSON.stringify(pluginSha || "")};
+    window.__CS_CLOUD_BUILD_TIME__ = ${JSON.stringify(pluginBuildTime || "")};
     window.__ASSISTANT_UI_HIDE_LOADING__ = function () {
       const loading = document.getElementById("cloud-ui-loading");
       if (!loading) return;
