@@ -58,6 +58,10 @@ openspec
 # Architect plans
 plans/
 
+# Review results
+code-review_result/
+security-review_result/
+
 roo-cli-*.tar.gz*
 zgsm-cli-*.tar.gz*
 cos-cli-*.tar.gz*
@@ -68,3 +72,6 @@ src/bundled-skills/
 .claude
 .costrict
 .gemini*
+
+# Bundled modes (generated during build)
+src/bundled-modes/

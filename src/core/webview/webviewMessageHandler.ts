@@ -777,13 +777,15 @@ export const webviewMessageHandler = async (
 					void ensureProjectWikiSubtasksExists(state.language ?? "en")
 				})
 
-				void installGitHubSkills(provider.context)
-					.then(() => provider.log("[BuiltinSkills] Bundled skills installed"))
-					.catch((error) =>
-						provider.log(
-							`[BuiltinSkills] Failed to install: ${error instanceof Error ? error.message : String(error)}`,
-						),
-					)
+				void provider.getState().then((state) => {
+					void installGitHubSkills(provider.context, state.language ?? "zh-CN")
+						.then(() => provider.log("[BuiltinSkills] Bundled skills installed"))
+						.catch((error) =>
+							provider.log(
+								`[BuiltinSkills] Failed to install: ${error instanceof Error ? error.message : String(error)}`,
+							),
+						)
+				})
 				// Perform auto cleanup shortly after startup so initial webview rendering is not blocked.
 				void provider?.performAutoCleanup?.().then(() => {
 					provider.log("Auto cleanup check completed on startup")
@@ -844,6 +846,14 @@ export const webviewMessageHandler = async (
 						changeLanguage(newValue as Language)
 						// Initialize subtask files for the new language.
 						await ensureProjectWikiSubtasksExists(newValue as string)
+						// Reinstall bundled skills with the new locale
+						void installGitHubSkills(provider.context, newValue as string)
+							.then(() => provider.log("[BuiltinSkills] Bundled skills reinstalled"))
+							.catch((error) =>
+								provider.log(
+									`[BuiltinSkills] Failed to reinstall: ${error instanceof Error ? error.message : String(error)}`,
+								),
+							)
 					} else if (key === "allowedCommands") {
 						const commands = value ?? []
 
@@ -3628,8 +3638,12 @@ export const webviewMessageHandler = async (
 				intentAddedFiles = await addFilesIntent(cwd, untrackedFiles)
 			}
 
-			await reviewInstance.createReviewTask(
+			const reviewPrompt = await reviewInstance.buildReviewPrompt(
+				(mode as "review" | "security-review") ?? "review",
 				"@git-changes",
+			)
+			await reviewInstance.createReviewTask(
+				reviewPrompt,
 				{
 					type: ReviewTargetType.FILE,
 					data: files?.map((item) => ({
