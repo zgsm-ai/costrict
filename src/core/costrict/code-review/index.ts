@@ -12,7 +12,6 @@ import { CodeReviewService } from "./codeReviewService"
 import { HistoryManager } from "./HistoryManager"
 import { CommentService } from "../../../integrations/comment"
 import type { ReviewComment } from "./reviewComment"
-import { supportPrompt } from "../../../shared/support-prompt"
 import { getChangedFiles } from "../../../utils/git"
 import { t } from "../../../i18n"
 import { GitCommitListener } from "./gitCommitListener"
@@ -96,13 +95,15 @@ export function initCodeReview(
 			startLine: range.start.line + 1 + "",
 			selectedText: editor.document.getText(range),
 		}
-		let prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
-
-		// For security-review mode, append auto-confirmation message
-		if (mode === "security-review") {
-			const autoExecuteMessage = t("common:review.tip.auto_execute_with_default_config")
-			prompt = `${prompt}\n\n${autoExecuteMessage}`
-		}
+		const prompt =
+			"Please use the Skill tool to load the `" +
+			mode +
+			"` skill to review the selected code at " +
+			filePath +
+			":" +
+			params.startLine +
+			"-" +
+			params.endLine
 
 		reviewInstance.createReviewTask(
 			prompt,
@@ -243,7 +244,13 @@ export function initCodeReview(
 							startLine: startLine + "",
 							selectedText: selectedText,
 						}
-						const prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
+						const prompt =
+							"Please use the Skill tool to load the `review` skill to review the selected code at " +
+							filePath +
+							":" +
+							startLine +
+							"-" +
+							endLine
 						reviewInstance.createReviewTask(prompt, {
 							type: ReviewTargetType.CODE,
 							data: [
