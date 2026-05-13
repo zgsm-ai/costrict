@@ -45,6 +45,7 @@ import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
 import { fileExistsAtPath } from "../../../utils/fs"
 import { isJetbrainsPlatform } from "../../../utils/platform"
 import { defaultModeSlug, type Mode } from "../../../shared/modes"
+import type { Language } from "@roo-code/types"
 /**
  * Code Review Service - Singleton
  *
@@ -166,6 +167,37 @@ export class CodeReviewService {
 		this.commentService = commentService
 	}
 
+	async buildReviewPrompt(mode: "review" | "security-review", arguments_: string): Promise<string> {
+		const { language } = await this.clineProvider!.getState()
+		const isZh = language === "zh-CN" || language === "zh-TW"
+		if (mode === "security-review") {
+			if (isZh) {
+				return (
+					"# 安全代码审查\n\n请使用 Skill 工具加载 `security-review` 技能来对以下内容执行安全代码审查：" +
+					arguments_ +
+					"\n\n使用默认配置，全程无需再次确认。全程请使用中文进行回答与文件写入。"
+				)
+			}
+			return (
+				"# Code Security Review\n\nPlease use the Skill tool to load the `security-review` skill to perform a security review on: " +
+				arguments_ +
+				"\n\nUse default configuration throughout the process without re-confirmation. Please respond and write all files in English throughout the entire process."
+			)
+		}
+		if (isZh) {
+			return (
+				"# 代码审查\n\n请使用 Skill 工具加载 `review` 技能来对以下内容执行代码审查：" +
+				arguments_ +
+				"\n\n使用默认配置，全程无需再次确认。全程请使用中文进行回答与文件写入。"
+			)
+		}
+		return (
+			"# Code Review\n\nPlease use the Skill tool to load the `review` skill to perform a code review on: " +
+			arguments_ +
+			"\n\nUse default configuration throughout the process without re-confirmation. Please respond and write all files in English throughout the entire process."
+		)
+	}
+
 	private async getRequestOptions(): Promise<AxiosRequestConfig> {
 		if (!this.clineProvider) {
 			return {}
@@ -219,7 +251,7 @@ export class CodeReviewService {
 				})
 				.join(" ")
 
-			const finalMessage = "Please use the Skill tool to load the `" + mode + "` skill to review: " + chatMessage
+			const finalMessage = await this.buildReviewPrompt(mode as "review" | "security-review", chatMessage ?? "")
 
 			await this.createReviewTask(finalMessage, target, { mode })
 		}
@@ -337,7 +369,8 @@ export class CodeReviewService {
 					this.logger.info(
 						"[CodeReview] No report found in message queue, attempting to read from default output directory",
 					)
-					const defaultOutputDir = "security-review_result"
+					const defaultOutputDir =
+						taskMode === "security-review" ? "security-review_result" : "code-review_result"
 					const fullReportPath = path.resolve(provider.cwd, defaultOutputDir, "full_report.jsonl")
 					this.logger.info(`[CodeReview] Looking for report at: ${fullReportPath}`)
 

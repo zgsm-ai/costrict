@@ -428,8 +428,9 @@ const WORKFLOW_MODES: readonly modelType[] = [
 			[
 				"command",
 				{
-					commandRegex: "(security-review_result|skills-security-review)",
-					description: "Only security-review_result and skills-security-review directories",
+					commandRegex:
+						"(code-review_result|skills-review|security-review_result|skills-security-review|SECURITY\\.md)",
+					description: "Only review and security-review directories and SECURITY.md",
 				},
 			],
 			"mcp",
@@ -455,8 +456,8 @@ const WORKFLOW_MODES: readonly modelType[] = [
 			[
 				"command",
 				{
-					commandRegex: "(security-review_result|skills-security-review)",
-					description: "Only security-review_result and skills-security-review directories",
+					commandRegex: "(security-review_result|skills-security-review|SECURITY\\.md)",
+					description: "Only security-review_result, skills-security-review directories and SECURITY.md",
 				},
 			],
 			"mcp",

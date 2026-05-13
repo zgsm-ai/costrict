@@ -95,15 +95,8 @@ export function initCodeReview(
 			startLine: range.start.line + 1 + "",
 			selectedText: editor.document.getText(range),
 		}
-		const prompt =
-			"Please use the Skill tool to load the `" +
-			mode +
-			"` skill to review the selected code at " +
-			filePath +
-			":" +
-			params.startLine +
-			"-" +
-			params.endLine
+		const args = `@/${filePath}:${params.startLine}-${params.endLine}`
+		const prompt = await reviewInstance.buildReviewPrompt(mode as "review" | "security-review", args)
 
 		reviewInstance.createReviewTask(
 			prompt,
@@ -116,7 +109,7 @@ export function initCodeReview(
 					},
 				],
 			},
-			mode !== "review" ? { mode } : undefined,
+			{ mode },
 		)
 	}
 
@@ -204,13 +197,17 @@ export function initCodeReview(
 
 			visibleProvider.log(`[CodeReview] Found ${changedFiles.length} changed files`)
 
-			// 使用 @git-changes 来审查当前的 git 变更
-			reviewInstance.createReviewTask("@git-changes", {
-				type: ReviewTargetType.FILE,
-				data: changedFiles.map((file_path) => ({
-					file_path,
-				})),
-			})
+			const reviewPrompt = await reviewInstance.buildReviewPrompt("review", "current git changes")
+			reviewInstance.createReviewTask(
+				reviewPrompt,
+				{
+					type: ReviewTargetType.FILE,
+					data: changedFiles.map((file_path) => ({
+						file_path,
+					})),
+				},
+				{ mode: "review" },
+			)
 		},
 		...(!isJetbrains
 			? {}
@@ -244,22 +241,21 @@ export function initCodeReview(
 							startLine: startLine + "",
 							selectedText: selectedText,
 						}
-						const prompt =
-							"Please use the Skill tool to load the `review` skill to review the selected code at " +
-							filePath +
-							":" +
-							startLine +
-							"-" +
-							endLine
-						reviewInstance.createReviewTask(prompt, {
-							type: ReviewTargetType.CODE,
-							data: [
-								{
-									file_path: toRelativePath(filePath.toPosix(), cwd),
-									line_range: [startLine, endLine],
-								},
-							],
-						})
+						const reviewArgs = `@/${filePath}:${startLine}-${endLine}`
+						const prompt = await reviewInstance.buildReviewPrompt("review", reviewArgs)
+						reviewInstance.createReviewTask(
+							prompt,
+							{
+								type: ReviewTargetType.CODE,
+								data: [
+									{
+										file_path: toRelativePath(filePath.toPosix(), cwd),
+										line_range: [startLine, endLine],
+									},
+								],
+							},
+							{ mode: "review" },
+						)
 					},
 					reviewFilesAndFoldersJetbrains: async (args: any) => {
 						const data = args?.[0]?.[0]
