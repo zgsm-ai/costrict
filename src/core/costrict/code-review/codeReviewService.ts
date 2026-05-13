@@ -279,10 +279,17 @@ export class CodeReviewService {
 		})
 		this.prevMode = (await provider.getMode()) ?? defaultModeSlug
 		const taskMode = options?.mode ?? "review"
+		this.logger.info(`[CodeReview] createReviewTask: prevMode=${this.prevMode}, taskMode=${taskMode}`)
 		await provider.handleModeSwitch(taskMode)
+		const modeAfterSwitch = await provider.getMode()
+		this.logger.info(`[CodeReview] createReviewTask: mode after handleModeSwitch=${modeAfterSwitch}`)
 		const task = await provider.createTask(message, undefined, undefined, {
 			costrictWorkflowMode: taskMode,
 		})
+		const modeAfterCreateTask = await provider.getMode()
+		this.logger.info(
+			`[CodeReview] createReviewTask: mode after createTask=${modeAfterCreateTask}, taskMode=${taskMode}`,
+		)
 		const trackedTaskId = task.taskId
 		let trackedTask: Task = task
 		let completionHandled = false
@@ -325,6 +332,9 @@ export class CodeReviewService {
 
 		const resetMode = async () => {
 			const restoreMode = this.getRestoreMode(this.prevMode)
+			this.logger.info(
+				`[CodeReview] resetMode: restoring from ${this.prevMode} to ${restoreMode} (task=${trackedTask.taskId})`,
+			)
 			await provider.handleModeSwitch(restoreMode)
 			trackedTask.updateMode(restoreMode)
 			this.prevMode = ""
@@ -427,9 +437,11 @@ export class CodeReviewService {
 				releaseTaskLifecycle()
 
 				setTimeout(async () => {
-					await provider.removeClineFromStack()
-					await provider.refreshWorkspace()
+					this.logger.info(
+						`[CodeReview] handleCompletion setTimeout(500ms) firing: about to call resetMode()`,
+					)
 					await resetMode()
+					await provider.refreshWorkspace()
 					options?.onTaskComplete?.()
 
 					// Switch to code review page if report was generated
