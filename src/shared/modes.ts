@@ -172,16 +172,6 @@ export class FileRestrictionError extends Error {
 	}
 }
 
-export class CommandRestrictionError extends Error {
-	constructor(mode: string, pattern: string, description: string | undefined, command: string, tool?: string) {
-		const toolInfo = tool ? `Tool '${tool}' in mode '${mode}'` : `This mode (${mode})`
-		super(
-			`${toolInfo} can only execute commands matching pattern: ${pattern}${description ? ` (${description})` : ""}. Got: ${command}`,
-		)
-		this.name = "CommandRestrictionError"
-	}
-}
-
 // Create the mode-specific default prompts
 export const defaultPrompts: Readonly<CustomModePrompts> = Object.freeze(
 	Object.fromEntries(

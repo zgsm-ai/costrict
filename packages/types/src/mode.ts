@@ -24,24 +24,6 @@ export const groupOptionsSchema = z.object({
 			},
 			{ message: "Invalid regular expression pattern" },
 		),
-	commandRegex: z
-		.string()
-		.optional()
-		.refine(
-			(pattern) => {
-				if (!pattern) {
-					return true
-				}
-
-				try {
-					new RegExp(pattern)
-					return true
-				} catch {
-					return false
-				}
-			},
-			{ message: "Invalid regular expression pattern" },
-		),
 	description: z.string().optional(),
 })
 
@@ -399,13 +381,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		groups: [
 			"read",
 			["edit", { fileRegex: "\\.(md|json)$", description: "Markdown and JSON files only" }],
-			[
-				"command",
-				{
-					commandRegex: "(code-review_result|skills-review)",
-					description: "Only code-review_result and skills-review directories",
-				},
-			],
+			"command",
 			"mcp",
 		],
 		disableSwitchMode: true,
@@ -425,14 +401,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		groups: [
 			"read",
 			["edit", { fileRegex: "\\.(md|json)$", description: "Markdown and JSON files only" }],
-			[
-				"command",
-				{
-					commandRegex:
-						"(code-review_result|skills-review|security-review_result|skills-security-review|SECURITY\\.md)",
-					description: "Only review and security-review directories and SECURITY.md",
-				},
-			],
+			"command",
 			"mcp",
 		],
 		disableSwitchMode: true,
@@ -453,13 +422,7 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		groups: [
 			"read",
 			["edit", { fileRegex: "\\.(md|json)$", description: "Markdown and JSON files only" }],
-			[
-				"command",
-				{
-					commandRegex: "(security-review_result|skills-security-review|SECURITY\\.md)",
-					description: "Only security-review_result, skills-security-review directories and SECURITY.md",
-				},
-			],
+			"command",
 			"mcp",
 		],
 		disableSwitchMode: true,
