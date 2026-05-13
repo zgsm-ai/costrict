@@ -22,7 +22,7 @@ const bundledSkillsDir = path.join(projectRoot, "src", "bundled-skills")
 const indexFilePath = path.join(bundledSkillsDir, "index.json")
 
 const REPO = "zgsm-ai/costrict-review"
-const BRANCH = "optimize/agent-prompts"
+const BRANCH = "main"
 const CLONE_URL = `git@github.com:${REPO}.git`
 
 function git(...args) {
