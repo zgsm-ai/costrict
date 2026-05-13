@@ -197,7 +197,7 @@ export function initCodeReview(
 
 			visibleProvider.log(`[CodeReview] Found ${changedFiles.length} changed files`)
 
-			const reviewPrompt = await reviewInstance.buildReviewPrompt("review", "current git changes")
+			const reviewPrompt = await reviewInstance.buildReviewPrompt("review", "@git-changes")
 			reviewInstance.createReviewTask(
 				reviewPrompt,
 				{

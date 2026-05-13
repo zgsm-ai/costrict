@@ -3638,8 +3638,12 @@ export const webviewMessageHandler = async (
 				intentAddedFiles = await addFilesIntent(cwd, untrackedFiles)
 			}
 
-			await reviewInstance.createReviewTask(
+			const reviewPrompt = await reviewInstance.buildReviewPrompt(
+				(mode as "review" | "security-review") ?? "review",
 				"@git-changes",
+			)
+			await reviewInstance.createReviewTask(
+				reviewPrompt,
 				{
 					type: ReviewTargetType.FILE,
 					data: files?.map((item) => ({
