@@ -47,13 +47,19 @@ _Free • Open Source • Private Deployment_
 
 <table>
   <tr>
-    <td align="center" width="33%">
+    <td align="center" width="25%">
+      <b>🌟 CoStrict Cloud</b><br><br>
+      <a href="https://docs.costrict.ai/cli/product-characteristics/cloud">
+        <img src="https://img.shields.io/badge/Cloud-Documentation-blue?style=for-the-badge" alt="Cloud Docs">
+      </a>
+    </td>
+    <td align="center" width="25%">
       <b>VS Code Extension</b><br><br>
       <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
         <img src="./assets/images/readme/download on vscode marketplace_en.png" alt="Install from VS Marketplace" width="180">
       </a>
     </td>
-    <td align="center" width="33%">
+    <td align="center" width="25%">
       <b>CLI Tool</b><br><br>
       <a href="https://docs.costrict.ai/cli/guide/installation">
         <img src="https://img.shields.io/badge/CLI-Documentation-blue?style=for-the-badge" alt="CLI Docs">
@@ -62,7 +68,7 @@ _Free • Open Source • Private Deployment_
         <img src="https://img.shields.io/badge/Download-Latest-success?style=for-the-badge" alt="Download">
       </a>
     </td>
-    <td align="center" width="33%">
+    <td align="center" width="25%">
       <b>JetBrains Plugin</b><br><br>
       <a href="https://github.com/zgsm-sangfor/costrict-for-jetbrains">
         <img src="https://img.shields.io/badge/GitHub-Repository-informational?style=for-the-badge" alt="JetBrains Repo">
