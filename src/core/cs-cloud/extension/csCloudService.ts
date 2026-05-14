@@ -224,6 +224,38 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			)
 		}
 
+		// ★ 重启前先检测 cs-cloud 是否已在运行（例如用户手动重启了服务）。
+		// 如果已运行，则直接采纳为 detected（unmanaged），避免 spawn 冲突。
+		const restartConfig = getAssistantUIConfig()
+		const restartDetectedPort = await detectCsCloudPort(restartConfig.defaultCli)
+		if (restartDetectedPort !== undefined) {
+			const restartHealthUrl = `http://127.0.0.1:${restartDetectedPort}/api/v1/runtime/health`
+			const restartBaseUrl = `http://127.0.0.1:${restartDetectedPort}/api/v1`
+			if (await isHttpReady(restartHealthUrl)) {
+				this.outputChannel.appendLine(
+					`[AssistantUI] Detected already-running cs-cloud on port ${restartDetectedPort}; adopting it.`,
+				)
+				this.baseUrl = restartBaseUrl
+				this.ownership = "unmanaged"
+				this.source = "detected"
+				await assertOpenCodeCompatible(this.baseUrl)
+				this.handleStartSuccess()
+				return this.baseUrl
+			}
+			// Port detected but not ready yet — wait for it, then use as detected
+			this.outputChannel.appendLine(
+				`[AssistantUI] Detected cs-cloud on port ${restartDetectedPort}, waiting for it to be ready...`,
+			)
+			this.baseUrl = restartBaseUrl
+			this.ownership = "unmanaged"
+			this.source = "detected"
+			// waitForHealth has its own 30s default timeout
+			await this.waitForHealth()
+			await assertOpenCodeCompatible(this.baseUrl)
+			this.handleStartSuccess()
+			return this.baseUrl
+		}
+
 		// owned 或自动检测到的 unmanaged：启动一个由扩展管理的新进程
 		this.stopHealthMonitor()
 		this.state = "starting"

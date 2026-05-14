@@ -219,6 +219,9 @@ describe("CsCloudService", () => {
 		await expect(service.ensureStarted()).resolves.toBe("http://127.0.0.1:55555/api/v1")
 		expect(spawn).not.toHaveBeenCalled()
 
+		// Simulate the detected service going down so restart() falls through to spawning
+		mockExecReturn("")
+
 		mockSpawnProcess()
 		nock("http://127.0.0.1:45489").get("/api/v1/runtime/health").reply(200, { ok: true })
 		nock("http://127.0.0.1:45489")
