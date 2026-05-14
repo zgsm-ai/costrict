@@ -47,13 +47,19 @@ English | [简体中文](./README.zh-CN.md)
 
 <table>
   <tr>
-    <td align="center" width="33%">
+    <td align="center" width="25%">
+      <b>🌟 CoStrict Cloud</b><br><br>
+      <a href="https://docs.costrict.ai/cli/product-characteristics/cloud">
+        <img src="https://img.shields.io/badge/Cloud-Documentation-blue?style=for-the-badge" alt="Cloud Docs">
+      </a>
+    </td>
+    <td align="center" width="25%">
       <b>VS Code 扩展</b><br><br>
       <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
         <img src="./assets/images/readme/download on vscode marketplace.png" alt="从 VS Marketplace 安装" width="180">
       </a>
     </td>
-    <td align="center" width="33%">
+    <td align="center" width="25%">
       <b>命令行工具</b><br><br>
       <a href="https://docs.costrict.ai/cli/guide/installation">
         <img src="https://img.shields.io/badge/CLI-文档-blue?style=for-the-badge" alt="CLI 文档">
