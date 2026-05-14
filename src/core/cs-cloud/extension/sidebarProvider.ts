@@ -4,7 +4,13 @@ import * as os from "os"
 import * as path from "path"
 import { CsCloudService } from "./csCloudService"
 import { getAssistantUIConfig, type AssistantUIConfig } from "./config"
-import { getAssistantUIStaticHtml, getAssistantUIIframeHtml, getAssistantUILoadingHtml } from "./html"
+import {
+	getAssistantUIStaticHtml,
+	getAssistantUIIframeHtml,
+	getAssistantUILoadingHtml,
+	getCrashedHtml,
+	escapeHtml,
+} from "./html"
 import { CostrictAuthService } from "../../costrict/auth"
 import { CostrictAuthConfig } from "../../costrict/auth/authConfig"
 import type { AssistantUIContextMessage } from "./types"
@@ -23,7 +29,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 	public static readonly viewType = "costrict.AssistantUISidebarProvider"
 
 	private view?: vscode.WebviewView
-	private csCloudService: CsCloudService
+	private readonly csCloudService: CsCloudService
 	private disposables: vscode.Disposable[] = []
 
 	/**
@@ -36,9 +42,9 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 	constructor(
 		private readonly context: vscode.ExtensionContext,
 		private readonly outputChannel: vscode.OutputChannel,
+		csCloudService: CsCloudService,
 	) {
-		this.csCloudService = new CsCloudService(outputChannel)
-		context.subscriptions.push(this.csCloudService)
+		this.csCloudService = csCloudService
 	}
 
 	/**
@@ -66,6 +72,23 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 				this.view = undefined
 				setActiveCloudProvider(undefined)
 				this.dispose()
+			},
+			null,
+			this.disposables,
+		)
+
+		// 1. 先注册事件监听（必须在分支渲染之前）+ 生命周期管理
+		const crashedHandler = ({ reason }: { reason: string }) => {
+			if (this.view) {
+				this.view.webview.html = getCrashedHtml(reason)
+			}
+		}
+		this.csCloudService.on("crashed", crashedHandler)
+
+		// webview dispose 时移除监听，避免重复绑定和内存泄漏
+		webviewView.onDidDispose(
+			() => {
+				this.csCloudService.off("crashed", crashedHandler)
 			},
 			null,
 			this.disposables,
@@ -125,6 +148,22 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					this.cachedHtml = undefined
 					await this.loadContent(webviewView)
 				}
+				if (message.type === "restartCsCloud") {
+					try {
+						await this.csCloudService.restart()
+						// 成功：重新加载 Cloud UI
+						this.cachedHtml = undefined
+						await this.loadContent(this.view!)
+					} catch (err) {
+						// 失败：通知错误页恢复按钮
+						const reason = err instanceof Error ? err.message : String(err)
+						this.outputChannel.appendLine(`[AssistantUI] Restart cs-cloud failed: ${reason}`)
+						this.view?.webview.postMessage({
+							type: "restartFailed",
+							reason,
+						})
+					}
+				}
 				if (message.type === "fetchQuota" && message.baseUrl && message.token) {
 					try {
 						const response = await fetch(`${message.baseUrl}/quota-manager/api/v1/quota`, {
@@ -156,13 +195,27 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 			return
 		}
 
-		// 如果有缓存的 HTML（侧边栏拖拽移动后重建 webview），直接复用
-		if (this.cachedHtml) {
-			webviewView.webview.html = this.cachedHtml
-			return
+		// 2. 根据持久化状态渲染
+		switch (this.csCloudService.state) {
+			case "crashed":
+				webviewView.webview.html = getCrashedHtml(this.csCloudService.lastCrashReason)
+				return
+			case "failed":
+				webviewView.webview.html = this.getErrorHtml(
+					this.csCloudService.startupFailureReason ??
+						this.csCloudService.lastCrashReason ??
+						"cs-cloud 启动失败",
+				)
+				return
+			case "running":
+				await this.loadContent(webviewView)
+				return
+			case "starting":
+			case "idle":
+				webviewView.webview.html = getAssistantUILoadingHtml(this.context, "正在启动 CoStrict Cloud...")
+				await this.loadContent(webviewView)
+				return
 		}
-
-		await this.loadContent(webviewView)
 	}
 
 	private getDisabledHtml(): string {
@@ -272,14 +325,27 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 </head>
 <body>
 	 <h3>CoStrict Cloud 启动失败</h3>
-	 <pre>${message.replace(/</g, "<")}</pre>
+	 <pre>${escapeHtml(message)}</pre>
 	 <p class="hint">请检查输出面板（Output → CoStrict）中的完整日志，或尝试重新登录 cs-cloud。</p>
-	 <button onclick="vscode.postMessage({type:'reloadAssistantUI'})">重试</button>
+	 <button onclick="vscode.postMessage({type:'restartCsCloud'})">重试</button>
 	 <script>
 	   const vscode = acquireVsCodeApi();
 	 </script>
 </body>
 </html>`
+	}
+
+	/**
+	 * 命令面板专用 restart 入口。
+	 * 如果 sidebar 未打开，直接 restart 即可（下次打开时根据状态渲染）。
+	 * 如果 sidebar 已打开，restart 成功后重新加载内容。
+	 */
+	async restartCsCloud(): Promise<void> {
+		await this.csCloudService.restart()
+		this.cachedHtml = undefined
+		if (this.view) {
+			await this.loadContent(this.view)
+		}
 	}
 
 	dispose() {

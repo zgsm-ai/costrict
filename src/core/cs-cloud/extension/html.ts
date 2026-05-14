@@ -216,8 +216,14 @@ function getNonce() {
 	return text
 }
 
-function escapeHtml(value: string) {
-	return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;")
+/** 转义 HTML 特殊字符，防止 XSS */
+export function escapeHtml(value: string): string {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;")
 }
 
 function getAssistantUITheme() {
@@ -365,6 +371,145 @@ function getLoadingMarkup(logoSvg: string, loadingText = "正在初始化界面.
       </div>
     </div>
   </div>`
+}
+
+/**
+ * 崩溃错误页 HTML。
+ * 包含「重试」按钮，通过 postMessage 与 SidebarProvider 交互。
+ */
+export function getCrashedHtml(reason?: string): string {
+	return /* html */ `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoStrict Cloud - Crashed</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--vscode-font-family, sans-serif);
+      background: var(--vscode-editor-background);
+      color: var(--vscode-foreground);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .crash-card {
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    .crash-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+    }
+    .crash-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+    .crash-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--vscode-errorForeground);
+    }
+    .crash-desc {
+      font-size: 13px;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .crash-detail {
+      background: var(--vscode-textCodeBlock-background);
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-family: var(--vscode-editor-font-family, monospace);
+      color: var(--vscode-descriptionForeground);
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 120px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+    .crash-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .crash-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: var(--vscode-font-family, sans-serif);
+      transition: opacity 0.15s;
+    }
+    .crash-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .crash-btn-primary {
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+    }
+    .crash-btn-primary:hover:not(:disabled) {
+      background: var(--vscode-button-hoverBackground);
+    }
+  </style>
+</head>
+<body>
+  <div class="crash-card">
+    <div class="crash-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--vscode-errorForeground)">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+      </svg>
+    </div>
+    <div class="crash-title">CoStrict Cloud 服务已崩溃</div>
+    <div class="crash-desc">cs-cloud 进程意外退出，请尝试重启服务。</div>
+    ${reason ? `<pre class="crash-detail">${escapeHtml(reason)}</pre>` : ""}
+    <div class="crash-actions">
+      <button id="restart-btn" class="crash-btn crash-btn-primary" onclick="handleRestart()">重试</button>
+    </div>
+  </div>
+  <script>
+    const vscode = acquireVsCodeApi();
+
+    function handleRestart() {
+      const btn = document.getElementById("restart-btn");
+      btn.disabled = true;
+      btn.textContent = "正在重启...";
+      vscode.postMessage({ type: "restartCsCloud" });
+    }
+
+    // 监听重启结果（由 SidebarProvider 回发）
+    window.addEventListener("message", (e) => {
+      if (e.data?.type === "restartFailed") {
+        const btn = document.getElementById("restart-btn");
+        btn.disabled = false;
+        btn.textContent = "重试";
+        const detail = document.querySelector(".crash-detail");
+        if (detail) {
+          detail.textContent = e.data.reason;
+        } else {
+          const desc = document.querySelector(".crash-desc");
+          if (desc) {
+            const pre = document.createElement("pre");
+            pre.className = "crash-detail";
+            pre.textContent = e.data.reason;
+            desc.after(pre);
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>`
 }
 
 export function getAssistantUILoadingHtml(context: vscode.ExtensionContext, loadingText?: string) {

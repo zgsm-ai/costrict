@@ -239,7 +239,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Only register AssistantUISidebarProvider when in cloud mode to avoid
 	// unnecessary object allocation and cs-cloud service initialization.
 	if (uiMode === "cloud") {
-		const assistantProvider = new AssistantUISidebarProvider(context, outputChannel)
+		// 创建单例 CsCloudService，注入给 SidebarProvider，避免多个实例竞争端口
+		const csCloudService = new CsCloudService(outputChannel)
+		context.subscriptions.push(csCloudService)
+
+		const assistantProvider = new AssistantUISidebarProvider(context, outputChannel, csCloudService)
 
 		context.subscriptions.push(
 			vscode.window.registerWebviewViewProvider(AssistantUISidebarProvider.viewType, assistantProvider, {
@@ -247,10 +251,24 @@ export async function activate(context: vscode.ExtensionContext) {
 			}),
 		)
 
+		// 注册 restart 命令（命令面板 + 错误页按钮）
+		context.subscriptions.push(
+			vscode.commands.registerCommand("costrict.restartCsCloud", async () => {
+				try {
+					await assistantProvider.restartCsCloud()
+				} catch (err) {
+					outputChannel.appendLine(
+						`[cs-cloud] restart failed: ${err instanceof Error ? err.message : String(err)}`,
+					)
+					vscode.window.showErrorMessage(
+						`重启 cs-cloud 失败: ${err instanceof Error ? err.message : String(err)}`,
+					)
+				}
+			}),
+		)
+
 		// Pre-start cs-cloud daemon when in cloud mode so it's ready by the
 		// time the user opens the sidebar.
-		const csCloudService = new CsCloudService(outputChannel)
-		context.subscriptions.push(csCloudService)
 		void csCloudService.ensureStarted().catch((err) => {
 			outputChannel.appendLine(
 				`[cs-cloud] auto-start failed: ${err instanceof Error ? err.message : String(err)}`,

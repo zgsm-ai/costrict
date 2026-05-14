@@ -1,27 +1,85 @@
 import * as http from "http"
-import { spawn, exec, type ChildProcessWithoutNullStreams } from "child_process"
+import { spawn, exec, type ChildProcessWithoutNullStreams, type ChildProcess } from "child_process"
+import { EventEmitter } from "events"
 import * as vscode from "vscode"
 import { getAssistantUIConfig } from "./config"
 
-export class CsCloudService implements vscode.Disposable {
+/** cs-cloud 进程归属类型 */
+export type CsCloudOwnership = "owned" | "unmanaged"
+/** cs-cloud 来源辅助信息 */
+export type CsCloudSource = "spawned" | "detected" | "configuredBaseUrl"
+
+export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	private process: ChildProcessWithoutNullStreams | undefined
 	private baseUrl: string | undefined
 	private lastErrorLine: string | undefined
-	private processExited = false
 
-	constructor(private readonly outputChannel: vscode.OutputChannel) {}
+	// ── 状态与归属 ──
+	state: "idle" | "starting" | "running" | "crashed" | "failed" = "idle"
+	ownership: CsCloudOwnership = "owned"
+	source: CsCloudSource = "spawned"
+
+	// ── 并发保护 ──
+	private generation = 0
+	private expectedStopGenerations: Set<number> = new Set()
+	private operationPromise?: Promise<string>
+
+	// ── 持久化 crash 信息 ──
+	lastCrashReason?: string
+	startupFailureReason?: string
+
+	// ── 健康检查 ──
+	private failCount = 0
+	private healthTimer?: NodeJS.Timeout
+
+	constructor(private readonly outputChannel: vscode.OutputChannel) {
+		super()
+	}
+
+	/** 暴露 baseUrl 供外部使用 */
+	get baseUrlValue(): string | undefined {
+		return this.baseUrl
+	}
+
+	// ═══════════════════════════════════════════════════════════════
+	// ensureStarted() / doEnsureStarted()
+	// ═══════════════════════════════════════════════════════════════
 
 	async ensureStarted(): Promise<string> {
-		const config = getAssistantUIConfig()
-		if (config.baseUrl.trim()) {
-			this.baseUrl = trimTrailingSlash(config.baseUrl.trim())
+		if (this.operationPromise) return this.operationPromise
+
+		// 如果已经是 owned 且 running，直接返回 baseUrl，避免 doEnsureStarted
+		// 中的 detectCsCloudPort 把 ownership 覆盖成 "unmanaged"（会导致
+		// 后续崩溃后 restart 时走 unmanaged 分支，只 health check 不 spawn）
+		if (this.state === "running" && this.ownership === "owned" && this.baseUrl) {
 			return this.baseUrl
 		}
 
-		const detectedPort = await detectCsCloudPort(config.defaultCli)
+		this.operationPromise = this.doEnsureStarted(false)
+		try {
+			const url = await this.operationPromise
+			this.handleStartSuccess()
+			return url
+		} finally {
+			this.operationPromise = undefined
+		}
+	}
+
+	private async doEnsureStarted(skipDetection = false, forceStart = false): Promise<string> {
+		const config = getAssistantUIConfig()
+		if (config.baseUrl.trim()) {
+			this.baseUrl = trimTrailingSlash(config.baseUrl.trim())
+			this.ownership = "unmanaged"
+			this.source = "configuredBaseUrl"
+			return this.baseUrl
+		}
+
+		const detectedPort = skipDetection ? undefined : await detectCsCloudPort(config.defaultCli)
 		if (detectedPort !== undefined) {
 			const healthUrl = `http://127.0.0.1:${detectedPort}/api/v1/runtime/health`
 			this.baseUrl = `http://127.0.0.1:${detectedPort}/api/v1`
+			this.ownership = "unmanaged"
+			this.source = "detected"
 
 			if (await isHttpReady(healthUrl)) {
 				await assertOpenCodeCompatible(this.baseUrl)
@@ -40,48 +98,93 @@ export class CsCloudService implements vscode.Disposable {
 		const healthUrl = `http://127.0.0.1:${port}/api/v1/runtime/health`
 		this.baseUrl = `http://127.0.0.1:${port}/api/v1`
 
-		if (await isHttpReady(healthUrl)) {
+		if (!skipDetection && (await isHttpReady(healthUrl))) {
+			this.ownership = "unmanaged"
+			this.source = "detected"
 			await assertOpenCodeCompatible(this.baseUrl)
 			return this.baseUrl
 		}
 
-		if (!config.autoStartCsCloud) {
+		if (!config.autoStartCsCloud && !forceStart) {
 			throw new Error("cs-cloud 没有运行，请先启动 cs-cloud 或设置 costrict.assistantUI.baseUrl")
 		}
 
-		if (!this.process) {
-			this.lastErrorLine = undefined
-			this.processExited = false
+		// ── 自己 spawn ──
+		this.ownership = "owned"
+		this.source = "spawned"
+		this.state = "starting"
+		this.lastErrorLine = undefined
+		this.startupFailureReason = undefined
 
+		if (!this.process) {
 			this.outputChannel.appendLine(
 				`[AssistantUI] Starting cs-cloud: ${config.defaultCli} cloud start --port ${port}`,
 			)
+			// 仅首次启动时递增 generation；restart 路径已由 doRestart 递增
+			if (!skipDetection) {
+				this.generation++
+			}
 			this.process = spawn(config.defaultCli, ["cloud", "start"].concat(port ? ["--port", String(port)] : []), {
 				cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
 				env: process.env,
 			})
 
-			this.process.stdout.on("data", (data) => {
+			const child = this.process
+			const childGen = this.generation
+
+			child.stdout.on("data", (data) => {
 				const text = String(data).trimEnd()
 				this.outputChannel.appendLine(`[cs-cloud] ${text}`)
 				this.captureErrorLine(text)
 			})
-			this.process.stderr.on("data", (data) => {
+			child.stderr.on("data", (data) => {
 				const text = String(data).trimEnd()
 				this.outputChannel.appendLine(`[cs-cloud] ${text}`)
 				this.captureErrorLine(text)
 			})
-			this.process.on("exit", (code, signal) => {
+			child.on("exit", (code, signal) => {
 				this.outputChannel.appendLine(`[AssistantUI] cs-cloud exited code=${code ?? ""} signal=${signal ?? ""}`)
-				this.process = undefined
-				if (code !== 0 || signal !== null) {
-					this.processExited = true
+
+				// 只有当前进程引用一致时才清空，防止旧事件清掉新进程引用
+				if (this.process === child) {
+					this.process = undefined
+				}
+
+				// 按 generation 检查是否为主动 kill
+				if (this.expectedStopGenerations.has(childGen)) {
+					this.expectedStopGenerations.delete(childGen)
+					return
+				}
+
+				// 旧 generation 事件忽略
+				if (childGen !== this.generation) return
+
+				// STARTING 阶段退出：仅非零退出码或 signal 才视为失败。
+				// cs-cloud daemon 模式会 fork 后父进程 exit(0)，此时不应报错，
+				// 让 waitForHttpReady 继续轮询等待 daemon HTTP 端口就绪。
+				if (this.state === "starting") {
+					if (code !== 0 || signal) {
+						this.startupFailureReason = this.lastErrorLine ?? `code=${code} signal=${signal}`
+						this.state = "failed"
+					}
+					return
+				}
+
+				// RUNNING 阶段退出 → 仅非零退出码或 signal 才视为崩溃。
+				// daemon fork 后 child exit(0) 可能在 handleStartSuccess 之后才被
+				// EventLoop 处理到（竞态），此时 state 已为 running，不应误判崩溃。
+				if (this.state === "running") {
+					if (code !== 0 || signal) {
+						this.notifyCrash(`进程退出 (code=${code}, signal=${signal})`)
+					}
+					return
 				}
 			})
-			this.process.on("error", (error) => {
+			child.on("error", (error) => {
 				this.outputChannel.appendLine(`[AssistantUI] Failed to start cs-cloud: ${error.message}`)
 				this.lastErrorLine = error.message
-				this.processExited = true
+				this.startupFailureReason = error.message
+				this.state = "failed"
 			})
 		}
 
@@ -90,11 +193,154 @@ export class CsCloudService implements vscode.Disposable {
 		return this.baseUrl
 	}
 
+	// ═══════════════════════════════════════════════════════════════
+	// restart()
+	// ═══════════════════════════════════════════════════════════════
+
+	async restart(): Promise<string> {
+		if (this.operationPromise) return this.operationPromise
+
+		this.operationPromise = this.doRestart()
+		try {
+			return await this.operationPromise
+		} finally {
+			this.operationPromise = undefined
+		}
+	}
+
+	private async doRestart(): Promise<string> {
+		if (this.ownership === "unmanaged" && this.source === "configuredBaseUrl") {
+			this.outputChannel.appendLine(
+				`[AssistantUI] Restart requested for configured cs-cloud baseUrl ${this.baseUrl}; waiting for health check...`,
+			)
+			await this.waitForHealth()
+			this.handleStartSuccess()
+			return this.baseUrl!
+		}
+
+		if (this.ownership === "unmanaged") {
+			this.outputChannel.appendLine(
+				"[AssistantUI] Restarting previously detected cs-cloud as a managed cs-cloud daemon...",
+			)
+		}
+
+		// owned 或自动检测到的 unmanaged：启动一个由扩展管理的新进程
+		this.stopHealthMonitor()
+		this.state = "starting"
+		this.failCount = 0
+		this.startupFailureReason = undefined
+
+		const oldProcess = this.process
+		const oldGen = this.generation
+
+		if (oldProcess && !oldProcess.killed) {
+			this.expectedStopGenerations.add(oldGen)
+			oldProcess.kill()
+			await this.waitForProcessExit(oldProcess, 5000)
+		}
+		this.process = undefined
+		this.generation++
+
+		try {
+			const url = await this.doEnsureStarted(true, true)
+			this.handleStartSuccess()
+			return url
+		} finally {
+			this.expectedStopGenerations.delete(oldGen)
+		}
+	}
+
+	// ═══════════════════════════════════════════════════════════════
+	// dispose()
+	// ═══════════════════════════════════════════════════════════════
+
 	dispose(): void {
+		this.stopHealthMonitor()
 		if (this.process && !this.process.killed) {
+			const gen = this.generation
+			this.expectedStopGenerations.add(gen)
 			this.process.kill()
 		}
 		this.process = undefined
+	}
+
+	// ═══════════════════════════════════════════════════════════════
+	// handleStartSuccess / notifyCrash / 健康检查
+	// ═══════════════════════════════════════════════════════════════
+
+	private handleStartSuccess(): void {
+		this.state = "running"
+		this.lastCrashReason = undefined
+		this.failCount = 0
+		this.startupFailureReason = undefined
+		this.startHealthMonitor()
+	}
+
+	private notifyCrash(reason: string): void {
+		if (this.state === "crashed") return
+		this.state = "crashed"
+		this.lastCrashReason = reason
+		this.stopHealthMonitor()
+		this.emit("crashed", { reason })
+	}
+
+	private startHealthMonitor(): void {
+		this.stopHealthMonitor()
+		const monitorGen = this.generation
+		const healthUrl = this.healthUrl
+
+		const doCheck = async () => {
+			if (monitorGen !== this.generation || this.state !== "running") return
+
+			const healthy = await isHttpReady(healthUrl)
+
+			if (monitorGen !== this.generation || this.state !== "running") return
+
+			if (healthy) {
+				this.failCount = 0
+			} else {
+				this.failCount++
+				if (this.failCount >= 3) {
+					this.notifyCrash("健康检查连续失败")
+					return
+				}
+			}
+
+			this.healthTimer = setTimeout(doCheck, 30_000)
+		}
+
+		this.healthTimer = setTimeout(doCheck, 30_000)
+	}
+
+	private stopHealthMonitor(): void {
+		if (this.healthTimer) {
+			clearTimeout(this.healthTimer)
+			this.healthTimer = undefined
+		}
+	}
+
+	private get healthUrl(): string {
+		return this.baseUrl ? `${this.baseUrl}/runtime/health` : "http://127.0.0.1:0/api/v1/runtime/health"
+	}
+
+	// ═══════════════════════════════════════════════════════════════
+	// Helpers
+	// ═══════════════════════════════════════════════════════════════
+
+	private async waitForHealth(timeoutMs = 30_000): Promise<void> {
+		const startedAt = Date.now()
+		while (Date.now() - startedAt < timeoutMs) {
+			if (await isHttpReady(this.healthUrl)) return
+			await new Promise((resolve) => setTimeout(resolve, 1000))
+		}
+		throw new Error("Timed out waiting for cs-cloud health check")
+	}
+
+	private async waitForProcessExit(proc: ChildProcess, timeoutMs: number): Promise<void> {
+		await Promise.race([
+			new Promise<void>((resolve) => proc.once("exit", () => resolve())),
+			new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+		])
 	}
 
 	private captureErrorLine(text: string) {
@@ -117,9 +363,8 @@ export class CsCloudService implements vscode.Disposable {
 		let attempt = 0
 
 		while (Date.now() - startedAt < timeoutMs) {
-			if (this.processExited) {
-				const reason = this.lastErrorLine ? `: ${this.lastErrorLine}` : ""
-				throw new Error(`cs-cloud 启动失败${reason}`)
+			if (this.startupFailureReason) {
+				throw new Error(`cs-cloud 启动失败: ${this.startupFailureReason}`)
 			}
 
 			try {
@@ -133,9 +378,8 @@ export class CsCloudService implements vscode.Disposable {
 			await new Promise((resolve) => setTimeout(resolve, delay))
 		}
 
-		if (this.processExited) {
-			const reason = this.lastErrorLine ? `: ${this.lastErrorLine}` : ""
-			throw new Error(`cs-cloud 启动失败${reason}`)
+		if (this.startupFailureReason) {
+			throw new Error(`cs-cloud 启动失败: ${this.startupFailureReason}`)
 		}
 
 		throw new Error(

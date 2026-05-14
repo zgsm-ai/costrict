@@ -37,6 +37,19 @@ function createOutputChannel() {
 	return { appendLine: vi.fn() }
 }
 
+function mockSpawnProcess() {
+	vi.mocked(spawn).mockImplementation(() => {
+		const stdout = new EventEmitter()
+		const stderr = new EventEmitter()
+		return Object.assign(new EventEmitter(), {
+			stdout,
+			stderr,
+			killed: false,
+			kill: vi.fn(),
+		}) as unknown as import("child_process").ChildProcessWithoutNullStreams
+	})
+}
+
 function mockExecReturn(stdout: string) {
 	vi.mocked(exec).mockImplementation((cmd, options, callback) => {
 		if (typeof options === "function") {
@@ -66,6 +79,7 @@ function mockExecSequence(outputs: string[]) {
 describe("CsCloudService", () => {
 	beforeEach(() => {
 		allowNetConnect("127.0.0.1")
+		vi.mocked(spawn).mockReset()
 		setConfigValues({
 			baseUrl: "",
 			port: 45489,
@@ -185,6 +199,55 @@ describe("CsCloudService", () => {
 		const service = new CsCloudService(createOutputChannel() as never)
 
 		await expect(service.ensureStarted()).resolves.toBe("http://127.0.0.1:55555/api/v1")
+		expect(spawn).not.toHaveBeenCalled()
+	})
+
+	it("starts a managed daemon when restarting a detected unmanaged service", async () => {
+		setConfigValues({ baseUrl: "", port: 45489, autoStartCsCloud: false })
+		mockExecReturn(
+			"\x1b[1;38;2;125;86;244mcs-cloud status\x1b[m\n               \n\x1b[38;2;4;181;117m  ✓\x1b[m \x1b[38;2;4;181;117mRunning\x1b[m\n  \x1b[38;2;176;176;176mlocal_url:\x1b[m \x1b[38;2;255;255;255mhttp://127.0.0.1:55555\x1b[m\n",
+		)
+		nock("http://127.0.0.1:55555").get("/api/v1/runtime/health").reply(200, { ok: true })
+		nock("http://127.0.0.1:55555")
+			.get("/api/v1/conversations")
+			.query({ roots: "true", archived: "true" })
+			.reply(200, [])
+
+		const outputChannel = createOutputChannel()
+		const service = new CsCloudService(outputChannel as never)
+
+		await expect(service.ensureStarted()).resolves.toBe("http://127.0.0.1:55555/api/v1")
+		expect(spawn).not.toHaveBeenCalled()
+
+		mockSpawnProcess()
+		nock("http://127.0.0.1:45489").get("/api/v1/runtime/health").reply(200, { ok: true })
+		nock("http://127.0.0.1:45489")
+			.get("/api/v1/conversations")
+			.query({ roots: "true", archived: "true" })
+			.reply(200, [])
+
+		await expect(service.restart()).resolves.toBe("http://127.0.0.1:45489/api/v1")
+		expect(spawn).toHaveBeenCalledWith(
+			"csc",
+			["cloud", "start", "--port", "45489"],
+			expect.objectContaining({ cwd: "/workspace" }),
+		)
+		expect(outputChannel.appendLine).toHaveBeenCalledWith(
+			"[AssistantUI] Restarting previously detected cs-cloud as a managed cs-cloud daemon...",
+		)
+		expect(outputChannel.appendLine).toHaveBeenCalledWith(
+			"[AssistantUI] Starting cs-cloud: csc cloud start --port 45489",
+		)
+	})
+
+	it("keeps configured baseUrl unmanaged when restarting", async () => {
+		setConfigValues({ baseUrl: "http://127.0.0.1:55555/api/v1", port: 45489, autoStartCsCloud: true })
+		nock("http://127.0.0.1:55555").get("/api/v1/runtime/health").reply(200, { ok: true })
+
+		const service = new CsCloudService(createOutputChannel() as never)
+
+		await expect(service.ensureStarted()).resolves.toBe("http://127.0.0.1:55555/api/v1")
+		await expect(service.restart()).resolves.toBe("http://127.0.0.1:55555/api/v1")
 		expect(spawn).not.toHaveBeenCalled()
 	})
 

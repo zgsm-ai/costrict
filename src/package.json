@@ -137,6 +137,11 @@
 				"icon": "$(account)"
 			},
 			{
+				"command": "costrict.restartCsCloud",
+				"title": "CoStrict: Restart CoStrict Cloud",
+				"category": "%configuration.title%"
+			},
+			{
 				"command": "costrict.settingsButtonClicked",
 				"title": "%command.settings.title%",
 				"icon": "$(settings-gear)"
