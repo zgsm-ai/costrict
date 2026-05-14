@@ -51,6 +51,9 @@ vi.mock("vscode", async () => {
 				stat: vi.fn(),
 			},
 			getWorkspaceFolder: vi.fn(),
+			getConfiguration: vi.fn().mockReturnValue({
+				get: vi.fn().mockReturnValue("classic"),
+			}),
 			createFileSystemWatcher: vi.fn().mockReturnValue({
 				onDidCreate: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 				onDidChange: vi.fn().mockReturnValue({ dispose: vi.fn() }),
