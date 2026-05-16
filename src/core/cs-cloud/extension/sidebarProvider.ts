@@ -1,6 +1,7 @@
 import * as vscode from "vscode"
 import * as path from "path"
 import { CsCloudService } from "./csCloudService"
+import { openDiffView } from "./diffView"
 import { getAssistantUIConfig, type AssistantUIConfig } from "./config"
 import {
 	getAssistantUIStaticHtml,
@@ -120,6 +121,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 				type: string
 				url?: string
 				path?: string
+				patch?: string
 				baseUrl?: string
 				token?: string
 				command?: string
@@ -138,6 +140,9 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 						: path.join(workspaceDir || "", message.path)
 					const uri = vscode.Uri.file(filePath)
 					vscode.commands.executeCommand("vscode.open", uri)
+				}
+				if (message.type === "openDiff" && message.path && message.patch) {
+					void openDiffView(message.path, message.patch)
 				}
 				if (message.type === "executeCommand" && message.command) {
 					vscode.commands.executeCommand(message.command)

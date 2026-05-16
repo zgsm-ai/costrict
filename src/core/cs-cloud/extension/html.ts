@@ -621,6 +621,10 @@ export function getAssistantUIStaticHtml(
               v.postMessage({ type: "openFile", path: e.data.path });
               return;
             }
+            if (e.data?.type === "openDiff" && e.data.path && e.data.patch) {
+              v.postMessage({ type: "openDiff", path: e.data.path, patch: e.data.patch });
+              return;
+            }
             if (e.data?.type === "executeCommand" && e.data.command) {
               v.postMessage({ type: "executeCommand", command: e.data.command });
               return;
@@ -799,6 +803,10 @@ export function getAssistantUIIframeHtml(
         }
         if (event.data?.type === "openFile" && event.data.path) {
           vscodeApi.postMessage({ type: "openFile", path: event.data.path });
+          return;
+        }
+        if (event.data?.type === "openDiff" && event.data.path && event.data.patch) {
+          vscodeApi.postMessage({ type: "openDiff", path: event.data.path, patch: event.data.patch });
           return;
         }
         if (event.data?.type === "executeCommand" && event.data.command) {
