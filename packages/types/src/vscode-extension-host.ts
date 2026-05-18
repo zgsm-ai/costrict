@@ -564,6 +564,7 @@ export interface WebviewMessage {
 		| "openProjectMcpSettings"
 		| "restartMcpServer"
 		| "refreshAllMcpServers"
+		| "queryMcpAsyncTask"
 		| "toggleToolAlwaysAllow"
 		| "toggleToolEnabledForPrompt"
 		| "toggleMcpServer"
@@ -727,6 +728,7 @@ export interface WebviewMessage {
 	audioType?: AudioType
 	serverName?: string
 	toolName?: string
+	recordId?: string
 	alwaysAllow?: boolean
 	isEnabled?: boolean
 	mode?: string

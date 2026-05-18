@@ -1844,6 +1844,10 @@ export class McpHub {
 		return records.map(summarizeRecord)
 	}
 
+	getAsyncTaskStore(): McpAsyncTaskStore {
+		return this.getOrCreateAsyncTaskStore()
+	}
+
 	getAsyncExecutionService(): McpAsyncExecutionService {
 		if (!this.asyncExecutionService) {
 			const store = this.getOrCreateAsyncTaskStore()
