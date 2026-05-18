@@ -2565,4 +2565,27 @@ describe("McpHub", () => {
 			await expect(hub.getAsyncPollingConfig("srv-a", "anything")).resolves.toBeUndefined()
 		})
 	})
+
+	describe("McpHub.getAsyncExecutionService", () => {
+		it("returns the same instance on repeated calls", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a")
+			expect(hub.getAsyncExecutionService()).toBe(hub.getAsyncExecutionService())
+		})
+
+		it("the returned service falls through to callTool when no asyncPolling is configured", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a")
+			const spy = vi.spyOn(hub, "callTool").mockResolvedValueOnce({ content: [{ type: "text", text: "x" }] })
+
+			const res = await hub.getAsyncExecutionService().execute({
+				serverName: "srv-a",
+				toolName: "anything",
+				arguments: {},
+				source: undefined,
+				executionId: "e1",
+				isCancelled: () => false,
+			})
+			expect((res.content[0] as { text: string }).text).toBe("x")
+			expect(spy).toHaveBeenCalled()
+		})
+	})
 })

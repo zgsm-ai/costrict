@@ -39,6 +39,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { arePathsEqual, getWorkspacePath } from "../../utils/path"
 import { injectVariables } from "../../utils/config"
 import { NotificationService } from "./costrict/NotificationService"
+import { McpAsyncExecutionService } from "./asyncPolling/McpAsyncExecutionService"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { isJetbrainsPlatform } from "../../utils/platform"
@@ -168,6 +169,7 @@ export class McpHub {
 	private flagResetTimer?: NodeJS.Timeout
 	private sanitizedNameRegistry: Map<string, string> = new Map()
 	private initializationPromise: Promise<void>
+	private asyncExecutionService: McpAsyncExecutionService | undefined
 
 	constructor(provider: ClineProvider) {
 		this.providerRef = new WeakRef(provider)
@@ -1809,6 +1811,19 @@ export class McpHub {
 		} catch {
 			return undefined
 		}
+	}
+
+	getAsyncExecutionService(): McpAsyncExecutionService {
+		if (!this.asyncExecutionService) {
+			this.asyncExecutionService = new McpAsyncExecutionService({
+				callTool: (serverName, toolName, args, source, options) =>
+					this.callTool(serverName, toolName, args, source, options),
+				isToolDisabled: (serverName, toolName, source) => this.isToolDisabled(serverName, toolName, source),
+				getAsyncPollingConfig: (serverName, toolName, source) =>
+					this.getAsyncPollingConfig(serverName, toolName, source),
+			})
+		}
+		return this.asyncExecutionService
 	}
 
 	async callTool(
