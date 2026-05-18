@@ -388,3 +388,103 @@ describe("ConfiguredPollingStrategy post-taskId", () => {
 		expect(text).toContain("rpc down")
 	})
 })
+
+describe("ConfiguredPollingStrategy persistence", () => {
+	function makeFakeStore() {
+		const state: { records: any[] } = { records: [] }
+		return {
+			state,
+			store: {
+				create: vi.fn(async (input: any) => {
+					const r = { id: `r${state.records.length + 1}`, ...input, createdAt: 0, updatedAt: 0 }
+					state.records.push(r)
+					return r
+				}),
+				update: vi.fn(async (id: string, patch: any) => {
+					const r = state.records.find((x) => x.id === id)
+					Object.assign(r, patch)
+					return r
+				}),
+				complete: vi.fn(async (id: string, terminal: any) => {
+					const r = state.records.find((x) => x.id === id)
+					r.terminalStatus = terminal
+					return r
+				}),
+			},
+		}
+	}
+
+	it("does NOT call store.create when taskId extraction fails", async () => {
+		const { store } = makeFakeStore()
+		const deps = makeDeps({
+			callTool: vi.fn().mockResolvedValueOnce({ content: [{ type: "text", text: "not json" }] }),
+			store,
+		} as any)
+		await new ConfiguredPollingStrategy(baseConfig, deps).execute({
+			serverName: "srv",
+			toolName: "deploy",
+			arguments: {},
+			source: undefined,
+			executionId: "e1",
+			isCancelled: () => false,
+		})
+		expect(store.create).not.toHaveBeenCalled()
+	})
+
+	it("calls store.create once taskId is extracted, update on each poll, complete on success", async () => {
+		const { store } = makeFakeStore()
+		const callTool = vi
+			.fn()
+			.mockResolvedValueOnce(jsonText({ taskId: "T-1" }))
+			.mockResolvedValueOnce(jsonText({ status: "running" }))
+			.mockResolvedValueOnce(jsonText({ status: "done", result: 1 }))
+
+		await new ConfiguredPollingStrategy(baseConfig, makeDeps({ callTool, store } as any)).execute({
+			serverName: "srv",
+			toolName: "deploy",
+			arguments: {},
+			source: undefined,
+			executionId: "e1",
+			isCancelled: () => false,
+		})
+
+		expect(store.create).toHaveBeenCalledTimes(1)
+		expect(store.create.mock.calls[0][0].taskId).toBe("T-1")
+		expect(store.update).toHaveBeenCalled()
+		expect(store.complete).toHaveBeenCalledWith("r1", "completed")
+	})
+
+	it("calls store.complete with 'failed' on business_failed", async () => {
+		const { store } = makeFakeStore()
+		const callTool = vi
+			.fn()
+			.mockResolvedValueOnce(jsonText({ taskId: "T-2" }))
+			.mockResolvedValueOnce(jsonText({ status: "failed", error: "x" }))
+		await new ConfiguredPollingStrategy(baseConfig, makeDeps({ callTool, store } as any)).execute({
+			serverName: "srv",
+			toolName: "deploy",
+			arguments: {},
+			source: undefined,
+			executionId: "e1",
+			isCancelled: () => false,
+		})
+		expect(store.complete).toHaveBeenCalledWith("r1", "failed")
+	})
+
+	it("calls store.complete with 'unknown' on transport_unknown after taskId is known", async () => {
+		const { store } = makeFakeStore()
+		const callTool = vi
+			.fn()
+			.mockResolvedValueOnce(jsonText({ taskId: "T-3" }))
+			.mockRejectedValueOnce(new Error("network"))
+		await new ConfiguredPollingStrategy(baseConfig, makeDeps({ callTool, store } as any)).execute({
+			serverName: "srv",
+			toolName: "deploy",
+			arguments: {},
+			source: undefined,
+			executionId: "e1",
+			isCancelled: () => false,
+		})
+		expect(store.complete).toHaveBeenCalledWith("r1", "unknown")
+	})
+})

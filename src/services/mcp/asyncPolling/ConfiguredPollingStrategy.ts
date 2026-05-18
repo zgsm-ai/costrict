@@ -76,10 +76,25 @@ export class ConfiguredPollingStrategy {
 		}
 
 		// Task 8 plugs the polling loop in here.
-		return this.pollUntilTerminal(rawTaskId, req)
+		const record = await this.deps.store?.create({
+			serverName: req.serverName,
+			source: req.source,
+			originalToolName: req.toolName,
+			taskId: rawTaskId,
+			statusTool: this.config.statusTool,
+			executionId: req.executionId,
+		})
+
+		const outcome = await this.pollUntilTerminal(rawTaskId, req, record?.id)
+		if (record?.id) {
+			const terminal: "completed" | "failed" | "unknown" =
+				outcome.kind === "success" ? "completed" : outcome.kind === "business_failed" ? "failed" : "unknown"
+			await this.deps.store?.complete(record.id, terminal)
+		}
+		return outcome
 	}
 
-	protected async pollUntilTerminal(taskId: string, req: ExecuteRequest): Promise<AsyncOutcome> {
+	protected async pollUntilTerminal(taskId: string, req: ExecuteRequest, recordId?: string): Promise<AsyncOutcome> {
 		const now = this.deps.now ?? (() => Date.now())
 		const sleep = this.deps.sleep ?? defaultSleep
 		const interval = clamp(this.config.intervalMs, 1000, 60000)
@@ -181,6 +196,13 @@ export class ConfiguredPollingStrategy {
 				}
 			}
 			lastStatus = rawStatus
+
+			if (recordId) {
+				await this.deps.store?.update(recordId, {
+					lastStatus: rawStatus,
+					rawSummary: text,
+				})
+			}
 
 			req.onProgress?.({
 				executionId: req.executionId,
