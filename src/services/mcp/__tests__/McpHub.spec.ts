@@ -1780,6 +1780,58 @@ describe("McpHub", () => {
 				)
 			})
 		})
+
+		describe("callTool per-call options", () => {
+			it("forwards custom timeoutMs to client.request", async () => {
+				const mockConnection: ConnectedMcpConnection = {
+					type: "connected",
+					server: {
+						name: "test-server",
+						config: JSON.stringify({ type: "stdio", command: "test", timeout: 60 }),
+						status: "connected",
+					},
+					client: {
+						request: vi.fn().mockResolvedValue({ content: [] }),
+					} as any,
+					transport: {} as any,
+				}
+
+				mcpHub.connections = [mockConnection]
+
+				await mcpHub.callTool("test-server", "t1", { x: 1 }, undefined, { timeoutMs: 1234 })
+
+				expect(mockConnection.client!.request).toHaveBeenCalledWith(
+					expect.anything(),
+					expect.anything(),
+					expect.objectContaining({ timeout: 1234 }),
+				)
+			})
+
+			it("aborts when AbortSignal already aborted before request", async () => {
+				const mockConnection: ConnectedMcpConnection = {
+					type: "connected",
+					server: {
+						name: "test-server",
+						config: JSON.stringify({ type: "stdio", command: "test", timeout: 60 }),
+						status: "connected",
+					},
+					client: {
+						request: vi.fn().mockResolvedValue({ content: [] }),
+					} as any,
+					transport: {} as any,
+				}
+
+				mcpHub.connections = [mockConnection]
+
+				const ctrl = new AbortController()
+				ctrl.abort()
+
+				await expect(
+					mcpHub.callTool("test-server", "t1", undefined, undefined, { signal: ctrl.signal }),
+				).rejects.toThrow(/aborted|abort/i)
+				expect(mockConnection.client!.request).not.toHaveBeenCalled()
+			})
+		})
 	})
 
 	describe("MCP global enable/disable", () => {

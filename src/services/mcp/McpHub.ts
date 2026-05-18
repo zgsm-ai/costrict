@@ -1781,7 +1781,12 @@ export class McpHub {
 		toolName: string,
 		toolArguments?: Record<string, unknown>,
 		source?: "global" | "project",
+		options?: { timeoutMs?: number; signal?: AbortSignal },
 	): Promise<McpToolCallResponse> {
+		if (options?.signal?.aborted) {
+			throw new Error(`callTool aborted before request: ${serverName}/${toolName}`)
+		}
+
 		const connection = this.findConnection(serverName, source)
 		if (!connection || connection.type !== "connected") {
 			throw new Error(
@@ -1793,27 +1798,28 @@ export class McpHub {
 		}
 
 		let timeout: number
-		try {
-			const parsedConfig = ServerConfigSchema.parse(JSON.parse(connection.server.config))
-			timeout = (parsedConfig.timeout ?? 60) * 1000
-		} catch (error) {
-			console.error("Failed to parse server config for timeout:", error)
-			// Default to 60 seconds if parsing fails
-			timeout = 60 * 1000
+		if (typeof options?.timeoutMs === "number") {
+			timeout = options.timeoutMs
+		} else {
+			try {
+				const parsedConfig = ServerConfigSchema.parse(JSON.parse(connection.server.config))
+				timeout = (parsedConfig.timeout ?? 60) * 1000
+			} catch (error) {
+				console.error("Failed to parse server config for timeout:", error)
+				timeout = 60 * 1000
+			}
 		}
+
+		const reqOptions: { timeout: number; signal?: AbortSignal } = { timeout }
+		if (options?.signal) reqOptions.signal = options.signal
 
 		return await connection.client.request(
 			{
 				method: "tools/call",
-				params: {
-					name: toolName,
-					arguments: toolArguments,
-				},
+				params: { name: toolName, arguments: toolArguments },
 			},
 			CallToolResultSchema,
-			{
-				timeout,
-			},
+			reqOptions,
 		)
 	}
 
