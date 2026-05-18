@@ -90,6 +90,12 @@ export class McpAsyncTaskStore {
 		return records[idx]
 	}
 
+	async delete(id: string): Promise<void> {
+		const records = await this.load()
+		const next = records.filter((r) => r.id !== id)
+		await this.persist(next)
+	}
+
 	private async load(): Promise<McpAsyncTaskRecord[]> {
 		try {
 			const raw = await fs.readFile(this.filePath, "utf-8")
