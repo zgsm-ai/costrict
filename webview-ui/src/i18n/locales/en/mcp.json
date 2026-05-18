@@ -60,6 +60,11 @@
 	"execution": {
 		"running": "Running",
 		"completed": "Completed",
-		"error": "Error"
+		"error": "Error",
+		"polling": "polling remote task",
+		"stoppedWaiting": "stopped waiting",
+		"stoppedUserCancelled": "user cancelled",
+		"stoppedTimedOut": "timed out",
+		"stoppedConnectionUnavailable": "connection unavailable"
 	}
 }

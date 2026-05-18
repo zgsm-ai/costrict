@@ -200,20 +200,36 @@ export const McpExecution = ({
 								<div
 									className={cn("rounded-full size-1.5", {
 										"bg-lime-400": status.status === "started" || status.status === "completed",
+										"bg-yellow-400": status.status === "polling",
+										"bg-orange-400": status.status === "stopped_waiting",
 										"bg-red-400": status.status === "error",
 									})}
 								/>
 								<div
 									className={cn("whitespace-nowrap", {
 										"text-vscode-foreground":
-											status.status === "started" || status.status === "completed",
+											status.status === "started" ||
+											status.status === "completed" ||
+											status.status === "polling" ||
+											status.status === "stopped_waiting",
 										"text-vscode-errorForeground": status.status === "error",
 									})}>
 									{status.status === "started"
 										? t("execution.running")
 										: status.status === "completed"
 											? t("execution.completed")
-											: t("execution.error")}
+											: status.status === "polling"
+												? t("execution.polling") +
+													(status.taskId ? ` · ${status.taskId.slice(0, 12)}` : "")
+												: status.status === "stopped_waiting"
+													? `${t("execution.stoppedWaiting")} · ${
+															status.reason === "user_cancelled"
+																? t("execution.stoppedUserCancelled")
+																: status.reason === "timed_out"
+																	? t("execution.stoppedTimedOut")
+																	: t("execution.stoppedConnectionUnavailable")
+														}`
+													: t("execution.error")}
 								</div>
 								{status.status === "error" && "error" in status && status.error && (
 									<div className="whitespace-nowrap">({status.error})</div>
