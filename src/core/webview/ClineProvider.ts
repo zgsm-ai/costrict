@@ -2866,6 +2866,7 @@ export class ClineProvider
 			experiments: experiments ?? experimentDefault,
 			experimentSettings: experimentSettings ?? {},
 			mcpServers: this.mcpHub?.getAllServers() ?? [],
+			mcpAsyncTaskRecords: (await this.mcpHub?.getAsyncTaskRecords?.()) ?? [],
 			maxOpenTabsContext: maxOpenTabsContext ?? 20,
 			maxWorkspaceFiles: maxWorkspaceFiles ?? MAX_WORKSPACE_FILES,
 			cwd,

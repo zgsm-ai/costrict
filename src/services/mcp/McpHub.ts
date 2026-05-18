@@ -171,6 +171,7 @@ export class McpHub {
 	private sanitizedNameRegistry: Map<string, string> = new Map()
 	private initializationPromise: Promise<void>
 	private asyncExecutionService: McpAsyncExecutionService | undefined
+	private asyncTaskStore: McpAsyncTaskStore | undefined
 	private asyncStorageRoot: string | undefined
 
 	constructor(provider: ClineProvider) {
@@ -1826,12 +1827,26 @@ export class McpHub {
 		return this.asyncStorageRoot
 	}
 
-	getAsyncExecutionService(): McpAsyncExecutionService {
-		if (!this.asyncExecutionService) {
-			const store = new McpAsyncTaskStore({
+	private getOrCreateAsyncTaskStore(): McpAsyncTaskStore {
+		if (!this.asyncTaskStore) {
+			this.asyncTaskStore = new McpAsyncTaskStore({
 				rootDir: this.getAsyncStorageRoot(),
 				workspacePath: getWorkspacePath(),
 			})
+		}
+		return this.asyncTaskStore
+	}
+
+	async getAsyncTaskRecords(): Promise<import("@roo-code/types").McpAsyncTaskSummary[]> {
+		const store = this.getOrCreateAsyncTaskStore()
+		const records = await store.list()
+		const { summarizeRecord } = await import("@roo-code/types")
+		return records.map(summarizeRecord)
+	}
+
+	getAsyncExecutionService(): McpAsyncExecutionService {
+		if (!this.asyncExecutionService) {
+			const store = this.getOrCreateAsyncTaskStore()
 			this.asyncExecutionService = new McpAsyncExecutionService(
 				{
 					callTool: (serverName, toolName, args, source, options) =>

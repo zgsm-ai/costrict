@@ -254,6 +254,17 @@ vi.mock("../../../integrations/workspace/WorkspaceTracker", () => {
 	}
 })
 
+vi.mock("../../../services/mcp/McpServerManager", () => ({
+	McpServerManager: {
+		getInstance: vi.fn().mockResolvedValue({
+			registerClient: vi.fn(),
+			unregisterClient: vi.fn(),
+			getAllServers: vi.fn().mockReturnValue([]),
+		}),
+		unregisterProvider: vi.fn(),
+	},
+}))
+
 vi.mock("../../task/Task", () => ({
 	Task: vi.fn().mockImplementation((options: any) => ({
 		api: undefined,
@@ -820,6 +831,28 @@ describe("ClineProvider", () => {
 		await provider.removeClineFromStack()
 		const stateAfterClear = await provider.getStateToPostToWebview()
 		expect(stateAfterClear.isStreaming).toBe(false)
+	})
+
+	test("getStateToPostToWebview includes summarized async task records from McpHub", async () => {
+		const list = vi.fn().mockResolvedValue([
+			{ id: "r1", serverName: "ci", originalToolName: "deploy", taskId: "T1" },
+			{
+				id: "r2",
+				serverName: "ci",
+				originalToolName: "deploy",
+				taskId: "T2",
+				terminalStatus: "completed",
+				resultFetchedAt: 2,
+			},
+		])
+		;(provider as any).mcpHub = {
+			getAsyncTaskRecords: list,
+			getAllServers: vi.fn().mockReturnValue([]),
+		}
+		const state = await provider.getStateToPostToWebview()
+		expect(state.mcpAsyncTaskRecords).toHaveLength(2)
+		expect(state.mcpAsyncTaskRecords?.[0].taskId).toBe("T1")
+		expect((state.mcpAsyncTaskRecords?.[0] as any).rawSummary).toBeUndefined()
 	})
 
 	test("postStateToWebviewWithoutClineMessages still includes currentTaskTodos for todo sync", async () => {
