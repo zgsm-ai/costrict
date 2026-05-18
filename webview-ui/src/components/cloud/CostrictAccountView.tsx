@@ -271,9 +271,9 @@ const CostrictAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewP
 	}, [apiConfiguration?.costrictBaseUrl, hash])
 
 	const handleGetMoreQuota = useCallback(() => {
-		const cloudUrl = `${apiConfiguration?.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager/?tab=activity`
+		const cloudUrl = "https://costrict.ai/operation"
 		vscode.postMessage({ type: "openExternal", url: cloudUrl })
-	}, [apiConfiguration?.costrictBaseUrl])
+	}, [])
 
 	const handleStarRepository = useCallback(() => {
 		vscode.postMessage({ type: "openExternal", url: "https://github.com/zgsm-ai/costrict" })
