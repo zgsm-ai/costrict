@@ -65,6 +65,10 @@
 		"stoppedWaiting": "stopped waiting",
 		"stoppedUserCancelled": "user cancelled",
 		"stoppedTimedOut": "timed out",
-		"stoppedConnectionUnavailable": "connection unavailable"
+		"stoppedConnectionUnavailable": "connection unavailable",
+		"copyTaskId": "Copy task ID",
+		"taskIdCopied": "Copied",
+		"elapsedSeconds": "{{seconds}}s elapsed",
+		"lastCheckedAt": "last checked {{when}}"
 	}
 }

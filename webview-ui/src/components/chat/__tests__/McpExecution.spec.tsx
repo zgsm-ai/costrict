@@ -1,5 +1,5 @@
 import React from "react"
-import { render, screen, act } from "@testing-library/react"
+import { render, screen, act, fireEvent } from "@testing-library/react"
 
 import { McpExecution } from "../McpExecution"
 
@@ -55,7 +55,7 @@ describe("McpExecution", () => {
 		})
 
 		expect(screen.getByText(/execution.polling/)).toBeInTheDocument()
-		expect(screen.getByText(/abcdef123456/)).toBeInTheDocument()
+		expect(screen.getAllByText(/abcdef123456/)).toHaveLength(2)
 	})
 
 	it("renders stopped_waiting with reason", () => {
@@ -77,5 +77,53 @@ describe("McpExecution", () => {
 		})
 
 		expect(screen.getByText(/execution.stoppedWaiting/)).toBeInTheDocument()
+	})
+
+	it("shows copyable taskId and elapsed time during polling", async () => {
+		const writeText = vi.fn()
+		Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true })
+
+		render(<McpExecution executionId="e1" />)
+		// started
+		act(() => {
+			window.dispatchEvent(
+				new MessageEvent("message", {
+					data: {
+						type: "mcpExecutionStatus",
+						text: JSON.stringify({
+							executionId: "e1",
+							status: "started",
+							serverName: "ci",
+							toolName: "deploy",
+						}),
+					},
+				}),
+			)
+		})
+		// first poll
+		act(() => {
+			window.dispatchEvent(
+				new MessageEvent("message", {
+					data: {
+						type: "mcpExecutionStatus",
+						text: JSON.stringify({
+							executionId: "e1",
+							status: "polling",
+							taskId: "T-abc-12345",
+							attempt: 1,
+							lastStatus: "running",
+							lastCheckedAt: Date.now(),
+						}),
+					},
+				}),
+			)
+		})
+
+		const copyBtn = await screen.findByLabelText(/execution.copyTaskId/i)
+		act(() => {
+			fireEvent.click(copyBtn)
+		})
+		expect(writeText).toHaveBeenCalledWith("T-abc-12345")
+		expect(screen.getByText(/running/)).toBeInTheDocument()
 	})
 })

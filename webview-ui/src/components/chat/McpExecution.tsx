@@ -52,6 +52,13 @@ export const McpExecution = ({
 
 	// State for tracking MCP response status
 	const [status, setStatus] = useState<McpExecutionStatus | null>(null)
+	const [pollingMeta, setPollingMeta] = useState<{
+		taskId?: string
+		attempt?: number
+		lastStatus?: string
+		lastCheckedAt?: number
+		startedAt?: number
+	} | null>(null)
 	const [responseText, setResponseText] = useState(text || "")
 	const [argumentsText, setArgumentsText] = useState(text || "")
 	const [serverName, setServerName] = useState(initialServerName)
@@ -146,6 +153,19 @@ export const McpExecution = ({
 						if (data.executionId === executionId) {
 							setStatus(data)
 
+							if (data.status === "started" && !pollingMeta?.startedAt) {
+								setPollingMeta({ startedAt: Date.now() })
+							}
+							if (data.status === "polling") {
+								setPollingMeta((prev) => ({
+									startedAt: prev?.startedAt ?? Date.now(),
+									taskId: data.taskId ?? prev?.taskId,
+									attempt: data.attempt ?? prev?.attempt,
+									lastStatus: data.lastStatus ?? prev?.lastStatus,
+									lastCheckedAt: data.lastCheckedAt ?? prev?.lastCheckedAt,
+								}))
+							}
+
 							if (data.status === "output" && data.response) {
 								setResponseText((prev) => prev + data.response)
 							} else if (data.status === "completed" && data.response) {
@@ -158,7 +178,7 @@ export const McpExecution = ({
 				}
 			}
 		},
-		[executionId],
+		[executionId, pollingMeta?.startedAt],
 	)
 
 	useEvent("message", onMessage)
@@ -233,6 +253,33 @@ export const McpExecution = ({
 								</div>
 								{status.status === "error" && "error" in status && status.error && (
 									<div className="whitespace-nowrap">({status.error})</div>
+								)}
+							</div>
+						)}
+						{pollingMeta?.taskId && (
+							<div className="flex items-center gap-2 text-xs text-vscode-descriptionForeground mt-1">
+								<code className="bg-vscode-editor-background px-1 rounded">{pollingMeta.taskId}</code>
+								<button
+									type="button"
+									aria-label={t("execution.copyTaskId")}
+									onClick={() => navigator.clipboard?.writeText?.(pollingMeta.taskId!)}
+									className="hover:text-vscode-foreground">
+									⧉
+								</button>
+								{pollingMeta.lastStatus && <span>{pollingMeta.lastStatus}</span>}
+								{pollingMeta.startedAt && (
+									<span>
+										{t("execution.elapsedSeconds", {
+											seconds: Math.floor((Date.now() - pollingMeta.startedAt) / 1000),
+										})}
+									</span>
+								)}
+								{pollingMeta.lastCheckedAt && (
+									<span>
+										{t("execution.lastCheckedAt", {
+											when: new Date(pollingMeta.lastCheckedAt).toLocaleTimeString(),
+										})}
+									</span>
 								)}
 							</div>
 						)}
