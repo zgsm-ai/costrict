@@ -14,6 +14,8 @@ import { safeJsonParse } from "@roo/core"
 
 import { cn } from "@src/lib/utils"
 import { Button } from "@src/components/ui"
+import { useExtensionState } from "@src/context/ExtensionStateContext"
+import { vscode } from "@src/utils/vscode"
 
 import CodeBlock from "../common/CodeBlock"
 import McpToolRow from "../mcp/McpToolRow"
@@ -49,6 +51,12 @@ export const McpExecution = ({
 	alwaysAllowMcp = false,
 }: McpExecutionProps) => {
 	const { t } = useTranslation("mcp")
+
+	const { mcpAsyncTaskRecords } = useExtensionState()
+	const matchedRecord = useMemo(
+		() => mcpAsyncTaskRecords?.find((r) => r.executionId === executionId),
+		[mcpAsyncTaskRecords, executionId],
+	)
 
 	// State for tracking MCP response status
 	const [status, setStatus] = useState<McpExecutionStatus | null>(null)
@@ -282,6 +290,21 @@ export const McpExecution = ({
 									</span>
 								)}
 							</div>
+						)}
+						{matchedRecord && (
+							<button
+								type="button"
+								disabled={
+									Boolean(matchedRecord.resultFetchedAt) ||
+									matchedRecord.terminalStatus === "completed"
+								}
+								onClick={() =>
+									vscode.postMessage({ type: "queryMcpAsyncTask", recordId: matchedRecord.id } as any)
+								}
+								aria-label={t("execution.continueQuery")}
+								className="ml-2 text-xs underline disabled:opacity-50">
+								{t("execution.continueQuery")} · {matchedRecord.taskId}
+							</button>
 						)}
 						{responseText && responseText.length > 0 && (
 							<Button variant="ghost" size="icon" onClick={onToggleResponseExpand}>

@@ -66,6 +66,7 @@
 		"stoppedUserCancelled": "用户已取消",
 		"stoppedTimedOut": "本地等待超时",
 		"stoppedConnectionUnavailable": "连接不可用",
+		"continueQuery": "继续查询",
 		"copyTaskId": "复制 taskId",
 		"taskIdCopied": "已复制",
 		"elapsedSeconds": "已等待 {{seconds}} 秒",

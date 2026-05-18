@@ -66,6 +66,7 @@
 		"stoppedUserCancelled": "user cancelled",
 		"stoppedTimedOut": "timed out",
 		"stoppedConnectionUnavailable": "connection unavailable",
+		"continueQuery": "Continue query",
 		"copyTaskId": "Copy task ID",
 		"taskIdCopied": "Copied",
 		"elapsedSeconds": "{{seconds}}s elapsed",

@@ -1,7 +1,22 @@
 import React from "react"
 import { render, screen, act, fireEvent } from "@testing-library/react"
 
+import { ExtensionStateContext } from "../../../context/ExtensionStateContext"
+import { vscode } from "@src/utils/vscode"
+
 import { McpExecution } from "../McpExecution"
+
+vi.mock("@src/utils/vscode", () => ({
+	vscode: {
+		postMessage: vi.fn(),
+	},
+}))
+
+function renderWithState(state: any, children: React.ReactNode) {
+	return render(<ExtensionStateContext.Provider value={state}>{children}</ExtensionStateContext.Provider>)
+}
+
+const defaultState = { mcpAsyncTaskRecords: [] }
 
 // Mock react-i18next
 vi.mock("react-i18next", async () => {
@@ -9,7 +24,10 @@ vi.mock("react-i18next", async () => {
 	return {
 		...actual,
 		useTranslation: () => ({
-			t: (key: string) => key,
+			t: (key: string) => {
+				if (key === "execution.continueQuery") return "Continue query"
+				return key
+			},
 			i18n: { language: "en" },
 		}),
 	}
@@ -41,7 +59,7 @@ vi.mock("./Markdown", () => ({
 
 describe("McpExecution", () => {
 	it("renders polling status with truncated taskId", () => {
-		render(<McpExecution executionId="e1" />)
+		renderWithState(defaultState, <McpExecution executionId="e1" />)
 
 		act(() => {
 			window.dispatchEvent(
@@ -59,7 +77,7 @@ describe("McpExecution", () => {
 	})
 
 	it("renders stopped_waiting with reason", () => {
-		render(<McpExecution executionId="e1" />)
+		renderWithState(defaultState, <McpExecution executionId="e1" />)
 
 		act(() => {
 			window.dispatchEvent(
@@ -83,7 +101,7 @@ describe("McpExecution", () => {
 		const writeText = vi.fn()
 		Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true })
 
-		render(<McpExecution executionId="e1" />)
+		renderWithState(defaultState, <McpExecution executionId="e1" />)
 		// started
 		act(() => {
 			window.dispatchEvent(
@@ -125,5 +143,57 @@ describe("McpExecution", () => {
 		})
 		expect(writeText).toHaveBeenCalledWith("T-abc-12345")
 		expect(screen.getByText(/running/)).toBeInTheDocument()
+	})
+
+	it("renders 'Continue Query' button when a matching async task record exists", async () => {
+		const state = {
+			mcpAsyncTaskRecords: [
+				{
+					id: "r1",
+					executionId: "e1",
+					serverName: "ci",
+					originalToolName: "deploy",
+					taskId: "T-xyz",
+					lastStatus: "running",
+				},
+			],
+		}
+		renderWithState(state, <McpExecution executionId="e1" />)
+		expect(await screen.findByRole("button", { name: /continue query|继续查询/i })).toBeInTheDocument()
+		expect(screen.getByText(/T-xyz/)).toBeInTheDocument()
+	})
+
+	it("disables 'Continue Query' for terminal records that already returned a result", () => {
+		const state = {
+			mcpAsyncTaskRecords: [
+				{
+					id: "r1",
+					executionId: "e2",
+					serverName: "ci",
+					originalToolName: "deploy",
+					taskId: "T",
+					terminalStatus: "completed",
+					resultFetchedAt: 1,
+				},
+			],
+		}
+		renderWithState(state, <McpExecution executionId="e2" />)
+		const btn = screen.getByRole("button", { name: /continue query|继续查询/i })
+		expect(btn).toBeDisabled()
+	})
+
+	it("posts queryMcpAsyncTask message on click", async () => {
+		;(vscode.postMessage as any).mockClear()
+
+		const state = {
+			mcpAsyncTaskRecords: [
+				{ id: "r1", executionId: "e1", serverName: "ci", originalToolName: "deploy", taskId: "T" },
+			],
+		}
+		renderWithState(state, <McpExecution executionId="e1" />)
+		fireEvent.click(await screen.findByRole("button", { name: /continue query|继续查询/i }))
+		expect(vscode.postMessage).toHaveBeenCalledWith(
+			expect.objectContaining({ type: "queryMcpAsyncTask", recordId: "r1" }),
+		)
 	})
 })
