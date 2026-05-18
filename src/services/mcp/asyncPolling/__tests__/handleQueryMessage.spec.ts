@@ -10,6 +10,20 @@ describe("handleQueryMcpAsyncTask", () => {
 			store: store as any,
 			callTool: vi.fn(),
 			postExecutionStatus: post,
+			asyncPollingConfig: {
+				statusTool: "get_status",
+				taskIdPath: "$.runId",
+				statusArgsTemplate: { RunID: "$taskId" },
+				statusPath: "$.status",
+				resultPath: "$.output",
+				pendingValues: ["processing"],
+				completedValues: ["success"],
+				failedValues: ["failed"],
+				statusToolErrorMode: "transportUnknown",
+				intervalMs: 5000,
+				statusToolTimeoutMs: 60000,
+				maxDurationMs: 600000,
+			},
 		})
 		expect(post).not.toHaveBeenCalled()
 	})
