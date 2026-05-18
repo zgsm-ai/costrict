@@ -79,11 +79,137 @@ export class ConfiguredPollingStrategy {
 		return this.pollUntilTerminal(rawTaskId, req)
 	}
 
-	// Stubbed in Task 7; implemented in Task 8.
 	protected async pollUntilTerminal(taskId: string, req: ExecuteRequest): Promise<AsyncOutcome> {
-		return {
-			kind: "transport_unknown",
-			result: buildTransportUnknown({ taskId, reason: "timed_out", detail: "polling loop not implemented" }),
+		const now = this.deps.now ?? (() => Date.now())
+		const sleep = this.deps.sleep ?? defaultSleep
+		const interval = clamp(this.config.intervalMs, 1000, 60000)
+		const deadline = now() + this.config.maxDurationMs
+
+		let attempt = 0
+		let lastStatus: string | undefined
+
+		// Emit one polling status update so UI flips from "started" → "polling".
+		req.onProgress?.({ executionId: req.executionId, status: "polling", taskId })
+
+		while (true) {
+			if (req.isCancelled()) {
+				return {
+					kind: "transport_unknown",
+					result: buildTransportUnknown({ taskId, reason: "user_cancelled" }),
+				}
+			}
+			if (now() >= deadline) {
+				return {
+					kind: "transport_unknown",
+					result: buildTransportUnknown({ taskId, reason: "timed_out" }),
+				}
+			}
+
+			try {
+				await sleep(interval)
+			} catch {
+				return {
+					kind: "transport_unknown",
+					result: buildTransportUnknown({ taskId, reason: "user_cancelled" }),
+				}
+			}
+			if (req.isCancelled()) {
+				return {
+					kind: "transport_unknown",
+					result: buildTransportUnknown({ taskId, reason: "user_cancelled" }),
+				}
+			}
+
+			attempt += 1
+			const statusArgs = substituteTaskId(this.config.statusArgsTemplate, taskId)
+
+			let resp: McpToolCallResponse
+			try {
+				resp = await this.deps.callTool(req.serverName, this.config.statusTool, statusArgs, req.source, {
+					timeoutMs: this.config.statusToolTimeoutMs,
+				})
+			} catch (err) {
+				return {
+					kind: "transport_unknown",
+					result: buildTransportUnknown({
+						taskId,
+						reason: "connection_unavailable",
+						detail: (err as Error).message,
+					}),
+				}
+			}
+			if (req.isCancelled()) {
+				return {
+					kind: "transport_unknown",
+					result: buildTransportUnknown({ taskId, reason: "user_cancelled" }),
+				}
+			}
+
+			if (resp.isError) {
+				if (this.config.statusToolErrorMode === "businessFailed") {
+					const extracted = extractError(this.config.errorPath, parseJsonOrUndefined(firstTextContent(resp)))
+					return {
+						kind: "business_failed",
+						result: buildBusinessFailed({ extractedError: extracted, rawResponse: firstTextContent(resp) }),
+					}
+				}
+				return {
+					kind: "transport_unknown",
+					result: buildTransportUnknown({
+						taskId,
+						reason: "status_tool_error",
+						detail: firstTextContent(resp),
+					}),
+				}
+			}
+
+			const text = firstTextContent(resp)
+			if (text === undefined) {
+				return { kind: "config_error", result: buildConfigError("statusTool response had no text content") }
+			}
+			let body: unknown
+			try {
+				body = JSON.parse(text)
+			} catch {
+				return { kind: "config_error", result: buildConfigError("statusTool first text is not JSON") }
+			}
+			const rawStatus = extractByJsonPath(body, this.config.statusPath)
+			if (typeof rawStatus !== "string") {
+				return {
+					kind: "config_error",
+					result: buildConfigError(`statusPath ${this.config.statusPath} did not yield a string`),
+				}
+			}
+			lastStatus = rawStatus
+
+			req.onProgress?.({
+				executionId: req.executionId,
+				status: "polling",
+				taskId,
+				attempt,
+				lastStatus,
+				lastCheckedAt: now(),
+			})
+
+			if (this.config.pendingValues.includes(rawStatus)) {
+				continue
+			}
+			if (this.config.completedValues.includes(rawStatus)) {
+				const resultValue =
+					this.config.resultPath !== undefined ? extractByJsonPath(body, this.config.resultPath) : body
+				return { kind: "success", result: buildSuccess(resultValue) }
+			}
+			if (this.config.failedValues.includes(rawStatus)) {
+				const extracted = extractError(this.config.errorPath, body)
+				return {
+					kind: "business_failed",
+					result: buildBusinessFailed({ extractedError: extracted, rawResponse: body }),
+				}
+			}
+			return {
+				kind: "config_error",
+				result: buildConfigError(`status "${rawStatus}" not in pendingValues/completedValues/failedValues`),
+			}
 		}
 	}
 }
@@ -91,6 +217,42 @@ export class ConfiguredPollingStrategy {
 function firstTextContent(resp: McpToolCallResponse): string | undefined {
 	for (const c of resp.content ?? []) {
 		if (c.type === "text") return c.text
+	}
+	return undefined
+}
+
+function clamp(n: number, lo: number, hi: number): number {
+	return Math.min(hi, Math.max(lo, n))
+}
+
+function defaultSleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function substituteTaskId(template: Record<string, unknown>, taskId: string): Record<string, unknown> {
+	const out: Record<string, unknown> = {}
+	for (const [k, v] of Object.entries(template)) {
+		out[k] = typeof v === "string" ? v.replaceAll("$taskId", taskId) : v
+	}
+	return out
+}
+
+function parseJsonOrUndefined(text: string | undefined): unknown {
+	if (text === undefined) return undefined
+	try {
+		return JSON.parse(text)
+	} catch {
+		return undefined
+	}
+}
+
+function extractError(errorPath: string | string[] | undefined, body: unknown): string | undefined {
+	if (!errorPath || body === undefined || body === null) return undefined
+	const paths = Array.isArray(errorPath) ? errorPath : [errorPath]
+	for (const p of paths) {
+		const v = extractByJsonPath(body, p)
+		if (typeof v === "string" && v.length > 0) return v
+		if (v !== undefined && v !== null && v !== "") return JSON.stringify(v)
 	}
 	return undefined
 }
