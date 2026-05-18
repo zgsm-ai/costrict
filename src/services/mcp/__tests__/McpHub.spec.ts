@@ -2501,4 +2501,68 @@ describe("McpHub", () => {
 			)
 		})
 	})
+
+	async function buildHubWithConnectedServer(
+		serverName: string,
+		config?: Record<string, unknown>,
+	): Promise<McpHubType> {
+		const hub = new McpHub(mockProvider as ClineProvider)
+		const mockConnection: ConnectedMcpConnection = {
+			type: "connected",
+			server: {
+				name: serverName,
+				config: JSON.stringify(config ?? { command: "node" }),
+				status: "connected",
+				source: "global",
+			},
+			client: {
+				request: vi.fn().mockResolvedValue({ content: [] }),
+			} as any,
+			transport: {} as any,
+		}
+		hub.connections = [mockConnection]
+		return hub
+	}
+
+	describe("McpHub.isToolDisabled", () => {
+		it("returns true when toolName is in disabledTools array of the raw config", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a", {
+				command: "node",
+				disabledTools: ["forbidden_tool"],
+			})
+			await expect(hub.isToolDisabled("srv-a", "forbidden_tool")).resolves.toBe(true)
+			await expect(hub.isToolDisabled("srv-a", "ok_tool")).resolves.toBe(false)
+		})
+
+		it("returns false when server not found", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a")
+			await expect(hub.isToolDisabled("missing", "x")).resolves.toBe(false)
+		})
+	})
+
+	describe("McpHub.getAsyncPollingConfig", () => {
+		it("returns the per-tool config when present", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a", {
+				command: "node",
+				asyncPolling: {
+					tools: {
+						deploy: {
+							statusTool: "get_status",
+							taskIdPath: "$.taskId",
+							statusPath: "$.status",
+							pendingValues: ["running"],
+							completedValues: ["done"],
+						},
+					},
+				},
+			})
+			const cfg = await hub.getAsyncPollingConfig("srv-a", "deploy")
+			expect(cfg?.statusTool).toBe("get_status")
+		})
+
+		it("returns undefined when tool has no async config", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a", { command: "node" })
+			await expect(hub.getAsyncPollingConfig("srv-a", "anything")).resolves.toBeUndefined()
+		})
+	})
 })

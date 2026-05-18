@@ -1776,6 +1776,41 @@ export class McpHub {
 		)
 	}
 
+	/**
+	 * Read the raw connection config for a server and check whether `toolName`
+	 * appears in its `disabledTools` array. Independent of `enabledForPrompt`
+	 * (which also drives prompt visibility, see design §5.6).
+	 */
+	async isToolDisabled(serverName: string, toolName: string, source?: "global" | "project"): Promise<boolean> {
+		const connection = this.findConnection(serverName, source)
+		if (!connection) return false
+		try {
+			const raw = JSON.parse(connection.server.config) as { disabledTools?: string[] }
+			return Array.isArray(raw.disabledTools) && raw.disabledTools.includes(toolName)
+		} catch {
+			return false
+		}
+	}
+
+	/**
+	 * Return the per-tool asyncPolling config for `toolName` on `serverName`,
+	 * or undefined when no asyncPolling is configured for that tool.
+	 */
+	async getAsyncPollingConfig(
+		serverName: string,
+		toolName: string,
+		source?: "global" | "project",
+	): Promise<import("@roo-code/types").AsyncPollingToolConfig | undefined> {
+		const connection = this.findConnection(serverName, source)
+		if (!connection) return undefined
+		try {
+			const parsed = ServerConfigSchema.parse(JSON.parse(connection.server.config))
+			return parsed.asyncPolling?.tools?.[toolName]
+		} catch {
+			return undefined
+		}
+	}
+
 	async callTool(
 		serverName: string,
 		toolName: string,
