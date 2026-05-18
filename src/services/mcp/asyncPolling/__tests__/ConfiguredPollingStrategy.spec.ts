@@ -117,7 +117,7 @@ describe("ConfiguredPollingStrategy pre-taskId", () => {
 	})
 
 	it("cancellation BEFORE original call → transport_unknown without taskId", async () => {
-		const deps = makeDeps()
+		const deps = makeDeps({})
 		const out = await new ConfiguredPollingStrategy(baseConfig, deps).execute({
 			serverName: "srv",
 			toolName: "deploy",
