@@ -1,6 +1,6 @@
 // src/services/mcp/asyncPolling/McpAsyncExecutionService.ts
 import type { AsyncPollingToolConfig, McpToolCallResponse } from "@roo-code/types"
-import type { ExecuteRequest, PollingDeps } from "./types"
+import type { ExecuteRequest, PollingDeps, AsyncTaskStoreLike } from "./types"
 import { ConfiguredPollingStrategy } from "./ConfiguredPollingStrategy"
 import { buildConfigError } from "./asyncResult"
 
@@ -20,6 +20,7 @@ export type McpAsyncDeps = {
 export type McpAsyncOptions = {
 	sleep?: PollingDeps["sleep"]
 	now?: PollingDeps["now"]
+	store?: AsyncTaskStoreLike
 }
 
 export class McpAsyncExecutionService {
@@ -50,6 +51,7 @@ export class McpAsyncExecutionService {
 				isToolDisabled: this.deps.isToolDisabled,
 				sleep: this.options.sleep,
 				now: this.options.now,
+				store: this.options.store,
 			})
 			const outcome = await strategy.execute(req)
 			return outcome.result

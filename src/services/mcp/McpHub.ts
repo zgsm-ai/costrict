@@ -40,6 +40,7 @@ import { arePathsEqual, getWorkspacePath } from "../../utils/path"
 import { injectVariables } from "../../utils/config"
 import { NotificationService } from "./costrict/NotificationService"
 import { McpAsyncExecutionService } from "./asyncPolling/McpAsyncExecutionService"
+import { McpAsyncTaskStore } from "./asyncPolling/McpAsyncTaskStore"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { isJetbrainsPlatform } from "../../utils/platform"
@@ -170,6 +171,7 @@ export class McpHub {
 	private sanitizedNameRegistry: Map<string, string> = new Map()
 	private initializationPromise: Promise<void>
 	private asyncExecutionService: McpAsyncExecutionService | undefined
+	private asyncStorageRoot: string | undefined
 
 	constructor(provider: ClineProvider) {
 		this.providerRef = new WeakRef(provider)
@@ -1813,15 +1815,33 @@ export class McpHub {
 		}
 	}
 
+	private getAsyncStorageRoot(): string {
+		if (!this.asyncStorageRoot) {
+			const provider = this.providerRef.deref()
+			const storageUri = provider?.context?.globalStorageUri
+			this.asyncStorageRoot = storageUri
+				? path.join(storageUri.fsPath, "mcpAsyncTasks")
+				: path.join(require("os").tmpdir(), "costrict-mcp-async-tasks")
+		}
+		return this.asyncStorageRoot
+	}
+
 	getAsyncExecutionService(): McpAsyncExecutionService {
 		if (!this.asyncExecutionService) {
-			this.asyncExecutionService = new McpAsyncExecutionService({
-				callTool: (serverName, toolName, args, source, options) =>
-					this.callTool(serverName, toolName, args, source, options),
-				isToolDisabled: (serverName, toolName, source) => this.isToolDisabled(serverName, toolName, source),
-				getAsyncPollingConfig: (serverName, toolName, source) =>
-					this.getAsyncPollingConfig(serverName, toolName, source),
+			const store = new McpAsyncTaskStore({
+				rootDir: this.getAsyncStorageRoot(),
+				workspacePath: getWorkspacePath(),
 			})
+			this.asyncExecutionService = new McpAsyncExecutionService(
+				{
+					callTool: (serverName, toolName, args, source, options) =>
+						this.callTool(serverName, toolName, args, source, options),
+					isToolDisabled: (serverName, toolName, source) => this.isToolDisabled(serverName, toolName, source),
+					getAsyncPollingConfig: (serverName, toolName, source) =>
+						this.getAsyncPollingConfig(serverName, toolName, source),
+				},
+				{ store },
+			)
 		}
 		return this.asyncExecutionService
 	}

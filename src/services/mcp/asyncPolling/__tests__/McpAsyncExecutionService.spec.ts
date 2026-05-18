@@ -193,3 +193,38 @@ describe("McpAsyncExecutionService", () => {
 		}
 	})
 })
+
+describe("McpAsyncExecutionService store forwarding", () => {
+	it("forwards the injected store to the strategy", async () => {
+		const create = vi.fn().mockResolvedValue({ id: "r1" })
+		const update = vi.fn().mockResolvedValue({ id: "r1" })
+		const complete = vi.fn().mockResolvedValue({ id: "r1", terminalStatus: "completed" })
+		const callTool = vi
+			.fn()
+			.mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify({ taskId: "T" }) }] })
+			.mockResolvedValueOnce({
+				content: [{ type: "text", text: JSON.stringify({ status: "done", result: 1 }) }],
+			})
+
+		const svc = new McpAsyncExecutionService(
+			{
+				callTool,
+				isToolDisabled: vi.fn().mockResolvedValue(false),
+				getAsyncPollingConfig: vi.fn().mockResolvedValue(validConfig),
+			},
+			{ sleep: () => Promise.resolve(), store: { create, update, complete } },
+		)
+
+		await svc.execute({
+			serverName: "srv",
+			toolName: "deploy",
+			arguments: {},
+			source: undefined,
+			executionId: "e",
+			isCancelled: () => false,
+		})
+
+		expect(create).toHaveBeenCalled()
+		expect(complete).toHaveBeenCalledWith("r1", "completed")
+	})
+})
