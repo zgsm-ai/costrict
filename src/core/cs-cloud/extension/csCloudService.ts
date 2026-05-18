@@ -1,5 +1,7 @@
+import * as fs from "fs"
 import * as http from "http"
-import { spawn, exec, type ChildProcessWithoutNullStreams, type ChildProcess } from "child_process"
+import * as path from "path"
+import { spawn, execFile, type ChildProcessWithoutNullStreams, type ChildProcess } from "child_process"
 import { EventEmitter } from "events"
 import * as vscode from "vscode"
 import { getAssistantUIConfig } from "./config"
@@ -48,10 +50,11 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	async ensureStarted(): Promise<string> {
 		if (this.operationPromise) return this.operationPromise
 
-		// 如果已经是 owned 且 running，直接返回 baseUrl，避免 doEnsureStarted
-		// 中的 detectCsCloudPort 把 ownership 覆盖成 "unmanaged"（会导致
-		// 后续崩溃后 restart 时走 unmanaged 分支，只 health check 不 spawn）
-		if (this.state === "running" && this.ownership === "owned" && this.baseUrl) {
+		// 如果已经 running，直接返回当前 baseUrl。
+		// 尤其是 crash/restart 后 adopt 了新端口时，调用方会立刻重新加载 UI；
+		// 这里不能再次探测并 fallback 到配置端口，否则 `cloud status` 短暂不可用
+		// 时会错误地重新 spawn 旧端口。
+		if (this.state === "running" && this.baseUrl) {
 			return this.baseUrl
 		}
 
@@ -117,14 +120,19 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		this.startupFailureReason = undefined
 
 		if (!this.process) {
+			const cliExecutable = await resolveCliExecutable(config.defaultCli)
+			if (!cliExecutable) {
+				throw new Error(getCliExecutableErrorMessage(config.defaultCli))
+			}
+
 			this.outputChannel.appendLine(
-				`[AssistantUI] Starting cs-cloud: ${config.defaultCli} cloud start --port ${port}`,
+				`[AssistantUI] Starting cs-cloud: ${cliExecutable} cloud start --port ${port}`,
 			)
 			// 仅首次启动时递增 generation；restart 路径已由 doRestart 递增
 			if (!skipDetection) {
 				this.generation++
 			}
-			this.process = spawn(config.defaultCli, ["cloud", "start"].concat(port ? ["--port", String(port)] : []), {
+			this.process = spawn(cliExecutable, ["cloud", "start"].concat(port ? ["--port", String(port)] : []), {
 				cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
 				env: process.env,
 			})
@@ -209,6 +217,11 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	}
 
 	private async doRestart(): Promise<string> {
+		const shouldWaitForMovedDaemon = this.state === "crashed" || this.state === "failed" || this.failCount > 0
+		// 清掉上一次 spawn 失败（例如 EACCES）的错误；否则检测到新端口但
+		// 还没 ready 时，waitForHttpReady 会被旧 startupFailureReason 立即打断。
+		this.startupFailureReason = undefined
+
 		if (this.ownership === "unmanaged" && this.source === "configuredBaseUrl") {
 			this.outputChannel.appendLine(
 				`[AssistantUI] Restart requested for configured cs-cloud baseUrl ${this.baseUrl}; waiting for health check...`,
@@ -224,44 +237,20 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			)
 		}
 
-		// ★ 重启前先检测 cs-cloud 是否已在运行（例如用户手动重启了服务）。
-		// 如果已运行，则直接采纳为 detected（unmanaged），避免 spawn 冲突。
-		const restartConfig = getAssistantUIConfig()
-		const restartDetectedPort = await detectCsCloudPort(restartConfig.defaultCli)
-		if (restartDetectedPort !== undefined) {
-			const restartHealthUrl = `http://127.0.0.1:${restartDetectedPort}/api/v1/runtime/health`
-			const restartBaseUrl = `http://127.0.0.1:${restartDetectedPort}/api/v1`
-			if (await isHttpReady(restartHealthUrl)) {
-				this.outputChannel.appendLine(
-					`[AssistantUI] Detected already-running cs-cloud on port ${restartDetectedPort}; adopting it.`,
-				)
-				this.baseUrl = restartBaseUrl
-				this.ownership = "unmanaged"
-				this.source = "detected"
-				await assertOpenCodeCompatible(this.baseUrl)
-				this.handleStartSuccess()
-				return this.baseUrl
-			}
-			// Port detected but not ready yet — wait for it, then use as detected
-			this.outputChannel.appendLine(
-				`[AssistantUI] Detected cs-cloud on port ${restartDetectedPort}, waiting for it to be ready...`,
-			)
-			this.baseUrl = restartBaseUrl
-			this.ownership = "unmanaged"
-			this.source = "detected"
-			// waitForHealth has its own 30s default timeout
-			await this.waitForHealth()
-			await assertOpenCodeCompatible(this.baseUrl)
+		// ★ 重启前先检测 cs-cloud 是否已在运行（例如用户手动重启了服务，端口可能已变化）。
+		// 如果已运行，则直接采纳为 detected（unmanaged），避免继续使用旧端口或 spawn 冲突。
+		const detectedUrl = await this.detectAndAdoptCsCloudPort(
+			shouldWaitForMovedDaemon ? { detectRetries: 15, detectDelayMs: 2000, readyTimeoutMs: 30_000 } : {},
+		)
+		if (detectedUrl) {
 			this.handleStartSuccess()
-			return this.baseUrl
+			return detectedUrl
 		}
 
 		// owned 或自动检测到的 unmanaged：启动一个由扩展管理的新进程
 		this.stopHealthMonitor()
 		this.state = "starting"
 		this.failCount = 0
-		this.startupFailureReason = undefined
-
 		const oldProcess = this.process
 		const oldGen = this.generation
 
@@ -319,12 +308,12 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	private startHealthMonitor(): void {
 		this.stopHealthMonitor()
 		const monitorGen = this.generation
-		const healthUrl = this.healthUrl
 
 		const doCheck = async () => {
 			if (monitorGen !== this.generation || this.state !== "running") return
 
-			const healthy = await isHttpReady(healthUrl)
+			const checkedHealthUrl = this.healthUrl
+			const healthy = await isHttpReady(checkedHealthUrl)
 
 			if (monitorGen !== this.generation || this.state !== "running") return
 
@@ -332,6 +321,14 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 				this.failCount = 0
 			} else {
 				this.failCount++
+
+				// `csc cloud restart` may bring the daemon back on a different port.
+				// Before showing the crash screen, re-read `cloud status` and adopt the
+				// new port if it is already healthy/OpenCode-compatible.
+				if (await this.tryRecoverByDetectingMovedDaemon(monitorGen, checkedHealthUrl)) {
+					return
+				}
+
 				if (this.failCount >= 3) {
 					this.notifyCrash("健康检查连续失败")
 					return
@@ -373,6 +370,59 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			new Promise<void>((resolve) => proc.once("exit", () => resolve())),
 			new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
 		])
+	}
+
+	private async detectAndAdoptCsCloudPort(
+		options: {
+			onlyIfDifferentPort?: boolean
+			detectRetries?: number
+			detectDelayMs?: number
+			readyTimeoutMs?: number
+		} = {},
+	): Promise<string | undefined> {
+		const config = getAssistantUIConfig()
+		const detectedPort = await detectCsCloudPort(config.defaultCli, options.detectRetries, options.detectDelayMs)
+		if (detectedPort === undefined) return undefined
+		if (options.onlyIfDifferentPort && detectedPort === getPortFromBaseUrl(this.baseUrl)) return undefined
+
+		const detectedBaseUrl = csCloudBaseUrl(detectedPort)
+		const detectedHealthUrl = csCloudHealthUrl(detectedPort)
+
+		if (await isHttpReady(detectedHealthUrl)) {
+			this.outputChannel.appendLine(
+				`[AssistantUI] Detected already-running cs-cloud on port ${detectedPort}; adopting it.`,
+			)
+		} else {
+			this.outputChannel.appendLine(
+				`[AssistantUI] Detected cs-cloud on port ${detectedPort}, waiting for it to be ready...`,
+			)
+			await this.waitForHttpReady(detectedHealthUrl, options.readyTimeoutMs ?? 30_000)
+		}
+
+		await assertOpenCodeCompatible(detectedBaseUrl)
+
+		this.baseUrl = detectedBaseUrl
+		this.ownership = "unmanaged"
+		this.source = "detected"
+		return detectedBaseUrl
+	}
+
+	private async tryRecoverByDetectingMovedDaemon(monitorGen: number, failedHealthUrl: string): Promise<boolean> {
+		try {
+			const detectedUrl = await this.detectAndAdoptCsCloudPort({ onlyIfDifferentPort: true })
+			if (!detectedUrl) return false
+			if (monitorGen !== this.generation || this.state !== "running") return true
+
+			this.outputChannel.appendLine(
+				`[AssistantUI] cs-cloud health check failed at ${failedHealthUrl}; recovered on ${detectedUrl}.`,
+			)
+			this.handleStartSuccess()
+			return true
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error)
+			this.outputChannel.appendLine(`[AssistantUI] Failed to adopt moved cs-cloud daemon: ${message}`)
+			return false
+		}
 	}
 
 	private captureErrorLine(text: string) {
@@ -421,15 +471,20 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 }
 
 async function detectCsCloudPort(defaultCli: "cs" | "csc", retries = 3, delayMs = 2000): Promise<number | undefined> {
+	const cliExecutable = await resolveCliExecutable(defaultCli)
+	if (!cliExecutable) return undefined
+
 	for (let i = 0; i < retries; i++) {
 		try {
-			const stdout = await new Promise<string>((resolve) => {
-				exec(`${defaultCli} cloud status`, { timeout: 5000 }, (err, stdout) => {
-					resolve(stdout || "")
+			const output = await new Promise<string>((resolve) => {
+				execFile(cliExecutable, ["cloud", "status"], { timeout: 5000 }, (err, stdout, stderr) => {
+					// Some CLI renderers write status output to stderr instead of stdout.
+					// Parse both streams so we still detect a restarted daemon's new port.
+					resolve(`${stdout || ""}\n${stderr || ""}`)
 				})
 			})
 
-			const cleanStdout = stripAnsi(stdout)
+			const cleanStdout = stripAnsi(output)
 
 			// 匹配 local_url: http://127.0.0.1:PORT 或 local_url: https://...:PORT
 			const match = cleanStdout.match(/local_url:\s+(https?:\/\/[^\s:]+:(\d+))/)
@@ -448,6 +503,94 @@ async function detectCsCloudPort(defaultCli: "cs" | "csc", retries = 3, delayMs 
 		}
 	}
 	return undefined
+}
+
+function csCloudBaseUrl(port: number): string {
+	return `http://127.0.0.1:${port}/api/v1`
+}
+
+function csCloudHealthUrl(port: number): string {
+	return `${csCloudBaseUrl(port)}/runtime/health`
+}
+
+function getPortFromBaseUrl(baseUrl: string | undefined): number | undefined {
+	if (!baseUrl) return undefined
+	try {
+		const port = new URL(baseUrl).port
+		return port ? Number(port) : undefined
+	} catch {
+		return undefined
+	}
+}
+
+async function resolveCliExecutable(cli: "cs" | "csc"): Promise<string | undefined> {
+	const candidates = getCliExecutableCandidates(cli)
+	const seen = new Set<string>()
+
+	for (const candidate of candidates) {
+		if (!candidate || seen.has(candidate)) continue
+		seen.add(candidate)
+		if (isExecutableFile(candidate)) return candidate
+	}
+
+	const shellResolved = await resolveCliExecutableFromShell(cli)
+	if (shellResolved && !seen.has(shellResolved) && isExecutableFile(shellResolved)) {
+		return shellResolved
+	}
+
+	return undefined
+}
+
+function getCliExecutableCandidates(cli: "cs" | "csc"): string[] {
+	return (process.env.PATH ?? "")
+		.split(path.delimiter)
+		.filter(Boolean)
+		.map((dir) => path.join(dir, cli))
+}
+
+async function resolveCliExecutableFromShell(cli: "cs" | "csc"): Promise<string | undefined> {
+	const shell = process.env.SHELL || "/bin/sh"
+	const shellName = path.basename(shell)
+	const command = `command -v ${cli}`
+	const attempts =
+		shellName === "bash" || shellName === "zsh"
+			? [
+					["-lc", command],
+					["-ic", command],
+				]
+			: [["-c", command]]
+
+	for (const args of attempts) {
+		try {
+			const output = await new Promise<string>((resolve) => {
+				execFile(shell, args, { timeout: 3000 }, (_err, stdout) => resolve(stdout || ""))
+			})
+			const resolved = output
+				.split(/\r?\n/)
+				.find((line) => line.trim().startsWith("/"))
+				?.trim()
+			if (resolved) return resolved
+		} catch {
+			// Ignore shell resolution failures; caller will surface a generic CLI error.
+		}
+	}
+
+	return undefined
+}
+
+function isExecutableFile(filePath: string): boolean {
+	try {
+		const stat = fs.statSync(filePath)
+		if (!stat.isFile()) return false
+		fs.accessSync(filePath, fs.constants.X_OK)
+		return true
+	} catch {
+		return false
+	}
+}
+
+function getCliExecutableErrorMessage(cli: "cs" | "csc"): string {
+	return `无法执行 ${cli}：PATH 中没有找到可执行的 ${cli}。请检查 ${cli} 是否已安装，并确认 VS Code 扩展进程的 PATH 配置正确。`
 }
 
 function trimTrailingSlash(value: string) {

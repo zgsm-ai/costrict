@@ -27,11 +27,11 @@ vi.mock("vscode", () => ({
 
 vi.mock("child_process", () => ({
 	spawn: vi.fn(),
-	exec: vi.fn(),
+	execFile: vi.fn(),
 }))
 
 import { CsCloudService } from "../core/cs-cloud/extension/csCloudService"
-import { exec, spawn } from "child_process"
+import { execFile, spawn } from "child_process"
 
 function createOutputChannel() {
 	return { appendLine: vi.fn() }
@@ -51,8 +51,10 @@ function mockSpawnProcess() {
 }
 
 function mockExecReturn(stdout: string) {
-	vi.mocked(exec).mockImplementation((cmd, options, callback) => {
-		if (typeof options === "function") {
+	vi.mocked(execFile).mockImplementation((cmd, args, options, callback) => {
+		if (typeof args === "function") {
+			callback = args
+		} else if (typeof options === "function") {
 			callback = options
 		}
 		if (callback) {
@@ -64,8 +66,10 @@ function mockExecReturn(stdout: string) {
 
 function mockExecSequence(outputs: string[]) {
 	let callIndex = 0
-	vi.mocked(exec).mockImplementation((cmd, options, callback) => {
-		if (typeof options === "function") {
+	vi.mocked(execFile).mockImplementation((cmd, args, options, callback) => {
+		if (typeof args === "function") {
+			callback = args
+		} else if (typeof options === "function") {
 			callback = options
 		}
 		const stdout = outputs[callIndex++] ?? ""
@@ -80,6 +84,7 @@ describe("CsCloudService", () => {
 	beforeEach(() => {
 		allowNetConnect("127.0.0.1")
 		vi.mocked(spawn).mockReset()
+		vi.mocked(execFile).mockReset()
 		setConfigValues({
 			baseUrl: "",
 			port: 45489,
@@ -231,7 +236,7 @@ describe("CsCloudService", () => {
 
 		await expect(service.restart()).resolves.toBe("http://127.0.0.1:45489/api/v1")
 		expect(spawn).toHaveBeenCalledWith(
-			"csc",
+			expect.stringMatching(/csc$/),
 			["cloud", "start", "--port", "45489"],
 			expect.objectContaining({ cwd: "/workspace" }),
 		)
@@ -239,8 +244,38 @@ describe("CsCloudService", () => {
 			"[AssistantUI] Restarting previously detected cs-cloud as a managed cs-cloud daemon...",
 		)
 		expect(outputChannel.appendLine).toHaveBeenCalledWith(
-			"[AssistantUI] Starting cs-cloud: csc cloud start --port 45489",
+			expect.stringMatching(/\[AssistantUI\] Starting cs-cloud: .*csc cloud start --port 45489/),
 		)
+	})
+
+	it("adopts a new detected port when restarting after cs-cloud moved", async () => {
+		setConfigValues({ baseUrl: "", port: 46007, autoStartCsCloud: false })
+		mockExecReturn("")
+		nock("http://127.0.0.1:46007").get("/api/v1/runtime/health").reply(200, { ok: true })
+		nock("http://127.0.0.1:46007")
+			.get("/api/v1/conversations")
+			.query({ roots: "true", archived: "true" })
+			.reply(200, [])
+
+		const service = new CsCloudService(createOutputChannel() as never)
+		await expect(service.ensureStarted()).resolves.toBe("http://127.0.0.1:46007/api/v1")
+
+		mockExecReturn(
+			"\x1b[1;38;2;125;86;244mcs-cloud status\x1b[m\n               \n\x1b[38;2;4;181;117m  ✓\x1b[m \x1b[38;2;4;181;117mRunning\x1b[m\n  \x1b[38;2;176;176;176mlocal_url:\x1b[m \x1b[38;2;255;255;255mhttp://127.0.0.1:55555\x1b[m\n",
+		)
+		nock("http://127.0.0.1:55555").get("/api/v1/runtime/health").reply(200, { ok: true })
+		nock("http://127.0.0.1:55555")
+			.get("/api/v1/conversations")
+			.query({ roots: "true", archived: "true" })
+			.reply(200, [])
+
+		await expect(service.restart()).resolves.toBe("http://127.0.0.1:55555/api/v1")
+
+		// Sidebar reload calls ensureStarted() immediately after restart(); it should
+		// reuse the adopted port instead of probing/falling back to the old config port.
+		mockExecReturn("")
+		await expect(service.ensureStarted()).resolves.toBe("http://127.0.0.1:55555/api/v1")
+		expect(spawn).not.toHaveBeenCalled()
 	})
 
 	it("keeps configured baseUrl unmanaged when restarting", async () => {
