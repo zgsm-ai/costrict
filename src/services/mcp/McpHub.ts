@@ -27,6 +27,7 @@ import type {
 	McpTool,
 	McpToolCallResponse,
 } from "@roo-code/types"
+import { AsyncPollingConfigSchema } from "@roo-code/types"
 
 import { t } from "../../i18n"
 
@@ -73,6 +74,7 @@ const BaseConfigSchema = z.object({
 	alwaysAllow: z.array(z.string()).default([]),
 	watchPaths: z.array(z.string()).optional(), // paths to watch for changes and restart server
 	disabledTools: z.array(z.string()).default([]),
+	asyncPolling: AsyncPollingConfigSchema.optional(),
 })
 
 // Custom error messages for better user feedback
@@ -702,7 +704,7 @@ export class McpHub {
 			let transport: StdioClientTransport | SSEClientTransport | StreamableHTTPClientTransport
 
 			// Inject variables to the config (environment, magic variables,...)
-			const configInjected = (await injectVariables(config, {
+			const configInjected = (await injectVariables(config as any, {
 				env: process.env,
 				workspaceFolder: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "",
 			})) as typeof config

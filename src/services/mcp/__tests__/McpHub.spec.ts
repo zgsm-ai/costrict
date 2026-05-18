@@ -2069,6 +2069,32 @@ describe("McpHub", () => {
 		})
 	})
 
+	describe("ServerConfigSchema asyncPolling", () => {
+		it("parses asyncPolling when provided", () => {
+			const parsed = ServerConfigSchema.parse({
+				command: "node",
+				asyncPolling: {
+					tools: {
+						deploy: {
+							statusTool: "get_status",
+							taskIdPath: "$.taskId",
+							statusPath: "$.status",
+							pendingValues: ["running"],
+							completedValues: ["done"],
+						},
+					},
+				},
+			})
+			expect(parsed.asyncPolling?.tools.deploy.statusTool).toBe("get_status")
+			expect(parsed.asyncPolling?.tools.deploy.intervalMs).toBe(5000)
+		})
+
+		it("defaults asyncPolling to undefined / absent when not provided", () => {
+			const parsed = ServerConfigSchema.parse({ command: "node" })
+			expect(parsed.asyncPolling).toBeUndefined()
+		})
+	})
+
 	describe("Windows command wrapping", () => {
 		let StdioClientTransport: ReturnType<typeof vi.fn>
 		let Client: ReturnType<typeof vi.fn>
