@@ -2,6 +2,12 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.8.1]
+
+- Update activity links
+- Exclude php_deserialization.md from bundled skills per VS Marketplace policy
+- Fix known issues
+
 ## [2.8.0]
 
 - Update skills build config
