@@ -55,8 +55,11 @@ _Free • Open Source • Private Deployment_
     </td>
     <td align="center" width="25%">
       <b>VS Code Extension</b><br><br>
+      <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm-nightly">
+        <img src="https://img.shields.io/badge/Download-Nightly-success?style=for-the-badge" alt="Download">
+      </a>
       <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
-        <img src="./assets/images/readme/download on vscode marketplace_en.png" alt="Install from VS Marketplace" width="180">
+        <img src="https://img.shields.io/badge/Download-Latest-success?style=for-the-badge" alt="Download">
       </a>
     </td>
     <td align="center" width="25%">

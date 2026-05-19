@@ -55,8 +55,11 @@ English | [简体中文](./README.zh-CN.md)
     </td>
     <td align="center" width="25%">
       <b>VS Code 扩展</b><br><br>
+      <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm-nightly">
+        <img src="https://img.shields.io/badge/Download-Nightly-success?style=for-the-badge" alt="下载">
+      </a>
       <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
-        <img src="./assets/images/readme/download on vscode marketplace.png" alt="从 VS Marketplace 安装" width="180">
+        <img src="https://img.shields.io/badge/Download-Latest-success?style=for-the-badge" alt="下载">
       </a>
     </td>
     <td align="center" width="25%">
