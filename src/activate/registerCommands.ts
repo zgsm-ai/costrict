@@ -20,6 +20,7 @@ import { EditorContext, EditorUtils } from "../integrations/editor/EditorUtils"
 import * as path from "path"
 import { handleGenerateCommitMessage } from "../core/costrict/commit"
 import { getTerminalManager } from "../core/costrict/cli-wrap"
+import { RemoteAgentInstaller } from "../core/costrict/remote-agent-installer"
 
 interface UriSource {
 	path: string
@@ -357,6 +358,35 @@ export const getCommandsMap = ({
 			const errorMessage = error instanceof Error ? error.message : String(error)
 			vscode.window.showErrorMessage(`Failed to generate commit message: ${errorMessage}`)
 			return undefined
+		}
+	},
+	// costrict: register remote agent installer commands
+	installAgentPackage: async () => {
+		const installer = RemoteAgentInstaller.getInstance()
+		const result = await installer.triggerManualInstall()
+		const name = installer.getPackageName()
+		if (result.state === "installed") {
+			void vscode.window.showInformationMessage(
+				t("remoteAgentInstaller:info.installed", { name, version: result.version }),
+			)
+		} else if (result.state === "noUpdate") {
+			void vscode.window.showInformationMessage(t("remoteAgentInstaller:info.noUpdate", { name }))
+		} else if (result.state === "failed") {
+			void vscode.window.showErrorMessage(
+				t("remoteAgentInstaller:error.updateFailed", { name, reason: result.reason }),
+			)
+		}
+	},
+	uninstallAgentPackage: async () => {
+		const installer = RemoteAgentInstaller.getInstance()
+		const result = await installer.triggerManualUninstall()
+		const name = installer.getPackageName()
+		if (result.success) {
+			void vscode.window.showInformationMessage(t("remoteAgentInstaller:info.uninstalled", { name }))
+		} else {
+			void vscode.window.showErrorMessage(
+				t("remoteAgentInstaller:error.uninstallFailed", { name, reason: result.reason }),
+			)
 		}
 	},
 })

@@ -16,7 +16,8 @@
 			"preLaunchTask": "${defaultBuildTask}",
 			"env": {
 				"NODE_ENV": "development",
-				"VSCODE_DEBUG_MODE": "true"
+				"VSCODE_DEBUG_MODE": "true",
+				"COSTRICT_AGENT_CHECK_INTERVAL_MINUTES": "5"
 			},
 			"resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
 			"presentation": {
