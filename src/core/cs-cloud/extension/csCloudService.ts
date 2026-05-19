@@ -1,8 +1,9 @@
-import * as fs from "fs"
 import * as http from "http"
 import * as path from "path"
-import { spawn, execFile, type ChildProcessWithoutNullStreams, type ChildProcess } from "child_process"
+import { execFile, type ChildProcess } from "child_process"
 import { EventEmitter } from "events"
+import crossSpawn from "cross-spawn"
+import which from "which"
 import * as vscode from "vscode"
 import { getAssistantUIConfig } from "./config"
 
@@ -12,7 +13,7 @@ export type CsCloudOwnership = "owned" | "unmanaged"
 export type CsCloudSource = "spawned" | "detected" | "configuredBaseUrl"
 
 export class CsCloudService extends EventEmitter implements vscode.Disposable {
-	private process: ChildProcessWithoutNullStreams | undefined
+	private process: ChildProcess | undefined
 	private baseUrl: string | undefined
 	private lastErrorLine: string | undefined
 
@@ -132,7 +133,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			if (!skipDetection) {
 				this.generation++
 			}
-			this.process = spawn(cliExecutable, ["cloud", "start"].concat(port ? ["--port", String(port)] : []), {
+			this.process = crossSpawn(cliExecutable, ["cloud", "start"].concat(port ? ["--port", String(port)] : []), {
 				cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
 				env: process.env,
 			})
@@ -140,12 +141,12 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			const child = this.process
 			const childGen = this.generation
 
-			child.stdout.on("data", (data) => {
+			child.stdout?.on("data", (data) => {
 				const text = String(data).trimEnd()
 				this.outputChannel.appendLine(`[cs-cloud] ${text}`)
 				this.captureErrorLine(text)
 			})
-			child.stderr.on("data", (data) => {
+			child.stderr?.on("data", (data) => {
 				const text = String(data).trimEnd()
 				this.outputChannel.appendLine(`[cs-cloud] ${text}`)
 				this.captureErrorLine(text)
@@ -476,14 +477,9 @@ async function detectCsCloudPort(defaultCli: "cs" | "csc", retries = 3, delayMs 
 
 	for (let i = 0; i < retries; i++) {
 		try {
-			const output = await new Promise<string>((resolve) => {
-				execFile(cliExecutable, ["cloud", "status"], { timeout: 5000 }, (err, stdout, stderr) => {
-					// Some CLI renderers write status output to stderr instead of stdout.
-					// Parse both streams so we still detect a restarted daemon's new port.
-					resolve(`${stdout || ""}\n${stderr || ""}`)
-				})
-			})
-
+			// Some CLI renderers write status output to stderr instead of stdout.
+			// Parse both streams so we still detect a restarted daemon's new port.
+			const output = await runCliCapture(cliExecutable, ["cloud", "status"], 5000)
 			const cleanStdout = stripAnsi(output)
 
 			// 匹配 local_url: http://127.0.0.1:PORT 或 local_url: https://...:PORT
@@ -523,52 +519,139 @@ function getPortFromBaseUrl(baseUrl: string | undefined): number | undefined {
 	}
 }
 
-async function resolveCliExecutable(cli: "cs" | "csc"): Promise<string | undefined> {
-	const candidates = getCliExecutableCandidates(cli)
-	const seen = new Set<string>()
+function runCliCapture(executable: string, args: string[], timeoutMs: number): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const child = crossSpawn(executable, args, { env: process.env })
+		const chunks: string[] = []
+		let settled = false
+		let timer: NodeJS.Timeout | undefined
 
-	for (const candidate of candidates) {
-		if (!candidate || seen.has(candidate)) continue
-		seen.add(candidate)
-		if (isExecutableFile(candidate)) return candidate
-	}
+		const finish = (error?: Error) => {
+			if (settled) return
+			settled = true
+			if (timer) clearTimeout(timer)
+			if (error) {
+				reject(error)
+			} else {
+				resolve(chunks.join(""))
+			}
+		}
 
-	const shellResolved = await resolveCliExecutableFromShell(cli)
-	if (shellResolved && !seen.has(shellResolved) && isExecutableFile(shellResolved)) {
-		return shellResolved
-	}
+		timer = setTimeout(() => {
+			child.kill()
+			finish(new Error(`Timed out running ${executable} ${args.join(" ")}`))
+		}, timeoutMs)
 
-	return undefined
+		child.stdout?.on("data", (data) => chunks.push(String(data)))
+		child.stderr?.on("data", (data) => chunks.push(String(data)))
+		child.once("error", finish)
+		child.once("close", () => finish())
+	})
 }
 
-function getCliExecutableCandidates(cli: "cs" | "csc"): string[] {
-	return (process.env.PATH ?? "")
-		.split(path.delimiter)
-		.filter(Boolean)
-		.map((dir) => path.join(dir, cli))
+async function resolveCliExecutable(cli: "cs" | "csc"): Promise<string | undefined> {
+	return (
+		(await resolveCliExecutableFromPath(cli, getExtensionAndTerminalPath())) ??
+		(await resolveCliExecutableFromKnownNpmGlobalBins(cli)) ??
+		(await resolveCliExecutableFromNpmPrefix(cli)) ??
+		(await resolveCliExecutableFromShell(cli))
+	)
+}
+
+async function resolveCliExecutableFromPath(
+	cli: "cs" | "csc",
+	searchPath: string | undefined,
+): Promise<string | undefined> {
+	try {
+		return (await which(cli, { path: searchPath, nothrow: true })) ?? undefined
+	} catch {
+		return undefined
+	}
+}
+
+function getExtensionAndTerminalPath(): string | undefined {
+	return joinSearchPaths(process.env.PATH, getConfiguredTerminalPath())
+}
+
+function getConfiguredTerminalPath(): string | undefined {
+	const platform = process.platform === "win32" ? "windows" : process.platform === "darwin" ? "osx" : "linux"
+	const terminalEnv = vscode.workspace
+		.getConfiguration("terminal.integrated")
+		.get<Record<string, string | null>>(`env.${platform}`)
+
+	const configuredPath = terminalEnv?.PATH ?? terminalEnv?.Path ?? terminalEnv?.path
+	if (!configuredPath) return undefined
+
+	return configuredPath.replace(/\$\{env:PATH\}|\$env:PATH|%PATH%/gi, process.env.PATH ?? "")
+}
+
+async function resolveCliExecutableFromKnownNpmGlobalBins(cli: "cs" | "csc"): Promise<string | undefined> {
+	const candidateBins = getKnownNpmGlobalBinPaths()
+	if (candidateBins.length === 0) return undefined
+	return resolveCliExecutableFromPath(cli, joinSearchPaths(...candidateBins))
+}
+
+function getKnownNpmGlobalBinPaths(): string[] {
+	const paths: Array<string | undefined> = []
+
+	if (process.env.npm_config_prefix) {
+		paths.push(
+			process.platform === "win32"
+				? process.env.npm_config_prefix
+				: path.join(process.env.npm_config_prefix, "bin"),
+		)
+	}
+
+	if (process.platform === "win32") {
+		paths.push(
+			process.env.APPDATA ? path.join(process.env.APPDATA, "npm") : undefined,
+			process.env.USERPROFILE ? path.join(process.env.USERPROFILE, "AppData", "Roaming", "npm") : undefined,
+		)
+	} else if (process.env.HOME) {
+		paths.push(path.join(process.env.HOME, ".npm-global", "bin"), path.join(process.env.HOME, ".npm", "bin"))
+	}
+
+	return uniquePathParts(paths)
+}
+
+async function resolveCliExecutableFromNpmPrefix(cli: "cs" | "csc"): Promise<string | undefined> {
+	const npmPrefix = await getNpmGlobalPrefix()
+	if (!npmPrefix) return undefined
+
+	const npmBin = process.platform === "win32" ? npmPrefix : path.join(npmPrefix, "bin")
+	return resolveCliExecutableFromPath(cli, joinSearchPaths(npmBin))
+}
+
+async function getNpmGlobalPrefix(): Promise<string | undefined> {
+	const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm"
+
+	try {
+		const output = await new Promise<string>((resolve) => {
+			execFile(
+				npmCommand,
+				["prefix", "-g"],
+				{ timeout: 3000, shell: process.platform === "win32" },
+				(_err, stdout) => {
+					resolve(stdout || "")
+				},
+			)
+		})
+		return output.split(/\r?\n/)[0]?.trim() || undefined
+	} catch {
+		return undefined
+	}
 }
 
 async function resolveCliExecutableFromShell(cli: "cs" | "csc"): Promise<string | undefined> {
-	const shell = process.env.SHELL || "/bin/sh"
-	const shellName = path.basename(shell)
-	const command = `command -v ${cli}`
-	const attempts =
-		shellName === "bash" || shellName === "zsh"
-			? [
-					["-lc", command],
-					["-ic", command],
-				]
-			: [["-c", command]]
-
-	for (const args of attempts) {
+	for (const attempt of getShellResolveAttempts(cli)) {
 		try {
 			const output = await new Promise<string>((resolve) => {
-				execFile(shell, args, { timeout: 3000 }, (_err, stdout) => resolve(stdout || ""))
+				execFile(attempt.command, attempt.args, { timeout: 3000 }, (_err, stdout) => resolve(stdout || ""))
 			})
 			const resolved = output
 				.split(/\r?\n/)
-				.find((line) => line.trim().startsWith("/"))
-				?.trim()
+				.map((line) => line.trim())
+				.find(Boolean)
 			if (resolved) return resolved
 		} catch {
 			// Ignore shell resolution failures; caller will surface a generic CLI error.
@@ -578,19 +661,97 @@ async function resolveCliExecutableFromShell(cli: "cs" | "csc"): Promise<string 
 	return undefined
 }
 
-function isExecutableFile(filePath: string): boolean {
-	try {
-		const stat = fs.statSync(filePath)
-		if (!stat.isFile()) return false
-		fs.accessSync(filePath, fs.constants.X_OK)
-		return true
-	} catch {
-		return false
+type ShellResolveAttempt = { command: string; args: string[] }
+
+function getShellResolveAttempts(cli: "cs" | "csc"): ShellResolveAttempt[] {
+	const attempts: ShellResolveAttempt[] = []
+	const seen = new Set<string>()
+	const add = (command: string | undefined, args: string[]) => {
+		if (!command) return
+		const key = `${command}\0${args.join("\0")}`
+		if (seen.has(key)) return
+		seen.add(key)
+		attempts.push({ command, args })
 	}
+
+	const shell = vscode.env.shell || process.env.SHELL || process.env.ComSpec
+	const shellName = shell ? path.basename(shell).toLowerCase() : ""
+	const posixCommand = `command -v ${cli}`
+	const powershellCommand = `(Get-Command ${cli} -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Source)`
+	// Keep the profile-loading PowerShell invocation first: VS Code terminals also
+	// load user profiles by default, and many Windows setups adjust PATH there.
+	const powershellWithProfileArgs = ["-NoLogo", "-Command", powershellCommand]
+	const powershellNoProfileArgs = ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", powershellCommand]
+	const cmdArgs = ["/d", "/s", "/c", `where ${cli}`]
+
+	if (process.platform === "win32") {
+		if (isPowerShellShell(shellName)) {
+			add(shell, powershellWithProfileArgs)
+			add(shell, powershellNoProfileArgs)
+		} else if (isCmdShell(shellName)) {
+			add(shell, cmdArgs)
+		} else {
+			// Unknown Windows shells: try POSIX-style flags first. If unsupported,
+			// execFile fails and we continue to PowerShell/cmd fallbacks below.
+			add(shell, ["-lc", posixCommand])
+			add(shell, ["-ic", posixCommand])
+			add(shell, ["-c", posixCommand])
+		}
+
+		add("powershell.exe", powershellWithProfileArgs)
+		add("powershell.exe", powershellNoProfileArgs)
+		add("pwsh.exe", powershellWithProfileArgs)
+		add("pwsh.exe", powershellNoProfileArgs)
+		add(process.env.ComSpec || "cmd.exe", cmdArgs)
+		add("cmd.exe", cmdArgs)
+		return attempts
+	}
+
+	// Most POSIX-compatible shells support -c; bash/zsh also commonly need -l/-i
+	// to load user profile files where PATH may be adjusted. Try all variants and
+	// ignore unsupported ones.
+	add(shell, ["-lc", posixCommand])
+	add(shell, ["-ic", posixCommand])
+	add(shell, ["-c", posixCommand])
+	add("/bin/sh", ["-c", posixCommand])
+	return attempts
+}
+
+function isPowerShellShell(shellName: string): boolean {
+	return (
+		shellName === "powershell" || shellName === "powershell.exe" || shellName === "pwsh" || shellName === "pwsh.exe"
+	)
+}
+
+function isCmdShell(shellName: string): boolean {
+	return shellName === "cmd" || shellName === "cmd.exe"
+}
+
+function joinSearchPaths(...paths: Array<string | undefined>): string | undefined {
+	const joined = uniquePathParts(paths.flatMap((value) => value?.split(path.delimiter) ?? []))
+	return joined.length > 0 ? joined.join(path.delimiter) : undefined
+}
+
+function uniquePathParts(paths: Array<string | undefined>): string[] {
+	const seen = new Set<string>()
+	const result: string[] = []
+
+	for (const value of paths) {
+		const normalized = value?.trim()
+		if (!normalized) continue
+
+		const key = process.platform === "win32" ? normalized.toLowerCase() : normalized
+		if (seen.has(key)) continue
+
+		seen.add(key)
+		result.push(normalized)
+	}
+
+	return result
 }
 
 function getCliExecutableErrorMessage(cli: "cs" | "csc"): string {
-	return `无法执行 ${cli}：PATH 中没有找到可执行的 ${cli}。请检查 ${cli} 是否已安装，并确认 VS Code 扩展进程的 PATH 配置正确。`
+	return `无法执行 ${cli}：未能在 VS Code 扩展 PATH、Terminal PATH 或 npm 全局安装目录中找到可执行的 ${cli}。请检查 ${cli} 是否已安装，或重载 VS Code 窗口后重试。`
 }
 
 function trimTrailingSlash(value: string) {
