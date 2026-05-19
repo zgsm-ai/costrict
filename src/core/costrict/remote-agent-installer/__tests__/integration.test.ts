@@ -64,7 +64,8 @@ async function createTestZip(destPath: string): Promise<void> {
 	await fs.writeFile(path.join(srcDir, "rules", "test-rule", "rule.md"), "# Test Rule\n", "utf-8")
 	await fs.writeFile(
 		path.join(srcDir, "mcp", "test-server.json"),
-		JSON.stringify({ name: "test-server", url: "http://localhost:3000" }),
+		// use nested format (standard mcp_settings.json format)
+		JSON.stringify({ "test-server": { url: "http://localhost:3000" } }),
 		"utf-8",
 	)
 
@@ -310,7 +311,8 @@ describe("Remote Resource Installer Integration", () => {
 		const mcpZipPath = path.join(tmpDir, "mcp-only.zip")
 		await createZipWithModules(mcpZipPath, {
 			mcp: {
-				"my-server.json": JSON.stringify({ name: "my-server", command: "node", args: ["server.js"] }),
+				// costrict: use nested format (standard mcp_settings.json format)
+				"my-server.json": JSON.stringify({ "my-server": { command: "node", args: ["server.js"] } }),
 			},
 		})
 
@@ -338,7 +340,8 @@ describe("Remote Resource Installer Integration", () => {
 		const mcpZipPath = path.join(tmpDir, "mcp-merge.zip")
 		await createZipWithModules(mcpZipPath, {
 			mcp: {
-				"new-server.json": JSON.stringify({ name: "new-server", command: "node" }),
+				// costrict: use nested format (standard mcp_settings.json format)
+				"new-server.json": JSON.stringify({ "new-server": { command: "node" } }),
 			},
 		})
 
@@ -365,7 +368,8 @@ describe("Remote Resource Installer Integration", () => {
 		const mcpZipPath = path.join(tmpDir, "mcp-invalid.zip")
 		await createZipWithModules(mcpZipPath, {
 			mcp: {
-				"server.json": JSON.stringify({ name: "server", command: "node" }),
+				// use nested format (standard mcp_settings.json format)
+				"server.json": JSON.stringify({ server: { command: "node" } }),
 			},
 		})
 
@@ -387,10 +391,10 @@ describe("Remote Resource Installer Integration", () => {
 		const mcpZipPath = path.join(tmpDir, "mcp-non-obj.zip")
 		await createZipWithModules(mcpZipPath, {
 			mcp: {
-				// null value �?not an object, should be skipped
+				// null value — not an object, should be skipped
 				"null-server.json": "null",
-				// valid server
-				"valid-server.json": JSON.stringify({ name: "valid-server", command: "node" }),
+				// valid server — use nested format (standard mcp_settings.json format)
+				"valid-server.json": JSON.stringify({ "valid-server": { command: "node" } }),
 			},
 		})
 
@@ -931,8 +935,9 @@ describe("Remote Resource Installer Integration", () => {
 		const multiMcpZipPath = path.join(tmpDir, "multi-mcp.zip")
 		await createZipWithModules(multiMcpZipPath, {
 			mcp: {
-				"server-a.json": JSON.stringify({ name: "server-a", command: "node", args: ["a.js"] }),
-				"server-b.json": JSON.stringify({ name: "server-b", command: "python", args: ["b.py"] }),
+				// use nested format (standard mcp_settings.json format)
+				"server-a.json": JSON.stringify({ "server-a": { command: "node", args: ["a.js"] } }),
+				"server-b.json": JSON.stringify({ "server-b": { command: "python", args: ["b.py"] } }),
 			},
 		})
 

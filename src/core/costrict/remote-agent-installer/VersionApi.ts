@@ -110,7 +110,7 @@ export class VersionApi {
 		}
 		try {
 			let apiConfiguration = (await provider.getState()).apiConfiguration
-			return apiConfiguration.costrictBaseUrl?.trim() || "" // not use default value here
+			return apiConfiguration.costrictBaseUrl?.trim() || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 		} catch {
 			// ignore
 		}

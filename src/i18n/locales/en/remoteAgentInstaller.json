@@ -1,0 +1,20 @@
+{
+	"info": {
+		"installed": "{{name}} v{{version}} installed successfully.",
+		"noUpdate": "{{name}} is already up to date.",
+		"uninstalled": "{{name}} uninstalled successfully."
+	},
+	"warn": {
+		"taskInProgress": "{{name}} install is already in progress.",
+		"contentCorrupted": "{{name}} package content is corrupted. Please contact your administrator.",
+		"downloadFailed": "Failed to download {{name}}: {{reason}}",
+		"installFailed": "Failed to install {{name}}: {{reason}}"
+	},
+	"error": {
+		"updateFailed": "Failed to update {{name}}: {{reason}}",
+		"uninstallFailed": "Failed to uninstall {{name}}: {{reason}}"
+	},
+	"action": {
+		"retryNow": "Retry Now"
+	}
+}

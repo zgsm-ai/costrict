@@ -11,9 +11,9 @@ vi.mock("vscode", async (importOriginal) => {
 			...actual.window,
 			createOutputChannel: vi.fn(() => ({ appendLine: vi.fn(), dispose: vi.fn() })),
 			createStatusBarItem: vi.fn(() => ({ text: "", show: vi.fn(), hide: vi.fn(), dispose: vi.fn() })),
-			showInformationMessage: vi.fn(),
-			showWarningMessage: vi.fn(),
-			showErrorMessage: vi.fn(),
+			showInformationMessage: vi.fn(() => Promise.resolve(undefined)),
+			showWarningMessage: vi.fn(() => Promise.resolve(undefined)),
+			showErrorMessage: vi.fn(() => Promise.resolve(undefined)),
 		},
 		extensions: {
 			getExtension: vi.fn(() => ({ extensionUri: { fsPath: "/mock" } })),
@@ -181,5 +181,168 @@ describe("RemoteAgentInstaller", () => {
 		expect(sameInstance).toBe(installer)
 		// Context should now be set on the existing instance
 		expect((sameInstance as any).context).toBe(mockContext)
+	})
+})
+
+describe("RemoteAgentInstaller.forceBackgroundCheck (US-001)", () => {
+	let installer: RemoteAgentInstaller
+
+	beforeEach(() => {
+		RemoteAgentInstaller["instance"] = undefined
+		installer = RemoteAgentInstaller.getInstance()
+	})
+
+	afterEach(() => {
+		installer.dispose()
+		RemoteAgentInstaller["instance"] = undefined
+	})
+
+	// T008 [P] [US1]: forceBackgroundCheck 应调用 performBackgroundCheck(true)
+	it("forceBackgroundCheck should call performBackgroundCheck with forceCheck=true", async () => {
+		const performSpy = vi.fn().mockResolvedValue(undefined)
+		;(installer as any).performBackgroundCheck = performSpy
+		;(installer as any).scheduleNextCheck = vi.fn() // ensure no timer side effects
+
+		installer.forceBackgroundCheck()
+		// Allow the async run() to execute
+		await new Promise((resolve) => setTimeout(resolve, 0))
+
+		expect(performSpy).toHaveBeenCalledWith(true)
+	})
+
+	// T009 [P] [US1]: forceBackgroundCheck 不应调用 scheduleNextCheck
+	it("forceBackgroundCheck should not call scheduleNextCheck", async () => {
+		const performSpy = vi.fn().mockResolvedValue(undefined)
+		const scheduleSpy = vi.fn()
+		;(installer as any).performBackgroundCheck = performSpy
+		;(installer as any).scheduleNextCheck = scheduleSpy
+
+		installer.forceBackgroundCheck()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+
+		expect(scheduleSpy).not.toHaveBeenCalled()
+	})
+
+	// T010 [P] [US1]: 当 runningPromise 存在时 forceBackgroundCheck 应直接跳过（不排队）
+	it("forceBackgroundCheck should be skipped when runningPromise exists", async () => {
+		const doInstallSpy = vi.fn()
+		;(installer as any).doInstall = doInstallSpy
+		installer["runningPromise"] = new Promise(() => {})
+
+		installer.forceBackgroundCheck()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+
+		// performBackgroundCheck sees runningPromise and returns early before calling doInstall
+		expect(doInstallSpy).not.toHaveBeenCalled()
+	})
+})
+
+describe("RemoteAgentInstaller background notification silence (US-002)", () => {
+	let installer: RemoteAgentInstaller
+	let recordManagerMock: any
+	let versionApiMock: any
+	let downloaderMock: any
+	let resourceInstallerMock: any
+	let vscodeWindow: typeof import("vscode").window
+
+	beforeEach(async () => {
+		RemoteAgentInstaller["instance"] = undefined
+		installer = RemoteAgentInstaller.getInstance()
+		vscodeWindow = await import("vscode").then((m) => m.window)
+
+		recordManagerMock = {
+			read: vi.fn().mockResolvedValue({
+				schemaVersion: 1,
+				installedVersion: "1.0.0",
+				lastCheckedAt: 0,
+				installState: "none",
+				manifest: { agents: [], commands: [], skills: [], rules: [], mcp: [] },
+			}),
+			write: vi.fn().mockResolvedValue(undefined),
+			shouldCheck: vi.fn().mockReturnValue(true),
+		}
+		versionApiMock = {
+			getLatestVersion: vi.fn().mockResolvedValue(null),
+		}
+		downloaderMock = {
+			download: vi.fn().mockResolvedValue("/mock/path.zip"),
+			cleanupResidualFiles: vi.fn().mockResolvedValue(undefined),
+			getTmpDir: vi.fn().mockReturnValue("/mock/tmp"),
+		}
+		resourceInstallerMock = {
+			install: vi.fn().mockResolvedValue({
+				agents: [], commands: [], skills: [], rules: [], mcp: [],
+			}),
+			uninstall: vi.fn().mockResolvedValue(undefined),
+			cleanup: vi.fn().mockResolvedValue(undefined),
+			getTmpDir: vi.fn().mockReturnValue("/mock/tmp"),
+		}
+
+		;(installer as any)["recordManager"] = recordManagerMock
+		;(installer as any)["versionApi"] = versionApiMock
+		;(installer as any)["downloader"] = downloaderMock
+		;(installer as any)["installer"] = resourceInstallerMock
+		;(installer as any)["isLockHeld"] = vi.fn().mockResolvedValue(false)
+		;(installer as any)["acquireLock"] = vi.fn().mockResolvedValue(undefined)
+		;(installer as any)["releaseLock"] = vi.fn().mockResolvedValue(undefined)
+		;(installer as any)["fileExists"] = vi.fn().mockResolvedValue(true)
+	})
+
+	afterEach(() => {
+		installer.dispose()
+		RemoteAgentInstaller["instance"] = undefined
+		vi.clearAllMocks()
+	})
+
+	// T014 [P] [US2]: 后台 noUpdate 路径不调用 showInformationMessage / showWarningMessage
+	it("background noUpdate should not show any notification", async () => {
+		// Server returns null → noUpdate path in doInstall
+		versionApiMock.getLatestVersion.mockResolvedValue(null)
+
+		await (installer as any).doInstall(false)
+
+		vi.mocked(vscodeWindow.showWarningMessage).mockClear()
+		expect(vscodeWindow.showInformationMessage).not.toHaveBeenCalled()
+		expect(vscodeWindow.showWarningMessage).not.toHaveBeenCalled()
+	})
+
+	// T015 [P] [US2]: 后台 installed 路径调用 showInformationMessage
+	it("background installed should show information message", async () => {
+		versionApiMock.getLatestVersion.mockResolvedValue({
+			version: "2.0.0",
+			downloadUrl: "https://example.com/pkg.zip",
+			name: "Test Package",
+		})
+		recordManagerMock.read.mockResolvedValue({
+			schemaVersion: 1,
+			installedVersion: "1.0.0",
+			lastCheckedAt: 0,
+			installState: "none",
+			manifest: { agents: [], commands: [], skills: [], rules: [], mcp: [] },
+		})
+
+		await (installer as any).doInstall(false)
+
+		expect(vscodeWindow.showInformationMessage).toHaveBeenCalled()
+	})
+
+	// T016 [P] [US2]: 后台 failed 路径调用 showWarningMessage
+	it("background failed should show warning message", async () => {
+		versionApiMock.getLatestVersion.mockResolvedValue({
+			version: "2.0.0",
+			downloadUrl: "https://example.com/pkg.zip",
+		})
+		recordManagerMock.read.mockResolvedValue({
+			schemaVersion: 1,
+			installedVersion: "1.0.0",
+			lastCheckedAt: 0,
+			installState: "none",
+			manifest: { agents: [], commands: [], skills: [], rules: [], mcp: [] },
+		})
+		downloaderMock.download.mockRejectedValue(new Error("Network timeout"))
+
+		await (installer as any).doInstall(false)
+
+		expect(vscodeWindow.showWarningMessage).toHaveBeenCalled()
 	})
 })

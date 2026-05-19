@@ -227,7 +227,8 @@ describe("AgentInstaller edge cases", () => {
 		const zipPath = path.join(tmpDir, "settings-dir.zip")
 		await createZipWithModules(zipPath, {
 			agents: "name: SettingsDir Agent\nslug: settings-agent\n",
-			mcp: JSON.stringify({ name: "settings-server", url: "http://localhost" }),
+			// use nested format (standard mcp_settings.json format)
+			mcp: JSON.stringify({ "settings-server": { url: "http://localhost" } }),
 		})
 
 		const settingsDir = path.join(tmpDir, "settings")
@@ -339,7 +340,8 @@ describe("AgentInstaller edge cases", () => {
 	it("should warn and continue when local mcp_settings.json is corrupted (not FatalError)", async () => {
 		const zipPath = path.join(tmpDir, "mcp-test.zip")
 		await createZipWithModules(zipPath, {
-			mcp: JSON.stringify({ name: "test-server", url: "http://localhost:3000" }),
+			// use nested format (standard mcp_settings.json format)
+			mcp: JSON.stringify({ "test-server": { url: "http://localhost:3000" } }),
 		})
 
 		const installer = new AgentInstaller(tmpDir, rooDir)

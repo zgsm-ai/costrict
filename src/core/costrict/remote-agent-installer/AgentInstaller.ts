@@ -583,16 +583,22 @@ export class AgentInstaller {
 			// Path safety for zip contents is enforced by extractZip(); no additional check needed here.
 			try {
 				const content = await fs.readFile(filePath, "utf-8")
-				const serverConfig = JSON.parse(content)
-				if (!serverConfig || typeof serverConfig !== "object") {
+				const parsed = JSON.parse(content)
+				if (!parsed || typeof parsed !== "object") {
 					continue
 				}
-				const name = serverConfig.name || path.basename(file, ".json")
-				// Exclude the `name` field from the stored config — it's used as the key,
-				// not as part of the server configuration value in mcp_settings.json.
-				const { name: _name, ...serverConfigWithoutName } = serverConfig
-				settings.mcpServers[name] = serverConfigWithoutName
-				serverNames.push(name)
+				// MCP JSON files use the standard mcp_settings.json nested format:
+				//   { "serverName": { "type": "stdio", "command": "...", ... }, ... }
+				// Each top-level key is a server name; the value is the server config object.
+				// This matches the format used by mcp_settings.json and the actual zip packages.
+				for (const [serverName, serverConfig] of Object.entries(parsed)) {
+						if (!serverConfig || typeof serverConfig !== "object" || Object.keys(serverConfig).length === 0) {
+							logger.warn(`${LOG_PREFIX} Skipping invalid MCP server entry "${serverName}" in ${file}`)
+							continue
+						}
+					settings.mcpServers[serverName] = serverConfig
+					serverNames.push(serverName)
+				}
 			} catch (error: any) {
 				throw new FatalInstallerError("jsonParseError", `Failed to parse MCP JSON ${file}: ${error.message}`)
 			}

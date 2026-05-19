@@ -7,6 +7,8 @@ import { Package } from "../../../shared/package"
 import { getGlobalCostrictDirectory } from "../../../services/roo-config/index"
 import { getSettingsDirectoryPath } from "../../../utils/storage"
 import { t } from "../../../i18n"
+// costrict: import ClineProvider for hot-reload after install
+import { ClineProvider } from "../../webview/ClineProvider"
 import { InstallRecordManager } from "./InstallRecordManager"
 import { VersionApi } from "./VersionApi"
 import { AgentDownloader } from "./AgentDownloader"
@@ -75,6 +77,32 @@ export class RemoteAgentInstaller {
 
 	getPackageName(): string {
 		return this.packageName
+	}
+
+	/**
+	 * Force an immediate background check without rescheduling the timer.
+	 *
+	 * Use this when an out-of-band event (e.g. costrictBaseUrl changed) requires
+	 * an immediate version check. The existing background check cycle (managed by
+	 * scheduleNextCheck) is left untouched to avoid delaying or resetting the
+	 * regular 12h interval.
+	 *
+	 * Calls `performBackgroundCheck(true)` where `true` means **forceCheck** —
+	 * i.e. skip the 12h cooldown so the check runs immediately regardless of when
+	 * the last check occurred. This is NOT the same as `isManual`: the check still
+	 * runs as a background (non-manual) operation, so `doInstall(false)` is called
+	 * internally and the `noUpdate` result is silenced per FR-005.
+	 */
+	forceBackgroundCheck(): void {
+		logger.info(`${LOG_PREFIX} forceBackgroundCheck triggered (costrictBaseUrl changed)`)
+		const run = async () => {
+			try {
+				await this.performBackgroundCheck(true)
+			} catch (error: any) {
+				logger.error(`${LOG_PREFIX} Force background check error: ${error.message}`)
+			}
+		}
+		void run()
 	}
 
 	scheduleBackgroundCheck(): void {
@@ -251,7 +279,7 @@ export class RemoteAgentInstaller {
 		this.packageName = versionInfo.name || "Remote Resource Package"
 
 		if (semverCompare(versionInfo.version, record.installedVersion) <= 0) {
-			logger.info(`${LOG_PREFIX} Local version ${record.installedVersion} is up to date`)
+			logger.info(`${LOG_PREFIX} Local version ${record.installedVersion} is up to date, skipping installation.`)
 			await this.updateLastChecked(record)
 			return { state: "noUpdate" }
 		}
@@ -350,6 +378,9 @@ export class RemoteAgentInstaller {
 				this.hideDownloadProgress()
 				this.hasNotifiedFailure = false
 				logger.info(`${LOG_PREFIX} ${this.packageName} updated to ${versionInfo.version}`)
+				// costrict: hot-reload custom modes, skills after install
+				void this.hotReloadAfterInstall()
+				// Background install shows notification here; manual install notification is handled by registerCommands.ts
 				if (!isManual) {
 					void vscode.window.showInformationMessage(
 						t("remoteAgentInstaller:info.installed", {
@@ -411,6 +442,29 @@ export class RemoteAgentInstaller {
 
 	private hideDownloadProgress(): void {
 		this.statusBarItem?.hide()
+	}
+
+	// hot-reload custom modes, skills after a successful remote agent install.
+	// Invalidates the ClineProvider's in-memory custom modes cache and re-discovers skills so that
+	// newly installed agents and skills are immediately visible in the UI without a VSCode restart.
+	private async hotReloadAfterInstall(): Promise<void> {
+		logger.info(`${LOG_PREFIX} Starting hot-reload after install (customModes, skills)`)
+		try {
+			const provider = await ClineProvider.getInstance()
+			if (!provider) {
+				logger.warn(`${LOG_PREFIX} Hot-reload skipped: no active ClineProvider instance`)
+				return
+			}
+			// Invalidate custom modes cache so the next getState() re-reads custom_modes.yaml
+			provider.invalidateCustomModesCache()
+			// Re-discover skills from disk (also refreshes the commands list)
+			await provider.getSkillsManager()?.discoverSkills()
+			// Push updated state to webview so the mode dropdown updates immediately
+			await provider.postStateToWebviewWithoutClineMessages()
+			logger.info(`${LOG_PREFIX} Hot-reload completed: webview state pushed`)
+		} catch (error: any) {
+			logger.warn(`${LOG_PREFIX} hotReloadAfterInstall failed (non-blocking): ${error.message}`)
+		}
 	}
 
 	private async isLockHeld(): Promise<boolean> {

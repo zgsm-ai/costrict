@@ -844,3 +844,80 @@ describe("RemoteAgentInstaller orchestration flow", () => {
 		expect(showInfoMock).not.toHaveBeenCalled()
 	})
 })
+
+
+describe("RemoteAgentInstaller.forceBackgroundCheck flow (US-001)", () => {
+	let installer: RemoteAgentInstaller
+	let recordManagerMock: any
+	let versionApiMock: any
+	let downloaderMock: any
+	let resourceInstallerMock: any
+
+	beforeEach(async () => {
+		RemoteAgentInstaller["instance"] = undefined
+		installer = RemoteAgentInstaller.getInstance()
+
+		recordManagerMock = {
+			read: vi.fn().mockResolvedValue({ ...defaultRecord }),
+			write: vi.fn().mockResolvedValue(undefined),
+			shouldCheck: vi.fn().mockReturnValue(true),
+		}
+		versionApiMock = {
+			getLatestVersion: vi.fn().mockResolvedValue(null),
+		}
+		downloaderMock = {
+			download: vi.fn().mockResolvedValue("/mock/path.zip"),
+			cleanupResidualFiles: vi.fn().mockResolvedValue(undefined),
+			getTmpDir: vi.fn().mockReturnValue("/mock/tmp"),
+		}
+		resourceInstallerMock = {
+			install: vi.fn().mockResolvedValue({
+				agents: ["test-agent"],
+				commands: [],
+				skills: [],
+				rules: [],
+				mcp: [],
+			} as InstalledManifest),
+			uninstall: vi.fn().mockResolvedValue(undefined),
+			cleanup: vi.fn().mockResolvedValue(undefined),
+			getTmpDir: vi.fn().mockReturnValue("/mock/tmp"),
+		}
+
+		;(installer as any)["recordManager"] = recordManagerMock
+		;(installer as any)["versionApi"] = versionApiMock
+		;(installer as any)["downloader"] = downloaderMock
+		;(installer as any)["installer"] = resourceInstallerMock
+		;(installer as any)["isLockHeld"] = vi.fn().mockResolvedValue(false)
+		;(installer as any)["acquireLock"] = vi.fn().mockResolvedValue(undefined)
+		;(installer as any)["releaseLock"] = vi.fn().mockResolvedValue(undefined)
+		;(installer as any)["fileExists"] = vi.fn().mockResolvedValue(true)
+	})
+
+	afterEach(() => {
+		installer.dispose()
+		RemoteAgentInstaller["instance"] = undefined
+		vi.clearAllMocks()
+	})
+
+	// T011 [US1]: base_url 变更触发流程的集成风格测试
+	it("forceBackgroundCheck should execute doInstall when no task is running", async () => {
+		const doInstallSpy = vi.fn().mockResolvedValue({ state: "noUpdate" })
+		;(installer as any).doInstall = doInstallSpy
+
+		installer.forceBackgroundCheck()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+
+		expect(doInstallSpy).toHaveBeenCalledWith(false)
+	})
+
+	it("forceBackgroundCheck should skip when a background check is already running", async () => {
+		const doInstallSpy = vi.fn().mockResolvedValue({ state: "noUpdate" })
+		;(installer as any).doInstall = doInstallSpy
+		installer["runningPromise"] = new Promise(() => {})
+
+		installer.forceBackgroundCheck()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+
+		expect(doInstallSpy).not.toHaveBeenCalled()
+	})
+})
