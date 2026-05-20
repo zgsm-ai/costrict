@@ -93,7 +93,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			this.outputChannel.appendLine(
 				`[AssistantUI] Detected cs-cloud on port ${detectedPort}, waiting for it to be ready...`,
 			)
-			await this.waitForHttpReady(healthUrl, 15_000)
+			await this.waitForHttpReady(healthUrl, 60_000)
 			await assertOpenCodeCompatible(this.baseUrl)
 			return this.baseUrl
 		}
@@ -197,7 +197,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			})
 		}
 
-		await this.waitForHttpReady(healthUrl, 15_000)
+		await this.waitForHttpReady(healthUrl, 60_000)
 		await assertOpenCodeCompatible(this.baseUrl)
 		return this.baseUrl
 	}
@@ -357,7 +357,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	// Helpers
 	// ═══════════════════════════════════════════════════════════════
 
-	private async waitForHealth(timeoutMs = 30_000): Promise<void> {
+	private async waitForHealth(timeoutMs = 60_000): Promise<void> {
 		const startedAt = Date.now()
 		while (Date.now() - startedAt < timeoutMs) {
 			if (await isHttpReady(this.healthUrl)) return
