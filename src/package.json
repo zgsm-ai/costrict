@@ -497,18 +497,13 @@
 			],
 			"comments/commentThread/title": [
 				{
-					"command": "costrict.acceptIssue",
+					"command": "costrict.askReviewSuggestionWithAI",
 					"group": "navigation@1",
 					"when": "commentThread == CostrictCodeReview"
 				},
 				{
 					"command": "costrict.rejectIssue",
 					"group": "navigation@2",
-					"when": "commentThread == CostrictCodeReview"
-				},
-				{
-					"command": "costrict.askReviewSuggestionWithAI",
-					"group": "navigation@3",
 					"when": "commentThread == CostrictCodeReview"
 				}
 			],
