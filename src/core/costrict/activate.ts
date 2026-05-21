@@ -45,6 +45,7 @@ import { t } from "../../i18n"
 import prettyBytes from "pretty-bytes"
 import { isCliPatform, isJetbrainsPlatform } from "../../utils/platform"
 import { updateDefaultDebug } from "../../utils/getDebugState"
+import { RemoteAgentInstaller } from "./remote-agent-installer"
 
 const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
 
@@ -222,6 +223,17 @@ export async function activate(
 	setTimeout(() => {
 		loginTip()
 	}, 2000)
+
+	// costrict: start remote agent installer background check after CostrictAuthApi.setProvider()
+	// has been called (inside initialize()), so that getApiConfiguration() can read the user's
+	// costrictBaseUrl from the provider state instead of falling back to an empty string.
+	try {
+		RemoteAgentInstaller.getInstance(context).scheduleBackgroundCheck()
+	} catch (error: any) {
+		outputChannel.appendLine(
+			`[RemoteAgentInstaller] Failed to start background check: ${error instanceof Error ? error.message : String(error)}`,
+		)
+	}
 }
 
 /**
@@ -234,4 +246,8 @@ export async function deactivate() {
 	void disconnectIPC()
 	void stopIPCServer()
 	loggerDeactivate()
+
+	// costrict: dispose remote agent installer (use disposeInstance to avoid creating a new
+	// instance just to immediately dispose it when the singleton was never initialized)
+	RemoteAgentInstaller.disposeInstance()
 }

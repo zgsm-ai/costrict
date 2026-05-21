@@ -338,6 +338,16 @@
 				"command": "costrict.coworkflow.runTest",
 				"title": "Generate Test Case",
 				"category": "Coworkflow"
+			},
+			{
+				"command": "costrict.installAgentPackage",
+				"title": "%command.installAgentPackage.title%",
+				"category": "%configuration.title%"
+			},
+			{
+				"command": "costrict.uninstallAgentPackage",
+				"title": "%command.uninstallAgentPackage.title%",
+				"category": "%configuration.title%"
 			}
 		],
 		"menus": {
@@ -877,6 +887,7 @@
 		"@roo-code/telemetry": "workspace:^",
 		"@roo-code/types": "workspace:^",
 		"@vscode/codicons": "^0.0.45",
+		"adm-zip": "^0.5.16",
 		"ai-sdk-provider-poe": "2.0.18",
 		"async-mutex": "^0.5.0",
 		"async-retry": "^1.3.3",
@@ -963,6 +974,7 @@
 		"@roo-code/build": "workspace:^",
 		"@roo-code/config-eslint": "workspace:^",
 		"@roo-code/config-typescript": "workspace:^",
+		"@types/adm-zip": "^0.5.8",
 		"@types/async-retry": "^1.4.9",
 		"@types/clone-deep": "^4.0.4",
 		"@types/debug": "^4.1.12",

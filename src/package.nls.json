@@ -80,5 +80,19 @@
 	"settings.debug.description": "Enable debug mode to show additional buttons for viewing API conversation history and UI messages as prettified JSON in temporary files.",
 	"settings.debugProxy.enabled.description": "**Enable Debug Proxy** — Route all outbound network requests through a proxy for MITM debugging. Only active when running in debug mode (F5).",
 	"settings.debugProxy.serverUrl.description": "Proxy URL (e.g., `http://127.0.0.1:8888`). Only used when **Debug Proxy** is enabled.",
-	"settings.debugProxy.tlsInsecure.description": "Accept self-signed certificates from the proxy. **Required for MITM inspection.** ⚠️ Insecure — only use for local debugging."
+	"settings.debugProxy.tlsInsecure.description": "Accept self-signed certificates from the proxy. **Required for MITM inspection.** ⚠️ Insecure — only use for local debugging.",
+
+	"command.installAgentPackage.title": "Install/Update Remote Agent Package",
+	"command.uninstallAgentPackage.title": "Uninstall Remote Agent Package",
+
+	"remoteAgentInstaller:info.installed": "{name} updated to version {version}",
+	"remoteAgentInstaller:info.noUpdate": "{name} is already up to date",
+	"remoteAgentInstaller:error.updateFailed": "{name} update failed: {reason}",
+	"remoteAgentInstaller:info.uninstalled": "{name} uninstalled",
+	"remoteAgentInstaller:error.uninstallFailed": "{name} uninstall failed: {reason}",
+	"remoteAgentInstaller:warn.downloadFailed": "{name} download failed ({reason}). Please check your network and click 'Retry Now'",
+	"remoteAgentInstaller:warn.installFailed": "{name} installation failed ({reason}). Please check disk space and permissions, then click 'Retry Now'",
+	"remoteAgentInstaller:warn.contentCorrupted": "{name} content verification failed and cannot be installed automatically. Please wait for the server fix and try again later",
+	"remoteAgentInstaller:warn.taskInProgress": "{name} update is in progress, please try again later",
+	"remoteAgentInstaller:action.retryNow": "Retry Now"
 }

@@ -1,0 +1,20 @@
+{
+	"info": {
+		"installed": "{{name}} v{{version}} 安裝成功。",
+		"noUpdate": "{{name}} 已是最新版本。",
+		"uninstalled": "{{name}} 解除安裝成功。"
+	},
+	"warn": {
+		"taskInProgress": "{{name}} 正在安裝中，請稍候。",
+		"contentCorrupted": "{{name}} 安裝包內容損壞，請聯繫管理員。",
+		"downloadFailed": "下載 {{name}} 失敗：{{reason}}",
+		"installFailed": "安裝 {{name}} 失敗：{{reason}}"
+	},
+	"error": {
+		"updateFailed": "更新 {{name}} 失敗：{{reason}}",
+		"uninstallFailed": "解除安裝 {{name}} 失敗：{{reason}}"
+	},
+	"action": {
+		"retryNow": "立即重試"
+	}
+}

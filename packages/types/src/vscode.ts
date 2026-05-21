@@ -69,6 +69,8 @@ export const commandIds = [
 	"addFileToContext",
 	"toggleAutoApprove",
 	"generateCommitMessage",
+	"installAgentPackage",
+	"uninstallAgentPackage",
 ] as const
 
 export const costrictCommandIds = [

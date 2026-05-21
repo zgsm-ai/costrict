@@ -3,9 +3,19 @@ import * as vscode from "vscode"
 import { ClineProvider } from "../../core/webview/ClineProvider"
 
 import { getCommandsMap, getVisibleProviderOrLog } from "../registerCommands"
+import { RemoteAgentInstaller } from "../../core/costrict/remote-agent-installer"
 
 vi.mock("execa", () => ({
 	execa: vi.fn(),
+}))
+
+vi.mock("../../core/costrict/remote-agent-installer", () => ({
+	RemoteAgentInstaller: {
+		getInstance: vi.fn(() => ({
+			triggerManualInstall: vi.fn(),
+			getPackageName: vi.fn().mockReturnValue("Test Package"),
+		})),
+	},
 }))
 
 const mockTerminalManager = {
@@ -158,5 +168,48 @@ describe("registerCommands", () => {
 			type: "CostrictCliToast",
 			text: "File path inserted into CoStrict CLI",
 		})
+	})
+})
+
+
+describe("registerCommands installAgentPackage (US-002 FR-008)", () => {
+	let mockOutputChannel: vscode.OutputChannel
+
+	beforeEach(() => {
+		mockOutputChannel = {
+			appendLine: vi.fn(),
+			append: vi.fn(),
+			clear: vi.fn(),
+			hide: vi.fn(),
+			name: "mock",
+			replace: vi.fn(),
+			show: vi.fn(),
+			dispose: vi.fn(),
+		}
+		vi.clearAllMocks()
+		vi.mocked(vscode.window.showInformationMessage).mockClear()
+	})
+
+	// T017 [US2]: 手动命令触发 noUpdate 时仍调用 showInformationMessage
+	it("installAgentPackage should show information message on manual noUpdate", async () => {
+		const showInfoMock = vi.mocked(vscode.window.showInformationMessage)
+		showInfoMock.mockResolvedValue(undefined)
+
+		const mockInstaller = {
+			triggerManualInstall: vi.fn().mockResolvedValue({ state: "noUpdate" }),
+			getPackageName: vi.fn().mockReturnValue("Test Package"),
+		}
+		;(RemoteAgentInstaller.getInstance as Mock).mockReturnValue(mockInstaller)
+
+		const commands = getCommandsMap({
+			context: {} as vscode.ExtensionContext,
+			outputChannel: mockOutputChannel,
+			provider: {} as ClineProvider,
+		})
+
+		await commands.installAgentPackage()
+
+		expect(mockInstaller.triggerManualInstall).toHaveBeenCalled()
+		expect(showInfoMock).toHaveBeenCalled()
 	})
 })
