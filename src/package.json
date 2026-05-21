@@ -979,6 +979,7 @@
 		"@roo-code/build": "workspace:^",
 		"@roo-code/config-eslint": "workspace:^",
 		"@roo-code/config-typescript": "workspace:^",
+		"@types/adm-zip": "^0.5.8",
 		"@types/async-retry": "^1.4.9",
 		"@types/clone-deep": "^4.0.4",
 		"@types/debug": "^4.1.12",

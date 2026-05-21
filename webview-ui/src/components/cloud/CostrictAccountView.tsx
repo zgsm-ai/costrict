@@ -241,6 +241,7 @@ const CostrictAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewP
 	const { t } = useAppTranslation()
 	const { copyWithFeedback } = useCopyToClipboard()
 	const [quotaInfo, setQuotaInfo] = useState<QuotaInfo>()
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [inviteCodeInfo, setInviteCodeInfo] = useState<InviteCodeInfo>()
 	const [showQuotaInfo, setShowQuotaInfo] = useState(false)
 	const [isLoadingQuota, setIsLoadingQuota] = useState(false)

@@ -350,7 +350,7 @@ export class AgentInstaller {
 			// on legitimate filenames like "..hidden" or "file..name".
 			// A traversal segment is exactly ".." (not "..hidden" or "file..name").
 			const segments = normalized.split("/")
-			if (segments.some((seg) => seg === "..") || normalized.startsWith("/")) {
+			if (segments.some((seg: string) => seg === "..") || normalized.startsWith("/")) {
 				throw new FatalInstallerError("pathTraversal", `Zip entry contains path traversal: ${entry.entryName}`)
 			}
 		}
@@ -607,10 +607,10 @@ export class AgentInstaller {
 				// Each top-level key is a server name; the value is the server config object.
 				// This matches the format used by mcp_settings.json and the actual zip packages.
 				for (const [serverName, serverConfig] of Object.entries(parsed)) {
-						if (!serverConfig || typeof serverConfig !== "object" || Object.keys(serverConfig).length === 0) {
-							logger.warn(`${LOG_PREFIX} Skipping invalid MCP server entry "${serverName}" in ${file}`)
-							continue
-						}
+					if (!serverConfig || typeof serverConfig !== "object" || Object.keys(serverConfig).length === 0) {
+						logger.warn(`${LOG_PREFIX} Skipping invalid MCP server entry "${serverName}" in ${file}`)
+						continue
+					}
 					settings.mcpServers[serverName] = serverConfig
 					serverNames.push(serverName)
 				}
