@@ -9,20 +9,16 @@ export function delay(ms: number): Promise<void> {
 }
 
 /**
- * Get the check interval in milliseconds.
- *
- * Reads from the environment variable `COSTRICT_AGENT_CHECK_INTERVAL_MINUTES`.
- * - Minimum: 1 minute (to prevent accidental abuse)
- * - Default: 12 hours (720 minutes)
- *
- * Example:
- *   COSTRICT_AGENT_CHECK_INTERVAL_MINUTES=5   → 5 minutes (for testing)
- *   COSTRICT_AGENT_CHECK_INTERVAL_MINUTES=720 → 12 hours (default)
- */
+ /**
+  * Get the check interval in milliseconds.
+  *
+  * Reads from the environment variable `COSTRICT_AGENT_CHECK_INTERVAL_MINUTES`.
+  * - Minimum: 1 minute (to prevent accidental abuse)
+  * - Default: 60 minutes (1 hour)
+  */
 export function getCheckIntervalMs(): number {
-	const DEFAULT_MINUTES = 12 * 60 // 720 minutes = 12 hours
+	const DEFAULT_MINUTES = 60
 	const MIN_MINUTES = 1
-
 	const raw = process.env.COSTRICT_AGENT_CHECK_INTERVAL_MINUTES
 	if (raw !== undefined && raw !== "") {
 		const parsed = parseInt(raw, 10)

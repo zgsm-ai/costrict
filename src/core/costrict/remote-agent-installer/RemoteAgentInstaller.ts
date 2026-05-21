@@ -85,10 +85,10 @@ export class RemoteAgentInstaller {
 	 * Use this when an out-of-band event (e.g. costrictBaseUrl changed) requires
 	 * an immediate version check. The existing background check cycle (managed by
 	 * scheduleNextCheck) is left untouched to avoid delaying or resetting the
-	 * regular 12h interval.
+	 * regular check interval.
 	 *
 	 * Calls `performBackgroundCheck(true)` where `true` means **forceCheck** —
-	 * i.e. skip the 12h cooldown so the check runs immediately regardless of when
+	 * i.e. skip the check cooldown so the check runs immediately regardless of when
 	 * the last check occurred. This is NOT the same as `isManual`: the check still
 	 * runs as a background (non-manual) operation, so `doInstall(false)` is called
 	 * internally and the `noUpdate` result is silenced per FR-005.
@@ -106,7 +106,7 @@ export class RemoteAgentInstaller {
 	}
 
 	scheduleBackgroundCheck(): void {
-		// FR-001: on activation, force an immediate check regardless of the 12h cooldown.
+		// FR-001: on activation, force an immediate check regardless of the cooldown.
 		// The cooldown only applies to subsequent scheduled (timer-based) checks.
 		const run = async () => {
 			try {
@@ -225,8 +225,7 @@ export class RemoteAgentInstaller {
 			// The timer fires every `intervalMs`; shouldCheck() enforces the same cooldown so that
 			// if a check was already performed recently (e.g. on activation), this timer
 			// check is skipped without making a network request.
-			// The interval defaults to 12h and can be overridden via
-			// COSTRICT_AGENT_CHECK_INTERVAL_MINUTES (minimum 1 minute, for testing).
+			// The interval can be overridden via COSTRICT_AGENT_CHECK_INTERVAL_MINUTES (minimum 1 minute).
 			const run = async () => {
 				try {
 					await this.performBackgroundCheck(false)
@@ -239,7 +238,7 @@ export class RemoteAgentInstaller {
 		}, intervalMs)
 	}
 
-	// forceCheck=true skips the 12h cooldown (used on activation per FR-001).
+	// forceCheck=true skips the cooldown (used on activation per FR-001).
 	// forceCheck=false respects the cooldown (used by timer-based checks per FR-002).
 	private async performBackgroundCheck(forceCheck: boolean): Promise<void> {
 		if (this.runningPromise) {
@@ -297,7 +296,7 @@ export class RemoteAgentInstaller {
 			if (isManual) {
 				logger.warn(`${LOG_PREFIX} Lock held by another process, cannot start manual install`)
 				// Lock held → install skipped entirely. Do NOT update lastCheckedAt here:
-				// resetting the 12h cooldown would cause the next window to skip the check
+				// resetting the cooldown would cause the next window to skip the check
 				// even though no install was actually attempted in this window.
 				return { state: "failed", reason: "Another process is currently installing" }
 			}
@@ -331,8 +330,8 @@ export class RemoteAgentInstaller {
 			const freshRecord = await this.recordManager.read()
 			if (semverCompare(versionInfo.version, freshRecord.installedVersion) <= 0) {
 				logger.info(`${LOG_PREFIX} Version already up to date after acquiring lock, skipping install`)
-				// Update lastCheckedAt so the 12h cooldown is correctly reset.
-				// Without this, the next activation would re-check immediately instead of waiting 12h.
+				// Update lastCheckedAt so the cooldown is correctly reset.
+				// Without this, the next activation would re-check immediately instead of waiting for the interval.
 				await this.updateLastChecked(freshRecord)
 				return { state: "noUpdate" }
 			}
