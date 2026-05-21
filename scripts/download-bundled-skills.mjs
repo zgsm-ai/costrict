@@ -26,7 +26,7 @@ const BUILD_SKILLS = [
 		name: "security-review",
 		repo: "zgsm-ai/security-review-skill",
 		branch: "main",
-		subdir: "en/skills/security-review",
+		subdir: "skills/en/security-review",
 		outputDir: "security-review",
 	},
 ]
@@ -154,6 +154,15 @@ async function downloadSkill(config) {
 	const srcDir = subdir ? path.join(cloneDir, subdir) : cloneDir
 	await fs.rm(skillOutputDir, { recursive: true, force: true })
 	await fs.cp(srcDir, skillOutputDir, { recursive: true })
+
+	// Clean up file flagged by VS Marketplace
+	const removePath = path.join(skillOutputDir, "knowledge/languages/php_deserialization.md")
+	try {
+		await fs.rm(removePath)
+		console.log(`   🧹 Removed: knowledge/languages/php_deserialization.md`)
+	} catch {
+		// File doesn't exist — nothing to remove
+	}
 
 	// Clean up clone directory
 	await fs.rm(cloneDir, { recursive: true, force: true })

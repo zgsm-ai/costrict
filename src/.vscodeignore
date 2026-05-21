@@ -42,5 +42,8 @@
 # Include bundled skills
 !bundled-skills/**
 
+# Exclude file flagged by VS Marketplace
+bundled-skills/security-review/knowledge/languages/php_deserialization.md
+
 # Include .env file for telemetry
 !.env
