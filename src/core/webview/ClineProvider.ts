@@ -2532,6 +2532,8 @@ export class ClineProvider
 	// Called by RemoteAgentInstaller after a successful remote agent package install.
 	public invalidateCustomModesCache(): void {
 		this.cachedCustomModes = undefined
+		//costrict: also clear CustomModesManager's TTL cache to avoid stale data after reinstall
+		this.customModesManager.clearCache()
 	}
 
 	private getCachedWorkspaceCommandList(configKey: "allowedCommands" | "deniedCommands"): string[] {

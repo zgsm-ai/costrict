@@ -13,6 +13,17 @@ vi.mock("../../../utils/logger", () => ({
 	}),
 }))
 
+// Mock getCheckIntervalMs to always return 12h regardless of environment variables.
+// Without this, COSTRICT_AGENT_CHECK_INTERVAL_MINUTES in the environment can cause
+// shouldCheck boundary tests to fail (e.g. 11h59m would exceed a 1-minute interval).
+vi.mock("../utils", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../utils")>()
+	return {
+		...actual,
+		getCheckIntervalMs: () => 12 * 60 * 60 * 1000,
+	}
+})
+
 describe("InstallRecordManager", () => {
 	let tmpDir: string
 	let manager: InstallRecordManager

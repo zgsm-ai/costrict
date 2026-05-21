@@ -1757,4 +1757,58 @@ describe("CustomModesManager", () => {
 			expect(result.yaml).not.toContain("\\")
 		})
 	})
+
+	describe("clearCache", () => {
+		it("should force re-read from disk on next getCustomModes call after clearCache", async () => {
+			//costrict: verify TTL cache is invalidated so next getCustomModes re-reads from disk
+			const firstCallModes = [{ slug: "mode-v1", name: "Mode V1", roleDefinition: "Role V1", groups: ["read"] }]
+			const secondCallModes = [{ slug: "mode-v2", name: "Mode V2", roleDefinition: "Role V2", groups: ["read"] }]
+
+			let callCount = 0
+			;(fs.readFile as Mock).mockImplementation(async (filePath: string) => {
+				if (filePath === mockSettingsPath) {
+					callCount++
+					return callCount === 1
+						? yaml.stringify({ customModes: firstCallModes })
+						: yaml.stringify({ customModes: secondCallModes })
+				}
+				throw new Error("File not found")
+			})
+
+			const result1 = await manager.getCustomModes()
+			expect(result1[0].slug).toBe("mode-v1")
+
+			const result2 = await manager.getCustomModes()
+			expect(result2[0].slug).toBe("mode-v1")
+			expect(callCount).toBe(1)
+
+			manager.clearCache()
+			const result3 = await manager.getCustomModes()
+			expect(result3[0].slug).toBe("mode-v2")
+			expect(callCount).toBe(2)
+		})
+
+		it("should allow subsequent getCustomModes calls to re-populate the cache", async () => {
+			//costrict: verify cache can be re-populated after clearCache and hits cache on next call
+			const modes = [{ slug: "mode-a", name: "Mode A", roleDefinition: "Role A", groups: ["read"] }]
+			let readCount = 0
+			;(fs.readFile as Mock).mockImplementation(async (filePath: string) => {
+				if (filePath === mockSettingsPath) {
+					readCount++
+					return yaml.stringify({ customModes: modes })
+				}
+				throw new Error("File not found")
+			})
+
+			await manager.getCustomModes()
+			expect(readCount).toBe(1)
+
+			manager.clearCache()
+			await manager.getCustomModes()
+			expect(readCount).toBe(2)
+
+			await manager.getCustomModes()
+			expect(readCount).toBe(2)
+		})
+	})
 })

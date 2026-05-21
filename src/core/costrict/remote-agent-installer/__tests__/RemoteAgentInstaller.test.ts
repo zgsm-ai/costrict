@@ -346,3 +346,65 @@ describe("RemoteAgentInstaller background notification silence (US-002)", () => 
 		expect(vscodeWindow.showWarningMessage).toHaveBeenCalled()
 	})
 })
+
+describe("RemoteAgentInstaller.triggerManualUninstall — hot-reload after uninstall", () => {
+	let installer: RemoteAgentInstaller
+	let recordManagerMock: any
+	let resourceInstallerMock: any
+
+	beforeEach(async () => {
+		RemoteAgentInstaller["instance"] = undefined
+		installer = RemoteAgentInstaller.getInstance()
+
+		recordManagerMock = {
+			read: vi.fn().mockResolvedValue({
+				schemaVersion: 1,
+				installedVersion: "1.0.0",
+				lastCheckedAt: 0,
+				installState: "installed",
+				manifest: { agents: ["test-agent"], commands: [], skills: [], rules: [], mcp: [] },
+			}),
+			write: vi.fn().mockResolvedValue(undefined),
+		}
+		resourceInstallerMock = {
+			uninstall: vi.fn().mockResolvedValue(undefined),
+			getTmpDir: vi.fn().mockReturnValue("/mock/tmp"),
+		}
+
+		;(installer as any)["recordManager"] = recordManagerMock
+		;(installer as any)["installer"] = resourceInstallerMock
+		;(installer as any)["ensureInstallerConfigured"] = vi.fn().mockResolvedValue(undefined)
+	})
+
+	afterEach(() => {
+		installer.dispose()
+		RemoteAgentInstaller["instance"] = undefined
+		vi.clearAllMocks()
+	})
+
+	// BUG regression: triggerManualUninstall() must call hotReloadAfterInstall() on success
+	// so that the webview mode dropdown immediately reflects the removed agents.
+	// Previously, hot-reload was only called after install, not after uninstall.
+	it("should call hotReloadAfterInstall after successful uninstall", async () => {
+		const hotReloadSpy = vi.fn().mockResolvedValue(undefined)
+		;(installer as any).hotReloadAfterInstall = hotReloadSpy
+
+		const result = await installer.triggerManualUninstall()
+
+		expect(result.success).toBe(true)
+		// hotReloadAfterInstall must be called so the webview dropdown updates immediately
+		expect(hotReloadSpy).toHaveBeenCalled()
+	})
+
+	// Verify that hot-reload is NOT called when uninstall fails
+	it("should NOT call hotReloadAfterInstall when uninstall fails", async () => {
+		const hotReloadSpy = vi.fn().mockResolvedValue(undefined)
+		;(installer as any).hotReloadAfterInstall = hotReloadSpy
+		resourceInstallerMock.uninstall.mockRejectedValue(new Error("Uninstall failed"))
+
+		const result = await installer.triggerManualUninstall()
+
+		expect(result.success).toBe(false)
+		expect(hotReloadSpy).not.toHaveBeenCalled()
+	})
+})

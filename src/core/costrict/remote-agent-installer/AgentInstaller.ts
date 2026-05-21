@@ -85,14 +85,14 @@ export async function atomicReplaceDirectory(src: string, dest: string): Promise
 				await fs.rm(src, { recursive: true, force: true })
 			} catch (cpError: any) {
 				if (hasBackup) {
-					await fs.rename(backup, dest).catch(() => {})
+					await restoreBackup(backup, dest)
 				}
 				throw cpError
 			}
 		} else {
 			// Restore backup to dest before re-throwing, so the original dest is not lost.
 			if (hasBackup) {
-				await fs.rename(backup, dest).catch(() => {})
+				await restoreBackup(backup, dest)
 			}
 			throw renameError
 		}
@@ -105,6 +105,21 @@ export async function atomicReplaceDirectory(src: string, dest: string): Promise
 		//    has succeeded, the backup is no longer needed and its cleanup is non-critical.
 		// 3. Awaiting this would delay the caller unnecessarily for a best-effort cleanup.
 		fs.rm(backup, { recursive: true, force: true }).catch(() => {})
+	}
+}
+
+/**
+ * Restore a backup directory to dest. On Windows, rename can fail with EPERM
+ * due to filesystem delays; fall back to cp+rm in that case.
+ */
+async function restoreBackup(backup: string, dest: string): Promise<void> {
+	try {
+		await fs.rename(backup, dest)
+	} catch (error: any) {
+		if (process.platform === "win32" && (error.code === "EPERM" || error.code === "EBUSY")) {
+			await fs.cp(backup, dest, { recursive: true }).catch(() => {})
+		}
+		// If rename fails for any other reason, dest may be lost — nothing more we can do.
 	}
 }
 
@@ -300,7 +315,7 @@ export class AgentInstaller {
 					`${LOG_PREFIX} Uninstallation verification warnings:\n${warnings.map((w) => `  - ${w}`).join("\n")}`,
 				)
 			} else {
-				logger.info(`${LOG_PREFIX} Uninstallation verified successfully`)
+				logger.info(`${LOG_PREFIX} Uninstallation verified: all files removed`)
 			}
 		} catch (error: any) {
 			logger.warn(`${LOG_PREFIX} Uninstallation verification failed unexpectedly: ${error.message}`)

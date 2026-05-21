@@ -1000,7 +1000,8 @@ export class CustomModesManager {
 		}
 	}
 
-	private clearCache(): void {
+	public clearCache(): void {
+		//costrict: expose so ClineProvider can invalidate after remote agent reinstall
 		this.cachedModes = null
 		this.cachedAt = 0
 	}

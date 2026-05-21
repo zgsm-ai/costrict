@@ -167,6 +167,7 @@ export class RemoteAgentInstaller {
 		try {
 			await this.ensureInstallerConfigured()
 			const record = await this.recordManager.read()
+			logger.info(`${LOG_PREFIX} Uninstalling ${this.packageName} ${record.installedVersion}`)
 			await this.installer.uninstall(record)
 			await this.recordManager.write({
 				...record,
@@ -174,6 +175,8 @@ export class RemoteAgentInstaller {
 				installState: "none",
 				manifest: { agents: [], commands: [], skills: [], rules: [], mcp: [] },
 			})
+			logger.info(`${LOG_PREFIX} ${this.packageName} ${record.installedVersion} uninstalled successfully`)
+			void this.hotReloadAfterInstall()
 			return { success: true }
 		} catch (error: any) {
 			logger.error(`${LOG_PREFIX} Manual uninstall failed: ${error.message}`)
