@@ -11,6 +11,7 @@ function jsonText(obj: unknown) {
 const baseConfig: PollingConfig = {
 	statusTool: "get_status",
 	taskIdPath: "$.taskId",
+	initialArgsTemplate: {},
 	statusArgsTemplate: { taskId: "$taskId" },
 	statusPath: "$.status",
 	resultPath: "$.result",

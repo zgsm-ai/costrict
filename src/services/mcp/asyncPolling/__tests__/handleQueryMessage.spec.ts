@@ -13,6 +13,7 @@ describe("handleQueryMcpAsyncTask", () => {
 			asyncPollingConfig: {
 				statusTool: "get_status",
 				taskIdPath: "$.runId",
+				initialArgsTemplate: {},
 				statusArgsTemplate: { RunID: "$taskId" },
 				statusPath: "$.status",
 				resultPath: "$.output",
@@ -55,6 +56,7 @@ describe("handleQueryMcpAsyncTask", () => {
 			asyncPollingConfig: {
 				statusTool: "get_status",
 				taskIdPath: "$.runId",
+				initialArgsTemplate: {},
 				statusArgsTemplate: { RunID: "$taskId" },
 				statusPath: "$.status",
 				resultPath: "$.output",
@@ -100,6 +102,7 @@ describe("handleQueryMcpAsyncTask", () => {
 			asyncPollingConfig: {
 				statusTool: "get_status",
 				taskIdPath: "$.runId",
+				initialArgsTemplate: {},
 				statusArgsTemplate: { taskId: "$taskId" },
 				statusPath: "$.status",
 				pendingValues: ["processing"],

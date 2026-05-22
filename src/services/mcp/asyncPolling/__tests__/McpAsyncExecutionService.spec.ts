@@ -21,6 +21,7 @@ function makeDeps(
 const validConfig: AsyncPollingToolConfig = {
 	statusTool: "get_status",
 	taskIdPath: "$.taskId",
+	initialArgsTemplate: {},
 	statusArgsTemplate: { taskId: "$taskId" },
 	statusPath: "$.status",
 	resultPath: "$.result",
