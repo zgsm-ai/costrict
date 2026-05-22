@@ -306,7 +306,7 @@ export const McpExecution = ({
 								aria-label={t("execution.continueQuery")}
 								className="ml-2 text-xs underline disabled:opacity-50 min-w-0 max-w-full">
 								{t("execution.continueQuery")} ·{" "}
-								<span className="truncate">{matchedRecord.taskId}</span>
+								<span className="truncate inline-block max-w-full">{matchedRecord.taskId}</span>
 							</button>
 						)}
 						{responseText && responseText.length > 0 && (

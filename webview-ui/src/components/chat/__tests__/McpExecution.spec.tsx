@@ -273,6 +273,8 @@ describe("McpExecution", () => {
 			const taskIdSpan = btn.querySelector("span")
 			expect(taskIdSpan).toBeTruthy()
 			expect(taskIdSpan!.className).toContain("truncate")
+			expect(taskIdSpan!.className).toContain("inline-block")
+			expect(taskIdSpan!.className).toContain("max-w-full")
 		})
 
 		it("top status action area has min-w-0 to prevent overflow", () => {
