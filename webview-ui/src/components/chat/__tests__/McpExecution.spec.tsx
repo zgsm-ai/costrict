@@ -277,7 +277,7 @@ describe("McpExecution", () => {
 			expect(taskIdSpan!.className).toContain("max-w-full")
 		})
 
-		it("top status action area has min-w-0 to prevent overflow", () => {
+		it("outer right-side header flex item has min-w-0 to allow shrinking", () => {
 			renderWithState(defaultState, <McpExecution executionId="e1" />)
 			act(() => {
 				window.dispatchEvent(
@@ -295,9 +295,9 @@ describe("McpExecution", () => {
 			})
 
 			const statusText = screen.getByText(/execution\.polling/)
-			const statusRow = statusText.parentElement!
-			const topActionArea = statusRow.parentElement!
-			expect(topActionArea.className).toContain("min-w-0")
+			const innerRow = statusText.parentElement!.parentElement!
+			const outerRightSide = innerRow.parentElement!
+			expect(outerRightSide.className).toContain("min-w-0")
 		})
 	})
 })

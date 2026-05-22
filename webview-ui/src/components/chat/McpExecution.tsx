@@ -221,7 +221,7 @@ export const McpExecution = ({
 						{serverName && <span className="font-bold text-vscode-foreground">{serverName}</span>}
 					</div>
 				</div>
-				<div className="flex flex-row items-center justify-between gap-2 px-1">
+				<div className="flex flex-row items-center justify-between gap-2 px-1 min-w-0">
 					<div className="flex flex-row items-center gap-1 min-w-0">
 						{status && (
 							<div className="flex flex-row items-center gap-2 font-mono text-xs">
