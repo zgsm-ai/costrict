@@ -196,4 +196,102 @@ describe("McpExecution", () => {
 			expect.objectContaining({ type: "queryMcpAsyncTask", recordId: "r1" }),
 		)
 	})
+
+	describe("narrow-width layout", () => {
+		it("polling metadata container has flex-wrap, min-w-0, and max-w-full", () => {
+			renderWithState(defaultState, <McpExecution executionId="e1" />)
+			act(() => {
+				window.dispatchEvent(
+					new MessageEvent("message", {
+						data: {
+							type: "mcpExecutionStatus",
+							text: JSON.stringify({
+								executionId: "e1",
+								status: "polling",
+								taskId: "T-abc-12345",
+								attempt: 1,
+								lastStatus: "running",
+								lastCheckedAt: Date.now(),
+							}),
+						},
+					}),
+				)
+			})
+
+			const codeEl = document.querySelector("code")
+			expect(codeEl).toBeTruthy()
+			const container = codeEl!.parentElement!
+			expect(container.className).toContain("flex-wrap")
+			expect(container.className).toContain("min-w-0")
+			expect(container.className).toContain("max-w-full")
+		})
+
+		it("long taskId code element has truncate and min-w-0", () => {
+			renderWithState(defaultState, <McpExecution executionId="e1" />)
+			act(() => {
+				window.dispatchEvent(
+					new MessageEvent("message", {
+						data: {
+							type: "mcpExecutionStatus",
+							text: JSON.stringify({
+								executionId: "e1",
+								status: "polling",
+								taskId: "very-long-task-id-that-should-truncate-xyz",
+								attempt: 1,
+								lastStatus: "running",
+								lastCheckedAt: Date.now(),
+							}),
+						},
+					}),
+				)
+			})
+
+			const codeEl = document.querySelector("code")
+			expect(codeEl).toBeTruthy()
+			expect(codeEl!.className).toContain("truncate")
+			expect(codeEl!.className).toContain("min-w-0")
+		})
+
+		it("continue query button has min-w-0 to prevent overflow from long taskId", () => {
+			const state = {
+				mcpAsyncTaskRecords: [
+					{
+						id: "r1",
+						executionId: "e1",
+						serverName: "ci",
+						originalToolName: "deploy",
+						taskId: "extremely-long-task-id-that-should-not-overflow",
+						lastStatus: "running",
+					},
+				],
+			}
+			renderWithState(state, <McpExecution executionId="e1" />)
+
+			const btn = screen.getByRole("button", { name: /continue query|继续查询/i })
+			expect(btn.className).toContain("min-w-0")
+		})
+
+		it("top status action area has min-w-0 to prevent overflow", () => {
+			renderWithState(defaultState, <McpExecution executionId="e1" />)
+			act(() => {
+				window.dispatchEvent(
+					new MessageEvent("message", {
+						data: {
+							type: "mcpExecutionStatus",
+							text: JSON.stringify({
+								executionId: "e1",
+								status: "polling",
+								taskId: "T-abc-12345",
+							}),
+						},
+					}),
+				)
+			})
+
+			const statusText = screen.getByText(/execution\.polling/)
+			const statusRow = statusText.parentElement!
+			const topActionArea = statusRow.parentElement!
+			expect(topActionArea.className).toContain("min-w-0")
+		})
+	})
 })

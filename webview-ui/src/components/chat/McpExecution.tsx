@@ -222,7 +222,7 @@ export const McpExecution = ({
 					</div>
 				</div>
 				<div className="flex flex-row items-center justify-between gap-2 px-1">
-					<div className="flex flex-row items-center gap-1">
+					<div className="flex flex-row items-center gap-1 min-w-0">
 						{status && (
 							<div className="flex flex-row items-center gap-2 font-mono text-xs">
 								<div
@@ -265,8 +265,10 @@ export const McpExecution = ({
 							</div>
 						)}
 						{pollingMeta?.taskId && (
-							<div className="flex items-center gap-2 text-xs text-vscode-descriptionForeground mt-1">
-								<code className="bg-vscode-editor-background px-1 rounded">{pollingMeta.taskId}</code>
+							<div className="flex flex-wrap items-center gap-2 text-xs text-vscode-descriptionForeground mt-1 min-w-0 max-w-full">
+								<code className="bg-vscode-editor-background px-1 rounded truncate min-w-0">
+									{pollingMeta.taskId}
+								</code>
 								<button
 									type="button"
 									aria-label={t("execution.copyTaskId")}
@@ -302,7 +304,7 @@ export const McpExecution = ({
 									vscode.postMessage({ type: "queryMcpAsyncTask", recordId: matchedRecord.id } as any)
 								}
 								aria-label={t("execution.continueQuery")}
-								className="ml-2 text-xs underline disabled:opacity-50">
+								className="ml-2 text-xs underline disabled:opacity-50 min-w-0">
 								{t("execution.continueQuery")} · {matchedRecord.taskId}
 							</button>
 						)}
