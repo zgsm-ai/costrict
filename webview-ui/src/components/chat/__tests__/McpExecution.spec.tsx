@@ -269,6 +269,10 @@ describe("McpExecution", () => {
 
 			const btn = screen.getByRole("button", { name: /continue query|继续查询/i })
 			expect(btn.className).toContain("min-w-0")
+			expect(btn.className).toContain("max-w-full")
+			const taskIdSpan = btn.querySelector("span")
+			expect(taskIdSpan).toBeTruthy()
+			expect(taskIdSpan!.className).toContain("truncate")
 		})
 
 		it("top status action area has min-w-0 to prevent overflow", () => {

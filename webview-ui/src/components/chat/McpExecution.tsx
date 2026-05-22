@@ -304,8 +304,9 @@ export const McpExecution = ({
 									vscode.postMessage({ type: "queryMcpAsyncTask", recordId: matchedRecord.id } as any)
 								}
 								aria-label={t("execution.continueQuery")}
-								className="ml-2 text-xs underline disabled:opacity-50 min-w-0">
-								{t("execution.continueQuery")} · {matchedRecord.taskId}
+								className="ml-2 text-xs underline disabled:opacity-50 min-w-0 max-w-full">
+								{t("execution.continueQuery")} ·{" "}
+								<span className="truncate">{matchedRecord.taskId}</span>
 							</button>
 						)}
 						{responseText && responseText.length > 0 && (
