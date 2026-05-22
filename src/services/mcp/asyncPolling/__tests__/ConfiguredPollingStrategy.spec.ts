@@ -389,6 +389,106 @@ describe("ConfiguredPollingStrategy post-taskId", () => {
 	})
 })
 
+describe("ConfiguredPollingStrategy initialArgsTemplate", () => {
+	it("merges initialArgsTemplate with conversation args for initial call", async () => {
+		const cfg: PollingConfig = {
+			...baseConfig,
+			initialArgsTemplate: { API_KEY: "secret123", UserID: "bot", AppKey: "ak1" },
+		}
+		const callTool = vi
+			.fn()
+			.mockResolvedValueOnce(jsonText({ taskId: "T-IA1" }))
+			.mockResolvedValueOnce(jsonText({ status: "done" }))
+
+		await new ConfiguredPollingStrategy(cfg, makeDeps({ callTool })).execute({
+			serverName: "srv",
+			toolName: "deploy",
+			arguments: { region: "us-east" },
+			source: undefined,
+			executionId: "e1",
+			isCancelled: () => false,
+		})
+
+		const initialCallArgs = callTool.mock.calls[0][2] as Record<string, unknown>
+		expect(initialCallArgs).toEqual({
+			API_KEY: "secret123",
+			UserID: "bot",
+			AppKey: "ak1",
+			region: "us-east",
+		})
+	})
+
+	it("conversation args override same-name keys from initialArgsTemplate", async () => {
+		const cfg: PollingConfig = {
+			...baseConfig,
+			initialArgsTemplate: { API_KEY: "default_key", UserID: "bot" },
+		}
+		const callTool = vi
+			.fn()
+			.mockResolvedValueOnce(jsonText({ taskId: "T-IA2" }))
+			.mockResolvedValueOnce(jsonText({ status: "done" }))
+
+		await new ConfiguredPollingStrategy(cfg, makeDeps({ callTool })).execute({
+			serverName: "srv",
+			toolName: "deploy",
+			arguments: { API_KEY: "override_key", region: "eu" },
+			source: undefined,
+			executionId: "e1",
+			isCancelled: () => false,
+		})
+
+		const initialCallArgs = callTool.mock.calls[0][2] as Record<string, unknown>
+		expect(initialCallArgs).toEqual({
+			API_KEY: "override_key",
+			UserID: "bot",
+			region: "eu",
+		})
+	})
+
+	it("statusTool call still receives args from statusArgsTemplate, NOT initialArgsTemplate", async () => {
+		const cfg: PollingConfig = {
+			...baseConfig,
+			initialArgsTemplate: { API_KEY: "should-not-appear", UserID: "bot" },
+			statusArgsTemplate: { RunID: "$taskId", UserID: "321" },
+		}
+		const callTool = vi
+			.fn()
+			.mockResolvedValueOnce(jsonText({ taskId: "T-IA3" }))
+			.mockResolvedValueOnce(jsonText({ status: "done" }))
+
+		await new ConfiguredPollingStrategy(cfg, makeDeps({ callTool })).execute({
+			serverName: "srv",
+			toolName: "deploy",
+			arguments: { region: "us" },
+			source: undefined,
+			executionId: "e1",
+			isCancelled: () => false,
+		})
+
+		const statusCallArgs = callTool.mock.calls[1][2] as Record<string, unknown>
+		expect(statusCallArgs).toEqual({ RunID: "T-IA3", UserID: "321" })
+	})
+
+	it("when initialArgsTemplate is omitted (default {}), initial call uses only conversation args", async () => {
+		const callTool = vi
+			.fn()
+			.mockResolvedValueOnce(jsonText({ taskId: "T-IA4" }))
+			.mockResolvedValueOnce(jsonText({ status: "done" }))
+
+		await new ConfiguredPollingStrategy(baseConfig, makeDeps({ callTool })).execute({
+			serverName: "srv",
+			toolName: "deploy",
+			arguments: { region: "ap" },
+			source: undefined,
+			executionId: "e1",
+			isCancelled: () => false,
+		})
+
+		const initialCallArgs = callTool.mock.calls[0][2] as Record<string, unknown>
+		expect(initialCallArgs).toEqual({ region: "ap" })
+	})
+})
+
 describe("ConfiguredPollingStrategy persistence", () => {
 	function makeFakeStore() {
 		const state: { records: any[] } = { records: [] }

@@ -214,6 +214,7 @@ export function countEnabledMcpTools(servers: McpServer[]): EnabledMcpToolsCount
 export const AsyncPollingToolConfigSchema = z.object({
 	statusTool: z.string().min(1),
 	taskIdPath: z.string().min(1),
+	initialArgsTemplate: z.record(z.unknown()).default({}),
 	statusArgsTemplate: z.record(z.unknown()).default({ taskId: "$taskId" }),
 	statusPath: z.string().min(1),
 	resultPath: z.string().optional(),

@@ -63,6 +63,27 @@ describe("AsyncPollingToolConfigSchema", () => {
 		expect(a.errorPath).toBe("$.error")
 		expect(b.errorPath).toEqual(["$.message", "$.msg"])
 	})
+
+	it("accepts initialArgsTemplate and defaults to {}", () => {
+		const withExplicit = AsyncPollingToolConfigSchema.parse({
+			statusTool: "s",
+			taskIdPath: "$.t",
+			statusPath: "$.s",
+			pendingValues: ["p"],
+			completedValues: ["c"],
+			initialArgsTemplate: { API_KEY: "abc123", UserID: "u1" },
+		})
+		expect(withExplicit.initialArgsTemplate).toEqual({ API_KEY: "abc123", UserID: "u1" })
+
+		const withOmitted = AsyncPollingToolConfigSchema.parse({
+			statusTool: "s",
+			taskIdPath: "$.t",
+			statusPath: "$.s",
+			pendingValues: ["p"],
+			completedValues: ["c"],
+		})
+		expect(withOmitted.initialArgsTemplate).toEqual({})
+	})
 })
 
 describe("AsyncPollingConfigSchema", () => {

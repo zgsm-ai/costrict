@@ -30,9 +30,10 @@ export class ConfiguredPollingStrategy {
 		}
 
 		// ---- Phase A: initial call, pre-taskId ----
+		const mergedArgs = { ...this.config.initialArgsTemplate, ...req.arguments }
 		let initial: McpToolCallResponse
 		try {
-			initial = await this.deps.callTool(req.serverName, req.toolName, req.arguments, req.source)
+			initial = await this.deps.callTool(req.serverName, req.toolName, mergedArgs, req.source)
 		} catch (err) {
 			return {
 				kind: "transport_unknown",
