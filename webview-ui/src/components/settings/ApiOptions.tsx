@@ -35,6 +35,7 @@ import {
 	rooDefaultModelId,
 	vercelAiGatewayDefaultModelId,
 	minimaxDefaultModelId,
+	mimoDefaultModelId,
 	// type ToolProtocol,
 	// TOOL_PROTOCOL,
 	unboundDefaultModelId,
@@ -103,6 +104,7 @@ import {
 	VercelAiGateway,
 	GeminiCli,
 	MiniMax,
+	Mimo,
 } from "./providers"
 
 import { MODELS_BY_PROVIDER, PROVIDERS } from "./constants"
@@ -396,6 +398,7 @@ const ApiOptions = ({
 				deepseek: { field: "apiModelId", default: deepSeekDefaultModelId },
 				moonshot: { field: "apiModelId", default: moonshotDefaultModelId },
 				minimax: { field: "apiModelId", default: minimaxDefaultModelId },
+				mimo: { field: "apiModelId", default: mimoDefaultModelId },
 				mistral: { field: "apiModelId", default: mistralDefaultModelId },
 				xai: { field: "apiModelId", default: xaiDefaultModelId },
 				baseten: { field: "apiModelId", default: basetenDefaultModelId },
@@ -758,6 +761,10 @@ const ApiOptions = ({
 							apiConfiguration={apiConfiguration}
 							setApiConfigurationField={setApiConfigurationField}
 						/>
+					)}
+
+					{selectedProvider === "mimo" && (
+						<Mimo apiConfiguration={apiConfiguration} setApiConfigurationField={setApiConfigurationField} />
 					)}
 
 					{selectedProvider === "vscode-lm" && (

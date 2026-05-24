@@ -17,6 +17,7 @@ import {
 	internationalZAiModels,
 	fireworksModels,
 	minimaxModels,
+	mimoModels,
 	basetenModels,
 	getClaudeCodeModels,
 } from "@roo-code/types"
@@ -39,6 +40,7 @@ export const MODELS_BY_PROVIDER: Partial<Record<ProviderName, Record<string, Mod
 	zai: internationalZAiModels,
 	fireworks: fireworksModels,
 	minimax: minimaxModels,
+	mimo: mimoModels,
 	baseten: basetenModels,
 }
 
@@ -71,6 +73,7 @@ export const PROVIDERS = [
 	// { value: "roo", label: "Roo Code Router", proxy: false },
 	{ value: "vercel-ai-gateway", label: "Vercel AI Gateway", proxy: false },
 	{ value: "minimax", label: "MiniMax", proxy: false },
+	{ value: "mimo", label: "Xiaomi MiMo", proxy: false },
 	{ value: "baseten", label: "Baseten", proxy: false },
 	{ value: "unbound", label: "Unbound", proxy: false },
 	{ value: "poe", label: "Poe", proxy: false },
