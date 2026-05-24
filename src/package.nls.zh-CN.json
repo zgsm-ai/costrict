@@ -43,6 +43,7 @@
 	"command.view.userHelperDoc.title": "CoStrict官网",
 	"command.addFileToContext.title": "添加上下文",
 	"command.generateCommitMessage.title": "使用 CoStrict 生成提交信息",
+	"command.reloadWebview.title": "重新加载 Webview UI",
 	"command.askReviewSuggestionWithAI.title": "修复代码",
 
 	"intelligentCodeCompletion.enabled.description": "启用智能代码补全",

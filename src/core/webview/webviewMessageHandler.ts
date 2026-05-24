@@ -1145,6 +1145,9 @@ export const webviewMessageHandler = async (
 		case "resetState":
 			await provider.resetState()
 			break
+		case "requestReloadWebview":
+			await provider.reloadWebview()
+			break
 		case "fixHistory":
 			await provider.fixHistory()
 			break

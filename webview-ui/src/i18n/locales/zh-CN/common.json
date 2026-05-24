@@ -5,7 +5,8 @@
 		"githubText": "我们的 GitHub Issues 页面",
 		"copyInstructions": "复制并粘贴以下错误信息，将其作为提交内容的一部分：",
 		"errorStack": "错误堆栈：",
-		"componentStack": "组件堆栈："
+		"componentStack": "组件堆栈：",
+		"reloadButtonText": "重新加载界面"
 	},
 	"answers": {
 		"yes": "是",

@@ -769,6 +769,69 @@ export class ClineProvider
 		}
 	}
 
+	private registerWebviewResources(webviewView: vscode.WebviewView | vscode.WebviewPanel) {
+		this.setWebviewMessageListener(webviewView.webview)
+		this.updateCodeIndexStatusSubscription()
+
+		const activeEditorSubscription = vscode.window.onDidChangeActiveTextEditor(() => {
+			this.updateCodeIndexStatusSubscription()
+		})
+		this.webviewDisposables.push(activeEditorSubscription)
+
+		if ("onDidChangeViewState" in webviewView) {
+			const viewStateDisposable = webviewView.onDidChangeViewState(() => {
+				if (this.view?.visible) {
+					this.postMessageToWebview({ type: "action", action: "didBecomeVisible" })
+				}
+			})
+
+			this.webviewDisposables.push(viewStateDisposable)
+		} else if ("onDidChangeVisibility" in webviewView) {
+			const visibilityDisposable = webviewView.onDidChangeVisibility(() => {
+				if (this.view?.visible) {
+					this.postMessageToWebview({ type: "action", action: "didBecomeVisible" })
+				}
+			})
+
+			this.webviewDisposables.push(visibilityDisposable)
+		}
+
+		const configDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
+			if (e?.affectsConfiguration(`${Package.commandIDPrefix}.allowedCommands`)) {
+				delete this.cachedMergedCommands?.allowedCommands
+				delete this.cachedWorkspaceCommandLists?.allowedCommands
+			}
+			if (e?.affectsConfiguration(`${Package.commandIDPrefix}.deniedCommands`)) {
+				delete this.cachedMergedCommands?.deniedCommands
+				delete this.cachedWorkspaceCommandLists?.deniedCommands
+			}
+			if (e?.affectsConfiguration(`${Package.commandIDPrefix}.customStoragePath`)) {
+				this.cachedCustomStoragePath = undefined
+			}
+			if (e?.affectsConfiguration("workbench.colorTheme")) {
+				await this.postMessageToWebview({ type: "theme", text: JSON.stringify(await getTheme()) })
+			}
+		})
+		this.webviewDisposables.push(configDisposable)
+	}
+
+	public async reloadWebview() {
+		if (!this.view) {
+			return
+		}
+
+		const webviewView = this.view
+
+		this.clearWebviewResources()
+		this.isViewLaunched = false
+		webviewView.webview.html =
+			this.contextProxy.extensionMode === vscode.ExtensionMode.Development
+				? await this.getHMRHtmlContent(webviewView.webview)
+				: await this.getHtmlContent(webviewView.webview)
+		this.registerWebviewResources(webviewView)
+		await this.postStateToWebview({ force: true })
+	}
+
 	async dispose() {
 		if (this._disposed) {
 			return
@@ -1121,43 +1184,7 @@ export class ClineProvider
 				? await this.getHMRHtmlContent(webviewView.webview)
 				: await this.getHtmlContent(webviewView.webview)
 
-		// Sets up an event listener to listen for messages passed from the webview view context
-		// and executes code based on the message that is received.
-		this.setWebviewMessageListener(webviewView.webview)
-
-		// Initialize code index status subscription for the current workspace.
-		this.updateCodeIndexStatusSubscription()
-
-		// Listen for active editor changes to update code index status for the
-		// current workspace.
-		const activeEditorSubscription = vscode.window.onDidChangeActiveTextEditor(() => {
-			// Update subscription when workspace might have changed.
-			this.updateCodeIndexStatusSubscription()
-		})
-		this.webviewDisposables.push(activeEditorSubscription)
-
-		// Listen for when the panel becomes visible.
-		// https://github.com/microsoft/vscode-discussions/discussions/840
-		if ("onDidChangeViewState" in webviewView) {
-			// WebviewView and WebviewPanel have all the same properties except
-			// for this visibility listener panel.
-			const viewStateDisposable = webviewView.onDidChangeViewState(() => {
-				if (this.view?.visible) {
-					this.postMessageToWebview({ type: "action", action: "didBecomeVisible" })
-				}
-			})
-
-			this.webviewDisposables.push(viewStateDisposable)
-		} else if ("onDidChangeVisibility" in webviewView) {
-			// sidebar
-			const visibilityDisposable = webviewView.onDidChangeVisibility(() => {
-				if (this.view?.visible) {
-					this.postMessageToWebview({ type: "action", action: "didBecomeVisible" })
-				}
-			})
-
-			this.webviewDisposables.push(visibilityDisposable)
-		}
+		this.registerWebviewResources(webviewView)
 
 		// Listen for when the view is disposed
 		// This happens when the user closes the view or when the view is closed programmatically
@@ -1176,26 +1203,6 @@ export class ClineProvider
 			null,
 			this.disposables,
 		)
-
-		// Listen for when color changes
-		const configDisposable = vscode.workspace.onDidChangeConfiguration(async (e) => {
-			if (e?.affectsConfiguration(`${Package.commandIDPrefix}.allowedCommands`)) {
-				delete this.cachedMergedCommands?.allowedCommands
-				delete this.cachedWorkspaceCommandLists?.allowedCommands
-			}
-			if (e?.affectsConfiguration(`${Package.commandIDPrefix}.deniedCommands`)) {
-				delete this.cachedMergedCommands?.deniedCommands
-				delete this.cachedWorkspaceCommandLists?.deniedCommands
-			}
-			if (e?.affectsConfiguration(`${Package.commandIDPrefix}.customStoragePath`)) {
-				this.cachedCustomStoragePath = undefined
-			}
-			if (e?.affectsConfiguration("workbench.colorTheme")) {
-				// Sends latest theme name to webview
-				await this.postMessageToWebview({ type: "theme", text: JSON.stringify(await getTheme()) })
-			}
-		})
-		this.webviewDisposables.push(configDisposable)
 
 		// If the extension is starting a new session, clear previous task state.
 		// But don't clear if there's already an active task (e.g., resumed via IPC/bridge).
