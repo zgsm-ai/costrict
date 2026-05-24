@@ -133,6 +133,41 @@ function validateModelsAndKeysProvided(apiConfiguration: ProviderSettings): stri
 				return i18next.t("settings:validation.apiKey")
 			}
 			break
+		case "mimo":
+			if (!apiConfiguration.mimoApiKey) {
+				return i18next.t("settings:validation.apiKey")
+			}
+			break
+		case "zai":
+			if (!apiConfiguration.zaiApiKey) {
+				return i18next.t("settings:validation.apiKey")
+			}
+			break
+		case "sambanova":
+			if (!apiConfiguration.sambaNovaApiKey) {
+				return i18next.t("settings:validation.apiKey")
+			}
+			break
+		case "poe":
+			if (!apiConfiguration.poeApiKey) {
+				return i18next.t("settings:validation.apiKey")
+			}
+			break
+		case "moonshot":
+			if (!apiConfiguration.moonshotApiKey) {
+				return i18next.t("settings:validation.apiKey")
+			}
+			break
+		case "deepseek":
+			if (!apiConfiguration.deepSeekApiKey) {
+				return i18next.t("settings:validation.apiKey")
+			}
+			break
+		case "minimax": 
+			if (!apiConfiguration.minimaxApiKey) {
+				return i18next.t("settings:validation.apiKey")
+			}
+			break
 	}
 
 	return undefined

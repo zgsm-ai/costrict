@@ -48,7 +48,7 @@ _Free • Open Source • Private Deployment_
 <table>
   <tr>
     <td align="center" width="25%">
-      <b>🌟 CoStrict Cloud</b><br><br>
+      <b>🌟 CoStrict Cloud (Experimental)</b><br><br>
       <a href="https://docs.costrict.ai/cli/product-characteristics/cloud">
         <img src="https://img.shields.io/badge/Cloud-Documentation-blue?style=for-the-badge" alt="Cloud Docs">
       </a>
@@ -127,7 +127,10 @@ Repository-wide indexing and RAG-based analysis with multi-model verification st
 - 📁 **Large Repository Context** - Automatic context inclusion with @ file/folder mentions
 - 🔧 **Mode Customization** - Multiple default modes (Code, Orchestrator) with custom mode support
 - 📝 **[OpenSpec Integration](https://github.com/Fission-AI/OpenSpec)** - Standardized change proposal workflows with `/openspec-init`
-
+- 🔗 **VSCode SCM Integration** - Seamless integration with Git for code review and collaboration
+- **Auto Cleanup History** - Automatically clean up history and reduce disk usage.
+- 📝 **History Import&Export** - Supports import and export of historical records to facilitate offline migration
+- 🔗 **Lite Mode** - Reduce context usage and reduce token consumption.
 <img src="./assets/images/readme/more-feature_en.webp" alt="More Features" width="100%">
 
 ## 📚 Documentation
