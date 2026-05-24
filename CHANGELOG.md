@@ -5,6 +5,7 @@
 ## [2.8.3]
 
 - Add Xiaomi MiMo provider support
+- Fix `Could not find ripgrep binary`
 - Fix known issues
 
 ## [2.8.2]
