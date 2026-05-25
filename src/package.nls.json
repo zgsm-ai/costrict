@@ -41,6 +41,7 @@
 	"command.addFileToContext.title": "Add To Context",
 	"command.toggleAutoApprove.title": "Toggle Auto-Approve",
 	"command.generateCommitMessage.title": "Generate Commit Message With CoStrict",
+	"command.reloadWebview.title": "Reload Webview UI",
 	"command.askReviewSuggestionWithAI.title": "Fix Code",
 
 	"intelligentCodeCompletion.enabled.description": "Enable intelligent code completion",

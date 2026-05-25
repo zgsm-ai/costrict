@@ -13,8 +13,8 @@ export class CostrictTelemetryClient extends BaseCostrictApiClient {
 	private metricsRecorder: MetricsRecorder
 	private hasFetchedControlConfig: boolean = false
 
-	constructor(endpoint: string, debug = false) {
-		super(endpoint, debug)
+	constructor(endpoint: string, additionalHeaders: Record<string, string> = {}, debug = false) {
+		super(endpoint, additionalHeaders, debug)
 		this.logger = createLogger()
 		this.metricsRecorder = new MetricsRecorder()
 		this.cleanupLegacyTelemetryDir()

@@ -2,6 +2,7 @@ import React, { Component } from "react"
 import { telemetryClient } from "@src/utils/TelemetryClient"
 import { withTranslation, WithTranslation } from "react-i18next"
 import { enhanceErrorWithSourceMaps } from "@src/utils/sourceMapUtils"
+import { vscode } from "@src/utils/vscode"
 
 type ErrorProps = {
 	children: React.ReactNode
@@ -52,6 +53,10 @@ class ErrorBoundary extends Component<ErrorProps, ErrorState> {
 		})
 	}
 
+	private handleReload = () => {
+		vscode.postMessage({ type: "requestReloadWebview" })
+	}
+
 	render() {
 		const { t } = this.props
 
@@ -88,6 +93,13 @@ class ErrorBoundary extends Component<ErrorProps, ErrorState> {
 						<pre className="p-2 border rounded text-sm overflow-auto">{componentStackDisplay}</pre>
 					</div>
 				)}
+
+				<button
+					type="button"
+					onClick={this.handleReload}
+					className="mt-4 px-3 py-1.5 rounded bg-[var(--vscode-button-background)] text-[var(--vscode-button-foreground)] hover:bg-[var(--vscode-button-hoverBackground)]">
+					{t("errorBoundary.reloadButtonText")}
+				</button>
 			</div>
 		)
 	}

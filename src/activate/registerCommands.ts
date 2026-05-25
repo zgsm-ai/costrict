@@ -228,6 +228,15 @@ export const getCommandsMap = ({
 			outputChannel.appendLine(`Error focusing panel: ${error}`)
 		}
 	},
+	reloadWebview: async () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		await visibleProvider.reloadWebview()
+	},
 	acceptInput: () => {
 		const visibleProvider = getVisibleProviderOrLog(outputChannel)
 

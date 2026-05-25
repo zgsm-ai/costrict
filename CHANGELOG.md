@@ -2,6 +2,16 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.8.4]
+
+- Add reload webview command and error boundary reload button for `Gray Screen`
+
+## [2.8.3]
+
+- Add Xiaomi MiMo provider support
+- Fix `Could not find ripgrep binary`
+- Fix known issues
+
 ## [2.8.2]
 
 - Fix commit message generation in multi-root workspaces (#1210)
