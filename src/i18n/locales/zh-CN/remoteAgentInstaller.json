@@ -1,6 +1,8 @@
 {
 	"info": {
 		"installed": "{{name}} v{{version}} 安装成功。",
+		"installing": "正在安装 {{name}}...",
+		"upgrading": "正在升级 {{name}}...",
 		"noUpdate": "{{name}} 已是最新版本。",
 		"uninstalled": "{{name}} 卸载成功。"
 	},
@@ -11,8 +13,8 @@
 		"installFailed": "安装 {{name}} 失败：{{reason}}"
 	},
 	"error": {
-		"updateFailed": "更新 {{name}} 失败：{{reason}}",
-		"uninstallFailed": "卸载 {{name}} 失败：{{reason}}"
+		"updateFailed": "更新 {{name}} 失败：{{reason}}，请尝试手动安装。",
+		"uninstallFailed": "卸载 {{name}} 失败：{{reason}}，请尝试手动卸载。"
 	},
 	"action": {
 		"retryNow": "立即重试"

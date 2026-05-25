@@ -85,16 +85,5 @@
 	"settings.debugProxy.tlsInsecure.description": "接受来自代理的 self-signed 证书。**MITM 检查所必需。** ⚠️ 不安全——只在本地调试时使用。",
 
 	"command.installAgentPackage.title": "安装/更新远程 Agent 包",
-	"command.uninstallAgentPackage.title": "卸载远程 Agent 包",
-
-	"remoteAgentInstaller:info.installed": "{name} 已更新至版本 {version}",
-	"remoteAgentInstaller:info.noUpdate": "{name} 已是最新版本",
-	"remoteAgentInstaller:error.updateFailed": "{name} 更新失败：{reason}",
-	"remoteAgentInstaller:info.uninstalled": "{name} 已卸载",
-	"remoteAgentInstaller:error.uninstallFailed": "{name} 卸载失败：{reason}",
-	"remoteAgentInstaller:warn.downloadFailed": "{name} 下载失败（{reason}）。请检查网络后点击「立即重试」",
-	"remoteAgentInstaller:warn.installFailed": "{name} 安装失败（{reason}）。请检查磁盘空间和权限后点击「立即重试」",
-	"remoteAgentInstaller:warn.contentCorrupted": "{name} 内容校验失败，无法自动安装。请等待服务端修复后重试",
-	"remoteAgentInstaller:warn.taskInProgress": "{name} 更新正在进行中，请稍后再试",
-	"remoteAgentInstaller:action.retryNow": "立即重试"
+	"command.uninstallAgentPackage.title": "卸载远程 Agent 包"
 }

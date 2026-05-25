@@ -79,38 +79,10 @@ export class RemoteAgentInstaller {
 		return this.packageName
 	}
 
-	/**
-	 * Force an immediate background check without rescheduling the timer.
-	 *
-	 * Use this when an out-of-band event (e.g. costrictBaseUrl changed) requires
-	 * an immediate version check. The existing background check cycle (managed by
-	 * scheduleNextCheck) is left untouched to avoid delaying or resetting the
-	 * regular check interval.
-	 *
-	 * Calls `performBackgroundCheck(true)` where `true` means **forceCheck** —
-	 * i.e. skip the check cooldown so the check runs immediately regardless of when
-	 * the last check occurred. This is NOT the same as `isManual`: the check still
-	 * runs as a background (non-manual) operation, so `doInstall(false)` is called
-	 * internally and the `noUpdate` result is silenced per FR-005.
-	 */
-	forceBackgroundCheck(): void {
-		logger.info(`${LOG_PREFIX} forceBackgroundCheck triggered (costrictBaseUrl changed)`)
-		const run = async () => {
-			try {
-				await this.performBackgroundCheck(true)
-			} catch (error: any) {
-				logger.error(`${LOG_PREFIX} Force background check error: ${error.message}`)
-			}
-		}
-		void run()
-	}
-
 	scheduleBackgroundCheck(): void {
-		// FR-001: on activation, force an immediate check regardless of the cooldown.
-		// The cooldown only applies to subsequent scheduled (timer-based) checks.
 		const run = async () => {
 			try {
-				await this.performBackgroundCheck(true)
+				await this.performBackgroundCheck()
 			} catch (error: any) {
 				logger.error(`${LOG_PREFIX} Background check error: ${error.message}`)
 			}
@@ -135,10 +107,12 @@ export class RemoteAgentInstaller {
 		// `runningPromise` is already set. Multi-process concurrency (different VSCode windows)
 		// is handled separately by the file-based lock in doInstall().
 		await this.ensureInstallerConfigured()
+
 		const task = this.doInstall(true)
 		this.runningPromise = task
 		try {
 			const result = await task
+			this.notifyResult(result, true)
 			return result
 		} finally {
 			this.runningPromise = null
@@ -221,14 +195,9 @@ export class RemoteAgentInstaller {
 		const nextCheckAt = new Date(Date.now() + intervalMs).toLocaleString()
 		logger.info(`${LOG_PREFIX} Next background check scheduled in ${intervalMs / 60_000} min (at ${nextCheckAt})`)
 		this.checkTimeout = setTimeout(() => {
-			// FR-002: timer-based checks respect the cooldown (forceCheck = false).
-			// The timer fires every `intervalMs`; shouldCheck() enforces the same cooldown so that
-			// if a check was already performed recently (e.g. on activation), this timer
-			// check is skipped without making a network request.
-			// The interval can be overridden via COSTRICT_AGENT_CHECK_INTERVAL_MINUTES (minimum 1 minute).
 			const run = async () => {
 				try {
-					await this.performBackgroundCheck(false)
+					await this.performBackgroundCheck()
 				} catch (error: any) {
 					logger.error(`${LOG_PREFIX} Background check error: ${error.message}`)
 				}
@@ -238,22 +207,16 @@ export class RemoteAgentInstaller {
 		}, intervalMs)
 	}
 
-	// forceCheck=true skips the cooldown (used on activation per FR-001).
-	// forceCheck=false respects the cooldown (used by timer-based checks per FR-002).
-	private async performBackgroundCheck(forceCheck: boolean): Promise<void> {
+	private async performBackgroundCheck(): Promise<void> {
 		if (this.runningPromise) {
 			logger.info(`${LOG_PREFIX} Background check skipped, install task already running`)
-			return
-		}
-		const record = await this.recordManager.read()
-		if (!forceCheck && !this.recordManager.shouldCheck(record)) {
-			logger.info(`${LOG_PREFIX} Skipping background check, cooldown active`)
 			return
 		}
 		const task = this.doInstall(false)
 		this.runningPromise = task
 		try {
-			await task
+			const result = await task
+			this.notifyResult(result, false)
 		} catch (error: any) {
 			// doInstall throws on network/HTTP errors (VersionApi throws instead of returning null).
 			// Swallow the error here so lastCheckedAt is NOT updated on network failures —
@@ -280,14 +243,21 @@ export class RemoteAgentInstaller {
 
 		this.packageName = versionInfo.name || "Remote Resource Package"
 
-		if (semverCompare(versionInfo.version, record.installedVersion) <= 0) {
+		// Only skip installation for automatic/background checks when the local
+		// version is already installed and up to date. Manual installs always
+		// proceed so the user can force a reinstall regardless of version.
+		if (
+			!isManual &&
+			record.installState === "installed" &&
+			semverCompare(versionInfo.version, record.installedVersion) <= 0
+		) {
 			logger.info(`${LOG_PREFIX} Local version ${record.installedVersion} is up to date, skipping installation.`)
 			await this.updateLastChecked(record)
 			return { state: "noUpdate" }
 		}
 
 		logger.info(
-			`${LOG_PREFIX} ${this.packageName} remote: ${versionInfo.version}, local: ${record.installedVersion}, update needed`,
+			`${LOG_PREFIX} ${this.packageName} remote: ${versionInfo.version}, local: ${record.installedVersion}, ${isManual ? "manual install" : "update needed"}`,
 		)
 
 		// Check lock for both manual and background triggers
@@ -323,19 +293,25 @@ export class RemoteAgentInstaller {
 			return { state: "noUpdate" }
 		}
 
+		// Determine if this is an upgrade (previously installed) or a fresh install,
+		// so the progress notification can show the appropriate text.
+		const isUpgrade = record.installState === "installed"
+		const titleKey = isUpgrade ? "remoteAgentInstaller:info.upgrading" : "remoteAgentInstaller:info.installing"
+
 		try {
 			await this.ensureInstallerConfigured()
-			// Re-read the record after acquiring the lock to avoid stale version comparison
-			// in multi-process scenarios (another window may have already installed the update).
-			const freshRecord = await this.recordManager.read()
-			if (semverCompare(versionInfo.version, freshRecord.installedVersion) <= 0) {
-				logger.info(`${LOG_PREFIX} Version already up to date after acquiring lock, skipping install`)
-				// Update lastCheckedAt so the cooldown is correctly reset.
-				// Without this, the next activation would re-check immediately instead of waiting for the interval.
-				await this.updateLastChecked(freshRecord)
-				return { state: "noUpdate" }
-			}
-			return await this.runInstallWithRetries(versionInfo, freshRecord, isManual)
+			// Show a progress notification for both manual and automatic installs.
+			// The notification appears immediately and auto-dismisses when the promise resolves.
+			return await vscode.window.withProgress(
+				{
+					location: vscode.ProgressLocation.Notification,
+					title: t(titleKey, { name: this.packageName }),
+					cancellable: false,
+				},
+				async () => {
+					return await this.runInstallWithRetries(versionInfo, record, isManual)
+				},
+			)
 		} finally {
 			await this.releaseLock()
 		}
@@ -382,15 +358,6 @@ export class RemoteAgentInstaller {
 				logger.info(`${LOG_PREFIX} ${this.packageName} updated to ${versionInfo.version}`)
 				// costrict: hot-reload custom modes, skills after install
 				void this.hotReloadAfterInstall()
-				// Background install shows notification here; manual install notification is handled by registerCommands.ts
-				if (!isManual) {
-					void vscode.window.showInformationMessage(
-						t("remoteAgentInstaller:info.installed", {
-							name: this.packageName,
-							version: versionInfo.version,
-						}),
-					)
-				}
 				return { state: "installed", version: versionInfo.version }
 			} catch (error: any) {
 				lastError = error
@@ -495,6 +462,28 @@ export class RemoteAgentInstaller {
 			await fs.unlink(LOCK_FILE_PATH)
 		} catch {
 			// ignore
+		}
+	}
+
+	/**
+	 * Show notification based on install result.
+	 * - installed: always notify (both manual and background)
+	 * - noUpdate: only notify for manual installs
+	 * - failed: only notify for manual installs (background errors are handled
+	 *   inside runInstallWithRetries via notifyFatalError / notifyRetryableError)
+	 */
+	private notifyResult(result: InstallResult, isManual: boolean): void {
+		const name = this.packageName
+		if (result.state === "installed") {
+			void vscode.window.showInformationMessage(
+				t("remoteAgentInstaller:info.installed", { name, version: result.version }),
+			)
+		} else if (isManual && result.state === "noUpdate") {
+			void vscode.window.showInformationMessage(t("remoteAgentInstaller:info.noUpdate", { name }))
+		} else if (isManual && result.state === "failed") {
+			void vscode.window.showErrorMessage(
+				t("remoteAgentInstaller:error.updateFailed", { name, reason: result.reason }),
+			)
 		}
 	}
 

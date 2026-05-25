@@ -2173,13 +2173,13 @@ export const webviewMessageHandler = async (
 				const newConfig = (await provider.getState()).apiConfiguration
 				const newBaseUrl = newConfig?.costrictBaseUrl?.trim() || ""
 
-				//costrict: trigger force background check only when base_url changed
-					if (oldBaseUrl !== newBaseUrl) {
-						provider.log(
-							`[webviewMessageHandler] costrictBaseUrl changed ("${oldBaseUrl}" → "${newBaseUrl}"), triggering remote agent install`,
-						)
-						RemoteAgentInstaller.getInstance().forceBackgroundCheck()
-					}
+				//costrict: trigger reinstall only when base_url changed
+				if (oldBaseUrl !== newBaseUrl) {
+					provider.log(
+						`[webviewMessageHandler] costrictBaseUrl changed ("${oldBaseUrl}" → "${newBaseUrl}"), triggering remote agent install`,
+					)
+					void RemoteAgentInstaller.getInstance().triggerManualInstall()
+				}
 			}
 			break
 		case "renameApiConfiguration":

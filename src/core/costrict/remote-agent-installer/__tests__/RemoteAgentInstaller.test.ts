@@ -7,6 +7,7 @@ vi.mock("vscode", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("vscode")>()
 	return {
 		...actual,
+		ProgressLocation: { Notification: 3 },
 		window: {
 			...actual.window,
 			createOutputChannel: vi.fn(() => ({ appendLine: vi.fn(), dispose: vi.fn() })),
@@ -14,6 +15,7 @@ vi.mock("vscode", async (importOriginal) => {
 			showInformationMessage: vi.fn(() => Promise.resolve(undefined)),
 			showWarningMessage: vi.fn(() => Promise.resolve(undefined)),
 			showErrorMessage: vi.fn(() => Promise.resolve(undefined)),
+			withProgress: vi.fn((_options: any, callback: any) => callback({ report: vi.fn() })),
 		},
 		extensions: {
 			getExtension: vi.fn(() => ({ extensionUri: { fsPath: "/mock" } })),
@@ -109,9 +111,8 @@ describe("RemoteAgentInstaller", () => {
 		expect((installer as any).isDisposed).toBe(true)
 	})
 
-	// Bug2 regression: scheduleBackgroundCheck() must call performBackgroundCheck(true)
-	// so that the activation-time check bypasses the 12h cooldown (FR-001).
-	it("scheduleBackgroundCheck should bypass 12h cooldown (forceCheck=true)", async () => {
+	// scheduleBackgroundCheck() must call performBackgroundCheck()
+	it("scheduleBackgroundCheck should call performBackgroundCheck", async () => {
 		const installer = RemoteAgentInstaller.getInstance()
 		const performSpy = vi.fn().mockResolvedValue(undefined)
 		;(installer as any).performBackgroundCheck = performSpy
@@ -121,12 +122,11 @@ describe("RemoteAgentInstaller", () => {
 		// Allow the async run() to execute
 		await new Promise((resolve) => setTimeout(resolve, 0))
 
-		expect(performSpy).toHaveBeenCalledWith(true)
+		expect(performSpy).toHaveBeenCalled()
 	})
 
-	// Bug2 regression: scheduleNextCheck() must call performBackgroundCheck(false)
-	// so that timer-based checks respect the 12h cooldown (FR-002).
-	it("scheduleNextCheck should respect 12h cooldown (forceCheck=false)", async () => {
+	// scheduleNextCheck() must call performBackgroundCheck() when timer fires
+	it("scheduleNextCheck should call performBackgroundCheck when timer fires", async () => {
 		vi.useFakeTimers()
 		const installer = RemoteAgentInstaller.getInstance()
 		const performSpy = vi.fn().mockResolvedValue(undefined)
@@ -145,7 +145,7 @@ describe("RemoteAgentInstaller", () => {
 		// Advance past the 12h timer
 		await vi.advanceTimersByTimeAsync(12 * 60 * 60 * 1000 + 1000)
 
-		expect(performSpy).toHaveBeenCalledWith(false)
+		expect(performSpy).toHaveBeenCalled()
 		vi.useRealTimers()
 	})
 
@@ -184,59 +184,6 @@ describe("RemoteAgentInstaller", () => {
 	})
 })
 
-describe("RemoteAgentInstaller.forceBackgroundCheck (US-001)", () => {
-	let installer: RemoteAgentInstaller
-
-	beforeEach(() => {
-		RemoteAgentInstaller["instance"] = undefined
-		installer = RemoteAgentInstaller.getInstance()
-	})
-
-	afterEach(() => {
-		installer.dispose()
-		RemoteAgentInstaller["instance"] = undefined
-	})
-
-	// T008 [P] [US1]: forceBackgroundCheck 应调用 performBackgroundCheck(true)
-	it("forceBackgroundCheck should call performBackgroundCheck with forceCheck=true", async () => {
-		const performSpy = vi.fn().mockResolvedValue(undefined)
-		;(installer as any).performBackgroundCheck = performSpy
-		;(installer as any).scheduleNextCheck = vi.fn() // ensure no timer side effects
-
-		installer.forceBackgroundCheck()
-		// Allow the async run() to execute
-		await new Promise((resolve) => setTimeout(resolve, 0))
-
-		expect(performSpy).toHaveBeenCalledWith(true)
-	})
-
-	// T009 [P] [US1]: forceBackgroundCheck 不应调用 scheduleNextCheck
-	it("forceBackgroundCheck should not call scheduleNextCheck", async () => {
-		const performSpy = vi.fn().mockResolvedValue(undefined)
-		const scheduleSpy = vi.fn()
-		;(installer as any).performBackgroundCheck = performSpy
-		;(installer as any).scheduleNextCheck = scheduleSpy
-
-		installer.forceBackgroundCheck()
-		await new Promise((resolve) => setTimeout(resolve, 0))
-
-		expect(scheduleSpy).not.toHaveBeenCalled()
-	})
-
-	// T010 [P] [US1]: 当 runningPromise 存在时 forceBackgroundCheck 应直接跳过（不排队）
-	it("forceBackgroundCheck should be skipped when runningPromise exists", async () => {
-		const doInstallSpy = vi.fn()
-		;(installer as any).doInstall = doInstallSpy
-		installer["runningPromise"] = new Promise(() => {})
-
-		installer.forceBackgroundCheck()
-		await new Promise((resolve) => setTimeout(resolve, 0))
-
-		// performBackgroundCheck sees runningPromise and returns early before calling doInstall
-		expect(doInstallSpy).not.toHaveBeenCalled()
-	})
-})
-
 describe("RemoteAgentInstaller background notification silence (US-002)", () => {
 	let installer: RemoteAgentInstaller
 	let recordManagerMock: any
@@ -271,13 +218,16 @@ describe("RemoteAgentInstaller background notification silence (US-002)", () => 
 		}
 		resourceInstallerMock = {
 			install: vi.fn().mockResolvedValue({
-				agents: [], commands: [], skills: [], rules: [], mcp: [],
+				agents: [],
+				commands: [],
+				skills: [],
+				rules: [],
+				mcp: [],
 			}),
 			uninstall: vi.fn().mockResolvedValue(undefined),
 			cleanup: vi.fn().mockResolvedValue(undefined),
 			getTmpDir: vi.fn().mockReturnValue("/mock/tmp"),
 		}
-
 		;(installer as any)["recordManager"] = recordManagerMock
 		;(installer as any)["versionApi"] = versionApiMock
 		;(installer as any)["downloader"] = downloaderMock
@@ -321,7 +271,10 @@ describe("RemoteAgentInstaller background notification silence (US-002)", () => 
 			manifest: { agents: [], commands: [], skills: [], rules: [], mcp: [] },
 		})
 
-		await (installer as any).doInstall(false)
+		// Use performBackgroundCheck() instead of doInstall() because
+		// notifyResult() (which shows the information message) is called
+		// by performBackgroundCheck, not by doInstall itself.
+		await (installer as any).performBackgroundCheck()
 
 		expect(vscodeWindow.showInformationMessage).toHaveBeenCalled()
 	})
@@ -370,7 +323,6 @@ describe("RemoteAgentInstaller.triggerManualUninstall — hot-reload after unins
 			uninstall: vi.fn().mockResolvedValue(undefined),
 			getTmpDir: vi.fn().mockReturnValue("/mock/tmp"),
 		}
-
 		;(installer as any)["recordManager"] = recordManagerMock
 		;(installer as any)["installer"] = resourceInstallerMock
 		;(installer as any)["ensureInstallerConfigured"] = vi.fn().mockResolvedValue(undefined)

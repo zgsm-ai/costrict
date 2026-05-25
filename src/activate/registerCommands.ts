@@ -367,21 +367,10 @@ export const getCommandsMap = ({
 		}
 	},
 	// costrict: register remote agent installer commands
+	// Notifications are handled inside RemoteAgentInstaller.triggerManualInstall()
 	installAgentPackage: async () => {
 		const installer = RemoteAgentInstaller.getInstance()
-		const result = await installer.triggerManualInstall()
-		const name = installer.getPackageName()
-		if (result.state === "installed") {
-			void vscode.window.showInformationMessage(
-				t("remoteAgentInstaller:info.installed", { name, version: result.version }),
-			)
-		} else if (result.state === "noUpdate") {
-			void vscode.window.showInformationMessage(t("remoteAgentInstaller:info.noUpdate", { name }))
-		} else if (result.state === "failed") {
-			void vscode.window.showErrorMessage(
-				t("remoteAgentInstaller:error.updateFailed", { name, reason: result.reason }),
-			)
-		}
+		await installer.triggerManualInstall()
 	},
 	uninstallAgentPackage: async () => {
 		const installer = RemoteAgentInstaller.getInstance()
