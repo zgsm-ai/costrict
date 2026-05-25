@@ -8,13 +8,13 @@ export * from "./constants"
 let rawTaskReporter: RawTaskReporter | undefined
 let rawCommitReporter: RawCommitReporter | undefined
 
-export function initTelemetry(provider: ClineProvider) {
+export function initTelemetry(provider: ClineProvider, additionalHeaders: Record<string, string> = {}): void {
 	const telemetryService = TelemetryService.instance
 	const costrictBaseUrl = provider.getValue("costrictBaseUrl")
 	const baseUrl = costrictBaseUrl ? costrictBaseUrl : CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 	try {
-		telemetryService.register(new CostrictTelemetryClient(`${baseUrl}`, false))
-		const rawStoreClient = new CostrictRawStoreClient(`${baseUrl}`, false)
+		telemetryService.register(new CostrictTelemetryClient(`${baseUrl}`, additionalHeaders, false))
+		const rawStoreClient = new CostrictRawStoreClient(`${baseUrl}`, additionalHeaders, false)
 		telemetryService.register(rawStoreClient)
 		telemetryService.setProvider(provider)
 		rawTaskReporter = new RawTaskReporter(rawStoreClient)

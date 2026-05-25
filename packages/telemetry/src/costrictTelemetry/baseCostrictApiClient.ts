@@ -8,6 +8,7 @@ export abstract class BaseCostrictApiClient extends BaseTelemetryClient {
 
 	constructor(
 		protected readonly endpoint: string,
+		protected readonly additionalHeaders: Record<string, string> = {},
 		debug = false,
 	) {
 		super(undefined, debug)
@@ -31,6 +32,7 @@ export abstract class BaseCostrictApiClient extends BaseTelemetryClient {
 		}
 
 		return {
+			...this.additionalHeaders,
 			Authorization: `Bearer ${costrictAccessToken}`,
 			"Content-Type": "application/json",
 			"X-Request-ID": uuidv7(),
