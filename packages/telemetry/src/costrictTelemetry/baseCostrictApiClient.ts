@@ -1,6 +1,6 @@
 import { createLogger, ILogger } from "@roo-code/logger"
 import { BaseTelemetryClient } from "../BaseTelemetryClient"
-import { ClineProvider } from "../../../../src/core/webview/ClineProvider"
+import type { ClineProvider } from "../../../../src/core/webview/ClineProvider"
 import { v7 as uuidv7 } from "uuid"
 
 export abstract class BaseCostrictApiClient extends BaseTelemetryClient {
