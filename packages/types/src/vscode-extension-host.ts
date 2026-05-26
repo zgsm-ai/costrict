@@ -533,6 +533,7 @@ export interface WebviewMessage {
 		| "importSettings"
 		| "exportSettings"
 		| "resetState"
+		| "requestReloadWebview"
 		| "flushRouterModels"
 		| "requestRouterModels"
 		| "requestOpenAiModels"

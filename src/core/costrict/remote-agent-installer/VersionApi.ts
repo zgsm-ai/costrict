@@ -3,7 +3,7 @@ import { createLogger } from "../../../utils/logger"
 import { Package } from "../../../shared/package"
 import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
 import { v7 as uuidv7 } from "uuid"
-import { redactUrl } from "./utils"
+import { redactUrl, delay } from "./utils"
 import type { ResourcePackageVersion } from "./types"
 import { CostrictAuthConfig } from "../../../core/costrict/auth"
 
@@ -11,6 +11,8 @@ const logger = createLogger(Package.outputChannel)
 const LOG_PREFIX = "[remote-agent-installer]"
 
 const VERSION_TIMEOUT_MS = 30_000
+const VERSION_MAX_RETRIES = 3
+const VERSION_RETRY_DELAYS_MS = [1_000, 1_000, 1_000]
 
 function isValidSemVer(version: string): boolean {
 	return /^\d+\.\d+\.\d+$/.test(version)
@@ -18,7 +20,7 @@ function isValidSemVer(version: string): boolean {
 
 export class VersionApi {
 	/**
-	 * Fetch the latest resource package version from the server.
+	 * Fetch the latest resource package version from the server with retry.
 	 *
 	 * Returns:
 	 *   - `ResourcePackageVersion` — a new version is available for download
@@ -28,10 +30,39 @@ export class VersionApi {
 	 *
 	 * Throws:
 	 *   - Any network/HTTP error (timeout, connection refused, non-2xx status,
-	 *     invalid JSON, invalid semver, etc.). The caller must NOT update
-	 *     lastCheckedAt in this case, because no successful check occurred.
+	 *     invalid JSON, invalid semver, etc.) after all retry attempts exhausted.
+	 *     The caller must NOT update lastCheckedAt in this case, because no
+	 *     successful check occurred.
 	 */
 	async getLatestVersion(): Promise<ResourcePackageVersion | null> {
+		let lastError: Error | undefined
+
+		for (let attempt = 0; attempt < VERSION_MAX_RETRIES; attempt++) {
+			try {
+				return await this.fetchLatestVersion()
+			} catch (error: any) {
+				lastError = error
+				if (attempt < VERSION_MAX_RETRIES - 1) {
+					logger.warn(
+						`${LOG_PREFIX} Version check attempt ${attempt + 1}/${VERSION_MAX_RETRIES} failed: ${error.message}, retrying in ${VERSION_RETRY_DELAYS_MS[attempt]}ms`,
+					)
+					await delay(VERSION_RETRY_DELAYS_MS[attempt])
+				} else {
+					logger.warn(
+						`${LOG_PREFIX} Version check failed after ${VERSION_MAX_RETRIES} attempts: ${error.message}`,
+					)
+				}
+			}
+		}
+
+		throw lastError
+	}
+
+	/**
+	 * Single attempt to fetch the latest version from the server.
+	 * Retries are handled by the calling getLatestVersion() method.
+	 */
+	private async fetchLatestVersion(): Promise<ResourcePackageVersion | null> {
 		const baseUrl = await this.getBaseUrl()
 
 		if (!baseUrl) {
@@ -57,17 +88,14 @@ export class VersionApi {
 		} catch (error: any) {
 			clearTimeout(timeout)
 			if (error.name === "AbortError") {
-				logger.warn(`${LOG_PREFIX} Version API request timed out after ${VERSION_TIMEOUT_MS}ms`)
 				throw new Error(`Version API request timed out after ${VERSION_TIMEOUT_MS}ms`)
 			}
-			logger.warn(`${LOG_PREFIX} Failed to fetch latest version: ${error.message}`)
 			throw error
 		}
 
 		clearTimeout(timeout)
 
 		if (!response.ok) {
-			logger.warn(`${LOG_PREFIX} Version API returned status ${response.status}`)
 			throw new Error(`Version API returned HTTP ${response.status}`)
 		}
 
@@ -75,12 +103,10 @@ export class VersionApi {
 		try {
 			data = (await response.json()) as ResourcePackageVersion
 		} catch (error: any) {
-			logger.warn(`${LOG_PREFIX} Failed to parse version API response: ${error.message}`)
 			throw new Error(`Failed to parse version API response: ${error.message}`)
 		}
 
 		if (!data.version || !isValidSemVer(data.version)) {
-			logger.warn(`${LOG_PREFIX} Invalid or missing version in response: ${data.version}`)
 			throw new Error(`Invalid or missing version in response: ${data.version}`)
 		}
 

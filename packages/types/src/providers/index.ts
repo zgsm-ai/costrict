@@ -34,6 +34,7 @@ export * from "./costrict.js"
 export * from "./vercel-ai-gateway.js"
 export * from "./zai.js"
 export * from "./minimax.js"
+export * from "./mimo.js"
 
 import { anthropicDefaultModelId } from "./anthropic.js"
 import { basetenDefaultModelId } from "./baseten.js"
@@ -61,6 +62,7 @@ import { xaiDefaultModelId } from "./xai.js"
 import { vercelAiGatewayDefaultModelId } from "./vercel-ai-gateway.js"
 import { internationalZAiDefaultModelId, mainlandZAiDefaultModelId } from "./zai.js"
 import { minimaxDefaultModelId } from "./minimax.js"
+import { mimoDefaultModelId } from "./mimo.js"
 
 // Import the ProviderName type from provider-settings to avoid duplication
 import type { ProviderName, ProviderSettings } from "../provider-settings.js"
@@ -101,6 +103,8 @@ export function getProviderDefaultModelId(
 			return moonshotDefaultModelId
 		case "minimax":
 			return minimaxDefaultModelId
+		case "mimo":
+			return mimoDefaultModelId
 		case "zai":
 			return options?.isChina ? mainlandZAiDefaultModelId : internationalZAiDefaultModelId
 		case "openai-native":

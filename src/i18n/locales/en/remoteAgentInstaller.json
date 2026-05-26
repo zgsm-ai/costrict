@@ -1,6 +1,8 @@
 {
 	"info": {
 		"installed": "{{name}} v{{version}} installed successfully.",
+		"installing": "Installing {{name}}...",
+		"upgrading": "Upgrading {{name}}...",
 		"noUpdate": "{{name}} is already up to date.",
 		"uninstalled": "{{name}} uninstalled successfully."
 	},
@@ -11,8 +13,8 @@
 		"installFailed": "Failed to install {{name}}: {{reason}}"
 	},
 	"error": {
-		"updateFailed": "Failed to update {{name}}: {{reason}}",
-		"uninstallFailed": "Failed to uninstall {{name}}: {{reason}}"
+		"updateFailed": "Failed to update {{name}}: {{reason}}. Please try to install it manually.",
+		"uninstallFailed": "Failed to uninstall {{name}}: {{reason}}. Please try to uninstall it manually."
 	},
 	"action": {
 		"retryNow": "Retry Now"

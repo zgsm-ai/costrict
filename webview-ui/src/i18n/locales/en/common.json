@@ -5,7 +5,8 @@
 		"githubText": "our GitHub Issues page",
 		"copyInstructions": "Copy and paste the following error message to include it as part of your submission:",
 		"errorStack": "Error Stack:",
-		"componentStack": "Component Stack:"
+		"componentStack": "Component Stack:",
+		"reloadButtonText": "Reload UI"
 	},
 	"answers": {
 		"yes": "Yes",

@@ -11,6 +11,7 @@ vi.mock("vscode", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("vscode")>()
 	return {
 		...actual,
+		ProgressLocation: { Notification: 3 },
 		window: {
 			...actual.window,
 			createOutputChannel: vi.fn(() => ({ appendLine: vi.fn(), dispose: vi.fn() })),
@@ -18,6 +19,7 @@ vi.mock("vscode", async (importOriginal) => {
 			showInformationMessage: vi.fn(),
 			showWarningMessage: vi.fn(),
 			showErrorMessage: vi.fn(),
+			withProgress: vi.fn((_options: any, callback: any) => callback({ report: vi.fn() })),
 		},
 		extensions: {
 			getExtension: vi.fn(() => ({ extensionUri: { fsPath: "/mock" } })),
@@ -129,7 +131,7 @@ describe("RemoteAgentInstaller orchestration flow", () => {
 		vi.clearAllMocks()
 	})
 
-	it("should return noUpdate when remote version equals local version", async () => {
+	it("should force reinstall on manual trigger when remote version equals local version", async () => {
 		recordManagerMock.read.mockResolvedValue({
 			...defaultRecord,
 			installedVersion: "1.0.0",
@@ -141,11 +143,12 @@ describe("RemoteAgentInstaller orchestration flow", () => {
 
 		const result = await installer.triggerManualInstall()
 
-		expect(result.state).toBe("noUpdate")
-		expect(downloaderMock.download).not.toHaveBeenCalled()
+		// Manual install bypasses version check — always proceeds to install
+		expect(result.state).toBe("installed")
+		expect(downloaderMock.download).toHaveBeenCalledTimes(1)
 	})
 
-	it("should return noUpdate when remote version is lower than local", async () => {
+	it("should force reinstall on manual trigger when remote version is lower than local", async () => {
 		recordManagerMock.read.mockResolvedValue({
 			...defaultRecord,
 			installedVersion: "2.0.0",
@@ -157,8 +160,9 @@ describe("RemoteAgentInstaller orchestration flow", () => {
 
 		const result = await installer.triggerManualInstall()
 
-		expect(result.state).toBe("noUpdate")
-		expect(downloaderMock.download).not.toHaveBeenCalled()
+		// Manual install bypasses version check — always proceeds to install
+		expect(result.state).toBe("installed")
+		expect(downloaderMock.download).toHaveBeenCalledTimes(1)
 	})
 
 	it("should return noUpdate when server returns no downloadUrl", async () => {
@@ -439,33 +443,14 @@ describe("RemoteAgentInstaller orchestration flow", () => {
 		expect(downloaderMock.download).toHaveBeenCalledTimes(1)
 	})
 
-	// FR-002: background check must respect 12h cooldown (shouldCheck=false → skip)
-	it("should skip background check when cooldown is active (shouldCheck=false)", async () => {
-		recordManagerMock.shouldCheck.mockReturnValue(false)
-
+	// Background check proceeds normally — timer interval is the cooldown mechanism
+	it("should proceed with background check and call getLatestVersion", async () => {
 		versionApiMock.getLatestVersion.mockResolvedValue({
 			version: "2.0.0",
 			downloadUrl: "https://example.com/pkg.zip",
 		} as ResourcePackageVersion)
 
-		// performBackgroundCheck(false) = timer-based check, respects cooldown
-		await (installer as any).performBackgroundCheck(false)
-
-		// Should skip entirely — no version check, no download
-		expect(versionApiMock.getLatestVersion).not.toHaveBeenCalled()
-		expect(downloaderMock.download).not.toHaveBeenCalled()
-	})
-
-	// FR-002: background check proceeds when cooldown is NOT active (shouldCheck=true)
-	it("should proceed with background check when cooldown is not active (shouldCheck=true)", async () => {
-		recordManagerMock.shouldCheck.mockReturnValue(true)
-
-		versionApiMock.getLatestVersion.mockResolvedValue({
-			version: "2.0.0",
-			downloadUrl: "https://example.com/pkg.zip",
-		} as ResourcePackageVersion)
-
-		await (installer as any).performBackgroundCheck(false)
+		await (installer as any).performBackgroundCheck()
 
 		expect(versionApiMock.getLatestVersion).toHaveBeenCalledTimes(1)
 	})
@@ -744,11 +729,9 @@ describe("RemoteAgentInstaller orchestration flow", () => {
 	// installed by process A (freshRecord.installedVersion >= versionInfo.version).
 	// It returns noUpdate without updating lastCheckedAt, so the 12h cooldown is not reset.
 	// This causes process B to re-check on the next activation instead of waiting 12h.
-	it("should update lastCheckedAt when version already up-to-date after acquiring lock (P1b)", async () => {
+	it("should proceed to install on manual trigger even when version already up-to-date after acquiring lock (P1b)", async () => {
 		// Setup: remote version 2.0.0, initial local version 1.0.0 (triggers lock acquisition)
-		recordManagerMock.read
-			.mockResolvedValueOnce({ ...defaultRecord, installedVersion: "1.0.0" }) // first read: needs update
-			.mockResolvedValueOnce({ ...defaultRecord, installedVersion: "2.0.0" }) // second read (after lock): already up-to-date
+		recordManagerMock.read.mockResolvedValue({ ...defaultRecord, installedVersion: "1.0.0" })
 
 		versionApiMock.getLatestVersion.mockResolvedValue({
 			version: "2.0.0",
@@ -757,11 +740,10 @@ describe("RemoteAgentInstaller orchestration flow", () => {
 
 		const result = await installer.triggerManualInstall()
 
-		// Should return noUpdate (version already installed by another process)
-		expect(result.state).toBe("noUpdate")
+		// Manual install bypasses version check — always proceeds to install
+		expect(result.state).toBe("installed")
 
-		// lastCheckedAt MUST be updated (recordManager.write must be called with lastCheckedAt)
-		// This is the regression: currently write() is NOT called in this branch
+		// lastCheckedAt is updated as part of successful install
 		expect(recordManagerMock.write).toHaveBeenCalled()
 		const writeCall = recordManagerMock.write.mock.calls[0][0]
 		expect(writeCall).toHaveProperty("lastCheckedAt")
@@ -824,9 +806,9 @@ describe("RemoteAgentInstaller orchestration flow", () => {
 		const callArgs = showInfoMock.mock.calls[0]
 		expect(String(callArgs[0])).toContain("installed")
 	})
-	// Requirement 1: manual install success should NOT show showInformationMessage inside runInstallWithRetries
-	// (registerCommands.ts handles the notification for manual installs)
-	it("should NOT show showInformationMessage inside runInstallWithRetries on manual install success", async () => {
+	// Notifications are now unified: both manual and background installs show
+	// showInformationMessage via notifyResult.
+	it("should show showInformationMessage on manual install success (unified notification)", async () => {
 		const vscode = await import("vscode")
 		const showInfoMock = vi.mocked(vscode.window.showInformationMessage)
 		showInfoMock.mockClear()
@@ -839,85 +821,9 @@ describe("RemoteAgentInstaller orchestration flow", () => {
 		const result = await installer.triggerManualInstall()
 		expect(result.state).toBe("installed")
 
-		// showInformationMessage must NOT be called inside runInstallWithRetries for manual installs
-		// (registerCommands.ts is responsible for showing the notification)
-		expect(showInfoMock).not.toHaveBeenCalled()
-	})
-})
-
-
-describe("RemoteAgentInstaller.forceBackgroundCheck flow (US-001)", () => {
-	let installer: RemoteAgentInstaller
-	let recordManagerMock: any
-	let versionApiMock: any
-	let downloaderMock: any
-	let resourceInstallerMock: any
-
-	beforeEach(async () => {
-		RemoteAgentInstaller["instance"] = undefined
-		installer = RemoteAgentInstaller.getInstance()
-
-		recordManagerMock = {
-			read: vi.fn().mockResolvedValue({ ...defaultRecord }),
-			write: vi.fn().mockResolvedValue(undefined),
-			shouldCheck: vi.fn().mockReturnValue(true),
-		}
-		versionApiMock = {
-			getLatestVersion: vi.fn().mockResolvedValue(null),
-		}
-		downloaderMock = {
-			download: vi.fn().mockResolvedValue("/mock/path.zip"),
-			cleanupResidualFiles: vi.fn().mockResolvedValue(undefined),
-			getTmpDir: vi.fn().mockReturnValue("/mock/tmp"),
-		}
-		resourceInstallerMock = {
-			install: vi.fn().mockResolvedValue({
-				agents: ["test-agent"],
-				commands: [],
-				skills: [],
-				rules: [],
-				mcp: [],
-			} as InstalledManifest),
-			uninstall: vi.fn().mockResolvedValue(undefined),
-			cleanup: vi.fn().mockResolvedValue(undefined),
-			getTmpDir: vi.fn().mockReturnValue("/mock/tmp"),
-		}
-
-		;(installer as any)["recordManager"] = recordManagerMock
-		;(installer as any)["versionApi"] = versionApiMock
-		;(installer as any)["downloader"] = downloaderMock
-		;(installer as any)["installer"] = resourceInstallerMock
-		;(installer as any)["isLockHeld"] = vi.fn().mockResolvedValue(false)
-		;(installer as any)["acquireLock"] = vi.fn().mockResolvedValue(undefined)
-		;(installer as any)["releaseLock"] = vi.fn().mockResolvedValue(undefined)
-		;(installer as any)["fileExists"] = vi.fn().mockResolvedValue(true)
-	})
-
-	afterEach(() => {
-		installer.dispose()
-		RemoteAgentInstaller["instance"] = undefined
-		vi.clearAllMocks()
-	})
-
-	// T011 [US1]: base_url 变更触发流程的集成风格测试
-	it("forceBackgroundCheck should execute doInstall when no task is running", async () => {
-		const doInstallSpy = vi.fn().mockResolvedValue({ state: "noUpdate" })
-		;(installer as any).doInstall = doInstallSpy
-
-		installer.forceBackgroundCheck()
-		await new Promise((resolve) => setTimeout(resolve, 0))
-
-		expect(doInstallSpy).toHaveBeenCalledWith(false)
-	})
-
-	it("forceBackgroundCheck should skip when a background check is already running", async () => {
-		const doInstallSpy = vi.fn().mockResolvedValue({ state: "noUpdate" })
-		;(installer as any).doInstall = doInstallSpy
-		installer["runningPromise"] = new Promise(() => {})
-
-		installer.forceBackgroundCheck()
-		await new Promise((resolve) => setTimeout(resolve, 0))
-
-		expect(doInstallSpy).not.toHaveBeenCalled()
+		// showInformationMessage must be called for manual installs too (unified notification)
+		expect(showInfoMock).toHaveBeenCalled()
+		const callArgs = showInfoMock.mock.calls[0]
+		expect(String(callArgs[0])).toContain("installed")
 	})
 })

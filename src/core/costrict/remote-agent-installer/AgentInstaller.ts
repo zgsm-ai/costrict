@@ -244,14 +244,17 @@ export class AgentInstaller {
 					.filter((m) => installedManifest[m].length > 0)
 					.join(", ")}`,
 			)
-			const warnings = await this.verifyInstalled(installedManifest)
-			if (warnings.length > 0) {
-				logger.warn(
-					`${LOG_PREFIX} Installation verification warnings:\n${warnings.map((w) => `  - ${w}`).join("\n")}`,
+			// 关键改进：验证失败则整个安装失败
+			const errors = await this.verifyInstalled(installedManifest)
+			if (errors.length > 0) {
+				logger.error(
+					`${LOG_PREFIX} Installation verification failed:\n${errors.map((e) => `  - ${e}`).join("\n")}`,
 				)
-			} else {
-				logger.info(`${LOG_PREFIX} Installation verified successfully`)
+				// 验证失败，抛出错误，阻止记录文件更新
+				throw new Error(`Installation verification failed: ${errors.join(", ")}`)
 			}
+
+			logger.info(`${LOG_PREFIX} Installation verified successfully`)
 			await this.cleanup(undefined, extractDir)
 			return installedManifest
 		} catch (error) {

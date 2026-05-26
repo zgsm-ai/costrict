@@ -34,11 +34,13 @@ export type DeepSeekAssistantMessage = AssistantMessage & {
  * @param options.mergeToolResultText If true, merge text content after tool_results into the last
  *                                     tool message instead of creating a separate user message.
  *                                     This is critical for DeepSeek's interleaved thinking mode.
+ * @param options.normalizeToolCallId If provided, a function used to sanitize tool call IDs.
+ *                                     Critical for MiMo provider which requires valid IDs.
  * @returns Array of OpenAI messages where consecutive messages with the same role are combined
  */
 export function convertToR1Format(
 	messages: AnthropicMessage[],
-	options?: { mergeToolResultText?: boolean },
+	options?: { mergeToolResultText?: boolean; normalizeToolCallId?: (id: string) => string },
 ): Message[] {
 	const result: Message[] = []
 
@@ -174,7 +176,7 @@ export function convertToR1Format(
 						textParts.push(part.text)
 					} else if (part.type === "tool_use") {
 						toolCalls.push({
-							id: part.id,
+							id: options?.normalizeToolCallId ? options.normalizeToolCallId(part.id) : part.id,
 							type: "function",
 							function: {
 								name: part.name,

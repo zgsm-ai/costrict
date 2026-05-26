@@ -17,6 +17,13 @@ vi.mock("uuid", () => ({
 	v7: () => "mock-uuid",
 }))
 
+// Mock delay to resolve immediately so retries happen synchronously
+vi.mock("../utils", () => ({
+	delay: vi.fn(() => Promise.resolve()),
+	redactUrl: (url: string) => url,
+	getCheckIntervalMs: () => 60 * 60 * 1000,
+}))
+
 describe("VersionApi", () => {
 	let api: VersionApi
 
@@ -144,5 +151,122 @@ describe("VersionApi", () => {
 		const result = await api.getLatestVersion()
 		expect(result).not.toBeNull()
 		expect(result?.name).toBeUndefined()
+	})
+
+	describe("retry mechanism", () => {
+		it("should retry on fetch network error and succeed on second attempt", async () => {
+			global.fetch = vi
+				.fn()
+				.mockRejectedValueOnce(new Error("network error"))
+				.mockResolvedValueOnce({
+					ok: true,
+					json: async () => ({
+						version: "1.0.0",
+						downloadUrl: "https://cdn.example.com/pkg.zip",
+					}),
+				})
+
+			const result = await api.getLatestVersion()
+
+			expect(global.fetch).toHaveBeenCalledTimes(2)
+			expect(result).not.toBeNull()
+			expect(result?.version).toBe("1.0.0")
+		})
+
+		it("should retry up to 3 times on persistent network errors then throw", async () => {
+			global.fetch = vi.fn().mockRejectedValue(new Error("network error"))
+
+			await expect(api.getLatestVersion()).rejects.toThrow("network error")
+
+			expect(global.fetch).toHaveBeenCalledTimes(3)
+		})
+
+		it("should retry on HTTP error and succeed on retry", async () => {
+			global.fetch = vi
+				.fn()
+				.mockResolvedValueOnce({ ok: false, status: 500 })
+				.mockResolvedValueOnce({
+					ok: true,
+					json: async () => ({
+						version: "2.0.0",
+						downloadUrl: "https://cdn.example.com/pkg.zip",
+					}),
+				})
+
+			const result = await api.getLatestVersion()
+
+			expect(global.fetch).toHaveBeenCalledTimes(2)
+			expect(result?.version).toBe("2.0.0")
+		})
+
+		it("should retry on timeout (AbortError) and succeed on retry", async () => {
+			const abortError = new DOMException("The operation was aborted.", "AbortError")
+			global.fetch = vi
+				.fn()
+				.mockRejectedValueOnce(abortError)
+				.mockResolvedValueOnce({
+					ok: true,
+					json: async () => ({
+						version: "1.0.0",
+						downloadUrl: "https://cdn.example.com/pkg.zip",
+					}),
+				})
+
+			const result = await api.getLatestVersion()
+
+			expect(global.fetch).toHaveBeenCalledTimes(2)
+			expect(result?.version).toBe("1.0.0")
+		})
+
+		it("should not retry when baseUrl is empty (returns null immediately)", async () => {
+			vi.spyOn(api as any, "getBaseUrl").mockResolvedValue("")
+			global.fetch = vi.fn()
+
+			const result = await api.getLatestVersion()
+			expect(result).toBeNull()
+			expect(global.fetch).not.toHaveBeenCalled()
+		})
+
+		it("should not retry when server returns null (no downloadUrl)", async () => {
+			global.fetch = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({ version: "1.0.0" }),
+			})
+
+			const result = await api.getLatestVersion()
+			expect(result).toBeNull()
+			expect(global.fetch).toHaveBeenCalledTimes(1)
+		})
+
+		it("should throw the last error after all retries exhausted", async () => {
+			global.fetch = vi
+				.fn()
+				.mockRejectedValueOnce(new Error("first error"))
+				.mockRejectedValueOnce(new Error("second error"))
+				.mockRejectedValueOnce(new Error("third error"))
+
+			await expect(api.getLatestVersion()).rejects.toThrow("third error")
+
+			expect(global.fetch).toHaveBeenCalledTimes(3)
+		})
+
+		it("should call delay between retries", async () => {
+			const { delay } = await import("../utils")
+			global.fetch = vi
+				.fn()
+				.mockRejectedValueOnce(new Error("network error"))
+				.mockResolvedValueOnce({
+					ok: true,
+					json: async () => ({
+						version: "1.0.0",
+						downloadUrl: "https://cdn.example.com/pkg.zip",
+					}),
+				})
+
+			await api.getLatestVersion()
+
+			expect(delay).toHaveBeenCalledTimes(1)
+			expect(delay).toHaveBeenCalledWith(1_000)
+		})
 	})
 })

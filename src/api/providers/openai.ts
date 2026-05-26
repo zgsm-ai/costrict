@@ -479,7 +479,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 	 * @param finishReason - The finish_reason from the stream chunk
 	 * @param activeToolCallIds - Set to track active tool call IDs (mutated in place)
 	 */
-	private *processToolCalls(
+	protected *processToolCalls(
 		delta: OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta | undefined,
 		finishReason: string | null | undefined,
 		activeToolCallIds: Set<string>,

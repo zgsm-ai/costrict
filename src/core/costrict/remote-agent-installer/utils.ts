@@ -17,7 +17,7 @@ export function delay(ms: number): Promise<void> {
   * - Default: 60 minutes (1 hour)
   */
 export function getCheckIntervalMs(): number {
-	const DEFAULT_MINUTES = 60
+	const DEFAULT_MINUTES = 24 * 60 // 24 hours
 	const MIN_MINUTES = 1
 	const raw = process.env.COSTRICT_AGENT_CHECK_INTERVAL_MINUTES
 	if (raw !== undefined && raw !== "") {
