@@ -27,6 +27,7 @@ import type {
 	McpTool,
 	McpToolCallResponse,
 } from "@roo-code/types"
+import { AsyncPollingConfigSchema } from "@roo-code/types"
 
 import { t } from "../../i18n"
 
@@ -38,6 +39,8 @@ import { fileExistsAtPath } from "../../utils/fs"
 import { arePathsEqual, getWorkspacePath } from "../../utils/path"
 import { injectVariables } from "../../utils/config"
 import { NotificationService } from "./costrict/NotificationService"
+import { McpAsyncExecutionService } from "./asyncPolling/McpAsyncExecutionService"
+import { McpAsyncTaskStore } from "./asyncPolling/McpAsyncTaskStore"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { isJetbrainsPlatform } from "../../utils/platform"
@@ -73,6 +76,7 @@ const BaseConfigSchema = z.object({
 	alwaysAllow: z.array(z.string()).default([]),
 	watchPaths: z.array(z.string()).optional(), // paths to watch for changes and restart server
 	disabledTools: z.array(z.string()).default([]),
+	asyncPolling: AsyncPollingConfigSchema.optional(),
 })
 
 // Custom error messages for better user feedback
@@ -166,6 +170,9 @@ export class McpHub {
 	private flagResetTimer?: NodeJS.Timeout
 	private sanitizedNameRegistry: Map<string, string> = new Map()
 	private initializationPromise: Promise<void>
+	private asyncExecutionService: McpAsyncExecutionService | undefined
+	private asyncTaskStore: McpAsyncTaskStore | undefined
+	private asyncStorageRoot: string | undefined
 
 	constructor(provider: ClineProvider) {
 		this.providerRef = new WeakRef(provider)
@@ -702,7 +709,7 @@ export class McpHub {
 			let transport: StdioClientTransport | SSEClientTransport | StreamableHTTPClientTransport
 
 			// Inject variables to the config (environment, magic variables,...)
-			const configInjected = (await injectVariables(config, {
+			const configInjected = (await injectVariables(config as any, {
 				env: process.env,
 				workspaceFolder: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "",
 			})) as typeof config
@@ -1774,12 +1781,101 @@ export class McpHub {
 		)
 	}
 
+	/**
+	 * Read the raw connection config for a server and check whether `toolName`
+	 * appears in its `disabledTools` array. Independent of `enabledForPrompt`
+	 * (which also drives prompt visibility, see design §5.6).
+	 */
+	async isToolDisabled(serverName: string, toolName: string, source?: "global" | "project"): Promise<boolean> {
+		const connection = this.findConnection(serverName, source)
+		if (!connection) return false
+		try {
+			const raw = JSON.parse(connection.server.config) as { disabledTools?: string[] }
+			return Array.isArray(raw.disabledTools) && raw.disabledTools.includes(toolName)
+		} catch {
+			return false
+		}
+	}
+
+	/**
+	 * Return the per-tool asyncPolling config for `toolName` on `serverName`,
+	 * or undefined when no asyncPolling is configured for that tool.
+	 */
+	async getAsyncPollingConfig(
+		serverName: string,
+		toolName: string,
+		source?: "global" | "project",
+	): Promise<import("@roo-code/types").AsyncPollingToolConfig | undefined> {
+		const connection = this.findConnection(serverName, source)
+		if (!connection) return undefined
+		try {
+			const parsed = ServerConfigSchema.parse(JSON.parse(connection.server.config))
+			return parsed.asyncPolling?.tools?.[toolName]
+		} catch {
+			return undefined
+		}
+	}
+
+	private getAsyncStorageRoot(): string {
+		if (!this.asyncStorageRoot) {
+			const provider = this.providerRef.deref()
+			const storageUri = provider?.context?.globalStorageUri
+			this.asyncStorageRoot = storageUri
+				? path.join(storageUri.fsPath, "mcpAsyncTasks")
+				: path.join(require("os").tmpdir(), "costrict-mcp-async-tasks")
+		}
+		return this.asyncStorageRoot
+	}
+
+	private getOrCreateAsyncTaskStore(): McpAsyncTaskStore {
+		if (!this.asyncTaskStore) {
+			this.asyncTaskStore = new McpAsyncTaskStore({
+				rootDir: this.getAsyncStorageRoot(),
+				workspacePath: getWorkspacePath(),
+			})
+		}
+		return this.asyncTaskStore
+	}
+
+	async getAsyncTaskRecords(): Promise<import("@roo-code/types").McpAsyncTaskSummary[]> {
+		const store = this.getOrCreateAsyncTaskStore()
+		const records = await store.list()
+		const { summarizeRecord } = await import("@roo-code/types")
+		return records.map(summarizeRecord)
+	}
+
+	getAsyncTaskStore(): McpAsyncTaskStore {
+		return this.getOrCreateAsyncTaskStore()
+	}
+
+	getAsyncExecutionService(): McpAsyncExecutionService {
+		if (!this.asyncExecutionService) {
+			const store = this.getOrCreateAsyncTaskStore()
+			this.asyncExecutionService = new McpAsyncExecutionService(
+				{
+					callTool: (serverName, toolName, args, source, options) =>
+						this.callTool(serverName, toolName, args, source, options),
+					isToolDisabled: (serverName, toolName, source) => this.isToolDisabled(serverName, toolName, source),
+					getAsyncPollingConfig: (serverName, toolName, source) =>
+						this.getAsyncPollingConfig(serverName, toolName, source),
+				},
+				{ store },
+			)
+		}
+		return this.asyncExecutionService
+	}
+
 	async callTool(
 		serverName: string,
 		toolName: string,
 		toolArguments?: Record<string, unknown>,
 		source?: "global" | "project",
+		options?: { timeoutMs?: number; signal?: AbortSignal },
 	): Promise<McpToolCallResponse> {
+		if (options?.signal?.aborted) {
+			throw new Error(`callTool aborted before request: ${serverName}/${toolName}`)
+		}
+
 		const connection = this.findConnection(serverName, source)
 		if (!connection || connection.type !== "connected") {
 			throw new Error(
@@ -1791,27 +1887,28 @@ export class McpHub {
 		}
 
 		let timeout: number
-		try {
-			const parsedConfig = ServerConfigSchema.parse(JSON.parse(connection.server.config))
-			timeout = (parsedConfig.timeout ?? 60) * 1000
-		} catch (error) {
-			console.error("Failed to parse server config for timeout:", error)
-			// Default to 60 seconds if parsing fails
-			timeout = 60 * 1000
+		if (typeof options?.timeoutMs === "number") {
+			timeout = options.timeoutMs
+		} else {
+			try {
+				const parsedConfig = ServerConfigSchema.parse(JSON.parse(connection.server.config))
+				timeout = (parsedConfig.timeout ?? 60) * 1000
+			} catch (error) {
+				console.error("Failed to parse server config for timeout:", error)
+				timeout = 60 * 1000
+			}
 		}
+
+		const reqOptions: { timeout: number; signal?: AbortSignal } = { timeout }
+		if (options?.signal) reqOptions.signal = options.signal
 
 		return await connection.client.request(
 			{
 				method: "tools/call",
-				params: {
-					name: toolName,
-					arguments: toolArguments,
-				},
+				params: { name: toolName, arguments: toolArguments },
 			},
 			CallToolResultSchema,
-			{
-				timeout,
-			},
+			reqOptions,
 		)
 	}
 

@@ -47,6 +47,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 			// Use the resolved tool name (original name from the server) for MCP calls
 			// This handles cases where models mangle hyphens to underscores
 			const resolvedToolName = toolValidation.resolvedToolName ?? toolName
+			const resolvedSource = toolValidation.resolvedSource
 
 			// Reset mistake count on successful validation
 			task.consecutiveMistakeCount = 0
@@ -59,12 +60,14 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 				arguments: params.arguments ? JSON.stringify(params.arguments) : undefined,
 			} satisfies ClineAskUseMcpServer)
 
-			const executionId = task.lastMessageTs?.toString() ?? Date.now().toString()
 			const didApprove = await askApproval("use_mcp_server", completeMessage)
 
 			if (!didApprove) {
 				return
 			}
+
+			// Read ask timestamp AFTER approval so the executionId matches the actual UI card.
+			const executionId = task.lastMessageTs?.toString() ?? Date.now().toString()
 
 			// Execute the tool and process results
 			await this.executeToolAndProcessResult(
@@ -74,6 +77,7 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 				parsedArguments,
 				executionId,
 				pushToolResult,
+				resolvedSource,
 			)
 		} catch (error) {
 			await handleError("executing MCP tool", error as Error)
@@ -142,7 +146,12 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 		serverName: string,
 		toolName: string,
 		pushToolResult: (content: string) => void,
-	): Promise<{ isValid: boolean; availableTools?: string[]; resolvedToolName?: string }> {
+	): Promise<{
+		isValid: boolean
+		availableTools?: string[]
+		resolvedToolName?: string
+		resolvedSource?: "global" | "project"
+	}> {
 		try {
 			// Get the MCP hub to access server information
 			const provider = task.providerRef.deref()
@@ -238,7 +247,12 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 			}
 
 			// Tool exists and is enabled - return the original tool name for use with the MCP server
-			return { isValid: true, availableTools: server?.tools?.map((t) => t.name), resolvedToolName: tool.name }
+			return {
+				isValid: true,
+				availableTools: server?.tools?.map((t) => t.name),
+				resolvedToolName: tool.name,
+				resolvedSource: server.source,
+			}
 		} catch (error) {
 			// If there's an error during validation, log it but don't block the tool execution
 			// The actual tool call might still fail with a proper error
@@ -297,10 +311,10 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 		parsedArguments: Record<string, unknown> | undefined,
 		executionId: string,
 		pushToolResult: (content: string | Array<any>) => void,
+		source?: "global" | "project",
 	): Promise<void> {
 		await task.say("mcp_server_request_started")
 
-		// Send started status
 		await this.sendExecutionStatus(task, {
 			executionId,
 			status: "started",
@@ -308,7 +322,22 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 			toolName,
 		})
 
-		const toolResult = await task.providerRef.deref()?.getMcpHub()?.callTool(serverName, toolName, parsedArguments)
+		const mcpHub = task.providerRef.deref()?.getMcpHub()
+		if (!mcpHub) {
+			await task.say("mcp_server_response", "(No response: MCP hub unavailable)", [])
+			pushToolResult(formatResponse.toolResult("(No response)"))
+			return
+		}
+
+		const toolResult = await mcpHub.getAsyncExecutionService().execute({
+			serverName,
+			toolName,
+			arguments: parsedArguments,
+			source,
+			executionId,
+			isCancelled: () => task.abort,
+			onProgress: (status) => this.sendExecutionStatus(task, status),
+		})
 
 		let toolResultPretty = "(No response)"
 		let images: string[] = []
@@ -329,7 +358,6 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 					(outputText || (images.length > 0 ? `[${images.length} image(s) received]` : ""))
 			}
 
-			// Send completion status
 			await this.sendExecutionStatus(task, {
 				executionId,
 				status: toolResult.isError ? "error" : "completed",
@@ -337,7 +365,6 @@ export class UseMcpToolTool extends BaseTool<"use_mcp_tool"> {
 				error: toolResult.isError ? "Error executing MCP tool" : undefined,
 			})
 		} else {
-			// Send error status if no result
 			await this.sendExecutionStatus(task, {
 				executionId,
 				status: "error",

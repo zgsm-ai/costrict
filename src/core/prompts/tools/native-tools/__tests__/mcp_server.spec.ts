@@ -197,4 +197,208 @@ describe("getMcpServerTools", () => {
 		})
 		expect(getFunction(result[0]).parameters).not.toHaveProperty("required")
 	})
+
+	describe("asyncPolling initialArgsTemplate schema filtering", () => {
+		it("should hide secret-like fields and remove preconfigured fields from required", () => {
+			const toolWithAsyncPolling: McpTool = {
+				name: "asyncTool",
+				description: "Tool with async polling config",
+				inputSchema: {
+					type: "object",
+					properties: {
+						InputData: { type: "string" },
+						UserID: { type: "string" },
+						"header-ApiKey": { type: "string" },
+					},
+					required: ["InputData", "UserID", "header-ApiKey"],
+				},
+			}
+			const serverWithAsyncPolling: McpServer = {
+				name: "pollingServer",
+				config: JSON.stringify({
+					type: "stdio",
+					command: "test",
+					asyncPolling: {
+						tools: {
+							asyncTool: {
+								initialArgsTemplate: {
+									"header-ApiKey": "sk-123",
+									UserID: "user-456",
+								},
+								statusTool: "getStatus",
+								taskIdPath: "$.taskId",
+								statusPath: "$.status",
+								pendingValues: ["pending"],
+								completedValues: ["completed"],
+							},
+						},
+					},
+				}),
+				status: "connected",
+				source: "global",
+				tools: [toolWithAsyncPolling],
+			}
+			const mockHub = createMockMcpHub([serverWithAsyncPolling])
+
+			const result = getMcpServerTools(mockHub as McpHub)
+
+			expect(result).toHaveLength(1)
+			const params = getFunction(result[0]).parameters as Record<string, unknown>
+
+			// InputData must remain required and visible
+			expect(params.required).toEqual(["InputData"])
+			expect((params.properties as Record<string, unknown>).InputData).toBeDefined()
+
+			// header-ApiKey must be removed entirely (secret-like)
+			expect((params.properties as Record<string, unknown>)["header-ApiKey"]).toBeUndefined()
+
+			// UserID must remain in properties but not in required
+			expect((params.properties as Record<string, unknown>).UserID).toBeDefined()
+		})
+
+		it("should keep schema unchanged when no asyncPolling config exists", () => {
+			const tool: McpTool = {
+				name: "plainTool",
+				description: "Tool without async polling",
+				inputSchema: {
+					type: "object",
+					properties: {
+						InputData: { type: "string" },
+						UserID: { type: "string" },
+					},
+					required: ["InputData", "UserID"],
+				},
+			}
+			const server = createMockServer("plainServer", [tool])
+			const mockHub = createMockMcpHub([server])
+
+			const result = getMcpServerTools(mockHub as McpHub)
+
+			expect(result).toHaveLength(1)
+			const params = getFunction(result[0]).parameters as Record<string, unknown>
+			expect(params.required).toEqual(["InputData", "UserID"])
+			expect((params.properties as Record<string, unknown>).InputData).toBeDefined()
+			expect((params.properties as Record<string, unknown>).UserID).toBeDefined()
+		})
+
+		it("should keep schema unchanged when config JSON is invalid", () => {
+			const tool: McpTool = {
+				name: "badConfigTool",
+				description: "Tool with bad server config",
+				inputSchema: {
+					type: "object",
+					properties: {
+						InputData: { type: "string" },
+					},
+					required: ["InputData"],
+				},
+			}
+			const server: McpServer = {
+				...createMockServer("badServer", [tool]),
+				config: "not valid json",
+			}
+			const mockHub = createMockMcpHub([server])
+
+			const result = getMcpServerTools(mockHub as McpHub)
+
+			expect(result).toHaveLength(1)
+			const params = getFunction(result[0]).parameters as Record<string, unknown>
+			expect(params.required).toEqual(["InputData"])
+		})
+
+		it("should keep schema unchanged for tools without matching asyncPolling entry", () => {
+			const tool: McpTool = {
+				name: "otherTool",
+				description: "Tool not listed in asyncPolling config",
+				inputSchema: {
+					type: "object",
+					properties: {
+						InputData: { type: "string" },
+					},
+					required: ["InputData"],
+				},
+			}
+			const server: McpServer = {
+				name: "partialServer",
+				config: JSON.stringify({
+					type: "stdio",
+					command: "test",
+					asyncPolling: {
+						tools: {
+							someOtherTool: {
+								initialArgsTemplate: { key: "val" },
+								statusTool: "getStatus",
+								taskIdPath: "$.id",
+								statusPath: "$.s",
+								pendingValues: ["pending"],
+								completedValues: ["completed"],
+							},
+						},
+					},
+				}),
+				status: "connected",
+				source: "global",
+				tools: [tool],
+			}
+			const mockHub = createMockMcpHub([server])
+
+			const result = getMcpServerTools(mockHub as McpHub)
+
+			expect(result).toHaveLength(1)
+			const params = getFunction(result[0]).parameters as Record<string, unknown>
+			expect(params.required).toEqual(["InputData"])
+		})
+
+		it("should keep non-secret initialArgsTemplate keys visible as optional properties", () => {
+			const tool: McpTool = {
+				name: "nonSecretTool",
+				description: "Tool with non-secret preconfigured field",
+				inputSchema: {
+					type: "object",
+					properties: {
+						InputData: { type: "string" },
+						UserID: { type: "string" },
+						SessionId: { type: "string" },
+					},
+					required: ["InputData", "UserID", "SessionId"],
+				},
+			}
+			const server: McpServer = {
+				name: "nonSecretServer",
+				config: JSON.stringify({
+					type: "stdio",
+					command: "test",
+					asyncPolling: {
+						tools: {
+							nonSecretTool: {
+								initialArgsTemplate: { UserID: "user-1", SessionId: "session-1" },
+								statusTool: "getStatus",
+								taskIdPath: "$.id",
+								statusPath: "$.s",
+								pendingValues: ["pending"],
+								completedValues: ["completed"],
+							},
+						},
+					},
+				}),
+				status: "connected",
+				source: "global",
+				tools: [tool],
+			}
+			const mockHub = createMockMcpHub([server])
+
+			const result = getMcpServerTools(mockHub as McpHub)
+
+			expect(result).toHaveLength(1)
+			const params = getFunction(result[0]).parameters as Record<string, unknown>
+			const props = params.properties as Record<string, unknown>
+
+			// InputData remains required
+			expect(params.required).toEqual(["InputData"])
+
+			// UserID and SessionId visible as optional properties
+			expect(props.UserID).toBeDefined()
+			expect(props.SessionId).toBeDefined()
+		})
+	})
 })

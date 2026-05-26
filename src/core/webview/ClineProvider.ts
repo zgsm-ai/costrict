@@ -75,6 +75,7 @@ import WorkspaceTracker from "../../integrations/workspace/WorkspaceTracker"
 
 import { McpHub } from "../../services/mcp/McpHub"
 import { McpServerManager } from "../../services/mcp/McpServerManager"
+import { McpAsyncTaskStoreCleaner } from "../../services/mcp/asyncPolling/McpAsyncTaskStoreCleaner"
 import { MarketplaceManager } from "../../services/marketplace"
 import { ShadowCheckpointService } from "../../services/checkpoints/ShadowCheckpointService"
 import { CodeIndexManager } from "../../services/code-index/manager"
@@ -267,6 +268,14 @@ export class ClineProvider
 			.then((hub) => {
 				this.mcpHub = hub
 				this.mcpHub.registerClient()
+				// Run one-shot async task store cleanup on startup
+				const store = this.mcpHub.getAsyncTaskStore()
+				new McpAsyncTaskStoreCleaner({
+					list: () => store.list(),
+					delete: (id) => store.delete(id),
+				})
+					.run()
+					.catch((err) => this.log(`McpAsyncTaskStoreCleaner failed: ${err}`))
 			})
 			.catch((error) => {
 				this.log(`Failed to initialize MCP Hub: ${error}`)
@@ -2873,6 +2882,7 @@ export class ClineProvider
 			experiments: experiments ?? experimentDefault,
 			experimentSettings: experimentSettings ?? {},
 			mcpServers: this.mcpHub?.getAllServers() ?? [],
+			mcpAsyncTaskRecords: (await this.mcpHub?.getAsyncTaskRecords?.()) ?? [],
 			maxOpenTabsContext: maxOpenTabsContext ?? 20,
 			maxWorkspaceFiles: maxWorkspaceFiles ?? MAX_WORKSPACE_FILES,
 			cwd,
