@@ -97,7 +97,7 @@ describe("redactUrl (NFR-004: no sensitive info in logs)", () => {
 
 describe("getCheckIntervalMs (COSTRICT_AGENT_CHECK_INTERVAL_MINUTES)", () => {
 	const ENV_KEY = "COSTRICT_AGENT_CHECK_INTERVAL_MINUTES"
-	const DEFAULT_MS = 60 * 60 * 1000 // 60 minutes = 1 hour
+	const DEFAULT_MS = 24 * 60 * 60 * 1000 // 1440 minutes = 24 hours
 
 	beforeEach(() => {
 		delete process.env[ENV_KEY]
@@ -107,11 +107,11 @@ describe("getCheckIntervalMs (COSTRICT_AGENT_CHECK_INTERVAL_MINUTES)", () => {
 		delete process.env[ENV_KEY]
 	})
 
-	it("should return default 1h when env var is not set", () => {
+	it("should return default 24h when env var is not set", () => {
 		expect(getCheckIntervalMs()).toBe(DEFAULT_MS)
 	})
 
-	it("should return default 1h when env var is empty string", () => {
+	it("should return default 24h when env var is empty string", () => {
 		process.env[ENV_KEY] = ""
 		expect(getCheckIntervalMs()).toBe(DEFAULT_MS)
 	})
