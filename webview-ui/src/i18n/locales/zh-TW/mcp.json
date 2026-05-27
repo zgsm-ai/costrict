@@ -60,6 +60,16 @@
 	"execution": {
 		"running": "執行中",
 		"completed": "已完成",
-		"error": "錯誤"
+		"error": "錯誤",
+		"polling": "等待遠端任務完成",
+		"stoppedWaiting": "本地已停止等待",
+		"stoppedUserCancelled": "使用者已取消",
+		"stoppedTimedOut": "本地等待逾時",
+		"stoppedConnectionUnavailable": "連線不可用",
+		"continueQuery": "繼續查詢",
+		"copyTaskId": "複製 taskId",
+		"taskIdCopied": "已複製",
+		"elapsedSeconds": "已等待 {{seconds}} 秒",
+		"lastCheckedAt": "上次檢查 {{when}}"
 	}
 }

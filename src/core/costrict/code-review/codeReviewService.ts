@@ -441,6 +441,7 @@ export class CodeReviewService {
 						`[CodeReview] handleCompletion setTimeout(500ms) firing: about to call resetMode()`,
 					)
 					await resetMode()
+					await provider.removeClineFromStack()
 					await provider.refreshWorkspace()
 					options?.onTaskComplete?.()
 

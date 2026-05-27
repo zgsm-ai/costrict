@@ -45,7 +45,7 @@ import { t } from "../../i18n"
 import prettyBytes from "pretty-bytes"
 import { isCliPatform, isJetbrainsPlatform } from "../../utils/platform"
 import { updateDefaultDebug } from "../../utils/getDebugState"
-import { COSTRICT_DEFAULT_HEADERS } from "shared/headers"
+import { COSTRICT_DEFAULT_HEADERS } from "../../shared/headers"
 
 const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
 
