@@ -61,6 +61,11 @@ vi.mock("vscode", () => {
 		},
 		Uri: {
 			file: (path: string) => ({ fsPath: path }),
+			joinPath: (base: any, ...parts: string[]) => {
+				const basePath = typeof base === "string" ? base : (base?.fsPath ?? base?.path ?? "")
+				const joined = [basePath, ...parts].join("/").replace(/\\/g, "/").replace(/\/+/g, "/")
+				return { fsPath: joined, path: joined, scheme: "file" }
+			},
 		},
 		// Expose event handlers for testing
 		__eventHandlers: eventHandlers,
