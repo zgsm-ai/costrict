@@ -45,6 +45,7 @@ import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
 import { fileExistsAtPath } from "../../../utils/fs"
 import { isJetbrainsPlatform } from "../../../utils/platform"
 import { defaultModeSlug, type Mode } from "../../../shared/modes"
+import type { Language } from "@roo-code/types"
 /**
  * Code Review Service - Singleton
  *
@@ -166,6 +167,37 @@ export class CodeReviewService {
 		this.commentService = commentService
 	}
 
+	async buildReviewPrompt(mode: "review" | "security-review", arguments_: string): Promise<string> {
+		const { language } = await this.clineProvider!.getState()
+		const isZh = language === "zh-CN" || language === "zh-TW"
+		if (mode === "security-review") {
+			if (isZh) {
+				return (
+					"# 安全代码审查\n\n请使用 Skill 工具加载 `security-review` 技能来对以下内容执行安全代码审查：" +
+					arguments_ +
+					"\n\n使用默认配置，全程无需再次确认。全程请使用中文进行回答与文件写入。"
+				)
+			}
+			return (
+				"# Code Security Review\n\nPlease use the Skill tool to load the `security-review` skill to perform a security review on: " +
+				arguments_ +
+				"\n\nUse default configuration throughout the process without re-confirmation. Please respond and write all files in English throughout the entire process."
+			)
+		}
+		if (isZh) {
+			return (
+				"# 代码审查\n\n请使用 Skill 工具加载 `review` 技能来对以下内容执行代码审查：" +
+				arguments_ +
+				"\n\n使用默认配置，全程无需再次确认。全程请使用中文进行回答与文件写入。"
+			)
+		}
+		return (
+			"# Code Review\n\nPlease use the Skill tool to load the `review` skill to perform a code review on: " +
+			arguments_ +
+			"\n\nUse default configuration throughout the process without re-confirmation. Please respond and write all files in English throughout the entire process."
+		)
+	}
+
 	private async getRequestOptions(): Promise<AxiosRequestConfig> {
 		if (!this.clineProvider) {
 			return {}
@@ -219,12 +251,7 @@ export class CodeReviewService {
 				})
 				.join(" ")
 
-			// For security-review mode, append auto-confirmation message
-			const autoExecuteMessage = t("common:review.tip.auto_execute_with_default_config")
-			const finalMessage =
-				mode === "security-review" && chatMessage
-					? `${chatMessage}\n\n${autoExecuteMessage}`
-					: (chatMessage ?? "")
+			const finalMessage = await this.buildReviewPrompt(mode as "review" | "security-review", chatMessage ?? "")
 
 			await this.createReviewTask(finalMessage, target, { mode })
 		}
@@ -252,14 +279,16 @@ export class CodeReviewService {
 		})
 		this.prevMode = (await provider.getMode()) ?? defaultModeSlug
 		const taskMode = options?.mode ?? "review"
-		const task = await provider.createTask(
-			message,
-			undefined,
-			undefined,
-			{
-				costrictWorkflowMode: taskMode,
-			},
-			{ mode: taskMode },
+		this.logger.info(`[CodeReview] createReviewTask: prevMode=${this.prevMode}, taskMode=${taskMode}`)
+		await provider.handleModeSwitch(taskMode)
+		const modeAfterSwitch = await provider.getMode()
+		this.logger.info(`[CodeReview] createReviewTask: mode after handleModeSwitch=${modeAfterSwitch}`)
+		const task = await provider.createTask(message, undefined, undefined, {
+			costrictWorkflowMode: taskMode,
+		})
+		const modeAfterCreateTask = await provider.getMode()
+		this.logger.info(
+			`[CodeReview] createReviewTask: mode after createTask=${modeAfterCreateTask}, taskMode=${taskMode}`,
 		)
 		const trackedTaskId = task.taskId
 		let trackedTask: Task = task
@@ -303,6 +332,9 @@ export class CodeReviewService {
 
 		const resetMode = async () => {
 			const restoreMode = this.getRestoreMode(this.prevMode)
+			this.logger.info(
+				`[CodeReview] resetMode: restoring from ${this.prevMode} to ${restoreMode} (task=${trackedTask.taskId})`,
+			)
 			await provider.handleModeSwitch(restoreMode)
 			trackedTask.updateMode(restoreMode)
 			this.prevMode = ""
@@ -342,7 +374,8 @@ export class CodeReviewService {
 					this.logger.info(
 						"[CodeReview] No report found in message queue, attempting to read from default output directory",
 					)
-					const defaultOutputDir = "security-review_result"
+					const defaultOutputDir =
+						taskMode === "security-review" ? "security-review_result" : "code-review_result"
 					const fullReportPath = path.resolve(provider.cwd, defaultOutputDir, "full_report.jsonl")
 					this.logger.info(`[CodeReview] Looking for report at: ${fullReportPath}`)
 
@@ -404,22 +437,20 @@ export class CodeReviewService {
 				releaseTaskLifecycle()
 
 				setTimeout(async () => {
-					await provider.removeClineFromStack()
-					await provider.refreshWorkspace()
+					this.logger.info(
+						`[CodeReview] handleCompletion setTimeout(500ms) firing: about to call resetMode()`,
+					)
 					await resetMode()
+					await provider.refreshWorkspace()
 					options?.onTaskComplete?.()
 
-					// For security-review mode, switch to code review page if report was generated
-					if (taskMode === "security-review") {
-						// Check if we have a valid report with issues
-						const hasValidReport = this.currentTask?.taskId && this.getAllCachedIssues().length > 0
-						if (hasValidReport) {
-							provider.postMessageToWebview({
-								type: "action",
-								action: "codeReviewButtonClicked",
-							})
-						}
-						// Otherwise stay on chat/agent page
+					// Switch to code review page if report was generated
+					const hasValidReport = this.currentTask?.taskId && this.getAllCachedIssues().length > 0
+					if (hasValidReport) {
+						provider.postMessageToWebview({
+							type: "action",
+							action: "codeReviewButtonClicked",
+						})
 					}
 				}, 500)
 			}
@@ -558,19 +589,12 @@ export class CodeReviewService {
 
 		bindTaskInstance(task)
 
-		// For security-review mode, switch to chat tab instead of code review page
-		if (taskMode === "security-review") {
-			provider.postMessageToWebview({
-				type: "action",
-				action: "switchTab",
-				tab: "chat",
-			})
-		} else {
-			provider.postMessageToWebview({
-				type: "action",
-				action: "codeReviewButtonClicked",
-			})
-		}
+		// Switch to chat tab for all review tasks
+		provider.postMessageToWebview({
+			type: "action",
+			action: "switchTab",
+			tab: "chat",
+		})
 	}
 	// ===== Task Management Methods =====
 

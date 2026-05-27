@@ -19,15 +19,23 @@ import { getCommandDecision } from "./commands"
 /**
  * Get all global skill directory prefixes.
  * Files inside these directories are considered safe to read without approval.
+ * Includes mode-specific skill directories (skills-review, skills-security-review, etc.)
  */
 function getSkillDirectoryPrefixes(): string[] {
 	const homeDir = os.homedir()
-	return [
-		path.join(homeDir, ".costrict", "skills"),
-		path.join(homeDir, ".roo", "skills"),
-		path.join(homeDir, ".agents", "skills"),
-		path.join(process.env.XDG_CONFIG_HOME || path.join(homeDir, ".config"), "costrict", "skills"),
+	const baseDirs = [
+		path.join(homeDir, ".costrict"),
+		path.join(homeDir, ".roo"),
+		path.join(homeDir, ".agents"),
+		path.join(process.env.XDG_CONFIG_HOME || path.join(homeDir, ".config"), "costrict"),
 	]
+	const prefixes: string[] = []
+	for (const base of baseDirs) {
+		prefixes.push(path.join(base, "skills"))
+		prefixes.push(path.join(base, "skills-review"))
+		prefixes.push(path.join(base, "skills-security-review"))
+	}
+	return prefixes
 }
 
 /**
@@ -194,6 +202,15 @@ export async function checkAutoApproval({
 			// Auto-approve reads from skill directories (user-installed instruction files)
 			if (isOutsideWorkspace && tool.content && isInsideSkillDirectory(tool.content)) {
 				return { decision: "approve" }
+			}
+			// Auto-approve batch reads where all files are inside skill directories
+			if (tool.batchFiles && Array.isArray(tool.batchFiles)) {
+				const allInSkillDir = (
+					tool.batchFiles as Array<{ content?: string; isOutsideWorkspace?: boolean }>
+				).every((f) => f.isOutsideWorkspace && f.content && isInsideSkillDirectory(f.content))
+				if (allInSkillDir) {
+					return { decision: "approve" }
+				}
 			}
 			return state.alwaysAllowReadOnly === true &&
 				(!isOutsideWorkspace || state.alwaysAllowReadOnlyOutsideWorkspace === true)

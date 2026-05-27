@@ -163,7 +163,7 @@ function validateModelsAndKeysProvided(apiConfiguration: ProviderSettings): stri
 				return i18next.t("settings:validation.apiKey")
 			}
 			break
-		case "minimax": 
+		case "minimax":
 			if (!apiConfiguration.minimaxApiKey) {
 				return i18next.t("settings:validation.apiKey")
 			}

@@ -131,7 +131,7 @@ Repository-wide indexing and RAG-based analysis with multi-model verification st
 - **Auto Cleanup History** - Automatically clean up history and reduce disk usage.
 - 📝 **History Import&Export** - Supports import and export of historical records to facilitate offline migration
 - 🔗 **Lite Mode** - Reduce context usage and reduce token consumption.
-<img src="./assets/images/readme/more-feature_en.webp" alt="More Features" width="100%">
+  <img src="./assets/images/readme/more-feature_en.webp" alt="More Features" width="100%">
 
 ## 📚 Documentation
 
