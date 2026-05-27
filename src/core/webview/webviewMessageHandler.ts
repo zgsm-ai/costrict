@@ -112,6 +112,7 @@ import { isJetbrainsPlatform } from "../../utils/platform"
 import { showFileDiffFromGitStatus } from "../../utils/costrictUtils"
 import { ReviewTargetType } from "../../shared/codeReview"
 import { getRawTaskReporter } from "../costrict/telemetry"
+import { handleQueryMcpAsyncTask } from "../../services/mcp/asyncPolling/handleQueryMessage"
 
 let webviewDidLaunchTimer: NodeJS.Timeout | undefined
 
@@ -1772,6 +1773,25 @@ export const webviewMessageHandler = async (
 				await mcpHub.refreshAllConnections()
 			}
 
+			break
+		}
+
+		case "queryMcpAsyncTask": {
+			const mcpHub = provider.getMcpHub()
+			if (!mcpHub) break
+			const records = await mcpHub.getAsyncTaskRecords()
+			const record = records.find((r) => r.id === message.recordId)
+			if (!record) break
+			const cfg = await mcpHub.getAsyncPollingConfig(record.serverName, record.originalToolName, record.source)
+			if (!cfg) break
+			await handleQueryMcpAsyncTask({
+				recordId: record.id,
+				store: mcpHub.getAsyncTaskStore(),
+				callTool: (s, t, a, src, opts) => mcpHub.callTool(s, t, a, src, opts),
+				postExecutionStatus: (status) =>
+					provider.postMessageToWebview({ type: "mcpExecutionStatus", text: JSON.stringify(status) }),
+				asyncPollingConfig: cfg,
+			})
 			break
 		}
 

@@ -14,6 +14,8 @@ import { safeJsonParse } from "@roo/core"
 
 import { cn } from "@src/lib/utils"
 import { Button } from "@src/components/ui"
+import { useExtensionState } from "@src/context/ExtensionStateContext"
+import { vscode } from "@src/utils/vscode"
 
 import CodeBlock from "../common/CodeBlock"
 import McpToolRow from "../mcp/McpToolRow"
@@ -50,8 +52,21 @@ export const McpExecution = ({
 }: McpExecutionProps) => {
 	const { t } = useTranslation("mcp")
 
+	const { mcpAsyncTaskRecords } = useExtensionState()
+	const matchedRecord = useMemo(
+		() => mcpAsyncTaskRecords?.find((r) => r.executionId === executionId),
+		[mcpAsyncTaskRecords, executionId],
+	)
+
 	// State for tracking MCP response status
 	const [status, setStatus] = useState<McpExecutionStatus | null>(null)
+	const [pollingMeta, setPollingMeta] = useState<{
+		taskId?: string
+		attempt?: number
+		lastStatus?: string
+		lastCheckedAt?: number
+		startedAt?: number
+	} | null>(null)
 	const [responseText, setResponseText] = useState(text || "")
 	const [argumentsText, setArgumentsText] = useState(text || "")
 	const [serverName, setServerName] = useState(initialServerName)
@@ -146,6 +161,19 @@ export const McpExecution = ({
 						if (data.executionId === executionId) {
 							setStatus(data)
 
+							if (data.status === "started" && !pollingMeta?.startedAt) {
+								setPollingMeta({ startedAt: Date.now() })
+							}
+							if (data.status === "polling") {
+								setPollingMeta((prev) => ({
+									startedAt: prev?.startedAt ?? Date.now(),
+									taskId: data.taskId ?? prev?.taskId,
+									attempt: data.attempt ?? prev?.attempt,
+									lastStatus: data.lastStatus ?? prev?.lastStatus,
+									lastCheckedAt: data.lastCheckedAt ?? prev?.lastCheckedAt,
+								}))
+							}
+
 							if (data.status === "output" && data.response) {
 								setResponseText((prev) => prev + data.response)
 							} else if (data.status === "completed" && data.response) {
@@ -158,7 +186,7 @@ export const McpExecution = ({
 				}
 			}
 		},
-		[executionId],
+		[executionId, pollingMeta?.startedAt],
 	)
 
 	useEvent("message", onMessage)
@@ -193,32 +221,93 @@ export const McpExecution = ({
 						{serverName && <span className="font-bold text-vscode-foreground">{serverName}</span>}
 					</div>
 				</div>
-				<div className="flex flex-row items-center justify-between gap-2 px-1">
-					<div className="flex flex-row items-center gap-1">
+				<div className="flex flex-row items-center justify-between gap-2 px-1 min-w-0">
+					<div className="flex flex-row items-center gap-1 min-w-0">
 						{status && (
 							<div className="flex flex-row items-center gap-2 font-mono text-xs">
 								<div
 									className={cn("rounded-full size-1.5", {
 										"bg-lime-400": status.status === "started" || status.status === "completed",
+										"bg-yellow-400": status.status === "polling",
+										"bg-orange-400": status.status === "stopped_waiting",
 										"bg-red-400": status.status === "error",
 									})}
 								/>
 								<div
 									className={cn("whitespace-nowrap", {
 										"text-vscode-foreground":
-											status.status === "started" || status.status === "completed",
+											status.status === "started" ||
+											status.status === "completed" ||
+											status.status === "polling" ||
+											status.status === "stopped_waiting",
 										"text-vscode-errorForeground": status.status === "error",
 									})}>
 									{status.status === "started"
 										? t("execution.running")
 										: status.status === "completed"
 											? t("execution.completed")
-											: t("execution.error")}
+											: status.status === "polling"
+												? t("execution.polling") +
+													(status.taskId ? ` · ${status.taskId.slice(0, 12)}` : "")
+												: status.status === "stopped_waiting"
+													? `${t("execution.stoppedWaiting")} · ${
+															status.reason === "user_cancelled"
+																? t("execution.stoppedUserCancelled")
+																: status.reason === "timed_out"
+																	? t("execution.stoppedTimedOut")
+																	: t("execution.stoppedConnectionUnavailable")
+														}`
+													: t("execution.error")}
 								</div>
 								{status.status === "error" && "error" in status && status.error && (
 									<div className="whitespace-nowrap">({status.error})</div>
 								)}
 							</div>
+						)}
+						{pollingMeta?.taskId && (
+							<div className="flex flex-wrap items-center gap-2 text-xs text-vscode-descriptionForeground mt-1 min-w-0 max-w-full">
+								<code className="bg-vscode-editor-background px-1 rounded truncate min-w-0">
+									{pollingMeta.taskId}
+								</code>
+								<button
+									type="button"
+									aria-label={t("execution.copyTaskId")}
+									onClick={() => navigator.clipboard?.writeText?.(pollingMeta.taskId!)}
+									className="hover:text-vscode-foreground">
+									⧉
+								</button>
+								{pollingMeta.lastStatus && <span>{pollingMeta.lastStatus}</span>}
+								{pollingMeta.startedAt && (
+									<span>
+										{t("execution.elapsedSeconds", {
+											seconds: Math.floor((Date.now() - pollingMeta.startedAt) / 1000),
+										})}
+									</span>
+								)}
+								{pollingMeta.lastCheckedAt && (
+									<span>
+										{t("execution.lastCheckedAt", {
+											when: new Date(pollingMeta.lastCheckedAt).toLocaleTimeString(),
+										})}
+									</span>
+								)}
+							</div>
+						)}
+						{matchedRecord && (
+							<button
+								type="button"
+								disabled={
+									Boolean(matchedRecord.resultFetchedAt) ||
+									matchedRecord.terminalStatus === "completed"
+								}
+								onClick={() =>
+									vscode.postMessage({ type: "queryMcpAsyncTask", recordId: matchedRecord.id } as any)
+								}
+								aria-label={t("execution.continueQuery")}
+								className="ml-2 text-xs underline disabled:opacity-50 min-w-0 max-w-full">
+								{t("execution.continueQuery")} ·{" "}
+								<span className="truncate inline-block max-w-full">{matchedRecord.taskId}</span>
+							</button>
 						)}
 						{responseText && responseText.length > 0 && (
 							<Button variant="ghost" size="icon" onClick={onToggleResponseExpand}>

@@ -43,6 +43,22 @@ export const mcpExecutionStatusSchema = z.discriminatedUnion("status", [
 		status: z.literal("error"),
 		error: z.string().optional(),
 	}),
+	// --- V1a additions for async polling ---
+	z.object({
+		executionId: z.string(),
+		status: z.literal("polling"),
+		taskId: z.string().optional(),
+		attempt: z.number().int().nonnegative().optional(),
+		lastStatus: z.string().optional(),
+		lastCheckedAt: z.number().optional(),
+	}),
+	z.object({
+		executionId: z.string(),
+		status: z.literal("stopped_waiting"),
+		reason: z.enum(["user_cancelled", "timed_out", "connection_unavailable"]),
+		taskId: z.string().optional(),
+		message: z.string().optional(),
+	}),
 ])
 
 export type McpExecutionStatus = z.infer<typeof mcpExecutionStatusSchema>
@@ -192,3 +208,34 @@ export function countEnabledMcpTools(servers: McpServer[]): EnabledMcpToolsCount
 
 	return { enabledToolCount: toolCount, enabledServerCount: serverCount }
 }
+
+// --- Async polling per-tool config ---
+
+export const AsyncPollingToolConfigSchema = z.object({
+	statusTool: z.string().min(1),
+	taskIdPath: z.string().min(1),
+	initialArgsTemplate: z.record(z.unknown()).default({}),
+	statusArgsTemplate: z.record(z.unknown()).default({ taskId: "$taskId" }),
+	statusPath: z.string().min(1),
+	resultPath: z.string().optional(),
+	errorPath: z.union([z.string(), z.array(z.string())]).optional(),
+	pendingValues: z.array(z.string()).min(1),
+	completedValues: z.array(z.string()).min(1),
+	failedValues: z.array(z.string()).default(["failed", "error"]),
+	statusToolErrorMode: z.enum(["transportUnknown", "businessFailed"]).default("transportUnknown"),
+	intervalMs: z.number().min(1000).max(60000).default(5000),
+	statusToolTimeoutMs: z.number().min(1000).max(300000).default(60000),
+	maxDurationMs: z
+		.number()
+		.min(5000)
+		.max(24 * 60 * 60 * 1000)
+		.default(10 * 60 * 1000),
+})
+
+export type AsyncPollingToolConfig = z.infer<typeof AsyncPollingToolConfigSchema>
+
+export const AsyncPollingConfigSchema = z.object({
+	tools: z.record(z.string(), AsyncPollingToolConfigSchema).default({}),
+})
+
+export type AsyncPollingConfig = z.infer<typeof AsyncPollingConfigSchema>

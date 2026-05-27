@@ -237,6 +237,7 @@ describe("useMcpToolTool", () => {
 			mockProviderRef.deref.mockReturnValue({
 				getMcpHub: () => ({
 					callTool: vi.fn().mockResolvedValue(mockToolResult),
+					getAsyncExecutionService: () => ({ execute: vi.fn().mockResolvedValue(mockToolResult) }),
 				}),
 				postMessageToWebview: vi.fn(),
 			})
@@ -457,6 +458,7 @@ describe("useMcpToolTool", () => {
 				getMcpHub: () => ({
 					getAllServers: vi.fn().mockReturnValue(mockServers),
 					callTool: vi.fn().mockResolvedValue(mockToolResult),
+					getAsyncExecutionService: () => ({ execute: vi.fn().mockResolvedValue(mockToolResult) }),
 				}),
 				postMessageToWebview: vi.fn(),
 			})
@@ -603,6 +605,9 @@ describe("useMcpToolTool", () => {
 				getMcpHub: () => ({
 					getAllServers: vi.fn().mockReturnValue(mockServers),
 					callTool: callToolMock,
+					getAsyncExecutionService: () => ({
+						execute: async (req: any) => callToolMock(req.serverName, req.toolName, req.arguments),
+					}),
 				}),
 				postMessageToWebview: vi.fn(),
 			})
@@ -639,6 +644,140 @@ describe("useMcpToolTool", () => {
 
 			// The original tool name (with hyphens) should be passed to callTool
 			expect(callToolMock).toHaveBeenCalledWith("test-server", "get-user-profile", {})
+		})
+	})
+
+	describe("UseMcpToolTool async polling integration", () => {
+		it("routes execution through getAsyncExecutionService", async () => {
+			const executeMock = vi.fn().mockResolvedValue({ content: [{ type: "text", text: "done" }] })
+
+			mockProviderRef.deref.mockReturnValue({
+				getMcpHub: () => ({
+					getAllServers: vi
+						.fn()
+						.mockReturnValue([{ name: "srv", tools: [{ name: "deploy", enabledForPrompt: true }] }]),
+					getAsyncExecutionService: () => ({ execute: executeMock }),
+				}),
+				postMessageToWebview: vi.fn(),
+			})
+
+			const block: ToolUse = {
+				type: "tool_use",
+				name: "use_mcp_tool",
+				params: {
+					server_name: "srv",
+					tool_name: "deploy",
+					arguments: '{"x": 1}',
+				},
+				nativeArgs: {
+					server_name: "srv",
+					tool_name: "deploy",
+					arguments: { x: 1 },
+				},
+				partial: false,
+			}
+
+			mockAskApproval.mockResolvedValue(true)
+
+			await useMcpToolTool.handle(mockTask as Task, block as any, {
+				askApproval: mockAskApproval,
+				handleError: mockHandleError,
+				pushToolResult: mockPushToolResult,
+			})
+
+			expect(executeMock).toHaveBeenCalledTimes(1)
+			expect(executeMock.mock.calls[0][0].toolName).toBe("deploy")
+			expect(executeMock.mock.calls[0][0].arguments).toEqual({ x: 1 })
+			expect(typeof executeMock.mock.calls[0][0].isCancelled).toBe("function")
+			expect(typeof executeMock.mock.calls[0][0].onProgress).toBe("function")
+		})
+
+		it("forwards resolvedSource to execute()", async () => {
+			const executeMock = vi.fn().mockResolvedValue({ content: [{ type: "text", text: "x" }] })
+
+			mockProviderRef.deref.mockReturnValue({
+				getMcpHub: () => ({
+					getAllServers: vi.fn().mockReturnValue([
+						{
+							name: "srv",
+							source: "project",
+							tools: [{ name: "deploy", enabledForPrompt: true }],
+						},
+					]),
+					getAsyncExecutionService: () => ({ execute: executeMock }),
+				}),
+				postMessageToWebview: vi.fn(),
+			})
+
+			const block: ToolUse = {
+				type: "tool_use",
+				name: "use_mcp_tool",
+				params: {
+					server_name: "srv",
+					tool_name: "deploy",
+				},
+				nativeArgs: {
+					server_name: "srv",
+					tool_name: "deploy",
+					arguments: {},
+				},
+				partial: false,
+			}
+
+			mockAskApproval.mockResolvedValue(true)
+
+			await useMcpToolTool.handle(mockTask as Task, block as any, {
+				askApproval: mockAskApproval,
+				handleError: mockHandleError,
+				pushToolResult: mockPushToolResult,
+			})
+
+			expect(executeMock.mock.calls[0][0].source).toBe("project")
+		})
+
+		it("uses post-approval ask timestamp as executionId", async () => {
+			const executeMock = vi.fn().mockResolvedValue({ content: [{ type: "text", text: "x" }] })
+
+			mockTask.lastMessageTs = 111
+
+			mockProviderRef.deref.mockReturnValue({
+				getMcpHub: () => ({
+					getAllServers: vi
+						.fn()
+						.mockReturnValue([{ name: "srv", tools: [{ name: "deploy", enabledForPrompt: true }] }]),
+					getAsyncExecutionService: () => ({ execute: executeMock }),
+				}),
+				postMessageToWebview: vi.fn(),
+			})
+
+			mockAskApproval.mockImplementation(async () => {
+				// Simulate what happens in real code: ask() updates lastMessageTs
+				mockTask.lastMessageTs = 222
+				return true
+			})
+
+			const block: ToolUse = {
+				type: "tool_use",
+				name: "use_mcp_tool",
+				params: {
+					server_name: "srv",
+					tool_name: "deploy",
+				},
+				nativeArgs: {
+					server_name: "srv",
+					tool_name: "deploy",
+					arguments: {},
+				},
+				partial: false,
+			}
+
+			await useMcpToolTool.handle(mockTask as Task, block as any, {
+				askApproval: mockAskApproval,
+				handleError: mockHandleError,
+				pushToolResult: mockPushToolResult,
+			})
+
+			expect(executeMock.mock.calls[0][0].executionId).toBe("222")
 		})
 	})
 
@@ -682,6 +821,7 @@ describe("useMcpToolTool", () => {
 							tools: [{ name: "get_screenshot", description: "Get screenshot" }],
 						},
 					]),
+					getAsyncExecutionService: () => ({ execute: vi.fn().mockResolvedValue(mockToolResult) }),
 				}),
 				postMessageToWebview: vi.fn(),
 			})
@@ -738,6 +878,7 @@ describe("useMcpToolTool", () => {
 						.mockReturnValue([
 							{ name: "figma-server", tools: [{ name: "get_node_info", description: "Get node info" }] },
 						]),
+					getAsyncExecutionService: () => ({ execute: vi.fn().mockResolvedValue(mockToolResult) }),
 				}),
 				postMessageToWebview: vi.fn(),
 			})
@@ -794,6 +935,7 @@ describe("useMcpToolTool", () => {
 							tools: [{ name: "get_screenshot", description: "Get screenshot" }],
 						},
 					]),
+					getAsyncExecutionService: () => ({ execute: vi.fn().mockResolvedValue(mockToolResult) }),
 				}),
 				postMessageToWebview: vi.fn(),
 			})
@@ -854,6 +996,7 @@ describe("useMcpToolTool", () => {
 							tools: [{ name: "get_screenshots", description: "Get screenshots" }],
 						},
 					]),
+					getAsyncExecutionService: () => ({ execute: vi.fn().mockResolvedValue(mockToolResult) }),
 				}),
 				postMessageToWebview: vi.fn(),
 			})
