@@ -13,11 +13,15 @@ import { HistoryManager } from "./HistoryManager"
 import { CommentService } from "../../../integrations/comment"
 import type { ReviewComment } from "./reviewComment"
 import { supportPrompt } from "../../../shared/support-prompt"
-import { getChangedFiles } from "../../../utils/git"
+import { getChangedFiles, getWorkingState } from "../../../utils/git"
 import { t } from "../../../i18n"
 import { GitCommitListener } from "./gitCommitListener"
 import { isJetbrainsPlatform } from "../../../utils/platform"
 import type { Mode } from "../../../shared/modes"
+import { getConfiguredUiMode } from "../../../shared/uiMode"
+import { sendContextToCloudWithFocus } from "../../cs-cloud/extension/contextBridge"
+import type { AssistantUIContextMessage } from "../../cs-cloud/extension/types"
+import * as cloudReviewReportWatcher from "./cloudReviewReportWatcher"
 
 let commitListener: GitCommitListener | undefined
 
@@ -25,6 +29,54 @@ export function disposeGitCommitListener(): void {
 	if (commitListener) {
 		commitListener.getDisposables().forEach((d) => d.dispose())
 		commitListener = undefined
+	}
+}
+
+function resolveWorkspaceFolderForPath(filePath: string | undefined): vscode.WorkspaceFolder | undefined {
+	if (filePath) {
+		const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(filePath))
+		if (workspaceFolder) {
+			return workspaceFolder
+		}
+	}
+	return vscode.workspace.workspaceFolders?.[0]
+}
+
+function getCloudReviewReportPath(mode: Mode): string {
+	return mode === "security-review"
+		? cloudReviewReportWatcher.SECURITY_REVIEW_REPORT_RELATIVE_PATH
+		: cloudReviewReportWatcher.CODE_REVIEW_REPORT_RELATIVE_PATH
+}
+
+async function resolveGitChangesContent(cwd: string): Promise<string> {
+	try {
+		const workingState = await getWorkingState(cwd)
+		return `Working directory changes (see below for details)\n\n<git_working_state>\n${workingState}\n</git_working_state>`
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : String(error)
+		return `Working directory changes (see below for details)\n\n<git_working_state>\nError fetching working state: ${errorMsg}\n</git_working_state>`
+	}
+}
+
+async function sendCloudReviewPayload(
+	payload: AssistantUIContextMessage,
+	workspaceFolder: vscode.WorkspaceFolder | undefined,
+	reportRelativePath = cloudReviewReportWatcher.CODE_REVIEW_REPORT_RELATIVE_PATH,
+): Promise<void> {
+	if (workspaceFolder) {
+		cloudReviewReportWatcher.startWatching(workspaceFolder, reportRelativePath)
+	}
+
+	try {
+		const result = await sendContextToCloudWithFocus(payload)
+		if (result === "unavailable" && workspaceFolder) {
+			cloudReviewReportWatcher.stopWatching(workspaceFolder)
+		}
+	} catch (error) {
+		if (workspaceFolder) {
+			cloudReviewReportWatcher.stopWatching(workspaceFolder)
+		}
+		throw error
 	}
 }
 
@@ -37,6 +89,15 @@ export function initCodeReview(
 	const commentService = CommentService.getInstance()
 	reviewInstance.setProvider(provider)
 	reviewInstance.setCommentService(commentService)
+	cloudReviewReportWatcher.setLogger(outputChannel)
+	context.subscriptions.push(
+		vscode.workspace.onDidChangeWorkspaceFolders((event) => {
+			for (const workspaceFolder of event.removed) {
+				cloudReviewReportWatcher.stopWatching(workspaceFolder)
+			}
+		}),
+		{ dispose: () => cloudReviewReportWatcher.disposeAll() },
+	)
 	const isJetbrains = isJetbrainsPlatform()
 
 	if (!isJetbrains) {
@@ -49,6 +110,31 @@ export function initCodeReview(
 	}
 
 	const startFileOrFolderReview = async (paths: readonly string[], mode: Mode = "review") => {
+		if (getConfiguredUiMode() === "cloud") {
+			const workspaceFolder = resolveWorkspaceFolderForPath(paths[0])
+			const chatMessage = paths
+				.map((p) => {
+					const uri = vscode.Uri.file(p)
+					const folder = vscode.workspace.getWorkspaceFolder(uri)
+					const cwd = folder?.uri.fsPath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+					const relative = cwd ? toRelativePath(p.toPosix(), cwd.toPosix()) : p.toPosix()
+					return `@/${relative}`
+				})
+				.join(" ")
+
+			const slashCommand = mode === "security-review" ? "/security-review " : "/review "
+
+			const payload: AssistantUIContextMessage = {
+				type: "assistantUIContext",
+				text: `${slashCommand}${chatMessage}`,
+				focus: true,
+				newThread: true,
+				autoSend: true,
+			}
+			await sendCloudReviewPayload(payload, workspaceFolder, getCloudReviewReportPath(mode))
+			return
+		}
+
 		const visibleProvider = await ClineProvider.getInstance()
 		if (!visibleProvider) {
 			return
@@ -77,6 +163,46 @@ export function initCodeReview(
 	}
 
 	const startSelectedCodeReview = async (mode: Mode = "review"): Promise<void> => {
+		if (getConfiguredUiMode() === "cloud") {
+			const editor = vscode.window.activeTextEditor
+			if (!editor) return
+
+			const fileUri = editor.document.uri
+			const workspaceFolder =
+				vscode.workspace.getWorkspaceFolder(fileUri) ?? vscode.workspace.workspaceFolders?.[0]
+			if (!workspaceFolder) return
+
+			const cwd = workspaceFolder.uri.fsPath.toPosix()
+			const range = editor.selection
+			const filePath = toRelativePath(fileUri.fsPath.toPosix(), cwd)
+			const params = {
+				filePath,
+				endLine: range.end.line + 1 + "",
+				startLine: range.start.line + 1 + "",
+				selectedText: editor.document.getText(range),
+			}
+			let prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
+
+			// For security-review mode, append auto-confirmation message
+			if (mode === "security-review") {
+				const autoExecuteMessage = t("common:review.tip.auto_execute_with_default_config")
+				prompt = `${prompt}\n\n${autoExecuteMessage}`
+			}
+
+			const slashCommand = mode === "security-review" ? "/security-review " : "/review "
+
+			const payload: AssistantUIContextMessage = {
+				type: "assistantUIContext",
+				text: `${slashCommand}${prompt}`,
+				previewText: mode === "security-review" ? "Security Review: " + filePath : "Code Review: " + filePath,
+				focus: true,
+				newThread: true,
+				autoSend: true,
+			}
+			await sendCloudReviewPayload(payload, workspaceFolder, getCloudReviewReportPath(mode))
+			return
+		}
+
 		const visibleProvider = await ClineProvider.getInstance()
 		const editor = vscode.window.activeTextEditor
 		if (!visibleProvider || !editor) {
@@ -121,6 +247,11 @@ export function initCodeReview(
 
 	const commandMap: Partial<Record<CostrictCommandId, any>> = {
 		codeReviewButtonClicked: async () => {
+			if (getConfiguredUiMode() === "cloud") {
+				await vscode.commands.executeCommand("costrict.AssistantUISidebarProvider.focus")
+				return
+			}
+
 			let visibleProvider = getVisibleProviderOrLog(outputChannel)
 
 			if (!visibleProvider) {
@@ -182,6 +313,30 @@ export function initCodeReview(
 			}
 		},
 		reviewCommit: async () => {
+			if (getConfiguredUiMode() === "cloud") {
+				const workspaceFolder = vscode.workspace.workspaceFolders?.[0]
+				if (!workspaceFolder) return
+
+				const cwd = workspaceFolder.uri.fsPath
+				const changedFiles = await getChangedFiles(cwd)
+				if (changedFiles.length === 0) {
+					vscode.window.showInformationMessage(t("common:review.tip.no_changed_files"))
+					return
+				}
+
+				const gitChangesContent = await resolveGitChangesContent(cwd)
+
+				const payload: AssistantUIContextMessage = {
+					type: "assistantUIContext",
+					text: `/review ${gitChangesContent}`,
+					focus: true,
+					newThread: true,
+					autoSend: true,
+				}
+				await sendCloudReviewPayload(payload, workspaceFolder)
+				return
+			}
+
 			const visibleProvider = await ClineProvider.getInstance()
 			if (!visibleProvider) {
 				return
