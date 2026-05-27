@@ -105,6 +105,23 @@ async function cloneAndCopy(cloneDir, index) {
 			await fs.rm(entryPath, { recursive: true, force: true })
 		}
 	}
+	// Files to always exclude from bundled skills (flagged by VS Marketplace virus scan)
+	const excludeFiles = new Set([
+		"php_deserialization.md",
+	])
+
+	async function removeExcludedFiles(dir) {
+		for (const file of excludeFiles) {
+			const filePath = path.join(dir, file)
+			try {
+				await fs.access(filePath)
+				await fs.rm(filePath)
+				console.log(`   ⚠ Removed excluded file: ${filePath}`)
+			} catch {
+				// File not present, skip
+			}
+		}
+	}
 
 	for (const locale of locales) {
 		for (const skill of index.skills) {
@@ -119,6 +136,9 @@ async function cloneAndCopy(cloneDir, index) {
 			await fs.rm(outputDir, { recursive: true, force: true })
 			await fs.cp(srcDir, outputDir, { recursive: true })
 
+			// Remove files that are flagged by VS Marketplace
+			await removeExcludedFiles(outputDir)
+
 			// Verify SKILL.md exists
 			const skillMd = path.join(outputDir, "SKILL.md")
 			try {
@@ -132,6 +152,7 @@ async function cloneAndCopy(cloneDir, index) {
 		}
 	}
 
+	await fs.rm(cloneDir, { recursive: true, force: true })
 	await fs.rm(cloneDir, { recursive: true, force: true })
 }
 
@@ -219,7 +240,7 @@ async function main() {
 			console.warn("  ⚠ Using cached resources")
 			commitSha = cachedSha ?? remoteSha
 		} finally {
-			await fs.rm(path.join(bundledSkillsDir, ".clone"), { recursive: true, force: true }).catch(() => {})
+			await fs.rm(path.join(bundledSkillsDir, ".clone"), { recursive: true, force: true }).catch(() => { })
 		}
 	}
 

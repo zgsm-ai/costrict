@@ -41,9 +41,9 @@
 !dist/node_modules/**
 # Include bundled skills
 !bundled-skills/**
-
-# Exclude file flagged by VS Marketplace
-bundled-skills/security-review/knowledge/languages/php_deserialization.md
+# Exclude files flagged by VS Marketplace virus scan.
+# Wildcard matches across all locale subdirectories (en/, zh-CN/, etc.).
+bundled-skills/*/security-review/knowledge/languages/php_deserialization.md
 
 # Include .env file for telemetry
 !.env

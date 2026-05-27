@@ -2,6 +2,10 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.8.6]
+
+- Update generate-review-builtin script
+
 ## [2.8.5]
 
 - MCP support async poll for improved performance (#1235)
