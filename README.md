@@ -191,3 +191,52 @@ Special thanks to our open-source partners:
 ## Disclaimer
 
 **Please note** that Sangfor, Inc does **not** make any representations or warranties regarding any code, models, or other tools provided or made available in connection with CoStrict, any associated third-party tools, or any resulting outputs. You assume **all risks** associated with the use of any such tools or outputs; such tools are provided on an **"AS IS"** and **"AS AVAILABLE"** basis. Such risks may include, without limitation, intellectual property infringement, cyber vulnerabilities or attacks, bias, inaccuracies, errors, defects, viruses, downtime, property loss or damage, and/or personal injury. You are solely responsible for your use of any such tools or outputs (including, without limitation, the legality, appropriateness, and results thereof).
+
+## ❓ FAQ
+
+### What is CoStrict?
+
+CoStrict is a free, open-source AI-powered coding assistant designed for enterprise-grade development. It supports private deployment, making it the optimal choice for organizations requiring secure, standardized AI development workflows.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🔒 **Strict Mode** | Standardized AI code generation with requirements analysis, architecture design, task planning, and test generation |
+| 🔍 **Code Review** | Repository-wide RAG-based code analysis with multi-expert model verification |
+| ⚡ **Code Completion** | Context-aware code generation in seconds |
+| 🎯 **Vibe Code** | Rapid development through natural language dialogue |
+| 🔗 **MCP Integration** | Standardized system connectivity for APIs, databases, and custom tools |
+| 🎨 **Multi-modal** | Support for image context and visual inputs |
+| 🛠️ **Skills Support** | Extensible skills system for specialized task workflows |
+
+### Installation Options
+
+| Method | Description |
+|--------|-------------|
+| 🌟 **CoStrict Cloud** | Experimental cloud version - see [Cloud Docs](https://docs.costrict.ai/cli/product-characteristics/cloud) |
+| **VS Code Extension** | Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm-nightly) |
+| **JetBrains Plugin** | Install from [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/26217-zgsm) |
+| **CLI** | Install via pip: `pip install zgsm` |
+
+### Supported Platforms
+
+- VS Code
+- JetBrains IDEs (IntelliJ IDEA, PyCharm, WebStorm, etc.)
+
+### Requirements
+
+- VS Code 1.85+ or JetBrains 2023.2+
+- Python 3.10+ (for CLI)
+- Node.js 18+ (for some features)
+
+### License
+
+Apache 2.0 License - Free and open source.
+
+### Help & Resources
+
+- [Documentation](https://docs.costrict.ai)
+- [Issues](https://github.com/zgsm-ai/costrict/issues)
+- [Chinese Documentation](./README.zh-CN.md)
+
