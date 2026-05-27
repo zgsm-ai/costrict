@@ -47,13 +47,22 @@ English | [简体中文](./README.zh-CN.md)
 
 <table>
   <tr>
-    <td align="center" width="33%">
-      <b>VS Code 扩展</b><br><br>
-      <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
-        <img src="./assets/images/readme/download on vscode marketplace.png" alt="从 VS Marketplace 安装" width="180">
+    <td align="center" width="25%">
+      <b>🌟 CoStrict Cloud（实验性）</b><br><br>
+      <a href="https://docs.costrict.ai/cli/product-characteristics/cloud">
+        <img src="https://img.shields.io/badge/Cloud-Documentation-blue?style=for-the-badge" alt="Cloud Docs">
       </a>
     </td>
-    <td align="center" width="33%">
+    <td align="center" width="25%">
+      <b>VS Code 扩展</b><br><br>
+      <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm-nightly">
+        <img src="https://img.shields.io/badge/Download-Nightly-success?style=for-the-badge" alt="下载">
+      </a>
+      <a href="https://marketplace.visualstudio.com/items?itemName=zgsm-ai.zgsm">
+        <img src="https://img.shields.io/badge/Download-Latest-success?style=for-the-badge" alt="下载">
+      </a>
+    </td>
+    <td align="center" width="25%">
       <b>命令行工具</b><br><br>
       <a href="https://docs.costrict.ai/cli/guide/installation">
         <img src="https://img.shields.io/badge/CLI-文档-blue?style=for-the-badge" alt="CLI 文档">
@@ -119,6 +128,10 @@ English | [简体中文](./README.zh-CN.md)
 - 🔧 **模式自定义** - 多种默认模式（Code、Orchestrator）+ 自定义模式支持
 - 📝 **[OpenSpec 集成](https://github.com/Fission-AI/OpenSpec)** - 通过 `/openspec-init` 初始化标准化变更提案工作流
 - 🖱️ **快捷菜单** - 选中代码右键菜单，支持解释、修复、改进、注释、审查、日志、容错、简化、性能优化等功能
+- 🔗 **VSCode SCM 集成** - 与 Git 无缝集成，支持代码审查与协作
+- **自动清理历史** - 自动清理历史记录，减少磁盘占用
+- 📝 **历史导入导出** - 支持历史记录的导入与导出，便于离线迁移
+- 🔗 **精简模式** - 减少上下文使用量，降低 Token 消耗
 
 <img src="./assets/images/readme/more-feature.webp" alt="更多特性" width="100%">
 

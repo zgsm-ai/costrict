@@ -69,6 +69,7 @@ export const commandIds = [
 	"addFileToContext",
 	"toggleAutoApprove",
 	"generateCommitMessage",
+	"reloadWebview",
 ] as const
 
 export const costrictCommandIds = [

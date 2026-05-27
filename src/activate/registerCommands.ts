@@ -227,6 +227,15 @@ export const getCommandsMap = ({
 			outputChannel.appendLine(`Error focusing panel: ${error}`)
 		}
 	},
+	reloadWebview: async () => {
+		const visibleProvider = getVisibleProviderOrLog(outputChannel)
+
+		if (!visibleProvider) {
+			return
+		}
+
+		await visibleProvider.reloadWebview()
+	},
 	acceptInput: () => {
 		const visibleProvider = getVisibleProviderOrLog(outputChannel)
 
@@ -345,13 +354,19 @@ export const getCommandsMap = ({
 	generateCommitMessage: async (e: any): Promise<string | undefined> => {
 		let commitMessage: string | undefined
 		try {
-			await handleGenerateCommitMessage(provider, (message: string) => {
-				commitMessage = message
-				// VSCode compatibility: set inputBox value if available
-				if (e?.inputBox?.value !== undefined) {
-					e.inputBox.value = message
-				}
-			})
+			// Extract repo root from SCM SourceControl context (multi-root workspace support)
+			const repoRoot = e?.rootUri?.fsPath as string | undefined
+			await handleGenerateCommitMessage(
+				provider,
+				(message: string) => {
+					commitMessage = message
+					// VSCode compatibility: set inputBox value if available
+					if (e?.inputBox?.value !== undefined) {
+						e.inputBox.value = message
+					}
+				},
+				repoRoot,
+			)
 			return commitMessage
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error)

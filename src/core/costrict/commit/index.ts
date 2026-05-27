@@ -16,13 +16,16 @@ export * from "./commitService"
 /**
  * Commit generation command handler
  */
-// Singleton instance
-let commitServiceInstance: CommitService | null = null
 // Execution lock to prevent concurrent calls
 let isExecuting = false
 
-export async function handleGenerateCommitMessage(provider: ClineProvider, cb: any): Promise<void> {
-	const workspaceRoot = CommitService.getWorkspaceRoot()
+export async function handleGenerateCommitMessage(
+	provider: ClineProvider,
+	cb: any,
+	workspaceRootHint?: string,
+): Promise<void> {
+	// Use the hint (from SCM SourceControl rootUri) if provided, otherwise fall back to first workspace folder
+	const workspaceRoot = workspaceRootHint || CommitService.getWorkspaceRoot()
 	if (!workspaceRoot) {
 		throw new Error(t("commit:commit.error.noWorkspace"))
 	}
@@ -42,16 +45,14 @@ export async function handleGenerateCommitMessage(provider: ClineProvider, cb: a
 		// Set execution lock
 		isExecuting = true
 
-		// Singleton pattern: reuse existing instance or create new one
-		if (!commitServiceInstance) {
-			commitServiceInstance = new CommitService()
-			commitServiceInstance.initialize(workspaceRoot, provider)
-		}
+		// Always create a new instance to ensure correct workspaceRoot in multi-root scenarios
+		const commitServiceInstance = new CommitService()
+		commitServiceInstance.initialize(workspaceRoot, provider)
 
 		await commitServiceInstance.generateAndPopulateCommitMessage(cb)
 		isExecuting = false
 	} catch (error) {
-		// Reset instance on error to allow recovery
+		// Reset lock on error to allow recovery
 		isExecuting = false
 		throw error
 	}

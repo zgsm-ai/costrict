@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, useMemo, memo } from "react"
 import { Button } from "@src/components/ui"
 import { StarIcon, StarFilledIcon, CheckCircledIcon } from "@radix-ui/react-icons"
 
-import type { InviteCodeInfo, ProviderSettings, QuotaInfo } from "@roo-code/types"
+import type { ProviderSettings, QuotaInfo } from "@roo-code/types"
 import { TelemetryEventName, ExtensionMessage } from "@roo-code/types"
 
 import { useAppTranslation } from "@src/i18n/TranslationContext"
@@ -241,7 +241,6 @@ const CostrictAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewP
 	const { t } = useAppTranslation()
 	const { copyWithFeedback } = useCopyToClipboard()
 	const [quotaInfo, setQuotaInfo] = useState<QuotaInfo>()
-	const [inviteCodeInfo, setInviteCodeInfo] = useState<InviteCodeInfo>()
 	const [showQuotaInfo, setShowQuotaInfo] = useState(false)
 	const [isLoadingQuota, setIsLoadingQuota] = useState(false)
 	const { userInfo, logoPic, hash } = useCostrictUserInfo(apiConfiguration?.costrictAccessToken)
@@ -271,9 +270,10 @@ const CostrictAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewP
 	}, [apiConfiguration?.costrictBaseUrl, hash])
 
 	const handleGetMoreQuota = useCallback(() => {
-		const cloudUrl = `${apiConfiguration?.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL}/credit/manager/credit-reward-plan?code=${inviteCodeInfo?.invite_code || ""}`
+		const cloudUrl = "https://costrict.ai/operation"
 		vscode.postMessage({ type: "openExternal", url: cloudUrl })
-	}, [apiConfiguration?.costrictBaseUrl, inviteCodeInfo?.invite_code])
+	}, [])
+
 	const handleStarRepository = useCallback(() => {
 		vscode.postMessage({ type: "openExternal", url: "https://github.com/zgsm-ai/costrict" })
 	}, [])
@@ -306,10 +306,6 @@ const CostrictAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewP
 					})
 					break
 				}
-				case "costrictInviteCode": {
-					setInviteCodeInfo(message?.values)
-					break
-				}
 			}
 		},
 		[onDone],
@@ -318,7 +314,6 @@ const CostrictAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewP
 	useEffect(() => {
 		if (!apiConfiguration?.costrictAccessToken) {
 			setQuotaInfo(undefined)
-			setInviteCodeInfo(undefined)
 			setShowQuotaInfo(false)
 			setIsLoadingQuota(false)
 			return

@@ -45,6 +45,7 @@ import { t } from "../../i18n"
 import prettyBytes from "pretty-bytes"
 import { isCliPatform, isJetbrainsPlatform } from "../../utils/platform"
 import { updateDefaultDebug } from "../../utils/getDebugState"
+import { COSTRICT_DEFAULT_HEADERS } from "shared/headers"
 
 const HISTORY_WARN_SIZE = 1000 * 1000 * 1000 * 3
 
@@ -165,7 +166,10 @@ export async function activate(
 	}
 
 	initCodeReview(context, provider, outputChannel)
-	initTelemetry(provider)
+	initTelemetry(provider, {
+		...COSTRICT_DEFAULT_HEADERS,
+		"User-Agent": `RooCode/3.52.1 ${isJetbrainsPlatform() ? "plugin_intellij" : "plugin_vscode"}/${Package.version}`,
+	})
 
 	if (!isCliPatform()) {
 		context.subscriptions.push(
