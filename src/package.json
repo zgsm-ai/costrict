@@ -863,7 +863,7 @@
 		"format": "prettier --write .",
 		"build:native": "cd node_modules/node-pty && npx node-gyp rebuild",
 		"bundle": "node esbuild.mjs",
-		"vscode:prepublish": "node ../scripts/download-bundled-skills.mjs && pnpm bundle --production",
+		"vscode:prepublish": "node ../scripts/generate-review-builtin.mjs && pnpm bundle --production",
 		"vsix": "mkdirp ../bin && vsce package --no-dependencies --out ../bin",
 		"publish:marketplace": "vsce publish --no-dependencies && ovsx publish --no-dependencies",
 		"watch:bundle": "pnpm bundle --watch",

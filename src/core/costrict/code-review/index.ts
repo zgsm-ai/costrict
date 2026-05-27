@@ -12,7 +12,6 @@ import { CodeReviewService } from "./codeReviewService"
 import { HistoryManager } from "./HistoryManager"
 import { CommentService } from "../../../integrations/comment"
 import type { ReviewComment } from "./reviewComment"
-import { supportPrompt } from "../../../shared/support-prompt"
 import { getChangedFiles } from "../../../utils/git"
 import { t } from "../../../i18n"
 import { GitCommitListener } from "./gitCommitListener"
@@ -49,6 +48,7 @@ export function initCodeReview(
 	}
 
 	const startFileOrFolderReview = async (paths: readonly string[], mode: Mode = "review") => {
+		console.log(`[CodeReview] startFileOrFolderReview called with mode=${mode}`)
 		const visibleProvider = await ClineProvider.getInstance()
 		if (!visibleProvider) {
 			return
@@ -77,6 +77,7 @@ export function initCodeReview(
 	}
 
 	const startSelectedCodeReview = async (mode: Mode = "review"): Promise<void> => {
+		console.log(`[CodeReview] startSelectedCodeReview called with mode=${mode}`)
 		const visibleProvider = await ClineProvider.getInstance()
 		const editor = vscode.window.activeTextEditor
 		if (!visibleProvider || !editor) {
@@ -96,15 +97,10 @@ export function initCodeReview(
 			startLine: range.start.line + 1 + "",
 			selectedText: editor.document.getText(range),
 		}
-		let prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
+		const args = `@/${filePath}:${params.startLine}-${params.endLine}`
+		const prompt = await reviewInstance.buildReviewPrompt(mode as "review" | "security-review", args)
 
-		// For security-review mode, append auto-confirmation message
-		if (mode === "security-review") {
-			const autoExecuteMessage = t("common:review.tip.auto_execute_with_default_config")
-			prompt = `${prompt}\n\n${autoExecuteMessage}`
-		}
-
-		reviewInstance.createReviewTask(
+		await reviewInstance.createReviewTask(
 			prompt,
 			{
 				type: ReviewTargetType.CODE,
@@ -115,7 +111,7 @@ export function initCodeReview(
 					},
 				],
 			},
-			mode !== "review" ? { mode } : undefined,
+			{ mode },
 		)
 	}
 
@@ -203,13 +199,17 @@ export function initCodeReview(
 
 			visibleProvider.log(`[CodeReview] Found ${changedFiles.length} changed files`)
 
-			// 使用 @git-changes 来审查当前的 git 变更
-			reviewInstance.createReviewTask("@git-changes", {
-				type: ReviewTargetType.FILE,
-				data: changedFiles.map((file_path) => ({
-					file_path,
-				})),
-			})
+			const reviewPrompt = await reviewInstance.buildReviewPrompt("review", "@git-changes")
+			reviewInstance.createReviewTask(
+				reviewPrompt,
+				{
+					type: ReviewTargetType.FILE,
+					data: changedFiles.map((file_path) => ({
+						file_path,
+					})),
+				},
+				{ mode: "review" },
+			)
 		},
 		...(!isJetbrains
 			? {}
@@ -243,16 +243,21 @@ export function initCodeReview(
 							startLine: startLine + "",
 							selectedText: selectedText,
 						}
-						const prompt = supportPrompt.create("ADD_TO_CONTEXT", params)
-						reviewInstance.createReviewTask(prompt, {
-							type: ReviewTargetType.CODE,
-							data: [
-								{
-									file_path: toRelativePath(filePath.toPosix(), cwd),
-									line_range: [startLine, endLine],
-								},
-							],
-						})
+						const reviewArgs = `@/${filePath}:${startLine}-${endLine}`
+						const prompt = await reviewInstance.buildReviewPrompt("review", reviewArgs)
+						reviewInstance.createReviewTask(
+							prompt,
+							{
+								type: ReviewTargetType.CODE,
+								data: [
+									{
+										file_path: toRelativePath(filePath.toPosix(), cwd),
+										line_range: [startLine, endLine],
+									},
+								],
+							},
+							{ mode: "review" },
+						)
 					},
 					reviewFilesAndFoldersJetbrains: async (args: any) => {
 						const data = args?.[0]?.[0]
