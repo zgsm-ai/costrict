@@ -90,7 +90,10 @@ export async function testParseSourceCodeDefinitions(
 
 	// Load language and configure parser
 	const cwd = process.cwd()
-	const wasmPath = cwd.endsWith("/src") ? path.join(cwd, `dist/${wasmFile}`) : path.join(cwd, `src/dist/${wasmFile}`)
+	const normalizedCwd = cwd.replace(/\\/g, "/")
+	const wasmPath = normalizedCwd.endsWith("/src")
+		? path.join(cwd, `dist/${wasmFile}`)
+		: path.join(cwd, `src/dist/${wasmFile}`)
 	const lang = await Language.load(wasmPath)
 	parser.setLanguage(lang)
 
