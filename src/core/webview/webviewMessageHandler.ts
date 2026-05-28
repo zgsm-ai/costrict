@@ -1651,7 +1651,7 @@ export const webviewMessageHandler = async (
 			break
 		}
 		case "openMcpSettings": {
-			const mcpSettingsFilePath = await provider.getMcpHub()?.getMcpSettingsFilePath()
+			const mcpSettingsFilePath = await provider.ensureMcpHub().then((hub) => hub.getMcpSettingsFilePath())
 
 			if (mcpSettingsFilePath) {
 				openFile(mcpSettingsFilePath)
@@ -1691,7 +1691,9 @@ export const webviewMessageHandler = async (
 
 			try {
 				provider.log(`Attempting to delete MCP server: ${message.serverName}`)
-				await provider.getMcpHub()?.deleteServer(message.serverName, message.source as "global" | "project")
+				await provider
+					.ensureMcpHub()
+					.then((hub) => hub.deleteServer(message.serverName!, message.source as "global" | "project"))
 				provider.log(`Successfully deleted MCP server: ${message.serverName}`)
 
 				// Refresh the webview state
@@ -1705,7 +1707,9 @@ export const webviewMessageHandler = async (
 		}
 		case "restartMcpServer": {
 			try {
-				await provider.getMcpHub()?.restartConnection(message.text!, message.source as "global" | "project")
+				await provider
+					.ensureMcpHub()
+					.then((hub) => hub.restartConnection(message.text!, message.source as "global" | "project"))
 			} catch (error) {
 				provider.log(
 					`Failed to retry connection for ${message.text}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
@@ -1715,14 +1719,14 @@ export const webviewMessageHandler = async (
 		}
 		case "toggleToolAlwaysAllow": {
 			try {
-				await provider
-					.getMcpHub()
-					?.toggleToolAlwaysAllow(
-						message.serverName!,
-						message.source as "global" | "project",
-						message.toolName!,
-						Boolean(message.alwaysAllow),
-					)
+				await (
+					await provider.ensureMcpHub()
+				).toggleToolAlwaysAllow(
+					message.serverName!,
+					message.source as "global" | "project",
+					message.toolName!,
+					Boolean(message.alwaysAllow),
+				)
 			} catch (error) {
 				provider.log(
 					`Failed to toggle auto-approve for tool ${message.toolName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
@@ -1732,14 +1736,14 @@ export const webviewMessageHandler = async (
 		}
 		case "toggleToolEnabledForPrompt": {
 			try {
-				await provider
-					.getMcpHub()
-					?.toggleToolEnabledForPrompt(
-						message.serverName!,
-						message.source as "global" | "project",
-						message.toolName!,
-						Boolean(message.isEnabled),
-					)
+				await (
+					await provider.ensureMcpHub()
+				).toggleToolEnabledForPrompt(
+					message.serverName!,
+					message.source as "global" | "project",
+					message.toolName!,
+					Boolean(message.isEnabled),
+				)
 			} catch (error) {
 				provider.log(
 					`Failed to toggle enabled for prompt for tool ${message.toolName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
@@ -1749,13 +1753,9 @@ export const webviewMessageHandler = async (
 		}
 		case "toggleMcpServer": {
 			try {
-				await provider
-					.getMcpHub()
-					?.toggleServerDisabled(
-						message.serverName!,
-						message.disabled!,
-						message.source as "global" | "project",
-					)
+				await (
+					await provider.ensureMcpHub()
+				).toggleServerDisabled(message.serverName!, message.disabled!, message.source as "global" | "project")
 			} catch (error) {
 				provider.log(
 					`Failed to toggle MCP server ${message.serverName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,
@@ -2349,13 +2349,9 @@ export const webviewMessageHandler = async (
 		case "updateMcpTimeout":
 			if (message.serverName && typeof message.timeout === "number") {
 				try {
-					await provider
-						.getMcpHub()
-						?.updateServerTimeout(
-							message.serverName,
-							message.timeout,
-							message.source as "global" | "project",
-						)
+					await (
+						await provider.ensureMcpHub()
+					).updateServerTimeout(message.serverName, message.timeout, message.source as "global" | "project")
 				} catch (error) {
 					provider.log(
 						`Failed to update timeout for ${message.serverName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`,

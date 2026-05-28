@@ -94,7 +94,7 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 		includeAllToolsWithRestrictions,
 	} = options
 
-	const mcpHub = provider.getMcpHub()
+	const mcpHub = await provider.ensureMcpHub()
 
 	// Get CodeIndexManager for feature checking.
 	const { CodeIndexManager } = await import("../../services/code-index/manager")

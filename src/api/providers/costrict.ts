@@ -346,8 +346,8 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 			type: "usage",
 			inputTokens: usage?.prompt_tokens || 0,
 			outputTokens: usage?.completion_tokens || 0,
-			cacheWriteTokens: usage?.cache_creation_input_tokens || undefined,
-			cacheReadTokens: usage?.cache_read_input_tokens || undefined,
+			cacheWriteTokens: usage?.cache_creation_input_tokens || usage?.prompt_tokens_details?.cache_miss_tokens,
+			cacheReadTokens: usage?.cache_read_input_tokens || usage?.prompt_tokens_details?.cached_tokens,
 		}
 	}
 
@@ -395,7 +395,9 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		let convertedMessages: Array<OpenAI.Chat.ChatCompletionMessageParam | Anthropic.Messages.MessageParam>
 		const _mid = modelInfo.id?.toLowerCase()
 		if (isDeepseekReasoner) {
-			convertedMessages = convertToR1Format([{ role: "user", content: systemPrompt }, ...messages])
+			convertedMessages = convertToR1Format([{ role: "user", content: systemPrompt }, ...messages], {
+				mergeToolResultText: isDeepseekReasoner,
+			})
 		} else {
 			const systemMessage = modelInfo.supportsPromptCache
 				? {
@@ -486,7 +488,8 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 			messages,
 			stream: true as const,
 			...(isGrokXAI ? {} : { stream_options: { include_usage: true } }),
-			...(reasoning && reasoning),
+			...(reasoning ?? {}),
+			...(isDeepseekReasoner && { thinking: { type: "enabled" } }),
 		}
 
 		if (isNative) {
@@ -949,7 +952,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		}
 		const _mid = id.toLowerCase()
 		if (
-			(_mid?.includes("auto") || _mid?.includes("kimi") || _mid?.includes("minimax") || _mid?.includes("glm")) &&
+			(_mid?.includes("auto") || _mid?.includes("kimi") || _mid?.includes("minimax") || _mid?.includes("glm") || _mid?.includes("deepseek-v4") || _mid?.includes("qwen-3")) &&
 			info.preserveReasoning == null
 		) {
 			info.preserveReasoning = true

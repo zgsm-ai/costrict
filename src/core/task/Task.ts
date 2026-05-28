@@ -2899,7 +2899,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				showRooIgnoredFiles,
 				includeDiagnosticMessages,
 				maxDiagnosticMessages,
-				skillsManager: provider?.getSkillsManager(),
+				skillsManager: provider ? await provider.ensureSkillsManager() : undefined,
 				currentMode,
 				language: state?.language,
 				mentionBudgetChars: this.getMentionBudgetChars(),
@@ -4351,7 +4351,7 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 				undefined, // todoList
 				this.api.getModel().id,
 				undefined,
-				provider.getSkillsManager(),
+				await provider.ensureSkillsManager(),
 				experiments?.useLitePrompts ?? false,
 			)
 		})()

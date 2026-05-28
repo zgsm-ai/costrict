@@ -198,18 +198,22 @@ export async function activate(
 		context.subscriptions.push(configChanged)
 	}
 
-	const tokens = await CostrictAuthStorage.getInstance().getTokens()
-	if (isVscodePlatform) {
-		if (tokens?.access_token) {
-			completionStatusBar.setEnableState()
-		} else {
-			completionStatusBar.fail({
-				message: OPENAI_CLIENT_NOT_INITIALIZED,
-			})
-		}
-	}
+	void CostrictAuthStorage.getInstance()
+		.getTokens()
+		.then((tokens) => {
+			if (isVscodePlatform) {
+				if (tokens?.access_token) {
+					completionStatusBar.setEnableState()
+				} else {
+					completionStatusBar.fail({
+						message: OPENAI_CLIENT_NOT_INITIALIZED,
+					})
+				}
+			}
+		})
+		.catch((error) => provider.log(`Failed to read auth tokens on startup: ${error}`))
 
-	await initNotificationService(provider)
+	void initNotificationService(provider)
 	provider.getState().then((state) => {
 		const size = (state.taskHistory || []).reduce((p, c) => p + Number(c.size), 0)
 		if (size > HISTORY_WARN_SIZE) {

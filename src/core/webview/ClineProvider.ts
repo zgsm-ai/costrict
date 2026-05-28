@@ -263,30 +263,6 @@ export class ClineProvider
 			await this.postStateToWebviewWithoutClineMessages()
 		})
 
-		// Initialize MCP Hub through the singleton manager
-		McpServerManager.getInstance(this.context, this)
-			.then((hub) => {
-				this.mcpHub = hub
-				this.mcpHub.registerClient()
-				// Run one-shot async task store cleanup on startup
-				const store = this.mcpHub.getAsyncTaskStore()
-				new McpAsyncTaskStoreCleaner({
-					list: () => store.list(),
-					delete: (id) => store.delete(id),
-				})
-					.run()
-					.catch((err) => this.log(`McpAsyncTaskStoreCleaner failed: ${err}`))
-			})
-			.catch((error) => {
-				this.log(`Failed to initialize MCP Hub: ${error}`)
-			})
-
-		// Initialize Skills Manager for skill discovery
-		this.skillsManager = new SkillsManager(this)
-		this.skillsManager.initialize().catch((error) => {
-			this.log(`Failed to initialize Skills Manager: ${error}`)
-		})
-
 		this.marketplaceManager = new MarketplaceManager(this.context, this.customModesManager)
 
 		// Initialize auto cleanup service
@@ -3397,8 +3373,46 @@ export class ClineProvider
 		return this.mcpHub
 	}
 
+	public async ensureMcpHub(): Promise<McpHub> {
+		if (this.mcpHub) {
+			return this.mcpHub
+		}
+
+		const hub = await McpServerManager.getInstance(this.context, this)
+		if (!this.mcpHub) {
+			this.mcpHub = hub
+			this.mcpHub.registerClient()
+
+			// Run one-shot async task store cleanup after the hub is first needed.
+			const store = this.mcpHub.getAsyncTaskStore()
+			void new McpAsyncTaskStoreCleaner({
+				list: () => store.list(),
+				delete: (id) => store.delete(id),
+			})
+				.run()
+				.catch((err) => this.log(`McpAsyncTaskStoreCleaner failed: ${err}`))
+		}
+
+		return this.mcpHub
+	}
+
 	public getSkillsManager(): SkillsManager | undefined {
 		return this.skillsManager
+	}
+
+	public async ensureSkillsManager(): Promise<SkillsManager> {
+		if (this.skillsManager) {
+			return this.skillsManager
+		}
+
+		const skillsManager = new SkillsManager(this)
+		this.skillsManager = skillsManager
+		try {
+			await skillsManager.initialize()
+		} catch (error) {
+			this.log(`Failed to initialize Skills Manager: ${error}`)
+		}
+		return skillsManager
 	}
 
 	/**
