@@ -219,6 +219,7 @@ export class AgentInstaller {
 
 			const declaredModules = new Set(manifest.modules || [])
 			const modulesToInstall: Array<keyof InstalledManifest> = ["agents", "commands", "skills", "rules", "mcp"]
+			const agentOrder = versionInfo.agents?.order
 
 			for (const moduleType of modulesToInstall) {
 				const moduleDir = path.join(extractDir, moduleType)
@@ -233,7 +234,7 @@ export class AgentInstaller {
 					continue
 				}
 				try {
-					await this.installModule(moduleType, moduleDir, installedManifest, versionInfo.version)
+					await this.installModule(moduleType, moduleDir, installedManifest, versionInfo.version, agentOrder)
 				} catch (error: any) {
 					logger.error(`${LOG_PREFIX} Failed to install module ${moduleType}: ${error.message}`)
 					throw error
@@ -388,10 +389,11 @@ export class AgentInstaller {
 		moduleDir: string,
 		manifest: InstalledManifest,
 		version: string,
+		agentOrder?: string[],
 	): Promise<void> {
 		switch (moduleType) {
 			case "agents":
-				manifest.agents = await this.installAgents(moduleDir, version)
+				manifest.agents = await this.installAgents(moduleDir, version, agentOrder)
 				break
 			case "commands":
 				manifest.commands = await this.installCommands(moduleDir, version)
@@ -408,7 +410,7 @@ export class AgentInstaller {
 		}
 	}
 
-	private async installAgents(agentsDir: string, version: string): Promise<string[]> {
+	private async installAgents(agentsDir: string, version: string, agentOrder?: string[]): Promise<string[]> {
 		const customModesPath = path.join(this.settingsDir || this.rooDir, "custom_modes.yaml")
 		const files = await fs.readdir(agentsDir)
 		const yamlFiles = files.filter((f) => f.endsWith(".yaml") || f.endsWith(".yml"))
@@ -455,6 +457,25 @@ export class AgentInstaller {
 			} catch (error: any) {
 				throw new FatalInstallerError("yamlParseError", `Failed to parse agent YAML ${file}: ${error.message}`)
 			}
+		}
+
+		// Sort agents according to agents.order from versionInfo (latest.json).
+		// Priority: completeness first (all agents installed), then order.
+		// Pre-existing modes (not part of this install) keep their relative positions.
+		// Agents not listed in order are appended to the end.
+		if (Array.isArray(agentOrder) && agentOrder.length > 0 && slugs.length > 0) {
+			const installedSlugSet = new Set(slugs)
+			const preExisting = customModes.customModes.filter((m: any) => !installedSlugSet.has(m.slug))
+			const installed = customModes.customModes.filter((m: any) => installedSlugSet.has(m.slug))
+
+			const orderMap = new Map(agentOrder.map((slug, index) => [slug, index]))
+			installed.sort((a: any, b: any) => {
+				const aIdx = orderMap.has(a.slug) ? orderMap.get(a.slug)! : Infinity
+				const bIdx = orderMap.has(b.slug) ? orderMap.get(b.slug)! : Infinity
+				return aIdx - bIdx
+			})
+
+			customModes.customModes = [...preExisting, ...installed]
 		}
 
 		await atomicWriteYaml(customModesPath, customModes)

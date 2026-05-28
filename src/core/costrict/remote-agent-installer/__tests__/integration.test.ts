@@ -1023,4 +1023,217 @@ describe("Remote Resource Installer Integration", () => {
 		// Verify the rule directory was created directly under rooDir (not under "rules/")
 		expect(fsSync.existsSync(path.join(ruleDirRooDir, "my-rule"))).toBe(true)
 	})
+
+	// ─── agents.order sorting tests ──────────────────────────────────────
+
+	it("should sort agents according to agents.order from versionInfo", async () => {
+		const sortTmpDir = path.join(tmpDir, "sort-order-tmp")
+		const sortRooDir = path.join(tmpDir, "sort-order-roo")
+		await fs.mkdir(sortTmpDir, { recursive: true })
+		await fs.mkdir(sortRooDir, { recursive: true })
+
+		const sortZipPath = path.join(tmpDir, "sort-order.zip")
+		await createZipWithModules(sortZipPath, {
+			agents: {
+				"agent-c.yaml": "name: Agent C\nslug: agent-c\n",
+				"agent-a.yaml": "name: Agent A\nslug: agent-a\n",
+				"agent-b.yaml": "name: Agent B\nslug: agent-b\n",
+			},
+		})
+
+		const installer = new AgentInstaller(sortTmpDir, sortRooDir)
+		const versionInfo: ResourcePackageVersion = {
+			version: "1.0.0",
+			agents: { order: ["agent-a", "agent-b", "agent-c"] },
+		}
+		await installer.install(sortZipPath, versionInfo, { ...defaultRecord })
+
+		// Read custom_modes.yaml and verify order
+		const yamlLib = await import("yaml")
+		const content = fsSync.readFileSync(path.join(sortRooDir, "custom_modes.yaml"), "utf-8")
+		const data = yamlLib.parse(content)
+		const slugs = data.customModes.map((m: any) => m.slug)
+		expect(slugs).toEqual(["agent-a", "agent-b", "agent-c"])
+	})
+
+	it("should keep pre-existing modes before sorted agents", async () => {
+		const preexistTmpDir = path.join(tmpDir, "sort-preexist-tmp")
+		const preexistRooDir = path.join(tmpDir, "sort-preexist-roo")
+		await fs.mkdir(preexistTmpDir, { recursive: true })
+		await fs.mkdir(preexistRooDir, { recursive: true })
+
+		// Pre-create custom_modes.yaml with existing modes
+		await fs.writeFile(
+			path.join(preexistRooDir, "custom_modes.yaml"),
+			"customModes:\n  - slug: user-mode-1\n    name: User Mode 1\n  - slug: user-mode-2\n    name: User Mode 2\n",
+			"utf-8",
+		)
+
+		const preexistZipPath = path.join(tmpDir, "sort-preexist.zip")
+		await createZipWithModules(preexistZipPath, {
+			agents: {
+				"agent-x.yaml": "name: Agent X\nslug: agent-x\n",
+				"agent-y.yaml": "name: Agent Y\nslug: agent-y\n",
+			},
+		})
+
+		const installer = new AgentInstaller(preexistTmpDir, preexistRooDir)
+		const versionInfo: ResourcePackageVersion = {
+			version: "1.0.0",
+			agents: { order: ["agent-y", "agent-x"] },
+		}
+		await installer.install(preexistZipPath, versionInfo, { ...defaultRecord })
+
+		const yamlLib = await import("yaml")
+		const content = fsSync.readFileSync(path.join(preexistRooDir, "custom_modes.yaml"), "utf-8")
+		const data = yamlLib.parse(content)
+		const slugs = data.customModes.map((m: any) => m.slug)
+		// Pre-existing modes must stay in place, sorted agents appended after
+		expect(slugs).toEqual(["user-mode-1", "user-mode-2", "agent-y", "agent-x"])
+	})
+
+	it("should append agents not in order to the end", async () => {
+		const partialTmpDir = path.join(tmpDir, "sort-partial-tmp")
+		const partialRooDir = path.join(tmpDir, "sort-partial-roo")
+		await fs.mkdir(partialTmpDir, { recursive: true })
+		await fs.mkdir(partialRooDir, { recursive: true })
+
+		const partialZipPath = path.join(tmpDir, "sort-partial.zip")
+		await createZipWithModules(partialZipPath, {
+			agents: {
+				"agent-a.yaml": "name: Agent A\nslug: agent-a\n",
+				"agent-b.yaml": "name: Agent B\nslug: agent-b\n",
+				"agent-c.yaml": "name: Agent C\nslug: agent-c\n",
+			},
+		})
+
+		const installer = new AgentInstaller(partialTmpDir, partialRooDir)
+		// order only includes agent-c and agent-a, agent-b is missing from order
+		const versionInfo: ResourcePackageVersion = {
+			version: "1.0.0",
+			agents: { order: ["agent-c", "agent-a"] },
+		}
+		await installer.install(partialZipPath, versionInfo, { ...defaultRecord })
+
+		const yamlLib = await import("yaml")
+		const content = fsSync.readFileSync(path.join(partialRooDir, "custom_modes.yaml"), "utf-8")
+		const data = yamlLib.parse(content)
+		const slugs = data.customModes.map((m: any) => m.slug)
+		// agent-b is not in order, should be appended to the end
+		expect(slugs).toEqual(["agent-c", "agent-a", "agent-b"])
+	})
+
+	it("should not sort when agents.order is absent", async () => {
+		const noOrderTmpDir = path.join(tmpDir, "sort-no-order-tmp")
+		const noOrderRooDir = path.join(tmpDir, "sort-no-order-roo")
+		await fs.mkdir(noOrderTmpDir, { recursive: true })
+		await fs.mkdir(noOrderRooDir, { recursive: true })
+
+		const noOrderZipPath = path.join(tmpDir, "sort-no-order.zip")
+		await createZipWithModules(noOrderZipPath, {
+			agents: {
+				"agent-a.yaml": "name: Agent A\nslug: agent-a\n",
+				"agent-b.yaml": "name: Agent B\nslug: agent-b\n",
+			},
+		})
+
+		const installer = new AgentInstaller(noOrderTmpDir, noOrderRooDir)
+		// No agents field at all
+		const versionInfo: ResourcePackageVersion = { version: "1.0.0" }
+		const manifest = await installer.install(noOrderZipPath, versionInfo, { ...defaultRecord })
+
+		// All agents should be installed regardless of order
+		expect(manifest.agents).toContain("agent-a")
+		expect(manifest.agents).toContain("agent-b")
+		expect(manifest.agents).toHaveLength(2)
+	})
+
+	it("should ignore slugs in order that do not exist in zip", async () => {
+		const extraSlugTmpDir = path.join(tmpDir, "sort-extra-slug-tmp")
+		const extraSlugRooDir = path.join(tmpDir, "sort-extra-slug-roo")
+		await fs.mkdir(extraSlugTmpDir, { recursive: true })
+		await fs.mkdir(extraSlugRooDir, { recursive: true })
+
+		const extraSlugZipPath = path.join(tmpDir, "sort-extra-slug.zip")
+		await createZipWithModules(extraSlugZipPath, {
+			agents: {
+				"agent-a.yaml": "name: Agent A\nslug: agent-a\n",
+				"agent-b.yaml": "name: Agent B\nslug: agent-b\n",
+			},
+		})
+
+		const installer = new AgentInstaller(extraSlugTmpDir, extraSlugRooDir)
+		// order includes "phantom-agent" which doesn't exist in zip
+		const versionInfo: ResourcePackageVersion = {
+			version: "1.0.0",
+			agents: { order: ["phantom-agent", "agent-a", "agent-b"] },
+		}
+		const manifest = await installer.install(extraSlugZipPath, versionInfo, { ...defaultRecord })
+
+		// All real agents should be installed; phantom-agent is ignored
+		expect(manifest.agents).toContain("agent-a")
+		expect(manifest.agents).toContain("agent-b")
+		expect(manifest.agents).toHaveLength(2)
+
+		const yamlLib = await import("yaml")
+		const content = fsSync.readFileSync(path.join(extraSlugRooDir, "custom_modes.yaml"), "utf-8")
+		const data = yamlLib.parse(content)
+		const slugs = data.customModes.map((m: any) => m.slug)
+		expect(slugs).toEqual(["agent-a", "agent-b"])
+	})
+
+	it("should not sort when agents.order is a non-array value", async () => {
+		const nonArrayTmpDir = path.join(tmpDir, "sort-non-array-tmp")
+		const nonArrayRooDir = path.join(tmpDir, "sort-non-array-roo")
+		await fs.mkdir(nonArrayTmpDir, { recursive: true })
+		await fs.mkdir(nonArrayRooDir, { recursive: true })
+
+		const nonArrayZipPath = path.join(tmpDir, "sort-non-array.zip")
+		await createZipWithModules(nonArrayZipPath, {
+			agents: {
+				"agent-a.yaml": "name: Agent A\nslug: agent-a\n",
+				"agent-b.yaml": "name: Agent B\nslug: agent-b\n",
+			},
+		})
+
+		const installer = new AgentInstaller(nonArrayTmpDir, nonArrayRooDir)
+		// agents.order is a string instead of array — should be ignored gracefully
+		const versionInfo: ResourcePackageVersion = {
+			version: "1.0.0",
+			agents: { order: "not-an-array" } as any,
+		}
+		const manifest = await installer.install(nonArrayZipPath, versionInfo, { ...defaultRecord })
+
+		// All agents should still be installed, just not sorted
+		expect(manifest.agents).toContain("agent-a")
+		expect(manifest.agents).toContain("agent-b")
+		expect(manifest.agents).toHaveLength(2)
+	})
+
+	it("should not sort when agents.order is an empty array", async () => {
+		const emptyOrderTmpDir = path.join(tmpDir, "sort-empty-order-tmp")
+		const emptyOrderRooDir = path.join(tmpDir, "sort-empty-order-roo")
+		await fs.mkdir(emptyOrderTmpDir, { recursive: true })
+		await fs.mkdir(emptyOrderRooDir, { recursive: true })
+
+		const emptyOrderZipPath = path.join(tmpDir, "sort-empty-order.zip")
+		await createZipWithModules(emptyOrderZipPath, {
+			agents: {
+				"agent-a.yaml": "name: Agent A\nslug: agent-a\n",
+				"agent-b.yaml": "name: Agent B\nslug: agent-b\n",
+			},
+		})
+
+		const installer = new AgentInstaller(emptyOrderTmpDir, emptyOrderRooDir)
+		const versionInfo: ResourcePackageVersion = {
+			version: "1.0.0",
+			agents: { order: [] },
+		}
+		const manifest = await installer.install(emptyOrderZipPath, versionInfo, { ...defaultRecord })
+
+		// All agents should still be installed, just not sorted
+		expect(manifest.agents).toContain("agent-a")
+		expect(manifest.agents).toContain("agent-b")
+		expect(manifest.agents).toHaveLength(2)
+	})
 })
