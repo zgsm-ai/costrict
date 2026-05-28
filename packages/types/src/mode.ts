@@ -373,23 +373,31 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		slug: "review",
 		name: "🔍 Review",
 		roleDefinition:
-			"You are CoStrict, a code review expert skilled at analyzing issues with business understanding. You identify potential logical defects, security risks, performance problems, and deviations from standards, providing clear, actionable improvement suggestions.",
+			"You are a code review specialist. Always use the 'review' skill via the Skill tool with default configuration to perform structured code reviews. The skill provides a 5-stage pipeline (target filtering, defect detection, adversarial validation, metadata management, report generation) that identifies static defects, security vulnerabilities, logical defects, and memory issues through data-flow-driven analysis. Do not switch to other modes to complete review tasks.",
 		whenToUse:
-			"Use this mode for code review tasks, including identifying bugs, security vulnerabilities, performance issues, code smells and style inconsistencies. It's ideal for analyzing pull requests, reviewing legacy code, checking for best practices compliance, and providing improvement suggestions.",
-		description: "Review code and identify potential issues",
-		groups: ["read", "mcp"],
-		source: "project",
+			"Use this mode for code review tasks such as defect scanning, PR/MR review, and code quality analysis. The review skill performs data-flow-driven analysis to detect static defects, security vulnerabilities, logical defects, and memory issues, with every finding traceable to file:line evidence.",
+		description:
+			"Structured code review with 5-stage pipeline for static, security, logic and memory defect detection",
+		groups: [
+			"read",
+			["edit", { fileRegex: "\\.(md|json)$", description: "Markdown and JSON files only" }],
+			"command",
+			"mcp",
+		],
+		disableSwitchMode: true,
 		costrictCodeModeGroup: "hide",
+		taskMode: "subreview",
+		source: "project",
 		apiProvider: "costrict",
 	},
 	{
 		slug: "subreview",
 		name: "🔍 Sub Review",
 		roleDefinition:
-			"You are a security code review executor. Follow the assigned task objectives precisely to perform code security reviews.",
+			"You are a code review subtask executor. Follow the assigned task objectives precisely to perform targeted file analysis, defect detection, validation, or context analysis as directed by the parent review or security-review task.",
 		whenToUse:
-			"Use this mode as a subtask executor for security review tasks. It handles specific audit objectives delegated by the parent security-review task, such as scanning individual files for vulnerabilities or analyzing specific code patterns.",
-		description: "Subtask executor mode for security review, performing targeted security reviews",
+			"Use this mode as a subtask executor for review and security-review tasks. It handles specific objectives delegated by the parent task, such as per-file defect detection, adversarial validation, sensitive operation identification, or context analysis.",
+		description: "Subtask executor for targeted file analysis, defect detection, validation, and context analysis",
 		groups: [
 			"read",
 			["edit", { fileRegex: "\\.(md|json)$", description: "Markdown and JSON files only" }],
@@ -406,11 +414,11 @@ const WORKFLOW_MODES: readonly modelType[] = [
 		slug: "security-review",
 		name: "🔒 Security Review",
 		roleDefinition:
-			"You are a security code review specialist. Always use the 'security-review' skill via the Skill tool with default configuration to perform comprehensive security audits. The skill provides specialized detection for 55+ vulnerability types across 9 programming languages, with coverage including OWASP Top 10, injection attacks, authentication bypass, business logic flaws, and modern security domains (LLM, Serverless, Android). Do not switch to other modes to complete security review tasks.",
+			"You are a security code review specialist. Always use the 'security-review' skill via the Skill tool with default configuration to perform security audits. The skill provides a 6-step state machine (queue initialization, per-file audit, sensitive operation identification, context analysis, report merge) that identifies vulnerabilities through sink-based and logic-based threat exploration. Do not switch to other modes to complete security review tasks.",
 		whenToUse:
-			"Use this mode for security code audit tasks, including vulnerability scanning, security flaw detection, penetration testing preparation, and identifying potential security risks. It's specifically designed for analyzing code for OWASP Top 10 vulnerabilities, business logic flaws, authentication/authorization issues, injection attacks, and other security defects.",
+			"Use this mode for security code audit tasks such as vulnerability scanning, security flaw detection, and penetration testing preparation. The security-review skill uses queue-driven file-by-file auditing with sensitive operation identification and context analysis to detect security threats.",
 		description:
-			"Security code review mode using the security-review skill for comprehensive vulnerability detection",
+			"Security code review with queue-driven auditing and threat exploration for vulnerability detection",
 		groups: [
 			"read",
 			["edit", { fileRegex: "\\.(md|json)$", description: "Markdown and JSON files only" }],

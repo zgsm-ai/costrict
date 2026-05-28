@@ -56,7 +56,24 @@ export function getLocalIP(): string {
 	return "127.0.0.1"
 }
 
+function getWindowsFallbackName(): string {
+	const release = os.release()
+	const majorVersion = parseInt(release.split(".")[0], 10)
+	const versionMap: Record<number, string> = {
+		10: "Windows 10/11",
+		6: "Windows Vista/7/8",
+		5: "Windows XP/2000",
+	}
+	return versionMap[majorVersion] || `Windows ${release}`
+}
+
 function getSafeOperatingSystemName(): string {
+	// Skip os-name on Windows: windows-release shells out to wmic/powershell
+	// synchronously, which can hang or be very slow on CI runners and newer
+	// Windows where wmic is removed.
+	if (os.platform() === "win32") {
+		return getWindowsFallbackName()
+	}
 	try {
 		return osName(os.platform(), os.release())
 	} catch (error) {

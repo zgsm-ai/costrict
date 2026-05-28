@@ -14,6 +14,11 @@ const mockDisposable = {
 const mockUri = {
 	file: (path) => ({ fsPath: path, path, scheme: "file" }),
 	parse: (path) => ({ fsPath: path, path, scheme: "file" }),
+	joinPath: (base, ...parts) => {
+		const basePath = typeof base === "string" ? base : (base?.fsPath ?? base?.path ?? "")
+		const joined = [basePath, ...parts].join("/").replace(/\\/g, "/").replace(/\/+/g, "/")
+		return { fsPath: joined, path: joined, scheme: "file" }
+	},
 }
 
 const mockRange = class {

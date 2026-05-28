@@ -4,7 +4,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 
 // Mock dependencies before importing the module under test
 vi.mock("../utils", () => ({
-	getIPCPath: () => "/tmp/costrict-ipc-test-" + process.pid + ".sock",
+	getIPCPath: () =>
+		process.platform === "win32"
+			? `\\\\.\\pipe\\costrict-ipc-test-${process.pid}`
+			: `/tmp/costrict-ipc-test-${process.pid}.sock`,
 }))
 
 describe("startIPCServer", () => {
@@ -24,11 +27,13 @@ describe("startIPCServer", () => {
 
 	afterEach(() => {
 		stopIPCServer()
-		const ipcPath = getIPCPath()
-		try {
-			fs.unlinkSync(ipcPath)
-		} catch {
-			// ignore
+		if (process.platform !== "win32") {
+			const ipcPath = getIPCPath()
+			try {
+				fs.unlinkSync(ipcPath)
+			} catch {
+				// ignore
+			}
 		}
 	})
 
@@ -47,8 +52,11 @@ describe("startIPCServer", () => {
 
 	it("should resolve quickly even with a stale socket file", async () => {
 		const ipcPath = getIPCPath()
-		// Create a stale socket file (just a regular file, no listener)
-		fs.writeFileSync(ipcPath, "")
+		// Create a stale socket file (just a regular file, no listener).
+		// Named pipes on Windows can't be created as regular files, so skip the stale-file setup there.
+		if (process.platform !== "win32") {
+			fs.writeFileSync(ipcPath, "")
+		}
 
 		const start = Date.now()
 		await startIPCServer()

@@ -58,8 +58,9 @@ openspec
 # Architect plans
 plans/
 
-# Local cs/cli-agent task handoff scratch file
-.cs-task.md
+# Review results
+code-review_result/
+security-review_result/
 
 roo-cli-*.tar.gz*
 zgsm-cli-*.tar.gz*
@@ -72,3 +73,5 @@ src/bundled-skills/
 .costrict
 .gemini*
 
+# Bundled modes (generated during build)
+src/bundled-modes/

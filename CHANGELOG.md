@@ -2,6 +2,17 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.8.6]
+
+- Update generate-review-builtin script
+
+## [2.8.5]
+
+- MCP support async poll for improved performance (#1235)
+- Fix fake_reasoning empty text handling and warn on empty chunks (#1239)
+- Migrate review skills to costrict-review repo with multi-locale support (#1236)
+- Telemetry API clients support additional headers (#1226)
+
 ## [2.8.4]
 
 - Add reload webview command and error boundary reload button for `Gray Screen`

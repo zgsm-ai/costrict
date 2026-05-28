@@ -102,14 +102,18 @@ export class GitCommitListener {
 		const confirmText = "Review"
 		const result = await vscode.window.showInformationMessage(message, confirmText)
 		if (result === confirmText) {
-			const prompt = `@${commit.hash}`
 			if (!(await this.reviewService.checkApiProviderSupport())) {
 				return
 			}
-			this.reviewService.createReviewTask(prompt, {
-				type: ReviewTargetType.COMMIT,
-				commit: commit.hash,
-			})
+			const prompt = await this.reviewService.buildReviewPrompt("review", `commit ${commit.hash}`)
+			this.reviewService.createReviewTask(
+				prompt,
+				{
+					type: ReviewTargetType.COMMIT,
+					commit: commit.hash,
+				},
+				{ mode: "review" },
+			)
 		}
 	}
 }

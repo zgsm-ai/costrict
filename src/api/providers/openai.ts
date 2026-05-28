@@ -225,7 +225,7 @@ export class OpenAiHandler extends BaseProvider implements SingleCompletionHandl
 			}
 			if (!hasReasoning) {
 				// Add a fake reasoning event to ensure the frontend processes the response
-				yield { type: "fake_reasoning", text: " " }
+				yield { type: "fake_reasoning", text: "" }
 			}
 			for (const chunk of matcher.final()) {
 				yield chunk

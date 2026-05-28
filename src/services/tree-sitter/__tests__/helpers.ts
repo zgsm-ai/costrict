@@ -41,7 +41,8 @@ export async function initializeTreeSitter() {
 			const filename = path.basename(wasmPath)
 			// Check if we're in the src directory and adjust path accordingly
 			const cwd = process.cwd()
-			const distPath = cwd.endsWith("/src")
+			const normalizedCwd = cwd.replace(/\\/g, "/")
+			const distPath = normalizedCwd.endsWith("/src")
 				? path.join(cwd, "dist", filename)
 				: path.join(cwd, "src", "dist", filename)
 			// console.log(`Redirecting WASM load from ${wasmPath} to ${distPath}`)
@@ -90,7 +91,10 @@ export async function testParseSourceCodeDefinitions(
 
 	// Load language and configure parser
 	const cwd = process.cwd()
-	const wasmPath = cwd.endsWith("/src") ? path.join(cwd, `dist/${wasmFile}`) : path.join(cwd, `src/dist/${wasmFile}`)
+	const normalizedCwd = cwd.replace(/\\/g, "/")
+	const wasmPath = normalizedCwd.endsWith("/src")
+		? path.join(cwd, `dist/${wasmFile}`)
+		: path.join(cwd, `src/dist/${wasmFile}`)
 	const lang = await Language.load(wasmPath)
 	parser.setLanguage(lang)
 
@@ -120,7 +124,8 @@ export async function inspectTreeStructure(content: string, language: string = "
 	const { Parser, Language } = await initializeTreeSitter()
 	const parser = new Parser()
 	const cwd = process.cwd()
-	const wasmPath = cwd.endsWith("/src")
+	const normalizedCwd = cwd.replace(/\\/g, "/")
+	const wasmPath = normalizedCwd.endsWith("/src")
 		? path.join(cwd, `dist/tree-sitter-${language}.wasm`)
 		: path.join(cwd, `src/dist/tree-sitter-${language}.wasm`)
 	const lang = await Language.load(wasmPath)
