@@ -31,7 +31,7 @@ describe("CompletionProvider", () => {
 
 	it("does not fetch localhost:undefined when completion-agent is missing", async () => {
 		const onError = vi.fn()
-		const provider = new CompletionProvider({} as any, onError)
+		const provider = new CompletionProvider(onError)
 
 		const result = await provider.provideInlineCompletionItems(
 			{
@@ -84,7 +84,7 @@ describe("CompletionProvider", () => {
 			status: "running",
 		})
 
-		const provider = new CompletionProvider({} as any, vi.fn())
+		const provider = new CompletionProvider(vi.fn())
 		const result = await provider.provideInlineCompletionItems(
 			{
 				completionId: "completion-2",

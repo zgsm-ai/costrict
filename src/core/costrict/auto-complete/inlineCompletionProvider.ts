@@ -16,7 +16,7 @@ import * as vscode from "vscode"
 import { v7 as uuidv7 } from "uuid"
 import { CompletionProvider, AutoCompleteInput, CompletionErrorHandler } from "./core/completionProvider"
 import { CompletionStatusBar } from "./statusBar"
-import { ClineProvider } from "../../webview/ClineProvider"
+import type { InlineCompletionHost } from "./host"
 import { extractPrefixSuffix, getDependencyImports } from "./utils"
 import { getWorkspacePath, toRelativePath } from "../../../utils/path"
 import { AutocompleteOutcome, CalculateHideScore } from "./types"
@@ -43,18 +43,18 @@ export class InlineCompletionProvider implements InlineCompletionItemProvider {
 
 	constructor(
 		private readonly context: ExtensionContext,
-		private readonly provider: ClineProvider,
+		private readonly host: InlineCompletionHost,
 	) {
 		this.ide = new VsCodeIde(context)
 		this.recentlyEditedTracker = new RecentlyEditedTracker(this.ide)
 		this.recentlyVisitedRanges = new RecentlyVisitedRangesService(this.ide)
 		this.completionStatusBar = CompletionStatusBar.getInstance()
 		const onError: CompletionErrorHandler = (error) => {
-			this.provider.log(`[Completion Error]: ${error}`)
+			this.host.log(`[Completion Error]: ${error}`)
 			TelemetryService.instance.captureError(`TabCompletion_${CodeCompletionError.ApiError}`)
 			this.completionStatusBar.fail(error as any)
 		}
-		this.completionProvider = new CompletionProvider(provider, onError)
+		this.completionProvider = new CompletionProvider(onError)
 		this._setupActiveTextEditorChangeListener()
 	}
 	public async provideInlineCompletionItems(
@@ -123,7 +123,7 @@ export class InlineCompletionProvider implements InlineCompletionItemProvider {
 			this.completionStatusBar.noSuggest()
 			return []
 		}
-		this.provider.log(`[Completions]: ${JSON.stringify(result)}`)
+		this.host.log(`[Completions]: ${JSON.stringify(result)}`)
 		const willDisplay = this.willDisplay(document, selectedCompletionInfo, signal, result)
 		if (!willDisplay) {
 			return []
@@ -223,8 +223,8 @@ export class InlineCompletionProvider implements InlineCompletionItemProvider {
 	}
 
 	private async isProviderSupported(): Promise<boolean> {
-		const { apiConfiguration } = await this.provider.getState()
-		return apiConfiguration.apiProvider === "costrict"
+		const apiProvider = await this.host.getApiProvider()
+		return apiProvider === "costrict"
 	}
 
 	private _setupActiveTextEditorChangeListener(): void {

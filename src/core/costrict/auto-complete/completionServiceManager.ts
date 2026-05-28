@@ -1,23 +1,21 @@
 import * as vscode from "vscode"
-import { ClineProvider } from "../../webview/ClineProvider"
+import type { InlineCompletionHost } from "./host"
 import { InlineCompletionProvider } from "./inlineCompletionProvider"
 import { CompletionProvider } from "./core/completionProvider"
 import { Package } from "shared/package"
 export class CompletionServiceManager {
 	private static instance: CompletionServiceManager | null = null
-	private readonly cline: ClineProvider
 	private readonly context: vscode.ExtensionContext
 
 	public readonly inlineCompletionProvider: InlineCompletionProvider
-	private constructor(context: vscode.ExtensionContext, provider: ClineProvider) {
-		this.cline = provider
+	private constructor(context: vscode.ExtensionContext, host: InlineCompletionHost) {
 		this.context = context
-		this.inlineCompletionProvider = new InlineCompletionProvider(context, provider)
+		this.inlineCompletionProvider = new InlineCompletionProvider(context, host)
 		this.load()
 	}
-	public static initialize(context: vscode.ExtensionContext, provider: ClineProvider) {
+	public static initialize(context: vscode.ExtensionContext, host: InlineCompletionHost) {
 		if (!CompletionServiceManager.instance) {
-			CompletionServiceManager.instance = new CompletionServiceManager(context, provider)
+			CompletionServiceManager.instance = new CompletionServiceManager(context, host)
 		}
 		return CompletionServiceManager.instance
 	}

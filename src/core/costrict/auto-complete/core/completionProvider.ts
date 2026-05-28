@@ -1,5 +1,4 @@
 import { Completion } from "openai/resources/completions"
-import { ClineProvider } from "../../../webview/ClineProvider"
 import { settings } from "../../base/common/constant"
 import { CalculateHideScore, PromptOptions, AutocompleteOutcome } from "../types"
 import { COSTRICT_DEFAULT_HEADERS } from "../../../../shared/headers"
@@ -90,10 +89,7 @@ export class CompletionProvider {
 	}
 	private serverHost: string | undefined
 	private readonly onError: CompletionErrorHandler
-	constructor(
-		private readonly provider: ClineProvider,
-		onError: CompletionErrorHandler,
-	) {
+	constructor(onError: CompletionErrorHandler) {
 		this.onError = onError
 		this.serverHost = this._getServerHostConfig()
 	}
