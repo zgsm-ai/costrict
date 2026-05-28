@@ -755,6 +755,12 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 									)
 								hasReasoning = true
 								yield { type: "reasoning", text: reasoning_content }
+							} else {
+								this.logger.warn(
+									`[ResponseID ${this.options.costrictModelId} chunk with empty ${key}]:`,
+									requestId,
+									JSON.stringify(chunk),
+								)
 							}
 							break
 						}
@@ -794,7 +800,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 			}
 			if (!hasReasoning) {
 				// Add a fake reasoning event to ensure the frontend processes the response
-				yield { type: "fake_reasoning", text: " " }
+				yield { type: "fake_reasoning", text: "" }
 			}
 		} finally {
 			// Always flush remaining content, even on abort

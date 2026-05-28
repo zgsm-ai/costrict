@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events"
+import path from "node:path"
 
 import { RooCodeEventName } from "@roo-code/types"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -228,7 +229,7 @@ describe("CodeReviewService delegation lifecycle", () => {
 
 		await vi.runAllTimersAsync()
 
-		expect(fileExistsAtPath).toHaveBeenCalledWith("/workspace/src/a.ts")
+		expect(fileExistsAtPath).toHaveBeenCalledWith(path.resolve("/workspace", "src/a.ts"))
 		expect(service.getAllCachedIssues()).toHaveLength(1)
 
 		const reviewUpdates = getReviewUpdates(provider)

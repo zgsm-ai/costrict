@@ -7,8 +7,9 @@
  * - Mode-specific skills are installed to skills-{mode}/ directories
  *
  * Version tracking:
- * - Uses bundled-skills/index.json for version information
+ * - Uses bundled-skills/index.json for version information (commitSha + locales)
  * - Reads/writes .version file in user skill directory for version comparison
+ * - Version format: "commitSha:locale" (e.g., "d2bc918:zh-CN")
  * - Does NOT use globalState for version tracking
  * - Does NOT modify SKILL.md content
  */
@@ -26,11 +27,12 @@ const logger: ILogger = createLogger("BuiltinSkillsInstaller")
  */
 interface BundledSkillsIndex {
 	version: string
+	commitSha: string
+	locales: string[]
 	skills: Array<{
 		name: string
 		repo: string
 		branch: string
-		commitSha: string
 	}>
 }
 
@@ -48,6 +50,10 @@ interface BuiltinSkillConfig {
  * Built-in skills bundled with the extension
  */
 const BUILTIN_SKILLS: readonly BuiltinSkillConfig[] = [
+	{
+		name: "review",
+		mode: "review", // Install to skills-review/ directory
+	},
 	{
 		name: "security-review",
 		mode: "security-review", // Install to skills-security-review/ directory
@@ -84,24 +90,51 @@ function getUserSkillsPath(mode?: string): string {
 }
 
 /**
- * Get the bundled commit SHA from index.json for a specific skill
+ * Get the bundled commit SHA from index.json
  */
-async function getBundledCommitSha(bundledSkillsPath: string, skillName: string): Promise<string> {
+async function getBundledCommitSha(bundledSkillsPath: string): Promise<string> {
 	try {
 		const indexPath = path.join(bundledSkillsPath, "index.json")
 		const content = await fs.readFile(indexPath, "utf-8")
 		const index: BundledSkillsIndex = JSON.parse(content)
-		const skill = index.skills.find((s) => s.name === skillName)
-		return skill?.commitSha || ""
+		return index.commitSha || ""
 	} catch {
 		return ""
 	}
 }
 
 /**
- * Get the installed commit SHA from .version file in user directory
+ * Get the available locales from index.json
  */
-async function getInstalledCommitSha(skillDir: string): Promise<string> {
+async function getBundledLocales(bundledSkillsPath: string): Promise<string[]> {
+	try {
+		const indexPath = path.join(bundledSkillsPath, "index.json")
+		const content = await fs.readFile(indexPath, "utf-8")
+		const index: BundledSkillsIndex = JSON.parse(content)
+		return index.locales || ["en"]
+	} catch {
+		return ["en"]
+	}
+}
+
+/**
+ * Resolve locale: use preferred locale if available, map zh-TW to zh-CN,
+ * otherwise fallback to first available
+ */
+function resolveLocale(preferredLocale: string, availableLocales: string[]): string {
+	if (availableLocales.includes(preferredLocale)) {
+		return preferredLocale
+	}
+	if (preferredLocale === "zh-TW" && availableLocales.includes("zh-CN")) {
+		return "zh-CN"
+	}
+	return availableLocales[0] || "en"
+}
+
+/**
+ * Get the installed version from .version file in user directory
+ */
+async function getInstalledVersion(skillDir: string): Promise<string> {
 	try {
 		const versionFilePath = path.join(skillDir, ".version")
 		const content = await fs.readFile(versionFilePath, "utf-8")
@@ -112,45 +145,37 @@ async function getInstalledCommitSha(skillDir: string): Promise<string> {
 }
 
 /**
- * Copy skill from bundled directory to user directory
- * Does NOT modify SKILL.md content
+ * Copy skill from bundled directory to user directory using atomic swap.
+ * Writes to a temp directory first, then renames to avoid partial states.
  */
 async function copyBundledSkill(
 	skillName: string,
 	bundledPath: string,
 	userPath: string,
 	bundledCommitSha: string,
+	locale: string,
 ): Promise<boolean> {
 	try {
-		// Check if bundled skill exists
-		const skillSourceDir = path.join(bundledPath, skillName)
+		// Check if bundled skill exists in locale directory
+		const skillSourceDir = path.join(bundledPath, locale, skillName)
 		await fs.access(skillSourceDir)
 
-		// Create user directory
 		await fs.mkdir(userPath, { recursive: true })
 
-		// Copy skill directory
 		const skillTargetDir = path.join(userPath, skillName)
+		const tempDir = path.join(userPath, `.tmp-${skillName}-${Date.now()}`)
 
-		// Remove old version if exists
-		if (
-			await fs
-				.access(skillTargetDir)
-				.then(() => true)
-				.catch(() => false)
-		) {
-			await fs.rm(skillTargetDir, { recursive: true, force: true })
-		}
+		// Copy to temp directory first
+		await fs.mkdir(tempDir, { recursive: true })
+		await fs.cp(skillSourceDir, tempDir, { recursive: true })
 
-		// Create target directory
-		await fs.mkdir(skillTargetDir, { recursive: true })
+		// Write .version file into temp directory
+		const versionFilePath = path.join(tempDir, ".version")
+		await fs.writeFile(versionFilePath, `${bundledCommitSha}:${locale}`, "utf-8")
 
-		// Copy all files recursively without modification
-		await fs.cp(skillSourceDir, skillTargetDir, { recursive: true })
-
-		// Write .version file with commit SHA
-		const versionFilePath = path.join(skillTargetDir, ".version")
-		await fs.writeFile(versionFilePath, bundledCommitSha, "utf-8")
+		// Remove old version and rename temp to target (atomic on same filesystem)
+		await fs.rm(skillTargetDir, { recursive: true, force: true })
+		await fs.rename(tempDir, skillTargetDir)
 
 		return true
 	} catch {
@@ -161,11 +186,15 @@ async function copyBundledSkill(
 /**
  * Install a single built-in skill
  */
-async function installBuiltinSkill(config: BuiltinSkillConfig, bundledSkillsPath: string): Promise<boolean> {
+async function installBuiltinSkill(
+	config: BuiltinSkillConfig,
+	bundledSkillsPath: string,
+	preferredLocale: string,
+): Promise<boolean> {
 	const { name, mode } = config
 
 	// Get bundled commit SHA from index.json
-	const bundledCommitSha = await getBundledCommitSha(bundledSkillsPath, name)
+	const bundledCommitSha = await getBundledCommitSha(bundledSkillsPath)
 
 	// Skip if commitSha is null/empty (skill not properly bundled)
 	if (!bundledCommitSha) {
@@ -173,12 +202,17 @@ async function installBuiltinSkill(config: BuiltinSkillConfig, bundledSkillsPath
 		return false
 	}
 
+	// Resolve locale from available locales
+	const availableLocales = await getBundledLocales(bundledSkillsPath)
+	const locale = resolveLocale(preferredLocale, availableLocales)
+
 	// Get user skills path
 	const userSkillsPath = getUserSkillsPath(mode)
 	const skillDir = path.join(userSkillsPath, name)
 
-	// Check installed commit SHA from .version file
-	const installedCommitSha = await getInstalledCommitSha(skillDir)
+	// Check installed version from .version file
+	const installedVersion = await getInstalledVersion(skillDir)
+	const expectedVersion = `${bundledCommitSha}:${locale}`
 
 	// Check if update is needed
 	const dirExists = await fs
@@ -186,25 +220,27 @@ async function installBuiltinSkill(config: BuiltinSkillConfig, bundledSkillsPath
 		.then(() => true)
 		.catch(() => false)
 	if (dirExists) {
-		if (installedCommitSha === bundledCommitSha) {
-			logger.info(`[BuiltinSkills] ${name}: Up to date (${bundledCommitSha})`)
+		if (installedVersion === expectedVersion) {
+			logger.info(`[BuiltinSkills] ${name}: Up to date (${expectedVersion})`)
 			return true
 		}
-		const shortInstalled = installedCommitSha?.slice(0, 7) || "unknown"
+		const shortInstalled = installedVersion?.slice(0, 7) || "unknown"
 		const shortBundled = bundledCommitSha?.slice(0, 7) || "unknown"
-		logger.info(`[BuiltinSkills] ${name}: Commit changed (${shortInstalled} -> ${shortBundled}), updating`)
+		logger.info(
+			`[BuiltinSkills] ${name}: Version changed (${shortInstalled} -> ${shortBundled}:${locale}), updating`,
+		)
 	} else {
 		const shortBundled = bundledCommitSha?.slice(0, 7) || "unknown"
-		logger.info(`[BuiltinSkills] ${name}: Installing (${shortBundled})`)
+		logger.info(`[BuiltinSkills] ${name}: Installing (${shortBundled}:${locale})`)
 	}
 
 	// Copy from bundled skills to mode-specific or generic directory
-	const bundledInstalled = await copyBundledSkill(name, bundledSkillsPath, userSkillsPath, bundledCommitSha)
+	const bundledInstalled = await copyBundledSkill(name, bundledSkillsPath, userSkillsPath, bundledCommitSha, locale)
 
 	if (bundledInstalled) {
 		const modeInfo = mode ? ` to ${mode} mode` : ""
 		const shortSha = bundledCommitSha?.slice(0, 7) || "unknown"
-		logger.info(`[BuiltinSkills] ${name}: Installed from bundled skills${modeInfo} (${shortSha})`)
+		logger.info(`[BuiltinSkills] ${name}: Installed from bundled skills${modeInfo} (${shortSha}:${locale})`)
 		return true
 	}
 
@@ -221,9 +257,12 @@ async function installBuiltinSkill(config: BuiltinSkillConfig, bundledSkillsPath
  * Mode-specific skills are installed to skills-{mode}/ directories,
  * which ensures they only activate in that specific mode.
  *
- * Skills are automatically updated when the bundled version changes.
+ * Skills are automatically updated when the bundled version or locale changes.
  */
-export async function installGitHubSkills(context: vscode.ExtensionContext): Promise<void> {
+export async function installGitHubSkills(
+	context: vscode.ExtensionContext,
+	preferredLocale: string = "zh-CN",
+): Promise<void> {
 	const bundledSkillsPath = getBundledSkillsPath(context)
 
 	// Check if bundled skills exist
@@ -239,11 +278,13 @@ export async function installGitHubSkills(context: vscode.ExtensionContext): Pro
 
 	const extensionVersion = getExtensionVersion(context)
 	logger.info(
-		`[BuiltinSkills] Installing ${BUILTIN_SKILLS.length} built-in skills (extension v${extensionVersion})...`,
+		`[BuiltinSkills] Installing ${BUILTIN_SKILLS.length} built-in skills (extension v${extensionVersion}, locale: ${preferredLocale})...`,
 	)
 
 	// Install all skills (copy from bundled to user directory)
-	const results = await Promise.all(BUILTIN_SKILLS.map((config) => installBuiltinSkill(config, bundledSkillsPath)))
+	const results = await Promise.all(
+		BUILTIN_SKILLS.map((config) => installBuiltinSkill(config, bundledSkillsPath, preferredLocale)),
+	)
 
 	const successCount = results.filter((r) => r).length
 	logger.info(`[BuiltinSkills] Installation complete: ${successCount}/${BUILTIN_SKILLS.length} skills`)
@@ -258,7 +299,7 @@ export async function getInstalledGitHubSkills(): Promise<string[]> {
 	for (const config of BUILTIN_SKILLS) {
 		const userSkillsPath = getUserSkillsPath(config.mode)
 		const skillDir = path.join(userSkillsPath, config.name)
-		const version = await getInstalledCommitSha(skillDir)
+		const version = await getInstalledVersion(skillDir)
 		if (version) {
 			installed.push(config.name)
 		}
@@ -278,6 +319,6 @@ export async function getGitHubSkillVersion(
 
 	const userSkillsPath = getUserSkillsPath(config.mode)
 	const skillDir = path.join(userSkillsPath, config.name)
-	const version = await getInstalledCommitSha(skillDir)
+	const version = await getInstalledVersion(skillDir)
 	return { installed: version !== "", version: version || null }
 }

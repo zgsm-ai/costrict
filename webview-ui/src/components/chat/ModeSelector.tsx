@@ -193,13 +193,6 @@ export const ModeSelector = ({
 		[trackModeSelectorOpened],
 	)
 
-	// Auto-switch to "code" mode when value is "review" but not reviewing
-	React.useEffect(() => {
-		if (["review", "security-review", "subreview"].includes(value) && !isReviewing) {
-			onChange("code")
-		}
-	}, [value, isReviewing, onChange])
-
 	// Auto-focus search input and scroll to selected item when popover opens.
 	React.useEffect(() => {
 		if (open) {
