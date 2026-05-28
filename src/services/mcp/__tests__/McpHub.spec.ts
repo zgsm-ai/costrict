@@ -1780,6 +1780,58 @@ describe("McpHub", () => {
 				)
 			})
 		})
+
+		describe("callTool per-call options", () => {
+			it("forwards custom timeoutMs to client.request", async () => {
+				const mockConnection: ConnectedMcpConnection = {
+					type: "connected",
+					server: {
+						name: "test-server",
+						config: JSON.stringify({ type: "stdio", command: "test", timeout: 60 }),
+						status: "connected",
+					},
+					client: {
+						request: vi.fn().mockResolvedValue({ content: [] }),
+					} as any,
+					transport: {} as any,
+				}
+
+				mcpHub.connections = [mockConnection]
+
+				await mcpHub.callTool("test-server", "t1", { x: 1 }, undefined, { timeoutMs: 1234 })
+
+				expect(mockConnection.client!.request).toHaveBeenCalledWith(
+					expect.anything(),
+					expect.anything(),
+					expect.objectContaining({ timeout: 1234 }),
+				)
+			})
+
+			it("aborts when AbortSignal already aborted before request", async () => {
+				const mockConnection: ConnectedMcpConnection = {
+					type: "connected",
+					server: {
+						name: "test-server",
+						config: JSON.stringify({ type: "stdio", command: "test", timeout: 60 }),
+						status: "connected",
+					},
+					client: {
+						request: vi.fn().mockResolvedValue({ content: [] }),
+					} as any,
+					transport: {} as any,
+				}
+
+				mcpHub.connections = [mockConnection]
+
+				const ctrl = new AbortController()
+				ctrl.abort()
+
+				await expect(
+					mcpHub.callTool("test-server", "t1", undefined, undefined, { signal: ctrl.signal }),
+				).rejects.toThrow(/aborted|abort/i)
+				expect(mockConnection.client!.request).not.toHaveBeenCalled()
+			})
+		})
 	})
 
 	describe("MCP global enable/disable", () => {
@@ -2066,6 +2118,32 @@ describe("McpHub", () => {
 			expect(server!.server.status).toBe("disconnected")
 			expect(server!.client).toBeNull()
 			expect(server!.transport).toBeNull()
+		})
+	})
+
+	describe("ServerConfigSchema asyncPolling", () => {
+		it("parses asyncPolling when provided", () => {
+			const parsed = ServerConfigSchema.parse({
+				command: "node",
+				asyncPolling: {
+					tools: {
+						deploy: {
+							statusTool: "get_status",
+							taskIdPath: "$.taskId",
+							statusPath: "$.status",
+							pendingValues: ["running"],
+							completedValues: ["done"],
+						},
+					},
+				},
+			})
+			expect(parsed.asyncPolling?.tools.deploy.statusTool).toBe("get_status")
+			expect(parsed.asyncPolling?.tools.deploy.intervalMs).toBe(5000)
+		})
+
+		it("defaults asyncPolling to undefined / absent when not provided", () => {
+			const parsed = ServerConfigSchema.parse({ command: "node" })
+			expect(parsed.asyncPolling).toBeUndefined()
 		})
 	})
 
@@ -2421,6 +2499,93 @@ describe("McpHub", () => {
 					args: ["/c", "echo", "test"],
 				}),
 			)
+		})
+	})
+
+	async function buildHubWithConnectedServer(
+		serverName: string,
+		config?: Record<string, unknown>,
+	): Promise<McpHubType> {
+		const hub = new McpHub(mockProvider as ClineProvider)
+		const mockConnection: ConnectedMcpConnection = {
+			type: "connected",
+			server: {
+				name: serverName,
+				config: JSON.stringify(config ?? { command: "node" }),
+				status: "connected",
+				source: "global",
+			},
+			client: {
+				request: vi.fn().mockResolvedValue({ content: [] }),
+			} as any,
+			transport: {} as any,
+		}
+		hub.connections = [mockConnection]
+		return hub
+	}
+
+	describe("McpHub.isToolDisabled", () => {
+		it("returns true when toolName is in disabledTools array of the raw config", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a", {
+				command: "node",
+				disabledTools: ["forbidden_tool"],
+			})
+			await expect(hub.isToolDisabled("srv-a", "forbidden_tool")).resolves.toBe(true)
+			await expect(hub.isToolDisabled("srv-a", "ok_tool")).resolves.toBe(false)
+		})
+
+		it("returns false when server not found", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a")
+			await expect(hub.isToolDisabled("missing", "x")).resolves.toBe(false)
+		})
+	})
+
+	describe("McpHub.getAsyncPollingConfig", () => {
+		it("returns the per-tool config when present", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a", {
+				command: "node",
+				asyncPolling: {
+					tools: {
+						deploy: {
+							statusTool: "get_status",
+							taskIdPath: "$.taskId",
+							statusPath: "$.status",
+							pendingValues: ["running"],
+							completedValues: ["done"],
+						},
+					},
+				},
+			})
+			const cfg = await hub.getAsyncPollingConfig("srv-a", "deploy")
+			expect(cfg?.statusTool).toBe("get_status")
+		})
+
+		it("returns undefined when tool has no async config", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a", { command: "node" })
+			await expect(hub.getAsyncPollingConfig("srv-a", "anything")).resolves.toBeUndefined()
+		})
+	})
+
+	describe("McpHub.getAsyncExecutionService", () => {
+		it("returns the same instance on repeated calls", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a")
+			expect(hub.getAsyncExecutionService()).toBe(hub.getAsyncExecutionService())
+		})
+
+		it("the returned service falls through to callTool when no asyncPolling is configured", async () => {
+			const hub = await buildHubWithConnectedServer("srv-a")
+			const spy = vi.spyOn(hub, "callTool").mockResolvedValueOnce({ content: [{ type: "text", text: "x" }] })
+
+			const res = await hub.getAsyncExecutionService().execute({
+				serverName: "srv-a",
+				toolName: "anything",
+				arguments: {},
+				source: undefined,
+				executionId: "e1",
+				isCancelled: () => false,
+			})
+			expect((res.content[0] as { text: string }).text).toBe("x")
+			expect(spy).toHaveBeenCalled()
 		})
 	})
 })

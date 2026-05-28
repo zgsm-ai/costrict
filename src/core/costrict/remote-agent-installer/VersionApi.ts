@@ -123,6 +123,7 @@ export class VersionApi {
 			downloadUrl: this.resolveUrl(data.downloadUrl, baseUrl),
 			checksum: data.checksum,
 			checksumAlgo: data.checksumAlgo,
+			agents: data.agents,
 		}
 
 		logger.info(`${LOG_PREFIX} Remote version: ${resolved.version}, url: ${redactUrl(resolved.downloadUrl || "")}`)

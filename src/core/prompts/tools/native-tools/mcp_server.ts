@@ -3,6 +3,59 @@ import { McpHub } from "../../../../services/mcp/McpHub"
 import { buildMcpToolName } from "../../../../utils/mcp-name"
 import { normalizeToolSchema, type JsonSchema } from "../../../../utils/json-schema"
 
+const SECRET_KEY_RE = /(?:api[_-]?key|authorization|token|secret|password|credential)/i
+
+function isSecretLike(key: string): boolean {
+	return SECRET_KEY_RE.test(key)
+}
+
+function getInitialArgsTemplate(
+	serverConfig: string | undefined,
+	toolName: string,
+): Record<string, unknown> | undefined {
+	if (!serverConfig) return undefined
+	try {
+		const parsed = JSON.parse(serverConfig)
+		const template = parsed?.asyncPolling?.tools?.[toolName]?.initialArgsTemplate
+		if (template && typeof template === "object" && !Array.isArray(template)) {
+			return template as Record<string, unknown>
+		}
+	} catch {
+		// invalid JSON – leave schema unchanged
+	}
+	return undefined
+}
+
+function filterSchemaForModel(schema: JsonSchema, initialArgsTemplate: Record<string, unknown>): JsonSchema {
+	if (!initialArgsTemplate || typeof schema !== "object") return schema
+
+	const result = { ...schema } as Record<string, unknown>
+	const templateKeys = Object.keys(initialArgsTemplate)
+
+	if (Array.isArray(result.required)) {
+		const filtered = (result.required as string[]).filter((k) => !templateKeys.includes(k))
+		if (filtered.length > 0) {
+			result.required = filtered
+		} else {
+			delete result.required
+		}
+	}
+
+	const props = result.properties as Record<string, unknown> | undefined
+	if (props) {
+		const secretKeys = templateKeys.filter(isSecretLike)
+		if (secretKeys.length > 0) {
+			const newProps = { ...props }
+			for (const sk of secretKeys) {
+				delete newProps[sk]
+			}
+			result.properties = newProps
+		}
+	}
+
+	return result as JsonSchema
+}
+
 /**
  * Dynamically generates native tool definitions for all enabled tools across connected MCP servers.
  * Tools are deduplicated by name to prevent API errors. When the same server exists in both
@@ -43,13 +96,16 @@ export function getMcpServerTools(mcpHub?: McpHub): OpenAI.Chat.ChatCompletionTo
 
 			const originalSchema = tool.inputSchema as Record<string, unknown> | undefined
 
-			// Normalize schema for JSON Schema 2020-12 compliance (type arrays → anyOf)
 			let parameters: JsonSchema
 			if (originalSchema) {
 				parameters = normalizeToolSchema(originalSchema) as JsonSchema
 			} else {
-				// No schema provided - create a minimal valid schema
 				parameters = { type: "object", additionalProperties: false } as JsonSchema
+			}
+
+			const initialArgsTemplate = getInitialArgsTemplate(server.config, tool.name)
+			if (initialArgsTemplate) {
+				parameters = filterSchemaForModel(parameters, initialArgsTemplate)
 			}
 
 			const toolDefinition: OpenAI.Chat.ChatCompletionTool = {

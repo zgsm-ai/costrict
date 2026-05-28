@@ -8,6 +8,9 @@ export interface ResourcePackageVersion {
 	downloadUrl?: string
 	checksum?: string
 	checksumAlgo?: string
+	agents?: {
+		order?: string[]
+	}
 }
 
 export type InstallState = "none" | "installed" | "failed"

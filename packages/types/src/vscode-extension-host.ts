@@ -18,6 +18,7 @@ import type { CloudUserInfo, CloudOrganizationMembership, OrganizationAllowList,
 import type { SerializedCustomToolDefinition } from "./custom-tool.js"
 import type { GitCommit } from "./git.js"
 import type { McpServer } from "./mcp.js"
+import type { McpAsyncTaskSummary } from "./mcpAsyncTaskSummary.js"
 // import type { ICostrictModelResponseData, ModelRecord, RouterModels } from "./model.js"
 import type { INotice } from "./notification.js"
 // import type { SkillMetadata } from "./skills.js"
@@ -424,6 +425,7 @@ export type ExtensionState = Pick<
 	lastShownAnnouncementId?: string
 	apiModelId?: string
 	mcpServers?: McpServer[]
+	mcpAsyncTaskRecords?: McpAsyncTaskSummary[]
 	mdmCompliant?: boolean
 	taskSyncEnabled: boolean
 	// featureRoomoteControlEnabled: boolean
@@ -563,6 +565,7 @@ export interface WebviewMessage {
 		| "openProjectMcpSettings"
 		| "restartMcpServer"
 		| "refreshAllMcpServers"
+		| "queryMcpAsyncTask"
 		| "toggleToolAlwaysAllow"
 		| "toggleToolEnabledForPrompt"
 		| "toggleMcpServer"
@@ -726,6 +729,7 @@ export interface WebviewMessage {
 	audioType?: AudioType
 	serverName?: string
 	toolName?: string
+	recordId?: string
 	alwaysAllow?: boolean
 	isEnabled?: boolean
 	mode?: string
