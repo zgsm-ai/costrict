@@ -27,16 +27,21 @@ export class NotificationService {
 		if (this.isInitialized) {
 			return
 		}
-		// Fetch immediately on initialization
+		this.isInitialized = true
+		// Start periodic fetching and defer the initial network request so activation is not blocked.
+		this.startPeriodicFetch()
+		setTimeout(() => {
+			void this.fetchAndProcessNotices("initialization")
+		}, 1000)
+	}
+
+	private async fetchAndProcessNotices(source: string): Promise<void> {
 		try {
-			this.isInitialized = true
 			const response = await this.fetchNotices()
 			await this.processAndSendNotices(response.notices || [])
 		} catch (error) {
-			console.warn("Failed to fetch notices during initialization:", error)
+			console.warn(`Failed to fetch notices during ${source}:`, error)
 		}
-		// Start periodic fetching
-		this.startPeriodicFetch()
 	}
 
 	/**
@@ -46,13 +51,8 @@ export class NotificationService {
 		// Clear existing timer if any
 		this.stopPeriodicFetch()
 		// Set up interval to fetch every hour
-		this.fetchTimer = setInterval(async () => {
-			try {
-				const response = await this.fetchNotices()
-				await this.processAndSendNotices(response.notices || [])
-			} catch (error) {
-				console.error("Failed to fetch notices periodically:", error)
-			}
+		this.fetchTimer = setInterval(() => {
+			void this.fetchAndProcessNotices("periodic refresh")
 		}, this.FETCH_INTERVAL)
 	}
 
