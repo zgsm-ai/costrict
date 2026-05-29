@@ -32,6 +32,15 @@ vi.mock("../../../utils/logger", () => ({
 	}),
 }))
 
+// Mock delay to prevent real waits during retry loops in runInstallWithRetries
+vi.mock("../utils", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../utils")>()
+	return {
+		...actual,
+		delay: vi.fn().mockResolvedValue(undefined),
+	}
+})
+
 import { RemoteAgentInstaller } from "../RemoteAgentInstaller"
 
 vi.mock("../../../i18n", () => ({
@@ -142,8 +151,8 @@ describe("RemoteAgentInstaller", () => {
 			// Stop after first real call to avoid infinite loop
 		}
 		;(installer as any).scheduleNextCheck()
-		// Advance past the 12h timer
-		await vi.advanceTimersByTimeAsync(12 * 60 * 60 * 1000 + 1000)
+		// Advance past the default 24h timer (getCheckIntervalMs defaults to 24*60 minutes)
+		await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000 + 1000)
 
 		expect(performSpy).toHaveBeenCalled()
 		vi.useRealTimers()

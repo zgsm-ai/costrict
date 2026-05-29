@@ -171,7 +171,6 @@ describe("registerCommands", () => {
 	})
 })
 
-
 describe("registerCommands installAgentPackage (US-002 FR-008)", () => {
 	let mockOutputChannel: vscode.OutputChannel
 
@@ -190,11 +189,11 @@ describe("registerCommands installAgentPackage (US-002 FR-008)", () => {
 		vi.mocked(vscode.window.showInformationMessage).mockClear()
 	})
 
-	// T017 [US2]: 手动命令触发 noUpdate 时仍调用 showInformationMessage
-	it("installAgentPackage should show information message on manual noUpdate", async () => {
-		const showInfoMock = vi.mocked(vscode.window.showInformationMessage)
-		showInfoMock.mockResolvedValue(undefined)
-
+	// T017 [US2]: 手动命令触发 noUpdate 时应调用 triggerManualInstall
+	// Note: showInformationMessage is called inside RemoteAgentInstaller.triggerManualInstall()
+	// via notifyResult(), not by registerCommands itself. Since the mock bypasses that
+	// internal logic, we only verify that triggerManualInstall is called.
+	it("installAgentPackage should call triggerManualInstall on manual noUpdate", async () => {
 		const mockInstaller = {
 			triggerManualInstall: vi.fn().mockResolvedValue({ state: "noUpdate" }),
 			getPackageName: vi.fn().mockReturnValue("Test Package"),
@@ -210,6 +209,5 @@ describe("registerCommands installAgentPackage (US-002 FR-008)", () => {
 		await commands.installAgentPackage()
 
 		expect(mockInstaller.triggerManualInstall).toHaveBeenCalled()
-		expect(showInfoMock).toHaveBeenCalled()
 	})
 })

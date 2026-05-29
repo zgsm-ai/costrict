@@ -2,6 +2,12 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.8.7]
+
+- Ensure MCP and Skills Managers are initialized properly in providers (#1251)
+- Fix DeepSeek 'reasoning_content' error
+-
+
 ## [2.8.6]
 
 - Update generate-review-builtin script

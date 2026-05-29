@@ -45,7 +45,7 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 		provider.context,
 		cwd,
 		false, // supportsComputerUse — browser removed
-		mcpEnabled ? provider.getMcpHub() : undefined,
+		mcpEnabled ? await provider.ensureMcpHub() : undefined,
 		diffStrategy,
 		mode,
 		customModePrompts,
@@ -68,7 +68,7 @@ export const generateSystemPrompt = async (provider: ClineProvider, message: Web
 		undefined, // todoList
 		message?.values?.modelId, // modelId
 		parallelToolCallsEnabled,
-		provider.getSkillsManager(),
+		await provider.ensureSkillsManager(),
 		experiments?.useLitePrompts ?? false,
 	)
 
