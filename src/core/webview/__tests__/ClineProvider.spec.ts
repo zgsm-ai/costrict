@@ -524,14 +524,15 @@ describe("ClineProvider", () => {
 		// @ts-ignore - Accessing private property for testing.
 		provider.customModesManager = mockCustomModesManager
 
-		// Mock getMcpHub method for generateSystemPrompt
-		provider.getMcpHub = vi.fn().mockReturnValue({
+		// Mock ensureMcpHub method for generateSystemPrompt
+		provider.ensureMcpHub = vi.fn().mockResolvedValue({
 			listTools: vi.fn().mockResolvedValue([]),
 			callTool: vi.fn().mockResolvedValue({ content: [] }),
 			listResources: vi.fn().mockResolvedValue([]),
 			readResource: vi.fn().mockResolvedValue({ contents: [] }),
 			getAllServers: vi.fn().mockReturnValue([]),
 		})
+		provider.ensureSkillsManager = vi.fn().mockResolvedValue(undefined)
 	})
 
 	test("constructor initializes correctly", () => {
@@ -3377,14 +3378,15 @@ describe("ClineProvider - Comprehensive Edit/Delete Edge Cases", () => {
 			},
 		}
 
-		// Mock getMcpHub method
-		provider.getMcpHub = vi.fn().mockReturnValue({
+		// Mock ensureMcpHub method
+		provider.ensureMcpHub = vi.fn().mockResolvedValue({
 			listTools: vi.fn().mockResolvedValue([]),
 			callTool: vi.fn().mockResolvedValue({ content: [] }),
 			listResources: vi.fn().mockResolvedValue([]),
 			readResource: vi.fn().mockResolvedValue({ contents: [] }),
 			getAllServers: vi.fn().mockReturnValue([]),
 		})
+		provider.ensureSkillsManager = vi.fn().mockResolvedValue(undefined)
 	})
 
 	describe("Edit Messages with Images and Attachments", () => {
