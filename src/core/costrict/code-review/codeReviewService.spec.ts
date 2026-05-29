@@ -119,6 +119,31 @@ vi.mock("./reviewComment", () => ({
 	ReviewComment: class {},
 }))
 
+// Mock common review modules used by CodeReviewService
+const resolveFromReportFileMock = vi.fn()
+const resolveFromReportTextMock = vi.fn()
+const buildReviewRequestOptionsMock = vi.fn()
+
+vi.mock("./common/reviewIssueResolver", () => ({
+	buildReviewRequestOptions: (...args: any[]) => buildReviewRequestOptionsMock(...args),
+	getReviewReportJsonPath: vi.fn((cwd: string, _mode: string) => `${cwd}/code-review_result/review-report.json`),
+	getFullReportJsonlPath: vi.fn((cwd: string, _mode: string) => `${cwd}/code-review_result/full_report.jsonl`),
+	resolveFromReportFile: (...args: any[]) => resolveFromReportFileMock(...args),
+	resolveFromReportText: (...args: any[]) => resolveFromReportTextMock(...args),
+}))
+
+// Default: resolveFromReportFile returns empty (overridden per test)
+resolveFromReportFileMock.mockResolvedValue({
+	issues: [],
+	review_task_id: "",
+	count: 0,
+	title: "",
+	conclusion: "",
+})
+
+// Default: buildReviewRequestOptions returns empty config
+buildReviewRequestOptionsMock.mockReturnValue({})
+
 class FakeTask extends EventEmitter {
 	public readonly clineMessages: any[] = []
 	public readonly updateMode = vi.fn()
@@ -140,6 +165,13 @@ class FakeProvider extends EventEmitter {
 	public readonly handleModeSwitch = vi.fn(async () => undefined)
 	public readonly removeClineFromStack = vi.fn(async () => undefined)
 	public readonly refreshWorkspace = vi.fn(async () => undefined)
+	public readonly getState = vi.fn(async () => ({
+		apiConfiguration: {
+			costrictAccessToken: "test-token",
+			costrictBaseUrl: "https://example.test",
+		},
+		language: "en",
+	}))
 	public readonly getCurrentTask = vi.fn<() => FakeTask | undefined>()
 }
 
@@ -174,7 +206,10 @@ describe("CodeReviewService delegation lifecycle", () => {
 		const service = CodeReviewService.getInstance()
 		service.setProvider(provider as any)
 
-		vi.spyOn(service as any, "getIssues").mockResolvedValue({
+		// JSON report exists
+		;(fileExistsAtPath as any).mockResolvedValue(true)
+
+		resolveFromReportFileMock.mockResolvedValue({
 			issues: [
 				{
 					id: "issue-1",
@@ -187,6 +222,7 @@ describe("CodeReviewService delegation lifecycle", () => {
 				},
 			],
 			review_task_id: "review-task-1",
+			count: 1,
 			title: "Security review",
 			conclusion: "Done",
 		})
@@ -229,8 +265,10 @@ describe("CodeReviewService delegation lifecycle", () => {
 
 		await vi.runAllTimersAsync()
 
-		expect(fileExistsAtPath).toHaveBeenCalledWith(path.resolve("/workspace", "src/a.ts"))
-		expect(service.getAllCachedIssues()).toHaveLength(1)
+		// JSON file existence was checked (the primary path)
+		expect(fileExistsAtPath).toHaveBeenCalledWith(
+			path.resolve("/workspace", "code-review_result/review-report.json"),
+		)
 
 		const reviewUpdates = getReviewUpdates(provider)
 		expect(
@@ -247,5 +285,168 @@ describe("CodeReviewService delegation lifecycle", () => {
 		expect(finalUpdate?.values.data.issues).toHaveLength(1)
 		expect(provider.removeClineFromStack).toHaveBeenCalledTimes(1)
 		expect(resumedTask.updateMode).toHaveBeenCalledWith("code")
+	})
+
+	it("resolves issues from review-report.json via the primary path", async () => {
+		const provider = new FakeProvider()
+		const task = new FakeTask("review-json", "inst-json")
+
+		provider.createTask.mockResolvedValue(task)
+		provider.getCurrentTask.mockImplementation(() => task)
+
+		const service = CodeReviewService.getInstance()
+		service.setProvider(provider as any)
+
+		// JSON report exists
+		;(fileExistsAtPath as any).mockResolvedValue(true)
+
+		resolveFromReportFileMock.mockResolvedValue({
+			issues: [
+				{
+					id: "json-issue-1",
+					file_path: "src/json-file.ts",
+					start_line: 5,
+					end_line: 10,
+					title: "JSON Issue",
+					message: "Found via JSON",
+					status: IssueStatus.INITIAL,
+				},
+			],
+			review_task_id: "json-task-1",
+			count: 1,
+			title: "JSON Review",
+			conclusion: "JSON-based",
+		})
+
+		await service.createReviewTask(
+			"@/src/json-file.ts",
+			{
+				type: ReviewTargetType.FILE,
+				data: [{ file_path: "src/json-file.ts" }],
+			} as any,
+			{ mode: "review" },
+		)
+
+		// Simulate task completion via completion_result message
+		task.clineMessages.push({
+			type: "say",
+			say: "completion_result",
+			text: "I-AM-CODE-REVIEW-REPORT-V1 legacy report",
+			partial: false,
+		})
+		task.emit(RooCodeEventName.Message, {
+			message: task.clineMessages[0],
+		})
+
+		await vi.runAllTimersAsync()
+
+		// Should have called resolveFromReportFile with the JSON path
+		expect(resolveFromReportFileMock).toHaveBeenCalledTimes(1)
+		// Should NOT have called resolveFromReportText (no fallback used)
+		expect(resolveFromReportTextMock).not.toHaveBeenCalled()
+
+		const issues = service.getAllCachedIssues()
+		expect(issues).toHaveLength(1)
+		expect(issues[0].id).toBe("json-issue-1")
+
+		const reviewUpdates = getReviewUpdates(provider)
+		const finalUpdate = reviewUpdates.at(-1)
+		expect(finalUpdate?.values.status).toBe(ReviewTaskStatus.COMPLETED)
+		expect(finalUpdate?.values.data.issues).toHaveLength(1)
+	})
+
+	it("throws error when review-report.json is not found", async () => {
+		const provider = new FakeProvider()
+		const task = new FakeTask("review-nofile", "inst-nf")
+
+		provider.createTask.mockResolvedValue(task)
+		provider.getCurrentTask.mockImplementation(() => task)
+
+		const service = CodeReviewService.getInstance()
+		service.setProvider(provider as any)
+
+		// JSON report does NOT exist
+		;(fileExistsAtPath as any).mockResolvedValue(false)
+
+		await service.createReviewTask(
+			"@/src/missing.ts",
+			{
+				type: ReviewTargetType.FILE,
+				data: [{ file_path: "src/missing.ts" }],
+			} as any,
+			{ mode: "review" },
+		)
+
+		task.clineMessages.push({
+			type: "say",
+			say: "completion_result",
+			text: "some report text",
+			partial: false,
+		})
+		task.emit(RooCodeEventName.Message, {
+			message: task.clineMessages[0],
+		})
+
+		await vi.runAllTimersAsync()
+
+		// Should NOT have tried to resolve from file or text
+		expect(resolveFromReportFileMock).not.toHaveBeenCalled()
+		expect(resolveFromReportTextMock).not.toHaveBeenCalled()
+
+		const reviewUpdates = getReviewUpdates(provider)
+		const finalUpdate = reviewUpdates.at(-1)
+		expect(finalUpdate?.values.status).toBe(ReviewTaskStatus.ERROR)
+	})
+
+	it("throws error when resolveFromReportFile returns no issues", async () => {
+		const provider = new FakeProvider()
+		const task = new FakeTask("review-empty", "inst-empty")
+
+		provider.createTask.mockResolvedValue(task)
+		provider.getCurrentTask.mockImplementation(() => task)
+
+		const service = CodeReviewService.getInstance()
+		service.setProvider(provider as any)
+
+		// JSON report exists but resolver returns empty issues
+		;(fileExistsAtPath as any).mockResolvedValue(true)
+
+		resolveFromReportFileMock.mockResolvedValue({
+			issues: [],
+			review_task_id: "",
+			count: 0,
+			title: "",
+			conclusion: "",
+		})
+
+		await service.createReviewTask(
+			"@/src/empty.ts",
+			{
+				type: ReviewTargetType.FILE,
+				data: [{ file_path: "src/empty.ts" }],
+			} as any,
+			{ mode: "review" },
+		)
+
+		task.clineMessages.push({
+			type: "say",
+			say: "completion_result",
+			text: "empty report",
+			partial: false,
+		})
+		task.emit(RooCodeEventName.Message, {
+			message: task.clineMessages[0],
+		})
+
+		await vi.runAllTimersAsync()
+
+		// resolveFromReportFile was called but returned empty
+		expect(resolveFromReportFileMock).toHaveBeenCalledTimes(1)
+		// No fallback to resolveFromReportText
+		expect(resolveFromReportTextMock).not.toHaveBeenCalled()
+
+		const reviewUpdates = getReviewUpdates(provider)
+		const finalUpdate = reviewUpdates.at(-1)
+		expect(finalUpdate?.values.status).toBe(ReviewTaskStatus.ERROR)
 	})
 })

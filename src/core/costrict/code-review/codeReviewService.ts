@@ -14,11 +14,10 @@
 import * as vscode from "vscode"
 import path from "node:path"
 import type { AxiosRequestConfig } from "axios"
-import { v7 as uuidv7 } from "uuid"
 import { ExtensionMessage, RooCodeEventName } from "@roo-code/types"
 
 import { ReviewTask, UpdateIssueStatusResponse } from "./types"
-import { updateIssueStatusAPI, getPrompt, reportIssue, getIssueByTaskId } from "./api"
+import { updateIssueStatusAPI, getPrompt, getIssueByTaskId } from "./api"
 import { ReviewComment } from "./reviewComment"
 import { HistoryManager } from "./HistoryManager"
 import { CostrictAuthConfig, CostrictAuthService } from "../auth"
@@ -34,18 +33,22 @@ import {
 import { Package } from "../../../shared/package"
 
 import { createLogger, ILogger } from "../../../utils/logger"
-import { getClientId } from "../../../utils/getClientId"
 import { t } from "../../../i18n"
 import { CommentService, type CommentThreadInfo } from "../../../integrations/comment"
 import type { ClineProvider } from "../../webview/ClineProvider"
 import type { Task } from "../../task/Task"
 import { TelemetryService } from "@roo-code/telemetry"
 import { CodeReviewErrorType, type TelemetryErrorType } from "../telemetry"
-import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
 import { fileExistsAtPath } from "../../../utils/fs"
 import { isJetbrainsPlatform } from "../../../utils/platform"
 import { defaultModeSlug, type Mode } from "../../../shared/modes"
-import type { Language } from "@roo-code/types"
+
+import {
+	buildReviewRequestOptions,
+	getReviewReportJsonPath,
+	resolveFromReportFile,
+	resolveFromReportText,
+} from "./common/reviewIssueResolver"
 /**
  * Code Review Service - Singleton
  *
@@ -203,18 +206,9 @@ export class CodeReviewService {
 			return {}
 		}
 		const { apiConfiguration, language } = await this.clineProvider.getState()
-		const apiKey = apiConfiguration.costrictAccessToken
+		const apiKey = apiConfiguration.costrictAccessToken || ""
 		const baseURL = apiConfiguration.costrictBaseUrl || CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
-		return {
-			baseURL,
-			headers: {
-				Authorization: `Bearer ${apiKey}`,
-				"Accept-Language": language,
-				"X-Request-ID": uuidv7(),
-				...COSTRICT_DEFAULT_HEADERS,
-			},
-			timeout: 10 * 60 * 1000,
-		}
+		return buildReviewRequestOptions({ apiKey, baseURL, language: language || "en" })
 	}
 
 	private getRestoreMode(mode: string): Mode {
@@ -299,7 +293,7 @@ export class CodeReviewService {
 		const listenerDisposers: Array<() => void> = []
 
 		// Set timeout based on mode: 3 hours for security-review, 15 minutes for others
-		const timeoutMs = taskMode === "security-review" ? 180 * 60 * 1000 : 15 * 60 * 1000
+		const timeoutMs = taskMode === "security-review" ? 180 * 60 * 1000 : 60 * 60 * 1000
 		const timeoutId = setTimeout(() => {
 			void handleTaskFailure(new Error(t("common:review.tip.task_timeout")))
 		}, timeoutMs)
@@ -365,67 +359,47 @@ export class CodeReviewService {
 
 			try {
 				this.logger.info("[CodeReview] Review Task completed")
-				let reportMessage = [...trackedTask.clineMessages]
-					.reverse()
-					.find((msg) => msg.type === "say" && msg?.text?.includes("I-AM-CODE-REVIEW-REPORT-V1"))
 
-				// If no report found in message queue, try to read from default output directory
-				if (!reportMessage?.text) {
-					this.logger.info(
-						"[CodeReview] No report found in message queue, attempting to read from default output directory",
-					)
-					const defaultOutputDir =
-						taskMode === "security-review" ? "security-review_result" : "code-review_result"
-					const fullReportPath = path.resolve(provider.cwd, defaultOutputDir, "full_report.jsonl")
-					this.logger.info(`[CodeReview] Looking for report at: ${fullReportPath}`)
+				const workspace = String(provider.cwd)
+				const requestOptions = await this.getRequestOptions()
+				const jsonPath = getReviewReportJsonPath(workspace, taskMode as Mode)
+				this.logger.info(`[CodeReview] Reading review report from ${jsonPath}`)
 
-					if (await fileExistsAtPath(fullReportPath)) {
-						this.logger.info("[CodeReview] Found full_report.jsonl, reading report from file")
-						try {
-							const fs = await import("node:fs")
-							const reportContent = fs.readFileSync(fullReportPath, "utf-8")
-							// Construct a synthetic report message with the file content
-							reportMessage = {
-								type: "say",
-								text: `I-AM-CODE-REVIEW-REPORT-V1\n${reportContent}`,
-								timestamp: new Date().toISOString(),
-							} as any
-							this.logger.info("[CodeReview] Successfully loaded report from file")
-						} catch (error) {
-							this.logger.error(`[CodeReview] Failed to read report file: ${error}`)
-						}
-					} else {
-						this.logger.info(`[CodeReview] Report file not found at ${fullReportPath}`)
-					}
+				if (!(await fileExistsAtPath(jsonPath))) {
+					throw new Error(`Review report not found at ${jsonPath}`)
 				}
 
-				if (reportMessage?.text) {
-					const { issues, review_task_id, title, conclusion } = await this.getIssues(
-						reportMessage.text,
-						targets,
-					)
-					if (issues) {
-						const existsResults = await Promise.all(
-							issues.map((issue) => fileExistsAtPath(path.resolve(provider.cwd, issue.file_path))),
-						)
-						const validIssues = issues.filter((_, index) => existsResults[index])
+				const resolveResult = await resolveFromReportFile(jsonPath, {
+					source: "classic",
+					reviewTarget: targets,
+					workspace,
+					requestOptions,
+				})
 
-						this.updateCachedIssues(validIssues)
-						if (validIssues.length > 0 && review_task_id) {
-							await this.historyManager.addEntry(review_task_id, title, conclusion)
-						}
-
-						this.updateTaskState({
-							taskId: review_task_id,
-							isCompleted: true,
-							progress: 1,
-							total: validIssues.length,
-							error: undefined,
-						})
-					}
-				} else {
+				if (!resolveResult?.issues || resolveResult.issues.length === 0) {
 					throw new Error(t("common:review.tip.get_review_result_failed"))
 				}
+
+				const { issues, review_task_id, title, conclusion } = resolveResult
+				this.logger.info(`[CodeReview] Resolved ${issues.length} issues from review report`)
+
+				const existsResults = await Promise.all(
+					issues.map((issue) => fileExistsAtPath(path.resolve(provider.cwd, issue.file_path))),
+				)
+				const validIssues = issues.filter((_, index) => existsResults[index])
+
+				this.updateCachedIssues(validIssues)
+				if (validIssues.length > 0 && review_task_id) {
+					await this.historyManager.addEntry(review_task_id, title, conclusion)
+				}
+
+				this.updateTaskState({
+					taskId: review_task_id,
+					isCompleted: true,
+					progress: 1,
+					total: validIssues.length,
+					error: undefined,
+				})
 			} catch (error) {
 				this.logger.error("[CodeReview] Failed to complete task:", error)
 				this.updateTaskState({
@@ -623,38 +597,14 @@ export class CodeReviewService {
 	}
 
 	public async getIssues(report: string, target: ReviewTarget) {
-		const clientId = getClientId()
 		const workspace = this.clineProvider?.cwd || ""
 		const requestOptions = await this.getRequestOptions()
-		try {
-			const { data } = await reportIssue(
-				{
-					review_report: report,
-					client_id: clientId,
-					workspace,
-					source: "",
-					review_target: target,
-				},
-				requestOptions,
-			)
-			return (
-				data ?? {
-					issues: [],
-					review_task_id: "",
-					count: 0,
-					title: "",
-					conclusion: "",
-				}
-			)
-		} catch (error) {
-			return {
-				issues: [],
-				review_task_id: "",
-				count: 0,
-				title: "",
-				conclusion: "",
-			}
-		}
+		return resolveFromReportText(report, {
+			source: "classic",
+			reviewTarget: target,
+			workspace,
+			requestOptions,
+		})
 	}
 	/**
 	 * Abort current running task

@@ -1,10 +1,19 @@
 import * as vscode from "vscode"
 
-export const CODE_REVIEW_REPORT_RELATIVE_PATH = "code-review_result/review-report.md"
-export const SECURITY_REVIEW_REPORT_RELATIVE_PATH = "security-review_result/task_summary.md"
+import { getReviewReportMdRelativePath, resolveFromReportFile, type ResolveInput } from "./common/reviewIssueResolver"
+
+// ── Re-export path constants for backward compatibility ────────────────
+
+/** @deprecated Use getReviewReportMdRelativePath("review") instead */
+export const CODE_REVIEW_REPORT_RELATIVE_PATH = getReviewReportMdRelativePath("review")
+
+/** @deprecated Use getReviewReportMdRelativePath("security-review") instead */
+export const SECURITY_REVIEW_REPORT_RELATIVE_PATH = getReviewReportMdRelativePath("security-review")
+
 const POLL_INTERVAL_MS = 5000
 const PREVIEW_REFRESH_DELAY_MS = 500
 const STABILITY_CHECK_DELAY_MS = 1000
+const JSON_STABILITY_CHECK_DELAY_MS = 1000
 const IDLE_COMPLETE_MS = 2 * 60 * 1000
 const MAX_WAIT_MS = 30 * 60 * 1000
 
@@ -12,6 +21,22 @@ interface FileSnapshot {
 	exists: boolean
 	size: number
 	mtime: number
+}
+
+/**
+ * Configuration for watching and resolving a JSON review report.
+ * When provided, the watcher will also poll the JSON report and call
+ * resolveFromReportFile when it stabilizes.
+ */
+export interface ResolveConfig {
+	/** Resolve input passed to resolveFromReportFile */
+	input: ResolveInput
+	/** Absolute path to the JSON report file on disk */
+	jsonAbsolutePath: string
+}
+
+interface JsonResolveState {
+	lastResolvedSnapshot: FileSnapshot | undefined
 }
 
 interface PendingWatch {
@@ -30,6 +55,11 @@ interface PendingWatch {
 	previewRefreshTimer?: NodeJS.Timeout
 	stabilityTimer?: NodeJS.Timeout
 	idleTimer?: NodeJS.Timeout
+
+	// JSON resolve fields
+	resolveConfig?: ResolveConfig
+	jsonResolveState?: JsonResolveState
+	jsonStabilityTimer?: NodeJS.Timeout
 }
 
 let outputChannel: vscode.OutputChannel | undefined
@@ -42,6 +72,7 @@ export function setLogger(channel: vscode.OutputChannel | undefined): void {
 export function startWatching(
 	workspaceFolder: vscode.WorkspaceFolder,
 	reportRelativePath = CODE_REVIEW_REPORT_RELATIVE_PATH,
+	resolveConfig?: ResolveConfig,
 ): void {
 	const key = getWorkspaceKey(workspaceFolder)
 	const existing = pendingMap.get(key)
@@ -57,6 +88,7 @@ export function startWatching(
 		startedAt: Date.now(),
 		previewOpened: false,
 		previewVersion: 0,
+		resolveConfig,
 	}
 	pendingMap.set(key, pending)
 
@@ -67,6 +99,16 @@ export function startWatching(
 		pending.baseline = snapshot
 	})
 
+	// Baseline snapshot for JSON file (independent from MD baseline)
+	if (resolveConfig) {
+		void readSnapshot(vscode.Uri.file(resolveConfig.jsonAbsolutePath)).then((snapshot) => {
+			if (!isActive(pending) || !pending.resolveConfig) {
+				return
+			}
+			pending.jsonResolveState = { lastResolvedSnapshot: snapshot.exists ? undefined : snapshot }
+		})
+	}
+
 	try {
 		const pattern = new vscode.RelativePattern(workspaceFolder, reportRelativePath)
 		pending.watcher = vscode.workspace.createFileSystemWatcher(pattern)
@@ -76,7 +118,13 @@ export function startWatching(
 		log(`Failed to create report file watcher, falling back to polling: ${formatError(error)}`)
 	}
 
-	pending.pollInterval = setInterval(() => void checkCandidate(pending), POLL_INTERVAL_MS)
+	pending.pollInterval = setInterval(() => {
+		void checkCandidate(pending)
+		if (pending.resolveConfig) {
+			void checkJsonCandidate(pending)
+		}
+	}, POLL_INTERVAL_MS)
+
 	pending.timeout = setTimeout(() => {
 		log(`Stopped waiting for Cloud review report after ${MAX_WAIT_MS / 60000} minutes: ${pending.uri.toString()}`)
 		stopWatching(workspaceFolder)
@@ -96,6 +144,8 @@ export function disposeAll(): void {
 		disposePending(pending, "disposed")
 	}
 }
+
+// ── Markdown candidate checks (existing behaviour) ──────────────────────
 
 async function checkCandidate(pending: PendingWatch): Promise<void> {
 	if (!isActive(pending)) {
@@ -206,6 +256,97 @@ async function openOrRefreshPreview(pending: PendingWatch, snapshot: FileSnapsho
 	}
 }
 
+// ── JSON candidate checks (issue resolution) ────────────────────────────
+
+async function checkJsonCandidate(pending: PendingWatch): Promise<void> {
+	if (!isActive(pending) || !pending.resolveConfig) {
+		return
+	}
+
+	const jsonUri = vscode.Uri.file(pending.resolveConfig.jsonAbsolutePath)
+	const snapshot = await readSnapshot(jsonUri)
+
+	if (!isActive(pending)) {
+		return
+	}
+	if (!snapshot.exists || snapshot.size <= 0) {
+		return
+	}
+
+	// Dedup: skip if this snapshot was already resolved
+	const lastResolved = pending.jsonResolveState?.lastResolvedSnapshot
+	if (isSameSnapshot(snapshot, lastResolved)) {
+		return
+	}
+
+	// Check if this is a new report created after watching started
+	if (!isNewJsonReport(pending, snapshot)) {
+		return
+	}
+
+	scheduleJsonStabilityCheck(pending, snapshot)
+}
+
+function scheduleJsonStabilityCheck(pending: PendingWatch, snapshot: FileSnapshot): void {
+	if (!isActive(pending)) {
+		return
+	}
+	if (pending.jsonStabilityTimer) {
+		clearTimeout(pending.jsonStabilityTimer)
+	}
+
+	pending.jsonStabilityTimer = setTimeout(() => {
+		pending.jsonStabilityTimer = undefined
+		void verifyJsonStableAndResolve(pending, snapshot)
+	}, JSON_STABILITY_CHECK_DELAY_MS)
+}
+
+async function verifyJsonStableAndResolve(pending: PendingWatch, previousSnapshot: FileSnapshot): Promise<void> {
+	if (!isActive(pending) || !pending.resolveConfig) {
+		return
+	}
+
+	const jsonUri = vscode.Uri.file(pending.resolveConfig.jsonAbsolutePath)
+	const currentSnapshot = await readSnapshot(jsonUri)
+
+	if (!isActive(pending)) {
+		return
+	}
+	if (!currentSnapshot.exists || currentSnapshot.size <= 0) {
+		return
+	}
+	if (!isNewJsonReport(pending, currentSnapshot)) {
+		return
+	}
+
+	const stable = currentSnapshot.size === previousSnapshot.size && currentSnapshot.mtime <= previousSnapshot.mtime
+	if (!stable) {
+		scheduleJsonStabilityCheck(pending, currentSnapshot)
+		return
+	}
+
+	// Perform issue resolution — failure must NOT affect MD preview
+	try {
+		const result = await resolveFromReportFile(pending.resolveConfig.jsonAbsolutePath, pending.resolveConfig.input)
+		pending.jsonResolveState = {
+			lastResolvedSnapshot: currentSnapshot,
+		}
+		log(`Resolved ${result.issues.length} issues from JSON report: ${pending.resolveConfig.jsonAbsolutePath}`)
+	} catch (error) {
+		log(`Failed to resolve issues from JSON report (MD preview unaffected): ${formatError(error)}`)
+	}
+}
+
+function isNewJsonReport(pending: PendingWatch, snapshot: FileSnapshot): boolean {
+	const lastResolved = pending.jsonResolveState?.lastResolvedSnapshot
+	if (!lastResolved) {
+		return snapshot.mtime >= pending.startedAt
+	}
+	return snapshot.mtime > lastResolved.mtime || snapshot.size !== lastResolved.size
+}
+
+// ── Shared helpers ──────────────────────────────────────────────────────
+
 function resetIdleTimer(pending: PendingWatch): void {
 	if (pending.idleTimer) {
 		clearTimeout(pending.idleTimer)
@@ -288,6 +429,10 @@ function clearTimers(pending: PendingWatch): void {
 	if (pending.idleTimer) {
 		clearTimeout(pending.idleTimer)
 		pending.idleTimer = undefined
+	}
+	if (pending.jsonStabilityTimer) {
+		clearTimeout(pending.jsonStabilityTimer)
+		pending.jsonStabilityTimer = undefined
 	}
 }
 

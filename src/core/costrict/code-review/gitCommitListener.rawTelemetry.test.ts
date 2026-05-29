@@ -1,37 +1,28 @@
 import { describe, expect, it, vi } from "vitest"
 
-const { mockReportCommit } = vi.hoisted(() => ({
-	mockReportCommit: vi.fn().mockResolvedValue(undefined),
-}))
+import { GitCommitListener, type GitCommitReviewHandler } from "./gitCommitListener"
 
-vi.mock("../telemetry", () => ({
-	getRawCommitReporter: vi.fn(() => ({
-		reportCommit: mockReportCommit,
-	})),
-}))
+describe("GitCommitListener general flow", () => {
+	it("delegates reportCommit, shouldOfferReview, and startReview to the handler", async () => {
+		const mockReportCommit = vi.fn()
+		const mockStartReview = vi.fn()
 
-import { GitCommitListener } from "./gitCommitListener"
+		const handler: GitCommitReviewHandler = {
+			reportCommit: mockReportCommit,
+			shouldOfferReview: vi.fn().mockResolvedValue(true),
+			startReview: mockStartReview,
+		}
 
-describe("GitCommitListener raw commit telemetry", () => {
-	it("reports a new commit through the raw commit reporter", async () => {
 		const context = {
 			globalState: {
 				get: vi.fn(() => undefined),
 				update: vi.fn().mockResolvedValue(undefined),
 			},
 		} as any
-		const provider = {
-			getState: vi.fn().mockResolvedValue({
-				experiments: {},
-				apiConfiguration: { apiProvider: "costrict" },
-			}),
-		} as any
-		const reviewService = {
-			getProvider: vi.fn(() => provider),
-			checkApiProviderSupport: vi.fn().mockResolvedValue(false),
-			createReviewTask: vi.fn(),
-		} as any
-		const listener = new GitCommitListener(context, reviewService)
+
+		const getHandler = vi.fn(() => handler)
+		const listener = new GitCommitListener(context, getHandler)
+
 		const repo = {
 			getCommit: vi.fn().mockResolvedValue({ hash: "abc123", message: "feat: test" }),
 			onDidCommit: vi.fn((cb) => {
@@ -42,12 +33,66 @@ describe("GitCommitListener raw commit telemetry", () => {
 
 		await (listener as any).handleNewCommit(repo)
 
-		expect(mockReportCommit).toHaveBeenCalledWith(repo, { hash: "abc123", message: "feat: test" }, provider)
-		// NOTE: globalState.update is NOT called because Experiments.isEnabled returns `false`
-		// (not `undefined`), and the `??` operator does not fall through to the right side
-		// `apiConfiguration?.apiProvider === "costrict"` check. This appears to be a bug
-		// in processNewCommit — `||` should likely be used instead of `??` — but the test
-		// reflects the current actual behavior.
+		expect(mockReportCommit).toHaveBeenCalledWith({ repo, commit: { hash: "abc123", message: "feat: test" } })
+		expect(handler.shouldOfferReview).toHaveBeenCalled()
+		expect(mockStartReview).not.toHaveBeenCalled() // user didn't click "Review"
+	})
+
+	it("skips duplicate commit hashes", async () => {
+		const handler: GitCommitReviewHandler = {
+			reportCommit: vi.fn(),
+			shouldOfferReview: vi.fn().mockResolvedValue(true),
+			startReview: vi.fn(),
+		}
+
+		const context = {
+			globalState: {
+				get: vi.fn(() => undefined),
+				update: vi.fn().mockResolvedValue(undefined),
+			},
+		} as any
+
+		const getHandler = vi.fn(() => handler)
+		const listener = new GitCommitListener(context, getHandler)
+
+		// Set a previously seen hash
+		;(listener as any).lastSeenCommitHash = "abc123"
+
+		const repo = {
+			getCommit: vi.fn().mockResolvedValue({ hash: "abc123", message: "feat: test" }),
+		} as any
+
+		await (listener as any).processNewCommit({ hash: "abc123", message: "feat: test" }, repo)
+
+		expect(handler.reportCommit).not.toHaveBeenCalled()
+		expect(handler.shouldOfferReview).not.toHaveBeenCalled()
+	})
+
+	it("skips notification when shouldOfferReview returns false", async () => {
+		const handler: GitCommitReviewHandler = {
+			reportCommit: vi.fn(),
+			shouldOfferReview: vi.fn().mockResolvedValue(false),
+			startReview: vi.fn(),
+		}
+
+		const context = {
+			globalState: {
+				get: vi.fn(() => undefined),
+				update: vi.fn().mockResolvedValue(undefined),
+			},
+		} as any
+
+		const getHandler = vi.fn(() => handler)
+		const listener = new GitCommitListener(context, getHandler)
+
+		const repo = {
+			getCommit: vi.fn().mockResolvedValue({ hash: "abc123", message: "feat: test" }),
+		} as any
+
+		await (listener as any).processNewCommit({ hash: "abc123", message: "feat: test" }, repo)
+
+		expect(handler.reportCommit).toHaveBeenCalled()
+		expect(handler.shouldOfferReview).toHaveBeenCalled()
 		expect(context.globalState.update).not.toHaveBeenCalled()
 	})
 })
