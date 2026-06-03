@@ -34,4 +34,16 @@ describe("getCorrectedCostrictModelId", () => {
 	it("returns null when the new list is empty (nothing to fall back to)", () => {
 		expect(getCorrectedCostrictModelId(["Auto", "qwen-max"], [], "qwen-max")).toBeNull()
 	})
+
+	it("returns null when the selected model is an empty string", () => {
+		expect(getCorrectedCostrictModelId(["Auto", "qwen-max"], ["Auto"], "")).toBeNull()
+	})
+
+	it("returns the sole model when the new list has exactly one element and Auto is absent", () => {
+		expect(getCorrectedCostrictModelId(["Auto", "qwen-max"], ["qwen-plus"], "qwen-max")).toBe("qwen-plus")
+	})
+
+	it("returns null for a custom model even when the new list is empty (guard order)", () => {
+		expect(getCorrectedCostrictModelId(["Auto"], [], "my-custom")).toBeNull()
+	})
 })
