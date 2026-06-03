@@ -251,4 +251,45 @@ describe("ModelPicker", () => {
 			expect(screen.queryByText(errorMessage)).not.toBeInTheDocument()
 		})
 	})
+
+	it("renders a refresh button in the dropdown when onRefreshModels is provided and calls it on click", async () => {
+		const onRefreshModels = vi.fn()
+
+		await act(async () =>
+			render(
+				<QueryClientProvider client={queryClient}>
+					<ModelPicker {...defaultProps} onRefreshModels={onRefreshModels} />
+				</QueryClientProvider>,
+			),
+		)
+
+		await act(async () => {
+			fireEvent.click(screen.getByRole("combobox"))
+		})
+
+		const refreshButton = screen.getByTestId("model-picker-refresh")
+		expect(refreshButton).toBeInTheDocument()
+
+		await act(async () => {
+			fireEvent.click(refreshButton)
+		})
+
+		expect(onRefreshModels).toHaveBeenCalledTimes(1)
+	})
+
+	it("does not render the refresh button when onRefreshModels is not provided", async () => {
+		await act(async () =>
+			render(
+				<QueryClientProvider client={queryClient}>
+					<ModelPicker {...defaultProps} />
+				</QueryClientProvider>,
+			),
+		)
+
+		await act(async () => {
+			fireEvent.click(screen.getByRole("combobox"))
+		})
+
+		expect(screen.queryByTestId("model-picker-refresh")).not.toBeInTheDocument()
+	})
 })

@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect, useRef, useLayoutEffect } from "react"
 import { VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { Trans } from "react-i18next"
-import { ChevronsUpDown, Check, X, Brain, Info } from "lucide-react"
+import { ChevronsUpDown, Check, X, Brain, Info, RefreshCw } from "lucide-react"
 
 import { type ProviderSettings, type ModelInfo, type OrganizationAllowList, isRetiredProvider } from "@roo-code/types"
 
@@ -62,6 +62,10 @@ interface ModelPickerProps {
 	showLabel?: boolean
 	isChatBox?: boolean
 	isStreaming?: boolean
+	/** When provided, renders a refresh button in the dropdown search row that calls this on click. */
+	onRefreshModels?: () => void
+	/** Spins the refresh icon and disables the button while a refresh is in flight. */
+	isRefreshingModels?: boolean
 	triggerClassName?: string
 	popoverContentClassName?: string
 	PopoverTriggerContentClassName?: string
@@ -92,6 +96,8 @@ export const ModelPicker = ({
 	showInfoView = true,
 	showLabel = true,
 	isStreaming = false,
+	onRefreshModels,
+	isRefreshingModels = false,
 	triggerClassName = "",
 	popoverContentClassName = "",
 	PopoverTriggerContentClassName = "",
@@ -299,22 +305,40 @@ export const ModelPicker = ({
 						align="start"
 						data-testid={`model-picker-content${displayValue}`}>
 						<Command>
-							<div className="relative">
-								<CommandInput
-									ref={searchInputRef}
-									value={searchValue}
-									onValueChange={setSearchValue}
-									placeholder={t("settings:modelPicker.searchPlaceholder")}
-									className="h-9 mr-4"
-									data-testid="model-input"
-								/>
-								{searchValue.length > 0 && (
-									<div className="absolute right-2 top-0 bottom-0 flex items-center justify-center">
-										<X
-											className="text-vscode-input-foreground opacity-50 hover:opacity-100 size-4 p-0.5 cursor-pointer"
-											onClick={onClearSearch}
-										/>
-									</div>
+							<div className="flex items-stretch">
+								<div className="relative flex-1">
+									<CommandInput
+										ref={searchInputRef}
+										value={searchValue}
+										onValueChange={setSearchValue}
+										placeholder={t("settings:modelPicker.searchPlaceholder")}
+										className="h-9 mr-4"
+										data-testid="model-input"
+									/>
+									{searchValue.length > 0 && (
+										<div className="absolute right-2 top-0 bottom-0 flex items-center justify-center">
+											<X
+												className="text-vscode-input-foreground opacity-50 hover:opacity-100 size-4 p-0.5 cursor-pointer"
+												onClick={onClearSearch}
+											/>
+										</div>
+									)}
+								</div>
+								{onRefreshModels && (
+									<StandardTooltip content={t("settings:providers.refreshModels.label")}>
+										<button
+											type="button"
+											aria-label={t("settings:providers.refreshModels.label")}
+											data-testid="model-picker-refresh"
+											disabled={isRefreshingModels}
+											onClick={(e) => {
+												e.stopPropagation()
+												onRefreshModels()
+											}}
+											className="flex shrink-0 items-center justify-center self-stretch border-b border-vscode-dropdown-border px-2.5 text-vscode-input-foreground opacity-60 hover:opacity-100 disabled:cursor-default disabled:opacity-40 cursor-pointer">
+											<RefreshCw className={cn("size-4", isRefreshingModels && "animate-spin")} />
+										</button>
+									</StandardTooltip>
 								)}
 							</div>
 							<CommandList>
