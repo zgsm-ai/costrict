@@ -151,6 +151,7 @@
 	},
 	"selectMode": "Select mode for interaction",
 	"selectModel": "Select model for interaction",
+	"modelAutoSwitched": "Model {{from}} is no longer available; switched to {{to}}.",
 	"selectApiConfig": "Select API configuration",
 	"lockApiConfigAcrossModes": "Lock API configuration across all modes in this workspace",
 	"unlockApiConfigAcrossModes": "API configuration is locked across all modes in this workspace (click to unlock)",

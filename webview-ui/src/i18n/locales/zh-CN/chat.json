@@ -124,6 +124,7 @@
 	},
 	"selectMode": "选择交互模式",
 	"selectModel": "选择模型",
+	"modelAutoSwitched": "原模型 {{from}} 已下线，已自动切换为 {{to}}。",
 	"selectApiConfig": "选择 API 配置",
 	"lockApiConfigAcrossModes": "锁定此工作区所有模式的 API 配置",
 	"unlockApiConfigAcrossModes": "此工作区所有模式的 API 配置已锁定（点击解锁）",
