@@ -292,4 +292,22 @@ describe("ModelPicker", () => {
 
 		expect(screen.queryByTestId("model-picker-refresh")).not.toBeInTheDocument()
 	})
+
+	it("disables the refresh button and spins the icon when isRefreshingModels is true", async () => {
+		await act(async () =>
+			render(
+				<QueryClientProvider client={queryClient}>
+					<ModelPicker {...defaultProps} onRefreshModels={vi.fn()} isRefreshingModels={true} />
+				</QueryClientProvider>,
+			),
+		)
+
+		await act(async () => {
+			fireEvent.click(screen.getByRole("combobox"))
+		})
+
+		const button = screen.getByTestId("model-picker-refresh")
+		expect(button).toBeDisabled()
+		expect(button.querySelector("svg")?.classList.contains("animate-spin")).toBe(true)
+	})
 })
