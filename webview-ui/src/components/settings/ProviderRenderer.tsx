@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ModelPicker } from "./ModelPicker"
 
 import {
@@ -18,11 +18,23 @@ import {
 import { useDebounce, useEvent } from "react-use"
 import { vscode } from "@/utils/vscode"
 import { convertHeadersToObject } from "./utils/headers"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, StandardTooltip } from "@src/components/ui"
+import {
+	Select,
+	SelectTrigger,
+	SelectValue,
+	SelectContent,
+	SelectItem,
+	StandardTooltip,
+	Popover,
+	PopoverAnchor,
+	PopoverContent,
+} from "@src/components/ui"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { useSelectedModel } from "../ui/hooks/useSelectedModel"
-import { Brain } from "lucide-react"
+import { Brain, Info, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getCorrectedCostrictModelId } from "./utils/correctModelSelection"
+import { useRooPortal } from "@/components/ui/hooks/useRooPortal"
 export interface ProviderRendererProps {
 	isEditMode?: boolean
 	isStreaming?: boolean
@@ -48,17 +60,118 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 }) => {
 	const [openAiModels, setOpenAiModels] = useState<Record<string, ModelInfo> | null>(null)
 
+	// Dedicated costrict model list — separate from openAiModels so a costrict refresh
+	// (incl. the unconditional login refresh) never overwrites the openai dropdown.
+	const [costrictModelList, setCostrictModelList] = useState<Record<string, ModelInfo> | null>(null)
+	const [isRefreshing, setIsRefreshing] = useState(false)
+	const [autoSwitchNotice, setAutoSwitchNotice] = useState<{ from: string; to: string } | null>(null)
+
+	// Last NON-EMPTY costrict server list; the "old list" baseline for correction.
+	const previousCostrictModelsRef = useRef<Record<string, ModelInfo> | null>(null)
+	// Mirrors apiConfiguration.costrictModelId; kept fresh by the effect below AND synchronously
+	// by the wrapped setter, so a just-typed custom model can't be mis-corrected by a racing refresh.
+	const selectedModelIdRef = useRef<string | undefined>(apiConfiguration.costrictModelId)
+	const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+	useEffect(() => {
+		selectedModelIdRef.current = apiConfiguration.costrictModelId
+	}, [apiConfiguration.costrictModelId])
+
+	// Wrapped setter: synchronously syncs the ref for costrictModelId before delegating.
+	const setApiConfigurationFieldWithRef = useCallback(
+		<K extends keyof ProviderSettings>(field: K, value: ProviderSettings[K]) => {
+			if (field === "costrictModelId") {
+				selectedModelIdRef.current = value as ProviderSettings["costrictModelId"]
+			}
+			setApiConfigurationField(field, value)
+		},
+		[setApiConfigurationField],
+	)
+	const setFieldRef = useRef(setApiConfigurationFieldWithRef)
+	useEffect(() => {
+		setFieldRef.current = setApiConfigurationFieldWithRef
+	}, [setApiConfigurationFieldWithRef])
+
+	// Container for the inline notice. Lives inside ChatView's hidden wrapper, so the notice
+	// escapes the toolbar's overflow-clip yet stays hidden when the chat tab is not active.
+	const noticePortalContainer = useRooPortal("costrict-portal")
+
+	// Auto-dismiss the inline notice after a few seconds.
+	useEffect(() => {
+		if (!autoSwitchNotice) {
+			return
+		}
+		const timer = setTimeout(() => setAutoSwitchNotice(null), 6000)
+		return () => clearTimeout(timer)
+	}, [autoSwitchNotice])
+
+	// Dismiss the notice once the user picks a different model than the one we corrected to.
+	useEffect(() => {
+		if (autoSwitchNotice && apiConfiguration.costrictModelId !== autoSwitchNotice.to) {
+			setAutoSwitchNotice(null)
+		}
+	}, [apiConfiguration.costrictModelId, autoSwitchNotice])
+
+	useEffect(() => {
+		return () => {
+			if (refreshTimeoutRef.current) {
+				clearTimeout(refreshTimeoutRef.current)
+			}
+		}
+	}, [])
+
+	const handleRefreshModels = useCallback(() => {
+		// Costrict round-trip: host flushes the cache, refetches, and pushes `costrictModels` back.
+		vscode.postMessage({ type: "flushRouterModels", text: "costrict" })
+		setIsRefreshing(true)
+		if (refreshTimeoutRef.current) {
+			clearTimeout(refreshTimeoutRef.current)
+		}
+		// Safety fallback: stop spinning even if no response arrives.
+		refreshTimeoutRef.current = setTimeout(() => setIsRefreshing(false), 10000)
+	}, [])
+
+	// Login refresh: ProviderRenderer is always mounted (ChatView is never unmounted), so it
+	// reliably catches the host's post-login `costrictLogined`. Fire unconditionally — refreshing
+	// the costrict list only touches `costrictModelList`, never the openai dropdown.
+	useEffect(() => {
+		const onLogined = (event: MessageEvent) => {
+			if (event.data?.type === "costrictLogined") {
+				handleRefreshModels()
+			}
+		}
+		window.addEventListener("message", onLogined)
+		return () => window.removeEventListener("message", onLogined)
+	}, [handleRefreshModels])
+
 	const onMessage = useCallback((event: MessageEvent) => {
 		const message: ExtensionMessage = event.data
 
 		switch (message.type) {
 			case "costrictModels": {
 				const { fullResponseData = [] } = message
-				setOpenAiModels(
-					Object.fromEntries(
-						fullResponseData.map((item) => [item.id, { ...(item ?? costrictModels.default) }]),
-					),
-				)
+				const newModels = Object.fromEntries(
+					fullResponseData.map((item) => [item.id, { ...(item ?? costrictModels.default) }]),
+				) as Record<string, ModelInfo>
+				const newModelIds = Object.keys(newModels)
+
+				// Selection correction: compare against the dedicated costrict baseline.
+				// The pure rule (and its rationale) lives in ./utils/correctModelSelection.
+				const oldModelIds = Object.keys(previousCostrictModelsRef.current ?? {})
+				const selectedModelId = selectedModelIdRef.current
+				const corrected = getCorrectedCostrictModelId(oldModelIds, newModelIds, selectedModelId)
+				if (corrected && selectedModelId) {
+					setFieldRef.current("costrictModelId", corrected)
+					setAutoSwitchNotice({ from: selectedModelId, to: corrected })
+				}
+
+				// Preserve the last NON-EMPTY costrict list as the baseline for the next refresh.
+				if (newModelIds.length > 0) {
+					previousCostrictModelsRef.current = newModels
+				}
+
+				setCostrictModelList(newModels)
+				setIsRefreshing(false)
 				break
 			}
 			case "openAiModels": {
@@ -160,7 +273,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				serviceName: "costrict",
 				defaultModelId: apiConfiguration.costrictModelId || costrictDefaultModelId,
 				serviceUrl: apiConfiguration.costrictBaseUrl?.trim() || (window as any).COSTRICT_BASE_URL,
-				models: openAiModels ?? {},
+				models: costrictModelList ?? {},
 			},
 			openrouter: {
 				modelIdKey: "openRouterModelId",
@@ -198,7 +311,13 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				models: routerModels?.litellm ?? {},
 			},
 		}),
-		[apiConfiguration.costrictModelId, apiConfiguration.costrictBaseUrl, openAiModels, routerModels],
+		[
+			apiConfiguration.costrictModelId,
+			apiConfiguration.costrictBaseUrl,
+			costrictModelList,
+			openAiModels,
+			routerModels,
+		],
 	)
 
 	const config = providerConfig[selectedProvider as keyof typeof providerConfig] || {}
@@ -216,74 +335,101 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			? `${t("settings:modelPicker.label")}: ${defaultModelId}`
 			: t("chat:selectModel")
 	return (
-		<div className={cn(className, config?.modelIdKey || selectedProviderModels.length > 0 ? "" : "hidden")}>
-			{config?.modelIdKey ? (
-				<ModelPicker
-					isChatBox={true}
-					modelPickerId={isEditMode ? "modelPickerEdit" : "modelPicker"}
-					apiConfiguration={apiConfiguration}
-					setApiConfigurationField={setApiConfigurationField}
-					defaultModelId={defaultModelId}
-					models={config?.models ?? {}}
-					modelIdKey={config.modelIdKey as any}
-					serviceName={config.serviceName}
-					serviceUrl={config.serviceUrl}
-					organizationAllowList={organizationAllowList}
-					showInfoView={false}
-					showLabel={false}
-					isStreaming={isStreaming}
-					triggerClassName="rounded-md max-w-80 px-[6px] text-xs h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
-					popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden text-xs"
-					tooltip={tooltip}
-				/>
-			) : (
-				selectedProviderModels.length > 0 && (
-					<StandardTooltip content={tooltip}>
-						<div>
-							<Select
-								open={showSelect}
-								disabled={isStreaming}
-								value={selectedModelId === "custom-arn" ? "custom-arn" : selectedModelId}
-								onValueChange={(value) => {
-									setApiConfigurationField(
-										apiConfiguration.apiProvider === "costrict" ? "costrictModelId" : "apiModelId",
-										value,
-									)
+		<Popover open={!!autoSwitchNotice} onOpenChange={(o) => !o && setAutoSwitchNotice(null)}>
+			<PopoverAnchor asChild>
+				<div className={cn(className, config?.modelIdKey || selectedProviderModels.length > 0 ? "" : "hidden")}>
+					{config?.modelIdKey ? (
+						<ModelPicker
+							isChatBox={true}
+							modelPickerId={isEditMode ? "modelPickerEdit" : "modelPicker"}
+							apiConfiguration={apiConfiguration}
+							setApiConfigurationField={setApiConfigurationFieldWithRef}
+							defaultModelId={defaultModelId}
+							models={config?.models ?? {}}
+							modelIdKey={config.modelIdKey as any}
+							serviceName={config.serviceName}
+							serviceUrl={config.serviceUrl}
+							organizationAllowList={organizationAllowList}
+							showInfoView={false}
+							showLabel={false}
+							isStreaming={isStreaming}
+							onRefreshModels={selectedProvider === "costrict" ? handleRefreshModels : undefined}
+							isRefreshingModels={isRefreshing}
+							triggerClassName="rounded-md max-w-80 px-[6px] text-xs h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
+							popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden text-xs"
+							tooltip={tooltip}
+						/>
+					) : (
+						selectedProviderModels.length > 0 && (
+							<StandardTooltip content={tooltip}>
+								<div>
+									<Select
+										open={showSelect}
+										disabled={isStreaming}
+										value={selectedModelId === "custom-arn" ? "custom-arn" : selectedModelId}
+										onValueChange={(value) => {
+											setApiConfigurationField(
+												apiConfiguration.apiProvider === "costrict"
+													? "costrictModelId"
+													: "apiModelId",
+												value,
+											)
 
-									// Clear custom ARN if not using custom ARN option.
-									if (value !== "custom-arn" && selectedProvider === "bedrock") {
-										setApiConfigurationField("awsCustomArn", "")
-									}
-								}}
-								onOpenChange={(open) => {
-									setShowSelect(open)
-								}}>
-								<SelectTrigger
-									className={cn(
-										"rounded-md w-full h-6 px-1.5 opacity-90 hover:opacity-100 bg-vscode-input-background hover:border-[rgba(255,255,255,0.15)]",
-									)}
-									showIcon={false}>
-									<span className=" overflow-hidden text-ellipsis whitespace-nowrap">
-										<Brain className="inline-block mr-1" />
-										<SelectValue placeholder={t("settings:common.select")} />
-									</span>
-								</SelectTrigger>
-								<SelectContent className="min-w-80 max-w-9/10 overflow-hidden">
-									{selectedProviderModels.map((option) => (
-										<SelectItem key={option.value} value={option.value}>
-											{option.label}
-										</SelectItem>
-									))}
-									{selectedProvider === "bedrock" && (
-										<SelectItem value="custom-arn">{t("settings:labels.useCustomArn")}</SelectItem>
-									)}
-								</SelectContent>
-							</Select>
-						</div>
-					</StandardTooltip>
-				)
+											// Clear custom ARN if not using custom ARN option.
+											if (value !== "custom-arn" && selectedProvider === "bedrock") {
+												setApiConfigurationField("awsCustomArn", "")
+											}
+										}}
+										onOpenChange={(open) => {
+											setShowSelect(open)
+										}}>
+										<SelectTrigger
+											className={cn(
+												"rounded-md w-full h-6 px-1.5 opacity-90 hover:opacity-100 bg-vscode-input-background hover:border-[rgba(255,255,255,0.15)]",
+											)}
+											showIcon={false}>
+											<span className=" overflow-hidden text-ellipsis whitespace-nowrap">
+												<Brain className="inline-block mr-1" />
+												<SelectValue placeholder={t("settings:common.select")} />
+											</span>
+										</SelectTrigger>
+										<SelectContent className="min-w-80 max-w-9/10 overflow-hidden">
+											{selectedProviderModels.map((option) => (
+												<SelectItem key={option.value} value={option.value}>
+													{option.label}
+												</SelectItem>
+											))}
+											{selectedProvider === "bedrock" && (
+												<SelectItem value="custom-arn">
+													{t("settings:labels.useCustomArn")}
+												</SelectItem>
+											)}
+										</SelectContent>
+									</Select>
+								</div>
+							</StandardTooltip>
+						)
+					)}
+				</div>
+			</PopoverAnchor>
+			{autoSwitchNotice && noticePortalContainer && (
+				<PopoverContent
+					container={noticePortalContainer}
+					side="top"
+					align="start"
+					onOpenAutoFocus={(e) => e.preventDefault()}
+					className="z-50 flex w-auto max-w-80 items-center gap-1 whitespace-normal rounded-md border border-vscode-dropdown-border bg-vscode-input-background px-2 py-1 text-xs text-vscode-descriptionForeground shadow">
+					<Info className="size-3 shrink-0" />
+					<span className="flex-1">
+						{t("chat:modelAutoSwitched", { from: autoSwitchNotice.from, to: autoSwitchNotice.to })}
+					</span>
+					<X
+						className="size-3 shrink-0 cursor-pointer opacity-70 hover:opacity-100"
+						onClick={() => setAutoSwitchNotice(null)}
+					/>
+				</PopoverContent>
 			)}
-		</div>
+		</Popover>
 	)
 }
 
