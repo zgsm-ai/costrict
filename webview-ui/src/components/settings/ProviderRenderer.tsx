@@ -66,6 +66,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	// Becomes true once apiConfiguration has actually caught up to the corrected model id.
 	// Guards the "dismiss on user re-pick" effect against firing during the async config round-trip.
 	const noticeSettledRef = useRef(false)
+	// Anchor the notice just above the model selector chip (computed from its bounding rect).
+	const anchorRef = useRef<HTMLDivElement>(null)
+	const [noticePos, setNoticePos] = useState<{ left: number; bottom: number } | null>(null)
 
 	useEffect(() => {
 		selectedModelIdRef.current = apiConfiguration.costrictModelId
@@ -97,6 +100,20 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 		}
 		const timer = setTimeout(() => setAutoSwitchNotice(null), 6000)
 		return () => clearTimeout(timer)
+	}, [autoSwitchNotice])
+
+	// Position the notice just above the model selector chip when it appears.
+	useEffect(() => {
+		if (!autoSwitchNotice) {
+			setNoticePos(null)
+			return
+		}
+		const el = anchorRef.current
+		if (!el) {
+			return
+		}
+		const rect = el.getBoundingClientRect()
+		setNoticePos({ left: rect.left, bottom: window.innerHeight - rect.top + 6 })
 	}, [autoSwitchNotice])
 
 	// Dismiss the notice once the user picks a different model than the one we corrected to.
@@ -340,7 +357,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			: t("chat:selectModel")
 	return (
 		<>
-			<div className={cn(className, config?.modelIdKey || selectedProviderModels.length > 0 ? "" : "hidden")}>
+			<div
+				ref={anchorRef}
+				className={cn(className, config?.modelIdKey || selectedProviderModels.length > 0 ? "" : "hidden")}>
 				{config?.modelIdKey ? (
 					<ModelPicker
 						isChatBox={true}
@@ -416,12 +435,14 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			</div>
 			{autoSwitchNotice &&
 				noticePortalContainer &&
+				noticePos &&
 				createPortal(
 					<div
 						role="status"
-						className="fixed top-12 left-1/2 z-50 flex max-w-[90%] -translate-x-1/2 items-center gap-2 rounded-md border border-vscode-dropdown-border bg-vscode-input-background px-3 py-2 text-xs text-vscode-foreground shadow-lg">
+						style={{ position: "fixed", left: noticePos.left, bottom: noticePos.bottom, zIndex: 50 }}
+						className="flex max-w-80 items-center gap-2 rounded-md border border-vscode-dropdown-border bg-vscode-input-background px-3 py-2 text-xs text-vscode-foreground shadow-lg">
 						<Info className="size-3.5 shrink-0" />
-						<span className="flex-1">
+						<span className="flex-1 whitespace-normal">
 							{t("chat:modelAutoSwitched", { from: autoSwitchNotice.from, to: autoSwitchNotice.to })}
 						</span>
 						<X
