@@ -66,6 +66,42 @@ export function getGlobalAgentsDirectory(): string {
 }
 
 /**
+ * Gets the global .claude directory path based on the current platform.
+ * This is Claude Code's global configuration directory.
+ *
+ * @returns The absolute path to the global .claude directory
+ *
+ * @example Platform-specific paths:
+ * ```
+ * // macOS/Linux: ~/.claude/
+ * // Example: /Users/john/.claude
+ *
+ * // Windows: %USERPROFILE%\.claude\
+ * // Example: C:\Users\john\.claude
+ * ```
+ */
+export function getGlobalClaudeDirectory(): string {
+	const homeDir = os.homedir()
+	return path.join(homeDir, ".claude")
+}
+
+/**
+ * Gets the project-local .claude directory path for a given cwd.
+ *
+ * @param cwd - Current working directory (project path)
+ * @returns The absolute path to the project-local .claude directory
+ *
+ * @example
+ * ```typescript
+ * const projectClaudeDir = getProjectClaudeDirectoryForCwd('/Users/john/my-project')
+ * // Returns: "/Users/john/my-project/.claude"
+ * ```
+ */
+export function getProjectClaudeDirectoryForCwd(cwd: string): string {
+	return path.join(cwd, ".claude")
+}
+
+/**
  * Gets the project-local .agents directory path for a given cwd.
  * This is a shared directory for agent skills across different AI coding tools.
  *
