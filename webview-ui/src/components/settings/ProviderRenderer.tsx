@@ -419,7 +419,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				createPortal(
 					<div
 						role="status"
-						className="fixed bottom-14 left-3 z-50 flex max-w-[80%] items-center gap-2 rounded-md border border-vscode-dropdown-border bg-vscode-input-background px-3 py-2 text-xs text-vscode-foreground shadow-lg">
+						className="fixed bottom-14 left-3 z-[3000] flex max-w-[80%] items-center gap-2 rounded-md border border-vscode-dropdown-border bg-vscode-input-background px-3 py-2 text-xs text-vscode-foreground shadow-lg">
 						<Info className="size-3.5 shrink-0" />
 						<span className="flex-1 whitespace-normal">
 							{t("chat:modelAutoSwitched", { from: autoSwitchNotice.from, to: autoSwitchNotice.to })}
