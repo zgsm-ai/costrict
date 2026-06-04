@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { ModelPicker } from "./ModelPicker"
 
 import {
@@ -18,17 +19,7 @@ import {
 import { useDebounce, useEvent } from "react-use"
 import { vscode } from "@/utils/vscode"
 import { convertHeadersToObject } from "./utils/headers"
-import {
-	Select,
-	SelectTrigger,
-	SelectValue,
-	SelectContent,
-	SelectItem,
-	StandardTooltip,
-	Popover,
-	PopoverAnchor,
-	PopoverContent,
-} from "@src/components/ui"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, StandardTooltip } from "@src/components/ui"
 import { useAppTranslation } from "@/i18n/TranslationContext"
 import { useSelectedModel } from "../ui/hooks/useSelectedModel"
 import { Brain, Info, X } from "lucide-react"
@@ -348,101 +339,99 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			? `${t("settings:modelPicker.label")}: ${defaultModelId}`
 			: t("chat:selectModel")
 	return (
-		<Popover open={!!autoSwitchNotice} onOpenChange={(o) => !o && setAutoSwitchNotice(null)}>
-			<PopoverAnchor asChild>
-				<div className={cn(className, config?.modelIdKey || selectedProviderModels.length > 0 ? "" : "hidden")}>
-					{config?.modelIdKey ? (
-						<ModelPicker
-							isChatBox={true}
-							modelPickerId={isEditMode ? "modelPickerEdit" : "modelPicker"}
-							apiConfiguration={apiConfiguration}
-							setApiConfigurationField={setApiConfigurationFieldWithRef}
-							defaultModelId={defaultModelId}
-							models={config?.models ?? {}}
-							modelIdKey={config.modelIdKey as any}
-							serviceName={config.serviceName}
-							serviceUrl={config.serviceUrl}
-							organizationAllowList={organizationAllowList}
-							showInfoView={false}
-							showLabel={false}
-							isStreaming={isStreaming}
-							onRefreshModels={selectedProvider === "costrict" ? handleRefreshModels : undefined}
-							isRefreshingModels={isRefreshing}
-							triggerClassName="rounded-md max-w-80 px-[6px] text-xs h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
-							popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden text-xs"
-							tooltip={tooltip}
-						/>
-					) : (
-						selectedProviderModels.length > 0 && (
-							<StandardTooltip content={tooltip}>
-								<div>
-									<Select
-										open={showSelect}
-										disabled={isStreaming}
-										value={selectedModelId === "custom-arn" ? "custom-arn" : selectedModelId}
-										onValueChange={(value) => {
-											setApiConfigurationField(
-												apiConfiguration.apiProvider === "costrict"
-													? "costrictModelId"
-													: "apiModelId",
-												value,
-											)
-
-											// Clear custom ARN if not using custom ARN option.
-											if (value !== "custom-arn" && selectedProvider === "bedrock") {
-												setApiConfigurationField("awsCustomArn", "")
-											}
-										}}
-										onOpenChange={(open) => {
-											setShowSelect(open)
-										}}>
-										<SelectTrigger
-											className={cn(
-												"rounded-md w-full h-6 px-1.5 opacity-90 hover:opacity-100 bg-vscode-input-background hover:border-[rgba(255,255,255,0.15)]",
-											)}
-											showIcon={false}>
-											<span className=" overflow-hidden text-ellipsis whitespace-nowrap">
-												<Brain className="inline-block mr-1" />
-												<SelectValue placeholder={t("settings:common.select")} />
-											</span>
-										</SelectTrigger>
-										<SelectContent className="min-w-80 max-w-9/10 overflow-hidden">
-											{selectedProviderModels.map((option) => (
-												<SelectItem key={option.value} value={option.value}>
-													{option.label}
-												</SelectItem>
-											))}
-											{selectedProvider === "bedrock" && (
-												<SelectItem value="custom-arn">
-													{t("settings:labels.useCustomArn")}
-												</SelectItem>
-											)}
-										</SelectContent>
-									</Select>
-								</div>
-							</StandardTooltip>
-						)
-					)}
-				</div>
-			</PopoverAnchor>
-			{autoSwitchNotice && noticePortalContainer && (
-				<PopoverContent
-					container={noticePortalContainer}
-					side="top"
-					align="start"
-					onOpenAutoFocus={(e) => e.preventDefault()}
-					className="z-50 flex w-auto max-w-80 items-center gap-1 whitespace-normal rounded-md border border-vscode-dropdown-border bg-vscode-input-background px-2 py-1 text-xs text-vscode-descriptionForeground shadow">
-					<Info className="size-3 shrink-0" />
-					<span className="flex-1">
-						{t("chat:modelAutoSwitched", { from: autoSwitchNotice.from, to: autoSwitchNotice.to })}
-					</span>
-					<X
-						className="size-3 shrink-0 cursor-pointer opacity-70 hover:opacity-100"
-						onClick={() => setAutoSwitchNotice(null)}
+		<>
+			<div className={cn(className, config?.modelIdKey || selectedProviderModels.length > 0 ? "" : "hidden")}>
+				{config?.modelIdKey ? (
+					<ModelPicker
+						isChatBox={true}
+						modelPickerId={isEditMode ? "modelPickerEdit" : "modelPicker"}
+						apiConfiguration={apiConfiguration}
+						setApiConfigurationField={setApiConfigurationFieldWithRef}
+						defaultModelId={defaultModelId}
+						models={config?.models ?? {}}
+						modelIdKey={config.modelIdKey as any}
+						serviceName={config.serviceName}
+						serviceUrl={config.serviceUrl}
+						organizationAllowList={organizationAllowList}
+						showInfoView={false}
+						showLabel={false}
+						isStreaming={isStreaming}
+						onRefreshModels={selectedProvider === "costrict" ? handleRefreshModels : undefined}
+						isRefreshingModels={isRefreshing}
+						triggerClassName="rounded-md max-w-80 px-[6px] text-xs h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
+						popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden text-xs"
+						tooltip={tooltip}
 					/>
-				</PopoverContent>
-			)}
-		</Popover>
+				) : (
+					selectedProviderModels.length > 0 && (
+						<StandardTooltip content={tooltip}>
+							<div>
+								<Select
+									open={showSelect}
+									disabled={isStreaming}
+									value={selectedModelId === "custom-arn" ? "custom-arn" : selectedModelId}
+									onValueChange={(value) => {
+										setApiConfigurationField(
+											apiConfiguration.apiProvider === "costrict"
+												? "costrictModelId"
+												: "apiModelId",
+											value,
+										)
+
+										// Clear custom ARN if not using custom ARN option.
+										if (value !== "custom-arn" && selectedProvider === "bedrock") {
+											setApiConfigurationField("awsCustomArn", "")
+										}
+									}}
+									onOpenChange={(open) => {
+										setShowSelect(open)
+									}}>
+									<SelectTrigger
+										className={cn(
+											"rounded-md w-full h-6 px-1.5 opacity-90 hover:opacity-100 bg-vscode-input-background hover:border-[rgba(255,255,255,0.15)]",
+										)}
+										showIcon={false}>
+										<span className=" overflow-hidden text-ellipsis whitespace-nowrap">
+											<Brain className="inline-block mr-1" />
+											<SelectValue placeholder={t("settings:common.select")} />
+										</span>
+									</SelectTrigger>
+									<SelectContent className="min-w-80 max-w-9/10 overflow-hidden">
+										{selectedProviderModels.map((option) => (
+											<SelectItem key={option.value} value={option.value}>
+												{option.label}
+											</SelectItem>
+										))}
+										{selectedProvider === "bedrock" && (
+											<SelectItem value="custom-arn">
+												{t("settings:labels.useCustomArn")}
+											</SelectItem>
+										)}
+									</SelectContent>
+								</Select>
+							</div>
+						</StandardTooltip>
+					)
+				)}
+			</div>
+			{autoSwitchNotice &&
+				noticePortalContainer &&
+				createPortal(
+					<div
+						role="status"
+						className="fixed top-12 left-1/2 z-50 flex max-w-[90%] -translate-x-1/2 items-center gap-2 rounded-md border border-vscode-dropdown-border bg-vscode-input-background px-3 py-2 text-xs text-vscode-foreground shadow-lg">
+						<Info className="size-3.5 shrink-0" />
+						<span className="flex-1">
+							{t("chat:modelAutoSwitched", { from: autoSwitchNotice.from, to: autoSwitchNotice.to })}
+						</span>
+						<X
+							className="size-3.5 shrink-0 cursor-pointer opacity-70 hover:opacity-100"
+							onClick={() => setAutoSwitchNotice(null)}
+						/>
+					</div>,
+					noticePortalContainer,
+				)}
+		</>
 	)
 }
 
