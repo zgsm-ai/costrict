@@ -171,8 +171,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	}, [])
 
 	// Login refresh: ProviderRenderer is always mounted (ChatView is never unmounted), so it
-	// reliably catches the host's post-login `costrictLogined`. Fire unconditionally — refreshing
-	// the costrict list only touches `costrictModelList`, never the openai dropdown.
+	// reliably catches the host's post-login `costrictLogined`. Only the primary (non-edit)
+	// instance flushes; refreshing the costrict list only touches `costrictModelList`, and the
+	// host only pushes `costrictModels` back when on the costrict provider, so this is safe.
 	useEffect(() => {
 		const onLogined = (event: MessageEvent) => {
 			// Only the primary (non-edit) instance drives the login refresh, to avoid a duplicate
