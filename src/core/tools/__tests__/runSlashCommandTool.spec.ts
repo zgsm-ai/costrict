@@ -31,7 +31,9 @@ describe("runSlashCommandTool", () => {
 							runSlashCommand: true,
 						},
 					}),
-					getSkillsManager: vi.fn().mockReturnValue(undefined),
+					ensureSkillsManager: vi.fn().mockResolvedValue({
+						getSkillContent: vi.fn().mockResolvedValue(null),
+					}),
 				}),
 			},
 		}
@@ -111,7 +113,7 @@ describe("runSlashCommandTool", () => {
 				},
 				mode: "code",
 			}),
-			getSkillsManager: vi.fn().mockReturnValue({
+			ensureSkillsManager: vi.fn().mockResolvedValue({
 				getSkillContent,
 			}),
 		})
@@ -179,7 +181,7 @@ Use skill workflow`,
 				},
 				mode: "code",
 			}),
-			getSkillsManager: vi.fn().mockReturnValue({
+			ensureSkillsManager: vi.fn().mockResolvedValue({
 				getSkillContent,
 			}),
 		})
