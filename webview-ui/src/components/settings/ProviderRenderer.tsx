@@ -25,7 +25,6 @@ import { useSelectedModel } from "../ui/hooks/useSelectedModel"
 import { Brain, Info, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getCorrectedCostrictModelId } from "./utils/correctModelSelection"
-import { useRooPortal } from "@/components/ui/hooks/useRooPortal"
 export interface ProviderRendererProps {
 	isEditMode?: boolean
 	isStreaming?: boolean
@@ -85,10 +84,6 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	useEffect(() => {
 		setFieldRef.current = setApiConfigurationFieldWithRef
 	}, [setApiConfigurationFieldWithRef])
-
-	// Container for the inline notice. Lives inside ChatView's hidden wrapper, so the notice
-	// escapes the toolbar's overflow-clip yet stays hidden when the chat tab is not active.
-	const noticePortalContainer = useRooPortal("costrict-portal")
 
 	// Auto-dismiss the inline notice after a few seconds.
 	useEffect(() => {
@@ -415,7 +410,6 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				)}
 			</div>
 			{autoSwitchNotice &&
-				noticePortalContainer &&
 				createPortal(
 					<div
 						role="status"
@@ -429,7 +423,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 							onClick={() => setAutoSwitchNotice(null)}
 						/>
 					</div>,
-					noticePortalContainer,
+					document.body,
 				)}
 		</>
 	)
