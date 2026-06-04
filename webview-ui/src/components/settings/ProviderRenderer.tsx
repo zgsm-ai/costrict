@@ -72,6 +72,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	// by the wrapped setter, so a just-typed custom model can't be mis-corrected by a racing refresh.
 	const selectedModelIdRef = useRef<string | undefined>(apiConfiguration.costrictModelId)
 	const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+	// Becomes true once apiConfiguration has actually caught up to the corrected model id.
+	// Guards the "dismiss on user re-pick" effect against firing during the async config round-trip.
+	const noticeSettledRef = useRef(false)
 
 	useEffect(() => {
 		selectedModelIdRef.current = apiConfiguration.costrictModelId
@@ -106,8 +109,18 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	}, [autoSwitchNotice])
 
 	// Dismiss the notice once the user picks a different model than the one we corrected to.
+	// We must first wait for apiConfiguration to "settle" to the corrected id — the correction
+	// updates the config asynchronously (round-trip via upsertApiConfiguration), so right after
+	// the notice is set the prop still holds the OLD id, which must NOT count as a user re-pick.
 	useEffect(() => {
-		if (autoSwitchNotice && apiConfiguration.costrictModelId !== autoSwitchNotice.to) {
+		if (!autoSwitchNotice) {
+			noticeSettledRef.current = false
+			return
+		}
+		if (apiConfiguration.costrictModelId === autoSwitchNotice.to) {
+			noticeSettledRef.current = true
+		} else if (noticeSettledRef.current) {
+			// Config had reached the corrected id and has now changed again → genuine user re-pick.
 			setAutoSwitchNotice(null)
 		}
 	}, [apiConfiguration.costrictModelId, autoSwitchNotice])
