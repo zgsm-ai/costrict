@@ -61,6 +61,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	// Mirrors apiConfiguration.costrictModelId; kept fresh by the effect below AND synchronously
 	// by the wrapped setter, so a just-typed custom model can't be mis-corrected by a racing refresh.
 	const selectedModelIdRef = useRef<string | undefined>(apiConfiguration.costrictModelId)
+	// Mirror props that the stable onMessage callback / listeners must read without re-subscribing.
+	const isEditModeRef = useRef(isEditMode)
+	const selectedProviderRef = useRef(selectedProvider)
 	const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	// Becomes true once apiConfiguration has actually caught up to the corrected model id.
 	// Guards the "dismiss on user re-pick" effect against firing during the async config round-trip.
@@ -73,6 +76,14 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	useEffect(() => {
 		selectedModelIdRef.current = apiConfiguration.costrictModelId
 	}, [apiConfiguration.costrictModelId])
+
+	useEffect(() => {
+		isEditModeRef.current = isEditMode
+	}, [isEditMode])
+
+	useEffect(() => {
+		selectedProviderRef.current = selectedProvider
+	}, [selectedProvider])
 
 	// Wrapped setter: synchronously syncs the ref for costrictModelId before delegating.
 	const setApiConfigurationFieldWithRef = useCallback(
@@ -98,19 +109,29 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 		return () => clearTimeout(timer)
 	}, [autoSwitchNotice])
 
-	// Compute the notice position from the model selector's rect when it appears.
+	// Compute the notice position from the model selector's rect when it appears, and keep it in
+	// sync on resize/scroll (fixed coords detach from layout once set). The rect.width === 0 guard
+	// also prevents rendering when the chat tab is hidden (anchor is display:none → zero rect).
 	useEffect(() => {
 		if (!autoSwitchNotice) {
 			setNoticePos(null)
 			return
 		}
-		const rect = anchorRef.current?.getBoundingClientRect()
-		if (!rect || rect.width === 0) {
-			// Anchor not laid out (e.g. a hidden duplicate instance) — don't show this one.
-			setNoticePos(null)
-			return
+		const computeNoticePos = () => {
+			const rect = anchorRef.current?.getBoundingClientRect()
+			if (!rect || rect.width === 0) {
+				setNoticePos(null)
+				return
+			}
+			setNoticePos({ left: rect.left, bottom: window.innerHeight - rect.top + 6 })
 		}
-		setNoticePos({ left: rect.left, bottom: window.innerHeight - rect.top + 6 })
+		computeNoticePos()
+		window.addEventListener("resize", computeNoticePos)
+		window.addEventListener("scroll", computeNoticePos, true)
+		return () => {
+			window.removeEventListener("resize", computeNoticePos)
+			window.removeEventListener("scroll", computeNoticePos, true)
+		}
 	}, [autoSwitchNotice])
 
 	// Dismiss the notice once the user picks a different model than the one we corrected to.
@@ -154,13 +175,15 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 	// the costrict list only touches `costrictModelList`, never the openai dropdown.
 	useEffect(() => {
 		const onLogined = (event: MessageEvent) => {
-			if (event.data?.type === "costrictLogined") {
+			// Only the primary (non-edit) instance drives the login refresh, to avoid a duplicate
+			// flush from the message-edit ChatTextArea instance.
+			if (event.data?.type === "costrictLogined" && !isEditMode) {
 				handleRefreshModels()
 			}
 		}
 		window.addEventListener("message", onLogined)
 		return () => window.removeEventListener("message", onLogined)
-	}, [handleRefreshModels])
+	}, [handleRefreshModels, isEditMode])
 
 	const onMessage = useCallback((event: MessageEvent) => {
 		const message: ExtensionMessage = event.data
@@ -178,7 +201,15 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				const oldModelIds = Object.keys(previousCostrictModelsRef.current ?? {})
 				const selectedModelId = selectedModelIdRef.current
 				const corrected = getCorrectedCostrictModelId(oldModelIds, newModelIds, selectedModelId)
-				if (corrected && selectedModelId) {
+				// Only the primary costrict selector applies the correction + notice. Other providers
+				// also receive costrictModels pushes (requestRouterModels broadcasts them), and the
+				// message-edit duplicate instance must not fire these global side-effects.
+				if (
+					corrected &&
+					selectedModelId &&
+					!isEditModeRef.current &&
+					selectedProviderRef.current === "costrict"
+				) {
 					setFieldRef.current("costrictModelId", corrected)
 					setAutoSwitchNotice({ from: selectedModelId, to: corrected })
 				}
@@ -222,6 +253,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 			// check messsage type only close with action
 			if (event.data && event.data.type === "action") {
 				setShowSelect(false)
+				// Tab/page navigation: dismiss the auto-switch notice so a body-portal toast
+				// can't linger over another tab.
+				setAutoSwitchNotice(null)
 			}
 		}
 		window.addEventListener("message", handlePageChange)
@@ -372,7 +406,9 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 						showInfoView={false}
 						showLabel={false}
 						isStreaming={isStreaming}
-						onRefreshModels={selectedProvider === "costrict" ? handleRefreshModels : undefined}
+						onRefreshModels={
+							!isEditMode && selectedProvider === "costrict" ? handleRefreshModels : undefined
+						}
 						isRefreshingModels={isRefreshing}
 						triggerClassName="rounded-md max-w-80 px-[6px] text-xs h-6 opacity-90 hover:opacity-100 hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)] cursor-pointer transition-all duration-150"
 						popoverContentClassName="min-w-80 max-w-9/10 overflow-hidden text-xs"
