@@ -2,16 +2,21 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.8.11]
+
+- Maintenance release with documentation updates
+- Optimize model list refresh (#1268)
+
 ## [2.8.10]
 
-- Add `.claude` directory support for skill discovery (#1266)
-- Revert remote agent installer and related commands (#1267)
-- Recover `refreshOnDiskCacheHit` option for model fetching and caching (#1269)
+- Add third-party skill support
+- Revert external tool bootstrapper and related commands
+- Recover `refreshOnDiskCacheHit` option for model fetching and caching
 
 ## [2.8.8]
 
-- Add remote agent installation support (#1258)
-- Defer RemoteAgentInstaller startup, add skills polling, and handle 404 version errors (#1261)
+- Add external tool sync for remote development environments (#1258)
+- Defer ExternalToolSync startup, add skills polling, and handle 404 version errors (#1261)
 - Fix known issues
 
 ## [2.8.7]
