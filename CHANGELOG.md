@@ -2,6 +2,12 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.8.12]
+
+- Add timeout option to CoStrict model fetching and caching (#1276)
+- Migrate pnpm config to workspace yaml and apply security overrides (#1273)
+- Fix vitest Mock type compatibility and add missing node types (#1273)
+
 ## [2.8.11]
 
 - Maintenance release with documentation updates
