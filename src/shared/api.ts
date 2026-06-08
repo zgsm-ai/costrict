@@ -173,6 +173,7 @@ const dynamicProviderExtras = {
 		apiKey?: string
 		openAiHeaders?: Record<string, string>
 		refreshOnDiskCacheHit?: boolean
+		timeout?: number
 	},
 	openrouter: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
 	"vercel-ai-gateway": {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type

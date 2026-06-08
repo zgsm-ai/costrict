@@ -5,7 +5,7 @@ import type { InviteCodeInfo, ICostrictModelResponseData, QuotaInfo } from "@roo
 import { readModels } from "./modelCache"
 import { CostrictAuthService } from "../../../core/costrict/auth"
 
-export async function getCostrictModels(baseUrl?: string, apiKey?: string, openAiHeaders?: Record<string, string>) {
+export async function getCostrictModels(baseUrl?: string, apiKey?: string, openAiHeaders?: Record<string, string>, timeout?: number ) {
 	const requestId = uuidv7()
 
 	try {
@@ -21,7 +21,9 @@ export async function getCostrictModels(baseUrl?: string, apiKey?: string, openA
 		}
 		const { id } = (await CostrictAuthService.getInstance()?.getUserInfo()) || {}
 
-		const config: Record<string, any> = {}
+		const config: Record<string, any> = {
+			timeout
+		}
 		const headers: Record<string, string> = {
 			...COSTRICT_DEFAULT_HEADERS,
 			...(openAiHeaders || {}),
