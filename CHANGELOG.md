@@ -7,6 +7,7 @@
 - Add timeout option to CoStrict model fetching and caching (#1276)
 - Migrate pnpm config to workspace yaml and apply security overrides (#1273)
 - Fix vitest Mock type compatibility and add missing node types (#1273)
+- Add built-in skills notification
 
 ## [2.8.11]
 

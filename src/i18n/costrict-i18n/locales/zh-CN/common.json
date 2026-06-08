@@ -215,6 +215,10 @@
 	"notification": {
 		"confirm": "确定"
 	},
+	"builtinSkills": {
+		"init": "内置技能（{{skills}}）已安装至 {{path}}",
+		"updated": "内置技能（{{skills}}）已更新至 {{path}}"
+	},
 	"ipc": {
 		"connectionFailed": "IPC 连接失败，无法连接到本地服务器",
 		"reloadWindow": "重新加载窗口",

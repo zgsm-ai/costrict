@@ -215,6 +215,10 @@
 	"notification": {
 		"confirm": "Confirm"
 	},
+	"builtinSkills": {
+		"init": "Built-in skills ({{skills}}) have been installed to {{path}}",
+		"updated": "Built-in skills ({{skills}}) have been updated in {{path}}"
+	},
 	"ipc": {
 		"connectionFailed": "IPC connection failed, unable to connect to local server",
 		"reloadWindow": "Reload Window",

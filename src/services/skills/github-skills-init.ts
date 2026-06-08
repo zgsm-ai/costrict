@@ -19,6 +19,7 @@ import * as path from "path"
 import * as vscode from "vscode"
 import { getGlobalCostrictDirectory } from "../roo-config"
 import { createLogger, ILogger } from "../../utils/logger"
+import { t } from "../../i18n"
 
 const logger: ILogger = createLogger("BuiltinSkillsInstaller")
 
@@ -184,13 +185,18 @@ async function copyBundledSkill(
 }
 
 /**
+ * Installation result for a single skill
+ */
+type SkillInstallResult = "up-to-date" | "installed" | "updated" | "failed"
+
+/**
  * Install a single built-in skill
  */
-async function installBuiltinSkill(
+async function initBuiltinSkill(
 	config: BuiltinSkillConfig,
 	bundledSkillsPath: string,
 	preferredLocale: string,
-): Promise<boolean> {
+): Promise<SkillInstallResult> {
 	const { name, mode } = config
 
 	// Get bundled commit SHA from index.json
@@ -199,7 +205,7 @@ async function installBuiltinSkill(
 	// Skip if commitSha is null/empty (skill not properly bundled)
 	if (!bundledCommitSha) {
 		logger.info(`[BuiltinSkills] ${name}: No commitSha in index.json, skipping`)
-		return false
+		return "failed"
 	}
 
 	// Resolve locale from available locales
@@ -222,7 +228,7 @@ async function installBuiltinSkill(
 	if (dirExists) {
 		if (installedVersion === expectedVersion) {
 			logger.info(`[BuiltinSkills] ${name}: Up to date (${expectedVersion})`)
-			return true
+			return "up-to-date"
 		}
 		const shortInstalled = installedVersion?.slice(0, 7) || "unknown"
 		const shortBundled = bundledCommitSha?.slice(0, 7) || "unknown"
@@ -241,11 +247,25 @@ async function installBuiltinSkill(
 		const modeInfo = mode ? ` to ${mode} mode` : ""
 		const shortSha = bundledCommitSha?.slice(0, 7) || "unknown"
 		logger.info(`[BuiltinSkills] ${name}: Installed from bundled skills${modeInfo} (${shortSha}:${locale})`)
-		return true
+		return dirExists ? "updated" : "installed"
 	}
 
 	logger.info(`[BuiltinSkills] ${name}: Bundled skills not found`)
-	return false
+	return "failed"
+}
+
+/**
+ * Installation summary returned by initReviewSkills
+ */
+export interface SkillsInitSummary {
+	/** Skills that were freshly installed */
+	installed: string[]
+	/** Skills that were updated to a new version */
+	updated: string[]
+	/** Skills that were already up to date */
+	upToDate: string[]
+	/** Skills that failed to install */
+	failed: string[]
 }
 
 /**
@@ -259,10 +279,11 @@ async function installBuiltinSkill(
  *
  * Skills are automatically updated when the bundled version or locale changes.
  */
-export async function installGitHubSkills(
+export async function initReviewSkills(
 	context: vscode.ExtensionContext,
 	preferredLocale: string = "zh-CN",
-): Promise<void> {
+): Promise<SkillsInitSummary> {
+	const emptySummary: SkillsInitSummary = { installed: [], updated: [], upToDate: [], failed: [] }
 	const bundledSkillsPath = getBundledSkillsPath(context)
 
 	// Check if bundled skills exist
@@ -273,7 +294,7 @@ export async function installGitHubSkills(
 
 	if (!bundledExists) {
 		logger.info("[BuiltinSkills] No bundled skills found, skipping")
-		return
+		return emptySummary
 	}
 
 	const extensionVersion = getExtensionVersion(context)
@@ -283,11 +304,61 @@ export async function installGitHubSkills(
 
 	// Install all skills (copy from bundled to user directory)
 	const results = await Promise.all(
-		BUILTIN_SKILLS.map((config) => installBuiltinSkill(config, bundledSkillsPath, preferredLocale)),
+		BUILTIN_SKILLS.map(async (config) => {
+			const result = await initBuiltinSkill(config, bundledSkillsPath, preferredLocale)
+			return { name: config.name, result }
+		}),
 	)
 
-	const successCount = results.filter((r) => r).length
-	logger.info(`[BuiltinSkills] Installation complete: ${successCount}/${BUILTIN_SKILLS.length} skills`)
+	// Aggregate results
+	const summary: SkillsInitSummary = { installed: [], updated: [], upToDate: [], failed: [] }
+	for (const { name, result } of results) {
+		switch (result) {
+			case "installed":
+				summary.installed.push(name)
+				break
+			case "updated":
+				summary.updated.push(name)
+				break
+			case "up-to-date":
+				summary.upToDate.push(name)
+				break
+			case "failed":
+				summary.failed.push(name)
+				break
+		}
+	}
+
+	logger.info(
+		`[BuiltinSkills] Installation complete: ${summary.installed.length} installed, ${summary.updated.length} updated, ${summary.upToDate.length} up-to-date, ${summary.failed.length} failed`,
+	)
+
+	return summary
+}
+
+/**
+ * Show a VS Code notification for skills that were installed or updated.
+ * Only shows when there are actual changes (not when all skills are already up-to-date).
+ */
+export function showSkillsInitNotification(summary: SkillsInitSummary): void {
+	const installedOrUpdated = [...summary.installed, ...summary.updated]
+	if (installedOrUpdated.length === 0) return
+
+	const skillsList = installedOrUpdated.join(", ")
+	const installPath = getGlobalCostrictDirectory()
+
+	if (summary.installed.length > 0 && summary.updated.length === 0) {
+		vscode.window.showInformationMessage(t("common:builtinSkills.init", { skills: skillsList, path: installPath }))
+	} else if (summary.updated.length > 0 && summary.installed.length === 0) {
+		vscode.window.showInformationMessage(
+			t("common:builtinSkills.updated", { skills: skillsList, path: installPath }),
+		)
+	} else {
+		// Mixed: some installed, some updated
+		vscode.window.showInformationMessage(
+			t("common:builtinSkills.updated", { skills: skillsList, path: installPath }),
+		)
+	}
 }
 
 /**

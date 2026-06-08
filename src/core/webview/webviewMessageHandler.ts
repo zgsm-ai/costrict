@@ -89,7 +89,7 @@ import { ErrorCodeManager } from "../costrict/error-code"
 import { writeCostrictRuntimeAuth } from "../costrict/runtime-config"
 import { fetchCostrictQuotaInfo, fetchCostrictInviteCode } from "../../api/providers/fetchers/costrict"
 import { initNotificationService } from "../costrict/notification"
-import { installGitHubSkills } from "../../services/skills/github-skills-installer"
+import { initReviewSkills, showSkillsInitNotification } from "../../services/skills/github-skills-init"
 import delay from "delay"
 import { ensureProjectWikiSubtasksExists } from "../costrict/wiki/projectWikiHelpers"
 import { setPendingTodoList } from "../tools/UpdateTodoListTool"
@@ -782,8 +782,11 @@ export const webviewMessageHandler = async (
 					})
 
 					void provider.getState().then((state) => {
-						void installGitHubSkills(provider.context, state.language ?? "zh-CN")
-							.then(() => provider.log("[BuiltinSkills] Bundled skills installed"))
+						void initReviewSkills(provider.context, state.language ?? "zh-CN")
+							.then((summary) => {
+								provider.log("[BuiltinSkills] Bundled skills installed")
+								showSkillsInitNotification(summary)
+							})
 							.catch((error) =>
 								provider.log(
 									`[BuiltinSkills] Failed to install: ${error instanceof Error ? error.message : String(error)}`,
@@ -854,8 +857,11 @@ export const webviewMessageHandler = async (
 						// Initialize subtask files for the new language.
 						await ensureProjectWikiSubtasksExists(newValue as string)
 						// Reinstall bundled skills with the new locale
-						void installGitHubSkills(provider.context, newValue as string)
-							.then(() => provider.log("[BuiltinSkills] Bundled skills reinstalled"))
+						void initReviewSkills(provider.context, newValue as string)
+							.then((summary) => {
+								provider.log("[BuiltinSkills] Bundled skills reinstalled")
+								showSkillsInitNotification(summary)
+							})
 							.catch((error) =>
 								provider.log(
 									`[BuiltinSkills] Failed to reinstall: ${error instanceof Error ? error.message : String(error)}`,
