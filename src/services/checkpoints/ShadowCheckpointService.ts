@@ -46,6 +46,13 @@ function createSanitizedGit(baseDir: string): SimpleGit {
 			continue
 		}
 
+		// Skip generic environment variables that simple-git considers unsafe
+		// for command injection (e.g. PAGER, EDITOR, VISUAL, BROWSER)
+		if (key === "PAGER" || key === "EDITOR" || key === "VISUAL" || key === "BROWSER") {
+			removedVars.push(`${key}=${value}`)
+			continue
+		}
+
 		// Only include defined values
 		if (value !== undefined) {
 			sanitizedEnv[key] = value
@@ -62,6 +69,11 @@ function createSanitizedGit(baseDir: string): SimpleGit {
 	const options: Partial<SimpleGitOptions> = {
 		baseDir,
 		config: [],
+		unsafe: {
+			allowUnsafeTemplateDir: true,
+			allowUnsafeConfigEnvCount: true,
+			allowUnsafePager: true,
+		} as SimpleGitOptions["unsafe"],
 	}
 
 	// Create git instance and set the sanitized environment

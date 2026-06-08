@@ -154,7 +154,7 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
 				models = undefined
 			} else {
 				if (!hadMemoryModels && refreshOnDiskCacheHit) {
-					options.timeout = 2000 // Set a short timeout for the background refresh to prevent long waits on slow API responses
+					options.timeout = 1000 // Set a short timeout for the background refresh to prevent long waits on slow API responses
 					void refreshModels(options).catch((error) => {
 						console.error(`[getModels] Background refresh failed for ${provider}:`, error)
 					})

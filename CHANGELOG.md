@@ -8,6 +8,7 @@
 - Migrate pnpm config to workspace yaml and apply security overrides (#1273)
 - Fix vitest Mock type compatibility and add missing node types (#1273)
 - Add built-in skills notification
+- Fix known issues
 
 ## [2.8.11]
 

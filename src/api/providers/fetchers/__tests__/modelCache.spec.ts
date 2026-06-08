@@ -332,7 +332,7 @@ describe("empty cache protection", () => {
 			})
 
 			expect(result).toEqual(diskModels)
-			expect(mockGetCostrictModels).toHaveBeenCalledWith("https://api.example.com", "test-api-key", undefined)
+			expect(mockGetCostrictModels).toHaveBeenCalledWith("https://api.example.com", "test-api-key", undefined, 2000)
 
 			await vi.waitFor(() => {
 				expect(mockSet).toHaveBeenCalledWith("costrict", refreshedModels)

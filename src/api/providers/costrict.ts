@@ -951,11 +951,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		if (info.id !== id) {
 			info.id = id
 		}
-		const _mid = id.toLowerCase()
-		if (
-			(_mid?.includes("auto") || _mid?.includes("kimi") || _mid?.includes("minimax") || _mid?.includes("glm") || _mid?.includes("deepseek-v4") || _mid?.includes("qwen-3")) &&
-			info.preserveReasoning == null
-		) {
+		if (info.preserveReasoning == null) {
 			info.preserveReasoning = true
 		}
 		return { id, info, ...params }

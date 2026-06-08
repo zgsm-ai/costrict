@@ -598,7 +598,6 @@ describe("ChatView scroll behavior regression coverage", () => {
 		})
 		expect(harness.scrollToIndexArgs.at(-1)).toMatchObject({ index: 0, align: "center", behavior: "smooth" })
 
-		// Once at the oldest checkpoint, additional clicks keep targeting it.
 		await act(async () => {
 			;(checkpointButton as HTMLButtonElement).click()
 		})

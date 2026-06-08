@@ -48,7 +48,9 @@ describe("PostHogTelemetryClient", () => {
 			optOut: vi.fn(),
 			shutdown: vi.fn().mockResolvedValue(undefined),
 		}
-		;(PostHog as any).mockImplementation(() => mockPostHogClient)
+		;(PostHog as any).mockImplementation(function () {
+			return mockPostHogClient
+		})
 
 		// @ts-expect-error - Accessing private static property for testing
 		PostHogTelemetryClient._instance = undefined
