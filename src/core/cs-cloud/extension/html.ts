@@ -934,6 +934,11 @@ export function getAssistantUIIframeHtml(
 		pluginSha,
 		pluginBuildTime,
 	)
+	const frameSrc = ["http://127.0.0.1:*", "http://localhost:*"]
+	const frameOrigin = new URL(frameUrl).origin
+	if (frameOrigin !== "null" && !frameSrc.includes(frameOrigin)) {
+		frameSrc.push(frameOrigin)
+	}
 	const csp = [
 		"default-src 'none'",
 		`font-src ${webview.cspSource} data:`,
@@ -941,7 +946,7 @@ export function getAssistantUIIframeHtml(
 		`img-src ${webview.cspSource} https://storage.googleapis.com https://img.clerk.com https://*.githubusercontent.com https: data: blob:`,
 		`media-src ${webview.cspSource}`,
 		`script-src 'unsafe-eval' ${webview.cspSource} https://* https://*.posthog.com http://127.0.0.1:* http://localhost:* http://0.0.0.0:* 'nonce-${nonce}'`,
-		"frame-src http://127.0.0.1:* http://localhost:*",
+		`frame-src ${frameSrc.join(" ")}`,
 		`connect-src ${webview.cspSource} https://* https://*.posthog.com https://*.sangfor.com ws://127.0.0.1:* ws://0.0.0.0:* ws://localhost:*  http://127.0.0.1:* http://localhost:* `,
 	].join("; ")
 
