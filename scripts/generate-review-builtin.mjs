@@ -79,6 +79,23 @@ function collectLocales(index) {
 	return [...localeSet].sort()
 }
 
+const EXCLUDED_BUNDLED_SKILL_FILES = new Set([
+	"php_deserialization.md",
+	"java_practical.md",
+])
+
+async function removeExcludedBundledSkillFiles(dir = bundledSkillsDir) {
+	for (const entry of await fs.readdir(dir, { withFileTypes: true }).catch(() => [])) {
+		const entryPath = path.join(dir, entry.name)
+		if (entry.isDirectory()) {
+			await removeExcludedBundledSkillFiles(entryPath)
+		} else if (EXCLUDED_BUNDLED_SKILL_FILES.has(entry.name)) {
+			await fs.rm(entryPath)
+			console.log(`   ⚠ Removed excluded file: ${entryPath}`)
+		}
+	}
+}
+
 async function getExtensionVersion() {
 	try {
 		const packagePath = path.join(projectRoot, "src", "package.json")
@@ -105,24 +122,6 @@ async function cloneAndCopy(cloneDir, index) {
 			await fs.rm(entryPath, { recursive: true, force: true })
 		}
 	}
-	// Files to always exclude from bundled skills (flagged by VS Marketplace virus scan)
-	const excludeFiles = new Set([
-		"php_deserialization.md",
-	])
-
-	async function removeExcludedFiles(dir) {
-		for (const file of excludeFiles) {
-			const filePath = path.join(dir, file)
-			try {
-				await fs.access(filePath)
-				await fs.rm(filePath)
-				console.log(`   ⚠ Removed excluded file: ${filePath}`)
-			} catch {
-				// File not present, skip
-			}
-		}
-	}
-
 	for (const locale of locales) {
 		for (const skill of index.skills) {
 			const skillMdPath = skill.path[locale]
@@ -137,7 +136,7 @@ async function cloneAndCopy(cloneDir, index) {
 			await fs.cp(srcDir, outputDir, { recursive: true })
 
 			// Remove files that are flagged by VS Marketplace
-			await removeExcludedFiles(outputDir)
+			await removeExcludedBundledSkillFiles(outputDir)
 
 			// Verify SKILL.md exists
 			const skillMd = path.join(outputDir, "SKILL.md")
@@ -244,6 +243,7 @@ async function main() {
 		}
 	}
 
+	await removeExcludedBundledSkillFiles()
 	await generateIndexJson(commitSha)
 
 	console.log(`✓ Bundled skills directory: ${bundledSkillsDir}`)

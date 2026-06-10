@@ -44,6 +44,7 @@
 # Exclude files flagged by VS Marketplace virus scan.
 # Wildcard matches across all locale subdirectories (en/, zh-CN/, etc.).
 bundled-skills/*/security-review/knowledge/languages/php_deserialization.md
+bundled-skills/*/security-review/knowledge/languages/java_practical.md
 
 # Include .env file for telemetry
 !.env
