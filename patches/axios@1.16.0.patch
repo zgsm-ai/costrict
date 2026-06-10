@@ -1,0 +1,15 @@
+diff --git a/lib/adapters/http.js b/lib/adapters/http.js
+index 252c7d87b908a0bef3adf5a4f7ce4174d7e800e8..e098a7ec72095d0236a17a705922b3d0585d19b3 100755
+--- a/lib/adapters/http.js
++++ b/lib/adapters/http.js
+@@ -1064,7 +1064,9 @@ export default isHttpAdapterSupported &&
+ 
+       req.on('socket', function handleRequestSocket(socket) {
+         // default interval of sending ack packet is 1 minute
+-        socket.setKeepAlive(true, 1000 * 60);
++        if (socket.setKeepAlive) {
++          socket.setKeepAlive(true, 1000 * 60);
++        }
+ 
+         // Install a single 'error' listener per socket (not per request) to avoid
+         // accumulating listeners on pooled keep-alive sockets that get reassigned

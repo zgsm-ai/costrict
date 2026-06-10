@@ -46,9 +46,14 @@ overrides:
   js-cookie@<=3.0.5: '>=3.0.7'
   qs@>=6.11.1 <=6.15.1: '>=6.15.2'
   tmp@<0.2.6: '>=0.2.6'
-  axios@>=1.0.0 <1.16.0: '>=1.16.0'
+  axios@>=1.0.0 <1.16.0: 1.16.0
   vitest: 3.2.6
   '@ai-sdk/provider-utils': 4.0.27
+
+patchedDependencies:
+  axios@1.16.0:
+    hash: 1c584a909173b8ceb2677ee9b4cb6d5c1eab2a3a17c67c64ee92f79a1e0a94cf
+    path: patches/axios@1.16.0.patch
 
 importers:
 
@@ -898,8 +903,8 @@ importers:
         specifier: ^1.3.3
         version: 1.3.3
       axios:
-        specifier: '>=1.16.0'
-        version: 1.17.0
+        specifier: 1.16.0
+        version: 1.16.0(patch_hash=1c584a909173b8ceb2677ee9b4cb6d5c1eab2a3a17c67c64ee92f79a1e0a94cf)
       cheerio:
         specifier: ^1.0.0
         version: 1.2.0
@@ -1328,8 +1333,8 @@ importers:
         specifier: ^0.7.2
         version: 0.7.2
       axios:
-        specifier: '>=1.16.0'
-        version: 1.17.0
+        specifier: 1.16.0
+        version: 1.16.0(patch_hash=1c584a909173b8ceb2677ee9b4cb6d5c1eab2a3a17c67c64ee92f79a1e0a94cf)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -4791,10 +4796,6 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  agent-base@6.0.2:
-    resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
-    engines: {node: '>= 6.0.0'}
-
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
@@ -4994,8 +4995,8 @@ packages:
   aws4fetch@1.0.20:
     resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
 
-  axios@1.17.0:
-    resolution: {integrity: sha512-J8SwNxprqqpbfenehxWYXE7CW+wM1BB4w3+N+g+/Wx40xM4rsLrfPmHHxSWIxJLYDgSY/HqlFPIYb2/S3rxafw==}
+  axios@1.16.0:
+    resolution: {integrity: sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==}
 
   azure-devops-node-api@12.5.0:
     resolution: {integrity: sha512-R5eFskGvOm3U/GzeAuxRkUsAl0hrAwGgWn6zAd2KrZmrEhWZVqLew4OOupbQlXUuojUzpGtq62SmdhJ06N88og==}
@@ -6934,10 +6935,6 @@ packages:
   http-proxy-agent@7.0.2:
     resolution: {integrity: sha512-T1gkAiYYDWYx3V5Bmyu7HcfcvL7mUrTWiM6yOfa3PIphViJ/gFPbvidQ+veqSOHci/PxBcDabeUNCzpOODJZig==}
     engines: {node: '>= 14'}
-
-  https-proxy-agent@5.0.1:
-    resolution: {integrity: sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA==}
-    engines: {node: '>= 6'}
 
   https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
@@ -14426,12 +14423,6 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  agent-base@6.0.2:
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
-    transitivePeerDependencies:
-      - supports-color
-
   agent-base@7.1.4: {}
 
   agentkeepalive@4.6.0:
@@ -14698,15 +14689,13 @@ snapshots:
 
   aws4fetch@1.0.20: {}
 
-  axios@1.17.0:
+  axios@1.16.0(patch_hash=1c584a909173b8ceb2677ee9b4cb6d5c1eab2a3a17c67c64ee92f79a1e0a94cf):
     dependencies:
       follow-redirects: 1.16.0
       form-data: 4.0.5
-      https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
-      - supports-color
 
   azure-devops-node-api@12.5.0:
     dependencies:
@@ -16835,13 +16824,6 @@ snapshots:
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3(supports-color@8.1.1)
-    transitivePeerDependencies:
-      - supports-color
-
-  https-proxy-agent@5.0.1:
-    dependencies:
-      agent-base: 6.0.2
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color

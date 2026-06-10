@@ -61,6 +61,9 @@ overrides:
     "js-cookie@<=3.0.5": ">=3.0.7"
     "qs@>=6.11.1 <=6.15.1": ">=6.15.2"
     "tmp@<0.2.6": ">=0.2.6"
-    "axios@>=1.0.0 <1.16.0": ">=1.16.0"
+    "axios@>=1.0.0 <1.16.0": "1.16.0"
     "vitest": "3.2.6"
     "@ai-sdk/provider-utils": "4.0.27"
+
+patchedDependencies:
+    axios@1.16.0: patches/axios@1.16.0.patch
