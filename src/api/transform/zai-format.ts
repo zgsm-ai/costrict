@@ -43,7 +43,7 @@ export function convertToZAiFormat(
 	for (const message of messages) {
 		// Check if the message has reasoning_content (for Z.ai interleaved thinking)
 		const messageWithReasoning = message as AnthropicMessage & { reasoning_content?: string }
-		const reasoningContent = messageWithReasoning.reasoning_content
+		const reasoningContent = messageWithReasoning.reasoning_content || ""
 
 		if (message.role === "user") {
 			// Handle user messages - may contain tool_result blocks
@@ -207,7 +207,7 @@ export function convertToZAiFormat(
 						lastMessage.content = `${lastContent}\n${assistantMessage.content}`
 					}
 					// Preserve reasoning_content from the new message if present
-					if (finalReasoning) {
+					if (finalReasoning != null) {
 						;(lastMessage as ZAiAssistantMessage).reasoning_content = finalReasoning
 					}
 				} else {
