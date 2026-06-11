@@ -770,8 +770,22 @@ export function getAssistantUIStaticHtml(
           if (window.fetch) {
             const originalFetch = window.fetch.bind(window);
             let proxyFetchSeq = 0;
-            window.fetch = function(input, init) {
-              const url = typeof input === "string" ? input : input && input.url;
+            const bodyToString = async function(body) {
+              if (body == null) return undefined;
+              if (typeof body === "string") return body;
+              if (body instanceof URLSearchParams) return body.toString();
+              if (typeof Blob !== "undefined" && body instanceof Blob) return await body.text();
+              if (body instanceof ArrayBuffer) return new TextDecoder().decode(body);
+              if (ArrayBuffer.isView(body)) return new TextDecoder().decode(body);
+              return undefined;
+            };
+            window.fetch = async function(input, init) {
+              const request = typeof Request !== "undefined" && input instanceof Request ? input : null;
+              const url = typeof input === "string"
+                ? input
+                : input instanceof URL
+                  ? input.toString()
+                  : request && request.url;
               if (typeof url === "string" && (url.indexOf(window.__CS_CLOUD_BASE_URL__) === 0 || url.indexOf("/api/v1") >= 0)) {
                 console.info(diagnosticPrefix + " fetch", url);
               }
@@ -783,23 +797,73 @@ export function getAssistantUIStaticHtml(
               // extension host to avoid CORS errors in the webview sandbox.
               const isCsCloudUrl = typeof url === "string" && url.indexOf(window.__CS_CLOUD_BASE_URL__) === 0;
               if (typeof url === "string" && (url.indexOf("sangfor.com") >= 0 || isCsCloudUrl)) {
-                return new Promise(function(resolve) {
-                  const requestId = "proxy-" + Date.now() + "-" + (++proxyFetchSeq);
-                  const headers = {};
-                  if (init && init.headers) {
-                    if (typeof init.headers.forEach === "function") {
-                      init.headers.forEach(function(value, key) { headers[key] = value; });
-                    } else {
-                      Object.assign(headers, init.headers);
+                const requestId = "proxy-" + Date.now() + "-" + (++proxyFetchSeq);
+                const headers = {};
+                if (request && request.headers) {
+                  request.headers.forEach(function(value, key) { headers[key] = value; });
+                }
+                if (init && init.headers) {
+                  new Headers(init.headers).forEach(function(value, key) { headers[key] = value; });
+                }
+                const method = (init && init.method) || (request && request.method) || "GET";
+                const body = init && init.body != null
+                  ? await bodyToString(init.body)
+                  : request && method !== "GET" && method !== "HEAD" && !request.bodyUsed
+                    ? await request.clone().text()
+                    : undefined;
+                return new Promise(function(resolve, reject) {
+                  const encoder = new TextEncoder();
+                  let streamController;
+                  let responseSettled = false;
+                  const cleanup = function() {
+                    window.removeEventListener("message", handler);
+                  };
+                  const stream = new ReadableStream({
+                    start: function(controller) {
+                      streamController = controller;
+                    },
+                    cancel: function() {
+                      cleanup();
+                      v.postMessage({ type: "proxyFetchAbort", requestId: requestId });
                     }
-                  }
+                  });
                   const handler = function(event) {
-                    if (event.data && event.data.type === "proxyFetchResult" && event.data.requestId === requestId) {
-                      window.removeEventListener("message", handler);
-                      resolve(new Response(event.data.body || "", {
-                        status: event.data.status || 200,
-                        statusText: event.data.statusText || "OK",
-                        headers: event.data.headers || {}
+                    const data = event.data;
+                    if (!data || data.requestId !== requestId) return;
+                    if (data.type === "proxyFetchResponse") {
+                      responseSettled = true;
+                      resolve(new Response(stream, {
+                        status: data.status || 200,
+                        statusText: data.statusText || "OK",
+                        headers: data.headers || {}
+                      }));
+                      return;
+                    }
+                    if (data.type === "proxyFetchChunk") {
+                      streamController.enqueue(encoder.encode(data.chunk || ""));
+                      return;
+                    }
+                    if (data.type === "proxyFetchDone") {
+                      cleanup();
+                      streamController.close();
+                      return;
+                    }
+                    if (data.type === "proxyFetchError") {
+                      const error = new Error(data.error || data.statusText || "proxy fetch failed");
+                      cleanup();
+                      if (responseSettled) {
+                        streamController.error(error);
+                      } else {
+                        reject(error);
+                      }
+                      return;
+                    }
+                    if (data.type === "proxyFetchResult") {
+                      cleanup();
+                      resolve(new Response(data.body || "", {
+                        status: data.status || 200,
+                        statusText: data.statusText || "OK",
+                        headers: data.headers || {}
                       }));
                     }
                   };
@@ -809,9 +873,9 @@ export function getAssistantUIStaticHtml(
                     requestId: requestId,
                     input: url,
                     init: {
-                      method: init && init.method,
+                      method: method,
                       headers: headers,
-                      body: init && typeof init.body === "string" ? init.body : undefined
+                      body: body
                     }
                   });
                 });

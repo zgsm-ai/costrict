@@ -236,6 +236,39 @@ describe("AssistantUIPanel", () => {
 		}
 	})
 
+	it("preserves Request method, headers, and body in the static Webview fetch proxy", () => {
+		const extensionRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cs-cloud-ui-fetch-proxy-"))
+		try {
+			const outDir = path.join(extensionRoot, "assets", "cs-cloud-ui", "out")
+			fs.mkdirSync(outDir, { recursive: true })
+			fs.writeFileSync(path.join(outDir, "index.html"), "<!DOCTYPE html><html><head></head><body></body></html>")
+
+			const webview = {
+				cspSource: "vscode-webview://test-csp-source",
+				asWebviewUri: (uri: { fsPath: string }) => ({
+					toString: () => `vscode-resource:${uri.fsPath}`,
+				}),
+			}
+
+			const html = getAssistantUIStaticHtml(
+				webview as never,
+				{ extensionUri: { fsPath: extensionRoot } } as never,
+				"http://127.0.0.1:45489/api/v1",
+				"/workspace",
+			)
+
+			expect(html).toContain("input instanceof Request")
+			expect(html).toContain("(request && request.method)")
+			expect(html).toContain("request.headers.forEach")
+			expect(html).toContain("await request.clone().text()")
+			expect(html).toContain('data.type === "proxyFetchResponse"')
+			expect(html).toContain('data.type === "proxyFetchChunk"')
+			expect(html).toContain('type: "proxyFetchAbort"')
+		} finally {
+			fs.rmSync(extensionRoot, { recursive: true, force: true })
+		}
+	})
+
 	it("adds nonce to script tags for static Webview CSP", () => {
 		const html =
 			'<script src="app.js"></script><script>self.__next_f=[]</script><script nonce="existing">ok()</script>'

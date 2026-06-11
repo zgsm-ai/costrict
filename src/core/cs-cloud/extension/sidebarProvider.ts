@@ -77,6 +77,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 	 * resolveWebviewView 会被再次调用。通过缓存避免重新调用 ensureStarted 和重新生成 HTML。
 	 */
 	private cachedHtml: string | undefined
+	private readonly proxyFetchControllers = new Map<string, AbortController>()
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
@@ -226,38 +227,82 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 						})
 					}
 				}
+				if (message.type === "proxyFetchAbort" && message.requestId) {
+					this.proxyFetchControllers.get(message.requestId)?.abort()
+					this.proxyFetchControllers.delete(message.requestId)
+					return
+				}
 				if (message.type === "proxyFetch" && message.requestId && message.input) {
+					const abortController = new AbortController()
+					this.proxyFetchControllers.set(message.requestId, abortController)
 					try {
 						const response = await fetch(message.input, {
 							method: message.init?.method,
 							headers: message.init?.headers,
 							body: message.init?.body,
+							signal: abortController.signal,
 						})
 						const headers: Record<string, string> = {}
 						response.headers.forEach((value, key) => {
 							headers[key] = value
 						})
-						const body = await response.text()
-						webviewView.webview.postMessage({
-							type: "proxyFetchResult",
+						await webviewView.webview.postMessage({
+							type: "proxyFetchResponse",
 							requestId: message.requestId,
 							ok: response.ok,
 							status: response.status,
 							statusText: response.statusText,
 							headers,
-							body,
 						})
+
+						if (!response.body) {
+							await webviewView.webview.postMessage({
+								type: "proxyFetchDone",
+								requestId: message.requestId,
+							})
+							return
+						}
+
+						const reader = response.body.getReader()
+						const decoder = new TextDecoder()
+						try {
+							while (true) {
+								const { done, value } = await reader.read()
+								if (done) break
+								const chunk = decoder.decode(value, { stream: true })
+								if (chunk) {
+									await webviewView.webview.postMessage({
+										type: "proxyFetchChunk",
+										requestId: message.requestId,
+										chunk,
+									})
+								}
+							}
+							const tail = decoder.decode()
+							if (tail) {
+								await webviewView.webview.postMessage({
+									type: "proxyFetchChunk",
+									requestId: message.requestId,
+									chunk: tail,
+								})
+							}
+						} finally {
+							reader.releaseLock()
+						}
+						await webviewView.webview.postMessage({ type: "proxyFetchDone", requestId: message.requestId })
 					} catch (err) {
-						const reason = err instanceof Error ? err.message : String(err)
-						webviewView.webview.postMessage({
-							type: "proxyFetchResult",
-							requestId: message.requestId,
-							ok: false,
-							status: 599,
-							statusText: reason,
-							headers: {},
-							body: "",
-						})
+						if (!abortController.signal.aborted) {
+							const reason = err instanceof Error ? err.message : String(err)
+							await webviewView.webview.postMessage({
+								type: "proxyFetchError",
+								requestId: message.requestId,
+								status: 599,
+								statusText: reason,
+								error: reason,
+							})
+						}
+					} finally {
+						this.proxyFetchControllers.delete(message.requestId)
 					}
 					return
 				}
@@ -738,6 +783,10 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 	}
 
 	dispose() {
+		for (const controller of this.proxyFetchControllers.values()) {
+			controller.abort()
+		}
+		this.proxyFetchControllers.clear()
 		while (this.disposables.length) {
 			this.disposables.pop()?.dispose()
 		}
