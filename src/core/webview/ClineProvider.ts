@@ -1026,6 +1026,23 @@ export class ClineProvider
 	): Promise<void> {
 		TelemetryService.instance.captureCodeActionUsed(promptType)
 
+		// Cloud 模式：不依赖 ClineProvider，提前分流
+		if (getConfiguredUiMode() === "cloud") {
+			if (command === "terminalAddToContext") {
+				const prompt = supportPrompt.create(promptType, params)
+				const message: AssistantUIContextMessage = {
+					type: "assistantUIContext",
+					text: `${prompt}\n\n`,
+					focus: true,
+				}
+				await sendContextToCloudWithFocus(message)
+				return
+			}
+			// 其他 terminal action：目前 Cloud 不处理
+			return
+		}
+
+		// Classic 模式：现有逻辑不变
 		const visibleProvider = await ClineProvider.getInstance()
 
 		if (!visibleProvider) {
