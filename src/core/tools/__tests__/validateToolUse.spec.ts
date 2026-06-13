@@ -172,6 +172,11 @@ describe("mode-validator", () => {
 				expect(isToolAllowedForMode("new_task", codeMode, [], requirements)).toBe(false)
 				expect(isToolAllowedForMode("attempt_completion", codeMode, [], requirements)).toBe(false)
 			})
+
+			it("blocks switch_mode for strict mode via disableSwitchMode", () => {
+				expect(isToolAllowedForMode("switch_mode", "strict", [])).toBe(false)
+				expect(isToolAllowedForMode("new_task", "strict", [])).toBe(true)
+			})
 		})
 	})
 

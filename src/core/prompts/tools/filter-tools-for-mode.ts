@@ -269,6 +269,11 @@ export function filterNativeToolsForMode(
 	)
 	allowedToolNames = customizedTools
 
+	// Remove switch_mode if the mode explicitly disables it
+	if (modeConfig.disableSwitchMode === true) {
+		allowedToolNames.delete("switch_mode")
+	}
+
 	// Conditionally exclude codebase_search if feature is disabled or not configured
 	if (
 		!codeIndexManager ||

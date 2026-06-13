@@ -145,6 +145,14 @@ export function isToolAllowedForMode(
 		return false
 	}
 
+	// Block switch_mode if the mode explicitly disables it
+	if (tool === "switch_mode") {
+		const mode = getModeBySlug(modeSlug, customModes)
+		if (mode?.disableSwitchMode === true) {
+			return false
+		}
+	}
+
 	// Always allow these tools (unless explicitly disabled above)
 	if (ALWAYS_AVAILABLE_TOOLS.includes(tool as any)) {
 		return true
