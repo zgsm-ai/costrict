@@ -30,8 +30,8 @@ async function updateCospecMetadataForCheckpoint(
 		return
 	}
 	const fileName = path.basename(editFilePath)
-	const cospecDir = path.join(workspaceDir, path.dirname(editFilePath))
-	const fileAbsPath = path.join(workspaceDir, editFilePath)
+	const fileAbsPath = path.resolve(workspaceDir, editFilePath)
+	const cospecDir = path.dirname(fileAbsPath)
 	const metadata = await CospecMetadataManager.getMetadataOrDefault(cospecDir)
 	Object.assign(metadata, {
 		[fileName.replace(".md", "")]: {
