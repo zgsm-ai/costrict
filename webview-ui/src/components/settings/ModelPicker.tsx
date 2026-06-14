@@ -374,7 +374,8 @@ export const ModelPicker = ({
 													{model}
 												</span>
 												{model === "Auto"
-													? creditDiscount && (
+													? typeof creditDiscount === "number" &&
+														creditDiscount > 0 && (
 															<span
 																className="ml-auto text-xs text-vscode-foreground bg-vscode-statusBarItem-prominentBackground px-1.5 py-0.5 rounded border border-vscode-button-border"
 																title={t("settings:autoMode.discountTitle")}>
@@ -383,8 +384,8 @@ export const ModelPicker = ({
 																})}
 															</span>
 														)
-													: creditConsumption &&
-														creditConsumption !== -1 && (
+													: typeof creditConsumption === "number" &&
+														creditConsumption > 0 && (
 															<span
 																className="ml-auto text-sm text-vscode-descriptionForeground"
 																title={t("settings:autoMode.consumptionTitle")}>

@@ -310,4 +310,169 @@ describe("ModelPicker", () => {
 		expect(button).toBeDisabled()
 		expect(button.querySelector("svg")?.classList.contains("animate-spin")).toBe(true)
 	})
+
+	describe("Costrict credit metadata", () => {
+		const renderModelPickerFor = (models: Record<string, ModelInfo>) =>
+			render(
+				<QueryClientProvider client={queryClient}>
+					<ModelPicker {...defaultProps} models={models} />
+				</QueryClientProvider>,
+			)
+
+		const openPopover = async () => {
+			await act(async () => {
+				fireEvent.click(screen.getByRole("combobox"))
+			})
+			await act(async () => {
+				vi.advanceTimersByTime(100)
+			})
+		}
+
+		it("hides creditDiscount badge when creditDiscount is 0", async () => {
+			const models = {
+				...mockModels,
+				Auto: { name: "Auto", description: "Auto mode", ...modelInfo, creditDiscount: 0 },
+			}
+			await act(async () => {
+				renderModelPickerFor(models)
+			})
+			await openPopover()
+			expect(screen.getByTestId("model-option-Auto")).not.toHaveTextContent(/0/)
+		})
+
+		it("hides creditDiscount badge when creditDiscount is negative", async () => {
+			const models = {
+				...mockModels,
+				Auto: { name: "Auto", description: "Auto mode", ...modelInfo, creditDiscount: -1 },
+			}
+			await act(async () => {
+				renderModelPickerFor(models)
+			})
+			await openPopover()
+			expect(screen.getByTestId("model-option-Auto").textContent).not.toContain("discount")
+		})
+
+		it("shows creditDiscount badge when creditDiscount > 0", async () => {
+			const models = {
+				...mockModels,
+				Auto: { name: "Auto", description: "Auto mode", ...modelInfo, creditDiscount: 0.5 },
+			}
+			await act(async () => {
+				renderModelPickerFor(models)
+			})
+			await openPopover()
+			expect(screen.getByTestId("model-option-Auto").textContent).toContain("discount")
+		})
+
+		it("hides creditConsumption metadata when creditConsumption is 0", async () => {
+			const models = {
+				...mockModels,
+				model1: { ...mockModels.model1, creditConsumption: 0 },
+			}
+			await act(async () => {
+				renderModelPickerFor(models)
+			})
+			await openPopover()
+			expect(screen.getByTestId("model-option-model1")).not.toHaveTextContent(/0/)
+		})
+
+		it("hides creditConsumption metadata when creditConsumption is negative", async () => {
+			const models = {
+				...mockModels,
+				model1: { ...mockModels.model1, creditConsumption: -5 },
+			}
+			await act(async () => {
+				renderModelPickerFor(models)
+			})
+			await openPopover()
+			expect(screen.getByTestId("model-option-model1").textContent).not.toContain("credit")
+		})
+
+		it("shows creditConsumption metadata when creditConsumption > 0", async () => {
+			const models = {
+				...mockModels,
+				model1: { ...mockModels.model1, creditConsumption: 5 },
+			}
+			await act(async () => {
+				renderModelPickerFor(models)
+			})
+			await openPopover()
+			expect(screen.getByTestId("model-option-model1").textContent).toContain("5x credit")
+		})
+
+		it("hides non-positive Costrict credit metadata and shows positive consumption", async () => {
+			// Auto creditDiscount=0 -> no 0 rendered, no discount badge
+			{
+				const models = {
+					...mockModels,
+					Auto: { name: "Auto", description: "Auto mode", ...modelInfo, creditDiscount: 0 },
+				}
+				const { unmount } = renderModelPickerFor(models)
+				await openPopover()
+				expect(screen.getByTestId("model-option-Auto")).not.toHaveTextContent(/0/)
+				expect(screen.getByTestId("model-option-Auto").textContent).not.toContain("discount")
+				unmount()
+			}
+
+			// Auto creditDiscount=-1 -> hidden
+			{
+				const models = {
+					...mockModels,
+					Auto: { name: "Auto", description: "Auto mode", ...modelInfo, creditDiscount: -1 },
+				}
+				const { unmount } = renderModelPickerFor(models)
+				await openPopover()
+				expect(screen.getByTestId("model-option-Auto").textContent).not.toContain("discount")
+				unmount()
+			}
+
+			// model1 creditConsumption=0 -> no 0 rendered
+			{
+				const models = {
+					...mockModels,
+					model1: { ...mockModels.model1, creditConsumption: 0 },
+				}
+				const { unmount } = renderModelPickerFor(models)
+				await openPopover()
+				expect(screen.getByTestId("model-option-model1")).not.toHaveTextContent(/0/)
+				unmount()
+			}
+
+			// model1 creditConsumption=-5 -> hidden
+			{
+				const models = {
+					...mockModels,
+					model1: { ...mockModels.model1, creditConsumption: -5 },
+				}
+				const { unmount } = renderModelPickerFor(models)
+				await openPopover()
+				expect(screen.getByTestId("model-option-model1").textContent).not.toContain("credit")
+				unmount()
+			}
+
+			// Auto creditDiscount=0.5 -> shown
+			{
+				const models = {
+					...mockModels,
+					Auto: { name: "Auto", description: "Auto mode", ...modelInfo, creditDiscount: 0.5 },
+				}
+				const { unmount } = renderModelPickerFor(models)
+				await openPopover()
+				expect(screen.getByTestId("model-option-Auto").textContent).toContain("discount")
+				unmount()
+			}
+
+			// model1 creditConsumption=5 -> shown with exact label
+			{
+				const models = {
+					...mockModels,
+					model1: { ...mockModels.model1, creditConsumption: 5 },
+				}
+				const { unmount } = renderModelPickerFor(models)
+				await openPopover()
+				expect(screen.getByTestId("model-option-model1").textContent).toContain("5x credit")
+				unmount()
+			}
+		})
+	})
 })
