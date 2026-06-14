@@ -2,6 +2,13 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.8.14]
+
+- Implement `disableSwitchMode` functionality to restrict tool usage in strict mode (#1291)
+- Fix correct path resolution for cospec metadata update (#1292)
+- Add EXDEV fallback strategy to `safeWriteJson` for cross-device rename handling (#1293)
+- Remove redundant 0 in model list (#1295)
+
 ## [2.8.13]
 
 - Add exclusion for additional bundled skill files in review generation (#1285)
