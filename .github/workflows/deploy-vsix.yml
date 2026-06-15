@@ -33,8 +33,11 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
           gh release download "v${VERSION}" --pattern "zgsm-${VERSION}.vsix" --dir bin
 
-      - name: Install sshpass
-        run: sudo apt-get install -y sshpass
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
       - name: Create remote directory
         id: mkdir
@@ -43,16 +46,15 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         run: |
-          echo "Creating remote directory /home/zhuge/costrict.ai/nginx/html/plugin/download"
+          echo "Creating remote directory /home/appuser/nginx/html/plugin/download"
 
-          sshpass -p "${SSH_PASSWORD}" ssh \
+          ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             -p "${SSH_PORT:-22}" \
             "${SSH_USER}@${SSH_HOST}" \
-            "mkdir -p /home/zhuge/costrict.ai/nginx/html/plugin/download"
+            "mkdir -p /home/appuser/nginx/html/plugin/download"
 
           echo "Directory created successfully"
 
@@ -63,15 +65,14 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         run: |
           VERSION=${{ steps.version.outputs.version }}
           SOURCE_FILE="bin/zgsm-${VERSION}.vsix"
-          TARGET_PATH="/home/zhuge/costrict.ai/nginx/html/plugin/download/zgsm-${VERSION}.vsix"
+          TARGET_PATH="/home/appuser/nginx/html/plugin/download/zgsm-${VERSION}.vsix"
 
           echo "Uploading ${SOURCE_FILE} to ${SSH_HOST}:${TARGET_PATH}"
 
-          sshpass -p "${SSH_PASSWORD}" scp \
+          scp -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             -P "${SSH_PORT:-22}" \
@@ -87,17 +88,16 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
         run: |
           VERSION=${{ steps.version.outputs.version }}
-          echo "Cleaning up old versions in /home/zhuge/costrict.ai/nginx/html/plugin/download"
+          echo "Cleaning up old versions in /home/appuser/nginx/html/plugin/download"
 
-          sshpass -p "${SSH_PASSWORD}" ssh \
+          ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             -p "${SSH_PORT:-22}" \
             "${SSH_USER}@${SSH_HOST}" \
-            "cd /home/zhuge/costrict.ai/nginx/html/plugin/download && ls -la zgsm-*.vsix 2>/dev/null | grep -v 'zgsm-${VERSION}.vsix' | awk '{print \$9}' | xargs -r rm -f"
+            "cd /home/appuser/nginx/html/plugin/download && ls -la zgsm-*.vsix 2>/dev/null | grep -v 'zgsm-${VERSION}.vsix' | awk '{print \$9}' | xargs -r rm -f"
 
           echo "Cleanup completed"
 
@@ -105,4 +105,4 @@ jobs:
         if: steps.upload.outcome == 'failure'
         run: |
           echo "::warning::SSH upload failed. VSIX was not uploaded to server."
-          echo "Please manually upload bin/zgsm-${{ steps.version.outputs.version }}.vsix to /home/zhuge/costrict.ai/nginx/html/plugin/download"
+          echo "Please manually upload bin/zgsm-${{ steps.version.outputs.version }}.vsix to /home/appuser/nginx/html/plugin/download"
