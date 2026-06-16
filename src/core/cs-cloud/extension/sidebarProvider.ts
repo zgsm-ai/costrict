@@ -426,35 +426,40 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 				() => this.csCloudService.ensureStarted(),
 			)
 
-			// In Remote SSH / dev-container scenarios, the webview runs on the
-			// local client while cs-cloud runs on the remote machine. A raw
-			// http://127.0.0.1 URL would resolve to the client's localhost,
-			// not the remote machine. vscode.env.asExternalUri tells VS Code to
-			// create a tunnel proxy URI so the webview can reach the remote
-			// cs-cloud through the SSH tunnel.
-			// In local (non-remote) scenarios this returns the original URI unchanged.
-			let tunneledBaseUrl = ""
-			if (vscode.env.remoteName === "ssh" || vscode.env.remoteName === "ssh-remote") {
-				tunneledBaseUrl = (await vscode.env.asExternalUri(vscode.Uri.parse(baseUrl))).toString(true)
-				this.outputChannel.appendLine(
-					`Detected remote environment (${vscode.env.remoteName}|${vscode.env.appName}), tunneling cs-cloud URL to ${tunneledBaseUrl}`,
-				)
-			} else if (vscode.env.appName === "code-server" && vscode.env.remoteName && !tunneledBaseUrl) {
-				// code-server: the webview runs in a browser, so 127.0.0.1 would resolve to
-				// the client instead of the server. vscode.env.remoteName carries the server
-				// address (e.g. "192.168.31.168:8282") – extract its hostname and replace
-				// the localhost hostname in baseUrl with it.
-				const remoteHost = vscode.env.remoteName.split(":")[0]
-				if (remoteHost) {
-					try {
-						const baseUrlObj = new URL(baseUrl)
-						baseUrlObj.hostname = remoteHost
-						tunneledBaseUrl = baseUrlObj.toString()
-						this.outputChannel.appendLine(
-							`Detected code-server environment, replacing localhost with remote host ${remoteHost}: ${tunneledBaseUrl}`,
-						)
-					} catch {
-						// baseUrl is not a valid URL, leave tunneledBaseUrl empty
+			const config = getAssistantUIConfig()
+			const useIframe = shouldUseAssistantUIIframe(this.context, config)
+
+			// Static webviews run the bundled UI in VS Code's webview origin. In that
+			// mode html.ts proxies cs-cloud fetches through the extension host, so the
+			// UI should keep the extension-host-local URL (usually 127.0.0.1). Rewriting
+			// it to the code-server/remote host makes the extension host fetch a
+			// browser-facing address, which can fail because of firewall/bind/CORS/mixed
+			// content. Only iframe mode needs a browser-reachable URL because requests
+			// originate inside the iframe page and cannot be intercepted by the outer
+			// webview bootstrap.
+			let csCloudBaseUrl = baseUrl
+			if (useIframe) {
+				if (vscode.env.remoteName === "ssh" || vscode.env.remoteName === "ssh-remote") {
+					csCloudBaseUrl = (await vscode.env.asExternalUri(vscode.Uri.parse(baseUrl))).toString(true)
+					this.outputChannel.appendLine(
+						`Detected remote environment (${vscode.env.remoteName}|${vscode.env.appName}), tunneling cs-cloud URL to ${csCloudBaseUrl}`,
+					)
+				} else if (vscode.env.appName === "code-server" && vscode.env.remoteName) {
+					// code-server + iframe: the iframe runs in the browser, so 127.0.0.1
+					// would resolve to the client. Use the code-server host as a best-effort
+					// browser-facing address for development/iframe mode.
+					const remoteHost = vscode.env.remoteName.split(":")[0]
+					if (remoteHost) {
+						try {
+							const baseUrlObj = new URL(baseUrl)
+							baseUrlObj.hostname = remoteHost
+							csCloudBaseUrl = baseUrlObj.toString()
+							this.outputChannel.appendLine(
+								`Detected code-server iframe environment, replacing localhost with remote host ${remoteHost}: ${csCloudBaseUrl}`,
+							)
+						} catch {
+							// baseUrl is not a valid URL, keep the original baseUrl
+						}
 					}
 				}
 			}
@@ -483,18 +488,15 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 			const pluginVersion = Package.version
 			const pluginSha = Package.sha
 			const pluginBuildTime = Package.buildTime
-			const config = getAssistantUIConfig()
-			const csCloudBaseUrl = tunneledBaseUrl || baseUrl
-			// [getAssistantUIStaticHtml] remoteName (192.168.31.168:8282|code-server) csCloudBaseUrl: http://127.0.0.1:45489/api/v1, tunneledBaseUrl:
 			// 如果 vscode 里面等 accessToken 没有了，被清空了，就去 $HOME/.costrict/share/auth.json 里面找 access_token 字段
-			if (shouldUseAssistantUIIframe(this.context, config)) {
+			if (useIframe) {
 				this.outputChannel.appendLine(
-					`[AssistantUISidebarProvider] remoteName (${vscode.env.remoteName}|${vscode.env.appName}) csCloudBaseUrl: ${baseUrl}, tunneledBaseUrl: ${tunneledBaseUrl}`,
+					`[AssistantUISidebarProvider] remoteName (${vscode.env.remoteName}|${vscode.env.appName}) baseUrl: ${baseUrl}, csCloudBaseUrl: ${csCloudBaseUrl}`,
 				)
 				const html = getAssistantUIIframeHtml(
 					webviewView.webview,
 					this.context,
-					csCloudBaseUrl, // iframe 模式下必须使用 tunneledBaseUrl，确保远程环境可访问
+					csCloudBaseUrl, // iframe 模式下必须使用浏览器可访问地址，确保远程环境可访问
 					config.webUrl,
 					workspaceDirectory,
 					accessToken ?? undefined,
@@ -509,7 +511,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 				this.cachedHtml = html
 			} else {
 				this.outputChannel.appendLine(
-					`[getAssistantUIStaticHtml] remoteName (${vscode.env.remoteName}|${vscode.env.appName}) csCloudBaseUrl: ${baseUrl}, tunneledBaseUrl: ${tunneledBaseUrl}`,
+					`[getAssistantUIStaticHtml] remoteName (${vscode.env.remoteName}|${vscode.env.appName}) baseUrl: ${baseUrl}, csCloudBaseUrl: ${csCloudBaseUrl}`,
 				)
 				const html = getAssistantUIStaticHtml(
 					webviewView.webview,

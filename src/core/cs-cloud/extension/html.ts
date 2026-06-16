@@ -786,8 +786,24 @@ export function getAssistantUIStaticHtml(
                 : input instanceof URL
                   ? input.toString()
                   : request && request.url;
-              if (typeof url === "string" && (url.indexOf(window.__CS_CLOUD_BASE_URL__) === 0 || url.indexOf("/api/v1") >= 0)) {
-                console.info(diagnosticPrefix + " fetch", url);
+              const resolveCsCloudProxyUrl = function(rawUrl) {
+                try {
+                  const base = new URL(window.__CS_CLOUD_BASE_URL__);
+                  const target = new URL(rawUrl, base);
+                  const basePath = base.pathname.replace(/\\/$/, "");
+                  const isBaseOrigin = target.origin === base.origin && (
+                    target.pathname === base.pathname ||
+                    (basePath && target.pathname.indexOf(basePath + "/") === 0)
+                  );
+                  const isApiV1Path = target.pathname === "/api/v1" || target.pathname.indexOf("/api/v1/") === 0;
+                  if (isBaseOrigin) return target.toString();
+                  if (isApiV1Path) return new URL(target.pathname + target.search + target.hash, base.origin).toString();
+                } catch (error) {}
+                return undefined;
+              };
+              const proxyFetchUrl = typeof url === "string" ? resolveCsCloudProxyUrl(url) : undefined;
+              if (typeof url === "string" && (proxyFetchUrl || url.indexOf("/api/v1") >= 0)) {
+                console.info(diagnosticPrefix + " fetch", url, proxyFetchUrl && proxyFetchUrl !== url ? { proxyFetchUrl: proxyFetchUrl } : undefined);
               }
               const logFetchFailure = function(error) {
                 console.error(diagnosticPrefix + " fetch failed", url, error && (error.stack || error.message || error));
@@ -795,8 +811,8 @@ export function getAssistantUIStaticHtml(
               };
               // Proxy cs-cloud API requests and sangfor.com requests through the
               // extension host to avoid CORS errors in the webview sandbox.
-              const isCsCloudUrl = typeof url === "string" && url.indexOf(window.__CS_CLOUD_BASE_URL__) === 0;
-              if (typeof url === "string" && (url.indexOf("sangfor.com") >= 0 || isCsCloudUrl)) {
+              const isSangforUrl = typeof url === "string" && url.indexOf("sangfor.com") >= 0;
+              if (typeof url === "string" && (isSangforUrl || proxyFetchUrl)) {
                 const requestId = "proxy-" + Date.now() + "-" + (++proxyFetchSeq);
                 const headers = {};
                 if (request && request.headers) {
@@ -871,7 +887,7 @@ export function getAssistantUIStaticHtml(
                   v.postMessage({
                     type: "proxyFetch",
                     requestId: requestId,
-                    input: url,
+                    input: proxyFetchUrl || url,
                     init: {
                       method: method,
                       headers: headers,
