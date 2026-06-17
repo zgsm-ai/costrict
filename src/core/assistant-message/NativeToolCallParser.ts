@@ -133,6 +133,73 @@ export class NativeToolCallParser {
 	}
 
 	/**
+	 * Resolve the server_name / tool_name / arguments for a use_mcp_tool call.
+	 *
+	 * Some models (observed with MiniMax-M2.7 and other streaming-prone providers)
+	 * double-wrap the entire payload inside a single stringified `arguments` field,
+	 * e.g. { arguments: '{"server_name":"af-deployer","tool_name":"sync_file_to_compiler","arguments":{...}}' }
+	 * instead of emitting server_name / tool_name as top-level keys.
+	 *
+	 * When that happens the top-level server_name / tool_name are missing and the call
+	 * would otherwise fail with "missing nativeArgs". This helper unwraps the inner
+	 * object so the call can still be finalized. Malformed inner JSON is left untouched
+	 * (the caller then reports the missing-args error, prompting a model retry).
+	 */
+	private static resolveUseMcpArgs(args: Record<string, any>): {
+		server_name?: any
+		tool_name?: any
+		arguments?: any
+	} {
+		let server_name = args.server_name
+		let tool_name = args.tool_name
+		let argumentsValue = args.arguments
+
+		if ((server_name === undefined || tool_name === undefined) && typeof argumentsValue === "string") {
+			const trimmed = argumentsValue.trim()
+			if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+				try {
+					const inner = JSON.parse(trimmed)
+					if (inner && typeof inner === "object" && !Array.isArray(inner)) {
+						if (server_name === undefined && typeof inner.server_name === "string") {
+							server_name = inner.server_name
+						}
+						if (tool_name === undefined && typeof inner.tool_name === "string") {
+							tool_name = inner.tool_name
+						}
+						// Prefer the inner arguments when they form a structured object
+						// (the MCP executor requires arguments to be an object, not a string).
+						if (inner.arguments !== undefined) {
+							if (
+								typeof inner.arguments === "object" &&
+								inner.arguments !== null &&
+								!Array.isArray(inner.arguments)
+							) {
+								argumentsValue = inner.arguments
+							} else if (typeof inner.arguments === "string") {
+								const innerTrimmed = inner.arguments.trim()
+								if (innerTrimmed.startsWith("{") && innerTrimmed.endsWith("}")) {
+									try {
+										const innerArgs = JSON.parse(innerTrimmed)
+										if (innerArgs && typeof innerArgs === "object" && !Array.isArray(innerArgs)) {
+											argumentsValue = innerArgs
+										}
+									} catch {
+										// inner arguments not parseable — keep outer value
+									}
+								}
+							}
+						}
+					}
+				} catch {
+					// Inner JSON malformed (e.g. truncated mid-stream) — leave values as-is.
+				}
+			}
+		}
+
+		return { server_name, tool_name, arguments: argumentsValue }
+	}
+
+	/**
 	 * Process a raw tool call chunk from the API stream.
 	 * Handles tracking, buffering, and emits start/delta/end events.
 	 *
@@ -629,15 +696,17 @@ export class NativeToolCallParser {
 				}
 				break
 
-			case "use_mcp_tool":
-				if (partialArgs.server_name !== undefined || partialArgs.tool_name !== undefined) {
+			case "use_mcp_tool": {
+				const mcp = this.resolveUseMcpArgs(partialArgs)
+				if (mcp.server_name !== undefined || mcp.tool_name !== undefined) {
 					nativeArgs = {
-						server_name: partialArgs.server_name,
-						tool_name: partialArgs.tool_name,
-						arguments: partialArgs.arguments,
+						server_name: mcp.server_name,
+						tool_name: mcp.tool_name,
+						arguments: mcp.arguments,
 					}
 				}
 				break
+			}
 
 			case "apply_patch":
 				if (partialArgs.patch !== undefined) {
@@ -1064,15 +1133,17 @@ export class NativeToolCallParser {
 					}
 					break
 
-				case "use_mcp_tool":
-					if (normalizedArgs.server_name !== undefined && normalizedArgs.tool_name !== undefined) {
+				case "use_mcp_tool": {
+					const mcp = this.resolveUseMcpArgs(normalizedArgs)
+					if (mcp.server_name !== undefined && mcp.tool_name !== undefined) {
 						nativeArgs = {
-							server_name: normalizedArgs.server_name,
-							tool_name: normalizedArgs.tool_name,
-							arguments: normalizedArgs.arguments,
+							server_name: mcp.server_name,
+							tool_name: mcp.tool_name,
+							arguments: mcp.arguments,
 						} as NativeArgsFor<TName>
 					}
 					break
+				}
 
 				case "access_mcp_resource":
 					if (normalizedArgs.server_name !== undefined && normalizedArgs.uri !== undefined) {

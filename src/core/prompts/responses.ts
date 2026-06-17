@@ -47,9 +47,11 @@ ${instructions}
 
 # Next Steps
 
+If the user asked a simple question, greeting, joke, or other request that does not need multiple steps, you MUST respond by calling the \`attempt_completion\` tool directly.
 If you have completed the user's task, use the \`attempt_completion\` tool.
 If you require additional information from the user, use the \`ask_followup_question\` tool.
-Otherwise, if you have not completed the task and do not need additional information, then proceed with the next step of the task.
+Otherwise, if you have not completed the task and do not need additional information, then proceed with the next step of the task using an appropriate tool.
+Do not reply with plain assistant text when a tool call is required.
 (This is an automated message, so do not respond to it conversationally.)`
 	},
 

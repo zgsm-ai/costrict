@@ -154,6 +154,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		const isAzureAiInference = this._isAzureAiInference(modelUrl)
 		const isDeepseekReasoner = modelId.includes("deepseek-reasoner") || modelId.includes("deepseek-v4")
 		const isMiniMax = modelId.toLowerCase().includes("minimax")
+		const isQwen3 = modelId.toLowerCase().includes("qwen3")
 		const deepseekReasoner = isDeepseekReasoner || enabledR1Format
 		const isGrokXAI = this._isGrokXAI(this.baseURL)
 		const isO1Family = modelId.includes("o1") || modelId.includes("o3") || modelId.includes("o4")
@@ -199,6 +200,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 					deepseekReasoner,
 					isGrokXAI,
 					isMiniMax,
+					isQwen3,
 					reasoning,
 					modelInfo,
 					metadata,
@@ -214,7 +216,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				let responseIdTimestamp: number | undefined
 				try {
 					requestIdTimestamp = Date.now()
-					this.logger.info(`[RequestID ${requestOptions.model}]:`, requestId)
+					this.logger.debug(`[RequestID ${requestOptions.model}]:`, requestId)
 
 					if (metadata?.onRequestHeadersReady && typeof metadata.onRequestHeadersReady === "function") {
 						metadata.onRequestHeadersReady(_headers)
@@ -229,7 +231,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 							}),
 						)
 						.withResponse()
-					this.logger.info(`[ResponseID ${requestOptions.model}]:`, response.headers.get("x-request-id"))
+					this.logger.debug(`[ResponseID ${requestOptions.model}]:`, response.headers.get("x-request-id"))
 					responseIdTimestamp = Date.now()
 					if (isAuto) {
 						selectedLLM = response.headers.get("x-select-llm") || ""
@@ -284,7 +286,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				let responseIdTimestamp: number | undefined
 				try {
 					requestIdTimestamp = Date.now()
-					this.logger.info(`[RequestID]:`, requestId)
+					this.logger.debug(`[RequestID]:`, requestId)
 					response = await (this.client as OpenAI).chat.completions.create(
 						requestOptions,
 						Object.assign(isAzureAiInference ? { path: OPENAI_AZURE_AI_INFERENCE_PATH } : {}, {
@@ -292,7 +294,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 							signal: this?.abortController?.signal,
 						}),
 					)
-					this.logger.info(`[ResponseId]:`, response._request_id)
+					this.logger.debug(`[ResponseId]:`, response._request_id)
 					responseIdTimestamp = Date.now()
 				} catch (error) {
 					throw handleOpenAIError(error, this.providerName)
@@ -337,7 +339,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				}
 			}
 		} finally {
-			this.logger.info(`[ResponseID ${requestOptions?.model ?? modelId} sse createMessage end]:`, requestId)
+			this.logger.debug(`[ResponseID ${requestOptions?.model ?? modelId} sse createMessage end]:`, requestId)
 		}
 	}
 
@@ -424,7 +426,9 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 			} else {
 				convertedMessages = [
 					{ role: "system", content: systemPrompt },
-					...convertToZAiFormat(messages, { mergeToolResultText: true }),
+					...(_mid?.includes("qwen")
+						? convertToOpenAiMessages(messages, { mergeToolResultText: isNative })
+						: convertToZAiFormat(messages, { mergeToolResultText: true })),
 				]
 			}
 		}
@@ -475,6 +479,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		isDeepseekReasoner: boolean,
 		isGrokXAI: boolean,
 		isMiniMax: boolean,
+		isQwen3: boolean,
 		reasoning: any,
 		modelInfo: ModelInfo,
 		metadata?: ApiHandlerCreateMessageMetadata,
@@ -487,6 +492,8 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 				this.options.modelTemperature ?? (isDeepseekReasoner ? DEEP_SEEK_DEFAULT_TEMPERATURE : undefined),
 			messages,
 			stream: true as const,
+			enable_thinking: isQwen3 ? true : undefined,
+			thinking_budget: isQwen3 ? 8192 : undefined,
 			...(isGrokXAI ? {} : { stream_options: { include_usage: true } }),
 			...(reasoning ?? {}),
 			...(isDeepseekReasoner && { thinking: { type: "enabled" } }),
@@ -576,14 +583,13 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		// For MiniMax models, allow matching <think> tags anywhere in the stream
 		// because MiniMax may include newlines before the <think> tag
 		const isMiniMax = modelInfo?.id?.toLowerCase().includes("minimax")
-		const isNoToolsQwen = modelInfo?.id?.toLowerCase().includes("qwen-2.5-vl") // Qwen model understands <tool_call> tags
+		const isNotSupportTools = modelInfo?.id?.toLowerCase().includes("qwen-2.5-vl") // Qwen model understands <tool_call> tags
 		let matcher: TagMatcher<{
 			readonly type: "reasoning" | "text" | "fake_tool_call"
 			readonly text: string
 		}>
-		// let mockToolId = ""
-		if (isNoToolsQwen) {
-			// mockToolId = "fake_tool_call"
+
+		if (isNotSupportTools) {
 			matcher = new TagMatcher(
 				"tool_call",
 				(chunk) => {
@@ -759,7 +765,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 								hasReasoning = true
 								yield { type: "reasoning", text: reasoning_content }
 							} else {
-								this.logger.warn(
+								this.logger.debug(
 									`[ResponseID ${this.options.costrictModelId} chunk with empty ${key}]:`,
 									requestId,
 									JSON.stringify(chunk),
@@ -1250,7 +1256,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 			this.abortController?.abort(reason)
 			this.abortController = undefined
 		} catch (error) {
-			this.logger.info(`Error while cancelling message ${error}`)
+			this.logger.error(`Error while cancelling message ${error}`)
 		}
 	}
 }

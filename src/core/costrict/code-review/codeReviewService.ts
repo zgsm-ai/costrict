@@ -279,15 +279,15 @@ export class CodeReviewService {
 		})
 		this.prevMode = (await provider.getMode()) ?? defaultModeSlug
 		const taskMode = options?.mode ?? "review"
-		this.logger.info(`[CodeReview] createReviewTask: prevMode=${this.prevMode}, taskMode=${taskMode}`)
+		this.logger.debug(`[CodeReview] createReviewTask: prevMode=${this.prevMode}, taskMode=${taskMode}`)
 		await provider.handleModeSwitch(taskMode)
 		const modeAfterSwitch = await provider.getMode()
-		this.logger.info(`[CodeReview] createReviewTask: mode after handleModeSwitch=${modeAfterSwitch}`)
+		this.logger.debug(`[CodeReview] createReviewTask: mode after handleModeSwitch=${modeAfterSwitch}`)
 		const task = await provider.createTask(message, undefined, undefined, {
 			costrictWorkflowMode: taskMode,
 		})
 		const modeAfterCreateTask = await provider.getMode()
-		this.logger.info(
+		this.logger.debug(
 			`[CodeReview] createReviewTask: mode after createTask=${modeAfterCreateTask}, taskMode=${taskMode}`,
 		)
 		const trackedTaskId = task.taskId
@@ -332,7 +332,7 @@ export class CodeReviewService {
 
 		const resetMode = async () => {
 			const restoreMode = this.getRestoreMode(this.prevMode)
-			this.logger.info(
+			this.logger.debug(
 				`[CodeReview] resetMode: restoring from ${this.prevMode} to ${restoreMode} (task=${trackedTask.taskId})`,
 			)
 			await provider.handleModeSwitch(restoreMode)
@@ -358,29 +358,29 @@ export class CodeReviewService {
 
 		const handleCompletion = async () => {
 			if (completionHandled) {
-				this.logger.info("[CodeReview] Completion already handled, skipping")
+				this.logger.debug("[CodeReview] Completion already handled, skipping")
 				return
 			}
 			completionHandled = true
 
 			try {
-				this.logger.info("[CodeReview] Review Task completed")
+				this.logger.debug("[CodeReview] Review Task completed")
 				let reportMessage = [...trackedTask.clineMessages]
 					.reverse()
 					.find((msg) => msg.type === "say" && msg?.text?.includes("I-AM-CODE-REVIEW-REPORT-V1"))
 
 				// If no report found in message queue, try to read from default output directory
 				if (!reportMessage?.text) {
-					this.logger.info(
+					this.logger.debug(
 						"[CodeReview] No report found in message queue, attempting to read from default output directory",
 					)
 					const defaultOutputDir =
 						taskMode === "security-review" ? "security-review_result" : "code-review_result"
 					const fullReportPath = path.resolve(provider.cwd, defaultOutputDir, "full_report.jsonl")
-					this.logger.info(`[CodeReview] Looking for report at: ${fullReportPath}`)
+					this.logger.debug(`[CodeReview] Looking for report at: ${fullReportPath}`)
 
 					if (await fileExistsAtPath(fullReportPath)) {
-						this.logger.info("[CodeReview] Found full_report.jsonl, reading report from file")
+						this.logger.debug("[CodeReview] Found full_report.jsonl, reading report from file")
 						try {
 							const fs = await import("node:fs")
 							const reportContent = fs.readFileSync(fullReportPath, "utf-8")
@@ -390,12 +390,12 @@ export class CodeReviewService {
 								text: `I-AM-CODE-REVIEW-REPORT-V1\n${reportContent}`,
 								timestamp: new Date().toISOString(),
 							} as any
-							this.logger.info("[CodeReview] Successfully loaded report from file")
+							this.logger.debug("[CodeReview] Successfully loaded report from file")
 						} catch (error) {
 							this.logger.error(`[CodeReview] Failed to read report file: ${error}`)
 						}
 					} else {
-						this.logger.info(`[CodeReview] Report file not found at ${fullReportPath}`)
+						this.logger.debug(`[CodeReview] Report file not found at ${fullReportPath}`)
 					}
 				}
 
@@ -437,7 +437,7 @@ export class CodeReviewService {
 				releaseTaskLifecycle()
 
 				setTimeout(async () => {
-					this.logger.info(
+					this.logger.debug(
 						`[CodeReview] handleCompletion setTimeout(500ms) firing: about to call resetMode()`,
 					)
 					await resetMode()
@@ -465,19 +465,19 @@ export class CodeReviewService {
 			trackedTask = taskInstance
 			boundTaskInstanceIds.add(taskInstance.instanceId)
 			clearAbortHandlingTimeout()
-			this.logger.info(
+			this.logger.debug(
 				`[CodeReview] Binding lifecycle to task instance ${taskInstance.taskId}.${taskInstance.instanceId}`,
 			)
 
 			const onMessage = ({ message: msg }: { message: any }) => {
 				if (!completionHandled && msg.type === "say" && !msg.partial && msg.say === "completion_result") {
-					this.logger.info("[CodeReview] Detected completion via Message event (completion_result)")
+					this.logger.debug("[CodeReview] Detected completion via Message event (completion_result)")
 					void handleCompletion()
 				}
 			}
 
 			const onTaskCompleted = () => {
-				this.logger.info("[CodeReview] Detected completion via TaskCompleted event")
+				this.logger.debug("[CodeReview] Detected completion via TaskCompleted event")
 				void handleCompletion()
 			}
 
@@ -520,7 +520,7 @@ export class CodeReviewService {
 					return
 				}
 				if (delegatedChildTaskId) {
-					this.logger.info("[CodeReview] Ignoring TaskAborted because review task is delegated")
+					this.logger.debug("[CodeReview] Ignoring TaskAborted because review task is delegated")
 					return
 				}
 				clearAbortHandlingTimeout()
@@ -561,7 +561,7 @@ export class CodeReviewService {
 			}
 			delegatedChildTaskId = childTaskId
 			clearAbortHandlingTimeout()
-			this.logger.info(`[CodeReview] Review task delegated to child task ${childTaskId}`)
+			this.logger.debug(`[CodeReview] Review task delegated to child task ${childTaskId}`)
 		}
 
 		const onTaskDelegationResumed = (parentTaskId: string, childTaskId: string) => {
@@ -572,7 +572,7 @@ export class CodeReviewService {
 				delegatedChildTaskId = null
 			}
 			clearAbortHandlingTimeout()
-			this.logger.info(`[CodeReview] Review task resumed after child task ${childTaskId}`)
+			this.logger.debug(`[CodeReview] Review task resumed after child task ${childTaskId}`)
 			const resumedTask = provider.getCurrentTask()
 			if (resumedTask?.taskId === trackedTaskId) {
 				bindTaskInstance(resumedTask)
@@ -714,7 +714,7 @@ export class CodeReviewService {
 	): Promise<UpdateIssueStatusResponse> {
 		const requestOptions = await this.getRequestOptions()
 
-		this.logger.info(`Calling API to update issue status: issueId=${issueId}, taskId=${taskId}`)
+		this.logger.debug(`Calling API to update issue status: issueId=${issueId}, taskId=${taskId}`)
 
 		const result = await updateIssueStatusAPI(issueId, taskId, status, {
 			...requestOptions,
@@ -771,7 +771,7 @@ export class CodeReviewService {
 	 * @param status - New status to set
 	 */
 	async updateIssueStatus(issueId: string, status: IssueStatus): Promise<void> {
-		this.logger.info(`Updating issue status: issueId=${issueId}, status=${status}`)
+		this.logger.debug(`Updating issue status: issueId=${issueId}, status=${status}`)
 		// Check if the issue exists in cache
 		const issue = this.getCachedIssue(issueId)
 		if (!issue) {
@@ -794,7 +794,7 @@ export class CodeReviewService {
 				this.logger.error(`API call failed to update issue status: ${result.message}`)
 				throw new Error(`Failed to update issue status: ${result.message}`)
 			}
-			this.logger.info(`Successfully updated issue status on server: issueId=${issueId}, status=${status}`)
+			this.logger.debug(`Successfully updated issue status on server: issueId=${issueId}, status=${status}`)
 
 			// Collapse comment thread after successful status update
 			await this.collapseCommentThread(issueId)
@@ -853,7 +853,7 @@ export class CodeReviewService {
 	 * @param status - New status to set (ACCEPT or REJECT)
 	 */
 	public async updateHistoryIssueStatus(issueId: string, taskId: string, status: IssueStatus): Promise<void> {
-		this.logger.info(`Updating history issue status: issueId=${issueId}, taskId=${taskId}, status=${status}`)
+		this.logger.debug(`Updating history issue status: issueId=${issueId}, taskId=${taskId}, status=${status}`)
 
 		try {
 			const result = await this.updateIssueStatusOnServer(issueId, taskId, status)
@@ -863,7 +863,7 @@ export class CodeReviewService {
 				throw new Error(`Failed to update issue status: ${result.message}`)
 			}
 
-			this.logger.info(`Successfully updated issue status on server: issueId=${issueId}, status=${status}`)
+			this.logger.debug(`Successfully updated issue status on server: issueId=${issueId}, status=${status}`)
 
 			await this.collapseCommentThread(issueId)
 

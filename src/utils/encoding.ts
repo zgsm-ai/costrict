@@ -268,7 +268,7 @@ export async function writeFileWithEncodingPreservation(filePath: string, conten
 		await retry(() => safeWriteFile(filePath, encodedBuffer))
 	}
 
-	createLogger().info(`[write] ${filePath} encoding with ${finalEncoding}`)
+	createLogger().debug(`[write] ${filePath} encoding with ${finalEncoding}`)
 }
 
 async function safeWriteFile(filePath: string, data: Buffer | string, encoding?: BufferEncoding) {

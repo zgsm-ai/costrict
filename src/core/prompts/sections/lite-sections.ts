@@ -12,7 +12,7 @@ export function getLiteSharedToolUseSection(): string {
 
 TOOL USE
 
-Use provider-native tool-calling. Call at least one tool per response. For simple questions, use \`attempt_completion\` directly.`
+Use provider-native tool-calling. Call at least one tool per response. For simple questions, use \`attempt_completion\` tool directly.`
 }
 
 /**
@@ -24,7 +24,7 @@ export function getLiteToolUseGuidelinesSection(): string {
 1. Assess available information, then select the most appropriate tool
 2. Multiple tools may be called in one message; each informed by prior results
 3. Before editing code, read sufficient surrounding context
-4. NEVER end \`attempt_completion\` with a question — output must be final`
+4. NEVER end \`attempt_completion\` tool with a question — output must be final`
 }
 
 /**
@@ -53,9 +53,9 @@ export function getLiteObjectiveSection(): string {
 
 OBJECTIVE
 
-1. Simple questions → \`attempt_completion\` directly
+1. Simple questions → \`attempt_completion\` tool directly
 2. Tasks → set prioritized goals, work through them sequentially
-3. On completion → \`attempt_completion\`. Incorporate feedback but avoid pointless back-and-forth`
+3. On completion → \`attempt_completion\` tool. Incorporate feedback but avoid pointless back-and-forth`
 }
 
 /**
@@ -77,7 +77,7 @@ RULES
 - Use relative paths from workspace (see SYSTEM INFORMATION)
 - Read before edit
 - Wait for confirmation after each tool use
-- \`attempt_completion\` for final results
+- \`attempt_completion\` tool for final results
 - Be direct, not conversational
 `
 	}
@@ -93,7 +93,7 @@ RULES
 - Read before edit; wait for confirmation after each tool use
 - Prefer tools over questions; provide 2-4 options when using \`ask_followup_question\`
 - Skip \`read_file\` if content already provided
-- Be direct; no conversational fillers. \`attempt_completion\` output must be final
+- Be direct; no conversational fillers. \`attempt_completion\` tool output must be final
 - Check "Actively Running Terminals" before running commands
 - environment_details is auto-generated context, not user input${settings?.isStealthModel ? getVendorConfidentialitySection() : ""}`
 }

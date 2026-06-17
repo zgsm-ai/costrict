@@ -112,7 +112,6 @@ import { showFileDiffFromGitStatus } from "../../utils/costrictUtils"
 import { ReviewTargetType } from "../../shared/codeReview"
 import { getRawTaskReporter } from "../costrict/telemetry"
 import { handleQueryMcpAsyncTask } from "../../services/mcp/asyncPolling/handleQueryMessage"
-import { createLogger } from "../../utils/logger"
 
 let webviewDidLaunchTimer: NodeJS.Timeout | undefined
 
@@ -684,12 +683,26 @@ export const webviewMessageHandler = async (
 					provider.postMessageToWebview({ type: "theme", text: JSON.stringify(theme) }),
 				)
 
-				// If MCP Hub is already initialized, update the webview with
-				// current server list.
-				const mcpHub = provider.getMcpHub()
+				// When MCP is enabled, ensure the MCP Hub is initialized so that
+				// configured servers connect and their status reaches the webview.
+				// If the hub already exists, push the current server list now.
+				// Otherwise, lazily initialize it in the background — McpHub will
+				// automatically push the server list via updateServerConnections
+				// once initialization completes. This fixes the case where opening
+				// the MCP settings page shows an empty server list on first launch.
+				const { mcpEnabled } = (await provider.getState()) ?? {}
+				if (mcpEnabled ?? true) {
+					const mcpHub = provider.getMcpHub()
 
-				if (mcpHub) {
-					provider.postMessageToWebview({ type: "mcpServers", mcpServers: mcpHub.getAllServers() })
+					if (mcpHub) {
+						provider.postMessageToWebview({ type: "mcpServers", mcpServers: mcpHub.getAllServers() })
+					} else {
+						// Lazily initialize MCP Hub in the background without
+						// blocking webview startup.
+						provider
+							.ensureMcpHub()
+							.catch((err) => provider.log(`MCP background initialization failed: ${err}`, "error"))
+					}
 				}
 
 				provider.providerSettingsManager

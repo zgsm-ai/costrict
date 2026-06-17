@@ -44,6 +44,16 @@ describe("RooIgnore Response Formatting", () => {
 		mockReadFile.mockResolvedValue("node_modules\n.git\nsecrets/**\n*.log")
 	})
 
+	describe("formatResponse.noToolsUsed", () => {
+		it("should explicitly require attempt_completion for simple conversational requests", () => {
+			const message = formatResponse.noToolsUsed()
+
+			expect(message).toContain("simple question, greeting, joke")
+			expect(message).toContain("MUST respond by calling the `attempt_completion` tool directly")
+			expect(message).toContain("Do not reply with plain assistant text")
+		})
+	})
+
 	describe("formatResponse.rooIgnoreError", () => {
 		/**
 		 * Tests the error message format for ignored files

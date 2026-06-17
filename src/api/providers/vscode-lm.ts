@@ -14,6 +14,10 @@ import { convertToVsCodeLmMessages, extractTextCountFromMessage } from "../trans
 import { BaseProvider } from "./base-provider"
 import type { SingleCompletionHandler, ApiHandlerCreateMessageMetadata } from "../index"
 
+// Hot-path logging (stream chunk loop) is gated to dev only to avoid per-token
+// console overhead in production. Mirrors the isDev convention in costrict.ts.
+const isDev = process.env.NODE_ENV === "development"
+
 /**
  * Converts OpenAI-format tools to VSCode Language Model tools.
  * Normalizes the JSON Schema to draft 2020-12 compliant format required by
@@ -410,7 +414,12 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 				if (chunk instanceof vscode.LanguageModelTextPart) {
 					// Validate text part value
 					if (typeof chunk.value !== "string") {
-						console.warn("CoStrict <Language Model API>: Invalid text part value received:", chunk.value)
+						if (isDev) {
+							console.warn(
+								"CoStrict <Language Model API>: Invalid text part value received:",
+								chunk.value,
+							)
+						}
 						continue
 					}
 
@@ -423,27 +432,38 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 					try {
 						// Validate tool call parameters
 						if (!chunk.name || typeof chunk.name !== "string") {
-							console.warn("CoStrict <Language Model API>: Invalid tool name received:", chunk.name)
+							if (isDev) {
+								console.warn("CoStrict <Language Model API>: Invalid tool name received:", chunk.name)
+							}
 							continue
 						}
 
 						if (!chunk.callId || typeof chunk.callId !== "string") {
-							console.warn("CoStrict <Language Model API>: Invalid tool callId received:", chunk.callId)
+							if (isDev) {
+								console.warn(
+									"CoStrict <Language Model API>: Invalid tool callId received:",
+									chunk.callId,
+								)
+							}
 							continue
 						}
 
 						// Ensure input is a valid object
 						if (!chunk.input || typeof chunk.input !== "object") {
-							console.warn("CoStrict <Language Model API>: Invalid tool input received:", chunk.input)
+							if (isDev) {
+								console.warn("CoStrict <Language Model API>: Invalid tool input received:", chunk.input)
+							}
 							continue
 						}
 
 						// Log tool call for debugging
-						console.debug("CoStrict <Language Model API>: Processing tool call:", {
-							name: chunk.name,
-							callId: chunk.callId,
-							inputSize: JSON.stringify(chunk.input).length,
-						})
+						if (isDev) {
+							console.debug("CoStrict <Language Model API>: Processing tool call:", {
+								name: chunk.name,
+								callId: chunk.callId,
+								inputSize: JSON.stringify(chunk.input).length,
+							})
+						}
 
 						// Yield native tool_call chunk when tools are provided
 						if (metadata?.tools?.length) {
@@ -462,7 +482,9 @@ export class VsCodeLmHandler extends BaseProvider implements SingleCompletionHan
 						continue
 					}
 				} else {
-					console.warn("CoStrict <Language Model API>: Unknown chunk type received:", chunk)
+					if (isDev) {
+						console.warn("CoStrict <Language Model API>: Unknown chunk type received:", chunk)
+					}
 				}
 			}
 

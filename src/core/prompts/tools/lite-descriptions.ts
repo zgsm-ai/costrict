@@ -42,8 +42,9 @@ getLiteAskFollowupQuestionDescription.toolname = "ask_followup_question"
 
 export function getLiteAttemptCompletionDescription(): string {
 	return `## attempt_completion
-Present final task result. Only after confirming all prior tool uses succeeded. No questions.
-Params: result (REQUIRED)`
+Use this tool to present the final result of your work to the user. 
+For simple questions or when the task is complete, call this tool directly — no other tools needed.
+Params: { result: string } (REQUIRED)`
 }
 getLiteAttemptCompletionDescription.toolname = "attempt_completion"
 

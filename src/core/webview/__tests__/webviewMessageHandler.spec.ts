@@ -5,6 +5,26 @@ import type { Mock } from "vitest"
 // Mock dependencies - must come before imports
 vi.mock("../../../api/providers/fetchers/modelCache")
 
+vi.mock("../../../integrations/theme/getTheme", async (importOriginal) => ({
+	...(await importOriginal()),
+	getTheme: vi.fn().mockResolvedValue({}),
+}))
+
+vi.mock("@roo-code/telemetry", () => ({
+	TelemetryService: {
+		hasInstance: vi.fn().mockReturnValue(true),
+		instance: {
+			updateTelemetryState: vi.fn(),
+			captureEvent: vi.fn(),
+			captureModeSettingChanged: vi.fn(),
+			captureCustomModeCreated: vi.fn(),
+			captureTelemetrySettingsChanged: vi.fn(),
+			captureTabShown: vi.fn(),
+			captureToolUsage: vi.fn(),
+		},
+	},
+}))
+
 vi.mock("../../../integrations/openai-codex/oauth", () => ({
 	openAiCodexOAuthManager: {
 		getAccessToken: vi.fn(),
@@ -928,6 +948,59 @@ describe("webviewMessageHandler - mcpEnabled", () => {
 
 		expect((mockClineProvider as any).getMcpHub).toHaveBeenCalledTimes(1)
 		expect(mockClineProvider.postStateToWebview).toHaveBeenCalledTimes(1)
+	})
+})
+
+describe("webviewDidLaunch - MCP lazy initialization", () => {
+	let mockMcpHub: any
+
+	beforeEach(() => {
+		vi.clearAllMocks()
+
+		mockMcpHub = {
+			getAllServers: vi.fn().mockReturnValue([]),
+		}
+
+		mockClineProvider.getState = vi.fn().mockResolvedValue({ mcpEnabled: true })
+		mockClineProvider.customModesManager.getCustomModes = vi.fn().mockResolvedValue([])
+		mockClineProvider.contextProxy.getValue = vi.fn().mockReturnValue(undefined)
+		mockClineProvider.contextProxy.setValue = vi.fn().mockResolvedValue(undefined)
+		;(mockClineProvider as any).getMcpHub = vi.fn().mockReturnValue(undefined)
+		;(mockClineProvider as any).ensureMcpHub = vi.fn().mockResolvedValue(undefined)
+		;(mockClineProvider as any).providerSettingsManager = {
+			listConfig: vi.fn().mockResolvedValue([]),
+		}
+		;(mockClineProvider as any).getStateToPostToWebview = vi.fn().mockResolvedValue({})
+		;(mockClineProvider as any).getValue = vi.fn().mockReturnValue("")
+		;(mockClineProvider as any).isViewLaunched = false
+	})
+
+	it("lazily initializes MCP hub when mcpEnabled is true and hub not yet created", async () => {
+		await webviewMessageHandler(mockClineProvider, { type: "webviewDidLaunch" })
+
+		// ensureMcpHub must be called so configured servers connect and their
+		// status is pushed to the webview (fixes empty MCP list on first launch).
+		expect((mockClineProvider as any).ensureMcpHub).toHaveBeenCalledTimes(1)
+	})
+
+	it("posts existing MCP servers immediately when hub is already initialized", async () => {
+		;(mockClineProvider as any).getMcpHub = vi.fn().mockReturnValue(mockMcpHub)
+
+		await webviewMessageHandler(mockClineProvider, { type: "webviewDidLaunch" })
+
+		expect((mockClineProvider as any).ensureMcpHub).not.toHaveBeenCalled()
+		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
+			type: "mcpServers",
+			mcpServers: [],
+		})
+	})
+
+	it("does not initialize MCP hub when mcpEnabled is false", async () => {
+		mockClineProvider.getState = vi.fn().mockResolvedValue({ mcpEnabled: false })
+
+		await webviewMessageHandler(mockClineProvider, { type: "webviewDidLaunch" })
+
+		expect((mockClineProvider as any).ensureMcpHub).not.toHaveBeenCalled()
 	})
 })
 
