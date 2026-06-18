@@ -151,6 +151,10 @@ vi.mock("../../../shared/modes", () => ({
 		roleDefinition: "You are a code assistant",
 		groups: ["read", "edit"],
 	}),
+	resolveCostrictCodeModeForMode: vi
+		.fn()
+		.mockImplementation((_mode: string, currentCostrictCodeMode = "vibe") => currentCostrictCodeMode),
+	isProviderAllowedForCostrictCodeMode: vi.fn().mockReturnValue(true),
 	defaultModeSlug: "code",
 }))
 
@@ -573,7 +577,7 @@ describe("ClineProvider - Sticky Provider Profile", () => {
 			// Verify provider profile was restored via activateProviderProfile (restore-only: don't persist mode config)
 			expect(activateProviderProfileSpy).toHaveBeenCalledWith(
 				{ name: "saved-profile" },
-				{ persistModeConfig: false, persistTaskHistory: false },
+				{ persistModeConfig: false, persistTaskHistory: false, costrictCodeModeOverride: "vibe" },
 			)
 		})
 

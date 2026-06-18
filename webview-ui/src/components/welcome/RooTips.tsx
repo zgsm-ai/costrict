@@ -6,7 +6,7 @@ import { delay } from "lodash-es"
 import { vscode } from "@/utils/vscode"
 import { useCallback } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { CostrictCodeMode } from "@roo/modes"
+import { CostrictCodeMode, isProviderAllowedForCostrictCodeMode } from "@roo/modes"
 import SectionDivider from "@/components/common/SectionDivider"
 import { StandardTooltip } from "../ui"
 import { Button } from "@/components/ui"
@@ -31,8 +31,8 @@ const RooTips = () => {
 		[setCostrictCodeMode],
 	)
 	const apiProviderCheck = useCallback(
-		(apiProvider: string) => {
-			if (apiConfiguration.apiProvider === apiProvider) {
+		(targetMode: CostrictCodeMode) => {
+			if (isProviderAllowedForCostrictCodeMode(targetMode, apiConfiguration.apiProvider)) {
 				return true
 			}
 
@@ -53,7 +53,7 @@ const RooTips = () => {
 		{
 			click: (e: any) => {
 				e.preventDefault()
-				if (!apiProviderCheck("costrict")) {
+				if (!apiProviderCheck("vibe")) {
 					return
 				}
 
@@ -74,7 +74,7 @@ const RooTips = () => {
 		{
 			click: (e: any) => {
 				e.preventDefault()
-				if (!apiProviderCheck("costrict")) {
+				if (!apiProviderCheck("strict")) {
 					return
 				}
 				switchMode("strict", "testguide")
@@ -141,7 +141,7 @@ const RooTips = () => {
 			description: tWelcome("plan.description"),
 			switchMode: (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
 				e.stopPropagation()
-				if (!apiProviderCheck("costrict")) {
+				if (!apiProviderCheck("plan")) {
 					return
 				}
 				switchMode("plan", "plan")
@@ -154,7 +154,7 @@ const RooTips = () => {
 			description: tWelcome("strict.description"),
 			switchMode: (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
 				e.stopPropagation()
-				if (!apiProviderCheck("costrict")) {
+				if (!apiProviderCheck("strict")) {
 					return
 				}
 				switchMode("strict")

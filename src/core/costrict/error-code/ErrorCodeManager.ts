@@ -42,7 +42,7 @@ export class ErrorCodeManager {
 			this.provider = provider
 			await this.refreshErrorCodes()
 		} catch (error) {
-			console.error("Failed to initialize ErrorCodeManager:", error)
+			console.warn("Failed to initialize ErrorCodeManager:", error)
 		}
 	}
 
@@ -69,7 +69,8 @@ export class ErrorCodeManager {
 		} catch (error) {
 			const { errorCode } = await this.provider.getState()
 			this.errorMap = (errorCode ?? {}) as IErrorMap
-			console.error("Failed to refresh error codes:", error)
+			// Non-fatal: falls back to cached error codes. Network issues are transient.
+			console.warn("Failed to refresh error codes:", error)
 		}
 	}
 
@@ -88,7 +89,9 @@ export class ErrorCodeManager {
 			})
 			return response.data
 		} catch (error) {
-			console.error("Failed to fetch remote error codes:", error)
+			// Per-attempt transient failure; refreshErrorCodes() retries and logs the
+			// final outcome. Keep this at debug to avoid duplicate noisy stack traces.
+			console.debug("Failed to fetch remote error codes:", error)
 			throw error
 			// Return empty object as fallback for any exception
 			// return {}

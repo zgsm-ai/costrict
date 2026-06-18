@@ -18,7 +18,7 @@ interface ApiConfigSelectorProps {
 	onChange: (value: string) => void
 	triggerClassName?: string
 	iconOnly?: boolean
-	listApiConfigMeta: Array<{ id: string; name: string; modelId?: string }>
+	listApiConfigMeta: Array<{ id: string; name: string; modelId?: string; apiProvider?: string }>
 	pinnedApiConfigs?: Record<string, boolean>
 	togglePinnedApiConfig: (id: string) => void
 	lockApiConfigAcrossModes: boolean
@@ -93,7 +93,7 @@ export const ApiConfigSelector = ({
 	}, [])
 
 	const renderConfigItem = useCallback(
-		(config: { id: string; name: string; modelId?: string }, isPinned: boolean) => {
+		(config: { id: string; name: string; modelId?: string; apiProvider?: string }, isPinned: boolean) => {
 			const isCurrentConfig = config.id === value
 
 			return (

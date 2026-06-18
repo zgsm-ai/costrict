@@ -111,6 +111,43 @@ export function filterModesByCostrictCodeMode(
 	})
 }
 
+export function resolveCostrictCodeModeForMode(
+	mode: Mode,
+	currentCostrictCodeMode: CostrictCodeMode = "vibe",
+	customModes?: ModeConfig[],
+): CostrictCodeMode {
+	if (mode === "plan") {
+		return "plan"
+	}
+
+	if (mode === "strict") {
+		return "strict"
+	}
+
+	const targetMode = getModeBySlug(mode, customModes)
+	const modeGroups = targetMode?.costrictCodeModeGroup
+		?.split(",")
+		.map((group) => group.trim())
+		.filter((group): group is CostrictCodeMode => ["vibe", "plan", "strict", "raw"].includes(group))
+
+	if (modeGroups?.length === 1) {
+		return modeGroups[0]
+	}
+
+	return currentCostrictCodeMode
+}
+
+export function isProviderAllowedForCostrictCodeMode(
+	costrictCodeMode: CostrictCodeMode | undefined,
+	apiProvider: string | undefined,
+): boolean {
+	if (costrictCodeMode === "plan" || costrictCodeMode === "strict") {
+		return apiProvider === "costrict"
+	}
+
+	return true
+}
+
 // Check if a mode is custom or an override
 export function isCustomMode(slug: string, customModes?: ModeConfig[]): boolean {
 	return !!customModes?.some((mode) => mode.slug === slug)

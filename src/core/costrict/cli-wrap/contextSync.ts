@@ -75,13 +75,14 @@ export class ContextSyncService {
 			})
 
 			if (!response.ok) {
-				console.error(`[ContextSync] Failed to sync: ${response.status}`)
+				console.warn(`[ContextSync] Failed to sync: ${response.status}`)
 			} else {
 				console.log(`[ContextSync] Sync successful`)
 			}
 		} catch (error) {
-			// Log error but don't throw - CLI might not be ready yet
-			console.error("[ContextSync] Error syncing context:", error)
+			// Log error but don't throw - CLI might not be ready yet. Expected/transient,
+			// so log at debug level to avoid spamming the console while the CLI starts up.
+			console.debug("[ContextSync] Error syncing context:", error)
 		}
 	}
 

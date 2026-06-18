@@ -353,7 +353,7 @@ Terminal output:
 	},
 	TERMINAL_FIX: {
 		template: `\${userInput}
-Fix this terminal command:
+Fix this terminal command problem:
 \`\`\`
 \${terminalContent}
 \`\`\`

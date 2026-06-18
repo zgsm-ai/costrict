@@ -1,6 +1,7 @@
 import React from "react"
 import { useTranslation } from "react-i18next"
 import logoSvg from "../assets/logo.svg?raw"
+import { Package } from "@roo/package"
 
 export default function LoadingView({ loadingText }: { loadingText?: string }) {
 	const { t } = useTranslation()
@@ -25,6 +26,9 @@ export default function LoadingView({ loadingText }: { loadingText?: string }) {
 					<div className="flex flex-col items-center gap-2">
 						<div className="text-base font-medium tracking-[0.18em] text-vscode-foreground/90">
 							{t("common:costrictCli.brand")}
+						</div>
+						<div className="flex items-center gap-2 text-sm text-vscode-descriptionForeground">
+							<span>{`Version: ${Package.version}`}</span>
 						</div>
 						<div className="flex items-center gap-2 text-sm text-vscode-descriptionForeground">
 							<span className="codicon codicon-loading codicon-modifier-spin text-base" />

@@ -338,6 +338,10 @@ vi.mock("../../../shared/modes", () => ({
 				return "General Tools"
 		}
 	}),
+	resolveCostrictCodeModeForMode: vi
+		.fn()
+		.mockImplementation((_mode: string, currentCostrictCodeMode = "vibe") => currentCostrictCodeMode),
+	isProviderAllowedForCostrictCodeMode: vi.fn().mockReturnValue(true),
 	defaultModeSlug: "code",
 }))
 
@@ -1515,6 +1519,7 @@ describe("ClineProvider", () => {
 			listConfig: vi.fn().mockResolvedValue([profile]),
 			setModeConfig: vi.fn(),
 			getModeConfigId: vi.fn().mockResolvedValue(undefined),
+			getProfile: vi.fn().mockResolvedValue(profile),
 		} as any
 
 		// First set the mode
@@ -1542,6 +1547,7 @@ describe("ClineProvider", () => {
 			listConfig: vi.fn().mockResolvedValue([profile]),
 			setModeConfig: vi.fn(),
 			getModeConfigId: vi.fn().mockResolvedValue(undefined),
+			getProfile: vi.fn().mockResolvedValue(profile),
 		} as any
 
 		// First set the mode

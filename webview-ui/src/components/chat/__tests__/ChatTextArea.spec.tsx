@@ -96,8 +96,8 @@ describe("ChatTextArea", () => {
 			openedTabs: [],
 			currentApiConfigName: "default",
 			listApiConfigMeta: [
-				{ id: "config-default", name: "default", modelId: "claude-3-opus-20240229" },
-				{ id: "config-alt", name: "backup", modelId: "gpt-4" },
+				{ id: "config-default", name: "default", modelId: "claude-3-opus-20240229", apiProvider: "anthropic" },
+				{ id: "config-alt", name: "backup", modelId: "gpt-4", apiProvider: "anthropic" },
 			],
 			pinnedApiConfigs: {},
 			togglePinnedApiConfig: vi.fn(),
@@ -106,7 +106,7 @@ describe("ChatTextArea", () => {
 			},
 			organizationAllowList: { allowAll: true, providers: {} },
 			reviewTask: { status: "idle" },
-			lockApiConfigAcrossModes: false,
+			lockApiConfigAcrossModes: true,
 			taskHistory: [],
 			cwd: "/test/workspace",
 		})
@@ -1124,16 +1124,45 @@ describe("ChatTextArea", () => {
 			})
 		})
 
-		it("should toggle lockApiConfigAcrossModes from the selector footer", () => {
+		it("should toggle lockApiConfigAcrossModes off from the selector footer when enabled by default", () => {
 			render(<ChatTextArea {...defaultProps} />)
 			openApiConfigDropdown()
 
-			fireEvent.click(screen.getByLabelText("chat:lockApiConfigAcrossModes"))
+			fireEvent.click(screen.getByLabelText("chat:unlockApiConfigAcrossModes"))
 
 			expect(mockPostMessage).toHaveBeenCalledWith({
 				type: "lockApiConfigAcrossModes",
-				bool: true,
+				bool: false,
 			})
+		})
+
+		it("filters non-costrict profiles out of the selector in plan/spec modes", () => {
+			;(useExtensionState as ReturnType<typeof vi.fn>).mockReturnValue({
+				filePaths: [],
+				openedTabs: [],
+				currentApiConfigName: "costrict-default",
+				listApiConfigMeta: [
+					{ id: "config-costrict", name: "costrict-default", modelId: "auto", apiProvider: "costrict" },
+					{ id: "config-alt", name: "backup", modelId: "gpt-4", apiProvider: "anthropic" },
+				],
+				pinnedApiConfigs: {},
+				togglePinnedApiConfig: vi.fn(),
+				apiConfiguration: {
+					apiProvider: "costrict",
+				},
+				organizationAllowList: { allowAll: true, providers: {} },
+				reviewTask: { status: "idle" },
+				lockApiConfigAcrossModes: false,
+				taskHistory: [],
+				cwd: "/test/workspace",
+				costrictCodeMode: "plan",
+			})
+
+			render(<ChatTextArea {...defaultProps} />)
+			openApiConfigDropdown()
+
+			expect(screen.getByText("costrict-default")).toBeInTheDocument()
+			expect(screen.queryByText("backup")).not.toBeInTheDocument()
 		})
 
 		describe("enter key behavior", () => {

@@ -66,13 +66,13 @@ describe("ApiConfigSelector", () => {
 		title: "API Config",
 		onChange: mockOnChange,
 		listApiConfigMeta: [
-			{ id: "config1", name: "Config 1", modelId: "claude-3-opus-20240229" },
-			{ id: "config2", name: "Config 2", modelId: "gpt-4" },
-			{ id: "config3", name: "Config 3", modelId: "claude-3-sonnet-20240229" },
+			{ id: "config1", name: "Config 1", modelId: "claude-3-opus-20240229", apiProvider: "costrict" },
+			{ id: "config2", name: "Config 2", modelId: "gpt-4", apiProvider: "anthropic" },
+			{ id: "config3", name: "Config 3", modelId: "claude-3-sonnet-20240229", apiProvider: "costrict" },
 		],
 		pinnedApiConfigs: { config1: true },
 		togglePinnedApiConfig: mockTogglePinnedApiConfig,
-		lockApiConfigAcrossModes: false,
+		lockApiConfigAcrossModes: true,
 		onToggleLockApiConfig: vi.fn(),
 	}
 
@@ -383,6 +383,15 @@ describe("ApiConfigSelector", () => {
 		// Check for the info icon
 		const infoIcon = screen.getByTestId("popover-content").querySelector(".codicon-info")
 		expect(infoIcon).toBeInTheDocument()
+	})
+
+	test("renders unlock control when lockApiConfigAcrossModes is enabled", () => {
+		render(<ApiConfigSelector {...defaultProps} />)
+
+		const trigger = screen.getByTestId("dropdown-trigger")
+		fireEvent.click(trigger)
+
+		expect(screen.getByLabelText("chat:unlockApiConfigAcrossModes")).toBeInTheDocument()
 	})
 
 	test("renders bottom bar with title but no info icon when 6 or fewer configs", () => {

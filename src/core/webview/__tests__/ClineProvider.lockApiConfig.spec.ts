@@ -176,12 +176,20 @@ vi.mock("../../../shared/modes", () => {
 			})
 			return allModes
 		}),
-		getModeBySlug: vi.fn().mockReturnValue({
-			slug: "code",
-			name: "Code Mode",
-			roleDefinition: "You are a code assistant",
-			groups: ["read", "edit"],
+		getModeBySlug: vi.fn().mockImplementation((slug: string) => mockModes.find((mode) => mode.slug === slug)),
+		resolveCostrictCodeModeForMode: vi.fn((mode: string, current = "vibe") => {
+			if (mode === "plan") return "plan"
+			if (mode === "strict") return "strict"
+			return current
 		}),
+		isProviderAllowedForCostrictCodeMode: vi.fn(
+			(costrictCodeMode: string | undefined, apiProvider: string | undefined) => {
+				if (costrictCodeMode === "plan" || costrictCodeMode === "strict") {
+					return apiProvider === "costrict"
+				}
+				return true
+			},
+		),
 		defaultModeSlug: "code",
 	}
 })
@@ -332,9 +340,7 @@ describe("ClineProvider - Lock API Config Across Modes", () => {
 			await provider.resolveWebviewView(mockWebviewView)
 		})
 
-		it("skips mode-specific config lookup/load when lockApiConfigAcrossModes is true", async () => {
-			await mockContext.workspaceState.update("lockApiConfigAcrossModes", true)
-
+		it("defaults lockApiConfigAcrossModes to true and skips mode-specific config lookup/load", async () => {
 			const getModeConfigIdSpy = vi
 				.spyOn(provider.providerSettingsManager, "getModeConfigId")
 				.mockResolvedValue("architect-profile-id")
@@ -376,6 +382,28 @@ describe("ClineProvider - Lock API Config Across Modes", () => {
 
 			expect(getModeConfigIdSpy).toHaveBeenCalledWith("architect")
 			expect(activateProviderProfileSpy).toHaveBeenCalledWith({ name: "architect-profile" })
+		})
+
+		it("does not bind the current non-costrict config as the default for plan mode", async () => {
+			await mockContext.workspaceState.update("lockApiConfigAcrossModes", false)
+			await mockContext.globalState.update("currentApiConfigName", "default-profile")
+			await mockContext.globalState.update("apiProvider", "anthropic")
+
+			vi.spyOn(provider, "getState").mockResolvedValue({
+				mode: "code",
+				costrictCodeMode: "vibe",
+				customModes: [],
+				apiConfiguration: { apiProvider: "anthropic" },
+			} as any)
+			vi.spyOn(provider.providerSettingsManager, "getModeConfigId").mockResolvedValue(undefined)
+			vi.spyOn(provider.providerSettingsManager, "listConfig").mockResolvedValue([
+				{ name: "default-profile", id: "default-profile-id", apiProvider: "anthropic" },
+			])
+			const setModeConfigSpy = vi.spyOn(provider.providerSettingsManager, "setModeConfig")
+
+			await provider.handleModeSwitch("plan")
+
+			expect(setModeConfigSpy).not.toHaveBeenCalledWith("plan", "default-profile-id")
 		})
 	})
 })

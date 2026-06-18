@@ -60,7 +60,14 @@ import { Package } from "../../shared/package"
 import { findLast } from "../../shared/array"
 import { supportPrompt, type SupportPromptType } from "../../shared/support-prompt"
 import { GlobalFileNames } from "../../shared/globalFileNames"
-import { Mode, defaultModeSlug, getModeBySlug, CostrictCodeMode } from "../../shared/modes"
+import {
+	Mode,
+	defaultModeSlug,
+	getModeBySlug,
+	CostrictCodeMode,
+	isProviderAllowedForCostrictCodeMode,
+	resolveCostrictCodeModeForMode,
+} from "../../shared/modes"
 import { experimentDefault } from "../../shared/experiments"
 import { formatLanguage } from "../../shared/language"
 import { WebviewMessage } from "../../shared/WebviewMessage"
@@ -1203,6 +1210,7 @@ export class ClineProvider
 		workflowOptions?: any,
 	) {
 		const isCliRuntime = process.env.ROO_CLI_RUNTIME === "1"
+		const stateBeforeRestore = await this.getState()
 		// CLI injects runtime provider settings from command flags/env at startup.
 		// Restoring provider profiles from task history can overwrite those
 		// runtime settings with stale/incomplete persisted profiles.
@@ -1235,7 +1243,7 @@ export class ClineProvider
 			// Load the saved API config for the restored mode if it exists.
 			// Skip mode-based profile activation if historyItem.apiConfigName exists,
 			// since the task's specific provider profile will override it anyway.
-			const lockApiConfigAcrossModes = this.context.workspaceState.get("lockApiConfigAcrossModes", false)
+			const lockApiConfigAcrossModes = this.context.workspaceState.get("lockApiConfigAcrossModes", true)
 
 			if (!historyItem.apiConfigName && !lockApiConfigAcrossModes && !skipProfileRestoreFromHistory) {
 				const savedConfigId = await this.providerSettingsManager.getModeConfigId(historyItem.mode)
@@ -1258,7 +1266,16 @@ export class ClineProvider
 							const hasActualSettings = !!fullProfile.apiProvider
 
 							if (hasActualSettings) {
-								await this.activateProviderProfile({ name: profile.name })
+								await this.activateProviderProfile(
+									{ name: profile.name },
+									{
+										costrictCodeModeOverride: resolveCostrictCodeModeForMode(
+											historyItem.mode,
+											stateBeforeRestore.costrictCodeMode,
+											stateBeforeRestore.customModes,
+										),
+									},
+								)
 							} else {
 								// The task will continue with the current/default configuration.
 							}
@@ -1289,7 +1306,15 @@ export class ClineProvider
 				try {
 					await this.activateProviderProfile(
 						{ name: profile.name },
-						{ persistModeConfig: false, persistTaskHistory: false },
+						{
+							persistModeConfig: false,
+							persistTaskHistory: false,
+							costrictCodeModeOverride: resolveCostrictCodeModeForMode(
+								historyItem.mode ?? stateBeforeRestore.mode,
+								stateBeforeRestore.costrictCodeMode,
+								stateBeforeRestore.customModes,
+							),
+						},
 					)
 				} catch (error) {
 					// Log the error but continue with task restoration.
@@ -1692,12 +1717,22 @@ export class ClineProvider
 			}
 		}
 
+		const stateBeforeSwitch = await this.getState()
+		const currentProviderAllowed = await this.shouldAllowProviderForMode(
+			newMode,
+			stateBeforeSwitch.apiConfiguration?.apiProvider,
+		)
+		if (!currentProviderAllowed) {
+			await this.postStateToWebview()
+			return
+		}
+
 		await this.updateGlobalState("mode", newMode)
 
 		this.emit(RooCodeEventName.ModeChanged, newMode)
 
 		// If workspace lock is on, keep the current API config — don't load mode-specific config
-		const lockApiConfigAcrossModes = this.context.workspaceState.get("lockApiConfigAcrossModes", false)
+		const lockApiConfigAcrossModes = this.context.workspaceState.get("lockApiConfigAcrossModes", true)
 		if (lockApiConfigAcrossModes) {
 			await this.postStateToWebview()
 			return
@@ -1738,8 +1773,9 @@ export class ClineProvider
 
 			if (currentApiConfigNameAfter) {
 				const config = listApiConfig.find((c) => c.name === currentApiConfigNameAfter)
+				const isAllowedCurrentConfig = await this.shouldAllowProviderForMode(newMode, config?.apiProvider)
 
-				if (config?.id) {
+				if (config?.id && isAllowedCurrentConfig) {
 					await this.providerSettingsManager.setModeConfig(newMode, config.id)
 				}
 			}
@@ -1924,14 +1960,50 @@ export class ClineProvider
 		}
 	}
 
+	private async getCurrentCostrictCodeModeForMode(
+		mode: Mode,
+		costrictCodeModeOverride?: CostrictCodeMode,
+	): Promise<CostrictCodeMode> {
+		const state = await this.getState()
+		return resolveCostrictCodeModeForMode(
+			mode,
+			costrictCodeModeOverride ?? state.costrictCodeMode,
+			state.customModes,
+		)
+	}
+
+	private async shouldAllowProviderForMode(
+		mode: Mode,
+		apiProvider: string | undefined,
+		costrictCodeModeOverride?: CostrictCodeMode,
+	): Promise<boolean> {
+		const targetCostrictCodeMode = await this.getCurrentCostrictCodeModeForMode(mode, costrictCodeModeOverride)
+		return isProviderAllowedForCostrictCodeMode(targetCostrictCodeMode, apiProvider)
+	}
+
 	async activateProviderProfile(
 		args: { name: string } | { id: string },
-		options?: { persistModeConfig?: boolean; persistTaskHistory?: boolean },
+		options?: {
+			persistModeConfig?: boolean
+			persistTaskHistory?: boolean
+			costrictCodeModeOverride?: CostrictCodeMode
+		},
 	) {
 		const { name, id, ...providerSettings } = await this.providerSettingsManager.activateProfile(args)
 
 		const persistModeConfig = options?.persistModeConfig ?? true
 		const persistTaskHistory = options?.persistTaskHistory ?? true
+		const { mode } = await this.getState()
+		const isAllowedForMode = await this.shouldAllowProviderForMode(
+			mode,
+			providerSettings.apiProvider,
+			options?.costrictCodeModeOverride,
+		)
+
+		if (!isAllowedForMode) {
+			await this.postStateToWebview()
+			return
+		}
 
 		// See `upsertProviderProfile` for a description of what this is doing.
 		await Promise.all([
@@ -1939,8 +2011,6 @@ export class ClineProvider
 			this.contextProxy.setValue("currentApiConfigName", name),
 			this.contextProxy.setProviderSettings(providerSettings),
 		])
-
-		const { mode } = await this.getState()
 
 		if (id && persistModeConfig) {
 			await this.providerSettingsManager.setModeConfig(mode, id)
@@ -2909,7 +2979,7 @@ export class ClineProvider
 			profileThresholds: profileThresholds ?? {},
 			// cloudApiUrl: getRooCodeApiUrl(),
 			hasOpenedModeSelector: this.getGlobalState("hasOpenedModeSelector") ?? false,
-			lockApiConfigAcrossModes: lockApiConfigAcrossModes ?? false,
+			lockApiConfigAcrossModes: lockApiConfigAcrossModes ?? true,
 			alwaysAllowFollowupQuestions: alwaysAllowFollowupQuestions ?? false,
 			followupAutoApproveTimeoutMs: followupAutoApproveTimeoutMs ?? 60000,
 			includeDiagnosticMessages: includeDiagnosticMessages ?? true,
@@ -3163,7 +3233,7 @@ export class ClineProvider
 					stateValues.codebaseIndexConfig?.codebaseIndexOpenRouterSpecificProvider,
 			},
 			profileThresholds: stateValues.profileThresholds ?? {},
-			lockApiConfigAcrossModes: this.context.workspaceState.get("lockApiConfigAcrossModes", false),
+			lockApiConfigAcrossModes: this.context.workspaceState.get("lockApiConfigAcrossModes", true),
 			includeDiagnosticMessages: stateValues.includeDiagnosticMessages ?? true,
 			maxDiagnosticMessages: stateValues.maxDiagnosticMessages ?? 50,
 			includeTaskHistoryInEnhance: stateValues.includeTaskHistoryInEnhance ?? true,

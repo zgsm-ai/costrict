@@ -4,8 +4,8 @@ import { cn } from "@src/lib/utils"
 import { StandardTooltip } from "@src/components/ui"
 import { useTranslation } from "react-i18next"
 import { vscode } from "@/utils/vscode"
-import { type CostrictCodeMode } from "@roo/modes"
-import { useCallback } from "react"
+import { type CostrictCodeMode, isProviderAllowedForCostrictCodeMode } from "@roo/modes"
+import { useCallback, useMemo } from "react"
 import { ExtensionState } from "@roo-code/types"
 
 interface ModeSwitchProps {
@@ -58,27 +58,33 @@ export const ModeSwitch = ({ isStreaming = false }: ModeSwitchProps) => {
 	const { t: tSettings } = useTranslation("settings")
 
 	const apiProviderCheck = useCallback(
-		(apiProvider: string) => {
-			if (apiConfiguration?.apiProvider === apiProvider) {
+		(selectedMode: "vibe" | "plan" | "spec", silent?: boolean) => {
+			const targetCostrictCodeMode = mapDisplayToOriginal(selectedMode) as CostrictCodeMode
+			const isAllowed = isProviderAllowedForCostrictCodeMode(
+				targetCostrictCodeMode,
+				apiConfiguration?.apiProvider,
+			)
+
+			if (isAllowed) {
 				return true
 			}
 
-			vscode.postMessage({
-				type: "costrictProviderTip",
-				values: {
-					tipType: "info",
-					msg: tSettings("codebase.general.onlyCostrictProviderSupport"),
-				},
-			})
+			!silent &&
+				vscode.postMessage({
+					type: "costrictProviderTip",
+					values: {
+						tipType: "info",
+						msg: tSettings("codebase.general.onlyCostrictProviderSupport"),
+					},
+				})
 
 			return false
 		},
 		[apiConfiguration?.apiProvider, tSettings],
 	)
 	const handleModeClick = (selectedMode: "vibe" | "plan" | "spec", forceMode?: string) => {
-		if (isStreaming) return
-		if (!apiProviderCheck("costrict")) {
-			selectedMode = "vibe"
+		if (!apiProviderCheck(selectedMode)) {
+			return
 		}
 		const originalMode = mapDisplayToOriginal(selectedMode)
 		setCostrictCodeMode(originalMode as CostrictCodeMode)
@@ -104,9 +110,9 @@ export const ModeSwitch = ({ isStreaming = false }: ModeSwitchProps) => {
 		}
 		return ""
 	}
-
+	const isDisabled = useMemo(() => isStreaming, [isStreaming])
 	return (
-		<SwitchContainer data-testid="mode-switch" disabled={isStreaming}>
+		<SwitchContainer data-testid="mode-switch" disabled={isDisabled}>
 			<Slider isVibe={displayMode === "vibe"} isPlan={displayMode === "plan"} isSpec={displayMode === "spec"} />
 			{["Vibe", "Plan", "Spec"].map((m) => (
 				<StandardTooltip content={getModeTip(m.toLowerCase())} key={m}>
@@ -116,12 +122,16 @@ export const ModeSwitch = ({ isStreaming = false }: ModeSwitchProps) => {
 							"pt-0.5 pb-px px-2 z-10 text-xs w-1/3 text-center bg-transparent cursor-pointer",
 							displayMode === m.toLowerCase() ? "text-white" : "text-input-foreground",
 						)}
-						onClick={() =>
-							handleModeClick(
-								m.toLowerCase() as "vibe" | "plan" | "spec",
-								m === "Plan" ? "plan" : undefined,
-							)
-						}
+						onClick={() => {
+							const selectedMode = m.toLowerCase() as "vibe" | "plan" | "spec"
+							if (isDisabled || !apiProviderCheck(selectedMode, true)) {
+								if (!isDisabled) {
+									apiProviderCheck(selectedMode)
+								}
+								return
+							}
+							handleModeClick(selectedMode, m === "Plan" ? "plan" : undefined)
+						}}
 						role="switch">
 						{m}
 					</div>

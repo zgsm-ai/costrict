@@ -61,8 +61,17 @@ vi.mock("./api", () => ({
 
 vi.mock("../../../utils/logger", () => ({
 	createLogger: vi.fn(() => ({
+		debug: vi.fn(),
 		info: vi.fn(),
+		warn: vi.fn(),
 		error: vi.fn(),
+		dispose: vi.fn(),
+		channel: {
+			appendLine: vi.fn(),
+			append: vi.fn(),
+			show: vi.fn(),
+			dispose: vi.fn(),
+		},
 	})),
 }))
 

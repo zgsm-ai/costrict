@@ -161,6 +161,10 @@ vi.mock("../../../shared/modes", () => ({
 		roleDefinition: "You are a code assistant",
 		groups: ["read", "edit"],
 	}),
+	resolveCostrictCodeModeForMode: vi
+		.fn()
+		.mockImplementation((_mode: string, currentCostrictCodeMode = "vibe") => currentCostrictCodeMode),
+	isProviderAllowedForCostrictCodeMode: vi.fn().mockReturnValue(true),
 	defaultModeSlug: "code",
 }))
 

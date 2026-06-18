@@ -69,7 +69,13 @@ import { resolveImageMentions } from "../mentions/resolveImageMentions"
 import { RooIgnoreController } from "../ignore/RooIgnoreController"
 import { getWorkspacePath } from "../../utils/path"
 import { isPathOutsideWorkspace } from "../../utils/pathUtils"
-import { Mode, defaultModeSlug, CostrictCodeMode } from "../../shared/modes"
+import {
+	Mode,
+	defaultModeSlug,
+	CostrictCodeMode,
+	isProviderAllowedForCostrictCodeMode,
+	resolveCostrictCodeModeForMode,
+} from "../../shared/modes"
 import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
 import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
@@ -2267,6 +2273,21 @@ export const webviewMessageHandler = async (
 		case "loadApiConfiguration":
 			if (message.text) {
 				try {
+					const state = await provider.getState()
+					const profile = await provider.providerSettingsManager.getProfile({ name: message.text })
+					const targetCostrictCodeMode = resolveCostrictCodeModeForMode(
+						state.mode,
+						state.costrictCodeMode,
+						state.customModes,
+					)
+
+					if (!isProviderAllowedForCostrictCodeMode(targetCostrictCodeMode, profile.apiProvider)) {
+						await vscode.window.showInformationMessage(
+							t("settings:codebase.general.onlyCostrictProviderSupport"),
+						)
+						break
+					}
+
 					await provider.activateProviderProfile({ name: message.text })
 				} catch (error) {
 					provider.log(
@@ -2279,6 +2300,21 @@ export const webviewMessageHandler = async (
 		case "loadApiConfigurationById":
 			if (message.text) {
 				try {
+					const state = await provider.getState()
+					const profile = await provider.providerSettingsManager.getProfile({ id: message.text })
+					const targetCostrictCodeMode = resolveCostrictCodeModeForMode(
+						state.mode,
+						state.costrictCodeMode,
+						state.customModes,
+					)
+
+					if (!isProviderAllowedForCostrictCodeMode(targetCostrictCodeMode, profile.apiProvider)) {
+						await vscode.window.showInformationMessage(
+							t("settings:codebase.general.onlyCostrictProviderSupport"),
+						)
+						break
+					}
+
 					await provider.activateProviderProfile({ id: message.text })
 				} catch (error) {
 					provider.log(

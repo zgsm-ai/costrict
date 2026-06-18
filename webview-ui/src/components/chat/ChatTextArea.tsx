@@ -8,7 +8,7 @@ import type { ExtensionMessage, ProviderName, RouterModels } from "@roo-code/typ
 
 import { mentionRegex, mentionRegexGlobal, commandRegexGlobal, unescapeSpaces } from "@roo/context-mentions"
 import { WebviewMessage } from "@roo/WebviewMessage"
-import { Mode, getAllModes } from "@roo/modes"
+import { Mode, getAllModes, isProviderAllowedForCostrictCodeMode } from "@roo/modes"
 
 import { vscode } from "@src/utils/vscode"
 import { useExtensionState } from "@src/context/ExtensionStateContext"
@@ -158,6 +158,12 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			},
 			[apiConfiguration, currentApiConfigName],
 		)
+
+		const selectableApiConfigs = useMemo(() => {
+			return (listApiConfigMeta || []).filter((config) =>
+				isProviderAllowedForCostrictCodeMode(costrictCodeMode, config.apiProvider),
+			)
+		}, [listApiConfigMeta, costrictCodeMode])
 
 		// Find the ID and display text for the currently selected API configuration.
 		const { currentConfigId, displayName } = useMemo(() => {
@@ -1462,7 +1468,7 @@ export const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							title={t("chat:selectApiConfig")}
 							onChange={handleApiConfigChange}
 							iconOnly
-							listApiConfigMeta={listApiConfigMeta || []}
+							listApiConfigMeta={selectableApiConfigs}
 							pinnedApiConfigs={pinnedApiConfigs}
 							togglePinnedApiConfig={togglePinnedApiConfig}
 							lockApiConfigAcrossModes={!!lockApiConfigAcrossModes}

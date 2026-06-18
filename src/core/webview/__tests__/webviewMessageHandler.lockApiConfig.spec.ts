@@ -101,6 +101,8 @@ describe("webviewMessageHandler - lockApiConfigAcrossModes", () => {
 				currentApiConfigName: "test-config",
 				listApiConfigMeta: [{ name: "test-config", id: "config-123" }],
 				customModes: [],
+				mode: "code",
+				costrictCodeMode: "vibe",
 			}),
 			postStateToWebview: vi.fn(),
 			activateProviderProfile: vi.fn().mockResolvedValue(undefined),
@@ -186,5 +188,61 @@ describe("webviewMessageHandler - lockApiConfigAcrossModes", () => {
 		expect(mockProvider.activateProviderProfile).not.toHaveBeenCalled()
 		expect(mockProvider.contextProxy.setValue).toHaveBeenCalledWith("listApiConfigMeta", expect.any(Array))
 		expect(mockProvider.postStateToWebview).toHaveBeenCalled()
+	})
+
+	it("blocks loading a non-costrict profile by id in plan mode", async () => {
+		mockProvider.getState.mockResolvedValue({
+			currentApiConfigName: "test-config",
+			listApiConfigMeta: [{ name: "test-config", id: "config-123" }],
+			customModes: [],
+			mode: "plan",
+			costrictCodeMode: "plan",
+		})
+		mockProvider.providerSettingsManager.getProfile.mockResolvedValue({
+			id: "config-other",
+			name: "other-config",
+			apiProvider: "anthropic",
+		})
+
+		await webviewMessageHandler(
+			mockProvider as unknown as ClineProvider,
+			{
+				type: "loadApiConfigurationById",
+				text: "config-other",
+			} as any,
+		)
+
+		expect(mockProvider.activateProviderProfile).not.toHaveBeenCalled()
+		expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+			"settings:codebase.general.onlyCostrictProviderSupport",
+		)
+	})
+
+	it("blocks loading a non-costrict profile by name in strict mode", async () => {
+		mockProvider.getState.mockResolvedValue({
+			currentApiConfigName: "test-config",
+			listApiConfigMeta: [{ name: "test-config", id: "config-123" }],
+			customModes: [],
+			mode: "strict",
+			costrictCodeMode: "strict",
+		})
+		mockProvider.providerSettingsManager.getProfile.mockResolvedValue({
+			id: "config-other",
+			name: "other-config",
+			apiProvider: "anthropic",
+		})
+
+		await webviewMessageHandler(
+			mockProvider as unknown as ClineProvider,
+			{
+				type: "loadApiConfiguration",
+				text: "other-config",
+			} as any,
+		)
+
+		expect(mockProvider.activateProviderProfile).not.toHaveBeenCalled()
+		expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+			"settings:codebase.general.onlyCostrictProviderSupport",
+		)
 	})
 })
