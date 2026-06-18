@@ -644,7 +644,7 @@ importers:
         specifier: ^9.6.0
         version: 9.6.1
       node-ipc:
-        specifier: ^12.0.0
+        specifier: 12.0.0
         version: 12.0.0
       p-map:
         specifier: ^7.0.3
@@ -699,7 +699,7 @@ importers:
         specifier: workspace:^
         version: link:../types
       node-ipc:
-        specifier: ^12.0.0
+        specifier: 12.0.0
         version: 12.0.0
     devDependencies:
       '@roo-code/config-eslint':
@@ -999,7 +999,7 @@ importers:
         specifier: ^5.1.2
         version: 5.1.2
       node-ipc:
-        specifier: ^12.0.0
+        specifier: 12.0.0
         version: 12.0.0
       node-pty:
         specifier: 1.2.0-beta.12
