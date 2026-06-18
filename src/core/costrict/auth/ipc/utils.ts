@@ -1,5 +1,6 @@
 import * as os from "os"
 import * as path from "path"
+import { Package } from "shared/package"
 import * as vscode from "vscode"
 
 export function getIPCPath() {
@@ -9,7 +10,7 @@ export function getIPCPath() {
 	const username = os.userInfo().username || process.env.USER || "unknown"
 
 	// Include username in the sid for user isolation
-	const sid = `${scheme}-costrict-login-sync-${username}`
+	const sid = `${scheme}-${Package.commandIDPrefix}-login-sync-${username}`
 
 	if (process.platform === "win32") {
 		return `\\\\.\\pipe\\${sid}`

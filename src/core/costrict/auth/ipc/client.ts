@@ -12,6 +12,7 @@ let isConnecting = false
 let retryTimeout: NodeJS.Timeout | null = null
 let retryCount = 0
 let forceRetryCount = 0
+let retryScheduled = false
 const MAX_RETRIES = 15
 const FORCE_MAX_RETRIES = 3
 const INITIAL_RETRY_DELAY = 1000 // 1 second
@@ -34,6 +35,12 @@ export function connectIPC() {
 	client.on("connect", () => {
 		console.log("Connected to IPC server.")
 		isConnecting = false
+		// Successfully connected - reset all retry counters so a future
+		// transient blip doesn't immediately re-trigger the error toast
+		// (forceRetryCount previously never reset, causing the toast to
+		// fire on every wobble after the first failure).
+		retryCount = 0
+		forceRetryCount = 0
 	})
 
 	client.on("data", (data) => {
@@ -82,8 +89,18 @@ export function connectIPC() {
 	})
 
 	function scheduleRetry() {
+		// Dedupe: both `end` and `error` may fire for the same disconnect
+		// (e.g. a RST produces ECONNRESET error followed by end). Without
+		// this guard a single disconnect burns 2 retry slots, halving the
+		// effective retry budget and making the toast appear too eagerly.
+		if (retryScheduled) {
+			return
+		}
+		retryScheduled = true
+
 		if (retryCount >= MAX_RETRIES) {
 			console.error(`IPC connection: Maximum retries (${MAX_RETRIES}) reached. Giving up.`)
+			retryScheduled = false
 			showRetryFailedNotification()
 			retryCount = 0
 			return
@@ -96,6 +113,7 @@ export function connectIPC() {
 		if (retryTimeout) clearTimeout(retryTimeout)
 		retryTimeout = setTimeout(() => {
 			retryTimeout = null
+			retryScheduled = false
 			connectIPC()
 		}, delay)
 	}
@@ -212,6 +230,7 @@ export function disconnectIPC() {
 		clearTimeout(retryTimeout)
 		retryTimeout = null
 	}
+	retryScheduled = false
 	retryCount = 0 // Reset retry count on disconnect
 	if (client) {
 		client.destroy()
