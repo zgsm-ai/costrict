@@ -2,6 +2,14 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [2.8.15]
+
+- Enhance CoStrict code mode handling and improve error logging (#1310)
+- Update IPC connection retry logic and improve session ID generation (#1309)
+- Pin `@types/node-ipc` version (#1308)
+- Add Qwen3 model support, lazy MCP initialization, and improve parser robustness (#1306)
+- Update SSH deployment process to use private key and correct directory paths (#1299)
+
 ## [2.8.14]
 
 - Implement `disableSwitchMode` functionality to restrict tool usage in strict mode (#1291)
