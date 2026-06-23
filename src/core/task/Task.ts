@@ -3695,6 +3695,28 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 								`[Task#${this.taskId}.${this.instanceId}] Stream failed, will retry: ${streamingFailedMessage}`,
 							)
 
+							if (shouldStop) {
+								console.log(
+									`[Task#${this.taskId}.${this.instanceId}] Pausing on critical error (shouldStop=true), awaiting user action`,
+								)
+								const { response } = await this.ask("api_req_failed", streamingFailedMessage)
+
+								if (response !== "yesButtonClicked") {
+									// User dismissed the error - abort the entire task
+									throw new Error("API request failed")
+								}
+
+								await this.say("api_req_retried")
+
+								// Push the same content back onto the stack to retry
+								stack.push({
+									userContent: currentUserContent,
+									includeFileDetails: false,
+									retryAttempt: (currentItem.retryAttempt ?? 0) + 1,
+								})
+								continue
+							}
+
 							// Apply exponential backoff similar to first-chunk errors when auto-resubmit is enabled
 							const stateForBackoff = await this.providerRef.deref()?.getState()
 							if (stateForBackoff?.autoApprovalEnabled) {
@@ -3714,15 +3736,6 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 									await this.abortTask()
 									break
 								}
-							}
-
-							// Check if we should stop due to critical errors (e.g., 401, quota)
-							if (shouldStop) {
-								// Don't add retry task, break the loop to stop processing
-								console.log(
-									`[Task#${this.taskId}.${this.instanceId}] Stopping due to critical error (shouldStop=true)`,
-								)
-								break
 							}
 
 							// Push the same content back onto the stack to retry, incrementing the retry attempt counter
