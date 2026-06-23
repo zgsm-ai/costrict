@@ -9,27 +9,18 @@ import crossSpawn from "cross-spawn"
 import * as vscode from "vscode"
 import { getAssistantUIConfig } from "./config"
 
-/** cs-cloud 进程归属类型 */
 export type CsCloudOwnership = "owned" | "unmanaged"
-/** cs-cloud 来源辅助信息 */
 export type CsCloudSource = "spawned" | "detected" | "configuredBaseUrl"
 
 /**
- * cs-cloud 服务管理器（简化版）。
+ * cs-cloud service manager.
  *
- * 发现策略（优先级从高到低）：
- *   Step1: 检查用户配置的 baseUrl → 直接使用
- *   Step2: 检查 $HOME/.costrict/cs-cloud/server_url 文件 → 读取地址
- *   Step3: 检查 $HOME/.costrict/cs-cloud/bin/cs-cloud 二进制 → spawn 启动，等待 server_url
- *   Step4: 通过 csc/cs cloud status 命令检测运行中实例
- *   Step5: 全部失败 → 抛出安装指引错误
- *
- * 文件监听：
- *   - server_url 消失 → 视为 crash，emit crashed 事件
- *   - server_url 变更 → 更新地址，emit urlChanged 事件
+ * Discovery: configuredUrl → server_url file → bundled binary → CLI status → error
+ * Crash detection: process exit, heartbeat (15s × 3), file watcher
+ * Auto recovery: owned process retries 3x with exponential backoff
+ * Events: "crashed" { reason }, "urlChanged" { url }
  */
 export class CsCloudService extends EventEmitter implements vscode.Disposable {
-	// ── 公开状态 ──
 	state: "idle" | "loading" | "running" | "error" = "idle"
 	ownership: CsCloudOwnership = "owned"
 	source: CsCloudSource = "spawned"
@@ -38,33 +29,31 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	startupFailureReason?: string
 	startupFailureIsUninstallCsc = false
 
-	// ── 内部状态 ──
 	private baseUrl: string | undefined
 	private watcher: fs.FSWatcher | undefined
 	private operationPromise?: Promise<string>
+	private childProcess?: ReturnType<typeof crossSpawn>
+	private healthCheckTimer?: ReturnType<typeof setInterval>
+	private healthCheckFailures = 0
+	private autoRestartCount = 0
+
+	private readonly HEALTH_CHECK_INTERVAL = 15_000
+	private readonly HEALTH_CHECK_FAILURE_THRESHOLD = 3
+	private readonly MAX_AUTO_RESTARTS = 3
 
 	constructor(private readonly outputChannel: vscode.OutputChannel) {
 		super()
 	}
 
-	/** 暴露 baseUrl 供外部使用 */
 	get baseUrlValue(): string | undefined {
 		return this.baseUrl
 	}
-
-	// ═══════════════════════════════════════════════════════════════
-	// 日志辅助
-	// ═══════════════════════════════════════════════════════════════
 
 	private log(step: number, branch: string, message: string) {
 		if (process.env.NODE_ENV !== "development") return
 		const prefix = step > 0 ? `[cs-cloud][Step${step}]` : `[cs-cloud]`
 		this.outputChannel.appendLine(`${prefix}[${branch}] ${message}`)
 	}
-
-	// ═══════════════════════════════════════════════════════════════
-	// 路径常量
-	// ═══════════════════════════════════════════════════════════════
 
 	private get serverUrlPath(): string {
 		return path.join(os.homedir(), ".costrict", "cs-cloud", "server_url")
@@ -75,22 +64,18 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		return path.join(os.homedir(), ".costrict", "bin", binName)
 	}
 
-	// ═══════════════════════════════════════════════════════════════
-	// ensureStarted()
-	// ═══════════════════════════════════════════════════════════════
-
 	async ensureStarted(): Promise<string> {
 		if (this.operationPromise) {
-			this.log(0, "ensureStarted", "已有进行中的操作，复用现有 Promise")
+			this.log(0, "ensureStarted", "Operation already in progress, reusing existing Promise")
 			return this.operationPromise
 		}
 
 		if (this.state === "running" && this.baseUrl) {
-			this.log(0, "ensureStarted", `已在运行中: ${this.baseUrl}`)
+			this.log(0, "ensureStarted", `Already running: ${this.baseUrl}`)
 			return this.baseUrl
 		}
 
-		this.log(0, "ensureStarted", `当前状态: ${this.state}，开始启动流程`)
+		this.log(0, "ensureStarted", `Current state: ${this.state}, starting launch sequence`)
 		this.state = "loading"
 		this.operationPromise = this.doEnsureStarted()
 
@@ -101,13 +86,14 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			this.startupFailureReason = undefined
 			this.startupFailureIsUninstallCsc = false
 			this.startWatching()
-			this.log(0, "ensureStarted", `✓ 启动成功 → ${url}`)
+			this.startHealthCheck()
+			this.log(0, "ensureStarted", `✓ Started successfully → ${url}`)
 			return url
 		} catch (err) {
 			this.state = "error"
 			this.startupFailureReason = err instanceof Error ? err.message : String(err)
 			this.startupFailureIsUninstallCsc = isUninstallCscError(err)
-			this.log(0, "ensureStarted", `✗ 启动失败: ${this.startupFailureReason}`)
+			this.log(0, "ensureStarted", `✗ Startup failed: ${this.startupFailureReason}`)
 			throw err
 		} finally {
 			this.operationPromise = undefined
@@ -117,21 +103,21 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	private async doEnsureStarted(): Promise<string> {
 		const config = getAssistantUIConfig()
 
-		// ── Step1: 用户配置的 baseUrl ──
+		// Step1: user-configured baseUrl
 		if (config.baseUrl.trim()) {
-			this.log(1, "configuredUrl", `使用配置的 baseUrl: "${config.baseUrl}"`)
+			this.log(1, "configuredUrl", `Using configured baseUrl: "${config.baseUrl}"`)
 			this.baseUrl = trimTrailingSlash(config.baseUrl.trim())
 			this.ownership = "unmanaged"
 			this.source = "configuredBaseUrl"
 			return this.baseUrl
 		}
-		this.log(1, "configuredUrl", "未配置 baseUrl，跳过")
+		this.log(1, "configuredUrl", "No baseUrl configured, skipping")
 
-		// ── Step2: server_url 文件 ──
+		// Step2: server_url file
 		const fileUrl = this.readServerUrlFile()
 		if (fileUrl) {
-			this.log(2, "serverUrlFile", `发现文件: ${this.serverUrlPath}`)
-			this.log(2, "serverUrlFile", `地址: ${fileUrl}`)
+			this.log(2, "serverUrlFile", `Found file: ${this.serverUrlPath}`)
+			this.log(2, "serverUrlFile", `Address: ${fileUrl}`)
 
 			const healthUrl = `${fileUrl}/api/v1/runtime/health`
 			const healthy = await isHttpReady(healthUrl)
@@ -141,17 +127,17 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 				this.baseUrl = `${fileUrl}/api/v1`
 				this.ownership = "unmanaged"
 				this.source = "detected"
-				this.log(2, "serverUrlFile", "✓ health check 通过，采纳该地址")
+				this.log(2, "serverUrlFile", "✓ Health check passed, using this address")
 				return this.baseUrl
 			}
-			this.log(2, "serverUrlFile", "地址无效，继续下一步")
+			this.log(2, "serverUrlFile", "Address invalid, continuing to next step")
 		} else {
-			this.log(2, "serverUrlFile", `文件不存在: ${this.serverUrlPath}`)
+			this.log(2, "serverUrlFile", `File does not exist: ${this.serverUrlPath}`)
 		}
 
-		// ── Step3: 内置二进制 ──
+		// Step3: bundled binary
 		const hasBin = fs.existsSync(this.bundledBinPath)
-		this.log(3, "bundledBin", `检查二进制: ${this.bundledBinPath} → ${hasBin ? "存在" : "不存在"}`)
+		this.log(3, "bundledBin", `Checking binary: ${this.bundledBinPath} → ${hasBin ? "exists" : "not found"}`)
 
 		if (hasBin) {
 			this.ownership = "owned"
@@ -160,60 +146,60 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			this.log(3, "bundledBin", `spawn: ${this.bundledBinPath} cloud start --port ${config.port} --host 0.0.0.0`)
 			try {
 				await this.spawnBundledBinary(config.port)
-				this.log(3, "bundledBin", "进程已 spawn，等待 server_url 文件生成...")
+				this.log(3, "bundledBin", "Process spawned, waiting for server_url file to be created...")
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err)
-				this.log(3, "bundledBin", `spawn 失败: ${msg}`)
+				this.log(3, "bundledBin", `Spawn failed: ${msg}`)
 			}
 
 			const url = await this.waitForServerUrlFile(5_000)
 			if (url) {
-				this.log(3, "bundledBin", `✓ server_url 就绪 → ${url}`)
+				this.log(3, "bundledBin", `✓ server_url ready → ${url}`)
 				return url
 			}
-			this.log(3, "bundledBin", "超时未生成 server_url，继续下一步")
+			this.log(3, "bundledBin", "Timed out waiting for server_url, continuing to next step")
 		}
-		// which
+
 		let cscCliPath = ""
 		try {
 			cscCliPath = await which(config.defaultCli)
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err)
 			this.log(4, "cliStatus", `${msg}`)
-			const _err = new Error(`${msg}\n安装命令: npm install @costrict/csc -g\n安装 csc 后执行 csc cloud start`)
+			const _err = new Error(
+				`${msg}\nInstall command: npm install @costrict/csc -g\nAfter installing csc, run: csc cloud start`,
+			)
 			// @ts-ignore
 			_err["__IS_UNINSTALL_CSC_ERROR__"] = true
 			throw _err
 		}
 
-		// ── Step4: CLI status 命令 ──
-		this.log(4, "cliStatus", `执行 ${cscCliPath} cloud status 检测...`)
+		// Step4: CLI status
+		this.log(4, "cliStatus", `Executing ${cscCliPath} cloud status detection...`)
 		const cliUrl = await this.detectViaCliStatus(cscCliPath)
 		if (cliUrl) {
 			this.baseUrl = cliUrl
 			this.ownership = "unmanaged"
 			this.source = "detected"
-			this.log(4, "cliStatus", `✓ 检测到运行中实例 → ${cliUrl}`)
+			this.log(4, "cliStatus", `✓ Detected running instance → ${cliUrl}`)
 			return cliUrl
 		}
-		this.log(4, "cliStatus", "未检测到运行中实例")
+		this.log(4, "cliStatus", "No running instance detected")
 
-		// ── Step5: 全部失败 ──
-		this.log(5, "failed", "所有策略均失败")
-		throw new Error("手动执行：csc cloud start\n 然后重启编辑器")
+		// Step5: all failed
+		this.log(5, "failed", "All strategies failed")
+		throw new Error("Please run manually: csc cloud start\n Then restart the editor")
 	}
-
-	// ═══════════════════════════════════════════════════════════════
-	// restart()
-	// ═══════════════════════════════════════════════════════════════
 
 	async restart(): Promise<string> {
 		if (this.startupFailureIsUninstallCsc) {
-			throw new Error(this.startupFailureReason ?? "未安装 csc")
+			throw new Error(this.startupFailureReason ?? "csc is not installed")
 		}
 
-		this.log(0, "restart", "开始重启...")
+		this.log(0, "restart", "Starting restart...")
 		this.stopWatching()
+		this.stopHealthCheck()
+		this.childProcess = undefined
 		this.state = "loading"
 		this.startupFailureReason = undefined
 		this.startupFailureIsUninstallCsc = false
@@ -228,32 +214,27 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			this.state = "running"
 			this.startupFailureIsUninstallCsc = false
 			this.startWatching()
-			this.log(0, "restart", `✓ 重启成功 → ${url}`)
+			this.startHealthCheck()
+			this.log(0, "restart", `✓ Restart successful → ${url}`)
 			return url
 		} catch (err) {
 			this.state = "error"
 			this.startupFailureReason = err instanceof Error ? err.message : String(err)
 			this.startupFailureIsUninstallCsc = isUninstallCscError(err)
-			this.log(0, "restart", `✗ 重启失败: ${this.startupFailureReason}`)
+			this.log(0, "restart", `✗ Restart failed: ${this.startupFailureReason}`)
 			throw err
 		} finally {
 			this.operationPromise = undefined
 		}
 	}
 
-	// ═══════════════════════════════════════════════════════════════
-	// dispose()
-	// ═══════════════════════════════════════════════════════════════
-
 	dispose(): void {
-		this.log(0, "dispose", "清理资源")
+		this.log(0, "dispose", "Cleaning up resources")
 		this.stopWatching()
+		this.stopHealthCheck()
+		this.childProcess = undefined
 		this.removeAllListeners()
 	}
-
-	// ═══════════════════════════════════════════════════════════════
-	// server_url 文件操作
-	// ═══════════════════════════════════════════════════════════════
 
 	private readServerUrlFile(): string | undefined {
 		try {
@@ -262,7 +243,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			if (!content) return undefined
 			return trimTrailingSlash(content)
 		} catch (err) {
-			this.log(0, "readServerUrl", `读取失败: ${err instanceof Error ? err.message : String(err)}`)
+			this.log(0, "readServerUrl", `Read failed: ${err instanceof Error ? err.message : String(err)}`)
 			return undefined
 		}
 	}
@@ -283,44 +264,33 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		return undefined
 	}
 
-	// ═══════════════════════════════════════════════════════════════
-	// 文件监听
-	// ═══════════════════════════════════════════════════════════════
-
 	private startWatching(): void {
 		this.stopWatching()
 
 		const dir = path.dirname(this.serverUrlPath)
 		if (!fs.existsSync(dir)) {
-			this.log(0, "fileWatcher", `目录不存在，跳过监听: ${dir}`)
+			this.log(0, "fileWatcher", `Directory does not exist, skipping watcher: ${dir}`)
 			return
 		}
 
-		this.log(0, "fileWatcher", `开始监听: ${dir}`)
+		this.log(0, "fileWatcher", `Starting watcher: ${dir}`)
 		this.watcher = fs.watch(dir, (eventType, filename) => {
 			if (filename !== "server_url") return
 
-			this.log(0, "fileWatcher", `事件: ${eventType}`)
+			this.log(0, "fileWatcher", `Event: ${eventType}`)
 
-			// 文件删除 → cs-cloud 停止
 			if (eventType === "rename" && !fs.existsSync(this.serverUrlPath)) {
-				this.log(0, "fileWatcher", "server_url 被删除 → cs-cloud 已停止")
-				this.stopWatching()
-				this.lastCrashReason = "cs-cloud 进程已停止"
-				if (this.state !== "error") {
-					this.state = "error"
-					this.emit("crashed", { reason: this.lastCrashReason })
-				}
+				this.log(0, "fileWatcher", "server_url deleted → cs-cloud has stopped")
+				this.handleCrashDetected("cs-cloud process has stopped")
 				return
 			}
 
-			// 文件变更 → URL 可能变了
 			if (eventType === "change") {
 				const newUrl = this.readServerUrlFile()
 				if (newUrl) {
 					const newBaseUrl = `${newUrl}/api/v1`
 					if (newBaseUrl !== this.baseUrl) {
-						this.log(0, "fileWatcher", `URL 变更: ${this.baseUrl} → ${newBaseUrl}`)
+						this.log(0, "fileWatcher", `URL changed: ${this.baseUrl} → ${newBaseUrl}`)
 						this.baseUrl = newBaseUrl
 						this.emit("urlChanged", { url: this.baseUrl })
 					}
@@ -331,15 +301,81 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 
 	private stopWatching(): void {
 		if (this.watcher) {
-			this.log(0, "fileWatcher", "停止监听")
+			this.log(0, "fileWatcher", "Stopping watcher")
 			this.watcher.close()
 			this.watcher = undefined
 		}
 	}
 
-	// ═══════════════════════════════════════════════════════════════
-	// 内置二进制 spawn
-	// ═══════════════════════════════════════════════════════════════
+	private startHealthCheck(): void {
+		this.stopHealthCheck()
+		this.healthCheckFailures = 0
+		this.log(0, "healthCheck", `Starting heartbeat check, interval ${this.HEALTH_CHECK_INTERVAL}ms`)
+
+		this.healthCheckTimer = setInterval(async () => {
+			if (!this.baseUrl || this.state !== "running") return
+
+			const healthy = await isHttpReady(`${this.baseUrl}/runtime/health`)
+			if (healthy) {
+				this.healthCheckFailures = 0
+			} else {
+				this.healthCheckFailures++
+				this.log(
+					0,
+					"healthCheck",
+					`Health check failed (${this.healthCheckFailures}/${this.HEALTH_CHECK_FAILURE_THRESHOLD})`,
+				)
+				if (this.healthCheckFailures >= this.HEALTH_CHECK_FAILURE_THRESHOLD) {
+					this.handleCrashDetected("cs-cloud health check failed consecutively")
+				}
+			}
+		}, this.HEALTH_CHECK_INTERVAL)
+	}
+
+	private stopHealthCheck(): void {
+		if (this.healthCheckTimer) {
+			this.log(0, "healthCheck", "Stopping heartbeat check")
+			clearInterval(this.healthCheckTimer)
+			this.healthCheckTimer = undefined
+		}
+		this.healthCheckFailures = 0
+	}
+
+	private handleCrashDetected(reason: string): void {
+		this.log(0, "crash", `Crash detected: ${reason}`)
+		this.stopWatching()
+		this.stopHealthCheck()
+		this.lastCrashReason = reason
+
+		if (this.ownership === "owned" && this.autoRestartCount < this.MAX_AUTO_RESTARTS) {
+			this.autoRestartCount++
+			const delay = 5000 * Math.pow(2, this.autoRestartCount - 1)
+			this.log(
+				0,
+				"crash",
+				`Auto-restart (${this.autoRestartCount}/${this.MAX_AUTO_RESTARTS}), retrying in ${delay}ms`,
+			)
+
+			setTimeout(async () => {
+				try {
+					await this.restart()
+					this.autoRestartCount = 0
+					this.log(0, "crash", "Auto-restart succeeded")
+				} catch (err) {
+					this.log(0, "crash", `Auto-restart failed: ${err instanceof Error ? err.message : String(err)}`)
+					this.state = "error"
+					this.emit("crashed", { reason: this.lastCrashReason ?? reason })
+				}
+			}, delay)
+			return
+		}
+
+		this.autoRestartCount = 0
+		if (this.state !== "error") {
+			this.state = "error"
+			this.emit("crashed", { reason })
+		}
+	}
 
 	private spawnBundledBinary(port: number): Promise<void> {
 		return new Promise((resolve, reject) => {
@@ -356,31 +392,33 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			})
 
 			child.on("error", (err) => reject(err))
-			// detached + unref: 让 daemon 进程独立运行
+
+			this.childProcess = child
+			child.on("exit", (code) => {
+				if (this.state === "running") {
+					this.handleCrashDetected(`cs-cloud process exited, exit code: ${code}`)
+				}
+			})
+
 			child.unref()
 			resolve()
 		})
 	}
 
-	// ═══════════════════════════════════════════════════════════════
-	// CLI status 检测
-	// ═══════════════════════════════════════════════════════════════
-
 	private async detectViaCliStatus(cscCliPath: string): Promise<string | undefined> {
 		try {
 			const output = await this.execCapture(cscCliPath, ["cloud", "status"], 15_000)
-			this.log(4, "cliStatus", `输出: ${output.slice(0, 200)}...`)
+			this.log(4, "cliStatus", `Output: ${output.slice(0, 200)}...`)
 
-			// 匹配 local_url: http://127.0.0.1:PORT
 			const match = output.match(/local_url:\s+(https?:\/\/[^\s]+)/)
 			if (!match) {
-				this.log(4, "cliStatus", "输出中未找到 local_url 字段")
+				this.log(4, "cliStatus", "local_url field not found in output")
 				return undefined
 			}
 
 			const url = trimTrailingSlash(match[1])
 			const baseUrl = `${url}/api/v1`
-			this.log(4, "cliStatus", `检测到 local_url: ${url}`)
+			this.log(4, "cliStatus", `Detected local_url: ${url}`)
 
 			const healthUrl = `${baseUrl}/runtime/health`
 			const healthy = await isHttpReady(healthUrl)
@@ -389,7 +427,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			return healthy ? baseUrl : undefined
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err)
-			this.log(4, "cliStatus", `执行失败: ${msg}`)
+			this.log(4, "cliStatus", `Execution failed: ${msg}`)
 			return undefined
 		}
 	}
@@ -431,9 +469,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	}
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// 公共工具函数
-// ═══════════════════════════════════════════════════════════════════
+// ── Utilities ──
 
 function isUninstallCscError(err: unknown): boolean {
 	return typeof err === "object" && err !== null && "__IS_UNINSTALL_CSC_ERROR__" in err

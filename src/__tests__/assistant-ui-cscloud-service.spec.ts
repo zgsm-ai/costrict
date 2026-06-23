@@ -71,9 +71,7 @@ function resetMocks() {
 		if (typeof cb === "function") cb(new Error("not found"), "", "")
 		return undefined as any
 	})
-	// Default: which rejects (csc not found on system)
 	mockWhich.mockRejectedValue(new Error("not found: csc"))
-	// Default: cross-spawn returns child that closes with no stdout
 	mockCrossSpawn.mockImplementation(() => {
 		const child = {
 			on: vi.fn((ev: string, fn: (...args: any[]) => any) => {
@@ -190,7 +188,7 @@ describe("CsCloudService (refactored)", () => {
 		mockFs.existsSync.mockReturnValue(false)
 		mockWhich.mockResolvedValue("/usr/local/bin/csc")
 		const svc = new CsCloudService(createOutputChannel() as never)
-		await expect(svc.ensureStarted()).rejects.toThrow("手动执行：csc cloud start")
+		await expect(svc.ensureStarted()).rejects.toThrow("Please run manually: csc cloud start")
 		expect(svc.state).toBe("error")
 	})
 
@@ -210,5 +208,77 @@ describe("CsCloudService (refactored)", () => {
 		const svc = new CsCloudService(createOutputChannel() as never)
 		const [a, b] = await Promise.all([svc.ensureStarted(), svc.ensureStarted()])
 		expect(a).toBe(b)
+	})
+
+	it("registers exit handler on spawned child process", async () => {
+		let spawnExitRegistered = false
+
+		mockCrossSpawn.mockImplementation(() => {
+			const child = {
+				on: vi.fn((ev: string) => {
+					if (ev === "exit") spawnExitRegistered = true
+				}),
+				stdout: { on: vi.fn() },
+				stderr: { on: vi.fn() },
+				unref: vi.fn(),
+				kill: vi.fn(),
+			}
+			return child
+		})
+
+		let existsCallCount = 0
+		mockFs.existsSync.mockImplementation((p: string) => {
+			existsCallCount++
+			if (p.toString().endsWith("server_url")) {
+				return existsCallCount > 1
+			}
+			return p.toString().includes("cs-cloud")
+		})
+		mockFs.readFileSync.mockReturnValue("http://127.0.0.1:59249")
+		mockHealthOk()
+		mockWhich.mockRejectedValue(new Error("not found"))
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await svc.ensureStarted()
+		expect(svc.state).toBe("running")
+		expect(svc.ownership).toBe("owned")
+		expect(spawnExitRegistered).toBe(true)
+	})
+
+	it("emits crashed event for unmanaged process on file deletion", async () => {
+		setServerUrlFile("http://127.0.0.1:59249")
+		mockHealthOk()
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await svc.ensureStarted()
+		expect(svc.state).toBe("running")
+		expect(svc.ownership).toBe("unmanaged")
+
+		const crashedPromise = new Promise<string>((resolve) => {
+			svc.on("crashed", ({ reason }: { reason: string }) => resolve(reason))
+		})
+
+		const watchCallback = mockFs.watch.mock.calls[0]?.[1]
+		expect(watchCallback).toBeDefined()
+
+		mockFs.existsSync.mockImplementation((p: string) => {
+			return p.toString().includes("cs-cloud") && !p.toString().endsWith("server_url")
+		})
+		watchCallback("rename", "server_url")
+
+		const reason = await crashedPromise
+		expect(reason).toContain("process has stopped")
+		expect(svc.state).toBe("error")
+	})
+
+	it("dispose cleans up health check timer", async () => {
+		setServerUrlFile("http://127.0.0.1:59249")
+		mockHealthOk()
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await svc.ensureStarted()
+		expect(svc.state).toBe("running")
+
+		svc.dispose()
 	})
 })
