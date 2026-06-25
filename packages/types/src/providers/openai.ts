@@ -24,6 +24,27 @@ export const openAiNativeModels = {
 		description:
 			"GPT-5.1 Codex Max: Our most intelligent coding model optimized for long-horizon, agentic coding tasks",
 	},
+	"gpt-5.5": {
+		maxTokens: 128000,
+		contextWindow: 1_000_000,
+		includedTools: ["apply_patch"],
+		excludedTools: ["apply_diff", "write_to_file"],
+		supportsImages: true,
+		supportsPromptCache: true,
+		supportsReasoningEffort: ["low", "medium", "high", "xhigh"],
+		reasoningEffort: "medium",
+		inputPrice: 5.0,
+		outputPrice: 30.0,
+		cacheReadsPrice: 0.5,
+		longContextPricing: {
+			thresholdTokens: 272_000,
+			inputPriceMultiplier: 2,
+			outputPriceMultiplier: 1.5,
+			appliesToServiceTiers: ["default", "flex"],
+		},
+		supportsTemperature: false,
+		description: "GPT-5.5: OpenAI's latest frontier model for agentic coding",
+	},
 	"gpt-5.4": {
 		maxTokens: 128000,
 		contextWindow: 1_050_000,
