@@ -12,7 +12,7 @@ export function getLiteSharedToolUseSection(): string {
 
 TOOL USE
 
-Use provider-native tool-calling. Call at least one tool per response. For simple questions, use \`attempt_completion\` tool directly.`
+Use provider-native tool-calling. Call at least one tool per response. For simple questions, greetings, or conversational messages, use \`attempt_completion\` tool IMMEDIATELY — do NOT respond with plain text.`
 }
 
 /**
@@ -53,7 +53,7 @@ export function getLiteObjectiveSection(): string {
 
 OBJECTIVE
 
-1. Simple questions → \`attempt_completion\` tool directly
+1. Simple questions, greetings, jokes → \`attempt_completion\` tool IMMEDIATELY (no plain text)
 2. Tasks → set prioritized goals, work through them sequentially
 3. On completion → \`attempt_completion\` tool. Incorporate feedback but avoid pointless back-and-forth`
 }
