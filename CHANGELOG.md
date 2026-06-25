@@ -2,6 +2,12 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [3.0.10]
+
+[CoStrict Cloud](https://zgsm.sangfor.com/cloud/workspace) is an AI-powered cloud programming workspace that lets you remotely connect to your personal devices (local or private servers) from any browser. It features conversational AI programming, project file management, multi-session persistence, and remote terminal collaboration — enabling seamless browser-based remote development, real-time AI coding and debugging, and cross-device project continuity.
+
+<img src="./assets/images/cloud_dashboard.png" alt="More Features" width="880">
+
 ## [2.8.15]
 
 - Enhance CoStrict code mode handling and improve error logging (#1310)
@@ -35,20 +41,3 @@
 
 - Maintenance release with documentation updates
 - Optimize model list refresh (#1268)
-
-## [2.8.10]
-
-- Add third-party skill support
-- Revert external tool bootstrapper and related commands
-- Recover `refreshOnDiskCacheHit` option for model fetching and caching
-
-## [2.8.8]
-
-- Add external tool sync for remote development environments (#1258)
-- Defer ExternalToolSync startup, add skills polling, and handle 404 version errors (#1261)
-- Fix known issues
-
-## [2.8.7]
-
-- Ensure MCP and Skills Managers are initialized properly in providers (#1251)
-- Fix DeepSeek 'reasoning_content' error

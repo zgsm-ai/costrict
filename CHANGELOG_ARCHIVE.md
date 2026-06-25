@@ -2,6 +2,23 @@
 
 > This file contains historical version records. For the latest versions, please visit [CHANGELOG.md](./CHANGELOG.md)
 
+## [2.8.10]
+
+- Add third-party skill support
+- Revert external tool bootstrapper and related commands
+- Recover `refreshOnDiskCacheHit` option for model fetching and caching
+
+## [2.8.8]
+
+- Add external tool sync for remote development environments (#1258)
+- Defer ExternalToolSync startup, add skills polling, and handle 404 version errors (#1261)
+- Fix known issues
+
+## [2.8.7]
+
+- Ensure MCP and Skills Managers are initialized properly in providers (#1251)
+- Fix DeepSeek 'reasoning_content' error
+
 ## [2.8.6]
 
 - Update generate-review-builtin script
