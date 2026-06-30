@@ -36,14 +36,14 @@ export type ZAiAssistantMessage = AssistantMessage & {
  */
 export function convertToZAiFormat(
 	messages: AnthropicMessage[],
-	options?: { mergeToolResultText?: boolean },
+	options?: { mergeToolResultText?: boolean; forcePreserveReasoning?: boolean },
 ): Message[] {
 	const result: Message[] = []
 
 	for (const message of messages) {
 		// Check if the message has reasoning_content (for Z.ai interleaved thinking)
 		const messageWithReasoning = message as AnthropicMessage & { reasoning_content?: string }
-		const reasoningContent = messageWithReasoning.reasoning_content || ""
+		let reasoningContent = messageWithReasoning.reasoning_content
 
 		if (message.role === "user") {
 			// Handle user messages - may contain tool_result blocks
@@ -56,10 +56,12 @@ export function convertToZAiFormat(
 					if (part.type === "text") {
 						textParts.push(part.text)
 					} else if (part.type === "image") {
-						imageParts.push({
-							type: "image_url",
-							image_url: { url: `data:${part.source.media_type};base64,${part.source.data}` },
-						})
+						if (part.source.type === "base64") {
+							imageParts.push({
+								type: "image_url",
+								image_url: { url: `data:${part.source.media_type};base64,${part.source.data}` },
+							})
+						}
 					} else if (part.type === "tool_result") {
 						// Convert tool_result to OpenAI tool message format
 						let content: string
@@ -186,14 +188,15 @@ export function convertToZAiFormat(
 				}
 
 				// Use reasoning from content blocks if not provided at top level
-				const finalReasoning = reasoningContent || extractedReasoning || ""
+				let finalReasoning = reasoningContent || extractedReasoning
+				if (options?.forcePreserveReasoning && !finalReasoning) finalReasoning = " "
 
 				const assistantMessage: ZAiAssistantMessage = {
 					role: "assistant",
 					content: textParts.length > 0 ? textParts.join("\n") : null,
 					...(toolCalls.length > 0 && { tool_calls: toolCalls }),
 					// Preserve reasoning_content for Z.ai interleaved thinking
-					...(finalReasoning != null && { reasoning_content: finalReasoning }),
+					...(finalReasoning && { reasoning_content: finalReasoning }),
 				}
 
 				// Check if we can merge with the last message (only if no tool calls)
@@ -207,7 +210,7 @@ export function convertToZAiFormat(
 						lastMessage.content = `${lastContent}\n${assistantMessage.content}`
 					}
 					// Preserve reasoning_content from the new message if present
-					if (finalReasoning != null) {
+					if (finalReasoning) {
 						;(lastMessage as ZAiAssistantMessage).reasoning_content = finalReasoning
 					}
 				} else {
@@ -216,6 +219,7 @@ export function convertToZAiFormat(
 			} else {
 				// Simple string content
 				const lastMessage = result[result.length - 1]
+				if (options?.forcePreserveReasoning && !reasoningContent) reasoningContent = " "
 				if (lastMessage?.role === "assistant" && !(lastMessage as any).tool_calls) {
 					if (typeof lastMessage.content === "string") {
 						lastMessage.content += `\n${message.content}`
@@ -223,14 +227,14 @@ export function convertToZAiFormat(
 						lastMessage.content = message.content
 					}
 					// Preserve reasoning_content from the new message if present
-					if (reasoningContent != null) {
+					if (reasoningContent) {
 						;(lastMessage as ZAiAssistantMessage).reasoning_content = reasoningContent
 					}
 				} else {
 					const assistantMessage: ZAiAssistantMessage = {
 						role: "assistant",
 						content: message.content,
-						...(reasoningContent != null && { reasoning_content: reasoningContent }),
+						...(reasoningContent && { reasoning_content: reasoningContent }),
 					}
 					result.push(assistantMessage)
 				}

@@ -399,6 +399,7 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 		if (isDeepseekReasoner) {
 			convertedMessages = convertToR1Format([{ role: "user", content: systemPrompt }, ...messages], {
 				mergeToolResultText: isDeepseekReasoner,
+				forcePreserveReasoning: true,
 			})
 		} else {
 			const systemMessage = modelInfo.supportsPromptCache
@@ -428,7 +429,10 @@ export class CostrictAiHandler extends BaseProvider implements SingleCompletionH
 					{ role: "system", content: systemPrompt },
 					...(_mid?.includes("qwen")
 						? convertToOpenAiMessages(messages, { mergeToolResultText: isNative })
-						: convertToZAiFormat(messages, { mergeToolResultText: true })),
+						: convertToZAiFormat(messages, {
+								mergeToolResultText: isNative,
+								forcePreserveReasoning: true,
+							})),
 				]
 			}
 		}

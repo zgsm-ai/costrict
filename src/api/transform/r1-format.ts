@@ -40,14 +40,18 @@ export type DeepSeekAssistantMessage = AssistantMessage & {
  */
 export function convertToR1Format(
 	messages: AnthropicMessage[],
-	options?: { mergeToolResultText?: boolean; normalizeToolCallId?: (id: string) => string },
+	options?: {
+		mergeToolResultText?: boolean
+		forcePreserveReasoning?: boolean
+		normalizeToolCallId?: (id: string) => string
+	},
 ): Message[] {
 	const result: Message[] = []
 
 	for (const message of messages) {
 		// Check if the message has reasoning_content (for DeepSeek interleaved thinking)
 		const messageWithReasoning = message as AnthropicMessage & { reasoning_content?: string }
-		const reasoningContent = messageWithReasoning.reasoning_content
+		let reasoningContent = messageWithReasoning.reasoning_content
 
 		if (message.role === "user") {
 			// Handle user messages - may contain tool_result blocks
@@ -60,10 +64,12 @@ export function convertToR1Format(
 					if (part.type === "text") {
 						textParts.push(part.text)
 					} else if (part.type === "image") {
-						imageParts.push({
-							type: "image_url",
-							image_url: { url: `data:${part.source.media_type};base64,${part.source.data}` },
-						})
+						if (part.source.type === "base64") {
+							imageParts.push({
+								type: "image_url",
+								image_url: { url: `data:${part.source.media_type};base64,${part.source.data}` },
+							})
+						}
 					} else if (part.type === "tool_result") {
 						// Convert tool_result to OpenAI tool message format
 						let content: string
@@ -190,7 +196,8 @@ export function convertToR1Format(
 				}
 
 				// Use reasoning from content blocks if not provided at top level
-				const finalReasoning = reasoningContent || extractedReasoning
+				let finalReasoning = reasoningContent || extractedReasoning
+				if (options?.forcePreserveReasoning && !finalReasoning) finalReasoning = " "
 
 				const assistantMessage: DeepSeekAssistantMessage = {
 					role: "assistant",
@@ -220,6 +227,7 @@ export function convertToR1Format(
 			} else {
 				// Simple string content
 				const lastMessage = result[result.length - 1]
+				if (options?.forcePreserveReasoning && !reasoningContent) reasoningContent = " "
 				if (lastMessage?.role === "assistant" && !(lastMessage as any).tool_calls) {
 					if (typeof lastMessage.content === "string") {
 						lastMessage.content += `\n${message.content}`
