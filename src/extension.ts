@@ -261,17 +261,33 @@ export async function activate(context: vscode.ExtensionContext) {
 			}),
 		)
 
-		// 注册 restart 命令（命令面板 + 错误页按钮）
+		// 注册 reconnect/retry 命令（命令面板 + 错误页按钮）
 		context.subscriptions.push(
-			vscode.commands.registerCommand(`${Package.commandIDPrefix}.restartCsCloud`, async () => {
+			vscode.commands.registerCommand(`${Package.commandIDPrefix}.reconnectCsCloud`, async () => {
 				try {
-					await assistantProvider.restartCsCloud()
+					await assistantProvider.reconnectCsCloud()
 				} catch (err) {
 					outputChannel.appendLine(
-						`[cs-cloud] restart failed: ${err instanceof Error ? err.message : String(err)}`,
+						`[cs-cloud] reconnect failed: ${err instanceof Error ? err.message : String(err)}`,
 					)
 					vscode.window.showErrorMessage(
-						`重启 cs-cloud 失败: ${err instanceof Error ? err.message : String(err)}`,
+						`重新连接 cs-cloud 失败: ${err instanceof Error ? err.message : String(err)}`,
+					)
+				}
+			}),
+		)
+
+		// 注册 server restart 命令（独立于 reconnect/retry，不影响错误页按钮语义）
+		context.subscriptions.push(
+			vscode.commands.registerCommand(`${Package.commandIDPrefix}.restartCsCloudServer`, async () => {
+				try {
+					await assistantProvider.restartCsCloudServer()
+				} catch (err) {
+					outputChannel.appendLine(
+						`[cs-cloud] server restart failed: ${err instanceof Error ? err.message : String(err)}`,
+					)
+					vscode.window.showErrorMessage(
+						`重启 cs-cloud 服务失败: ${err instanceof Error ? err.message : String(err)}`,
 					)
 				}
 			}),

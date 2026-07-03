@@ -9,21 +9,36 @@ import crossSpawn from "cross-spawn"
 import * as vscode from "vscode"
 import { getAssistantUIConfig } from "./config"
 
-export type CsCloudOwnership = "owned" | "unmanaged"
-export type CsCloudSource = "spawned" | "detected" | "configuredBaseUrl"
+export type CsCloudServiceState = "idle" | "loading" | "running" | "error"
+export type CsCloudProcessOwner = "extension" | "external"
+export type CsCloudConnectionSource =
+	| "configuredBaseUrl"
+	| "serverUrlFile"
+	| "bundledBinary"
+	| "cliStatus"
+	| "cliRestart"
+
+type CsCloudConnectionRefreshOperation = {
+	logBranch: string
+	operationLabel: string
+	startMessage: string
+	successMessage: string
+	validate?: () => void
+	run: () => Promise<string>
+}
 
 /**
  * cs-cloud service manager.
  *
  * Discovery: configuredUrl → server_url file → bundled binary → CLI status → error
  * Crash detection: process exit, heartbeat (15s × 3), file watcher
- * Auto recovery: owned process retries 3x with exponential backoff
+ * Auto recovery: extension-owned process retries 3x with exponential backoff
  * Events: "crashed" { reason }, "urlChanged" { url }
  */
 export class CsCloudService extends EventEmitter implements vscode.Disposable {
-	state: "idle" | "loading" | "running" | "error" = "idle"
-	ownership: CsCloudOwnership = "owned"
-	source: CsCloudSource = "spawned"
+	state: CsCloudServiceState = "idle"
+	processOwner: CsCloudProcessOwner = "extension"
+	connectionSource: CsCloudConnectionSource = "bundledBinary"
 
 	lastCrashReason?: string
 	startupFailureReason?: string
@@ -35,11 +50,12 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	private childProcess?: ReturnType<typeof crossSpawn>
 	private healthCheckTimer?: ReturnType<typeof setInterval>
 	private healthCheckFailures = 0
-	private autoRestartCount = 0
+	private autoReconnectCount = 0
 
 	private readonly HEALTH_CHECK_INTERVAL = 15_000
 	private readonly HEALTH_CHECK_FAILURE_THRESHOLD = 3
-	private readonly MAX_AUTO_RESTARTS = 3
+	private readonly MAX_AUTO_RECONNECTS = 3
+	private readonly RESTART_READY_TIMEOUT = 30_000
 
 	constructor(private readonly outputChannel: vscode.OutputChannel) {
 		super()
@@ -107,8 +123,8 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		if (config.baseUrl.trim()) {
 			this.log(1, "configuredUrl", `Using configured baseUrl: "${config.baseUrl}"`)
 			this.baseUrl = trimTrailingSlash(config.baseUrl.trim())
-			this.ownership = "unmanaged"
-			this.source = "configuredBaseUrl"
+			this.processOwner = "external"
+			this.connectionSource = "configuredBaseUrl"
 			return this.baseUrl
 		}
 		this.log(1, "configuredUrl", "No baseUrl configured, skipping")
@@ -125,8 +141,8 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 
 			if (healthy) {
 				this.baseUrl = `${fileUrl}/api/v1`
-				this.ownership = "unmanaged"
-				this.source = "detected"
+				this.processOwner = "external"
+				this.connectionSource = "serverUrlFile"
 				this.log(2, "serverUrlFile", "✓ Health check passed, using this address")
 				return this.baseUrl
 			}
@@ -140,8 +156,8 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		this.log(3, "bundledBin", `Checking binary: ${this.bundledBinPath} → ${hasBin ? "exists" : "not found"}`)
 
 		if (hasBin) {
-			this.ownership = "owned"
-			this.source = "spawned"
+			this.processOwner = "extension"
+			this.connectionSource = "bundledBinary"
 
 			this.log(3, "bundledBin", `spawn: ${this.bundledBinPath} cloud start --port ${config.port} --host 0.0.0.0`)
 			try {
@@ -179,8 +195,8 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		const cliUrl = await this.detectViaCliStatus(cscCliPath)
 		if (cliUrl) {
 			this.baseUrl = cliUrl
-			this.ownership = "unmanaged"
-			this.source = "detected"
+			this.processOwner = "external"
+			this.connectionSource = "cliStatus"
 			this.log(4, "cliStatus", `✓ Detected running instance → ${cliUrl}`)
 			return cliUrl
 		}
@@ -191,12 +207,63 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		throw new Error("Please run manually: csc cloud start\n Then restart the editor")
 	}
 
-	async restart(): Promise<string> {
+	async reconnect(): Promise<string> {
+		return this.runConnectionRefreshOperation({
+			logBranch: "reconnect",
+			operationLabel: "Reconnect",
+			startMessage: "Starting reconnect...",
+			successMessage: "Reconnect successful",
+			run: () => this.doEnsureStarted(),
+		})
+	}
+
+	async restartServer(): Promise<string> {
+		return this.runConnectionRefreshOperation({
+			logBranch: "restartServer",
+			operationLabel: "Server restart",
+			startMessage: "Starting server restart...",
+			successMessage: "Server restart successful",
+			validate: () => {
+				const config = getAssistantUIConfig()
+				if (config.baseUrl.trim()) {
+					throw new Error("Cannot restart configured external cs-cloud baseUrl")
+				}
+			},
+			run: () => this.doRestartServer("restartServer"),
+		})
+	}
+
+	private async runConnectionRefreshOperation(options: CsCloudConnectionRefreshOperation): Promise<string> {
 		if (this.startupFailureIsUninstallCsc) {
 			throw new Error(this.startupFailureReason ?? "csc is not installed")
 		}
 
-		this.log(0, "restart", "Starting restart...")
+		options.validate?.()
+
+		this.log(0, options.logBranch, options.startMessage)
+		this.resetRuntimeStateForConnectionRefresh()
+		this.operationPromise = options.run()
+
+		try {
+			const url = await this.operationPromise
+			this.state = "running"
+			this.startupFailureIsUninstallCsc = false
+			this.startWatching()
+			this.startHealthCheck()
+			this.log(0, options.logBranch, `✓ ${options.successMessage} → ${url}`)
+			return url
+		} catch (err) {
+			this.state = "error"
+			this.startupFailureReason = err instanceof Error ? err.message : String(err)
+			this.startupFailureIsUninstallCsc = isUninstallCscError(err)
+			this.log(0, options.logBranch, `✗ ${options.operationLabel} failed: ${this.startupFailureReason}`)
+			throw err
+		} finally {
+			this.operationPromise = undefined
+		}
+	}
+
+	private resetRuntimeStateForConnectionRefresh(): void {
 		this.stopWatching()
 		this.stopHealthCheck()
 		this.childProcess = undefined
@@ -206,26 +273,6 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		this.lastCrashReason = undefined
 		this.baseUrl = undefined
 		this.operationPromise = undefined
-
-		this.operationPromise = this.doEnsureStarted()
-
-		try {
-			const url = await this.operationPromise
-			this.state = "running"
-			this.startupFailureIsUninstallCsc = false
-			this.startWatching()
-			this.startHealthCheck()
-			this.log(0, "restart", `✓ Restart successful → ${url}`)
-			return url
-		} catch (err) {
-			this.state = "error"
-			this.startupFailureReason = err instanceof Error ? err.message : String(err)
-			this.startupFailureIsUninstallCsc = isUninstallCscError(err)
-			this.log(0, "restart", `✗ Restart failed: ${this.startupFailureReason}`)
-			throw err
-		} finally {
-			this.operationPromise = undefined
-		}
 	}
 
 	dispose(): void {
@@ -262,6 +309,44 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			await sleep(1000)
 		}
 		return undefined
+	}
+
+	private async doRestartServer(logBranch: string): Promise<string> {
+		if (fs.existsSync(this.bundledBinPath)) {
+			this.processOwner = "extension"
+			this.connectionSource = "bundledBinary"
+			this.log(0, logBranch, `Executing bundled restart: ${this.bundledBinPath} restart`)
+			await this.execCapture(this.bundledBinPath, ["restart"], 30_000, true)
+			return this.waitForRestartReady()
+		}
+
+		let cscCliPath = ""
+		try {
+			const config = getAssistantUIConfig()
+			cscCliPath = await which(config.defaultCli)
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err)
+			const _err = new Error(
+				`${msg}\nInstall command: npm install @costrict/csc -g\nAfter installing csc, run: csc cloud restart`,
+			)
+			// @ts-ignore
+			_err["__IS_UNINSTALL_CSC_ERROR__"] = true
+			throw _err
+		}
+
+		this.processOwner = "external"
+		this.connectionSource = "cliRestart"
+		this.log(0, logBranch, `Executing CLI restart: ${cscCliPath} cloud restart`)
+		await this.execCapture(cscCliPath, ["cloud", "restart"], 30_000, true)
+		return this.waitForRestartReady()
+	}
+
+	private async waitForRestartReady(): Promise<string> {
+		const url = await this.waitForServerUrlFile(this.RESTART_READY_TIMEOUT)
+		if (!url) {
+			throw new Error("cs-cloud restart timed out waiting for server_url")
+		}
+		return url
 	}
 
 	private startWatching(): void {
@@ -347,22 +432,22 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		this.stopHealthCheck()
 		this.lastCrashReason = reason
 
-		if (this.ownership === "owned" && this.autoRestartCount < this.MAX_AUTO_RESTARTS) {
-			this.autoRestartCount++
-			const delay = 5000 * Math.pow(2, this.autoRestartCount - 1)
+		if (this.processOwner === "extension" && this.autoReconnectCount < this.MAX_AUTO_RECONNECTS) {
+			this.autoReconnectCount++
+			const delay = 5000 * Math.pow(2, this.autoReconnectCount - 1)
 			this.log(
 				0,
 				"crash",
-				`Auto-restart (${this.autoRestartCount}/${this.MAX_AUTO_RESTARTS}), retrying in ${delay}ms`,
+				`Auto-reconnect (${this.autoReconnectCount}/${this.MAX_AUTO_RECONNECTS}), retrying in ${delay}ms`,
 			)
 
 			setTimeout(async () => {
 				try {
-					await this.restart()
-					this.autoRestartCount = 0
-					this.log(0, "crash", "Auto-restart succeeded")
+					await this.reconnect()
+					this.autoReconnectCount = 0
+					this.log(0, "crash", "Auto-reconnect succeeded")
 				} catch (err) {
-					this.log(0, "crash", `Auto-restart failed: ${err instanceof Error ? err.message : String(err)}`)
+					this.log(0, "crash", `Auto-reconnect failed: ${err instanceof Error ? err.message : String(err)}`)
 					this.state = "error"
 					this.emit("crashed", { reason: this.lastCrashReason ?? reason })
 				}
@@ -370,7 +455,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			return
 		}
 
-		this.autoRestartCount = 0
+		this.autoReconnectCount = 0
 		if (this.state !== "error") {
 			this.state = "error"
 			this.emit("crashed", { reason })
@@ -432,7 +517,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 		}
 	}
 
-	private execCapture(command: string, args: string[], timeoutMs: number): Promise<string> {
+	private execCapture(command: string, args: string[], timeoutMs: number, rejectOnNonZero = false): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const child = crossSpawn(command, args, {
 				env: { ...process.env },
@@ -452,11 +537,16 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 			child.stdout?.on("data", (d) => chunks.push(String(d)))
 			child.stderr?.on("data", (d) => chunks.push(String(d)))
 
-			child.on("close", () => {
+			child.on("close", (code) => {
 				if (settled) return
 				settled = true
 				clearTimeout(timer)
-				resolve(stripAnsi(chunks.join("")))
+				const output = stripAnsi(chunks.join(""))
+				if (rejectOnNonZero && typeof code === "number" && code !== 0) {
+					reject(new Error(`Command failed (${code}): ${command} ${args.join(" ")}\n${output}`))
+					return
+				}
+				resolve(output)
 			})
 
 			child.on("error", (err) => {

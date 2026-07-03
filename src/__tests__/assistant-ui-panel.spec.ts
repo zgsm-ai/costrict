@@ -36,6 +36,7 @@ import {
 	addNonceToScriptTags,
 	injectIntoHead,
 	buildAssistantUIFrameUrl,
+	getAssistantUIIframeHtml,
 	getAssistantUIStaticHtml,
 	getAssistantUIStaticOutDir,
 	rewriteStaticAssetUrls,
@@ -230,10 +231,29 @@ describe("AssistantUIPanel", () => {
 
 			expect(html).toContain("http://127.0.0.1:45489")
 			expect(html).toContain(`href="vscode-resource:${outDir}/costrict/logo.png"`)
+			expect(html).toContain('e.data?.type === "restartCsCloudServer"')
+			expect(html).toContain('v.postMessage({ type: "restartCsCloudServer" })')
 			expect(html).not.toContain('href="/costrict/logo.png"')
 		} finally {
 			fs.rmSync(extensionRoot, { recursive: true, force: true })
 		}
+	})
+
+	it("forwards server restart messages between iframe and extension host", () => {
+		const webview = {
+			cspSource: "vscode-webview://test-csp-source",
+		}
+
+		const html = getAssistantUIIframeHtml(
+			webview as never,
+			{ extensionUri: { fsPath: "/tmp/test-extension" } } as never,
+			"http://127.0.0.1:45489/api/v1",
+			"http://127.0.0.1:3000",
+		)
+
+		expect(html).toContain('event.data?.type === "restartCsCloudServer"')
+		expect(html).toContain('vscodeApi.postMessage({ type: "restartCsCloudServer" })')
+		expect(html).toContain('event.data?.type === "restartCsCloudServerFailed"')
 	})
 
 	it("preserves Request method, headers, and body in the static Webview fetch proxy", () => {

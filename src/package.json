@@ -139,8 +139,13 @@
 				"icon": "$(account)"
 			},
 			{
-				"command": "costrict.restartCsCloud",
-				"title": "CoStrict: Restart CoStrict Cloud",
+				"command": "costrict.reconnectCsCloud",
+				"title": "CoStrict: Reconnect CoStrict Cloud",
+				"category": "%configuration.title%"
+			},
+			{
+				"command": "costrict.restartCsCloudServer",
+				"title": "CoStrict: Restart CoStrict Cloud Server",
 				"category": "%configuration.title%"
 			},
 			{

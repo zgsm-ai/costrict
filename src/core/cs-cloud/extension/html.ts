@@ -609,7 +609,7 @@ export function getCrashedHtml(reason?: string): string {
       const btn = document.getElementById("restart-btn");
       btn.disabled = true;
       btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><style>@keyframes spin{to{transform:rotate(360deg)}}</style><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> ' + I18N.connecting;
-      vscode.postMessage({ type: "restartCsCloud" });
+      vscode.postMessage({ type: "reconnectCsCloud" });
     }
 
     function handleSwitchToClassic() {
@@ -621,7 +621,7 @@ export function getCrashedHtml(reason?: string): string {
     }
 
     window.addEventListener("message", (e) => {
-      if (e.data?.type === "restartFailed") {
+      if (e.data?.type === "reconnectFailed") {
         const btn = document.getElementById("restart-btn");
         btn.disabled = false;
         btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/></svg> ' + I18N.reconnect;
@@ -961,6 +961,10 @@ export function getAssistantUIStaticHtml(
               v.postMessage({ type: "openDiff", path: e.data.path, patch: e.data.patch });
               return;
             }
+            if (e.data?.type === "restartCsCloudServer") {
+              v.postMessage({ type: "restartCsCloudServer" });
+              return;
+            }
             if (e.data?.type === "executeCommand" && e.data.command) {
               v.postMessage({ type: "executeCommand", command: e.data.command });
               return;
@@ -1170,6 +1174,10 @@ export function getAssistantUIIframeHtml(
           vscodeApi.postMessage({ type: "openDiff", path: event.data.path, patch: event.data.patch });
           return;
         }
+        if (event.data?.type === "restartCsCloudServer") {
+          vscodeApi.postMessage({ type: "restartCsCloudServer" });
+          return;
+        }
         if (event.data?.type === "executeCommand" && event.data.command) {
           vscodeApi.postMessage({ type: "executeCommand", command: event.data.command });
           return;
@@ -1203,6 +1211,11 @@ export function getAssistantUIIframeHtml(
         return;
       }
       if (event.data?.type === "quotaResult") {
+        if (frame?.contentWindow) {
+          frame.contentWindow.postMessage(event.data, frameOrigin);
+        }
+      }
+      if (event.data?.type === "restartCsCloudServerFailed") {
         if (frame?.contentWindow) {
           frame.contentWindow.postMessage(event.data, frameOrigin);
         }

@@ -201,19 +201,36 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					this.cachedHtml = undefined
 					await this.loadContent(webviewView)
 				}
-				if (message.type === "restartCsCloud") {
+				if (message.type === "reconnectCsCloud") {
 					if (this.csCloudService.startupFailureIsUninstallCsc) {
 						return
 					}
 					try {
-						await this.csCloudService.restart()
+						await this.csCloudService.reconnect()
 						this.cachedHtml = undefined
 						await this.loadContent(this.view!)
 					} catch (err) {
 						const reason = err instanceof Error ? err.message : String(err)
-						this.outputChannel.appendLine(`[AssistantUI] Restart cs-cloud failed: ${reason}`)
+						this.outputChannel.appendLine(`[AssistantUI] Reconnect cs-cloud failed: ${reason}`)
 						this.view?.webview.postMessage({
-							type: "restartFailed",
+							type: "reconnectFailed",
+							reason,
+						})
+					}
+				}
+				if (message.type === "restartCsCloudServer") {
+					if (this.csCloudService.startupFailureIsUninstallCsc) {
+						return
+					}
+					try {
+						await this.csCloudService.restartServer()
+						this.cachedHtml = undefined
+						await this.loadContent(this.view!)
+					} catch (err) {
+						const reason = err instanceof Error ? err.message : String(err)
+						this.outputChannel.appendLine(`[AssistantUI] Restart cs-cloud server failed: ${reason}`)
+						this.view?.webview.postMessage({
+							type: "restartCsCloudServerFailed",
 							reason,
 						})
 					}
@@ -782,7 +799,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
         btn.disabled = true;
         btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><style>@keyframes spin{to{transform:rotate(360deg)}}</style><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> ' + I18N.starting;
       }
-      vscode.postMessage({ type: "restartCsCloud" });
+      vscode.postMessage({ type: "reconnectCsCloud" });
     }
 
     function handleSwitchToClassic() {
@@ -796,7 +813,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
     }
 
     window.addEventListener("message", (e) => {
-      if (e.data?.type === "restartFailed") {
+      if (e.data?.type === "reconnectFailed") {
         const btn = document.getElementById("restart-btn");
         if (btn) {
           btn.disabled = false;
@@ -817,13 +834,26 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 </html>`
 	}
 
-	/** Restart entry for command palette. */
-	async restartCsCloud(): Promise<void> {
+	/** Reconnect/retry entry for command palette and error-page retry. */
+	async reconnectCsCloud(): Promise<void> {
 		if (this.csCloudService.startupFailureIsUninstallCsc) {
 			throw new Error(this.csCloudService.startupFailureReason ?? t("common:csCloud.error.cscNotInstalled"))
 		}
 
-		await this.csCloudService.restart()
+		await this.csCloudService.reconnect()
+		this.cachedHtml = undefined
+		if (this.view) {
+			await this.loadContent(this.view)
+		}
+	}
+
+	/** Server-process restart entry for command palette. */
+	async restartCsCloudServer(): Promise<void> {
+		if (this.csCloudService.startupFailureIsUninstallCsc) {
+			throw new Error(this.csCloudService.startupFailureReason ?? t("common:csCloud.error.cscNotInstalled"))
+		}
+
+		await this.csCloudService.restartServer()
 		this.cachedHtml = undefined
 		if (this.view) {
 			await this.loadContent(this.view)

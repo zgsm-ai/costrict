@@ -192,14 +192,67 @@ describe("CsCloudService (refactored)", () => {
 		expect(svc.state).toBe("error")
 	})
 
-	it("restart clears state and re-resolves", async () => {
+	it("reconnect clears state and re-resolves", async () => {
 		setServerUrlFile("http://127.0.0.1:59249")
 		mockHealthOk()
 		const svc = new CsCloudService(createOutputChannel() as never)
 		await svc.ensureStarted()
 		expect(svc.state).toBe("running")
 		setServerUrlFile("http://127.0.0.1:60000")
-		await expect(svc.restart()).resolves.toBe("http://127.0.0.1:60000/api/v1")
+		await expect(svc.reconnect()).resolves.toBe("http://127.0.0.1:60000/api/v1")
+		expect(mockCrossSpawn).not.toHaveBeenCalled()
+	})
+
+	it("restartServer uses bundled cs-cloud restart when bundled binary exists", async () => {
+		setServerUrlFile("http://127.0.0.1:59249")
+		mockHealthOk()
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await expect(svc.restartServer()).resolves.toBe("http://127.0.0.1:59249/api/v1")
+
+		expect(mockCrossSpawn).toHaveBeenCalledWith(
+			"/home/testuser/.costrict/bin/cs-cloud",
+			["restart"],
+			expect.objectContaining({ env: expect.any(Object), stdio: "pipe" }),
+		)
+		expect(svc.processOwner).toBe("extension")
+		expect(svc.connectionSource).toBe("bundledBinary")
+	})
+
+	it("restartServer uses global csc cloud restart when bundled binary is missing", async () => {
+		mockFs.existsSync.mockImplementation((p: string) => p.toString().endsWith("server_url"))
+		mockFs.readFileSync.mockReturnValue("http://127.0.0.1:59249")
+		mockWhich.mockResolvedValue("/usr/local/bin/csc")
+		mockHealthOk()
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await expect(svc.restartServer()).resolves.toBe("http://127.0.0.1:59249/api/v1")
+
+		expect(mockCrossSpawn).toHaveBeenCalledWith(
+			"/usr/local/bin/csc",
+			["cloud", "restart"],
+			expect.objectContaining({ env: expect.any(Object), stdio: "pipe" }),
+		)
+		expect(svc.processOwner).toBe("external")
+		expect(svc.connectionSource).toBe("cliRestart")
+	})
+
+	it("configured baseUrl reconnect keeps reconnect behavior", async () => {
+		setConfigValues({ baseUrl: "http://custom:8080/api/v1", port: 45489 })
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await expect(svc.reconnect()).resolves.toBe("http://custom:8080/api/v1")
+
+		expect(mockCrossSpawn).not.toHaveBeenCalled()
+	})
+
+	it("configured baseUrl restartServer is rejected", async () => {
+		setConfigValues({ baseUrl: "http://custom:8080/api/v1", port: 45489 })
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await expect(svc.restartServer()).rejects.toThrow("Cannot restart configured external cs-cloud baseUrl")
+
+		expect(mockCrossSpawn).not.toHaveBeenCalled()
 	})
 
 	it("deduplicates concurrent ensureStarted calls", async () => {
@@ -241,7 +294,7 @@ describe("CsCloudService (refactored)", () => {
 		const svc = new CsCloudService(createOutputChannel() as never)
 		await svc.ensureStarted()
 		expect(svc.state).toBe("running")
-		expect(svc.ownership).toBe("owned")
+		expect(svc.processOwner).toBe("extension")
 		expect(spawnExitRegistered).toBe(true)
 	})
 
@@ -252,7 +305,7 @@ describe("CsCloudService (refactored)", () => {
 		const svc = new CsCloudService(createOutputChannel() as never)
 		await svc.ensureStarted()
 		expect(svc.state).toBe("running")
-		expect(svc.ownership).toBe("unmanaged")
+		expect(svc.processOwner).toBe("external")
 
 		const crashedPromise = new Promise<string>((resolve) => {
 			svc.on("crashed", ({ reason }: { reason: string }) => resolve(reason))
