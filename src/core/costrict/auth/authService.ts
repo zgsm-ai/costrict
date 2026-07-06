@@ -10,10 +10,19 @@ import { joinUrl } from "../../../utils/joinUrl"
 import { CostrictAuthStatus, CostrictAuthTokens, CostrictLoginState, LoginTokenResponse } from "./types"
 import { generateNewSessionClientId, getClientId } from "../../../utils/getClientId"
 import { sendCostrictLogout } from "./ipc/client"
+import { readCostrictAccessToken } from "../runtime-config"
+import { pickFresher, type CostrictTokenPair } from "../runtime-config/pickFresher"
 import { CompletionStatusBar } from "../auto-complete"
 import { t } from "../../../i18n"
 
 let _loginState = ""
+
+export type CostrictStartupAuthSource = "secret" | "file"
+
+export interface CostrictStartupAuthTokens {
+	tokens: CostrictAuthTokens
+	source: CostrictStartupAuthSource
+}
 
 export class CostrictAuthService {
 	private static instance: CostrictAuthService
@@ -298,21 +307,82 @@ export class CostrictAuthService {
 	}
 
 	/**
-	 * Check login status on plugin startup
+	 * Resolve the token pair that should be used during plugin startup.
+	 *
+	 * SecretStorage owns the local `state`; auth.json may own fresher tokens after
+	 * an external runtime/CLI/other-window refresh. Returning the final token set
+	 * here keeps activate.ts focused on startup side effects instead of duplicating
+	 * storage reads and freshness checks.
+	 */
+	async getStartupAuthTokens(): Promise<CostrictStartupAuthTokens | null> {
+		const secretTokens = await this.getStoredTokensForStartup()
+		const secretPair = this.toValidTokenPair(secretTokens)
+		const filePair = this.readValidFileTokenPair()
+		const winner = pickFresher(secretPair, filePair)
+
+		if (!winner || !secretTokens?.state) {
+			return null
+		}
+
+		if (filePair && winner === filePair) {
+			return {
+				source: "file",
+				tokens: { ...filePair, state: secretTokens.state },
+			}
+		}
+
+		if (!secretPair) {
+			return null
+		}
+
+		return {
+			source: "secret",
+			tokens: { ...secretPair, state: secretTokens.state },
+		}
+	}
+
+	/**
+	 * Check login status on plugin startup.
 	 */
 	async checkLoginStatusOnStartup(): Promise<boolean> {
+		return (await this.getStartupAuthTokens()) !== null
+	}
+
+	private async getStoredTokensForStartup(): Promise<CostrictAuthTokens | null> {
 		try {
-			const tokens = await CostrictAuthStorage.getInstance().getTokens()
-
-			if (!tokens?.access_token || !tokens?.refresh_token) {
-				return false
-			}
-
-			const jwt = jwtDecode(tokens?.refresh_token) as any
-
-			return jwt.exp * 1000 > Date.now()
+			return await CostrictAuthStorage.getInstance().getTokens()
 		} catch (error) {
 			console.error("Failed to check login status on startup:", error)
+			return null
+		}
+	}
+
+	private readValidFileTokenPair(): CostrictTokenPair | null {
+		try {
+			return this.toValidTokenPair(readCostrictAccessToken())
+		} catch {
+			return null
+		}
+	}
+
+	private toValidTokenPair(
+		tokens?: { access_token?: string; refresh_token?: string } | null,
+	): CostrictTokenPair | null {
+		if (!tokens?.access_token || !tokens.refresh_token || !this.isRefreshTokenValid(tokens.refresh_token)) {
+			return null
+		}
+
+		return {
+			access_token: tokens.access_token,
+			refresh_token: tokens.refresh_token,
+		}
+	}
+
+	private isRefreshTokenValid(refreshToken: string): boolean {
+		try {
+			const jwt = jwtDecode(refreshToken) as any
+			return jwt.exp * 1000 > Date.now()
+		} catch {
 			return false
 		}
 	}

@@ -79,6 +79,19 @@ async function initialize(provider: ClineProvider, logger: ILogger) {
 	loadLocalLanguageExtensions()
 }
 
+const prepareCompletionRuntimeAuth = (
+	tokens: { access_token: string; refresh_token: string },
+	provider: ClineProvider,
+) => {
+	void writeCostrictRuntimeAuth(tokens.access_token, tokens.refresh_token)
+		.then(() => ensureCompletionRuntimeReady())
+		.catch((error) => {
+			provider.log(
+				`Failed to prepare completion runtime on startup: ${error instanceof Error ? error.message : String(error)}`,
+			)
+		})
+}
+
 /**
  * Entry function when the ZGSM extension is activated
  */
@@ -127,24 +140,21 @@ export async function activate(
 
 	let loginTip = () => {}
 	try {
-		const isLoggedIn = await costrictAuthService.checkLoginStatusOnStartup()
+		const startupAuth = await costrictAuthService.getStartupAuthTokens()
 
-		if (isLoggedIn) {
-			costrictAuthService.getTokens().then(async (tokens) => {
-				if (!tokens) {
-					return
-				}
-				provider.log(`Login status detected at plugin startup: valid (${tokens.state})`)
-				void writeCostrictRuntimeAuth(tokens.access_token, tokens.refresh_token)
-					.then(() => ensureCompletionRuntimeReady())
-					.catch((error) => {
-						provider.log(
-							`Failed to prepare completion runtime on startup: ${error instanceof Error ? error.message : String(error)}`,
-						)
-					})
-				costrictAuthService.startTokenRefresh(tokens.refresh_token, getClientId(), tokens.state)
-				costrictAuthService.updateUserInfo(tokens.access_token)
-			})
+		if (startupAuth) {
+			const { tokens, source } = startupAuth
+			provider.log(`Login status detected at plugin startup: valid (${tokens.state})`)
+
+			if (source === "file") {
+				provider.log("Startup reconciliation: adopted fresher tokens from auth.json")
+				await costrictAuthService.saveTokens(tokens)
+			} else {
+				prepareCompletionRuntimeAuth(tokens, provider)
+			}
+
+			costrictAuthService.startTokenRefresh(tokens.refresh_token, getClientId(), tokens.state)
+			costrictAuthService.updateUserInfo(tokens.access_token)
 		} else {
 			loginTip = () => {
 				costrictAuthService.getTokens().then(async (tokens) => {

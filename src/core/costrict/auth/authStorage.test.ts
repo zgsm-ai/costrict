@@ -62,6 +62,7 @@ describe("CostrictAuthStorage.saveTokens", () => {
 			},
 			setValue: vi.fn(),
 			upsertProviderProfile: vi.fn().mockResolvedValue(undefined),
+			log: vi.fn(),
 		}
 
 		CostrictAuthStorage.setProvider(mockProvider)
@@ -81,5 +82,34 @@ describe("CostrictAuthStorage.saveTokens", () => {
 
 		expect(writeCostrictRuntimeAuth).toHaveBeenCalledWith(newTokens.access_token, newTokens.refresh_token)
 		expect(ensureCompletionRuntimeReady).toHaveBeenCalledTimes(1)
+	})
+
+	it("still persists when only the access_token changed (refresh unchanged)", async () => {
+		// refresh_token is identical to the stored value. The dedup guard must
+		// only no-op when BOTH tokens match, otherwise a rotated access_token
+		// would be silently dropped.
+		const rotatedAccess = {
+			access_token: "new-access-token",
+			refresh_token: "old-refresh-token",
+			state: "new-state",
+		}
+
+		await CostrictAuthStorage.getInstance().saveTokens(rotatedAccess as any)
+
+		expect(writeCostrictRuntimeAuth).toHaveBeenCalledWith(rotatedAccess.access_token, rotatedAccess.refresh_token)
+		expect(ensureCompletionRuntimeReady).toHaveBeenCalledTimes(1)
+	})
+
+	it("is a no-op when both access and refresh tokens match the stored values", async () => {
+		const sameTokens = {
+			access_token: "old-access-token",
+			refresh_token: "old-refresh-token",
+			state: "old-state",
+		}
+
+		await CostrictAuthStorage.getInstance().saveTokens(sameTokens as any)
+
+		expect(writeCostrictRuntimeAuth).not.toHaveBeenCalled()
+		expect(ensureCompletionRuntimeReady).not.toHaveBeenCalled()
 	})
 })

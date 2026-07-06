@@ -29,7 +29,7 @@ export class CostrictAuthStorage {
 			return
 		}
 		if (
-			tokens.access_token === state.apiConfiguration.costrictAccessToken ||
+			tokens.access_token === state.apiConfiguration.costrictAccessToken &&
 			tokens.refresh_token === state.apiConfiguration.costrictRefreshToken
 		) {
 			CostrictAuthStorage.clineProvider?.log(

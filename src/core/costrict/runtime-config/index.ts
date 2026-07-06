@@ -12,6 +12,10 @@ import { CostrictAuthConfig } from "../auth/authConfig"
 import { getClientId } from "../../../utils/getClientId"
 import { createLogger } from "../../../utils/logger"
 import { Package } from "../../../shared/package"
+import { pickFresher } from "./pickFresher"
+
+export { pickFresher }
+export type { CostrictTokenPair } from "./pickFresher"
 
 export interface CostrictWellKnownService {
 	name: string
@@ -216,6 +220,33 @@ export const ensureCompletionRuntimeReady = async (): Promise<void> => {
 }
 
 export const writeCostrictRuntimeAuth = async (accessToken: string, refreshToken: string) => {
+	// Guard: don't clobber a fresher token that an external process
+	// (completion-agent runtime, CLI, another window) has written to auth.json.
+	// After a window reload SecretStorage may hold a stale value; without this
+	// guard every reload would roll back the external refresh. The comparison
+	// covers both refresh and access tokens, so an access-only rotation on disk
+	// is protected too.
+	try {
+		const existing = readCostrictAccessToken()
+		if (existing?.refresh_token) {
+			const incoming = { access_token: accessToken, refresh_token: refreshToken }
+			const onDisk = {
+				access_token: existing.access_token ?? "",
+				refresh_token: existing.refresh_token,
+			}
+			// `pickFresher` returns the on-disk reference only when it is strictly
+			// fresher; on a tie it returns `incoming`, so equal values still write.
+			if (pickFresher(incoming, onDisk) === onDisk) {
+				logger.info(
+					"[runtime-config] skipping auth.json write: on-disk token is fresher than the incoming value",
+				)
+				return
+			}
+		}
+	} catch (error) {
+		logger.info(`[runtime-config] auth.json pre-write check skipped: ${error}`)
+	}
+
 	const homeDir = os.homedir()
 
 	if (!homeDir) {
