@@ -36,9 +36,18 @@ const memoryCache = new NodeCache({ stdTTL: 5 * 60, checkperiod: 5 * 60 })
 // Zod schema for validating ModelRecord structure from disk cache
 const modelRecordSchema = z.record(z.string(), modelInfoSchema)
 
+export interface ModelFetchResult {
+	models: ModelRecord
+	/**
+	 * True only when `models` came directly from a successful provider request.
+	 * Memory/disk cache hits and graceful-degradation fallbacks are never authoritative.
+	 */
+	authoritative: boolean
+}
+
 // Track in-flight refresh requests to prevent concurrent API calls for the same provider
 // This prevents race conditions where multiple calls might overwrite each other's results
-const inFlightRefresh = new Map<RouterName, Promise<ModelRecord>>()
+const inFlightRefresh = new Map<RouterName, Promise<ModelFetchResult>>()
 
 async function writeModels(router: RouterName, data: ModelRecord) {
 	const filename = `${router}_models.json`
@@ -137,7 +146,7 @@ async function fetchModelsFromProvider(options: GetModelsOptions): Promise<Model
  * @param baseUrl - Optional base URL for the provider (currently used only for LiteLLM).
  * @returns The models from the cache or the fetched models.
  */
-export const getModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
+export const getModelsWithMetadata = async (options: GetModelsOptions): Promise<ModelFetchResult> => {
 	const { provider } = options
 	const refreshOnDiskCacheHit = "refreshOnDiskCacheHit" in options && options.refreshOnDiskCacheHit
 	const hadMemoryModels = memoryCache.get<ModelRecord>(provider) != null
@@ -156,7 +165,7 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
 						console.error(`[getModels] Background refresh failed for ${provider}:`, error)
 					})
 				}
-				return models
+				return { models, authoritative: false }
 			}
 		}
 		models = await fetchModelsFromProvider(options)
@@ -178,7 +187,7 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
 			})
 		}
 
-		return models
+		return { models, authoritative: true }
 	} catch (error) {
 		// Log the error and re-throw it so the caller can handle it (e.g., show a UI message).
 		console.error(`[getModels] Failed to fetch models in modelCache for ${provider}:`, error)
@@ -186,6 +195,9 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
 		throw error // Re-throw the original error to be handled by the caller.
 	}
 }
+
+export const getModels = async (options: GetModelsOptions): Promise<ModelRecord> =>
+	(await getModelsWithMetadata(options)).models
 
 /**
  * Force-refresh models from API, bypassing cache.
@@ -196,7 +208,7 @@ export const getModels = async (options: GetModelsOptions): Promise<ModelRecord>
  * @param options - Provider options for fetching models
  * @returns Fresh models from API, or existing cache if refresh yields worse data
  */
-export const refreshModels = async (options: GetModelsOptions): Promise<ModelRecord> => {
+export const refreshModelsWithMetadata = async (options: GetModelsOptions): Promise<ModelFetchResult> => {
 	const { provider } = options
 
 	// Check if there's already an in-flight refresh for this provider
@@ -208,7 +220,7 @@ export const refreshModels = async (options: GetModelsOptions): Promise<ModelRec
 	}
 
 	// Create the refresh promise and track it
-	const refreshPromise = (async (): Promise<ModelRecord> => {
+	const refreshPromise = (async (): Promise<ModelFetchResult> => {
 		try {
 			// Force fresh API fetch - skip getModelsFromCache() check
 			const models = await fetchModelsFromProvider(options)
@@ -226,9 +238,9 @@ export const refreshModels = async (options: GetModelsOptions): Promise<ModelRec
 					existingCacheSize: existingCount,
 				})
 				if (existingCount > 0) {
-					return existingCache!
+					return { models: existingCache!, authoritative: false }
 				} else {
-					return {}
+					return { models: {}, authoritative: false }
 				}
 			}
 
@@ -240,11 +252,11 @@ export const refreshModels = async (options: GetModelsOptions): Promise<ModelRec
 				console.error(`[refreshModels] Error writing ${provider} models to disk:`, err),
 			)
 
-			return models
+			return { models, authoritative: true }
 		} catch (error) {
 			// Log the error for debugging, then return existing cache if available (graceful degradation)
 			console.error(`[refreshModels] Failed to refresh ${provider} models:`, error)
-			return getModelsFromCache(provider) || {}
+			return { models: getModelsFromCache(provider) || {}, authoritative: false }
 		} finally {
 			// Always clean up the in-flight tracking
 			inFlightRefresh.delete(provider)
@@ -256,6 +268,9 @@ export const refreshModels = async (options: GetModelsOptions): Promise<ModelRec
 
 	return refreshPromise
 }
+
+export const refreshModels = async (options: GetModelsOptions): Promise<ModelRecord> =>
+	(await refreshModelsWithMetadata(options)).models
 
 /**
  * Initialize background model cache refresh.
@@ -292,7 +307,7 @@ export async function initializeModelCacheRefresh(): Promise<void> {
 export const flushModels = async (
 	options: GetModelsOptions,
 	refresh: boolean = false,
-	cb?: (v: any) => void,
+	cb?: (models: ModelRecord, metadata: ModelFetchResult) => void,
 ): Promise<void> => {
 	const { provider } = options
 	if (refresh) {
@@ -300,8 +315,8 @@ export const flushModels = async (
 		// This prevents a race condition where getModels() might be called
 		// before refresh completes, avoiding a gap in cache availability
 		// Await the refresh to ensure the cache is updated before returning
-		await refreshModels(options)
-			.then(cb)
+		await refreshModelsWithMetadata(options)
+			.then((result) => cb?.(result.models, result))
 			.catch((error) => {
 				console.log(`[flushModels] Refresh failed for ${provider}:`, error.message)
 			})

@@ -61,12 +61,13 @@ import type { ModelRecord } from "@roo-code/types"
 
 import { webviewMessageHandler } from "../webviewMessageHandler"
 import type { ClineProvider } from "../ClineProvider"
-import { getModels } from "../../../api/providers/fetchers/modelCache"
+import { getModels, getModelsWithMetadata } from "../../../api/providers/fetchers/modelCache"
 import { getCommands } from "../../../services/command/commands"
 const { openAiCodexOAuthManager } = await import("../../../integrations/openai-codex/oauth")
 const { fetchOpenAiCodexRateLimitInfo } = await import("../../../integrations/openai-codex/rate-limits")
 
 const mockGetModels = getModels as Mock<typeof getModels>
+const mockGetModelsWithMetadata = getModelsWithMetadata as Mock<typeof getModelsWithMetadata>
 const mockGetCommands = vi.mocked(getCommands)
 const mockGetAccessToken = vi.mocked(openAiCodexOAuthManager.getAccessToken)
 const mockGetAccountId = vi.mocked(openAiCodexOAuthManager.getAccountId)
@@ -348,6 +349,10 @@ describe("webviewMessageHandler - requestOllamaModels", () => {
 describe("webviewMessageHandler - requestRouterModels", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		mockGetModelsWithMetadata.mockImplementation(async (options) => ({
+			models: await mockGetModels(options),
+			authoritative: false,
+		}))
 		mockClineProvider.getState = vi.fn().mockResolvedValue({
 			apiConfiguration: {
 				openRouterApiKey: "openrouter-key",
@@ -408,6 +413,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 			type: "costrictModels",
 			openAiModels: ["model-1", "model-2"],
 			fullResponseData: [mockModels["model-1"], mockModels["model-2"]],
+			modelListAuthoritative: false,
 		})
 
 		// Verify response was sent
@@ -425,6 +431,32 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 				poe: {},
 			},
 			values: undefined,
+		})
+	})
+
+	it("marks a direct costrict provider result as authoritative", async () => {
+		const mockModels: ModelRecord = {
+			"model-1": {
+				maxTokens: 4096,
+				contextWindow: 8192,
+				supportsPromptCache: false,
+			},
+		}
+		mockGetModelsWithMetadata.mockResolvedValue({
+			models: mockModels,
+			authoritative: true,
+		})
+
+		await webviewMessageHandler(mockClineProvider, {
+			type: "requestRouterModels",
+			values: { provider: "costrict" },
+		})
+
+		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
+			type: "costrictModels",
+			openAiModels: ["model-1"],
+			fullResponseData: [mockModels["model-1"]],
+			modelListAuthoritative: true,
 		})
 	})
 
@@ -509,6 +541,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 			type: "costrictModels",
 			openAiModels: ["model-1"],
 			fullResponseData: [mockModels["model-1"]],
+			modelListAuthoritative: false,
 		})
 
 		// Verify response includes empty object for LiteLLM
@@ -559,6 +592,7 @@ describe("webviewMessageHandler - requestRouterModels", () => {
 			type: "costrictModels",
 			fullResponseData: [mockModels["model-1"]],
 			openAiModels: ["model-1"],
+			modelListAuthoritative: false,
 		})
 
 		// Verify error messages were sent for failed providers

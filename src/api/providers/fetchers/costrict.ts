@@ -2,7 +2,6 @@ import axios from "axios"
 import { v7 as uuidv7 } from "uuid"
 import { COSTRICT_DEFAULT_HEADERS } from "../../../shared/headers"
 import type { InviteCodeInfo, ICostrictModelResponseData, QuotaInfo } from "@roo-code/types"
-import { readModels } from "./modelCache"
 import { CostrictAuthService } from "../../../core/costrict/auth"
 
 export async function getCostrictModels(
@@ -52,9 +51,7 @@ export async function getCostrictModels(
 			`Error fetching costrictModels from [${requestId}|${baseUrl}/ai-gateway/api/v1/models]:`,
 			error.message,
 		)
-		const modelCache = (await readModels("costrict")) || {}
-
-		return Object.keys(modelCache).map((key) => modelCache[key])
+		throw error
 	}
 }
 
