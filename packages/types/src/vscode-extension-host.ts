@@ -172,6 +172,8 @@ export interface ExtensionMessage {
 	ollamaModels?: ModelRecord
 	lmStudioModels?: ModelRecord
 	fullResponseData?: ICostrictModelResponseData[]
+	/** Whether a costrictModels payload came directly from a successful provider request. */
+	modelListAuthoritative?: boolean
 	vsCodeLmModels?: { vendor?: string; family?: string; version?: string; id?: string }[]
 	mcpServers?: McpServer[]
 	commits?: GitCommit[]

@@ -5,6 +5,7 @@ import { costrictDefaultModelId } from "@roo-code/types"
  * list was refreshed, and if so, which model id to switch to.
  *
  * Rule (see docs/adr/0001-model-selection-correction.md):
+ * - Skip non-authoritative lists (cache hits and failed-refresh fallbacks).
  * - Skip when the old list is empty — we don't yet know the legitimate server set.
  * - Only correct a "server model": one that WAS in the old list. This protects a
  *   user-typed "custom model" whose id is intentionally absent from the server list.
@@ -18,7 +19,11 @@ export function getCorrectedCostrictModelId(
 	oldModelIds: string[],
 	newModelIds: string[],
 	selectedModelId: string | undefined,
+	authoritative: boolean,
 ): string | null {
+	if (!authoritative) {
+		return null
+	}
 	if (!selectedModelId) {
 		return null
 	}

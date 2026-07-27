@@ -136,6 +136,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 		switch (message.type) {
 			case "costrictModels": {
 				const { fullResponseData = [] } = message
+				const authoritative = message.modelListAuthoritative === true
 				const newModels = Object.fromEntries(
 					fullResponseData.map((item) => [item.id, { ...(item ?? costrictModels.default) }]),
 				) as Record<string, ModelInfo>
@@ -145,7 +146,7 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 				// The pure rule (and its rationale) lives in ./utils/correctModelSelection.
 				const oldModelIds = Object.keys(previousCostrictModelsRef.current ?? {})
 				const selectedModelId = selectedModelIdRef.current
-				const corrected = getCorrectedCostrictModelId(oldModelIds, newModelIds, selectedModelId)
+				const corrected = getCorrectedCostrictModelId(oldModelIds, newModelIds, selectedModelId, authoritative)
 				// Only the primary costrict selector applies the correction + notice. Other providers
 				// also receive costrictModels pushes (requestRouterModels broadcasts them), and the
 				// message-edit duplicate instance must not fire these global side-effects.
@@ -167,12 +168,16 @@ const ProviderRenderer: React.FC<ProviderRendererProps> = ({
 					})
 				}
 
-				// Preserve the last NON-EMPTY costrict list as the baseline for the next refresh.
-				if (newModelIds.length > 0) {
+				// Only a direct provider response may become the correction baseline.
+				if (authoritative && newModelIds.length > 0) {
 					previousCostrictModelsRef.current = newModels
 				}
 
-				setCostrictModelList(newModels)
+				// Cached data is useful on initial load, but must not replace an authoritative
+				// list already shown in this webview.
+				if (authoritative || previousCostrictModelsRef.current === null) {
+					setCostrictModelList(newModels)
+				}
 				setIsRefreshing(false)
 				break
 			}

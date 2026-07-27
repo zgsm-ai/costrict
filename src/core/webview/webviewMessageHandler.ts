@@ -76,7 +76,12 @@ import {
 	isProviderAllowedForCostrictCodeMode,
 	resolveCostrictCodeModeForMode,
 } from "../../shared/modes"
-import { getModels, flushModels } from "../../api/providers/fetchers/modelCache"
+import {
+	getModels,
+	getModelsWithMetadata,
+	flushModels,
+	type ModelFetchResult,
+} from "../../api/providers/fetchers/modelCache"
 import { GetModelsOptions } from "../../shared/api"
 import { generateSystemPrompt } from "./generateSystemPrompt"
 import { resolveDefaultSaveUri, saveLastExportPath } from "../../utils/export"
@@ -730,7 +735,7 @@ export const webviewMessageHandler = async (
 							baseUrl: provider.getValue("costrictBaseUrl"),
 						},
 						true,
-						(models: ModelRecord) => {
+						(models: ModelRecord, metadata) => {
 							const openAiModels = [] as string[]
 							const fullResponseData = [] as ModelInfo[]
 							for (const [id, value] of Object.entries(models)) {
@@ -741,6 +746,7 @@ export const webviewMessageHandler = async (
 								type: "costrictModels",
 								openAiModels,
 								fullResponseData,
+								modelListAuthoritative: metadata.authoritative,
 							})
 						},
 					)
@@ -1156,7 +1162,7 @@ export const webviewMessageHandler = async (
 				opt.openAiHeaders = apiConfiguration?.openAiHeaders
 			}
 
-			await flushModels(opt, true, (models: ModelRecord) => {
+			await flushModels(opt, true, (models: ModelRecord, metadata) => {
 				if (apiConfiguration?.apiProvider === "costrict") {
 					const openAiModels = [] as string[]
 					const fullResponseData = [] as ModelInfo[]
@@ -1168,6 +1174,7 @@ export const webviewMessageHandler = async (
 						type: "costrictModels",
 						openAiModels,
 						fullResponseData,
+						modelListAuthoritative: metadata.authoritative,
 					})
 				}
 			})
@@ -1295,14 +1302,23 @@ export const webviewMessageHandler = async (
 				: candidates
 
 			// If refresh flag is set and we have a specific provider, flush its cache first
+			let forcedRefreshResult: ModelFetchResult | undefined
 			if (shouldRefresh && providerFilter && modelFetchPromises.length > 0) {
 				const targetCandidate = modelFetchPromises[0]
-				await flushModels(targetCandidate.options, true)
+				await flushModels(targetCandidate.options, true, (_models, metadata) => {
+					forcedRefreshResult = metadata
+				})
 			}
 
 			const results = await Promise.allSettled(
 				modelFetchPromises.map(async ({ key, options }) => {
-					const models = await safeGetModels(options)
+					const result =
+						key === providerFilter && forcedRefreshResult
+							? forcedRefreshResult
+							: key === "costrict"
+								? await getModelsWithMetadata(options)
+								: { models: await safeGetModels(options), authoritative: false }
+					const { models } = result
 
 					if (key === "costrict") {
 						const openAiModels = [] as string[]
@@ -1315,6 +1331,7 @@ export const webviewMessageHandler = async (
 							type: "costrictModels",
 							openAiModels,
 							fullResponseData,
+							modelListAuthoritative: result.authoritative,
 						})
 					}
 

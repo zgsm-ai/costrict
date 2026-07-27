@@ -58,7 +58,7 @@ vi.mock("../../../core/config/ContextProxy", () => ({
 import type { Mock } from "vitest"
 import * as fsSync from "fs"
 import NodeCache from "node-cache"
-import { getModels, getModelsFromCache } from "../modelCache"
+import { getModels, getModelsFromCache, getModelsWithMetadata, refreshModelsWithMetadata } from "../modelCache"
 import { getLiteLLMModels } from "../litellm"
 import { getOpenRouterModels } from "../openrouter"
 import { getRequestyModels } from "../requesty"
@@ -70,6 +70,78 @@ const mockGetRequestyModels = getRequestyModels as Mock<typeof getRequestyModels
 const mockGetCostrictModels = getCostrictModels as Mock<typeof getCostrictModels>
 
 const DUMMY_REQUESTY_KEY = "requesty-key-for-testing"
+
+describe("model list authority metadata", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+		const mockCache: any = new NodeCache()
+		mockCache.get.mockReturnValue(undefined)
+		vi.mocked(fsSync.existsSync).mockReturnValue(false)
+	})
+
+	afterEach(() => {
+		const mockCache: any = new NodeCache()
+		mockCache.get.mockReturnValue(undefined)
+	})
+
+	it("marks a direct provider response as authoritative", async () => {
+		const models = {
+			"openrouter/fresh-model": {
+				maxTokens: 8192,
+				contextWindow: 128000,
+				supportsPromptCache: false,
+			},
+		}
+		mockGetOpenRouterModels.mockResolvedValue(models)
+
+		await expect(getModelsWithMetadata({ provider: "openrouter" })).resolves.toEqual({
+			models,
+			authoritative: true,
+		})
+	})
+
+	it("marks a cache hit as non-authoritative", async () => {
+		const models = {
+			"openrouter/cached-model": {
+				maxTokens: 8192,
+				contextWindow: 128000,
+				supportsPromptCache: false,
+			},
+		}
+		const mockCache: any = new NodeCache()
+		mockCache.get.mockReturnValue(models)
+
+		await expect(getModelsWithMetadata({ provider: "openrouter" })).resolves.toEqual({
+			models,
+			authoritative: false,
+		})
+	})
+
+	it("marks refresh fallback data as non-authoritative", async () => {
+		const models = {
+			"costrict/cached-model": {
+				id: "costrict/cached-model",
+				maxTokens: 8192,
+				contextWindow: 128000,
+				supportsPromptCache: false,
+			},
+		}
+		const mockCache: any = new NodeCache()
+		mockCache.get.mockReturnValue(models)
+		mockGetCostrictModels.mockRejectedValue(new Error("API error"))
+
+		await expect(
+			refreshModelsWithMetadata({
+				provider: "costrict",
+				baseUrl: "https://api.example.com",
+				apiKey: "test-api-key",
+			}),
+		).resolves.toEqual({
+			models,
+			authoritative: false,
+		})
+	})
+})
 
 describe("getModels with new GetModelsOptions", () => {
 	beforeEach(() => {
