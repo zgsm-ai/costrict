@@ -10,6 +10,7 @@
 <img src="https://img.shields.io/badge/license-Apache%202.0-green?style=flat-square" alt="License">
 <img src="https://img.shields.io/badge/platform-VS%20Code%20%7C%20JetBrains-orange?style=flat-square" alt="Platform">
 <img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs Welcome">
+<img src="https://img.shields.io/endpoint?url=https://gittokens.rsamf.com/badge/zgsm-ai/costrict" alt="tokens">
 
 </div>
 
