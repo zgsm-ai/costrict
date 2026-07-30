@@ -49,9 +49,13 @@ export async function GET(request: NextRequest) {
 	// Check if we should try to use the background image
 	const useBackgroundImage = searchParams.get("bg") !== "false"
 
-	// Dynamically get the base URL from the current request
-	// This ensures it works correctly in development, preview, and production environments
-	const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`
+	// Use a trusted base URL from the environment rather than the client-
+	// controlled Host header (requestUrl.host). The background image URL is
+	// passed to Satori, which fetches it server-side via fetch(); deriving it
+	// from the Host header enabled a blind SSRF (an attacker could point the
+	// server at an internal host/IP). The OG image is a static asset served
+	// from the site origin, so this base URL is fixed per deployment.
+	const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://roocode.com"
 	const variant = title.length % 2 === 0 ? "a" : "b"
 	const backgroundUrl = `${baseUrl}/og/base_${variant}.png`
 
@@ -67,88 +71,86 @@ export async function GET(request: NextRequest) {
 	}
 
 	return new ImageResponse(
-		(
-			<div
-				style={{
-					width: "100%",
-					height: "100%",
-					display: "flex",
-					position: "relative",
-					// Use gradient background as default/fallback
-					background: "linear-gradient(135deg, #1e3a5f 0%, #0f1922 50%, #1a2332 100%)",
-				}}>
-				{/* Optional Background Image - only render if explicitly requested */}
-				{useBackgroundImage && (
-					<div
-						style={{
-							position: "absolute",
-							top: 0,
-							left: 0,
-							width: "100%",
-							height: "100%",
-							display: "flex",
-						}}>
-						{/* eslint-disable-next-line @next/next/no-img-element */}
-						<img
-							src={backgroundUrl}
-							alt=""
-							width={1200}
-							height={630}
-							style={{
-								width: "100%",
-								height: "100%",
-								objectFit: "cover",
-							}}
-						/>
-					</div>
-				)}
-
-				{/* Text Content */}
+		<div
+			style={{
+				width: "100%",
+				height: "100%",
+				display: "flex",
+				position: "relative",
+				// Use gradient background as default/fallback
+				background: "linear-gradient(135deg, #1e3a5f 0%, #0f1922 50%, #1a2332 100%)",
+			}}>
+			{/* Optional Background Image - only render if explicitly requested */}
+			{useBackgroundImage && (
 				<div
 					style={{
 						position: "absolute",
+						top: 0,
+						left: 0,
+						width: "100%",
+						height: "100%",
 						display: "flex",
-						flexDirection: "column",
-						justifyContent: "flex-end",
-						top: "220px",
-						left: "80px",
-						right: "80px",
-						bottom: "80px",
 					}}>
-					{/* Main Title */}
-					<h1
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img
+						src={backgroundUrl}
+						alt=""
+						width={1200}
+						height={630}
+						style={{
+							width: "100%",
+							height: "100%",
+							objectFit: "cover",
+						}}
+					/>
+				</div>
+			)}
+
+			{/* Text Content */}
+			<div
+				style={{
+					position: "absolute",
+					display: "flex",
+					flexDirection: "column",
+					justifyContent: "flex-end",
+					top: "220px",
+					left: "80px",
+					right: "80px",
+					bottom: "80px",
+				}}>
+				{/* Main Title */}
+				<h1
+					style={{
+						fontSize: 70,
+						fontWeight: 700,
+						fontFamily: "Inter, Helvetica Neue, Helvetica, sans-serif",
+						color: "white",
+						lineHeight: 1.2,
+						margin: 0,
+						maxHeight: "2.4em",
+						overflow: "hidden",
+					}}>
+					{title}
+				</h1>
+
+				{/* Secondary Description */}
+				{description && (
+					<h2
 						style={{
 							fontSize: 70,
-							fontWeight: 700,
-							fontFamily: "Inter, Helvetica Neue, Helvetica, sans-serif",
-							color: "white",
+							fontWeight: 400,
+							fontFamily: "Inter, Helvetica Neue, Helvetica, Arial, sans-serif",
+							color: "rgba(255, 255, 255, 0.9)",
 							lineHeight: 1.2,
 							margin: 0,
 							maxHeight: "2.4em",
 							overflow: "hidden",
 						}}>
-						{title}
-					</h1>
-
-					{/* Secondary Description */}
-					{description && (
-						<h2
-							style={{
-								fontSize: 70,
-								fontWeight: 400,
-								fontFamily: "Inter, Helvetica Neue, Helvetica, Arial, sans-serif",
-								color: "rgba(255, 255, 255, 0.9)",
-								lineHeight: 1.2,
-								margin: 0,
-								maxHeight: "2.4em",
-								overflow: "hidden",
-							}}>
-							{description}
-						</h2>
-					)}
-				</div>
+						{description}
+					</h2>
+				)}
 			</div>
-		),
+		</div>,
 		{
 			width: 1200,
 			height: 630,

@@ -302,16 +302,21 @@ describe("writeToFileTool", () => {
 
 	describe("directory creation for new files", () => {
 		it.skipIf(process.platform === "win32")(
-			"creates parent directories early when file does not exist (execute)",
+			"defers parent-directory creation to the diff view when file does not exist (execute)",
 			async () => {
+				// Directory creation is intentionally NOT performed here (pre-approval).
+				// It is delegated to diffViewProvider.open()/saveDirectly(), which run
+				// inside the approval flow and track created dirs for rollback on deny.
+				// Creating dirs in execute() would be an untracked, pre-consent
+				// filesystem side-effect (relevant for outside-workspace paths).
 				await executeWriteFileTool({}, { fileExists: false })
 
-				expect(mockedCreateDirectoriesForFile).toHaveBeenCalledWith(absoluteFilePath)
+				expect(mockedCreateDirectoriesForFile).not.toHaveBeenCalled()
 			},
 		)
 
 		it.skipIf(process.platform === "win32")(
-			"creates parent directories when path has stabilized (partial)",
+			"defers parent-directory creation to the diff view when path has stabilized (partial)",
 			async () => {
 				// First call - path not yet stabilized
 				await executeWriteFileTool({}, { fileExists: false, isPartial: true })
@@ -319,7 +324,7 @@ describe("writeToFileTool", () => {
 
 				// Second call with same path - path is now stabilized
 				await executeWriteFileTool({}, { fileExists: false, isPartial: true })
-				expect(mockedCreateDirectoriesForFile).toHaveBeenCalledWith(absoluteFilePath)
+				expect(mockedCreateDirectoriesForFile).not.toHaveBeenCalled()
 			},
 		)
 
@@ -337,12 +342,12 @@ describe("writeToFileTool", () => {
 			expect(mockedCreateDirectoriesForFile).not.toHaveBeenCalled()
 		})
 
-		it.skipIf(process.platform === "win32")("creates directories when editType is cached as create", async () => {
+		it.skipIf(process.platform === "win32")("defers directories when editType is cached as create", async () => {
 			mockCline.diffViewProvider.editType = "create"
 
 			await executeWriteFileTool({})
 
-			expect(mockedCreateDirectoriesForFile).toHaveBeenCalledWith(absoluteFilePath)
+			expect(mockedCreateDirectoriesForFile).not.toHaveBeenCalled()
 		})
 	})
 

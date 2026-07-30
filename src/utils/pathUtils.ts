@@ -22,3 +22,23 @@ export function isPathOutsideWorkspace(filePath: string): boolean {
 		return absolutePath === folderPath || absolutePath.startsWith(folderPath + path.sep)
 	})
 }
+
+/**
+ * Checks whether `filePath` resolves to `baseDir` itself or a path beneath it.
+ *
+ * Unlike {@link isPathOutsideWorkspace}, this checks against an arbitrary base
+ * directory (e.g. task.cwd or a checkpoint workspace dir) rather than the VS
+ * Code workspace folders. Use this for boundary checks where the relevant base
+ * is the task's working directory, not the IDE workspace — relying on
+ * isPathOutsideWorkspace for such checks is a known source of false positives
+ * (CLI mode, custom working dirs) and regressions.
+ *
+ * @param filePath The path to check (absolute, or relative to cwd).
+ * @param baseDir The base directory that filePath must stay within.
+ * @returns true if filePath is baseDir or a descendant of it.
+ */
+export function isPathWithin(filePath: string, baseDir: string): boolean {
+	const absolutePath = path.resolve(filePath)
+	const base = path.resolve(baseDir)
+	return absolutePath === base || absolutePath.startsWith(base + path.sep)
+}

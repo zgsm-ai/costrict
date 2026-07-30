@@ -57,7 +57,10 @@
       gh issue edit <issue-url-or-number> --add-assignee "@me".
     </assignment>
     <command_safety>
-      Use --body with robust quoting (for example: --body "$(printf '%s\n' "[ISSUE_BODY]")") or a heredoc; do not create temporary files or reference file paths. Always include --repo "[OWNER_REPO]" and echo the resulting issue URL.
+      Pass the issue body via a quoted heredoc with --body-file - (for example: `gh issue create ... --body-file - <<'ISSUE_EOF'` followed by the body and `ISSUE_EOF`). The quoted delimiter `<<'ISSUE_EOF'` disables ALL shell expansion, so quotes, `$`, backticks, or `;` inside the body cannot inject commands.
+      NEVER embed [ISSUE_BODY] inside a double-quoted shell argument such as `--body "$(printf '%s\n' "[ISSUE_BODY]")"` — a `"` in the body closes the quote and allows command injection.
+      For [ISSUE_TITLE], keep the derived title to plain alphanumerics, spaces, and common punctuation only; strip any `"`, `$`, backticks, or `;` before substitution, since the title is passed via gh's --title argument.
+      Do not create temporary files or reference file paths. Always include --repo "[OWNER_REPO]" and echo the resulting issue URL.
       In execute_command calls, output only the command string; never include XML tags, CDATA markers, code fences, or backticks in the command payload.
     </command_safety>
     <error_handling>

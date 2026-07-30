@@ -7,6 +7,8 @@ import * as path from "path"
 import { Task } from "../task/Task"
 import { getReadablePath } from "../../utils/path"
 import { isPathOutsideWorkspace } from "../../utils/pathUtils"
+import { formatResponse } from "../prompts/responses"
+import type { ClineSayTool } from "@roo-code/types"
 import type { ToolUse } from "../../shared/tools"
 
 import { readFileSync } from "fs"
@@ -229,6 +231,24 @@ export class FileOutlineTool extends BaseTool<"file_outline"> {
 			}
 
 			const { parser, query } = parserData
+
+			// Request user approval before reading the file, consistent with
+			// ReadFileTool/ListFilesTool. The isOutsideWorkspace flag is surfaced
+			// to the approval UI so the existing auto-approval settings
+			// (alwaysAllowReadOnly / alwaysAllowReadOnlyOutsideWorkspace) govern
+			// access — outside-workspace reads remain a user-controlled feature.
+			const sharedMessageProps: ClineSayTool = {
+				tool: "readFile",
+				path: getReadablePath(task.cwd, file_path),
+				content: absolutePath,
+				isOutsideWorkspace,
+			}
+			const didApprove = await askApproval("tool", JSON.stringify(sharedMessageProps satisfies ClineSayTool))
+
+			if (!didApprove) {
+				pushToolResult(formatResponse.toolDenied())
+				return
+			}
 
 			// 读取文件内容
 			const sourceCode = readFileSync(absolutePath, "utf-8")

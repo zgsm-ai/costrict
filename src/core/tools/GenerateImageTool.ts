@@ -64,9 +64,18 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 		}
 
 		let inputImageData: string | undefined
+		// Compute the outside-workspace flag for the input image path up front so
+		// it can be surfaced in the approval prompt. The actual file read is
+		// deferred to after approval (see loadInputImageData below) to match the
+		// ReadFileTool security model — no file content is read before the user
+		// consents (or auto-approval allows it via alwaysAllowReadOnlyOutsideWorkspace).
+		let inputImageOutsideWorkspace = false
 		if (inputImagePath) {
 			const inputImageFullPath = path.resolve(task.cwd, inputImagePath)
+			inputImageOutsideWorkspace = isPathOutsideWorkspace(inputImageFullPath)
 
+			// Pre-check existence / access so the approval prompt (and any error)
+			// is shown before reading content.
 			const inputImageExists = await fileExistsAtPath(inputImageFullPath)
 			if (!inputImageExists) {
 				await task.say("error", `Input image not found: ${getReadablePath(task.cwd, inputImagePath)}`)
@@ -83,7 +92,16 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 				pushToolResult(formatResponse.rooIgnoreError(inputImagePath))
 				return
 			}
+		}
 
+		// Loads (and validates) the input image content. Called only AFTER
+		// approval so the file read never happens pre-consent. Returns true on
+		// success, false on failure (error already pushed to the user).
+		const loadInputImageData = async (): Promise<boolean> => {
+			if (!inputImagePath) {
+				return true
+			}
+			const inputImageFullPath = path.resolve(task.cwd, inputImagePath)
 			try {
 				const imageBuffer = await fs.readFile(inputImageFullPath)
 				const imageExtension = path.extname(inputImageFullPath).toLowerCase().replace(".", "")
@@ -100,11 +118,12 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 							`Unsupported image format: ${imageExtension}. Supported formats: ${supportedFormats.join(", ")}`,
 						),
 					)
-					return
+					return false
 				}
 
 				const mimeType = imageExtension === "jpg" ? "jpeg" : imageExtension
 				inputImageData = `data:image/${mimeType};base64,${imageBuffer.toString("base64")}`
+				return true
 			} catch (error) {
 				await task.say(
 					"error",
@@ -116,7 +135,7 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 						`Failed to read input image: ${error instanceof Error ? error.message : "Unknown error"}`,
 					),
 				)
-				return
+				return false
 			}
 		}
 
@@ -180,12 +199,21 @@ export class GenerateImageTool extends BaseTool<"generate_image"> {
 			const approvalMessage = JSON.stringify({
 				...sharedMessageProps,
 				content: prompt,
-				...(inputImagePath && { inputImage: getReadablePath(task.cwd, inputImagePath) }),
+				...(inputImagePath && {
+					inputImage: getReadablePath(task.cwd, inputImagePath),
+					inputImageOutsideWorkspace,
+				}),
 			})
 
 			const didApprove = await askApproval("tool", approvalMessage, undefined, isWriteProtected)
 
 			if (!didApprove) {
+				return
+			}
+
+			// Read the input image content only after approval (matches the
+			// ReadFileTool model: no file content read before user consent).
+			if (!(await loadInputImageData())) {
 				return
 			}
 
