@@ -35,7 +35,13 @@ export const createRunSchema = z
 		concurrency: z.number().int().min(CONCURRENCY_MIN).max(CONCURRENCY_MAX),
 		timeout: z.number().int().min(TIMEOUT_MIN).max(TIMEOUT_MAX),
 		iterations: z.number().int().min(ITERATIONS_MIN).max(ITERATIONS_MAX),
-		jobToken: z.string().optional(),
+		// Restrict to a safe character set. jobToken is eventually interpolated
+		// into shell/docker argv; rejecting shell metacharacters here is defense
+		// in depth on top of the non-shell execa call in processTask.ts.
+		jobToken: z
+			.string()
+			.regex(/^[A-Za-z0-9._-]+$/, "Roo Code Cloud Token contains invalid characters.")
+			.optional(),
 		executionMethod: executionMethodSchema,
 	})
 	.refine((data) => data.suite === "full" || (data.exercises || []).length > 0, {

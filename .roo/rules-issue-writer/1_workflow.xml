@@ -338,15 +338,26 @@ Title: [ISSUE_TITLE]
             - Title: derive from Summary (≤ 80 chars, plain language)
             - Body: the finalized issue body
 
-          Execute:
+          Execute (the quoted heredoc `<<'ISSUE_EOF'` passes the body verbatim
+          with NO shell expansion, so quotes/`$`/backticks in the body cannot
+          inject commands; the title is passed via gh's --title arg):
           <execute_command>
-          <command>gh issue create --repo "[OWNER_REPO]" --title "[ISSUE_TITLE]" --body "$(printf '%s\n' "[ISSUE_BODY]")"</command>
+          <command>gh issue create --repo "[OWNER_REPO]" --title "[ISSUE_TITLE]" --body-file - <<'ISSUE_EOF'
+[ISSUE_BODY]
+ISSUE_EOF</command>
           </execute_command>
 
         - If "Submit now and assign to me":
-          Execute (assignment at creation; falls back to edit if needed):
+          Execute (assignment at creation; falls back to edit if needed). Same
+          quoted-heredoc pattern is used in both create attempts:
           <execute_command>
-          <command>ISSUE_URL=$(gh issue create --repo "[OWNER_REPO]" --title "[ISSUE_TITLE]" --body "$(printf '%s\n' "[ISSUE_BODY]")" --assignee "@me") || true; if [ -z "$ISSUE_URL" ]; then ISSUE_URL=$(gh issue create --repo "[OWNER_REPO]" --title "[ISSUE_TITLE]" --body "$(printf '%s\n' "[ISSUE_BODY]")"); gh issue edit "$ISSUE_URL" --add-assignee "@me"; fi; echo "$ISSUE_URL"</command>
+          <command>ISSUE_URL=$(gh issue create --repo "[OWNER_REPO]" --title "[ISSUE_TITLE]" --body-file - --assignee "@me" <<'ISSUE_EOF'
+[ISSUE_BODY]
+ISSUE_EOF
+) || true; if [ -z "$ISSUE_URL" ]; then ISSUE_URL=$(gh issue create --repo "[OWNER_REPO]" --title "[ISSUE_TITLE]" --body-file - <<'ISSUE_EOF'
+[ISSUE_BODY]
+ISSUE_EOF
+); gh issue edit "$ISSUE_URL" --add-assignee "@me"; fi; echo "$ISSUE_URL"</command>
           </execute_command>
 
         - Any other response:

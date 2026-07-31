@@ -27,19 +27,21 @@ export const runTaskInVscode = async ({ run, task, publish, logger, jobToken }: 
 	const prompt = fs.readFileSync(path.resolve(EVALS_REPO_PATH, `prompts/${language}.md`), "utf-8")
 	const workspacePath = path.resolve(EVALS_REPO_PATH, language, exercise)
 	const ipcSocketPath = path.resolve(os.tmpdir(), `evals-${run.id}-${task.id}.sock`)
-	const env = { ROO_CODE_IPC_SOCKET_PATH: ipcSocketPath }
+	// Pass jobToken through the process environment rather than baking it into
+	// the shell command string. This mirrors the safe runTaskWithCli path and
+	// prevents shell injection if jobToken ever contains shell metacharacters.
+	const env: Record<string, string> = { ROO_CODE_IPC_SOCKET_PATH: ipcSocketPath }
+	if (jobToken) {
+		env.ROO_CODE_CLOUD_TOKEN = jobToken
+	}
 	const controller = new AbortController()
 	const cancelSignal = controller.signal
 	const containerized = isDockerContainer()
 	const logDir = containerized ? `/var/log/evals/runs/${run.id}` : `/tmp/evals/runs/${run.id}`
 
-	let codeCommand = containerized
+	const codeCommand = containerized
 		? `xvfb-run --auto-servernum --server-num=1 code --wait --log trace --disable-workspace-trust --disable-gpu --disable-lcd-text --no-sandbox --user-data-dir /roo/.vscode --password-store="basic" -n ${workspacePath}`
 		: `code --disable-workspace-trust -n ${workspacePath}`
-
-	if (jobToken) {
-		codeCommand = `ROO_CODE_CLOUD_TOKEN=${jobToken} ${codeCommand}`
-	}
 
 	logger.info(codeCommand)
 

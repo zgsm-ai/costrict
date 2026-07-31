@@ -75,16 +75,25 @@ export const processTaskInContainer = async ({
 	logger: Logger
 	maxRetries?: number
 }) => {
+	// Build docker arguments as separate argv elements. Each flag and each
+	// "-e KEY=VALUE" pair is its own array entry, so user-controlled values
+	// (jobToken, API keys) are never interpolated into a shell string. The
+	// command below is passed to execa WITHOUT `shell: true`, which means it is
+	// spawned directly (no /bin/sh -c) and shell metacharacters cannot inject.
 	const baseArgs = [
 		"--rm",
-		"--network evals_default",
-		"-v /var/run/docker.sock:/var/run/docker.sock",
-		"-v /tmp/evals:/var/log/evals",
-		"-e HOST_EXECUTION_METHOD=docker",
+		"--network",
+		"evals_default",
+		"-v",
+		"/var/run/docker.sock:/var/run/docker.sock",
+		"-v",
+		"/tmp/evals:/var/log/evals",
+		"-e",
+		"HOST_EXECUTION_METHOD=docker",
 	]
 
 	if (jobToken) {
-		baseArgs.push(`-e ROO_CODE_CLOUD_TOKEN=${jobToken}`)
+		baseArgs.push("-e", `ROO_CODE_CLOUD_TOKEN=${jobToken}`)
 	}
 
 	// Pass API keys to the container so the CLI can authenticate
@@ -99,7 +108,7 @@ export const processTaskInContainer = async ({
 
 	for (const envVar of apiKeyEnvVars) {
 		if (process.env[envVar]) {
-			baseArgs.push(`-e ${envVar}=${process.env[envVar]}`)
+			baseArgs.push("-e", `${envVar}=${process.env[envVar]}`)
 		}
 	}
 
@@ -108,7 +117,18 @@ export const processTaskInContainer = async ({
 
 	for (let attempt = 0; attempt <= maxRetries; attempt++) {
 		const containerName = `evals-task-${taskId}.${attempt}`
-		const args = [`--name ${containerName}`, `-e EVALS_ATTEMPT=${attempt}`, ...baseArgs]
+		const args = [
+			"run",
+			"--name",
+			containerName,
+			"-e",
+			`EVALS_ATTEMPT=${attempt}`,
+			...baseArgs,
+			"evals-runner",
+			"sh",
+			"-c",
+			command,
+		]
 		const isRetry = attempt > 0
 
 		if (isRetry) {
@@ -121,7 +141,9 @@ export const processTaskInContainer = async ({
 			`${isRetry ? "retrying" : "executing"} container command (attempt ${attempt + 1}/${maxRetries + 1})`,
 		)
 
-		const subprocess = execa(`docker run ${args.join(" ")} evals-runner sh -c "${command}"`, { shell: true })
+		// No `shell: true`: docker is spawned directly with an argv array, so
+		// jobToken / API-key values cannot break out via shell metacharacters.
+		const subprocess = execa("docker", args)
 		// subprocess.stdout?.on("data", (data) => console.log(data.toString()))
 		// subprocess.stderr?.on("data", (data) => console.error(data.toString()))
 

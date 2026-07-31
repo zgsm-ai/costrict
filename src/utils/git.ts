@@ -2,7 +2,7 @@ import * as vscode from "vscode"
 import * as path from "path"
 import { createHash } from "crypto"
 import { promises as fs } from "fs"
-import { exec } from "child_process"
+import { exec, execFile } from "child_process"
 import { promisify } from "util"
 
 import type { GitRepositoryInfo, GitCommit } from "@roo-code/types"
@@ -11,6 +11,7 @@ import { truncateOutput } from "../integrations/misc/extract-text"
 import { excludedFileExtensions } from "./costrictUtils"
 
 const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 const GIT_OUTPUT_LINE_LIMIT = 500
 interface AutoCommit {
@@ -396,14 +397,16 @@ export const autoCommit: AutoCommit = async (relPath, cwd, option) => {
 		// Get git username
 		let username = "Unknown"
 		try {
-			const { stdout } = await execAsync("git config user.name", { cwd })
+			const { stdout } = await execFileAsync("git", ["config", "user.name"], { cwd })
 			username = stdout.trim()
 		} catch (error) {
 			console.warn("Could not get git username, using default")
 		}
 
-		// Add the specified file
-		await execAsync(`git add "${relPath}"`, { cwd })
+		// Add the specified file. Use execFile (no shell) so relPath is passed as
+		// an argv element instead of being interpolated into a shell string — this
+		// neutralizes command injection via shell metacharacters in the filename.
+		await execFileAsync("git", ["add", relPath], { cwd })
 
 		// Generate fingerprint based on path
 		const fingerprint = createHash("sha256")
@@ -426,8 +429,10 @@ export const autoCommit: AutoCommit = async (relPath, cwd, option) => {
 		// Generate author name with AI_ prefix
 		const authorName = `AI_${username}`
 
-		// Commit with the generated message and custom author
-		await execAsync(`git -c user.name="${authorName}" commit -m "${commitMessage}"`, {
+		// Commit with the generated message and custom author. execFile passes
+		// each argument (including commitMessage, which embeds relPath) as a
+		// separate argv element without shell interpretation.
+		await execFileAsync("git", ["-c", `user.name=${authorName}`, "commit", "-m", commitMessage], {
 			cwd,
 		})
 	} catch (error) {

@@ -7,7 +7,7 @@ import { type ClineSayTool, DEFAULT_WRITE_DELAY_MS } from "@roo-code/types"
 import { Task } from "../task/Task"
 import { formatResponse } from "../prompts/responses"
 import { RecordSource } from "../context-tracking/FileContextTrackerTypes"
-import { createDirectoriesForFile, isFile } from "../../utils/fs"
+import { isFile } from "../../utils/fs"
 import { stripLineNumbers, everyLineHasLineNumbers } from "../../integrations/misc/extract-text"
 import { getReadablePath } from "../../utils/path"
 import { isPathOutsideWorkspace } from "../../utils/pathUtils"
@@ -74,11 +74,15 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			task.diffViewProvider.editType = fileExists ? "modify" : "create"
 		}
 
-		// Create parent directories early for new files to prevent ENOENT errors
-		// in subsequent operations (e.g., diffViewProvider.open, fs.readFile)
-		if (!fileExists) {
-			await createDirectoriesForFile(absolutePath)
-		}
+		// NOTE: parent-directory creation for new files is intentionally NOT done
+		// here (pre-approval). Both code paths below create directories at the
+		// right time and track them for rollback on denial:
+		//   - diffViewProvider.open() (DiffViewProvider.ts ~line 78) creates dirs
+		//     and records them in createdDirs, reverted by revertChanges() on deny.
+		//   - diffViewProvider.saveDirectly() (DiffViewProvider.ts ~line 696)
+		//     creates dirs as part of the post-approval save.
+		// Creating dirs here would be an untracked, pre-consent filesystem
+		// side-effect outside the approval flow.
 
 		if (newContent.startsWith("```")) {
 			newContent = newContent.split("\n").slice(1).join("\n")
@@ -241,12 +245,9 @@ export class WriteToFileTool extends BaseTool<"write_to_file"> {
 			task.diffViewProvider.editType = fileExists ? "modify" : "create"
 		}
 
-		// Create parent directories early for new files to prevent ENOENT errors
-		// in subsequent operations (e.g., diffViewProvider.open)
-		if (!fileExists) {
-			await createDirectoriesForFile(absolutePath)
-		}
-
+		// NOTE: parent-directory creation is deferred to diffViewProvider.open()
+		// below (which tracks createdDirs for rollback on denial). Doing it here
+		// would be an untracked pre-approval filesystem side-effect.
 		const isWriteProtected = task.rooProtectedController?.isWriteProtected(relPath!) || false
 		const isOutsideWorkspace = isPathOutsideWorkspace(absolutePath)
 
