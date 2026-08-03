@@ -1057,6 +1057,7 @@
 		"string-similarity": "^4.0.4",
 		"strip-ansi": "^7.1.0",
 		"strip-bom": "^5.0.0",
+		"tar": "^7.5.22",
 		"tiktoken": "^1.0.21",
 		"tmp": "^0.2.3",
 		"tree-sitter-wasms": "^0.1.12",

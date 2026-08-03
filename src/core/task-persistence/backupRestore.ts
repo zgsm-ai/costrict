@@ -4,12 +4,26 @@ import * as os from "os"
 import * as path from "path"
 import { promisify } from "util"
 
+import iconv from "iconv-lite"
+import * as tar from "tar"
+
 import type { HistoryItem } from "@roo-code/types"
 
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 
-const execFileAsync = promisify(execFile)
+type ExecFileOptions = {
+	timeout: number
+	cwd?: string
+	windowsHide: boolean
+	encoding?: BufferEncoding | "buffer"
+}
+
+const execFileAsync = promisify(execFile) as (
+	file: string,
+	args: string[],
+	options: ExecFileOptions,
+) => Promise<{ stdout: string | Buffer; stderr: string | Buffer }>
 
 /** Timeout for system tool invocations (5 minutes). */
 const EXEC_TIMEOUT_MS = 5 * 60 * 1000
@@ -42,38 +56,64 @@ interface HistoryIndex {
 const isWindows = process.platform === "win32"
 
 /**
+ * Decode an execFile error into a readable message.
+ *
+ * Windows system tools (e.g. PowerShell) emit legacy GBK (cp936) output on
+ * non-English systems. When the raw bytes were captured (Buffer), re-decode
+ * them so the error message isn't shown as mojibake.
+ *
+ * @internal Exported for unit testing.
+ */
+export function formatCommandError(error: unknown): string {
+	const err = error as NodeJS.ErrnoException & { stderr?: unknown; stdout?: unknown }
+	if (Buffer.isBuffer(err.stderr)) {
+		const utf8 = err.stderr.toString("utf8")
+		const text = (utf8.includes("\uFFFD") ? iconv.decode(err.stderr, "gbk") : utf8).trim()
+		if (text) {
+			return `${err.message}\n${text}`
+		}
+	}
+	return err.message
+}
+
+/**
  * Run a system command in a child process with a 5-minute timeout.
  * Throws if the command exits with a non-zero code.
+ *
+ * On Windows the stdout/stderr are captured as raw bytes so legacy GBK output
+ * can be decoded for error messages.
  */
 async function runSystemCommand(cmd: string, args: string[], cwd?: string): Promise<void> {
-	await execFileAsync(cmd, args, {
-		timeout: EXEC_TIMEOUT_MS,
-		cwd,
-		// Windows needs shell for built-in commands
-		windowsHide: true,
-	})
+	try {
+		await execFileAsync(cmd, args, {
+			timeout: EXEC_TIMEOUT_MS,
+			cwd,
+			windowsHide: true,
+			...(isWindows ? { encoding: "buffer" as const } : {}),
+		})
+	} catch (error) {
+		throw new Error(formatCommandError(error))
+	}
 }
 
 /**
  * Create a gzip-compressed tar archive of the tasks directory.
  * - Linux/macOS: uses `tar -czf`
- * - Windows: uses PowerShell `Compress-Archive` (produces zip), falling back to
- *   the Windows built-in `tar.exe` available since Windows 10 1803.
+ * - Windows: uses the built-in `tar.exe` (Windows 10 1803+), falling back to
+ *   the pure-JS `tar` package so a real `.tar.gz` is always produced.
+ *
+ * Note: PowerShell `Compress-Archive` only supports `.zip` and cannot satisfy
+ * the `.tar.gz` contract used by the UI layer, so it is NOT used here.
  */
 async function archiveTasks(basePath: string, destPath: string): Promise<void> {
 	if (isWindows) {
-		// Windows 10 1803+ ships tar.exe; try it first.
+		// Windows 10 1803+ ships tar.exe; try it first (offloads I/O from Node).
 		try {
 			await runSystemCommand("tar", ["-czf", destPath, "-C", basePath, "tasks"])
 		} catch {
-			// Fall back to PowerShell Compress-Archive (produces .zip, not .tar.gz)
-			const srcGlob = path.join(basePath, "tasks")
-			await runSystemCommand("powershell", [
-				"-NoProfile",
-				"-NonInteractive",
-				"-Command",
-				`Compress-Archive -Path '${srcGlob}' -DestinationPath '${destPath}' -Force`,
-			])
+			// Fall back to the pure-JS `tar` package, which produces a real
+			// .tar.gz on any machine, even without tar.exe.
+			await tar.c({ gzip: true, cwd: basePath, file: destPath, portable: true }, ["tasks"])
 		}
 	} else {
 		await runSystemCommand("tar", ["-czf", destPath, "-C", basePath, "tasks"])
@@ -82,7 +122,9 @@ async function archiveTasks(basePath: string, destPath: string): Promise<void> {
 
 /**
  * Extract an archive into a target directory.
- * Supports .tar.gz and .zip (Windows fallback).
+ * Supports `.tar.gz` everywhere and legacy `.zip` archives (produced by the old
+ * Windows PowerShell fallback). Falls back to the pure-JS `tar` package when
+ * the system `tar` is unavailable.
  */
 async function extractArchive(srcPath: string, destDir: string): Promise<void> {
 	if (isWindows && srcPath.toLowerCase().endsWith(".zip")) {
@@ -93,7 +135,12 @@ async function extractArchive(srcPath: string, destDir: string): Promise<void> {
 			`Expand-Archive -Path '${srcPath}' -DestinationPath '${destDir}' -Force`,
 		])
 	} else {
-		await runSystemCommand("tar", ["-xzf", srcPath, "-C", destDir])
+		try {
+			await runSystemCommand("tar", ["-xzf", srcPath, "-C", destDir])
+		} catch {
+			// Fall back to the pure-JS `tar` package (covers machines without tar.exe).
+			await tar.x({ gzip: true, cwd: destDir, file: srcPath })
+		}
 	}
 }
 
@@ -146,13 +193,12 @@ async function writeIndexFile(indexPath: string, index: HistoryIndex): Promise<v
 /**
  * Creates a compressed backup of the entire `tasks/` directory.
  *
- * Uses the system `tar` (Linux/macOS/Windows 10+) or PowerShell
- * `Compress-Archive` (Windows fallback) so that I/O-intensive work is
- * offloaded from the Node.js event loop.
+ * Uses the system `tar` (Linux/macOS/Windows 10+) or the pure-JS `tar` package
+ * (Windows fallback) so that I/O-intensive work is offloaded from the Node.js
+ * event loop where possible.
  *
  * @param basePath  The storage base directory (contains `tasks/`).
- * @param destPath  Destination archive path (`.tar.gz` on Unix, `.zip` Windows
- *                  fallback).
+ * @param destPath  Destination archive path (`.tar.gz` on all platforms).
  */
 export async function createTasksBackup(basePath: string, destPath: string): Promise<void> {
 	const tasksDir = path.join(basePath, "tasks")
