@@ -2,6 +2,13 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [3.0.18]
+
+- Fix task history backup/restore on Windows by using a pure-JS `tar` fallback
+- Fix command injection, path traversal, and SSRF security vulnerabilities
+- Distinguish authoritative model lists from cache
+- Fix known issues
+
 ## [3.0.17]
 
 - Fix the issue of opening the browser with file links
@@ -30,9 +37,4 @@
 
 - Add preferences for CoStrict Cloud
 - Auto Refresh Auth Token for CoStrict Cloud
-- Fix known issues
-
-## [3.0.13]
-
-- Optimize CoStrict Cloud
 - Fix known issues

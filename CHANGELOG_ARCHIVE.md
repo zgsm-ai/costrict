@@ -2,6 +2,11 @@
 
 > This file contains historical version records. For the latest versions, please visit [CHANGELOG.md](./CHANGELOG.md)
 
+## [3.0.13]
+
+- Optimize CoStrict Cloud
+- Fix known issues
+
 ## [3.0.12]
 
 - Clean up branding and descriptions
