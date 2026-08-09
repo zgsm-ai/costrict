@@ -2,6 +2,12 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [3.0.19]
+
+- Implement workspace trust service requiring explicit user approval before starting project-scoped MCP servers and loading custom tools
+- Persist trust decisions per workspace with command fingerprint tracking for re-approval on changes
+- Fix known issues
+
 ## [3.0.18]
 
 - Fix task history backup/restore on Windows by using a pure-JS `tar` fallback
