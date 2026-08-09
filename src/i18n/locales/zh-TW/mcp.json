@@ -23,6 +23,13 @@
 		"already_refreshing": "MCP 伺服器已在重新整理中。",
 		"refreshing_all": "正在重新整理所有 MCP 伺服器...",
 		"all_refreshed": "所有 MCP 伺服器已重新整理。",
-		"project_config_deleted": "專案MCP設定檔案已刪除。所有專案MCP伺服器已斷開連接。"
+		"project_config_deleted": "專案MCP設定檔案已刪除。所有專案MCP伺服器已斷開連接。",
+		"server_not_approved": "專案 MCP 伺服器 \"{{serverName}}\" 未獲得授權，不會啟動。"
+	},
+	"security": {
+		"project_mcp_prompt": "此專案要啟動 MCP 伺服器 \"{{serverName}}\"，將以你的權限在本機執行以下命令：\n\n{{command}} {{args}}\n\n允許後將在本機執行上述命令，請僅授權可信專案。是否允許？",
+		"custom_tools_prompt": "此專案要載入自訂工具，載入這些檔案會在本機執行其中程式碼：\n\n{{files}}\n\n請僅授權可信專案。是否允許？",
+		"custom_tools_restricted": "不可信工作區中無法載入自訂工具。",
+		"custom_tools_not_approved": "自訂工具未獲得授權，不會載入。"
 	}
 }

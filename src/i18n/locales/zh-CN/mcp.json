@@ -23,6 +23,13 @@
 		"already_refreshing": "MCP 服务器已在刷新中。",
 		"refreshing_all": "正在刷新所有 MCP 服务器...",
 		"all_refreshed": "所有 MCP 服务器已刷新。",
-		"project_config_deleted": "项目MCP配置文件已删除。所有项目MCP服务器已断开连接。"
+		"project_config_deleted": "项目MCP配置文件已删除。所有项目MCP服务器已断开连接。",
+		"server_not_approved": "项目 MCP 服务器 \"{{serverName}}\" 未获得授权，不会启动。"
+	},
+	"security": {
+		"project_mcp_prompt": "此项目要启动 MCP 服务器 \"{{serverName}}\"，将以你的权限在本机执行以下命令：\n\n{{command}} {{args}}\n\n允许后将在本机执行上述命令，请仅授权可信项目。是否允许？",
+		"custom_tools_prompt": "此项目要加载自定义工具，加载这些文件会在本机执行其中代码：\n\n{{files}}\n\n请仅授权可信项目。是否允许？",
+		"custom_tools_restricted": "不可信工作区中无法加载自定义工具。",
+		"custom_tools_not_approved": "自定义工具未获得授权，不会加载。"
 	}
 }

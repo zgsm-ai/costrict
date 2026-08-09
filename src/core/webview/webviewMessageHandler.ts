@@ -3,6 +3,7 @@ import * as path from "path"
 import * as os from "os"
 import * as fs from "fs/promises"
 import { getRooDirectoriesForCwd } from "../../services/roo-config/index.js"
+import { WorkspaceTrustService, listCustomToolFiles } from "../../services/security/workspaceTrust"
 import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
 import dedent from "dedent"
@@ -2154,7 +2155,28 @@ export const webviewMessageHandler = async (
 		}
 		case "refreshCustomTools": {
 			try {
-				const toolDirs = getRooDirectoriesForCwd(getCurrentCwd(), true).map((dir) => path.join(dir, "tools"))
+				const cwd = getCurrentCwd()
+				const toolDirs = getRooDirectoriesForCwd(cwd, true).map((dir) => path.join(dir, "tools"))
+				const trust = WorkspaceTrustService.getInstance(provider.context)
+				// L0 + L1: skip in VS Code restricted mode; otherwise require explicit
+				// approval before importing project tool files (executes top-level code).
+				if (trust.isRestrictedMode()) {
+					await provider.postMessageToWebview({
+						type: "customToolsResult",
+						tools: [],
+						error: t("mcp:security.custom_tools_restricted"),
+					})
+					break
+				}
+				const files = await listCustomToolFiles(toolDirs)
+				if (!(await trust.ensureCustomToolsApproved(cwd, files))) {
+					await provider.postMessageToWebview({
+						type: "customToolsResult",
+						tools: [],
+						error: t("mcp:security.custom_tools_not_approved"),
+					})
+					break
+				}
 				await customToolRegistry.loadFromDirectories(toolDirs)
 
 				await provider.postMessageToWebview({

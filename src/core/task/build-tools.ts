@@ -7,6 +7,7 @@ import { customToolRegistry, formatNative } from "@roo-code/core"
 
 import type { ClineProvider } from "../webview/ClineProvider"
 import { getRooDirectoriesForCwd } from "../../services/roo-config/index.js"
+import { WorkspaceTrustService, listCustomToolFiles } from "../../services/security/workspaceTrust"
 
 import { getNativeTools, getMcpServerTools } from "../prompts/tools/native-tools"
 import {
@@ -136,11 +137,20 @@ export async function buildNativeToolsArrayWithRestrictions(options: BuildToolsO
 
 	if (experiments?.customTools) {
 		const toolDirs = getRooDirectoriesForCwd(cwd, true)?.map((dir) => path.join(dir, "tools"))
-		await customToolRegistry.loadFromDirectoriesIfStale(toolDirs)
-		const customTools = customToolRegistry.getAllSerialized()
+		const trust = WorkspaceTrustService.getInstance(provider.context)
+		// L0 + L1: skip in VS Code restricted mode; otherwise require explicit
+		// approval before dynamically importing project tool files (which executes
+		// their module top-level code).
+		if (!trust.isRestrictedMode()) {
+			const files = await listCustomToolFiles(toolDirs)
+			if (await trust.ensureCustomToolsApproved(cwd, files)) {
+				await customToolRegistry.loadFromDirectoriesIfStale(toolDirs)
+				const customTools = customToolRegistry.getAllSerialized()
 
-		if (customTools.length > 0) {
-			nativeCustomTools = customTools.map(formatNative)
+				if (customTools.length > 0) {
+					nativeCustomTools = customTools.map(formatNative)
+				}
+			}
 		}
 	}
 

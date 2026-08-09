@@ -44,6 +44,7 @@ import { McpAsyncTaskStore } from "./asyncPolling/McpAsyncTaskStore"
 import { safeWriteJson } from "../../utils/safeWriteJson"
 import { sanitizeMcpName, toolNamesMatch } from "../../utils/mcp-name"
 import { isJetbrainsPlatform } from "../../utils/platform"
+import { WorkspaceTrustService } from "../security/workspaceTrust"
 import { getIdeaShellEnvWithUpdatePath } from "../../utils/ideaShellEnvLoader"
 
 // Discriminated union for connection states
@@ -67,6 +68,7 @@ export type McpConnection = ConnectedMcpConnection | DisconnectedMcpConnection
 export enum DisableReason {
 	MCP_DISABLED = "mcpDisabled",
 	SERVER_DISABLED = "serverDisabled",
+	NOT_APPROVED = "notApproved",
 }
 
 // Base configuration schema for common settings
@@ -416,6 +418,8 @@ export class McpHub {
 	}
 
 	private async updateProjectMcpServers(): Promise<void> {
+		// L0: do not read/connect project MCP in VS Code restricted mode.
+		if (this.getTrustService()?.isRestrictedMode()) return
 		try {
 			const projectMcpPath = await this.getProjectMcpPath()
 			if (!projectMcpPath) return
@@ -617,6 +621,8 @@ export class McpHub {
 
 	// Initialize project-level MCP servers
 	private async initializeProjectMcpServers(): Promise<void> {
+		// L0: do not read/connect project MCP in VS Code restricted mode.
+		if (this.getTrustService()?.isRestrictedMode()) return
 		await this.initializeMcpServers("project")
 	}
 
@@ -628,6 +634,11 @@ export class McpHub {
 	 * @param reason The reason for creating a placeholder (mcpDisabled or serverDisabled)
 	 * @returns A placeholder DisconnectedMcpConnection object
 	 */
+	private getTrustService(): WorkspaceTrustService | null {
+		const context = this.providerRef.deref()?.context
+		return context ? WorkspaceTrustService.getInstance(context) : null
+	}
+
 	private createPlaceholderConnection(
 		name: string,
 		config: z.infer<typeof ServerConfigSchema>,
@@ -690,6 +701,33 @@ export class McpHub {
 			const connection = this.createPlaceholderConnection(name, config, source, DisableReason.SERVER_DISABLED)
 			this.connections.push(connection)
 			return
+		}
+
+		// L1: require explicit user approval before starting a project-scoped stdio
+		// server. Project `.roo/mcp.json` is attacker-controllable content, so the
+		// configured command must not launch a local process without consent. Global
+		// servers (user-configured) and non-stdio project servers are not gated.
+		if (source === "project" && config.type === "stdio") {
+			const cwd = config.cwd ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? ""
+			const trust = this.getTrustService()
+			if (trust) {
+				const approved = await trust.ensureMcpServerApproved(cwd, name, {
+					command: config.command,
+					args: config.args,
+					cwd,
+				})
+				if (!approved) {
+					const connection = this.createPlaceholderConnection(
+						name,
+						config,
+						source,
+						DisableReason.NOT_APPROVED,
+					)
+					this.connections.push(connection)
+					await this.notifyWebviewOfServerChanges()
+					return
+				}
+			}
 		}
 
 		// Set up file watchers for enabled servers
