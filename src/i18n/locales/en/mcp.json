@@ -23,6 +23,13 @@
 		"already_refreshing": "MCP servers are already refreshing.",
 		"refreshing_all": "Refreshing all MCP servers...",
 		"all_refreshed": "All MCP servers have been refreshed.",
-		"project_config_deleted": "Project MCP configuration file deleted. All project MCP servers have been disconnected."
+		"project_config_deleted": "Project MCP configuration file deleted. All project MCP servers have been disconnected.",
+		"server_not_approved": "Project MCP server \"{{serverName}}\" was not approved and will not start."
+	},
+	"security": {
+		"project_mcp_prompt": "This project wants to start the MCP server \"{{serverName}}\", which will run a local command:\n\n{{command}} {{args}}\n\nAllowing this runs the command above on your machine with your permissions. Only approve projects you trust. Allow?",
+		"custom_tools_prompt": "This project wants to load custom tools. Loading these files runs their code on your machine:\n\n{{files}}\n\nOnly approve projects you trust. Allow?",
+		"custom_tools_restricted": "Custom tools cannot be loaded in an untrusted workspace.",
+		"custom_tools_not_approved": "Custom tools were not approved and will not be loaded."
 	}
 }
