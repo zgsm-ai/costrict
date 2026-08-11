@@ -306,6 +306,102 @@ describe("MiniMaxHandler", () => {
 			)
 		})
 
+		it("should enable adaptive thinking for MiniMax-M3", async () => {
+			const handlerWithThinking = new MiniMaxHandler({
+				apiModelId: "MiniMax-M3",
+				minimaxApiKey: "test-minimax-api-key",
+				enableReasoningEffort: true,
+			})
+
+			mockCreate.mockResolvedValueOnce({
+				[Symbol.asyncIterator]: () => ({
+					async next() {
+						return { done: true }
+					},
+				}),
+			})
+
+			const messageGenerator = handlerWithThinking.createMessage("test", [])
+			await messageGenerator.next()
+
+			expect(mockCreate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					model: "MiniMax-M3",
+					thinking: { type: "adaptive" },
+				}),
+			)
+		})
+
+		it("should disable thinking for MiniMax-M3 when reasoning is off", async () => {
+			const handlerWithoutThinking = new MiniMaxHandler({
+				apiModelId: "MiniMax-M3",
+				minimaxApiKey: "test-minimax-api-key",
+				enableReasoningEffort: false,
+			})
+
+			mockCreate.mockResolvedValueOnce({
+				[Symbol.asyncIterator]: () => ({
+					async next() {
+						return { done: true }
+					},
+				}),
+			})
+
+			const messageGenerator = handlerWithoutThinking.createMessage("test", [])
+			await messageGenerator.next()
+
+			expect(mockCreate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					model: "MiniMax-M3",
+					thinking: { type: "disabled" },
+				}),
+			)
+		})
+
+		it("should not send MiniMax-M3 thinking controls to M2 models", async () => {
+			const handlerWithM2 = new MiniMaxHandler({
+				apiModelId: "MiniMax-M2.7",
+				minimaxApiKey: "test-minimax-api-key",
+				enableReasoningEffort: true,
+			})
+
+			mockCreate.mockResolvedValueOnce({
+				[Symbol.asyncIterator]: () => ({
+					async next() {
+						return { done: true }
+					},
+				}),
+			})
+
+			const messageGenerator = handlerWithM2.createMessage("test", [])
+			await messageGenerator.next()
+
+			const requestParams = mockCreate.mock.calls[0][0]
+			expect(requestParams).not.toHaveProperty("thinking")
+		})
+
+		it("should pass MiniMax-M3 thinking control to completePrompt", async () => {
+			const handlerWithThinking = new MiniMaxHandler({
+				apiModelId: "MiniMax-M3",
+				minimaxApiKey: "test-minimax-api-key",
+				enableReasoningEffort: true,
+			})
+
+			mockCreate.mockResolvedValueOnce({
+				content: [{ type: "text", text: "response" }],
+			})
+
+			await handlerWithThinking.completePrompt("test")
+
+			expect(mockCreate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					model: "MiniMax-M3",
+					thinking: { type: "adaptive" },
+				}),
+				expect.any(Object),
+			)
+		})
+
 		it("should use temperature 1 by default", async () => {
 			mockCreate.mockResolvedValueOnce({
 				[Symbol.asyncIterator]: () => ({
