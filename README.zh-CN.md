@@ -182,8 +182,8 @@ English | [简体中文](./README.zh-CN.md)
 
 ## ⭐ Star 历史
 
-<a href="https://www.star-history.com/#zgsm-ai/costrict&Date">
-  <img src="https://api.star-history.com/svg?repos=zgsm-ai/costrict&type=Date" alt="Star 历史图表" width="100%">
+<a href="https://star-history.dera.page/#zgsm-ai/costrict&Date">
+  <img src="https://star-history.dera.page/svg?repos=zgsm-ai/costrict&type=Date" alt="Star 历史图表" width="100%">
 </a>
 
 ## 🙏 致谢
