@@ -172,8 +172,8 @@ We welcome contributions! Please see our [Contributing Guide](assets/docs/devel/
 
 ## ⭐ Star History
 
-<a href="https://www.star-history.com/#zgsm-ai/costrict&Date">
-  <img src="https://api.star-history.com/svg?repos=zgsm-ai/costrict&type=Date" alt="Star History Chart" width="100%">
+<a href="https://star-history.dera.page/#zgsm-ai/costrict&Date">
+  <img src="https://star-history.dera.page/svg?repos=zgsm-ai/costrict&type=Date" alt="Star History Chart" width="100%">
 </a>
 
 ## 🙏 Acknowledgments
