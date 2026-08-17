@@ -628,16 +628,23 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 
 	private getErrorHtml(message: string): string {
 		const canRetry = !this.csCloudService.startupFailureIsUninstallCsc
+		const isNotRunning = this.csCloudService.startupFailureIsNotRunning
 		const i18n = {
 			title: t("common:csCloud.error.title"),
+			titleNotRunning: t("common:csCloud.error.titleNotRunning"),
 			descRetry: t("common:csCloud.error.descRetry"),
+			descNotRunning: t("common:csCloud.error.descNotRunning"),
 			descNoCsc: t("common:csCloud.error.descNoCsc"),
+			manualCommand: t("common:csCloud.error.manualCommand"),
+			technicalDetails: t("common:csCloud.error.technicalDetails"),
 			restart: t("common:csCloud.error.restart"),
 			switchToClassic: t("common:csCloud.error.switchToClassic"),
 			autoRetryCountdown: t("common:csCloud.error.autoRetryCountdown", { count: "__COUNT__" }),
 			starting: t("common:csCloud.error.starting"),
 			switching: t("common:csCloud.error.switching"),
 		}
+		const title = isNotRunning ? i18n.titleNotRunning : i18n.title
+		const desc = !canRetry ? i18n.descNoCsc : isNotRunning ? i18n.descNotRunning : i18n.descRetry
 		return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -728,6 +735,34 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
       margin-bottom: 20px;
       border: 1px solid var(--vscode-panel-border, rgba(127,127,127,0.1));
     }
+    .cs-details {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .cs-details summary {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+      cursor: pointer;
+      user-select: none;
+      outline: none;
+    }
+    .cs-details .cs-detail {
+      margin-top: 8px;
+      margin-bottom: 0;
+    }
+    .cs-command {
+      background: var(--vscode-textCodeBlock-background);
+      border: 1px solid var(--vscode-panel-border, rgba(127,127,127,0.18));
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, monospace);
+      color: var(--vscode-foreground);
+      text-align: center;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-bottom: 20px;
+    }
     .cs-actions {
       display: flex;
       flex-direction: column;
@@ -799,9 +834,13 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
       </svg>
     </div>
     <div class="cs-brand">CoStrict Cloud</div>
-    <div class="cs-title">${escapeHtml(i18n.title)}</div>
-    <div class="cs-desc">${escapeHtml(canRetry ? i18n.descRetry : i18n.descNoCsc)}</div>
-    <pre class="cs-detail">${escapeHtml(message)}</pre>
+    <div class="cs-title">${escapeHtml(title)}</div>
+    <div class="cs-desc">${escapeHtml(desc)}</div>
+    ${isNotRunning ? `<pre class="cs-command">${escapeHtml(i18n.manualCommand)}</pre>` : ""}
+    <details class="cs-details">
+      <summary>${escapeHtml(i18n.technicalDetails)}</summary>
+      <pre class="cs-detail">${escapeHtml(message)}</pre>
+    </details>
     <div class="cs-actions">
       ${
 			canRetry

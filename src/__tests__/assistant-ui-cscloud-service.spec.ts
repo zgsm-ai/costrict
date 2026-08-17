@@ -182,14 +182,85 @@ describe("CsCloudService (refactored)", () => {
 		expect(svc.state).toBe("running")
 	})
 
-	it("throws install prompt when nothing works", async () => {
+	it("throws manual-start prompt when nothing works", async () => {
 		denyServerUrlFile()
 		mockHealthDown()
 		mockFs.existsSync.mockReturnValue(false)
 		mockWhich.mockResolvedValue("/usr/local/bin/csc")
+		const svc = new CsCloudService(createOutputChannel() as never, {
+			spawnReadyTimeoutMs: 50,
+			cliStartReadyTimeoutMs: 50,
+		})
+		await expect(svc.ensureStarted()).rejects.toThrow("Please run manually: csc cloud start")
+		expect(svc.state).toBe("error")
+		expect(svc.startupFailureIsNotRunning).toBe(true)
+	})
+
+	it("auto-starts via csc cloud start when bundled binary is missing", async () => {
+		let started = false
+		mockFs.existsSync.mockImplementation((p: string) => {
+			return started && p.toString().endsWith("server_url")
+		})
+		mockFs.readFileSync.mockImplementation(() => {
+			if (!started) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" })
+			return "http://127.0.0.1:53001"
+		})
+		mockWhich.mockResolvedValue("/usr/local/bin/csc")
+		mockCrossSpawn.mockImplementation((_cmd: unknown, args: string[]) => {
+			const stdoutHandlers: ((data: Buffer) => void)[] = []
+			const closeHandlers: ((code: number) => void)[] = []
+			const child = {
+				on: vi.fn((ev: string, fn: (...args: unknown[]) => unknown) => {
+					if (ev === "close") closeHandlers.push(fn as (code: number) => void)
+				}),
+				stdout: {
+					on: vi.fn((ev: string, fn: (...args: unknown[]) => unknown) => {
+						if (ev === "data") stdoutHandlers.push(fn as (data: Buffer) => void)
+					}),
+				},
+				stderr: { on: vi.fn() },
+				kill: vi.fn(),
+			}
+			setTimeout(() => {
+				if (args[0] === "cloud" && args[1] === "start") {
+					started = true
+				}
+				if (args[0] === "cloud" && args[1] === "status") {
+					stdoutHandlers.forEach((fn) => fn(Buffer.from("status: stopped\n")))
+				}
+				closeHandlers.forEach((fn) => fn(0))
+			}, 10)
+			return child
+		})
+		mockHealthOk()
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await expect(svc.ensureStarted()).resolves.toBe("http://127.0.0.1:53001/api/v1")
+		expect(mockCrossSpawn).toHaveBeenCalledWith(
+			"/usr/local/bin/csc",
+			["cloud", "start"],
+			expect.objectContaining({ env: expect.any(Object) }),
+		)
+		expect(svc.state).toBe("running")
+		expect(svc.processOwner).toBe("external")
+		expect(svc.connectionSource).toBe("cliStart")
+	})
+
+	it("does not auto start when autoStartCsCloud is disabled", async () => {
+		setConfigValues({ baseUrl: "", port: 45489, autoStartCsCloud: false, defaultCli: "csc" })
+		denyServerUrlFile()
+		mockHealthDown()
+		mockFs.existsSync.mockReturnValue(true)
+		setExecFileStdout("status: stopped\n")
+
 		const svc = new CsCloudService(createOutputChannel() as never)
 		await expect(svc.ensureStarted()).rejects.toThrow("Please run manually: csc cloud start")
 		expect(svc.state).toBe("error")
+		expect(svc.startupFailureIsNotRunning).toBe(true)
+
+		const spawnArgs = mockCrossSpawn.mock.calls.map((call) => JSON.stringify(call[1]))
+		expect(spawnArgs).not.toContain(JSON.stringify(["cloud", "start"]))
+		expect(spawnArgs).not.toContain(JSON.stringify(["start", "--port", "45489", "--host", "0.0.0.0"]))
 	})
 
 	it("reconnect clears state and re-resolves", async () => {
