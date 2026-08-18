@@ -8,6 +8,22 @@ export type MinimaxModelId = keyof typeof minimaxModels
 export const minimaxDefaultModelId: MinimaxModelId = "MiniMax-M2.7"
 
 export const minimaxModels = {
+	"MiniMax-M3": {
+		maxTokens: 16_384,
+		contextWindow: 1_000_000,
+		supportsImages: true,
+		supportsPromptCache: true,
+		supportsReasoningBinary: true,
+		includedTools: ["search_and_replace"],
+		excludedTools: ["apply_diff"],
+		preserveReasoning: true,
+		inputPrice: 0.6,
+		outputPrice: 2.4,
+		cacheWritesPrice: undefined,
+		cacheReadsPrice: 0.12,
+		description:
+			"MiniMax M3, the latest MiniMax flagship model with a 1,000,000-token context window, multimodal input (text, image, and video), and adaptive thinking that can be disabled. See pricing at https://platform.minimax.io/docs/guides/pricing-paygo. Note: When using TokenPlan, usage is billed per request, not per token.",
+	},
 	"MiniMax-M2.7": {
 		maxTokens: 16_384,
 		contextWindow: 204_800,

@@ -50,6 +50,15 @@ function convertOpenAIToolChoice(
 	return { type: "auto" }
 }
 
+type MiniMaxThinkingConfig = { type: "adaptive" | "disabled" }
+
+function getMiniMaxThinkingConfig(
+	modelId: MinimaxModelId,
+	enableReasoningEffort: boolean | undefined,
+): MiniMaxThinkingConfig | undefined {
+	return modelId === "MiniMax-M3" ? { type: enableReasoningEffort ? "adaptive" : "disabled" } : undefined
+}
+
 export class MiniMaxHandler extends BaseProvider implements SingleCompletionHandler {
 	private options: ApiHandlerOptions
 	private client: Anthropic
@@ -111,6 +120,12 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 			stream: true,
 			tools: convertOpenAIToolsToAnthropic(metadata?.tools ?? []),
 			tool_choice: convertOpenAIToolChoice(metadata?.tool_choice),
+		}
+
+		const thinking = getMiniMaxThinkingConfig(modelId, this.options.enableReasoningEffort)
+		if (thinking) {
+			// The installed Anthropic SDK predates the adaptive thinking type supported by MiniMax-M3.
+			;(requestParams as unknown as { thinking: MiniMaxThinkingConfig }).thinking = thinking
 		}
 
 		stream = await this.client.messages.create(requestParams)
@@ -291,19 +306,22 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 
 	async completePrompt(prompt: string, systemPrompt?: string, metadata?: any) {
 		const { id: model, temperature } = this.getModel()
+		const requestParams: Anthropic.Messages.MessageCreateParamsNonStreaming = {
+			model,
+			max_tokens: 16_384,
+			temperature: temperature ?? 1.0,
+			messages: [{ role: "user", content: prompt }],
+			stream: false,
+		}
 
-		const message = await this.client.messages.create(
-			{
-				model,
-				max_tokens: 16_384,
-				temperature: temperature ?? 1.0,
-				messages: [{ role: "user", content: prompt }],
-				stream: false,
-			},
-			{
-				signal: metadata?.signal,
-			},
-		)
+		const thinking = getMiniMaxThinkingConfig(model, this.options.enableReasoningEffort)
+		if (thinking) {
+			;(requestParams as unknown as { thinking: MiniMaxThinkingConfig }).thinking = thinking
+		}
+
+		const message = await this.client.messages.create(requestParams, {
+			signal: metadata?.signal,
+		})
 
 		const content = message.content.find(({ type }) => type === "text")
 		return content?.type === "text" ? content.text : ""
