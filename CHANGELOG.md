@@ -2,6 +2,13 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [3.0.20]
+
+- Add MiniMax-M3 model to the MiniMax model registry
+- Optimize cloud mode auto-start fallback and improve the not-running error UI
+- Execute `/compact` locally via the session command API in Cloud mode (assistant-ui)
+- Fix known issues
+
 ## [3.0.19]
 
 - Implement workspace trust service requiring explicit user approval before starting project-scoped MCP servers and loading custom tools
