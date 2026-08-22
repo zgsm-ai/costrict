@@ -40,6 +40,7 @@ export const dynamicProviders = [
 	"costrict",
 	"openrouter",
 	"vercel-ai-gateway",
+	"orcarouter",
 	"litellm",
 	"requesty",
 	// "roo",
@@ -417,6 +418,12 @@ const vercelAiGatewaySchema = baseProviderSettingsSchema.extend({
 	vercelAiGatewayModelId: z.string().optional(),
 })
 
+const orcaRouterSchema = baseProviderSettingsSchema.extend({
+	orcaRouterApiKey: z.string().optional(),
+	orcaRouterModelId: z.string().optional(),
+	orcaRouterBaseUrl: z.string().optional(),
+})
+
 const basetenSchema = apiModelIdProviderModelSchema.extend({
 	basetenApiKey: z.string().optional(),
 })
@@ -458,6 +465,7 @@ export const providerSettingsSchemaDiscriminated = z.discriminatedUnion("apiProv
 	qwenCodeSchema.merge(z.object({ apiProvider: z.literal("qwen-code") })),
 	rooSchema.merge(z.object({ apiProvider: z.literal("roo") })),
 	vercelAiGatewaySchema.merge(z.object({ apiProvider: z.literal("vercel-ai-gateway") })),
+	orcaRouterSchema.merge(z.object({ apiProvider: z.literal("orcarouter") })),
 	defaultSchema,
 ])
 
@@ -497,6 +505,7 @@ export const providerSettingsSchema = z.object({
 	...qwenCodeSchema.shape,
 	...rooSchema.shape,
 	...vercelAiGatewaySchema.shape,
+	...orcaRouterSchema.shape,
 	...codebaseIndexProviderSchema.shape,
 })
 
@@ -537,6 +546,7 @@ export const modelIdKeys = [
 	"unboundModelId",
 	"litellmModelId",
 	"vercelAiGatewayModelId",
+	"orcaRouterModelId",
 ] as const satisfies readonly (keyof ProviderSettings)[]
 
 export type ModelIdKey = (typeof modelIdKeys)[number]
@@ -584,6 +594,7 @@ export const modelIdKeysByProvider: Record<TypicalProvider, ModelIdKey> = {
 	fireworks: "apiModelId",
 	roo: "apiModelId",
 	"vercel-ai-gateway": "vercelAiGatewayModelId",
+	orcarouter: "orcaRouterModelId",
 }
 
 /**
@@ -723,6 +734,7 @@ export const MODELS_BY_PROVIDER: Record<
 	requesty: { id: "requesty", label: "Requesty", models: [] },
 	unbound: { id: "unbound", label: "Unbound", models: [] },
 	"vercel-ai-gateway": { id: "vercel-ai-gateway", label: "Vercel AI Gateway", models: [] },
+	orcarouter: { id: "orcarouter", label: "OrcaRouter", models: [] },
 
 	// Local providers; models discovered from localhost endpoints.
 	lmstudio: { id: "lmstudio", label: "LM Studio", models: [] },

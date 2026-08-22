@@ -7,6 +7,7 @@ export const supportedProviders = [
 	"gemini",
 	"openrouter",
 	"vercel-ai-gateway",
+	"orcarouter",
 	"roo",
 	"costrict",
 ] as const satisfies ProviderName[]

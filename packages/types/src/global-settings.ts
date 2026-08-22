@@ -314,6 +314,7 @@ export const SECRET_STATE_KEYS = [
 	"zaiApiKey",
 	"fireworksApiKey",
 	"vercelAiGatewayApiKey",
+	"orcaRouterApiKey",
 	"basetenApiKey",
 	"mimoApiKey",
 ] as const
