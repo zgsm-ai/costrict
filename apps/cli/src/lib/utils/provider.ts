@@ -9,6 +9,7 @@ const envVarMap: Record<SupportedProvider, string> = {
 	costrict: "COSTRICT_API_KEY",
 	openrouter: "OPENROUTER_API_KEY",
 	"vercel-ai-gateway": "VERCEL_AI_GATEWAY_API_KEY",
+	orcarouter: "ORCAROUTER_API_KEY",
 	roo: "ROO_API_KEY",
 }
 
@@ -52,6 +53,10 @@ export function getProviderSettings(
 		case "vercel-ai-gateway":
 			if (apiKey) config.vercelAiGatewayApiKey = apiKey
 			if (model) config.vercelAiGatewayModelId = model
+			break
+		case "orcarouter":
+			if (apiKey) config.orcaRouterApiKey = apiKey
+			if (model) config.orcaRouterModelId = model
 			break
 		case "roo":
 			if (apiKey) config.rooApiKey = apiKey

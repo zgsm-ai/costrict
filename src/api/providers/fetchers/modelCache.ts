@@ -18,6 +18,7 @@ import { fileExistsAtPath } from "../../../utils/fs"
 
 import { getOpenRouterModels } from "./openrouter"
 import { getVercelAiGatewayModels } from "./vercel-ai-gateway"
+import { getOrcaRouterModels } from "./orcarouter"
 import { getRequestyModels } from "./requesty"
 import { getCostrictModels } from "./costrict"
 import { getUnboundModels } from "./unbound"
@@ -115,6 +116,9 @@ async function fetchModelsFromProvider(options: GetModelsOptions): Promise<Model
 			break
 		case "vercel-ai-gateway":
 			models = await getVercelAiGatewayModels()
+			break
+		case "orcarouter":
+			models = await getOrcaRouterModels({ apiKey: options.apiKey, baseUrl: options.baseUrl })
 			break
 		// case "roo": {
 		// 	// Roo Code Cloud provider requires baseUrl and optional apiKey
