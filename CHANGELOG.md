@@ -2,6 +2,11 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [3.0.21]
+
+- Fix normalize non-array cs-cloud diff responses in getDiff to prevent a render crash
+- Fix known issues
+
 ## [3.0.20]
 
 - Add MiniMax-M3 model to the MiniMax model registry
