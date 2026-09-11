@@ -36,6 +36,7 @@ type ModelIdKey = keyof Pick<
 	| "litellmModelId"
 	| "costrictModelId"
 	| "vercelAiGatewayModelId"
+	| "orcaRouterModelId"
 	| "apiModelId"
 	| "ollamaModelId"
 	| "lmStudioModelId"

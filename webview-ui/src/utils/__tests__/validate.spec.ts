@@ -44,6 +44,7 @@ describe("Model Validation Functions", () => {
 		ollama: {},
 		lmstudio: {},
 		"vercel-ai-gateway": {},
+		orcarouter: {},
 		costrict: {},
 		// roo: {},
 		poe: {},

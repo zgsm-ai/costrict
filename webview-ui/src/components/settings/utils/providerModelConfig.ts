@@ -127,6 +127,7 @@ export const PROVIDERS_WITH_CUSTOM_MODEL_UI: ProviderName[] = [
 	"openai-codex", // OpenAI Codex has custom UI with auth and rate limits
 	"litellm",
 	"vercel-ai-gateway",
+	"orcarouter",
 	"roo",
 	"ollama",
 	"lmstudio",
