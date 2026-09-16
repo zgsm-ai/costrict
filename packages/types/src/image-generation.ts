@@ -31,6 +31,10 @@ export const IMAGE_GENERATION_MODELS: ImageGenerationModel[] = [
 	// 	provider: "roo",
 	// 	apiMethod: "images_api",
 	// },
+	{ value: "image-01", label: "image-01", provider: "minimax" },
+	{ value: "image-01-live", label: "image-01-live", provider: "minimax" },
+	{ value: "image-01", label: "image-01", provider: "minimax-cn" },
+	{ value: "image-01-live", label: "image-01-live", provider: "minimax-cn" },
 ]
 
 /**
@@ -41,20 +45,17 @@ export const IMAGE_GENERATION_MODEL_IDS = IMAGE_GENERATION_MODELS.map((m) => m.v
 /**
  * Image generation provider type
  */
-export type ImageGenerationProvider = "openrouter" | "roo"
+export type ImageGenerationProvider = "openrouter" | "roo" | "minimax" | "minimax-cn"
 
 /**
  * Get the image generation provider with backwards compatibility
- * - If provider is explicitly set, use it
- * - If a model is already configured (existing users), default to "openrouter"
- * - Otherwise default to "roo" (new users)
+ * - Honor explicitly selected MiniMax regions.
+ * - Preserve the existing default for other configurations.
  */
 export function getImageGenerationProvider(
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	explicitProvider: ImageGenerationProvider | undefined,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	hasExistingModel: boolean,
 ): ImageGenerationProvider {
-	return "openrouter"
-	// return explicitProvider !== undefined ? explicitProvider : hasExistingModel ? "openrouter" : "roo"
+	return explicitProvider === "minimax" || explicitProvider === "minimax-cn" ? explicitProvider : "openrouter"
 }
