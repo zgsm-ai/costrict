@@ -8,7 +8,7 @@
  */
 import * as path from "path"
 import * as vscode from "vscode"
-import { CODELENS_CONST, COMPLETION_CONST } from "./constant"
+import { CODELENS_CONST } from "./constant"
 
 /**
  * Definition of programming language extensions,
@@ -85,21 +85,12 @@ export enum LangSwitch {
  * Language feature settings
  */
 export class LangSetting {
-	public static completionEnabled = true
 	public static codelensEnabled = true
 
-	private completionSwitchs = new Map<string, LangSwitch>()
 	private codelensSwitchs = new Map<string, LangSwitch>()
-	private static readonly completionDefault = LangSwitch.Enabled
 	private static readonly codelensDefault = LangSwitch.Unsupported
 	private static instance: LangSetting | undefined = undefined
 
-	/**
-	 * Get completion disable items
-	 */
-	public static getCompletionDisables(): LangDisables {
-		return this.getDisables(this.getInstance().completionSwitchs)
-	}
 	/**
 	 * Get quick menu disable items
 	 */
@@ -107,22 +98,10 @@ export class LangSetting {
 		return this.getDisables(this.getInstance().codelensSwitchs)
 	}
 	/**
-	 * Set completion disable items
-	 */
-	public static setCompletionDisables(disables: LangDisables) {
-		this.setDisables(this.getInstance().completionSwitchs, disables, this.completionDefault)
-	}
-	/**
 	 * Set quick menu disable items
 	 */
 	public static setCodelensDisables(disables: LangDisables) {
 		this.setDisables(this.getInstance().codelensSwitchs, disables, this.codelensDefault)
-	}
-	/**
-	 * Check if completion is disabled for a language
-	 */
-	public static getCompletionDisable(lang: string): LangSwitch {
-		return this.getInstance().completionSwitchs.get(lang) ?? this.completionDefault
 	}
 	/**
 	 * Check if codelens is disabled for a language
@@ -138,12 +117,11 @@ export class LangSetting {
 		if (!this.instance) {
 			this.instance = new LangSetting()
 			this.setSupports(this.instance.codelensSwitchs, CODELENS_CONST.allowableLanguages)
-			this.setSupports(this.instance.completionSwitchs, COMPLETION_CONST.allowableLanguages)
 		}
 		return this.instance
 	}
 	/**
-	 * Set the list of languages supported for a feature (code completion/quick menu)
+	 * Set the list of languages supported for a feature (quick menu)
 	 */
 	private static setSupports(switchs: Map<string, LangSwitch>, langs: string[]) {
 		for (let i = 0; i < langs.length; i++) {

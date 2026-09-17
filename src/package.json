@@ -103,11 +103,6 @@
 		},
 		"commands": [
 			{
-				"command": "costrict-completion.shortKeyCut",
-				"title": "%command.shortKeyCut.title%",
-				"shortTitle": "%command.shortKeyCut.title%"
-			},
-			{
 				"command": "costrict.openNewButtonClicked",
 				"title": "%command.newTask.title%",
 				"icon": "assets/images/shenma_robot_logo_big.png"
@@ -585,14 +580,6 @@
 				"mac": "cmd+alt+a",
 				"win": "ctrl+alt+a",
 				"linux": "ctrl+alt+a"
-			},
-			{
-				"command": "costrict-completion.shortKeyCut",
-				"key": "alt+a",
-				"mac": "alt+a",
-				"win": "alt+a",
-				"linux": "alt+a",
-				"when": "editorTextFocus && !editorReadonly && !inlineSuggestionVisible"
 			}
 		],
 		"submenus": [
@@ -616,29 +603,6 @@
 		"configuration": {
 			"title": "%configuration.title%",
 			"properties": {
-				"IntelligentCodeCompletion.enabled": {
-					"type": "boolean",
-					"default": true,
-					"order": 1,
-					"description": "%intelligentCodeCompletion.enabled.description%"
-				},
-				"IntelligentCodeCompletion.betaMode": {
-					"type": "boolean",
-					"default": false,
-					"order": 2,
-					"description": "%intelligentCodeCompletion.betaMode.description%"
-				},
-				"IntelligentCodeCompletion.inlineCompletion": {
-					"type": "boolean",
-					"default": false,
-					"description": "%intelligentCodeCompletion.inlineCompletion.description%"
-				},
-				"IntelligentCodeCompletion.disableLanguages": {
-					"type": "object",
-					"additionalProperties": "string",
-					"default": {},
-					"markdownDescription": "%intelligentCodeCompletion.disableLanguages.description%"
-				},
 				"FunctionQuickCommands.enabled": {
 					"type": "boolean",
 					"default": false,
@@ -1008,10 +972,8 @@
 		"fast-deep-equal": "^3.1.3",
 		"fast-xml-parser": "^5.0.0",
 		"fastest-levenshtein": "^1.0.16",
-		"find-process": "^2.0.0",
 		"fzf": "^0.5.2",
 		"get-folder-size": "^5.0.0",
-		"get-port": "^7.1.0",
 		"global-agent": "^3.0.0",
 		"google-auth-library": "^9.15.1",
 		"gray-matter": "^4.0.3",

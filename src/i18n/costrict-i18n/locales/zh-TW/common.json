@@ -27,86 +27,9 @@
 			"please_log_in_first": "請先登入。",
 			"login_again": "重新登錄",
 			"login_for_full_features": "登入後可使用完整功能"
-		},
-		"infor": {
-			"enable_disable_function_quick_menu": "啟用/禁用\"快捷選單\"和\"補全\""
 		}
 	},
 	"login_url_copied": "登入連結已複製到剪貼簿",
-	"button": {
-		"enable_function_quick_menu": "啟用快捷選單",
-		"disable": "禁用",
-		"enable": "啟用",
-		"enable_completion": "啟用補全",
-		"enable_quick_menu": "啟用快捷菜單",
-		"disable_completion": "禁用補全",
-		"disable_quick_menu": "禁用快捷菜單"
-	},
-	"function": {
-		"completion": "補全",
-		"quick_menu": "快捷選單"
-	},
-	"completion": {
-		"status": {
-			"notSupport": {
-				"text": "$(alert) CoStrict",
-				"tooltip": "僅 CoStrict 提供商支援此服務"
-			},
-			"loading": {
-				"text": "$(loading~spin) CoStrict - 處理中",
-				"tooltip": "CoStrict - 程式碼補全 - 等待請求結果"
-			},
-			"complete": {
-				"text": "$(check) CoStrict",
-				"tooltip": "CoStrict - 程式碼補全 - 已完成"
-			},
-			"fail": {
-				"text": "$(alert) CoStrict - ",
-				"tooltip": "CoStrict - 程式碼補全 - 失敗："
-			},
-			"noSuggest": {
-				"text": "$(check) CoStrict - 無建議",
-				"tooltip": "CoStrict - 程式碼補全 - 無可用建議"
-			},
-			"enabled": {
-				"tooltip": "CoStrict - 程式碼補全 - 已啟用"
-			},
-			"disabled": {
-				"tooltip": "CoStrict - 程式碼補全 - 已禁用"
-			},
-			"login": {
-				"text": "$(loading~spin) CoStrict - 登錄中..."
-			}
-		},
-		"code": {
-			"401": "請登錄",
-			"400": "請求參數錯誤",
-			"403": "無權限訪問",
-			"404": "未找到資源",
-			"413": "上下文過大",
-			"429": "超過API限制",
-			"500": "服務錯誤",
-			"502": "網關錯誤",
-			"503": "服務不可用",
-			"504": "網關超時",
-			"aborted": "已取消",
-			"unknown": "未知錯誤"
-		},
-		"solution": {
-			"401": "請檢查登錄狀態和API密鑰",
-			"400": "請檢查請求參數",
-			"403": "請檢查權限",
-			"404": "請檢查請求路徑和資源是否存在",
-			"413": "推薦將長上下文拆分成更小的任務處理",
-			"429": "請稍後重試/聯繫管理員",
-			"500": "請稍後重試/聯繫管理員",
-			"502": "請稍後重試/聯繫管理員",
-			"503": "請稍後重試/聯繫管理員",
-			"504": "請稍後重試/聯繫管理員",
-			"aborted": "請重試",
-			"unknown": "請聯繫管理員"
-		}
-	},
 	"command": {
 		"explain": {
 			"name": "解釋程式碼",

@@ -11,42 +11,6 @@ import { t } from "../../../../i18n"
 import { registerRefreshFunction } from "../../../../i18n/costrict-i18n"
 import { getCommand } from "../../../../utils/commands"
 
-// Completion: Model settings
-export const settings = {
-	// fillmodel in settings
-	fillmodel: true,
-	// openai_model in settings
-	openai_model: "fastertransformer",
-	// temperature in settings
-	temperature: 0.1,
-}
-// Completion: Preset constants
-export const COMPLETION_CONST = {
-	allowableLanguages: [
-		"vue",
-		"typescript",
-		"javascript",
-		"python",
-		"go",
-		"c",
-		"c++",
-		"shell",
-		"bash",
-		"batch",
-		"lua",
-		"java",
-		"php",
-		"ruby",
-	], // Supported languages for code completion
-	codeCompletionLogUploadOnce: false, // Whether to upload code completion logs only once
-	suggestionDelay: 300, // Delay from user input to trigger request
-	lineRejectedDelayIncrement: 1000, // Delay increment after rejection on the same line (increase wait time after rejection to reduce interference)
-	lineRejectedDelayMax: 1000, // Maximum delay after rejection on the same line
-	manualTriggerDelay: 50, // Delay for manual completion trigger
-	feedbackInterval: 5000, // Feedback timer interval
-	collectInterval: 5000, // Timer interval for collecting code snippets
-}
-
 // VSCode related
 export const VSCODE_CONST = {
 	checkSpin: "$(check~spin)", // Checkmark icon
@@ -189,8 +153,4 @@ export function refreshCodelensFunc() {
 // Register refreshCodelensFunc to the language refresh list
 registerRefreshFunction(refreshCodelensFunc)
 
-export const configCompletion = "IntelligentCodeCompletion"
 export const configCodeLens = "FunctionQuickCommands"
-// OpenAI Client
-export const OPENAI_CLIENT_NOT_INITIALIZED = "OpenAI client not initialized"
-export const OPENAI_REQUEST_ABORTED = "Request was aborted"

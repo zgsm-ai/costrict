@@ -12,7 +12,6 @@ import { generateNewSessionClientId, getClientId } from "../../../utils/getClien
 import { sendCostrictLogout } from "./ipc/client"
 import { readCostrictAccessToken } from "../runtime-config"
 import { pickFresher, type CostrictTokenPair } from "../runtime-config/pickFresher"
-import { CompletionStatusBar } from "../auto-complete"
 import { t } from "../../../i18n"
 
 let _loginState = ""
@@ -35,7 +34,6 @@ export class CostrictAuthService {
 	private startLoginTokenPollInterval?: NodeJS.Timeout
 	private disposed = false
 	private userInfo = {} as CostrictUserInfo
-	private statusBar = CompletionStatusBar.getInstance()
 
 	public static setProvider(clineProvider: ClineProvider): void {
 		CostrictAuthService.clineProvider = clineProvider
@@ -310,7 +308,7 @@ export class CostrictAuthService {
 	 * Resolve the token pair that should be used during plugin startup.
 	 *
 	 * SecretStorage owns the local `state`; auth.json may own fresher tokens after
-	 * an external runtime/CLI/other-window refresh. Returning the final token set
+	 * an external CLI/other-window refresh. Returning the final token set
 	 * here keeps activate.ts focused on startup side effects instead of duplicating
 	 * storage reads and freshness checks.
 	 */
@@ -472,7 +470,6 @@ export class CostrictAuthService {
 		this.updateUserInfo(tokens.refresh_token)
 		vscode.window.showInformationMessage(`${this.userInfo.name} user logged in successfully`)
 		CostrictAuthService.clineProvider?.postMessageToWebview?.({ type: "costrictLogined" })
-		this.statusBar.complete()
 	}
 
 	updateUserInfo(token: string) {

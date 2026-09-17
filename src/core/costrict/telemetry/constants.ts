@@ -13,12 +13,7 @@ export const CodeBaseError = {
 	CheckFileError: "CheckFileError",
 }
 
-export const CodeCompletionError = {
-	ApiError: "ApiError",
-}
-
 export type CodeBaseErrorType = keyof typeof CodeBaseError
 export type CodeReviewErrorType = keyof typeof CodeReviewErrorType
-export type CodeCompletionErrorType = keyof typeof CodeCompletionError
 
-export type TelemetryErrorType = CodeReviewErrorType | CodeBaseErrorType | CodeCompletionErrorType
+export type TelemetryErrorType = CodeReviewErrorType | CodeBaseErrorType

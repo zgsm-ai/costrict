@@ -9,7 +9,6 @@
 import * as vscode from "vscode"
 import * as fs from "fs"
 import * as path from "path"
-import { configCompletion } from "./constant"
 import { Logger } from "./log-util"
 import { Package } from "../../../../shared/package"
 // import { Package } from "../../../schemas"
@@ -98,12 +97,4 @@ export function writeLogsSync(fileName: string, content: string) {
 		fs.mkdirSync(tempDir, { recursive: true })
 	}
 	fs.writeFileSync(tempFilePath, content)
-}
-
-/**
- * Get the configuration for [Intelligent Code Completion]
- */
-export function getCompleteConfig(): vscode.WorkspaceConfiguration {
-	const config = vscode.workspace.getConfiguration(configCompletion)
-	return config
 }

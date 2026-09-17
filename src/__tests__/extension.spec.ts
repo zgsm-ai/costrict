@@ -47,7 +47,6 @@ vi.mock("vscode", async (importOriginal) => ({
 	languages: {
 		registerCodeActionsProvider: vi.fn(),
 		registerCodeLensProvider: vi.fn().mockReturnValue({ dispose: vi.fn() }),
-		registerInlineCompletionItemProvider: vi.fn().mockReturnValue({ dispose: vi.fn() }),
 	},
 	commands: {
 		executeCommand: vi.fn(),
