@@ -37,7 +37,6 @@ _Free • Open Source • Private Deployment_
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | 🔒 **Strict Mode**     | Standardized AI code generation with requirements analysis, architecture design, task planning, and test generation |
 | 🔍 **Code Review**     | Repository-wide RAG-based code analysis with multi-expert model verification                                        |
-| ⚡ **Code Completion** | Context-aware code generation in seconds                                                                            |
 | 🎯 **Vibe Code**       | Rapid development through natural language dialogue                                                                 |
 | 🔗 **MCP Integration** | Standardized system connectivity for APIs, databases, and custom tools                                              |
 | 🎨 **Multi-modal**     | Support for image context and visual inputs                                                                         |

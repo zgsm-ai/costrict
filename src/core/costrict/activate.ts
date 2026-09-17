@@ -2,21 +2,16 @@
  * ZGSM Core Activation Module
  *
  * Handles the activation and initialization of all ZGSM functionality
- * including completion providers, codelens providers, and command registration.
+ * including codelens providers and command registration.
  */
 
 import * as vscode from "vscode"
 import type { ClineProvider } from "../webview/ClineProvider"
-import { registerAutoCompletionProvider, CompletionStatusBar } from "./auto-complete"
-
 import { CostrictCodeLensProvider, codeLensCallBackCommand, codeLensCallBackMoreCommand } from "./codelens"
 
 import {
-	configCompletion,
 	configCodeLens,
-	OPENAI_CLIENT_NOT_INITIALIZED,
 	updateCodelensConfig,
-	updateCompletionConfig,
 	initLangSetting,
 	printLogo,
 	loadLocalLanguageExtensions,
@@ -38,7 +33,7 @@ import {
 	stopIPCServer,
 } from "./auth/ipc"
 import { generateNewSessionClientId, getClientId } from "../../utils/getClientId"
-import { ensureCompletionRuntimeReady, writeCostrictRuntimeAuth } from "./runtime-config"
+import { writeCostrictRuntimeAuth } from "./runtime-config"
 import { getPanel } from "../../activate/registerCommands"
 import { t } from "../../i18n"
 import prettyBytes from "pretty-bytes"
@@ -79,17 +74,16 @@ async function initialize(provider: ClineProvider, logger: ILogger) {
 	loadLocalLanguageExtensions()
 }
 
-const prepareCompletionRuntimeAuth = (
-	tokens: { access_token: string; refresh_token: string },
-	provider: ClineProvider,
-) => {
-	void writeCostrictRuntimeAuth(tokens.access_token, tokens.refresh_token)
-		.then(() => ensureCompletionRuntimeReady())
-		.catch((error) => {
-			provider.log(
-				`Failed to prepare completion runtime on startup: ${error instanceof Error ? error.message : String(error)}`,
-			)
-		})
+/**
+ * Publish the login tokens to ~/.costrict/share/auth.json so external tools
+ * (e.g. the csc CLI) that share the credential file stay logged in.
+ */
+const publishRuntimeAuth = (tokens: { access_token: string; refresh_token: string }, provider: ClineProvider) => {
+	void writeCostrictRuntimeAuth(tokens.access_token, tokens.refresh_token).catch((error) => {
+		provider.log(
+			`Failed to write runtime auth on startup: ${error instanceof Error ? error.message : String(error)}`,
+		)
+	})
 }
 
 /**
@@ -109,11 +103,6 @@ export async function activate(
 	void startIPCServer()
 		.then(() => connectIPC())
 		.catch((err) => console.error("IPC startup failed:", err))
-
-	if (isVscodePlatform) {
-		registerAutoCompletionProvider(context, provider)
-	}
-	const completionStatusBar = CompletionStatusBar.getInstance()
 
 	const costrictAuthService = CostrictAuthService.getInstance()
 	context.subscriptions.push(costrictAuthService)
@@ -150,7 +139,7 @@ export async function activate(
 				provider.log("Startup reconciliation: adopted fresher tokens from auth.json")
 				await costrictAuthService.saveTokens(tokens)
 			} else {
-				prepareCompletionRuntimeAuth(tokens, provider)
+				publishRuntimeAuth(tokens, provider)
 			}
 
 			costrictAuthService.startTokenRefresh(tokens.refresh_token, getClientId(), tokens.state)
@@ -193,31 +182,12 @@ export async function activate(
 	if (isVscodePlatform) {
 		context.subscriptions.push(vscode.languages.registerCodeLensProvider("*", new CostrictCodeLensProvider()))
 		const configChanged = vscode.workspace.onDidChangeConfiguration((e) => {
-			if (e.affectsConfiguration(configCompletion)) {
-				updateCompletionConfig()
-			}
 			if (e.affectsConfiguration(configCodeLens)) {
 				updateCodelensConfig()
 			}
-			completionStatusBar.setEnableState()
 		})
 		context.subscriptions.push(configChanged)
 	}
-
-	void CostrictAuthStorage.getInstance()
-		.getTokens()
-		.then((tokens) => {
-			if (isVscodePlatform) {
-				if (tokens?.access_token) {
-					completionStatusBar.setEnableState()
-				} else {
-					completionStatusBar.fail({
-						message: OPENAI_CLIENT_NOT_INITIALIZED,
-					})
-				}
-			}
-		})
-		.catch((error) => provider.log(`Failed to read auth tokens on startup: ${error}`))
 
 	void initNotificationService(provider)
 	provider.getState().then((state) => {

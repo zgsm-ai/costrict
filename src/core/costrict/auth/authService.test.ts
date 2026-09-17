@@ -35,10 +35,6 @@ vi.mock("./ipc/client", () => ({
 	sendCostrictLogout: vi.fn(),
 }))
 
-vi.mock("../auto-complete", () => ({
-	CompletionStatusBar: { getInstance: () => ({ complete: () => {} }) },
-}))
-
 vi.mock("../../../i18n", () => ({
 	t: (key: string) => key,
 }))

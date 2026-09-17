@@ -12,15 +12,12 @@ vi.mock("./ipc/client", () => ({
 }))
 
 vi.mock("../runtime-config", () => ({
-	ensureCompletionRuntimeReady: vi.fn().mockResolvedValue(undefined),
 	writeCostrictRuntimeAuth: vi.fn().mockResolvedValue(undefined),
-	ensureCostrictRuntimeInstalled: vi.fn().mockResolvedValue("noUpdate"),
-	getRuntimeBinaryPath: vi.fn(() => "/tmp/home/.costrict/bin/costrict"),
-	getRuntimeProcessName: vi.fn(() => "costrict"),
+	readCostrictAccessToken: vi.fn(() => null),
 }))
 
 import { CostrictAuthStorage } from "./authStorage"
-import { ensureCompletionRuntimeReady, writeCostrictRuntimeAuth } from "../runtime-config"
+import { writeCostrictRuntimeAuth } from "../runtime-config"
 
 type MockProviderState = {
 	currentApiConfigName: string
@@ -72,7 +69,6 @@ describe("CostrictAuthStorage.saveTokens", () => {
 		await CostrictAuthStorage.getInstance().saveTokens(newTokens as any)
 
 		expect(writeCostrictRuntimeAuth).toHaveBeenCalledWith(newTokens.access_token, newTokens.refresh_token)
-		expect(ensureCompletionRuntimeReady).toHaveBeenCalledTimes(1)
 	})
 
 	it("persists shared runtime auth regardless of legacy codebase toggle state", async () => {
@@ -81,7 +77,6 @@ describe("CostrictAuthStorage.saveTokens", () => {
 		await CostrictAuthStorage.getInstance().saveTokens(newTokens as any)
 
 		expect(writeCostrictRuntimeAuth).toHaveBeenCalledWith(newTokens.access_token, newTokens.refresh_token)
-		expect(ensureCompletionRuntimeReady).toHaveBeenCalledTimes(1)
 	})
 
 	it("still persists when only the access_token changed (refresh unchanged)", async () => {
@@ -97,7 +92,6 @@ describe("CostrictAuthStorage.saveTokens", () => {
 		await CostrictAuthStorage.getInstance().saveTokens(rotatedAccess as any)
 
 		expect(writeCostrictRuntimeAuth).toHaveBeenCalledWith(rotatedAccess.access_token, rotatedAccess.refresh_token)
-		expect(ensureCompletionRuntimeReady).toHaveBeenCalledTimes(1)
 	})
 
 	it("is a no-op when both access and refresh tokens match the stored values", async () => {
@@ -110,6 +104,5 @@ describe("CostrictAuthStorage.saveTokens", () => {
 		await CostrictAuthStorage.getInstance().saveTokens(sameTokens as any)
 
 		expect(writeCostrictRuntimeAuth).not.toHaveBeenCalled()
-		expect(ensureCompletionRuntimeReady).not.toHaveBeenCalled()
 	})
 })
