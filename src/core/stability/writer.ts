@@ -155,37 +155,53 @@ export class Writer {
 			// proactively so the next append recreates the file.
 			try {
 				const current = await fs.stat(this.deps.filePath)
-				// External truncation/rotation guard: another actor (consumer,
-				// log rotator) must never rewrite our append file silently —
-				// surface it as a write_error and rebaseline so the loss is
-				// visible in telemetry.health instead of vanishing.
-				const expected = this.baseline + this.appended
-				if (current.size !== expected) {
+				// Single-file layout: sibling writers append to the SAME file, so
+				// foreign GROWTH is protocol-normal — rebase silently and never
+				// alarm (field-verified: alarming per round flooded write_error).
+				// Real anomalies remain loud: inode replacement (sibling budget
+				// rewrite via temp+rename — our fd would point at the orphaned
+				// inode) and in-place truncation.
+				const fdStat = await this.handle.stat()
+				if (current.ino && fdStat.ino && current.ino !== fdStat.ino) {
 					this.deps.onWriteError(1)
-					this.deps.onExternalChange?.(
-						`outbox file size ${current.size} != expected ${expected} (external truncation or append)`,
-					)
-					this.baseline = current.size
-					this.appended = 0
-					// A truncation mid-line leaves no trailing LF — re-establish the
-					// line boundary so our appends stay parseable (the torn fragment
-					// becomes an isolatable bad line for the consumer, per contract).
-					// The append fd is write-only; probe the last byte read-only.
-					if (current.size > 0 && this.handle) {
-						try {
-							const probe = await fs.open(this.deps.filePath, "r")
+					this.deps.onExternalChange?.("outbox file replaced externally (inode change) — reopening")
+					await this.handle.close()
+					this.handle = undefined
+					await this.open()
+					if (!this.handle || this.state !== "ACTIVE") throw new Error("reopen failed")
+				} else {
+					const expected = this.baseline + this.appended
+					if (current.size > expected) {
+						// Benign sibling append — silent rebase, same inode.
+						this.baseline = current.size
+						this.appended = 0
+					} else if (current.size < expected) {
+						this.deps.onWriteError(1)
+						this.deps.onExternalChange?.(
+							`outbox file truncated externally (${expected} → ${current.size} bytes)`,
+						)
+						this.baseline = current.size
+						this.appended = 0
+						// A truncation mid-line leaves no trailing LF — re-establish the
+						// line boundary so our appends stay parseable (the torn fragment
+						// becomes an isolatable bad line for the consumer, per contract).
+						// The append fd is write-only; probe the last byte read-only.
+						if (current.size > 0 && this.handle) {
 							try {
-								const buffer = Buffer.alloc(1)
-								const read = await probe.read(buffer, 0, 1, current.size - 1)
-								if (read.bytesRead === 1 && buffer[0] !== 0x0a) {
-									await this.handle.write("\n")
-									this.baseline += 1
+								const probe = await fs.open(this.deps.filePath, "r")
+								try {
+									const buffer = Buffer.alloc(1)
+									const read = await probe.read(buffer, 0, 1, current.size - 1)
+									if (read.bytesRead === 1 && buffer[0] !== 0x0a) {
+										await this.handle.write("\n")
+										this.baseline += 1
+									}
+								} finally {
+									await probe.close()
 								}
-							} finally {
-								await probe.close()
+							} catch {
+								// Probe failure is not fatal — the consumer isolates bad lines.
 							}
-						} catch {
-							// Probe failure is not fatal — the consumer isolates bad lines.
 						}
 					}
 				}
@@ -201,11 +217,12 @@ export class Writer {
 						`outbox file deleted externally (~${lost} bytes of written facts lost)`,
 					)
 				}
-				await this.handle.close()
+				await this.handle?.close()
 				this.handle = undefined
 				await this.open()
 				if (!this.handle || this.state !== "ACTIVE") throw new Error("reopen failed")
 			}
+			if (!this.handle) throw new Error("writer not active")
 			for (const line of lines) {
 				// One write per line including the trailing LF.
 				await this.handle.write(line + "\n")

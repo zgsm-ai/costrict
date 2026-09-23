@@ -89,7 +89,7 @@ describe("writer external-change detection", () => {
 		await writer.round()
 		expect(errors()).toBe(1)
 		expect(events().length).toBe(1)
-		expect(events()[0]).toContain("external truncation")
+		expect(events()[0]).toContain("truncated externally")
 
 		// After rebaselining, the next round writes without further alarms.
 		record(recorder, 3)
@@ -108,15 +108,72 @@ describe("writer external-change detection", () => {
 		await writer.close()
 	})
 
-	it("flags external appends too", async () => {
-		const { recorder, writer, events, file } = await setup()
+	it("sibling appends rebase silently — no alarm, no write_error (single-file layout)", async () => {
+		const { recorder, writer, events, errors, file } = await setup()
 		record(recorder, 1)
 		await writer.round()
-		await fs.appendFile(file, '{"foreign":true}\n', "utf8")
+		await fs.appendFile(file, '{"schema_version":"1.0","sibling":true}\n', "utf8")
+		record(recorder, 2)
+		await writer.round()
+		expect(events().length).toBe(0)
+		expect(errors()).toBe(0)
+		const lines = (await fs.readFile(file, "utf8"))
+			.trim()
+			.split("\n")
+			.map((l) => JSON.parse(l) as { data?: { duration_ms?: number } })
+		const durations = lines.map((l) => l.data?.duration_ms).filter((d): d is number => d !== undefined)
+		expect(durations).toContain(1)
+		expect(durations).toContain(2)
+		await writer.close()
+	})
+
+	it("sibling rewrite via temp+rename heals through the inode-change path", async () => {
+		const { recorder, writer, events, errors, file } = await setup()
+		record(recorder, 1)
+		await writer.round()
+		const raw = await fs.readFile(file, "utf8")
+		const temp = `${file}.tmp-sibling`
+		await fs.writeFile(temp, raw, "utf8")
+		await fs.rename(temp, file)
+
 		record(recorder, 2)
 		await writer.round()
 		expect(events().length).toBe(1)
-		expect(events()[0]).toContain("external truncation or append")
+		expect(events()[0]).toContain("replaced externally (inode change)")
+		expect(errors()).toBe(1)
+
+		record(recorder, 3)
+		await writer.round()
+		expect(errors()).toBe(1) // no repeat alarm after reopen+rebase
+		const lines = (await fs.readFile(file, "utf8"))
+			.trim()
+			.split("\n")
+			.map((l) => JSON.parse(l) as { data: { duration_ms: number } })
+		const durations = lines.map((l) => l.data.duration_ms)
+		expect(durations).toContain(2)
+		expect(durations).toContain(3)
+		await writer.close()
+	})
+
+	it("pads a torn tail with LF on open so the first append never glues onto it", async () => {
+		const { file } = await setup()
+		await fs.appendFile(file, '{"schema_version":"1.0","torn', "utf8")
+		const sizeBefore = (await fs.stat(file)).size
+		const { recorder, writer } = await setup()
+		record(recorder, 1)
+		await writer.round()
+		const raw = await fs.readFile(file, "utf8")
+		expect(raw.length).toBeGreaterThan(sizeBefore)
+		const lines = raw.split("\n").filter((l) => l.trim())
+		const parsed = lines.filter((l) => {
+			try {
+				JSON.parse(l)
+				return true
+			} catch {
+				return false
+			}
+		})
+		expect(parsed.length).toBe(lines.length - 1) // exactly one torn fragment
 		await writer.close()
 	})
 
