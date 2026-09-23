@@ -19,6 +19,7 @@ import { setActiveCloudProvider, onCloudUiReady, setCloudUnavailable } from "./c
 import { Package } from "../../../shared/package"
 import { readCostrictAccessToken } from "../../costrict/runtime-config"
 import { t } from "../../../i18n"
+import type { StabilityController } from "../../stability/setup"
 
 export function getAssistantUIWorkspaceDirectory() {
 	return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
@@ -109,6 +110,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 		private readonly context: vscode.ExtensionContext,
 		private readonly outputChannel: vscode.OutputChannel,
 		csCloudService: CsCloudService,
+		private readonly stability?: StabilityController,
 	) {
 		this.csCloudService = csCloudService
 	}
@@ -129,6 +131,19 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 
 	async resolveWebviewView(webviewView: vscode.WebviewView) {
 		this.view = webviewView
+		this.stability?.panel.setupBegin()
+		// M03: readiness starts at first view resolve (60s deadline, five conditions).
+		this.stability?.panel.readinessBegin()
+
+		// Availability input: panel visibility (M13).
+		webviewView.onDidChangeVisibility(
+			() => {
+				this.stability?.viewStateChanged(webviewView.visible)
+			},
+			null,
+			this.disposables,
+		)
+		this.stability?.viewStateChanged(webviewView.visible)
 
 		// Register as active cloud provider
 		const cloudGen = setActiveCloudProvider(this)
@@ -205,8 +220,13 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					body?: string
 				}
 			}) => {
+				// Stability bridge first: webview facts are untrusted input routed
+				// through the collector's admission gate (design §5).
+				if (this.stability?.handleWebviewMessage(message)) return
 				if (message.type === "ASSISTANT_UI_READY") {
 					onCloudUiReady(cloudGen)
+					this.stability?.panel.setupHtmlInjected()
+					this.stability?.panel.setupReady()
 					return
 				}
 				if (message.type === "openExternal" && message.url) {
@@ -221,32 +241,38 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					}
 				}
 				if (message.type === "openFile" && message.path) {
-					const workspaceDir = getAssistantUIWorkspaceDirectory()
-					let filePath: string
-					if (path.isAbsolute(message.path)) {
-						filePath = message.path
-					} else {
-						filePath = path.resolve(workspaceDir || "", message.path)
-						// Prevent path traversal for relative paths: resolved path
-						// must stay within the workspace directory.
-						if (
-							workspaceDir &&
-							filePath !== workspaceDir &&
-							!filePath.startsWith(workspaceDir + path.sep)
-						) {
-							return
+					void this.stability?.ide("open_file", async () => {
+						const workspaceDir = getAssistantUIWorkspaceDirectory()
+						let filePath: string
+						if (path.isAbsolute(message.path!)) {
+							filePath = message.path!
+						} else {
+							filePath = path.resolve(workspaceDir || "", message.path!)
+							// Prevent path traversal for relative paths: resolved path
+							// must stay within the workspace directory.
+							if (
+								workspaceDir &&
+								filePath !== workspaceDir &&
+								!filePath.startsWith(workspaceDir + path.sep)
+							) {
+								return
+							}
 						}
-					}
-					const uri = vscode.Uri.file(filePath)
-					vscode.commands.executeCommand("vscode.open", uri)
+						const uri = vscode.Uri.file(filePath)
+						await vscode.commands.executeCommand("vscode.open", uri)
+					})
 				}
 				if (message.type === "openDiff" && message.path && message.patch) {
-					void openDiffView(message.path, message.patch)
+					void this.stability?.ide("open_diff", () =>
+						Promise.resolve(openDiffView(message.path!, message.patch!)),
+					)
 				}
 				if (message.type === "executeCommand" && message.command) {
 					// Only allow whitelisted commands to prevent arbitrary command execution
 					if (isAllowedExecuteCommand(message.command)) {
-						vscode.commands.executeCommand(message.command)
+						void this.stability?.ide("execute_command", () =>
+							Promise.resolve(vscode.commands.executeCommand(message.command!)),
+						)
 					}
 				}
 				if (message.type === "reloadAssistantUI") {
@@ -320,12 +346,21 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					const abortController = new AbortController()
 					this.proxyFetchControllers.set(message.requestId, abortController)
 					try {
-						const response = await fetch(message.input, {
-							method: message.init?.method,
-							headers: message.init?.headers,
-							body: message.init?.body,
-							signal: abortController.signal,
-						})
+						const response =
+							(await this.stability?.rpc(String(message.input), () =>
+								fetch(message.input!, {
+									method: message.init?.method,
+									headers: message.init?.headers,
+									body: message.init?.body,
+									signal: abortController.signal,
+								}),
+							)) ??
+							(await fetch(message.input, {
+								method: message.init?.method,
+								headers: message.init?.headers,
+								body: message.init?.body,
+								signal: abortController.signal,
+							}))
 						const headers: Record<string, string> = {}
 						response.headers.forEach((value, key) => {
 							headers[key] = value
@@ -506,9 +541,20 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 
 	private async loadContent(webviewView: vscode.WebviewView) {
 		webviewView.webview.html = getAssistantUILoadingHtml(this.context, t("common:csCloud.loading.startingCloud"))
+		const loadTrigger = this.cachedHtml === undefined && this.view ? "initial" : "reload"
+		this.stability?.panel.loadBegin(loadTrigger)
+		// Credentials probe (M08) — observation only, no auth of our own.
+		void this.stability?.panel.probeCredentials(async () => {
+			try {
+				return await CostrictAuthService.getInstance().getCurrentAccessToken()
+			} catch {
+				return readCostrictAccessToken()
+			}
+		})
 
 		try {
 			const workspaceDirectory = getAssistantUIWorkspaceDirectory()
+			this.stability?.connection.beginJourney(loadTrigger === "initial" ? "initial" : "manual")
 			const baseUrl = await vscode.window.withProgress(
 				{
 					location: vscode.ProgressLocation.Notification,
@@ -517,6 +563,8 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 				},
 				() => this.csCloudService.ensureStarted(),
 			)
+			this.stability?.connection.connected()
+			this.stability?.panel.conditionMet("workspace")
 
 			const config = getAssistantUIConfig()
 			const useIframe = shouldUseAssistantUIIframe(this.context, config)
@@ -619,9 +667,16 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 				webviewView.webview.html = html
 				this.cachedHtml = html
 			}
+			this.stability?.panel.setupHtmlInjected()
+			this.stability?.panel.loadEnd("success")
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error)
 			this.outputChannel.appendLine(`[AssistantUI] ${message}`)
+			this.stability?.connection.failed(
+				error instanceof Error && error.name === "Error" ? "cs_cloud_start_failed" : "unknown",
+			)
+			this.stability?.panel.setupFailed(error instanceof Error ? error.name.toLowerCase() : "unknown")
+			this.stability?.panel.loadEnd("failure", "other")
 			webviewView.webview.html = this.getErrorHtml(message)
 		}
 	}

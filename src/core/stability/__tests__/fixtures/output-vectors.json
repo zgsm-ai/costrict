@@ -1,0 +1,18 @@
+{
+	"schema_major": 1,
+	"status": "pending_freeze",
+	"namespace": null,
+	"array_encoding": {
+		"description": "派生输出ID = UUIDv5(固定命名空间, 规范化数组编码)；数组元素顺序和编码固定，禁止无分隔字符串拼接；输出为36字符小写UUID（对齐 JetBrains 版 9.1）。命名空间常量值及数组规范化编码在阶段0随外部证据一并冻结，冻结前不得生成正式输出ID，也不得临时生成namespace或直接复用input event_id。",
+		"canonical_elements": ["input_event_id", "sink", "output_name", "mapping_version"],
+		"sink_enum": ["metrics", "logs"],
+		"charset": "UTF-8无BOM",
+		"output_id_length": 36
+	},
+	"length_limits": {
+		"metrics_output_id_max_chars": 64,
+		"logs_output_id_max_chars": 128
+	},
+	"pending_vectors": ["counter", "histogram", "log"],
+	"vectors": []
+}

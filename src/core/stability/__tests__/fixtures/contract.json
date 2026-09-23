@@ -1,0 +1,16 @@
+{
+	"schema_major": 1,
+	"description": "阶段0契约门（设计§10）。全部门为 false 时阻止正式启用（fail-open 只约束本地采集，不替代交接验收）。任一门翻 true 需在评审中登记证据。",
+	"gates": {
+		"identity_verified": false,
+		"metrics_authority_verified": false,
+		"series_key_verified": false,
+		"late_query_verified": false,
+		"output_ids_verified": false,
+		"consumer_displacement_verified": false,
+		"durable_ack_verified": false,
+		"logs_contract_verified": false,
+		"default_profile_verified": false,
+		"webview_bridge_contract_verified": false
+	}
+}

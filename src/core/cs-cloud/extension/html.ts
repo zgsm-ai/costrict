@@ -1172,6 +1172,10 @@ export function getAssistantUIIframeHtml(
           }
           return;
         }
+        if (event.data?.type === "stabilityFacts") {
+          vscodeApi.postMessage({ type: "stabilityFacts", facts: event.data.facts, dropped: event.data.dropped });
+          return;
+        }
         if (event.data?.type === "FETCH_QUOTA") {
           vscodeApi.postMessage({ type: "fetchQuota", baseUrl: event.data.baseUrl, token: event.data.token });
           return;

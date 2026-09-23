@@ -1,0 +1,42 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "CoStrict stability control file v1 (vscode.json)",
+	"description": "cs-cloud atomically writes ~/.costrict/telemetry/control/vscode.json; the plugin polls every 30s. FAIL-OPEN semantics (design §6): missing/empty/malformed/unknown-schema_major file means NO restriction (collect all purposes, policy_revision=0, account_epoch=unbound). Restriction only ever comes from a currently-valid explicit policy. Fields are identical to jetbrains.json.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["schema_major", "revision", "enabled", "account_epoch", "account_state", "expires_at"],
+	"properties": {
+		"schema_major": { "const": 1 },
+		"revision": { "type": "integer", "minimum": 0 },
+		"enabled": { "type": "boolean", "description": "Total authorization; false stops both purposes." },
+		"metrics_enabled": { "type": "boolean" },
+		"metrics_expires_at": {
+			"type": "integer",
+			"minimum": 0,
+			"description": "UTC ms; effective deadline = min(own expires, common expires_at)."
+		},
+		"logs_enabled": { "type": "boolean" },
+		"logs_expires_at": { "type": "integer", "minimum": 0 },
+		"account_epoch": { "type": "string", "minLength": 1, "maxLength": 64 },
+		"account_state": { "enum": ["pending", "ready", "disabled"] },
+		"expires_at": { "type": "integer", "minimum": 0 },
+		"metrics_allowed_categories": {
+			"type": "array",
+			"items": { "enum": ["critical", "diagnostic"] },
+			"uniqueItems": true
+		},
+		"logs_allowed_categories": {
+			"type": "array",
+			"items": { "enum": ["critical", "diagnostic"] },
+			"uniqueItems": true
+		},
+		"log_detail_rate_limit": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["per_fingerprint_max_per_minute"],
+			"properties": {
+				"per_fingerprint_max_per_minute": { "type": "integer", "minimum": 0, "maximum": 60 }
+			}
+		}
+	}
+}
