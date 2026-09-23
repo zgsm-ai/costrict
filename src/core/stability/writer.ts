@@ -78,9 +78,36 @@ export class Writer {
 	private async open(): Promise<void> {
 		try {
 			await fs.mkdir(this.deps.dirPath, { recursive: true, mode: 0o700 })
+			// Single-file layout: a crashed predecessor (or sibling window) may
+			// have left a torn tail without LF — pad the line boundary BEFORE we
+			// append so our first line never glues onto it (the torn fragment
+			// becomes an isolatable bad line for the consumer). The append fd is
+			// write-only, so probe the last byte through a read-only handle.
+			const size = await fs.stat(this.deps.filePath).then(
+				(s) => s.size,
+				() => 0,
+			)
+			if (size > 0) {
+				const probe = await fs.open(this.deps.filePath, "r")
+				try {
+					const buffer = Buffer.alloc(1)
+					const read = await probe.read(buffer, 0, 1, size - 1)
+					if (read.bytesRead === 1 && buffer[0] !== 0x0a) {
+						const pad = await fs.open(this.deps.filePath, "a", 0o600)
+						try {
+							await pad.write("\n")
+						} finally {
+							await pad.close()
+						}
+					}
+				} finally {
+					await probe.close()
+				}
+			}
 			this.handle = await fs.open(this.deps.filePath, "a", 0o600)
 			this.state = "ACTIVE"
-			// Rebaseline after every (re)open — our append position starts here.
+			// Rebaseline after every (re)open — our append position starts here
+			// (includes the pad byte when one was written).
 			this.appended = 0
 			this.baseline = await this.handle.stat().then(
 				(s) => s.size,

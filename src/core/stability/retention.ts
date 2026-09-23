@@ -1,14 +1,12 @@
 /**
- * Retention & cleanup (design §2.1). Budget: this producer's own file is
- * rewritten to ≤10MiB via temp + same-dir atomic rename when it exceeds the
- * budget; evicted rows are counted as health drops and retained lines are
- * never modified (a shorter file resets the consumer's displacement; replay
- * duplicates are absorbed by event_id dedup). Stale: files under the same
- * scope prefix with no append for 24h are deleted whole (predecessor
- * remnants) — the plugin only ever touches its OWN scope; cross-scope
- * cleanup belongs to the consumer. Active producers emit periodic health
- * facts so they are never stale-swept. Cleanup never blocks business and
- * never emits uploadable facts.
+ * Retention (design §2.1, single-file layout). Budget: the shared scope file
+ * is rewritten to ≤10MiB via temp + same-dir atomic rename when it exceeds
+ * the budget; evicted rows are counted as health drops and retained lines
+ * are never modified (a shorter file resets the consumer's displacement;
+ * replay duplicates are absorbed by event_id dedup). Concurrent sibling
+ * writers self-heal from the rewrite through the writer's external-change
+ * guard (write_error + rebaseline + reopen). Legacy per-producer files of
+ * the same scope are deleted once at activation without migration.
  */
 import { promises as fs } from "fs"
 import type { Clock } from "./clock"
@@ -68,27 +66,27 @@ export class Retention {
 		return evicted
 	}
 
-	/** Delete same-scope predecessor files with no append for 24h. */
-	async sweep(): Promise<number> {
+	/**
+	 * Single-file layout transition: delete same-scope LEGACY files from the
+	 * per-producer era (`<scope>-pr-*.jsonl`) without migration — regular
+	 * files only, never other scopes, never the active scope file. Runs once
+	 * after the writer is active (mirrors the JetBrains clearLegacy).
+	 */
+	async clearLegacy(): Promise<number> {
 		let entries: string[]
 		try {
 			entries = await fs.readdir(this.deps.dirPath)
 		} catch {
 			return 0
 		}
-		const prefix = `${this.deps.scope}-`
-		const now = this.deps.clock.wall()
 		let deleted = 0
 		for (const entry of entries) {
-			if (!entry.startsWith(prefix) || !entry.endsWith(".jsonl")) continue
+			if (!entry.startsWith(`${this.deps.scope}-pr-`) || !entry.endsWith(".jsonl")) continue
 			const full = `${this.deps.dirPath}/${entry}`
 			if (full === this.deps.activePath) continue
 			try {
-				const stat = await fs.stat(full)
-				if (now - stat.mtimeMs >= STALE_MS) {
-					await fs.unlink(full)
-					deleted++
-				}
+				await fs.unlink(full)
+				deleted++
 			} catch {
 				// raced away — not an error
 			}

@@ -7,7 +7,7 @@ import { PolicyStore } from "../policy"
 import { StabilityQueue } from "../queue"
 import { Recorder, type Identity } from "../recorder"
 import { Writer } from "../writer"
-import { Retention, FILE_BUDGET_BYTES, STALE_MS } from "../retention"
+import { Retention, FILE_BUDGET_BYTES } from "../retention"
 import { detectUnclean } from "../producer"
 import { StabilityService } from "../service"
 import type { Fact } from "../fact"
@@ -193,64 +193,84 @@ describe("retention", () => {
 		expect(raw.endsWith("\n")).toBe(true)
 	})
 
-	it("sweeps only same-scope stale predecessor files, never the active one", async () => {
+	it("clearLegacy deletes only same-scope per-producer files, never other scopes", async () => {
 		const outbox = path.join(home, "outbox")
 		await fs.mkdir(outbox, { recursive: true })
-		const active = path.join(outbox, "scope-a-pr-new.jsonl")
+		const active = path.join(outbox, "scope-a.jsonl")
 		await fs.writeFile(active, "{}\n", "utf8")
-		const oldMine = path.join(outbox, "scope-a-pr-old.jsonl")
-		await fs.writeFile(oldMine, "{}\n", "utf8")
-		const oldOther = path.join(outbox, "scope-b-pr-old.jsonl")
-		await fs.writeFile(oldOther, "{}\n", "utf8")
-		const freshMine = path.join(outbox, "scope-a-pr-fresh.jsonl")
-		await fs.writeFile(freshMine, "{}\n", "utf8")
-		const oldTime = new Date(clock.wall() - STALE_MS - 1000)
-		await fs.utimes(oldMine, oldTime, oldTime)
-		await fs.utimes(oldOther, oldTime, oldTime)
+		const legacyMine = path.join(outbox, "scope-a-pr-old.jsonl")
+		await fs.writeFile(legacyMine, "{}\n", "utf8")
+		const otherScope = path.join(outbox, "scope-b.jsonl")
+		await fs.writeFile(otherScope, "{}\n", "utf8")
+		const junk = path.join(outbox, "scope-a-notes.txt")
+		await fs.writeFile(junk, "notes\n", "utf8")
 		const retention = new Retention({ dirPath: outbox, scope: "scope-a", activePath: active, clock })
-		const deleted = await retention.sweep()
+		const deleted = await retention.clearLegacy()
 		expect(deleted).toBe(1)
-		await expect(fs.stat(oldMine)).rejects.toThrow()
-		await expect(fs.stat(oldOther)).resolves.toBeTruthy() // cross-scope belongs to the consumer
-		await expect(fs.stat(freshMine)).resolves.toBeTruthy()
-		await expect(fs.stat(active)).resolves.toBeTruthy()
+		await expect(fs.stat(legacyMine)).rejects.toThrow()
+		await expect(fs.stat(otherScope)).resolves.toBeTruthy() // other scope untouched
+		await expect(fs.stat(junk)).resolves.toBeTruthy() // non-jsonl untouched
+		await expect(fs.stat(active)).resolves.toBeTruthy() // active scope file kept
 	})
 })
 
-describe("unclean detection", () => {
-	it("flags the last started run without shutdown, skipping torn tails and quarantining unknown schema", async () => {
-		const outbox = path.join(home, "outbox")
-		await fs.mkdir(outbox, { recursive: true })
-		const started = (run: string) =>
-			JSON.stringify({ schema_version: "1.0", name: "plugin.started", run_id: run, channel: "critical" })
-		const shutdown = (run: string) =>
-			JSON.stringify({ schema_version: "1.0", name: "plugin.shutdown", run_id: run, channel: "critical" })
-		await fs.writeFile(
-			path.join(outbox, "scope-a-pr-1.jsonl"),
-			`${started("run-1")}\n${shutdown("run-1")}\n${started("run-2")}\n{"torn`,
-			"utf8",
-		)
-		await fs.writeFile(
-			path.join(outbox, "scope-a-pr-2.jsonl"),
-			JSON.stringify({ schema_version: "2.0", name: "plugin.started", run_id: "run-x" }) + "\n",
-			"utf8",
-		)
-		const unclean = await detectUnclean(outbox, "scope-a", path.join(outbox, "scope-a-pr-new.jsonl"))
-		expect(unclean).toEqual({ previous_run_id: "run-2", evidence: "no_shutdown_record" })
+describe("unclean detection (single scope file)", () => {
+	const file = () => path.join(home, "outbox", "scope-a.jsonl")
+	const started = (run: string, ts = 1000) =>
+		JSON.stringify({
+			schema_version: "1.0",
+			name: "plugin.started",
+			run_id: run,
+			channel: "critical",
+			timestamp: ts,
+		})
+	const shutdown = (run: string, ts = 2000) =>
+		JSON.stringify({
+			schema_version: "1.0",
+			name: "plugin.shutdown",
+			run_id: run,
+			channel: "critical",
+			timestamp: ts,
+		})
+	const factLine = (name: string, run: string, ts: number) =>
+		JSON.stringify({ schema_version: "1.0", name, run_id: run, channel: "critical", timestamp: ts })
+
+	beforeEach(async () => {
+		await fs.mkdir(path.join(home, "outbox"), { recursive: true })
 	})
 
-	it("returns undefined when every run ended normally", async () => {
-		const outbox = path.join(home, "outbox")
-		await fs.mkdir(outbox, { recursive: true })
-		await fs.writeFile(
-			path.join(outbox, "scope-a-pr-1.jsonl"),
-			JSON.stringify({ schema_version: "1.0", name: "plugin.started", run_id: "run-1" }) +
-				"\n" +
-				JSON.stringify({ schema_version: "1.0", name: "plugin.shutdown", run_id: "run-1" }) +
-				"\n",
-			"utf8",
-		)
-		expect(await detectUnclean(outbox, "scope-a", "none")).toBeUndefined()
+	it("flags the last started run without shutdown; torn tail and bad lines are skipped", async () => {
+		await fs.writeFile(file(), `${started("run-1")}\n${shutdown("run-1")}\n${started("run-2")}\n{"torn`, "utf8")
+		expect(await detectUnclean(file(), 1000 + 91_000)).toEqual({
+			previous_run_id: "run-2",
+			evidence: "no_shutdown_record",
+		})
+	})
+
+	it("returns undefined when every run ended normally or the file is absent", async () => {
+		await fs.writeFile(file(), `${started("run-1")}\n${shutdown("run-1")}\n`, "utf8")
+		expect(await detectUnclean(file(), 1000 + 60_000)).toBeUndefined()
+		await fs.rm(file())
+		expect(await detectUnclean(file(), 1000 + 60_000)).toBeUndefined()
+	})
+
+	it("liveness window: a sibling run with recent facts is not reported as a crash", async () => {
+		// run-2 started long ago but its health facts are RECENT (fixed clock at 1000+30s).
+		const now = 1000 + 30_000
+		await fs.writeFile(file(), `${started("run-2", 1000)}\n${factLine("telemetry.health", "run-2", now)}\n`, "utf8")
+		expect(await detectUnclean(file(), now)).toBeUndefined() // alive sibling
+		expect(await detectUnclean(file(), now + 91_000)).toEqual({
+			previous_run_id: "run-2",
+			evidence: "no_shutdown_record",
+		}) // went silent past the window
+	})
+
+	it("shutdown of an OLDER run does not clear the newest started run", async () => {
+		await fs.writeFile(file(), `${started("run-1")}\n${started("run-2")}\n${shutdown("run-1")}\n`, "utf8")
+		expect(await detectUnclean(file(), 1000 + 91_000)).toEqual({
+			previous_run_id: "run-2",
+			evidence: "no_shutdown_record",
+		})
 	})
 })
 
@@ -291,7 +311,7 @@ describe("stability service end to end", () => {
 		await service.stop("app_close")
 		const files = await fs.readdir(path.join(home, "outbox"))
 		expect(files.length).toBe(1)
-		expect(files[0]).toMatch(/^scope-[0-9a-f]+-pr-[0-9a-f]+\.jsonl$/)
+		expect(files[0]).toMatch(/^scope-[0-9a-f]+\.jsonl$/)
 		const facts = await readFacts(path.join(home, "outbox", files[0]))
 		const names = facts.map((f) => f.name)
 		expect(names).toContain("plugin.started")
@@ -402,6 +422,8 @@ describe("stability service end to end", () => {
 		await first.ready()
 		// Force the writer to drain the started fact.
 		await first.drain()
+		// Advance past the 90s liveness window so the crashed run is judged dead.
+		clock.tick(91_000)
 
 		const second = new StabilityService({
 			home,

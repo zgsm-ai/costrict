@@ -58,49 +58,61 @@ export interface UncleanEvidence {
 }
 
 /**
- * Scan predecessor files (same scope prefix, excluding `excludePath`).
- * Returns the latest run whose started has no shutdown; undefined when every
- * predecessor run ended normally.
+ * Detect an unclean predecessor inside the shared scope file (single-file
+ * layout, aligned with the JetBrains 2026-09-23 change). Reads the whole
+ * file (bounded by the writer budget), considers only LF-terminated rows,
+ * skips malformed rows and unknown schema files, and flags the run of the
+ * LAST plugin.started that has no later plugin.shutdown with the same
+ * run_id.
+ *
+ * Multi-writer liveness heuristic (VS Code runs concurrent extension hosts
+ * against one scope file): a candidate run counts as dead only when it has
+ * NO fact newer than LIVE_WINDOW_MS — live windows emit telemetry.health at
+ * a 30s cadence even with the sidebar closed, so an idle-but-alive sibling
+ * window is not misreported as a crash. Timestamps come from recorded
+ * facts, never from mtimes (no death inference by mtime).
  */
-export const detectUnclean = async (
-	dirPath: string,
-	scope: string,
-	excludePath: string,
-): Promise<UncleanEvidence | undefined> => {
-	let entries: string[]
+export const LIVE_WINDOW_MS = 90_000
+
+export const detectUnclean = async (filePath: string, now: number): Promise<UncleanEvidence | undefined> => {
+	let raw: string
 	try {
-		entries = await fs.readdir(dirPath)
+		raw = await fs.readFile(filePath, "utf8")
 	} catch {
 		return undefined
 	}
-	const prefix = `${scope}-`
-	let unclean: UncleanEvidence | undefined
-	for (const entry of [...entries].sort()) {
-		if (!entry.startsWith(prefix) || !entry.endsWith(".jsonl")) continue
-		const full = `${dirPath}/${entry}`
-		if (full === excludePath) continue
-		const raw = await fs.readFile(full, "utf8").catch(() => "")
-		const lines = raw.endsWith("\n") ? raw.slice(0, -1).split("\n") : raw.split("\n").slice(0, -1)
-		const pending = new Map<string, true>()
-		let unknownSchema = false
-		for (const line of lines) {
-			let fact: Fact
-			try {
-				const parsed = JSON.parse(line) as Partial<Fact>
-				if (parsed.schema_version !== "1.0") {
-					unknownSchema = true
-					break
-				}
-				fact = parsed as Fact
-			} catch {
-				continue // middle bad line: isolate and keep processing
+	if (!raw.endsWith("\n")) raw = raw.slice(0, raw.lastIndexOf("\n") + 1) // torn tail is skipped, not judged
+	const lines = raw.slice(0, -1).split("\n")
+	let lastStartedRun: string | undefined
+	let lastStartedAt = 0
+	let newestFactAt = 0
+	let unknownSchema = false
+	const shutdownRuns = new Set<string>()
+	const runNewest = new Map<string, number>()
+	for (const line of lines) {
+		if (!line.trim()) continue
+		let fact: Fact
+		try {
+			const parsed = JSON.parse(line) as Partial<Fact>
+			if (parsed.schema_version !== "1.0") {
+				unknownSchema = true
+				break
 			}
-			if (fact.name === "plugin.started") pending.set(fact.run_id, true)
-			if (fact.name === "plugin.shutdown") pending.delete(fact.run_id)
+			fact = parsed as Fact
+		} catch {
+			continue // middle bad line: isolate and keep processing
 		}
-		if (unknownSchema) continue // quarantined, not line-tolerated
-		const open = [...pending.keys()]
-		if (open.length > 0) unclean = { previous_run_id: open[open.length - 1], evidence: "no_shutdown_record" }
+		runNewest.set(fact.run_id, Math.max(runNewest.get(fact.run_id) ?? 0, fact.timestamp))
+		if (fact.name === "plugin.started") {
+			lastStartedRun = fact.run_id
+			lastStartedAt = fact.timestamp
+		}
+		if (fact.name === "plugin.shutdown" && fact.run_id === lastStartedRun) {
+			shutdownRuns.add(fact.run_id)
+		}
 	}
-	return unclean
+	if (unknownSchema || !lastStartedRun || shutdownRuns.has(lastStartedRun)) return undefined
+	newestFactAt = runNewest.get(lastStartedRun) ?? lastStartedAt
+	if (now - newestFactAt < LIVE_WINDOW_MS) return undefined // sibling window still alive
+	return { previous_run_id: lastStartedRun, evidence: "no_shutdown_record" }
 }

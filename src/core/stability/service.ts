@@ -228,6 +228,11 @@ export class StabilityService {
 		}
 	}
 
+	/** Single-file layout: one `<scope-id>.jsonl` per installation, appended across windows/reloads. */
+	private fileName(): string {
+		return `${this.scope}.jsonl`
+	}
+
 	private async activate(): Promise<void> {
 		const runId = randomId("run")
 		const recorder = new Recorder({
@@ -236,12 +241,21 @@ export class StabilityService {
 			queue: this.queue!,
 			clock: this.deps.clock,
 		})
+		// §7.3/M22: unclean detection MUST run BEFORE the writer opens the
+		// shared file — the writer pads a torn tail with LF, and padding first
+		// could make a crash fragment parse as a shutdown (JetBrains-verified
+		// ordering). The liveness window keeps concurrent sibling windows from
+		// being misreported as crashes.
+		const unclean = await detectUnclean(
+			path.join(this.deps.home, "outbox", this.fileName()),
+			this.deps.clock.wall(),
+		)
 		const writer = new Writer({
 			queue: this.queue!,
 			policy: this.policy!,
 			clock: this.deps.clock,
 			dirPath: path.join(this.deps.home, "outbox"),
-			filePath: path.join(this.deps.home, "outbox", `${this.scope}-${this.producerId}.jsonl`),
+			filePath: path.join(this.deps.home, "outbox", this.fileName()),
 			onWriteError: (count) => {
 				if (this.health) this.health.writeError += count
 			},
@@ -255,7 +269,7 @@ export class StabilityService {
 		this.retention = new Retention({
 			dirPath: path.join(this.deps.home, "outbox"),
 			scope: this.scope,
-			activePath: path.join(this.deps.home, "outbox", `${this.scope}-${this.producerId}.jsonl`),
+			activePath: path.join(this.deps.home, "outbox", this.fileName()),
 			clock: this.deps.clock,
 			onEvict: (count) => {
 				this.deps.log?.(`stability retention evicted ${count} lines`)
@@ -272,12 +286,10 @@ export class StabilityService {
 		this.faultsRef = new Faults({ recorder, clock: this.deps.clock })
 		this.activated = true
 		this.standby?.setStandbyTarget(recorder)
+		// Legacy per-producer files of this scope are deleted once, without
+		// migration (debug-era layout); other scopes are untouched.
+		await this.retention.clearLegacy().catch(() => 0)
 		recorder.record({ name: "plugin.started", kind: "lifecycle", channel: "critical", data: {} })
-		const unclean = await detectUnclean(
-			path.join(this.deps.home, "outbox"),
-			this.scope,
-			path.join(this.deps.home, "outbox", `${this.scope}-${this.producerId}.jsonl`),
-		)
 		if (this.stopped) return // check 3: post-commit
 		if (unclean) {
 			recorder.record({
@@ -310,7 +322,6 @@ export class StabilityService {
 	private async retentionLoop(): Promise<void> {
 		if (this.stopped) return
 		try {
-			await this.retention?.sweep()
 			await this.retention?.compact()
 		} catch (err) {
 			this.deps.log?.(`stability retention failed: ${err instanceof Error ? err.name : "unknown"}`)
