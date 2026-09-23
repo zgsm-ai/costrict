@@ -60,7 +60,7 @@ describe("writer appends single-file NDJSON", () => {
 			dirPath: path.join(home, "outbox"),
 			filePath: path.join(home, "outbox", "scope-a-pr-1.jsonl"),
 			onWriteError: (c) => (writeErrors += c),
-			onWriteDrop: (c) => (writeDrops += c),
+			onWriteDrop: (c, _reason) => (writeDrops += c),
 		})
 		return { writer, counts: () => ({ writeErrors, writeDrops }) }
 	}

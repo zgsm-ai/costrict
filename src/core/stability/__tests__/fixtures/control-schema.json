@@ -6,28 +6,56 @@
 	"additionalProperties": false,
 	"required": ["schema_major", "revision", "enabled", "account_epoch", "account_state", "expires_at"],
 	"properties": {
-		"schema_major": { "const": 1 },
-		"revision": { "type": "integer", "minimum": 0 },
-		"enabled": { "type": "boolean", "description": "Total authorization; false stops both purposes." },
-		"metrics_enabled": { "type": "boolean" },
+		"schema_major": {
+			"const": 1
+		},
+		"revision": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"enabled": {
+			"type": "boolean",
+			"description": "Total authorization; false stops both purposes."
+		},
+		"metrics_enabled": {
+			"type": "boolean"
+		},
 		"metrics_expires_at": {
 			"type": "integer",
 			"minimum": 0,
 			"description": "UTC ms; effective deadline = min(own expires, common expires_at)."
 		},
-		"logs_enabled": { "type": "boolean" },
-		"logs_expires_at": { "type": "integer", "minimum": 0 },
-		"account_epoch": { "type": "string", "minLength": 1, "maxLength": 64 },
-		"account_state": { "enum": ["pending", "ready", "disabled"] },
-		"expires_at": { "type": "integer", "minimum": 0 },
+		"logs_enabled": {
+			"type": "boolean"
+		},
+		"logs_expires_at": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"account_epoch": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 64
+		},
+		"account_state": {
+			"enum": ["pending", "ready", "disabled"]
+		},
+		"expires_at": {
+			"type": "integer",
+			"minimum": 0
+		},
 		"metrics_allowed_categories": {
 			"type": "array",
-			"items": { "enum": ["critical", "diagnostic"] },
+			"items": {
+				"enum": ["critical", "diagnostic"]
+			},
 			"uniqueItems": true
 		},
 		"logs_allowed_categories": {
 			"type": "array",
-			"items": { "enum": ["critical", "diagnostic"] },
+			"items": {
+				"enum": ["critical", "diagnostic"]
+			},
 			"uniqueItems": true
 		},
 		"log_detail_rate_limit": {
@@ -35,8 +63,22 @@
 			"additionalProperties": false,
 			"required": ["per_fingerprint_max_per_minute"],
 			"properties": {
-				"per_fingerprint_max_per_minute": { "type": "integer", "minimum": 0, "maximum": 60 }
+				"per_fingerprint_max_per_minute": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 60
+				}
 			}
+		},
+		"accepted_fact_schema_majors": {
+			"type": "array",
+			"items": {
+				"type": "integer",
+				"minimum": 1
+			},
+			"minItems": 1,
+			"uniqueItems": true,
+			"description": "consumer可重构的事实schema major；缺失等同[1]。v1插件仅解析不启用；包含2时高保真诊断(v2)才可能被放行"
 		}
 	}
 }

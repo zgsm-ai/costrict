@@ -264,8 +264,10 @@ export class StabilityService {
 			onWriteError: (count) => {
 				if (this.health) this.health.writeError += count
 			},
-			onWriteDrop: (count) => {
-				if (this.health) this.health.writeDrop += count
+			onWriteDrop: (count, reason) => {
+				if (!this.health) return
+				if (reason === "policy") this.health.writeDropPolicy += count
+				else this.health.writeDropInvalid += count
 			},
 			onExternalChange: (message) => {
 				this.deps.log?.(`stability: ${message}`)
@@ -277,6 +279,7 @@ export class StabilityService {
 			activePath: path.join(this.deps.home, "outbox", this.fileName()),
 			clock: this.deps.clock,
 			onEvict: (count) => {
+				if (this.health) this.health.evicted += count
 				this.deps.log?.(`stability retention evicted ${count} lines`)
 			},
 		})

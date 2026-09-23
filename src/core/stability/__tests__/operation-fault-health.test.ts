@@ -242,6 +242,48 @@ describe("health", () => {
 		expect(next.data.write_error).toBe(1)
 		expect(next.data.webview_buffer_full).toBe(0)
 	})
+
+	it("breaks drops down by reason with JetBrains-aligned keys", () => {
+		const health = new Health({ recorder, queue, clock, intervalMs: 30_000 })
+		health.poll() // baseline
+		drain()
+
+		recorder.record({ name: "nope", kind: "operation", channel: "critical", data: {} }) // droppedInvalid
+		health.writeDropPolicy = 2 // write gate: re-permit / retired epoch
+		health.evicted = 7 // budget rewrite
+		health.poll()
+		const [fact] = drain()
+		expect(fact.data.drop_invalid).toBe(1)
+		expect(fact.data.drop_policy).toBe(2)
+		expect(fact.data.drop_evicted).toBe(7)
+		// aggregate covers every non-failure reason
+		expect(fact.data.drop).toBe(1 + 2 + 7)
+		// v1 has no failure tier yet: constants stay zero and quality is good
+		expect(fact.data.drop_contention).toBe(0)
+		expect(fact.data.drop_oversize).toBe(0)
+		expect(fact.data.drop_failure).toBe(0)
+		expect(fact.data.quality).toBe("good")
+
+		clock.tick(31_000)
+		health.poll() // next window: all deltas reset
+		const [next] = drain()
+		expect(next.data.drop).toBe(0)
+		expect(next.data.drop_evicted).toBe(0)
+		expect(next.data.quality).toBe("good")
+	})
+
+	it("keeps a loss window visible when the health record itself is not queued", () => {
+		recorder.close() // stopped: every record returns disabled
+		const health = new Health({ recorder, queue, clock, intervalMs: 30_000 })
+		health.poll()
+		expect(drain().length).toBe(0) // never queued
+		// baseline did not advance → lossChanged stays true → every poll
+		// re-attempts (observable as growing disabledShutdown self-drops)
+		const after = recorder.counters.disabledShutdown
+		health.poll()
+		expect(recorder.counters.disabledShutdown).toBeGreaterThan(after)
+		expect(drain().length).toBe(0)
+	})
 })
 
 describe("fault fingerprint frames", () => {

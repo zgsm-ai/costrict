@@ -47,6 +47,29 @@ describe("control file parsing", () => {
 	it("accepts a valid file", () => {
 		expect(parseControl(JSON.stringify(baseControl))?.revision).toBe(7)
 	})
+
+	it("parses accepted_fact_schema_majors strictly", () => {
+		expect(
+			parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [1, 2] }))
+				?.accepted_fact_schema_majors,
+		).toEqual([1, 2])
+		// absent, empty, non-integer, non-positive or duplicated values invalidate the whole file
+		expect(parseControl(JSON.stringify(baseControl))?.accepted_fact_schema_majors).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [] }))).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [1, "2"] }))).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [0] }))).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [2, 2] }))).toBeUndefined()
+	})
+
+	it("exposes acceptedMajors on the snapshot, defaulting to [1]", async () => {
+		const clock = fixedClock(1000)
+		const store = new PolicyStore({ controlPath: controlPath(), clock })
+		await store.refresh()
+		expect(store.current().acceptedMajors).toEqual([1]) // fail-open default
+		await writeControl({ ...baseControl, accepted_fact_schema_majors: [1, 2] })
+		await store.refresh()
+		expect(store.current().acceptedMajors).toEqual([1, 2])
+	})
 })
 
 describe("policy store fail-open semantics", () => {

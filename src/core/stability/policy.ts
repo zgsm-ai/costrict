@@ -26,6 +26,8 @@ export interface ControlFile {
 	metrics_allowed_categories?: Channel[]
 	logs_allowed_categories?: Channel[]
 	log_detail_rate_limit?: { per_fingerprint_max_per_minute: number }
+	/** Consumer-declared reconstructable fact schema majors. Absent = [1]. */
+	accepted_fact_schema_majors?: number[]
 }
 
 const CLOSED_KEYS = new Set([
@@ -42,6 +44,7 @@ const CLOSED_KEYS = new Set([
 	"metrics_allowed_categories",
 	"logs_allowed_categories",
 	"log_detail_rate_limit",
+	"accepted_fact_schema_majors",
 ])
 
 export const UNBOUND_EPOCH = "unbound"
@@ -76,6 +79,16 @@ export const parseControl = (raw: string): ControlFile | undefined => {
 		const categories = file[`${purpose}_allowed_categories`]
 		if (categories !== undefined && !isChannelArray(categories)) return undefined
 	}
+	const majors = file.accepted_fact_schema_majors
+	if (majors !== undefined) {
+		if (
+			!Array.isArray(majors) ||
+			majors.length === 0 ||
+			!majors.every((m) => Number.isInteger(m) && m >= 1) ||
+			new Set(majors).size !== majors.length
+		)
+			return undefined
+	}
 	return file as unknown as ControlFile
 }
 
@@ -84,6 +97,8 @@ export interface PolicySnapshot {
 	epoch: string
 	/** undefined = no valid explicit policy (fail-open). */
 	explicit: ControlFile | undefined
+	/** Fact schema majors the consumer can reconstruct; [1] unless declared. Dormant in v1. */
+	acceptedMajors: number[]
 	/** Effective purposes permitted for a fact of `channel` requesting `requested`. */
 	permit: (channel: Channel, requested: readonly Purpose[]) => readonly Purpose[]
 }
@@ -92,6 +107,7 @@ const failOpen = (): PolicySnapshot => ({
 	revision: 0,
 	epoch: UNBOUND_EPOCH,
 	explicit: undefined,
+	acceptedMajors: [1],
 	permit: (_channel, requested) => requested,
 })
 
@@ -174,6 +190,7 @@ export class PolicyStore {
 			revision: file.revision,
 			epoch: file.account_epoch,
 			explicit: file,
+			acceptedMajors: file.accepted_fact_schema_majors ?? [1],
 			permit: (channel, requested) => {
 				// Advance the floor on every observation so an already-seen-expired
 				// permit cannot revive after a wall-clock rollback.

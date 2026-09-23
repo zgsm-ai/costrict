@@ -226,6 +226,20 @@ export const DICTIONARY: Record<string, NameRule> = {
 			depth_bytes: { type: "int", optional: true, max: 2 ** 31 },
 			oldest_age_ms: { type: "int", optional: true, max: 2 ** 31 },
 			webview_buffer_full: { type: "int", optional: true, max: 2 ** 31 },
+			// Drop reason breakdown (v1-minor additive; key names aligned with
+			// the JetBrains 2026-09-23 health change, which the cs-cloud v2
+			// branch already parses). Deltas over the same window as `drop`.
+			drop_invalid: { type: "int", optional: true, max: 2 ** 31 },
+			drop_contention: { type: "int", optional: true, max: 2 ** 31 },
+			drop_capacity: { type: "int", optional: true, max: 2 ** 31 },
+			drop_policy: { type: "int", optional: true, max: 2 ** 31 },
+			drop_oversize: { type: "int", optional: true, max: 2 ** 31 },
+			drop_evicted: { type: "int", optional: true, max: 2 ** 31 },
+			drop_failure: { type: "int", optional: true, max: 2 ** 31 },
+			// "degraded" once any failure-class record was ever lost (failure
+			// tiers are a v2 concept; stays "good" in v1). Consumers must not
+			// trust precise success rates of a degraded run.
+			quality: { type: "token", vocab: ["good", "degraded"], optional: true },
 		},
 		purposes: DUAL,
 		phased: false,

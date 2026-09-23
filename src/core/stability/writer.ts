@@ -36,8 +36,8 @@ export interface WriterDeps {
 	dirPath: string
 	/** write_error increments sink (health). */
 	onWriteError: (count: number) => void
-	/** Facts dropped at the write gate (re-permit/retired epoch/oversize). */
-	onWriteDrop: (count: number) => void
+	/** Facts dropped at the write gate, by reason: "policy" = re-permit decline or retired epoch, "invalid" = encode failure. */
+	onWriteDrop: (count: number, reason: "policy" | "invalid") => void
 	/** Local-only notice for external file interference (truncation/append). */
 	onExternalChange?: (message: string) => void
 	intervalMs?: number
@@ -258,24 +258,26 @@ export class Writer {
 	/** Write-gate settlement: re-permit, drop retired epochs, real-encode check. */
 	private settle(batch: QueuedFact[]): string[] {
 		const lines: string[] = []
-		let dropped = 0
+		let policy = 0
+		let invalid = 0
 		for (const item of batch) {
 			const permitted = this.deps.policy.current().permit(item.fact.channel, item.fact.purposes)
 			if (permitted.length === 0) {
-				dropped++
+				policy++
 				continue
 			}
 			if (this.deps.policy.isRetired(item.fact.account_epoch)) {
-				dropped++
+				policy++
 				continue
 			}
 			try {
 				lines.push(encodeLine(item.fact))
 			} catch {
-				dropped++
+				invalid++
 			}
 		}
-		if (dropped > 0) this.deps.onWriteDrop(dropped)
+		if (policy > 0) this.deps.onWriteDrop(policy, "policy")
+		if (invalid > 0) this.deps.onWriteDrop(invalid, "invalid")
 		return lines
 	}
 
