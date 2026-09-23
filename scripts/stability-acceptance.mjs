@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url"
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const keep = process.argv.includes("--keep")
 const home = mkdtempSync(path.join(os.tmpdir(), "stability-acceptance-"))
-const evidence = path.join(root, "docs", "vscode-stability-evidence.md")
+const evidence = path.join(root, "docs", "stability", "vscode-stability-evidence.md")
 
 const env = {
 	...process.env,

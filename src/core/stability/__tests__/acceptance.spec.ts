@@ -110,6 +110,11 @@ describe("acceptance G1-local", () => {
 			facts.every((f) => f.mode === "monolith" && f.connection_provider === "cs-cloud"),
 			"mode/provider constants",
 		)
+		check(
+			"wire-ide-major",
+			facts.every((f) => typeof f.ide_build_major === "string" && /^\d+\.\d+$/.test(f.ide_build_major)),
+			`ide_build_major normalized (${facts[0]?.ide_build_major})`,
+		)
 	})
 
 	it("dictionary sweep: every non-singleton name queues and lands on disk", async () => {

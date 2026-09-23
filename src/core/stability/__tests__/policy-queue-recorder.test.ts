@@ -167,6 +167,7 @@ const identity: Identity = {
 	device_id: "device-6d81",
 	plugin_version: "3.0.21",
 	ide_build: "1.102",
+	ide_build_major: "1.102",
 	os_family: "linux",
 	arch: "x64",
 	env: "test",

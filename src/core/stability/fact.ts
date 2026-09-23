@@ -35,6 +35,7 @@ export interface Fact {
 	plugin_version: string
 	ide_product: string
 	ide_build: string
+	ide_build_major: string
 	os_family: string
 	arch: string
 	env: "prod" | "dev" | "test"

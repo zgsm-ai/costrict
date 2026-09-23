@@ -13,6 +13,7 @@ import type { Fact } from "./fact"
 export interface EnvSnapshot {
 	plugin_version: string
 	ide_build: string
+	ide_build_major: string
 	os_family: string
 	arch: string
 	env: "prod" | "dev" | "test"
@@ -32,9 +33,20 @@ const archOf = (): "x64" | "arm64" | "ia32" | "unknown" => {
 	return "unknown"
 }
 
+/**
+ * ide_build_major normalizes the user-facing major.minor (VS Code reports
+ * "1.138.0"; the user-visible scheme is 1.138) — mirrors the JetBrains
+ * ide_build_major shared wire field.
+ */
+export const ideBuildMajorOf = (ideBuild: string): string => {
+	const parts = ideBuild.split(".")
+	return parts.length >= 2 ? `${parts[0]}.${parts[1]}` : ideBuild
+}
+
 export const envSnapshot = (pluginVersion: string, ideBuild: string, dev: boolean, test: boolean): EnvSnapshot => ({
 	plugin_version: pluginVersion,
 	ide_build: ideBuild,
+	ide_build_major: ideBuildMajorOf(ideBuild),
 	os_family: osFamily(),
 	arch: archOf(),
 	env: test ? "test" : dev ? "dev" : "prod",

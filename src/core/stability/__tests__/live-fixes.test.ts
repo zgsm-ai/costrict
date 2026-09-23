@@ -33,6 +33,7 @@ const identity: Identity = {
 	device_id: "device-fix",
 	plugin_version: "3.0.22",
 	ide_build: "1.138",
+	ide_build_major: "1.138",
 	os_family: "linux",
 	arch: "x64",
 	env: "test",

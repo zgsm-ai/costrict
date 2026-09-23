@@ -24,6 +24,7 @@ export interface Identity {
 	device_id: string
 	plugin_version: string
 	ide_build: string
+	ide_build_major: string
 	os_family: string
 	arch: string
 	env: "prod" | "dev" | "test"
@@ -136,6 +137,7 @@ export class Recorder {
 			plugin_version: this.deps.identity.plugin_version,
 			ide_product: "vscode",
 			ide_build: this.deps.identity.ide_build,
+			ide_build_major: this.deps.identity.ide_build_major,
 			os_family: this.deps.identity.os_family,
 			arch: this.deps.identity.arch,
 			env: this.deps.identity.env,

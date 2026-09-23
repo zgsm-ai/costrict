@@ -20,6 +20,7 @@
 		"plugin_version",
 		"ide_product",
 		"ide_build",
+		"ide_build_major",
 		"os_family",
 		"arch",
 		"env",
@@ -31,47 +32,123 @@
 		"data"
 	],
 	"properties": {
-		"schema_version": { "const": "1.0" },
-		"event_id": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
-		"timestamp": { "type": "integer", "minimum": 0 },
-		"producer_id": { "$ref": "#/definitions/token" },
-		"run_id": { "$ref": "#/definitions/token" },
-		"channel": { "enum": ["critical", "diagnostic"] },
-		"seq": { "type": "integer", "minimum": 1 },
-		"account_epoch": { "type": "string", "minLength": 1, "maxLength": 64 },
-		"policy_revision": { "type": "integer", "minimum": 0 },
-		"purposes": { "type": "array", "items": { "enum": ["metrics", "logs"] }, "minItems": 1, "uniqueItems": true },
-		"source": { "const": "vscode-plugin" },
-		"device_id": { "$ref": "#/definitions/token" },
-		"plugin_version": { "type": "string", "maxLength": 64 },
-		"ide_product": { "const": "vscode" },
-		"ide_build": { "type": "string", "maxLength": 64 },
-		"os_family": { "enum": ["windows", "macos", "linux", "unknown"] },
-		"arch": { "enum": ["x64", "arm64", "ia32", "unknown"] },
-		"env": { "enum": ["prod", "dev", "test"] },
-		"mode": { "const": "monolith" },
-		"side": { "enum": ["extension_host", "webview"] },
-		"connection_provider": { "const": "cs-cloud" },
-		"kind": { "enum": ["operation", "transition", "lifecycle", "interval", "diagnostic", "health", "sample"] },
-		"name": { "$ref": "#/definitions/token" },
+		"schema_version": {
+			"const": "1.0"
+		},
+		"event_id": {
+			"type": "string",
+			"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+		},
+		"timestamp": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"producer_id": {
+			"$ref": "#/definitions/token"
+		},
+		"run_id": {
+			"$ref": "#/definitions/token"
+		},
+		"channel": {
+			"enum": ["critical", "diagnostic"]
+		},
+		"seq": {
+			"type": "integer",
+			"minimum": 1
+		},
+		"account_epoch": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 64
+		},
+		"policy_revision": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"purposes": {
+			"type": "array",
+			"items": {
+				"enum": ["metrics", "logs"]
+			},
+			"minItems": 1,
+			"uniqueItems": true
+		},
+		"source": {
+			"const": "vscode-plugin"
+		},
+		"device_id": {
+			"$ref": "#/definitions/token"
+		},
+		"plugin_version": {
+			"type": "string",
+			"maxLength": 64
+		},
+		"ide_product": {
+			"const": "vscode"
+		},
+		"ide_build": {
+			"type": "string",
+			"maxLength": 64
+		},
+		"os_family": {
+			"enum": ["windows", "macos", "linux", "unknown"]
+		},
+		"arch": {
+			"enum": ["x64", "arm64", "ia32", "unknown"]
+		},
+		"env": {
+			"enum": ["prod", "dev", "test"]
+		},
+		"mode": {
+			"const": "monolith"
+		},
+		"side": {
+			"enum": ["extension_host", "webview"]
+		},
+		"connection_provider": {
+			"const": "cs-cloud"
+		},
+		"kind": {
+			"enum": ["operation", "transition", "lifecycle", "interval", "diagnostic", "health", "sample"]
+		},
+		"name": {
+			"$ref": "#/definitions/token"
+		},
 		"context": {
 			"type": "object",
 			"additionalProperties": false,
 			"maxProperties": 5,
 			"properties": {
-				"operation_id": { "$ref": "#/definitions/token" },
-				"attempt_id": { "$ref": "#/definitions/token" },
-				"fault_id": { "$ref": "#/definitions/token" },
-				"trace_id": { "$ref": "#/definitions/token" },
-				"workspace_id": { "$ref": "#/definitions/token" }
+				"operation_id": {
+					"$ref": "#/definitions/token"
+				},
+				"attempt_id": {
+					"$ref": "#/definitions/token"
+				},
+				"fault_id": {
+					"$ref": "#/definitions/token"
+				},
+				"trace_id": {
+					"$ref": "#/definitions/token"
+				},
+				"workspace_id": {
+					"$ref": "#/definitions/token"
+				}
 			}
 		},
 		"data": {
 			"type": "object",
 			"description": "Event-specific whitelist; see dictionary.ts and the design doc §4 table."
+		},
+		"ide_build_major": {
+			"type": "string",
+			"maxLength": 32
 		}
 	},
 	"definitions": {
-		"token": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]{0,63}$" }
+		"token": {
+			"type": "string",
+			"pattern": "^[a-z0-9][a-z0-9_.-]{0,63}$"
+		}
 	}
 }

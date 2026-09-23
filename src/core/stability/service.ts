@@ -198,6 +198,7 @@ export class StabilityService {
 			device_id: deviceId(this.deps.store),
 			plugin_version: this.env.plugin_version,
 			ide_build: this.env.ide_build,
+			ide_build_major: this.env.ide_build_major,
 			os_family: this.env.os_family,
 			arch: this.env.arch,
 			env: this.env.env,
