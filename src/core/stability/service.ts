@@ -14,7 +14,8 @@
 import path from "path"
 import os from "os"
 import { systemClock, type Clock } from "./clock"
-import { deviceId, randomId, scopeId, type IdStore } from "./ids"
+import { deviceId, randomId, type IdStore } from "./ids"
+import { durableScopeId } from "./scope-store"
 import { PolicyStore } from "./policy"
 import { StabilityQueue } from "./queue"
 import { Recorder, type Identity } from "./recorder"
@@ -84,7 +85,6 @@ export class StabilityService {
 	start(): StabilityService {
 		if (this.started || this.stopped) return this
 		this.started = true
-		this.scope = scopeId(this.deps.store)
 		this.producerId = randomId("pr")
 		const dirPath = path.join(this.deps.home, "outbox")
 		this.policy = new PolicyStore({
@@ -234,6 +234,11 @@ export class StabilityService {
 	}
 
 	private async activate(): Promise<void> {
+		if (!this.scope) {
+			// Durable scope resolution (single-file layout: the scope IS the
+			// filename). Resolved once per process; globalState migrates as seed.
+			this.scope = await durableScopeId(this.deps.home, this.deps.store, (message) => this.deps.log?.(message))
+		}
 		const runId = randomId("run")
 		const recorder = new Recorder({
 			identity: this.identity(runId),
