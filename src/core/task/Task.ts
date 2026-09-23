@@ -3339,6 +3339,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 											if (existingToolUse && existingToolUse.type === "tool_use") {
 												existingToolUse.partial = false
 												existingToolUse.nativeArgs = undefined
+												// params is also filled during streaming (for handlePartial UI) and history falls back to it via `nativeArgs || params`
+												existingToolUse.params = {}
 												// Ensure it has the ID for native protocol
 												;(existingToolUse as any).id = event.id
 											}
@@ -3878,6 +3880,8 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							if (existingToolUse && existingToolUse.type === "tool_use") {
 								existingToolUse.partial = false
 								existingToolUse.nativeArgs = undefined
+								// params is also filled during streaming (for handlePartial UI) and history falls back to it via `nativeArgs || params`
+								existingToolUse.params = {}
 								// Ensure it has the ID for native protocol
 								;(existingToolUse as any).id = event.id
 							}

@@ -33,6 +33,7 @@ describe("Truncated native tool-call args on finalize failure (issue #1360)", ()
 	function finalizeNullBranch(existingToolUse: ToolUse): ToolUse {
 		existingToolUse.partial = false
 		existingToolUse.nativeArgs = undefined
+		existingToolUse.params = {}
 		return existingToolUse
 	}
 
@@ -110,5 +111,24 @@ describe("Truncated native tool-call args on finalize failure (issue #1360)", ()
 		}
 
 		expect(wouldBeBlocked(complete)).toBe(false)
+	})
+
+	it("also clears params, which streaming fills and the history builder falls back to", () => {
+		// NativeToolCallParser fills params during streaming (for handlePartial UI), and
+		// Task.ts records history via `toolUse.nativeArgs || toolUse.params`. Clearing
+		// nativeArgs alone would just move the truncated value into history via params.
+		const truncated: WriteToFileToolUse = {
+			type: "tool_use",
+			name: "write_to_file",
+			params: { path: "src/config.json", content: '{"apiKey": "sk-live-abc123' },
+			partial: true,
+			nativeArgs: { path: "src/config.json", content: '{"apiKey": "sk-live-abc123' },
+		}
+
+		finalizeNullBranch(truncated)
+
+		const recordedInput = truncated.nativeArgs || truncated.params
+		expect(recordedInput).toEqual({})
+		expect(JSON.stringify(recordedInput)).not.toContain("sk-live-abc123")
 	})
 })
