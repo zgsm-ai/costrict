@@ -3,9 +3,6 @@ import { type TelemetryEvent } from "@roo-code/types"
 import { TelemetryControlResponse } from "./types"
 import { MetricsRecorder } from "./metricsRecorder"
 import { BaseCostrictApiClient } from "./baseCostrictApiClient"
-import * as os from "os"
-import * as path from "path"
-import * as fs from "fs"
 
 export class CostrictTelemetryClient extends BaseCostrictApiClient {
 	private reportIntervalMinutes: number = 20
@@ -17,7 +14,13 @@ export class CostrictTelemetryClient extends BaseCostrictApiClient {
 		super(endpoint, additionalHeaders, debug)
 		this.logger = createLogger()
 		this.metricsRecorder = new MetricsRecorder()
-		this.cleanupLegacyTelemetryDir()
+		// NOTE: do NOT "clean up" ~/.costrict/telemetry here. That directory is
+		// the root of the stability v1 collection protocol (outbox + control,
+		// see src/core/stability/ and docs/vscode-stability-design.md) and is
+		// written by every running extension host. A previous
+		// cleanupLegacyTelemetryDir() rmSync'd the whole tree on every
+		// activation, wiping live stability data (field-verified: prefix loss
+		// on every window open/reload).
 	}
 	public override async capture(event: TelemetryEvent): Promise<void> {
 		if (!this.isTelemetryEnabled() || !this.isEventCapturable(event.event)) {
@@ -130,19 +133,6 @@ export class CostrictTelemetryClient extends BaseCostrictApiClient {
 		} catch (error) {
 			this.logger.error(
 				`[CostrictTelemetryClient#reportMetrics] Error: ${error instanceof Error ? error.message : String(error)}`,
-			)
-		}
-	}
-	private cleanupLegacyTelemetryDir(): void {
-		try {
-			const homeDir = os.homedir()
-			const telemetryDir = path.join(homeDir, ".costrict", "telemetry")
-			if (fs.existsSync(telemetryDir)) {
-				fs.rmSync(telemetryDir, { recursive: true, force: true })
-			}
-		} catch (error) {
-			this.logger.error(
-				`[CostrictTelemetryClient#cleanupLegacyTelemetryDir] Error: ${error instanceof Error ? error.message : String(error)}`,
 			)
 		}
 	}
