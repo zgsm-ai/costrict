@@ -36,6 +36,16 @@ export const observeRpc = <T>(service: StabilityService, path: string, run: () =
 			op?.end(err instanceof Error && err.name === "AbortError" ? "cancelled" : "failure", {
 				error_code: err instanceof Error ? err.name.toLowerCase() : "other",
 			})
+			// v2: mirror failures into the diagnostics bridge — the outbox
+			// alone must explain WHAT threw, with payload and correlation.
+			service.mirror({
+				severity: "error",
+				component: "rpc",
+				message: `rpc ${apiGroupOf(path)} failed: ${err instanceof Error ? err.message : String(err)}`,
+				error: err instanceof Error ? err : undefined,
+				context: op ? { operation_id: op.id } : undefined,
+				attributes: { route: path, code: err instanceof Error ? err.name.toLowerCase() : "other" },
+			})
 			throw err
 		},
 	)

@@ -20,6 +20,7 @@ import type { Draft, FactContext } from "./fact"
 import type { Recorder } from "./recorder"
 import type { Clock } from "./clock"
 import { uuid } from "./ids"
+import { currentDiagnosticContext } from "./diagnostic-context"
 
 const WINDOW_MS = 60_000
 const MAX_KEYS = 1024
@@ -102,7 +103,7 @@ export class Diagnostics {
 	report(input: DiagnosticInput): string {
 		const id = uuid()
 		try {
-			return this.collect(input, id)
+			return this.collect(this.withAmbient(input), id)
 		} catch {
 			// Fail-closed: anything the filter/format pipeline threw becomes a
 			// redaction failure record without original text.
@@ -169,6 +170,17 @@ export class Diagnostics {
 	private v1Component(component: string): string {
 		const token = scalar(component)
 		return token === "host" || token === "webview" || token === "collector" ? token : "host"
+	}
+
+	/** Ambient context fills gaps; explicit arguments always win. */
+	private withAmbient(input: DiagnosticInput): DiagnosticInput {
+		const ambient = currentDiagnosticContext()
+		return {
+			...input,
+			context: { ...(ambient.context ?? {}), ...(input.context ?? {}) },
+			attributes: { ...(ambient.attributes ?? {}), ...(input.attributes ?? {}) },
+			payloads: { ...(ambient.payloads ?? {}), ...(input.payloads ?? {}) },
+		}
 	}
 
 	/** Same-object identity: the incident id is remembered, never rewritten. */

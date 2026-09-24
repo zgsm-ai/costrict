@@ -55,6 +55,10 @@ export const envSnapshot = (pluginVersion: string, ideBuild: string, dev: boolea
 export interface UncleanEvidence {
 	previous_run_id: string
 	evidence: "no_shutdown_record"
+	/** Forensic anchors of the dead run (JB v2 parity, optional on the wire). */
+	last_seq?: number
+	last_fact_time?: number
+	unfinished_operations?: string[]
 }
 
 /**
@@ -85,16 +89,17 @@ export const detectUnclean = async (filePath: string, now: number): Promise<Uncl
 	const lines = raw.slice(0, -1).split("\n")
 	let lastStartedRun: string | undefined
 	let lastStartedAt = 0
-	let newestFactAt = 0
 	let unknownSchema = false
 	const shutdownRuns = new Set<string>()
 	const runNewest = new Map<string, number>()
+	let lastSeq = 0
+	const openOperations = new Map<string, string>() // operation_id → name
 	for (const line of lines) {
 		if (!line.trim()) continue
 		let fact: Fact
 		try {
 			const parsed = JSON.parse(line) as Partial<Fact>
-			if (parsed.schema_version !== "1.0") {
+			if (parsed.schema_version !== "1.0" && parsed.schema_version !== "2.0") {
 				unknownSchema = true
 				break
 			}
@@ -106,13 +111,30 @@ export const detectUnclean = async (filePath: string, now: number): Promise<Uncl
 		if (fact.name === "plugin.started") {
 			lastStartedRun = fact.run_id
 			lastStartedAt = fact.timestamp
+			openOperations.clear() // a fresh run invalidates prior pairing state
 		}
 		if (fact.name === "plugin.shutdown" && fact.run_id === lastStartedRun) {
 			shutdownRuns.add(fact.run_id)
 		}
+		// Forensic anchors: only facts of the candidate run count.
+		if (fact.run_id === lastStartedRun) {
+			lastSeq = Math.max(lastSeq, fact.seq ?? 0)
+			const opId = fact.context?.operation_id
+			if (opId !== undefined && fact.kind === "operation") {
+				if (fact.data?.phase === "start") openOperations.set(opId, fact.name)
+				else if (fact.data?.phase === "end" || fact.data?.phase === "progress") openOperations.delete(opId)
+			}
+		}
 	}
 	if (unknownSchema || !lastStartedRun || shutdownRuns.has(lastStartedRun)) return undefined
-	newestFactAt = runNewest.get(lastStartedRun) ?? lastStartedAt
+	const newestFactAt = runNewest.get(lastStartedRun) ?? lastStartedAt
 	if (now - newestFactAt < LIVE_WINDOW_MS) return undefined // sibling window still alive
-	return { previous_run_id: lastStartedRun, evidence: "no_shutdown_record" }
+	const unfinished = [...openOperations.values()].slice(0, 32).map((name) => name)
+	return {
+		previous_run_id: lastStartedRun,
+		evidence: "no_shutdown_record" as const,
+		last_seq: lastSeq || undefined,
+		last_fact_time: newestFactAt || undefined,
+		...(unfinished.length > 0 ? { unfinished_operations: unfinished } : {}),
+	}
 }

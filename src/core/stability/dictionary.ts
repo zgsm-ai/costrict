@@ -127,7 +127,14 @@ export const DICTIONARY: Record<string, NameRule> = {
 	},
 	"plugin.unclean": {
 		kind: "lifecycle",
-		fields: { previous_run_id: { type: "token" }, evidence: { type: "token", vocab: ["no_shutdown_record"] } },
+		fields: {
+			previous_run_id: { type: "token" },
+			evidence: { type: "token", vocab: ["no_shutdown_record"] },
+			// v1-minor enrichment (JB v2 parity): forensic anchors of the dead run
+			last_seq: { type: "int", optional: true, max: 2 ** 31 },
+			last_fact_time: { type: "int", optional: true, max: 2 ** 53 },
+			unfinished_operations: { type: "list", optional: true, itemMax: 64, max: 32 },
+		},
 		purposes: DUAL,
 		phased: false,
 	},

@@ -8,6 +8,7 @@
  * epoch and purposes; end keeps the begin-time epoch (never rebinds across
  * account switches) and purposes may only shrink.
  */
+import { randomId } from "./ids"
 import type { FactContext, Purpose } from "./fact"
 import type { Recorder } from "./recorder"
 import type { Clock } from "./clock"
@@ -32,6 +33,8 @@ export class Operation {
 	private readonly startedMono: number
 	private readonly startedWall: number
 	private readonly epoch: string | undefined
+	/** Correlation handle for v2 diagnostics context (never written to v1 facts). */
+	readonly id = randomId("op")
 	private settled = false
 	private timer: ReturnType<typeof setTimeout> | undefined
 
@@ -98,7 +101,11 @@ export class Operation {
 			kind: "operation",
 			channel: "critical",
 			data,
-			...(this.deps.context ? { context: this.deps.context } : {}),
+			// operation_id context (v1-minor additive) enables consumer-side
+			// start/end pairing and unclean unfinished-operation attribution.
+			...(this.deps.context || this.id
+				? { context: { ...(this.deps.context ?? {}), operation_id: this.id } }
+				: {}),
 			...(this.epoch ? { epoch: this.epoch } : {}),
 			...(this.deps.purposes ? { purposes: this.deps.purposes } : {}),
 			t_wall: phase === "start" ? this.startedWall : undefined,

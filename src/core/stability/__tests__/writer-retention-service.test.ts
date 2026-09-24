@@ -312,7 +312,7 @@ describe("unclean detection (single scope file)", () => {
 
 	it("flags the last started run without shutdown; torn tail and bad lines are skipped", async () => {
 		await fs.writeFile(file(), `${started("run-1")}\n${shutdown("run-1")}\n${started("run-2")}\n{"torn`, "utf8")
-		expect(await detectUnclean(file(), 1000 + 91_000)).toEqual({
+		expect(await detectUnclean(file(), 1000 + 91_000)).toMatchObject({
 			previous_run_id: "run-2",
 			evidence: "no_shutdown_record",
 		})
@@ -330,7 +330,7 @@ describe("unclean detection (single scope file)", () => {
 		const now = 1000 + 30_000
 		await fs.writeFile(file(), `${started("run-2", 1000)}\n${factLine("telemetry.health", "run-2", now)}\n`, "utf8")
 		expect(await detectUnclean(file(), now)).toBeUndefined() // alive sibling
-		expect(await detectUnclean(file(), now + 91_000)).toEqual({
+		expect(await detectUnclean(file(), now + 91_000)).toMatchObject({
 			previous_run_id: "run-2",
 			evidence: "no_shutdown_record",
 		}) // went silent past the window
@@ -338,10 +338,27 @@ describe("unclean detection (single scope file)", () => {
 
 	it("shutdown of an OLDER run does not clear the newest started run", async () => {
 		await fs.writeFile(file(), `${started("run-1")}\n${started("run-2")}\n${shutdown("run-1")}\n`, "utf8")
-		expect(await detectUnclean(file(), 1000 + 91_000)).toEqual({
+		expect(await detectUnclean(file(), 1000 + 91_000)).toMatchObject({
 			previous_run_id: "run-2",
 			evidence: "no_shutdown_record",
 		})
+	})
+
+	it("enriches evidence with forensic anchors of the dead run", async () => {
+		const startedOp = (run: string, id: string) =>
+			`{"schema_version":"1.0","timestamp":2000,"run_id":"${run}","seq":7,"name":"rpc","kind":"operation","channel":"critical","context":{"operation_id":"${id}"},"data":{"phase":"start","deadline_ms":30000,"api_group":"session"}}`
+		const endedOp = (run: string, id: string) =>
+			`{"schema_version":"1.0","timestamp":2100,"run_id":"${run}","seq":8,"name":"rpc","kind":"operation","channel":"critical","context":{"operation_id":"${id}"},"data":{"phase":"end","result":"failure","duration_ms":5,"api_group":"session"}}`
+		await fs.writeFile(
+			file(),
+			`${started("run-9", 1000)}\n${startedOp("run-9", "op-open")}\n${startedOp("run-9", "op-closed")}\n${endedOp("run-9", "op-closed")}\n`,
+			"utf8",
+		)
+		const evidence = await detectUnclean(file(), 2100 + 91_000) // past the window from the newest fact
+		expect(evidence).toMatchObject({ previous_run_id: "run-9", evidence: "no_shutdown_record" })
+		expect(evidence?.last_seq).toBe(8)
+		expect(evidence?.last_fact_time).toBe(2100)
+		expect(evidence?.unfinished_operations).toEqual(["rpc"])
 	})
 })
 

@@ -23,7 +23,8 @@ import { Writer } from "./writer"
 import { Retention } from "./retention"
 import { Health } from "./health"
 import { Faults } from "./fault"
-import { Diagnostics } from "./diagnostics"
+import { Diagnostics, type DiagnosticInput } from "./diagnostics"
+import { DiagnosticBridge } from "./diagnostic-bridge"
 import { Resources } from "./resources"
 import { Operation } from "./operation"
 import { detectUnclean, envSnapshot, type EnvSnapshot } from "./producer"
@@ -66,6 +67,7 @@ export class StabilityService {
 	private health: Health | undefined
 	private faultsRef: Faults | undefined
 	private diagnosticsRef: Diagnostics | undefined
+	private readonly bridge = new DiagnosticBridge()
 	private retention: Retention | undefined
 	private standby: Recorder | undefined
 	private timers: ReturnType<typeof setInterval>[] = []
@@ -189,6 +191,18 @@ export class StabilityService {
 		return this.diagnosticsRef
 	}
 
+	/**
+	 * Mirror a WARN/ERROR record into the diagnostics pipeline (log-mirror
+	 * semantics: bounded, async, never blocks or throws at the call site).
+	 */
+	mirror(input: DiagnosticInput): void {
+		this.bridge.offer(input)
+	}
+
+	get diagnosticBridge(): DiagnosticBridge {
+		return this.bridge
+	}
+
 	get healthCounts(): Health | undefined {
 		return this.health
 	}
@@ -300,6 +314,9 @@ export class StabilityService {
 		this.recorder = recorder
 		this.faultsRef = new Faults({ recorder, clock: this.deps.clock })
 		this.diagnosticsRef = new Diagnostics({ recorder, clock: this.deps.clock })
+		// Log mirror sink: the bridge drains asynchronously into report();
+		// reentrancy inside the drain is dropped by the bridge itself.
+		this.bridge.install((input) => this.diagnosticsRef?.report(input))
 		this.activated = true
 		this.standby?.setStandbyTarget(recorder)
 		// Legacy per-producer files of this scope are deleted once, without
@@ -312,7 +329,13 @@ export class StabilityService {
 				name: "plugin.unclean",
 				kind: "lifecycle",
 				channel: "critical",
-				data: { previous_run_id: unclean.previous_run_id, evidence: unclean.evidence },
+				data: {
+					previous_run_id: unclean.previous_run_id,
+					evidence: unclean.evidence,
+					...(unclean.last_seq !== undefined ? { last_seq: unclean.last_seq } : {}),
+					...(unclean.last_fact_time !== undefined ? { last_fact_time: unclean.last_fact_time } : {}),
+					...(unclean.unfinished_operations ? { unfinished_operations: unclean.unfinished_operations } : {}),
+				},
 			})
 		}
 		this.coverage = {

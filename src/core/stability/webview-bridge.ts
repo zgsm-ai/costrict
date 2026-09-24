@@ -134,5 +134,16 @@ export const receiveStabilityFacts = (
 		const health = service.healthCounts
 		if (health) health.webviewBufferFull += outcome.overflowed
 	}
+	// v2: mirror only anomalous batches — rejections and overflows are real
+	// protocol failures worth a payload; healthy batches stay silent.
+	if (outcome.rejected > 0 || outcome.overflowed > 0) {
+		const preview = JSON.stringify(message).slice(0, 2048)
+		service.mirror({
+			severity: "warn",
+			component: "webview",
+			message: `stability bridge anomalies: rejected=${outcome.rejected} overflowed=${outcome.overflowed}`,
+			payloads: { bridge_batch: () => preview },
+		})
+	}
 	return outcome
 }
