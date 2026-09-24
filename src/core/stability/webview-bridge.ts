@@ -83,6 +83,61 @@ export const toDraft = (raw: unknown): Draft | undefined => {
 	}
 }
 
+export interface WireDiagnostic {
+	severity: "warn" | "error"
+	component: string
+	message: string
+	error_name?: string
+	error_message?: string
+	stack?: string
+	payloads?: Record<string, string>
+	handled?: boolean
+}
+
+/**
+ * Handle one stabilityDiagnostics message (v2 webview capture). Everything is
+ * untrusted input: shape-validated and bounded here, then mirrored into the
+ * host diagnostics pipeline — the fail-closed credential filter runs HOST-side
+ * before anything reaches the outbox. Returns true when a record was queued.
+ */
+export const receiveStabilityDiagnostics = (service: StabilityService, message: unknown): boolean => {
+	if (typeof message !== "object" || message === null) return false
+	const typed = message as { type?: unknown; diagnostic?: unknown }
+	if (typed.type !== "stabilityDiagnostics" || typeof typed.diagnostic !== "object" || typed.diagnostic === null) {
+		return false
+	}
+	const raw = typed.diagnostic as Record<string, unknown>
+	const severity = raw.severity === "error" ? "error" : "warn"
+	const component = typeof raw.component === "string" ? raw.component.slice(0, 64) : "webview"
+	const text = (value: unknown, max: number): string | undefined =>
+		typeof value === "string" && value.length > 0 ? value.slice(0, max) : undefined
+	const message_ = text(raw.message, 4096) ?? "webview diagnostic without message"
+	const payloads: Record<string, () => string> = {}
+	const push = (kind: string, value: string | undefined): void => {
+		if (value !== undefined) payloads[kind] = () => value
+	}
+	push("error_message", text(raw.error_message, 8192))
+	push("stack", text(raw.stack, 32 * 1024))
+	if (raw.payloads !== null && typeof raw.payloads === "object") {
+		const entries = Object.entries(raw.payloads as Record<string, unknown>).slice(0, 4)
+		for (const [kind, value] of entries) {
+			if (!/^[a-z][a-z0-9_]{0,63}$/.test(kind) || kind === "attributes") continue
+			const content = text(value, 64 * 1024)
+			if (content !== undefined) payloads[kind] = () => content
+		}
+	}
+	service.mirror({
+		severity,
+		component: `webview.${component}`,
+		message: message_,
+		...(typeof raw.error_name === "string" ? { attributes: { code: raw.error_name.slice(0, 64) } } : {}),
+		...(Object.keys(payloads).length > 0 ? { payloads } : {}),
+		handled: raw.handled !== false,
+		threadName: "webview",
+	})
+	return true
+}
+
 export interface BridgeOutcome {
 	accepted: number
 	rejected: number

@@ -13,7 +13,7 @@ import { PanelObservation } from "./observe/panel"
 import { Availability } from "./observe/availability"
 import { observeGlobalFaults, observeIdeOperation } from "./observe/ide"
 import { observeRpc } from "./observe/rpc"
-import { receiveStabilityFacts, type StabilityFactsMessage } from "./webview-bridge"
+import { receiveStabilityDiagnostics, receiveStabilityFacts, type StabilityFactsMessage } from "./webview-bridge"
 import type { IdStore } from "./ids"
 
 export interface StabilityContextLike {
@@ -118,6 +118,10 @@ export class StabilityController {
 					this.panel.webviewState(component, state)
 				}
 			})
+			return true
+		}
+		if (typed.type === "stabilityDiagnostics") {
+			receiveStabilityDiagnostics(this.service, message)
 			return true
 		}
 		return false

@@ -10,6 +10,7 @@ import { Diagnostics } from "../diagnostics"
 import { DiagnosticBridge } from "../diagnostic-bridge"
 import { withDiagnosticContext } from "../diagnostic-context"
 import { observeRpc } from "../observe/rpc"
+import { receiveStabilityDiagnostics } from "../webview-bridge"
 import { StabilityService } from "../service"
 import type { Fact } from "../fact"
 
@@ -172,3 +173,47 @@ const memoryStore = () => {
 		},
 	}
 }
+
+describe("webview diagnostics receiving", () => {
+	it("an untrusted stabilityDiagnostics message lands as a v2 incident with payloads", async () => {
+		const service = new StabilityService({
+			home: dir,
+			store: memoryStore(),
+			pluginVersion: "3.0.22-test",
+			ideBuild: "1.138.0",
+			test: true,
+			clock,
+			log: () => {},
+		})
+		service.start()
+		await service.ready()
+		const consumed = receiveStabilityDiagnostics(service, {
+			type: "stabilityDiagnostics",
+			diagnostic: {
+				severity: "warn",
+				component: "protocol",
+				message: "sse frame failed to decode (decode_failed)",
+				payloads: { raw_frame: '{"type":"part.delta","prop' },
+			},
+		})
+		expect(consumed).toBe(true)
+		// malformed shapes are not consumed (router falls through)
+		expect(receiveStabilityDiagnostics(service, { type: "other" })).toBe(false)
+		expect(receiveStabilityDiagnostics(service, { type: "stabilityDiagnostics", diagnostic: 42 })).toBe(false)
+		await new Promise((resolve) => setImmediate(resolve)) // bridge drain
+		await service.stop("app_close")
+		const outbox = path.join(dir, "outbox")
+		const [file] = (await fs.readdir(outbox)).filter((name) => name.endsWith(".jsonl"))
+		const facts = (await fs.readFile(path.join(outbox, file), "utf8"))
+			.trim()
+			.split("\n")
+			.map((line) => JSON.parse(line) as Fact)
+		const parent = facts.find((f) => f.name === "diagnostic.reported")
+		expect(parent).toBeTruthy()
+		expect(parent?.data.component).toBe("webview.protocol")
+		expect(parent?.data.thread_name).toBe("webview")
+		const shards = facts.filter((f) => f.name === "diagnostic.payload")
+		const frame = shards.find((s) => s.data.payload_kind === "raw_frame")
+		expect(frame?.data.content).toContain("part.delta")
+	})
+})

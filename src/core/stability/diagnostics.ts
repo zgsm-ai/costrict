@@ -169,7 +169,9 @@ export class Diagnostics {
 	/** The v1 error-family component vocab is closed; free-form names clamp to the nearest token (the v2 parent keeps the original). */
 	private v1Component(component: string): string {
 		const token = scalar(component)
-		return token === "host" || token === "webview" || token === "collector" ? token : "host"
+		if (token === "host" || token === "webview" || token === "collector") return token
+		// webview-originated components ("webview.protocol", ...) count as webview
+		return component.startsWith("webview") ? "webview" : "host"
 	}
 
 	/** Ambient context fills gaps; explicit arguments always win. */
