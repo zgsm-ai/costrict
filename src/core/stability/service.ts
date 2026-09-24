@@ -180,6 +180,15 @@ export class StabilityService {
 			fields,
 			context,
 			purposes,
+			onFailure: (error, op) => {
+				this.mirror({
+					severity: "error",
+					component: name,
+					message: `${name} failed: ${error instanceof Error ? error.message : String(error)}`,
+					error: error instanceof Error ? error : undefined,
+					context: { operation_id: op.id },
+				})
+			},
 		})
 	}
 
@@ -279,6 +288,7 @@ export class StabilityService {
 			queue: this.queue!,
 			policy: this.policy!,
 			clock: this.deps.clock,
+			checkpoint: (time) => recorder.checkpoint(time),
 			dirPath: path.join(this.deps.home, "outbox"),
 			filePath: path.join(this.deps.home, "outbox", this.fileName()),
 			onWriteError: (count) => {

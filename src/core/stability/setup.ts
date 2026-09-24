@@ -7,6 +7,7 @@
  * real platform lifecycle (deactivate).
  */
 import * as vscode from "vscode"
+import { isErrorShapedLine, isStabilityOwnLine } from "./log-mirror"
 import { StabilityService } from "./service"
 import { ConnectionObservation } from "./observe/connection"
 import { PanelObservation } from "./observe/panel"
@@ -35,6 +36,25 @@ export class StabilityController {
 	readonly connection: ConnectionObservation
 	readonly panel: PanelObservation
 	readonly availability: Availability
+
+	/** Mirror a WARN/ERROR record into the v2 diagnostics pipeline (bounded, async). */
+	mirror(input: Parameters<StabilityService["mirror"]>[0]): void {
+		this.service.mirror(input)
+	}
+
+	/**
+	 * Heuristic log-line mirror (JB's KiloLog-mirror equivalent for our
+	 * unstructured output channel): error-shaped lines become diagnostics;
+	 * the collector's own lines never feed back (log-mirror.ts classifier).
+	 */
+	mirrorLogLine(line: string): void {
+		if (isStabilityOwnLine(line) || !isErrorShapedLine(line)) return
+		this.service.mirror({
+			severity: "error",
+			component: "extension",
+			message: line.slice(0, 2048),
+		})
+	}
 	private readonly disposers: (() => void)[] = []
 	private visible = false
 	private focused = true

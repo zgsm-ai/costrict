@@ -24,6 +24,8 @@ export interface OperationDeps {
 	fields?: Record<string, unknown>
 	context?: FactContext
 	purposes?: Purpose[]
+	/** v2 failure mirror (service wiring): report the error with this op's correlation. */
+	onFailure?: (error: unknown, op: Operation) => void
 }
 
 const RESERVED = new Set(["phase", "deadline_ms", "result", "duration_ms"])
@@ -55,6 +57,20 @@ export class Operation {
 
 	get isSettled(): boolean {
 		return this.settled
+	}
+
+	/**
+	 * Settle as failure AND mirror a v2 diagnostic carrying this operation's
+	 * correlation id — the one-call failure path for business boundaries
+	 * (JB's Operations.report equivalent). No-op when already settled.
+	 */
+	fail(error: unknown, fields: Record<string, unknown> = {}): void {
+		if (this.settled) return
+		this.deps.onFailure?.(error, this)
+		this.settle("failure", {
+			error_code: error instanceof Error ? error.name.toLowerCase() : "other",
+			...fields,
+		})
 	}
 
 	progress(stage: string, fields: Record<string, unknown> = {}): void {

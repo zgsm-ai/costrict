@@ -307,6 +307,10 @@ export const DICTIONARY: Record<string, NameRule> = {
 			// tiers are a v2 concept; stays "good" in v1). Consumers must not
 			// trust precise success rates of a degraded run.
 			quality: { type: "token", vocab: ["good", "degraded"], optional: true },
+			// Close-time flush evidence (JB parity): the writer's final
+			// checkpoint after the last data force — anchors unclean forensics.
+			checkpoint: { type: "bool", optional: true },
+			last_flush_time: { type: "int", optional: true, max: 2 ** 53 },
 		},
 		purposes: DUAL,
 		phased: false,

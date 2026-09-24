@@ -256,6 +256,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		// 稳定性采集（cloud ui mode only）：fail-open，outbox 落盘 ~/.costrict/telemetry
 		const stability = startStability(context, (line) => outputChannel.appendLine(line), Package.version)
+		// v2 日志镜像（cloud only）：扩展输出通道的错误形态行进入诊断管线
+		{
+			const channel = outputChannel as { appendLine: (value: string) => void }
+			const original = channel.appendLine.bind(outputChannel)
+			channel.appendLine = (value: string) => {
+				stability.mirrorLogLine(value)
+				original(value)
+			}
+		}
 		context.subscriptions.push({
 			dispose: () => {
 				void stability.stop("app_close")

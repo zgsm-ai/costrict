@@ -672,6 +672,14 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error)
 			this.outputChannel.appendLine(`[AssistantUI] ${message}`)
+			// v2: the cs-cloud startup failure is the highest-value incident
+			// on this path — mirror the full error for outbox-only diagnosis.
+			this.stability?.mirror({
+				severity: "error",
+				component: "csc.start",
+				message: `cs-cloud startup failed: ${message}`,
+				error: error instanceof Error ? error : undefined,
+			})
 			this.stability?.connection.failed(
 				error instanceof Error && error.name === "Error" ? "cs_cloud_start_failed" : "unknown",
 			)

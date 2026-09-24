@@ -11,6 +11,7 @@ import { DiagnosticBridge } from "../diagnostic-bridge"
 import { withDiagnosticContext } from "../diagnostic-context"
 import { observeRpc } from "../observe/rpc"
 import { receiveStabilityDiagnostics } from "../webview-bridge"
+import { isErrorShapedLine, isStabilityOwnLine } from "../log-mirror"
 import { StabilityService } from "../service"
 import type { Fact } from "../fact"
 
@@ -215,5 +216,83 @@ describe("webview diagnostics receiving", () => {
 		const shards = facts.filter((f) => f.name === "diagnostic.payload")
 		const frame = shards.find((s) => s.data.payload_kind === "raw_frame")
 		expect(frame?.data.content).toContain("part.delta")
+	})
+})
+
+describe("close checkpoint and op.fail", () => {
+	it("writer close appends a final health checkpoint with last_flush_time", async () => {
+		const service = new StabilityService({
+			home: dir,
+			store: memoryStore(),
+			pluginVersion: "3.0.22-test",
+			ideBuild: "1.138.0",
+			test: true,
+			clock,
+			log: () => {},
+		})
+		service.start()
+		await service.ready()
+		service.record({
+			name: "action",
+			kind: "operation",
+			channel: "critical",
+			data: { phase: "end", result: "success", duration_ms: 1 },
+		})
+		await service.stop("app_close")
+		const outbox = path.join(dir, "outbox")
+		const [file] = (await fs.readdir(outbox)).filter((name) => name.endsWith(".jsonl"))
+		const facts = (await fs.readFile(path.join(outbox, file), "utf8"))
+			.trim()
+			.split("\n")
+			.map((line) => JSON.parse(line) as Fact)
+		const checkpoint = facts[facts.length - 1]
+		expect(checkpoint.name).toBe("telemetry.health")
+		expect(checkpoint.data.checkpoint).toBe(true)
+		expect(typeof checkpoint.data.last_flush_time).toBe("number")
+		// the shutdown record precedes the checkpoint (flush evidence is last)
+		expect(facts[facts.length - 2].name).toBe("plugin.shutdown")
+	})
+
+	it("op.fail settles failure and mirrors a diagnostic with the operation correlation", async () => {
+		const service = new StabilityService({
+			home: dir,
+			store: memoryStore(),
+			pluginVersion: "3.0.22-test",
+			ideBuild: "1.138.0",
+			test: true,
+			clock,
+			log: () => {},
+		})
+		service.start()
+		await service.ready()
+		const op = service.begin("csc.start", 30_000, { stage: "spawn" })
+		op?.fail(new Error("spawn exited with code 1"), { stage: "spawn" })
+		await new Promise((resolve) => setImmediate(resolve)) // bridge drain
+		await service.stop("app_close")
+		const outbox = path.join(dir, "outbox")
+		const [file] = (await fs.readdir(outbox)).filter((name) => name.endsWith(".jsonl"))
+		const facts = (await fs.readFile(path.join(outbox, file), "utf8"))
+			.trim()
+			.split("\n")
+			.map((line) => JSON.parse(line) as Fact)
+		const end = facts.find((f) => f.name === "csc.start" && f.data.phase === "end")
+		expect(end?.data.result).toBe("failure")
+		expect(end?.data.error_code).toBe("error")
+		const parent = facts.find((f) => f.name === "diagnostic.reported" && f.data.component === "csc.start")
+		expect(parent).toBeTruthy()
+		expect(parent?.context?.operation_id).toBe(end?.context?.operation_id)
+	})
+
+	it("log-line classifier mirrors error shapes only, never collector output", () => {
+		expect(isErrorShapedLine("[2026/9/24 18:00:00] [info] Login status detected")).toBe(false)
+		expect(isErrorShapedLine("plain progress line")).toBe(false)
+		expect(isStabilityOwnLine("[stability] scope storage unreadable")).toBe(true)
+		expect(
+			isErrorShapedLine(
+				"[2026/9/24 18:00:00] [error] GitCommitListener Failed to start: Error: Extension 'vscode.git' is not known",
+			),
+		).toBe(true)
+		expect(isErrorShapedLine("[stderr] spawn ENOENT")).toBe(true)
+		expect(isErrorShapedLine("Command Failed to execute")).toBe(true)
 	})
 })

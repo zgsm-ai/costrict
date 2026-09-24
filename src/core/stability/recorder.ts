@@ -230,6 +230,33 @@ export class Recorder {
 		return "queued"
 	}
 
+	/**
+	 * Writer-only final health checkpoint (JB parity): after the last data
+	 * force at close, the writer appends this minimal record directly — it
+	 * never queues and never advances the health baseline. Only this fixed
+	 * internal fact may exist after close; public record() stays closed.
+	 */
+	checkpoint(time: number): Fact | undefined {
+		const policy = this.deps.policy.current()
+		const draft: Draft = {
+			name: "telemetry.health",
+			kind: "health",
+			channel: "critical",
+			data: {
+				drop: 0,
+				write_error: 0,
+				depth_bytes: this.deps.queue.depth().bytes,
+				oldest_age_ms: 0,
+				checkpoint: true,
+				last_flush_time: time,
+			},
+		}
+		if (validate(draft).length > 0) return undefined
+		const permitted = policy.permit(draft.channel, draft.purposes ?? ["metrics", "logs"])
+		if (permitted.length === 0) return undefined
+		return this.buildFact(draft, permitted, ++this.seq[draft.channel], policy)
+	}
+
 	/** Per-fingerprint detail budget per minute from the current policy snapshot. */
 	policyDetailLimit(): number {
 		return this.deps.policy.current().detailLimit

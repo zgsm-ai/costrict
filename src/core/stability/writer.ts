@@ -11,7 +11,7 @@
  * retry on the next cycle.
  */
 import { promises as fs } from "fs"
-import { encodeLine } from "./fact"
+import { encodeLine, type Fact } from "./fact"
 import type { PolicyStore } from "./policy"
 import type { QueuedFact, StabilityQueue } from "./queue"
 import type { Clock } from "./clock"
@@ -30,6 +30,8 @@ export interface WriterDeps {
 	queue: StabilityQueue
 	policy: PolicyStore
 	clock: Clock
+	/** Recorder's close-time checkpoint (writer-only path, JB parity). */
+	checkpoint?: (time: number) => Fact | undefined
 	/** Absolute path of this producer's single append file. */
 	filePath: string
 	/** Parent directory (created 0700 on first open). */
@@ -284,7 +286,7 @@ export class Writer {
 		return lines
 	}
 
-	/** Bounded close: one final round then close the handle. */
+	/** Bounded close: one final round, the flush-evidence checkpoint, then close. */
 	async close(): Promise<void> {
 		if (this.state === "CLOSED") return
 		if (this.timer) clearInterval(this.timer)
@@ -294,6 +296,20 @@ export class Writer {
 			await this.round()
 			if (this.state === "DISABLED") break
 		}
+		// Flush evidence (JB parity): a final health checkpoint with the last
+		// successful sync time — the unclean detector's forensic anchor.
+		if (this.handle && this.state === "ACTIVE") {
+			const fact = this.checkpointFact()
+			if (fact) {
+				try {
+					const line = encodeLine(fact)
+					await this.handle.write(`${line}\n`)
+					this.appended += Buffer.byteLength(line, "utf8") + 1
+				} catch {
+					this.deps.onWriteError(1)
+				}
+			}
+		}
 		try {
 			await this.handle?.sync()
 			await this.handle?.close()
@@ -302,5 +318,10 @@ export class Writer {
 		}
 		this.handle = undefined
 		this.state = "CLOSED"
+	}
+
+	private checkpointFact(): Fact | undefined {
+		const recorder = this.deps as { checkpoint?: (time: number) => Fact | undefined }
+		return recorder.checkpoint?.(this.deps.clock.wall())
 	}
 }
