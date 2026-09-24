@@ -188,3 +188,39 @@ export const emitDictionarySweep = (service: StabilityService): SweepResult => {
 	}
 	return result
 }
+
+export interface DiagnosticSelftestResult {
+	/** Incident id assigned to the synthetic failure. */
+	incident: string
+	/** Mirror records accepted into the bridge (before async drain). */
+	mirrored: number
+}
+
+/**
+ * v2 diagnostics self-test: drive one synthetic failure through the REAL
+ * collection chain (bridge mirror → report → count form + parent + payload
+ * shards) with a planted credential, so the redaction path is exercised too.
+ * Dev/test modes only, like the dictionary sweep.
+ */
+export const emitDiagnosticSelftest = (service: StabilityService): DiagnosticSelftestResult => {
+	const error = new TypeError("selftest: cannot read properties of undefined (reading 'selftest')")
+	// Direct report (sync): a real incident id for immediate inspection.
+	const incident =
+		service.diagnostics?.report({
+			severity: "error",
+			component: "rpc",
+			message: "selftest synthetic rpc failure",
+			error,
+			attributes: { route: "/api/v1/selftest", method: "GET", code: "typeerror" },
+			payloads: { response_body: () => "selftest body with token=planted-secret-value" },
+			secrets: ["planted-secret-value"],
+		}) ?? "diagnostics-inactive"
+	// Bridge mirror (async): exercises the log-mirror drain path.
+	service.mirror({
+		severity: "warn",
+		component: "webview",
+		message: "selftest bridge anomaly preview",
+		payloads: { bridge_batch: () => "selftest preview" },
+	})
+	return { incident, mirrored: 1 }
+}

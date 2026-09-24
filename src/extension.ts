@@ -269,11 +269,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		) {
 			context.subscriptions.push(
 				vscode.commands.registerCommand(`${Package.commandIDPrefix}.stability.selfTest`, async () => {
-					const { emitDictionarySweep } = await import("./core/stability/selftest")
+					const { emitDictionarySweep, emitDiagnosticSelftest } = await import("./core/stability/selftest")
 					const result = emitDictionarySweep(stability.service)
+					const diag = emitDiagnosticSelftest(stability.service)
 					void stability.drain()
 					outputChannel.appendLine(
 						`[stability] selfTest: ${result.queued}/${result.attempted} queued, dropped=${result.dropped}, disabled=${result.disabled} (ws-selftest)`,
+					)
+					outputChannel.appendLine(
+						`[stability] selfTest v2: incident=${diag.incident}, ${diag.mirrored} mirror record queued for drain`,
 					)
 				}),
 			)

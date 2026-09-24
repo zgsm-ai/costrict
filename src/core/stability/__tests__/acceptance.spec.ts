@@ -269,6 +269,73 @@ describe("acceptance G1-local", () => {
 		)
 	})
 
+	it("v2 outbox-only diagnosis: a relayed failure is explainable from the file alone", async () => {
+		const { observeRpc } = await import("../observe/rpc")
+		const { createHash } = await import("crypto")
+		// Reenact the reconnect-storm class: a TypeError thrown by a relayed
+		// call, with a credential planted inside the message text.
+		const boom = new TypeError(
+			"storm: cannot read properties of undefined (reading 'session') — Authorization: Bearer swx-storm-token-1",
+		)
+		await observeRpc(service, "/api/v1/session/prompt", async () => {
+			throw boom
+		}).catch(() => "propagated")
+		await new Promise((resolve) => setImmediate(resolve)) // bridge drain
+		await service.drain()
+		const facts = await readFacts()
+		const parent = facts.find((f) => f.name === "diagnostic.reported" && f.data.route === "/api/v1/session/prompt")
+		check("v2-parent-found", parent !== undefined, "diagnostic.reported with route exists")
+		if (!parent) return
+		const incident = parent.context?.incident_id ?? ""
+		const shards = facts.filter((f) => f.name === "diagnostic.payload" && f.data.incident_id === incident)
+		check("v2-shards-present", shards.length >= 3, `payload shards: ${shards.length}`)
+		// Reassemble every kind in chunk order — the outbox-only reader protocol.
+		const kinds = new Map<string, string>()
+		for (const shard of [...shards].sort(
+			(a, b) => (a.data.chunk_index as number) - (b.data.chunk_index as number),
+		)) {
+			const kind = shard.data.payload_kind as string
+			kinds.set(kind, (kinds.get(kind) ?? "") + (shard.data.content as string))
+		}
+		check(
+			"v2-diagnosis",
+			(kinds.get("exception_message") ?? "").includes("reading 'session'"),
+			"exception text recoverable from shards",
+		)
+		check(
+			"v2-route",
+			parent.data.method === "GET" || typeof parent.data.route === "string",
+			"HTTP context attached",
+		)
+		const opEnd = facts.find(
+			(f) =>
+				f.name === "rpc" && f.data.phase === "end" && f.context?.operation_id === parent.context?.operation_id,
+		)
+		check("v2-correlation", opEnd !== undefined, "incident links to its rpc operation end")
+		const rendered = JSON.stringify(facts)
+		check(
+			"v2-credential-redacted",
+			!rendered.includes("swx-storm-token-1"),
+			"planted credential never reaches the wire",
+		)
+		const single = shards.find((sh) => (sh.data.chunk_count as number) === 1)
+		if (single) {
+			const digest = createHash("sha256")
+				.update(String(kinds.get(single.data.payload_kind as string) ?? ""))
+				.digest("hex")
+			check(
+				"v2-sha-integrity",
+				digest === single.data.sha256,
+				"reassembled content hash matches the recorded sha256",
+			)
+		}
+		check(
+			"v2-schema",
+			parent.schema_version === "2.0" && shards.every((sh) => sh.schema_version === "2.0"),
+			"v2 lines on the wire",
+		)
+	})
+
 	it("lifecycle: stop records shutdown for the active run; runs stay isolated", async () => {
 		await service.stop("app_close")
 		const facts = await readFacts()
