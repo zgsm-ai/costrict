@@ -2,6 +2,12 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [3.0.22]
+
+- Remove code completion feature and runtime installer
+- Temporarily disable quota purchase entries
+- Fix known issues
+
 ## [3.0.21]
 
 - Fix normalize non-array cs-cloud diff responses in getDiff to prevent a render crash

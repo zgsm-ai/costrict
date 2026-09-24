@@ -20,6 +20,10 @@ type AccountViewProps = {
 	onDone: () => void
 }
 
+// Individual quota purchase is currently offline. The entry and its handler are kept
+// in place so they only need to be switched back on once purchase is available again.
+const SHOW_PURCHASE_QUOTA_ENTRY: boolean = false
+
 // Quota information skeleton component
 const QuotaSkeleton = memo(() => (
 	<div className="w-full mt-0 space-y-2">
@@ -405,18 +409,20 @@ const CostrictAccountViewComponent = ({ apiConfiguration, onDone }: AccountViewP
 									</StandardTooltip>
 								</h2>
 							)}
-							<div className="w-full flex gap-2 mt-4 justify-center">
-								<span
-									className="text-[10px] font-medium bg-gradient-to-br border border-[var(--vscode-editorWidget-border)] bg-[var(--vscode-editorWidget-background)] text-[var(--vscode-editor-foreground)] px-2 py-1 rounded-full cursor-pointer select-none flex items-center gap-1"
-									onClick={handlePurchaseQuota}>
-									{t("account:purchaseQuota")}
-								</span>
-								<span
-									className="text-[10px] font-medium bg-gradient-to-br border border-[var(--vscode-editorWidget-border)] bg-[var(--vscode-editorWidget-background)] text-[var(--vscode-editor-foreground)] px-2 py-1 rounded-full cursor-pointer select-none flex items-center gap-1"
-									onClick={handleGetMoreQuota}>
-									{t("account:joinActivityForQuota")}
-								</span>
-							</div>
+							{SHOW_PURCHASE_QUOTA_ENTRY && (
+								<div className="w-full flex gap-2 mt-4 justify-center">
+									<span
+										className="text-[10px] font-medium bg-gradient-to-br border border-[var(--vscode-editorWidget-border)] bg-[var(--vscode-editorWidget-background)] text-[var(--vscode-editor-foreground)] px-2 py-1 rounded-full cursor-pointer select-none flex items-center gap-1"
+										onClick={handlePurchaseQuota}>
+										{t("account:purchaseQuota")}
+									</span>
+									<span
+										className="text-[10px] font-medium bg-gradient-to-br border border-[var(--vscode-editorWidget-border)] bg-[var(--vscode-editorWidget-background)] text-[var(--vscode-editor-foreground)] px-2 py-1 rounded-full cursor-pointer select-none flex items-center gap-1"
+										onClick={handleGetMoreQuota}>
+										{t("account:joinActivityForQuota")}
+									</span>
+								</div>
+							)}
 							{/* Star status card */}
 							{quotaInfo?.is_star != null && (
 								<StarStatusCard quotaInfo={quotaInfo} onStarRepository={handleStarRepository} _t={t} />
