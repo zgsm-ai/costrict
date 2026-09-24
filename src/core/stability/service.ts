@@ -23,6 +23,7 @@ import { Writer } from "./writer"
 import { Retention } from "./retention"
 import { Health } from "./health"
 import { Faults } from "./fault"
+import { Diagnostics } from "./diagnostics"
 import { Resources } from "./resources"
 import { Operation } from "./operation"
 import { detectUnclean, envSnapshot, type EnvSnapshot } from "./producer"
@@ -64,6 +65,7 @@ export class StabilityService {
 	private writer: Writer | undefined
 	private health: Health | undefined
 	private faultsRef: Faults | undefined
+	private diagnosticsRef: Diagnostics | undefined
 	private retention: Retention | undefined
 	private standby: Recorder | undefined
 	private timers: ReturnType<typeof setInterval>[] = []
@@ -183,6 +185,10 @@ export class StabilityService {
 		return this.faultsRef
 	}
 
+	get diagnostics(): Diagnostics | undefined {
+		return this.diagnosticsRef
+	}
+
 	get healthCounts(): Health | undefined {
 		return this.health
 	}
@@ -293,6 +299,7 @@ export class StabilityService {
 		this.writer = writer
 		this.recorder = recorder
 		this.faultsRef = new Faults({ recorder, clock: this.deps.clock })
+		this.diagnosticsRef = new Diagnostics({ recorder, clock: this.deps.clock })
 		this.activated = true
 		this.standby?.setStandbyTarget(recorder)
 		// Legacy per-producer files of this scope are deleted once, without
@@ -324,6 +331,7 @@ export class StabilityService {
 		this.writer = undefined
 		this.recorder = undefined
 		this.faultsRef = undefined
+		this.diagnosticsRef = undefined
 		this.activated = false
 		this.coverage = { mode: "standby", reason: "policy_revoked", metrics: false, logs: false }
 	}

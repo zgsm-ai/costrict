@@ -6,7 +6,7 @@
  */
 import type { Draft, FactKind, Purpose } from "./fact"
 
-type FieldType = "string" | "token" | "int" | "number" | "bool" | "list"
+type FieldType = "string" | "text" | "token" | "int" | "number" | "bool" | "list"
 
 interface FieldRule {
 	type: FieldType
@@ -76,9 +76,9 @@ const diagnostic = (): NameRule => ({
 		severity: { type: "token", vocab: ["warn", "error"] },
 		component: { type: "string" },
 		code: { type: "string" },
-		message: { type: "string", max: 16 * 1024 },
+		message: { type: "text", max: 16 * 1024 },
 		exception_type: { type: "string", optional: true },
-		cause_chain: { type: "string", optional: true, max: 16 * 1024 },
+		cause_chain: { type: "text", optional: true, max: 16 * 1024 },
 		suppressed_count: { type: "int", optional: true, max: 2 ** 31 },
 		thread_name: { type: "string" },
 		thread_id: { type: "int", max: 2 ** 53 },
@@ -260,7 +260,7 @@ export const DICTIONARY: Record<string, NameRule> = {
 			chunk_index: { type: "int", optional: true, max: 2 ** 31 },
 			chunk_count: { type: "int", max: 2 ** 31 },
 			encoding: { type: "token", vocab: ["utf8", "base64"] },
-			content: { type: "string", optional: true, max: 32 * 1024 },
+			content: { type: "text", optional: true, max: 32 * 1024 },
 			original_bytes: { type: "int", optional: true, max: 2 ** 53 },
 			sha256: { type: "token", optional: true },
 			truncated: { type: "bool", optional: true },
@@ -398,6 +398,14 @@ const checkValue = (key: string, value: unknown, rule: FieldRule, at: string[]):
 			if (typeof value !== "string") return [`${at}: ${key} must be string`]
 			// eslint-disable-next-line no-control-regex -- rejecting control characters is the point
 			if (/[\u0000-\u0008\u000a-\u001f\u007f]/.test(value)) return [`${at}: ${key} control chars`]
+			if (Buffer.byteLength(value, "utf8") > (rule.max ?? 512)) return [`${at}: ${key} exceeds bytes`]
+			return []
+		}
+		case "text": {
+			if (typeof value !== "string") return [`${at}: ${key} must be string`]
+			// multi-line bounded text: LF and tab allowed, other control chars rejected
+			// eslint-disable-next-line no-control-regex -- rejecting control characters is the point
+			if (/[\u0000-\u0008\u000b-\u001f\u007f]/.test(value)) return [`${at}: ${key} control chars`]
 			if (Buffer.byteLength(value, "utf8") > (rule.max ?? 512)) return [`${at}: ${key} exceeds bytes`]
 			return []
 		}

@@ -99,6 +99,8 @@ export interface PolicySnapshot {
 	explicit: ControlFile | undefined
 	/** Fact schema majors the consumer can reconstruct. Fail-open defaults to {1,2} (v2 by default); an explicit file without the field falls back to [1]. */
 	acceptedMajors: number[]
+	/** Log detail budget per fingerprint per minute (fail-open default 3). */
+	detailLimit: number
 	/** Effective purposes permitted for a fact of `channel` requesting `requested`. */
 	permit: (channel: Channel, requested: readonly Purpose[]) => readonly Purpose[]
 }
@@ -113,6 +115,7 @@ const failOpen = (): PolicySnapshot => ({
 	// with accepted_fact_schema_majors [1] (or a missing field) still
 	// suppresses v2 — mirrors the JetBrains unbound-policy flip.
 	acceptedMajors: [1, 2],
+	detailLimit: 3,
 	permit: (_channel, requested) => requested,
 })
 
@@ -196,6 +199,7 @@ export class PolicyStore {
 			epoch: file.account_epoch,
 			explicit: file,
 			acceptedMajors: file.accepted_fact_schema_majors ?? [1],
+			detailLimit: file.log_detail_rate_limit?.per_fingerprint_max_per_minute ?? 3,
 			permit: (channel, requested) => {
 				// Advance the floor on every observation so an already-seen-expired
 				// permit cannot revive after a wall-clock rollback.

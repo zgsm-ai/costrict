@@ -10,6 +10,7 @@
  */
 import { validate, purposes as projection } from "./dictionary"
 import { estimateBytes, type Draft, type Fact, type Purpose } from "./fact"
+import { validateGroup } from "./dictionary"
 import type { PolicyStore } from "./policy"
 import { type StabilityQueue, tierOf } from "./queue"
 import type { Clock } from "./clock"
@@ -130,7 +131,26 @@ export class Recorder {
 			return "dropped"
 		}
 		const seq = ++this.seq[draft.channel]
-		const fact: Fact = {
+		const fact = this.buildFact(draft, permitted, seq, snapshot)
+		const bytes = estimateBytes(draft)
+		if (!this.deps.queue.offer({ fact, bytes, channel: draft.channel, at: this.deps.clock.wall() })) {
+			// A failure-tier rejection is its own loss class: quality degrades
+			// (precise success rates must not be trusted for the run).
+			if (tierOf(fact) === "failure") this.counters.droppedFailure++
+			else this.counters.droppedCapacity++
+			return "dropped"
+		}
+		this.counters.accepted++
+		return "queued"
+	}
+
+	private buildFact(
+		draft: Draft,
+		permitted: readonly Purpose[],
+		seq: number,
+		snapshot: ReturnType<PolicyStore["current"]>,
+	): Fact {
+		return {
 			schema_version: draft.schemaVersion ?? "1.0",
 			event_id: uuid(),
 			timestamp: draft.t_wall ?? this.deps.clock.wall(),
@@ -158,16 +178,61 @@ export class Recorder {
 			...(draft.context && Object.keys(draft.context).length > 0 ? { context: draft.context } : {}),
 			data: draft.data,
 		}
-		const bytes = estimateBytes(draft)
-		if (!this.deps.queue.offer({ fact, bytes, channel: draft.channel, at: this.deps.clock.wall() })) {
-			// A failure-tier rejection is its own loss class: quality degrades
-			// (precise success rates must not be trusted for the run).
-			if (tierOf(fact) === "failure") this.counters.droppedFailure++
-			else this.counters.droppedCapacity++
+	}
+
+	/**
+	 * Atomic publication for a diagnostic unit (parent + payload shards):
+	 * the group validates together (chunk uniqueness) and enters the queue as
+	 * ONE admission unit — admitted or dropped whole, seq assigned in order.
+	 */
+	recordGroup(drafts: Draft[]): RecordStatus {
+		if (this.stopped) {
+			this.counters.disabledShutdown += drafts.length
+			return "disabled"
+		}
+		if (this.standbyTarget) return this.standbyTarget.recordGroup(drafts)
+		if (!this.standbyTarget && this.deps.forwardOnly) {
+			this.counters.disabledStandby += drafts.length
+			return "disabled"
+		}
+		if (validateGroup(drafts).length > 0) {
+			this.counters.droppedInvalid += drafts.length
 			return "dropped"
 		}
-		this.counters.accepted++
+		const snapshot = this.deps.policy.current()
+		const items: { fact: Fact; bytes: number; channel: Draft["channel"]; at: number }[] = []
+		for (const draft of drafts) {
+			const dictionaryPurposes = projection(draft.name, draft.data)
+			const requested = draft.purposes ?? dictionaryPurposes
+			const permitted = snapshot.permit(
+				draft.channel,
+				requested.filter((p) => dictionaryPurposes.includes(p)),
+			)
+			if (permitted.length === 0) {
+				this.counters.disabledPolicy += drafts.length
+				return "disabled"
+			}
+			const seq = ++this.seq[draft.channel]
+			items.push({
+				fact: this.buildFact(draft, permitted, seq, snapshot),
+				bytes: estimateBytes(draft),
+				channel: draft.channel,
+				at: this.deps.clock.wall(),
+			})
+		}
+		if (!this.deps.queue.offerGroup(items)) {
+			const failure = items.some((item) => tierOf(item.fact) === "failure")
+			if (failure) this.counters.droppedFailure += items.length
+			else this.counters.droppedCapacity += items.length
+			return "dropped"
+		}
+		this.counters.accepted += items.length
 		return "queued"
+	}
+
+	/** Per-fingerprint detail budget per minute from the current policy snapshot. */
+	policyDetailLimit(): number {
+		return this.deps.policy.current().detailLimit
 	}
 
 	/** Purposes the current policy would permit for a channel (coverage introspection). */
