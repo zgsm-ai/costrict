@@ -205,7 +205,7 @@ export class ErrorCodeManager {
 				solution = defaultError["401"].solution
 				error.status = status = 401
 			} else if (code === "ai-gateway.insufficient_quota") {
-				solution = await this.handleInsufficientQuotaError(apiConfiguration)
+				// solution = await this.handleInsufficientQuotaError(apiConfiguration)
 			} else if (code === "ai-gateway.star_required") {
 				solution = await this.handleStarRequiredError(apiConfiguration)
 			}

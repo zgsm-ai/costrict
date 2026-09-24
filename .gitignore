@@ -27,6 +27,7 @@ AGENTS.local.md
 
 # Docs
 docs/_site/
+docs/stability/
 
 # Dotenv
 .env
