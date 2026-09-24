@@ -3327,12 +3327,20 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 											// Present the finalized tool call
 											presentAssistantMessage(this)
 										} else if (toolUseIndex !== undefined) {
-											// finalizeStreamingToolCall returned null (malformed JSON or missing args)
-											// Mark the tool as non-partial so it's presented as complete, but execution
-											// will be short-circuited in presentAssistantMessage with a structured tool_result.
+											// finalizeStreamingToolCall returned null (malformed JSON or missing args).
+											// existingToolUse is the same object the streaming phase was mutating in
+											// place, so it still carries nativeArgs built from the incomplete partial
+											// parse (e.g. a truncated write_to_file `content` string) - that value was
+											// only ever meant for live progress display, never for execution. Mark the
+											// tool as non-partial so it's presented as complete, and clear nativeArgs so
+											// presentAssistantMessage's `!block.nativeArgs` guard actually short-circuits
+											// it with a structured tool_result instead of executing the truncated value.
 											const existingToolUse = this.assistantMessageContent[toolUseIndex]
 											if (existingToolUse && existingToolUse.type === "tool_use") {
 												existingToolUse.partial = false
+												existingToolUse.nativeArgs = undefined
+												// params is also filled during streaming (for handlePartial UI) and history falls back to it via `nativeArgs || params`
+												existingToolUse.params = {}
 												// Ensure it has the ID for native protocol
 												;(existingToolUse as any).id = event.id
 											}
@@ -3862,12 +3870,18 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 							// Present the finalized tool call
 							presentAssistantMessage(this)
 						} else if (toolUseIndex !== undefined) {
-							// finalizeStreamingToolCall returned null (malformed JSON or missing args)
-							// We still need to mark the tool as non-partial so it gets executed
-							// The tool's validation will catch any missing required parameters
+							// finalizeStreamingToolCall returned null (malformed JSON or missing args).
+							// existingToolUse still carries nativeArgs from the incomplete streaming-phase
+							// partial parse - a truncated string argument is not "missing", so per-field
+							// validation downstream would not catch it. Mark the tool as non-partial and
+							// clear nativeArgs so presentAssistantMessage's `!block.nativeArgs` guard emits a
+							// structured tool_result instead of executing the truncated value.
 							const existingToolUse = this.assistantMessageContent[toolUseIndex]
 							if (existingToolUse && existingToolUse.type === "tool_use") {
 								existingToolUse.partial = false
+								existingToolUse.nativeArgs = undefined
+								// params is also filled during streaming (for handlePartial UI) and history falls back to it via `nativeArgs || params`
+								existingToolUse.params = {}
 								// Ensure it has the ID for native protocol
 								;(existingToolUse as any).id = event.id
 							}
