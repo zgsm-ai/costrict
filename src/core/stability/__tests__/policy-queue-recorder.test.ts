@@ -61,14 +61,21 @@ describe("control file parsing", () => {
 		expect(parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [2, 2] }))).toBeUndefined()
 	})
 
-	it("exposes acceptedMajors on the snapshot, defaulting to [1]", async () => {
+	it("exposes acceptedMajors: fail-open defaults to {1,2}, explicit file controls it", async () => {
 		const clock = fixedClock(1000)
 		const store = new PolicyStore({ controlPath: controlPath(), clock })
 		await store.refresh()
-		expect(store.current().acceptedMajors).toEqual([1]) // fail-open default
+		expect(store.current().acceptedMajors).toEqual([1, 2]) // no control file: v2 by default
 		await writeControl({ ...baseControl, accepted_fact_schema_majors: [1, 2] })
 		await store.refresh()
 		expect(store.current().acceptedMajors).toEqual([1, 2])
+		// Explicit [1] or a missing field both suppress v2 (consumer v1 only).
+		await writeControl({ ...baseControl, accepted_fact_schema_majors: [1] })
+		await store.refresh()
+		expect(store.current().acceptedMajors).toEqual([1])
+		await writeControl({ ...baseControl })
+		await store.refresh()
+		expect(store.current().acceptedMajors).toEqual([1])
 	})
 })
 

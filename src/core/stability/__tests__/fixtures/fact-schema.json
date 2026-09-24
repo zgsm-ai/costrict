@@ -1,7 +1,7 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"title": "CoStrict VS Code stability fact v1",
-	"description": "Wire record for ~/.costrict/telemetry/outbox/<scope-id>-<producer-id>.jsonl (NDJSON, one object per line, LF-terminated, ≤32KiB). Frozen field set; unknown keys rejected. See docs/vscode-stability-design.md §3.",
+	"description": "Wire record for ~/.costrict/telemetry/outbox/<scope-id>.jsonl (NDJSON, one object per line, LF-terminated, ≤32KiB; scope ids match ^sc-[0-9a-f]{12}$). Frozen field set; unknown keys rejected. See docs/vscode-stability-design.md §3.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": [

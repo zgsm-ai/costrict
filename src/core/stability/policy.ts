@@ -97,7 +97,7 @@ export interface PolicySnapshot {
 	epoch: string
 	/** undefined = no valid explicit policy (fail-open). */
 	explicit: ControlFile | undefined
-	/** Fact schema majors the consumer can reconstruct; [1] unless declared. Dormant in v1. */
+	/** Fact schema majors the consumer can reconstruct. Fail-open defaults to {1,2} (v2 by default); an explicit file without the field falls back to [1]. */
 	acceptedMajors: number[]
 	/** Effective purposes permitted for a fact of `channel` requesting `requested`. */
 	permit: (channel: Channel, requested: readonly Purpose[]) => readonly Purpose[]
@@ -107,7 +107,12 @@ const failOpen = (): PolicySnapshot => ({
 	revision: 0,
 	epoch: UNBOUND_EPOCH,
 	explicit: undefined,
-	acceptedMajors: [1],
+	// cs-cloud no longer writes the control file (2026-09-24), so a missing
+	// file is the normal state: fail-open accepts fact schema majors {1,2}
+	// and v2 high-fidelity diagnostics collect by default. An explicit file
+	// with accepted_fact_schema_majors [1] (or a missing field) still
+	// suppresses v2 — mirrors the JetBrains unbound-policy flip.
+	acceptedMajors: [1, 2],
 	permit: (_channel, requested) => requested,
 })
 

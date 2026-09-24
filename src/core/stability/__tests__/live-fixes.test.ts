@@ -60,7 +60,7 @@ describe("writer external-change detection", () => {
 			policy,
 			clock,
 			dirPath: path.join(home, "outbox"),
-			filePath: path.join(home, "outbox", "scope-x-pr-fix.jsonl"),
+			filePath: path.join(home, "outbox", "sc-x-pr-fix.jsonl"),
 			onWriteError: (c) => (writeErrors += c),
 			onWriteDrop: () => {},
 			onExternalChange: (m) => events.push(m),
@@ -71,7 +71,7 @@ describe("writer external-change detection", () => {
 			writer,
 			events: () => events,
 			errors: () => writeErrors,
-			file: path.join(home, "outbox", "scope-x-pr-fix.jsonl"),
+			file: path.join(home, "outbox", "sc-x-pr-fix.jsonl"),
 		}
 	}
 

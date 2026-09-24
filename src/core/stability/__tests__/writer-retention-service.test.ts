@@ -58,7 +58,7 @@ describe("writer appends single-file NDJSON", () => {
 			policy,
 			clock,
 			dirPath: path.join(home, "outbox"),
-			filePath: path.join(home, "outbox", "scope-a-pr-1.jsonl"),
+			filePath: path.join(home, "outbox", "sc-a-pr-1.jsonl"),
 			onWriteError: (c) => (writeErrors += c),
 			onWriteDrop: (c, _reason) => (writeDrops += c),
 		})
@@ -85,7 +85,7 @@ describe("writer appends single-file NDJSON", () => {
 		record(recorder, 1)
 		record(recorder, 2)
 		await writer.round()
-		const file = path.join(home, "outbox", "scope-a-pr-1.jsonl")
+		const file = path.join(home, "outbox", "sc-a-pr-1.jsonl")
 		const facts = await readFacts(file)
 		expect(facts.length).toBe(2)
 		expect(facts.map((f) => f.seq)).toEqual([1, 2])
@@ -137,7 +137,7 @@ describe("writer appends single-file NDJSON", () => {
 		// All facts claimed in the batch failed re-permit → nothing written, batch released.
 		await writer.close()
 		expect(counts().writeDrops).toBeGreaterThanOrEqual(0)
-		const file = path.join(home, "outbox", "scope-a-pr-1.jsonl")
+		const file = path.join(home, "outbox", "sc-a-pr-1.jsonl")
 		const facts = await fs.readFile(file, "utf8").catch(() => "")
 		// The queued fact was dropped at the write gate (policy revoked pre-write).
 		expect(facts).toBe("")
@@ -152,7 +152,7 @@ describe("writer appends single-file NDJSON", () => {
 		await writer.start()
 		record(recorder, 1)
 		await writer.round()
-		const file = path.join(home, "outbox", "scope-a-pr-1.jsonl")
+		const file = path.join(home, "outbox", "sc-a-pr-1.jsonl")
 		await fs.unlink(file)
 		record(recorder, 2)
 		await writer.round()
@@ -167,7 +167,7 @@ describe("retention", () => {
 	it("compacts the active file to budget with atomic rename and counts evictions", async () => {
 		const outbox = path.join(home, "outbox")
 		await fs.mkdir(outbox, { recursive: true })
-		const active = path.join(outbox, "scope-a-pr-1.jsonl")
+		const active = path.join(outbox, "sc-a-pr-1.jsonl")
 		// Oversize file: many small lines.
 		const line = JSON.stringify({ schema_version: "1.0", seq: 1, data: "x".repeat(200) })
 		const big =
@@ -178,7 +178,7 @@ describe("retention", () => {
 		let evicted = 0
 		const retention = new Retention({
 			dirPath: outbox,
-			scope: "scope-a",
+			scope: "sc-a",
 			activePath: active,
 			clock,
 			onEvict: (c) => (evicted += c),
@@ -196,15 +196,15 @@ describe("retention", () => {
 	it("clearLegacy deletes only same-scope per-producer files, never other scopes", async () => {
 		const outbox = path.join(home, "outbox")
 		await fs.mkdir(outbox, { recursive: true })
-		const active = path.join(outbox, "scope-a.jsonl")
+		const active = path.join(outbox, "sc-a.jsonl")
 		await fs.writeFile(active, "{}\n", "utf8")
-		const legacyMine = path.join(outbox, "scope-a-pr-old.jsonl")
+		const legacyMine = path.join(outbox, "sc-a-pr-old.jsonl")
 		await fs.writeFile(legacyMine, "{}\n", "utf8")
-		const otherScope = path.join(outbox, "scope-b.jsonl")
+		const otherScope = path.join(outbox, "sc-b.jsonl")
 		await fs.writeFile(otherScope, "{}\n", "utf8")
-		const junk = path.join(outbox, "scope-a-notes.txt")
+		const junk = path.join(outbox, "sc-a-notes.txt")
 		await fs.writeFile(junk, "notes\n", "utf8")
-		const retention = new Retention({ dirPath: outbox, scope: "scope-a", activePath: active, clock })
+		const retention = new Retention({ dirPath: outbox, scope: "sc-a", activePath: active, clock })
 		const deleted = await retention.clearLegacy()
 		expect(deleted).toBe(1)
 		await expect(fs.stat(legacyMine)).rejects.toThrow()
@@ -215,7 +215,7 @@ describe("retention", () => {
 })
 
 describe("unclean detection (single scope file)", () => {
-	const file = () => path.join(home, "outbox", "scope-a.jsonl")
+	const file = () => path.join(home, "outbox", "sc-a.jsonl")
 	const started = (run: string, ts = 1000) =>
 		JSON.stringify({
 			schema_version: "1.0",
@@ -311,7 +311,7 @@ describe("stability service end to end", () => {
 		await service.stop("app_close")
 		const files = await fs.readdir(path.join(home, "outbox"))
 		expect(files.length).toBe(1)
-		expect(files[0]).toMatch(/^scope-[0-9a-f]+\.jsonl$/)
+		expect(files[0]).toMatch(/^sc-[0-9a-f]+\.jsonl$/)
 		const facts = await readFacts(path.join(home, "outbox", files[0]))
 		const names = facts.map((f) => f.name)
 		expect(names).toContain("plugin.started")

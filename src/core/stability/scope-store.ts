@@ -18,8 +18,8 @@ import { promises as fs } from "fs"
 import path from "path"
 import type { IdStore } from "./ids"
 
-const SIZE = 18 // "scope-" + 12 hex
-const PATTERN = /^scope-[0-9a-f]{12}$/
+const SIZE = 15 // "sc-" + 12 hex (protocol doc §2.2 canonical scope filename)
+const PATTERN = /^sc-[0-9a-f]{12}$/
 
 const valid = (value: string | undefined): value is string =>
 	typeof value === "string" && value.length === SIZE && PATTERN.test(value)
@@ -76,7 +76,7 @@ export const durableScopeId = async (
 		if (valid(seed)) {
 			resolved = seed
 		} else {
-			resolved = `scope-${Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`
+			resolved = `sc-${Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`
 		}
 	}
 	try {
