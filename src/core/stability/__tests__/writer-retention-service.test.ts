@@ -182,15 +182,86 @@ describe("retention", () => {
 			activePath: active,
 			clock,
 			onEvict: (c) => (evicted += c),
+			budgetBytes: 8 * 1024, // keep the test file small; production uses 50MiB
 		})
 		const count = await retention.compact()
 		expect(count).toBeGreaterThan(0)
 		expect(evicted).toBe(count)
 		const stat = await fs.stat(active)
-		expect(stat.size).toBeLessThanOrEqual(FILE_BUDGET_BYTES)
+		expect(stat.size).toBeLessThanOrEqual(8 * 1024)
 		// Retained lines are unmodified (first kept line is one of the originals).
 		const raw = await fs.readFile(active, "utf8")
 		expect(raw.endsWith("\n")).toBe(true)
+	})
+
+	it("group-preserving compaction keeps incident shard groups whole and failure first", async () => {
+		const outbox = path.join(home, "outbox")
+		await fs.mkdir(outbox, { recursive: true })
+		const active = path.join(outbox, "sc-b.jsonl")
+		const line = (over: Record<string, unknown>) => JSON.stringify(over)
+		// 1: old incident (parent + 2 shards) 2: newer samples 3: newer failure end
+		const rows = [
+			line({
+				schema_version: "2.0",
+				name: "diagnostic.reported",
+				channel: "diagnostic",
+				timestamp: 1000,
+				producer_id: "pr-1",
+				run_id: "run-1",
+				context: { incident_id: "inc-old" },
+				data: { severity: "error", payload_refs: ["response_body"], truncated: false },
+			}),
+			line({
+				schema_version: "2.0",
+				name: "diagnostic.payload",
+				channel: "diagnostic",
+				timestamp: 1001,
+				producer_id: "pr-1",
+				run_id: "run-1",
+				context: { incident_id: "inc-old" },
+				data: { chunk_index: 0, chunk_count: 2, encoding: "utf8", content: "a".repeat(1200) },
+			}),
+			line({
+				schema_version: "2.0",
+				name: "diagnostic.payload",
+				channel: "diagnostic",
+				timestamp: 1002,
+				producer_id: "pr-1",
+				run_id: "run-1",
+				context: { incident_id: "inc-old" },
+				data: { chunk_index: 1, chunk_count: 2, encoding: "utf8", content: "b".repeat(1200) },
+			}),
+			line({ schema_version: "1.0", name: "webview.delay", channel: "critical", timestamp: 5000, data: {} }),
+			line({ schema_version: "1.0", name: "webview.delay", channel: "critical", timestamp: 5001, data: {} }),
+			line({
+				schema_version: "1.0",
+				name: "rpc",
+				channel: "critical",
+				timestamp: 6000,
+				data: { phase: "end", result: "failure" },
+			}),
+		]
+		await fs.writeFile(active, rows.join("\n") + "\n", "utf8")
+		let evicted = 0
+		const retention = new Retention({
+			dirPath: outbox,
+			scope: "sc-b",
+			activePath: active,
+			clock,
+			onEvict: (c) => (evicted += c),
+			budgetBytes: rows[0].length + rows[1].length + rows[2].length + rows[5].length + 8 * 4,
+		})
+		const count = await retention.compact()
+		expect(count).toBe(2) // the two samples go; the old incident stays whole
+		expect(evicted).toBe(2)
+		const kept = (await fs.readFile(active, "utf8")).trim().split("\n")
+		expect(kept.length).toBe(4)
+		expect(kept.map((l) => JSON.parse(l).name)).toEqual([
+			"diagnostic.reported",
+			"diagnostic.payload",
+			"diagnostic.payload",
+			"rpc", // original file order preserved (failure end last, as written)
+		])
 	})
 
 	it("clearLegacy deletes only same-scope per-producer files, never other scopes", async () => {

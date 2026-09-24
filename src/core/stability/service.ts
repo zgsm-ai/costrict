@@ -267,6 +267,7 @@ export class StabilityService {
 			onWriteDrop: (count, reason) => {
 				if (!this.health) return
 				if (reason === "policy") this.health.writeDropPolicy += count
+				else if (reason === "oversize") this.health.writeDropOversize += count
 				else this.health.writeDropInvalid += count
 			},
 			onExternalChange: (message) => {

@@ -4,7 +4,7 @@ import os from "os"
 import path from "path"
 import { fixedClock } from "../clock"
 import { parseControl, PolicyStore, UNBOUND_EPOCH } from "../policy"
-import { CRITICAL_RESERVED_ITEMS, isCritical, QUEUE_MAX_BYTES, QUEUE_MAX_ITEMS, StabilityQueue } from "../queue"
+import { RESERVED_ITEMS, QUEUE_MAX_BYTES, QUEUE_MAX_ITEMS, StabilityQueue } from "../queue"
 import { Recorder, type Identity } from "../recorder"
 import type { Draft, Fact } from "../fact"
 import { randomId } from "../ids"
@@ -144,50 +144,84 @@ describe("policy store fail-open semantics", () => {
 	})
 })
 
-const queued = (channel: "critical" | "diagnostic" = "critical", bytes = 1024) => ({
-	fact: { channel } as Fact,
+const queued = (channel: "critical" | "diagnostic" = "critical", bytes = 1024, name = "connection") => ({
+	fact: { channel, name, data: {} } as Fact,
 	bytes,
 	channel,
 	at: 0,
 })
 
-describe("queue bounds", () => {
-	it("reserves critical slots: diagnostic rejected beyond non-reserved share", () => {
+describe("queue bounds (three tiers)", () => {
+	it("reserves the protected share: samples rejected beyond it, critical still fits", () => {
 		const queue = new StabilityQueue()
-		const diagMax = QUEUE_MAX_ITEMS - CRITICAL_RESERVED_ITEMS
-		for (let i = 0; i < diagMax; i++) expect(queue.offer(queued("diagnostic", 1))).toBe(true)
-		expect(queue.offer(queued("diagnostic", 1))).toBe(false)
-		expect(queue.rejectedDiagnostic).toBe(1)
-		// critical still fits in its reservation
+		const sampleMax = QUEUE_MAX_ITEMS - RESERVED_ITEMS
+		for (let i = 0; i < sampleMax; i++) expect(queue.offer(queued("diagnostic", 1))).toBe(true)
+		expect(queue.offer(queued("diagnostic", 1))).toBe(false) // sample never evicts
+		// critical fits inside the reservation
 		expect(queue.offer(queued("critical", 1))).toBe(true)
 	})
 
-	it("evicts oldest diagnostics under critical pressure, never the reverse", () => {
-		const queue = new StabilityQueue()
-		const diagBytes = Math.floor(QUEUE_MAX_BYTES * 0.6)
-		expect(queue.offer(queued("diagnostic", diagBytes))).toBe(true)
-		expect(queue.offer(queued("critical", QUEUE_MAX_BYTES - diagBytes - 100))).toBe(true)
-		expect(queue.evictedDiagnostic).toBeGreaterThanOrEqual(0)
-		// refill with diagnostics then force eviction with one big critical record
+	it("critical evicts samples under pressure; failure evicts samples then critical, never the reverse", () => {
 		const q2 = new StabilityQueue()
 		q2.offer(queued("diagnostic", 1024))
 		q2.offer(queued("diagnostic", 1024))
 		expect(q2.offer(queued("critical", QUEUE_MAX_BYTES - 512))).toBe(true)
-		expect(q2.evictedDiagnostic).toBe(2)
-		expect(q2.claim(10, QUEUE_MAX_BYTES).every(isCritical)).toBe(true)
+		expect(q2.evictedSample).toBe(2)
+		expect(q2.claim(10, QUEUE_MAX_BYTES).every((item) => item.channel === "critical")).toBe(true)
+
+		const q3 = new StabilityQueue()
+		q3.offer(queued("diagnostic", 1024))
+		q3.offer(queued("critical", 1024))
+		expect(q3.offer(queued("critical", QUEUE_MAX_BYTES - 512, "error.reported"))).toBe(true)
+		expect(q3.evictedSample).toBe(1)
+		expect(q3.evictedCritical).toBe(1)
+		const claimed = q3.claim(10, QUEUE_MAX_BYTES)
+		expect(claimed.length).toBe(1) // only the failure survivor remains
 	})
 
-	it("keeps claimed batches budgeted until release and can requeue on failure", () => {
+	it("keeps claimed batches budgeted until release; requeue stays group-atomic", () => {
 		const queue = new StabilityQueue()
 		for (let i = 0; i < 10; i++) expect(queue.offer(queued("critical", 1024))).toBe(true)
 		const batch = queue.claim(5, QUEUE_MAX_BYTES)
 		expect(batch.length).toBe(5)
-		expect(queue.depth().items).toBe(5)
+		expect(queue.depth().items).toBe(5) // claimed excluded from backlog depth
 		queue.requeue(batch)
 		expect(queue.depth().items).toBe(10)
-		const again = queue.claim(2, QUEUE_MAX_BYTES)
+		// the requeued five arrive as ONE group: a claim smaller than the group
+		// cannot split it (head-of-line blocking is group-granular, like JB)
+		expect(queue.claim(2, QUEUE_MAX_BYTES)).toEqual([])
+		const again = queue.claim(6, QUEUE_MAX_BYTES)
+		expect(again.length).toBe(6) // the 5-group plus one single
 		queue.release(again)
-		expect(queue.depth().items).toBe(8) // released batches were written; only unclaimed remain
+		expect(queue.depth().items).toBe(4)
+	})
+
+	it("tiers gate eviction only: draining stays arrival-ordered so seq stays monotonic in file order", () => {
+		const queue = new StabilityQueue()
+		queue.offer(queued("critical", 1, "telemetry.health"))
+		queue.offer(queued("critical", 1, "connection"))
+		queue.offer({
+			...queued("critical", 1, "rpc"),
+			fact: { channel: "critical", name: "rpc", data: { phase: "start" } } as unknown as Fact,
+		})
+		queue.offer({
+			...queued("critical", 1, "rpc"),
+			fact: { channel: "critical", name: "rpc", data: { phase: "end" } } as unknown as Fact,
+		})
+		// failure-tier end does NOT overtake its critical-tier start
+		const order = queue.claim(10, QUEUE_MAX_BYTES).map((item) => item.fact.data.phase ?? "-")
+		expect(order).toEqual(["-", "-", "start", "end"])
+	})
+
+	it("offerGroup admits or drops a publication unit whole, at its most severe tier", () => {
+		const queue = new StabilityQueue()
+		const parent = { ...queued("diagnostic", 100, "diagnostic.reported") }
+		const shard = { ...queued("diagnostic", 100, "diagnostic.payload") }
+		expect(queue.offerGroup([parent, shard])).toBe(true)
+		// a group larger than the whole queue drops whole
+		expect(queue.offerGroup([{ ...queued("diagnostic", QUEUE_MAX_BYTES + 1, "diagnostic.payload") }])).toBe(false)
+		const claimed = queue.claim(10, QUEUE_MAX_BYTES)
+		expect(claimed.map((item) => item.fact.name)).toEqual(["diagnostic.reported", "diagnostic.payload"])
 	})
 })
 

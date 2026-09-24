@@ -36,8 +36,8 @@ export interface WriterDeps {
 	dirPath: string
 	/** write_error increments sink (health). */
 	onWriteError: (count: number) => void
-	/** Facts dropped at the write gate, by reason: "policy" = re-permit decline or retired epoch, "invalid" = encode failure. */
-	onWriteDrop: (count: number, reason: "policy" | "invalid") => void
+	/** Facts dropped at the write gate, by reason: "policy" = re-permit decline or retired epoch, "invalid" = encode failure, "oversize" = wire line beyond the 32KiB budget. */
+	onWriteDrop: (count: number, reason: "policy" | "invalid" | "oversize") => void
 	/** Local-only notice for external file interference (truncation/append). */
 	onExternalChange?: (message: string) => void
 	intervalMs?: number
@@ -260,6 +260,7 @@ export class Writer {
 		const lines: string[] = []
 		let policy = 0
 		let invalid = 0
+		let oversize = 0
 		for (const item of batch) {
 			const permitted = this.deps.policy.current().permit(item.fact.channel, item.fact.purposes)
 			if (permitted.length === 0) {
@@ -272,12 +273,14 @@ export class Writer {
 			}
 			try {
 				lines.push(encodeLine(item.fact))
-			} catch {
-				invalid++
+			} catch (err) {
+				if (err instanceof Error && err.message.includes("exceeds")) oversize++
+				else invalid++
 			}
 		}
 		if (policy > 0) this.deps.onWriteDrop(policy, "policy")
 		if (invalid > 0) this.deps.onWriteDrop(invalid, "invalid")
+		if (oversize > 0) this.deps.onWriteDrop(oversize, "oversize")
 		return lines
 	}
 

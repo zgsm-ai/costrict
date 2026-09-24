@@ -7,12 +7,13 @@
  * (key names aligned with the JetBrains 2026-09-23 health change; the cs-cloud
  * v2 branch parses them): invalid (dictionary/validate/encode), contention
  * (pipeline not accepting: standby/shutdown), capacity (queue or storage
- * budget full), policy (declined or retired epoch), oversize and failure
- * (constants in v1 — no such drop path exists yet), evicted (file budget
- * rewrite). drop_failure is excluded from `drop` and flips `quality` to
- * "degraded" for the rest of the run. Collector failures report only to a
- * caller provided sink (rate limited there) — this class never records itself
- * recursively.
+ * budget full), policy (declined or retired epoch), oversize (constant in v1
+ * — no such drop path yet), evicted (file budget rewrite + in-memory tier
+ * evictions) and failure (failure-tier rejection — the never-evicted class
+ * could not be admitted at all). drop_failure is excluded from `drop` and
+ * flips `quality` to "degraded" for the rest of the run. Collector failures
+ * report only to a caller provided sink (rate limited there) — this class
+ * never records itself recursively.
  */
 import type { Recorder, RecorderCounters } from "./recorder"
 import type { StabilityQueue } from "./queue"
@@ -66,6 +67,7 @@ export class Health {
 	/** Write-gate drops by reason, fed by the writer's onWriteDrop. */
 	writeDropPolicy = 0
 	writeDropInvalid = 0
+	writeDropOversize = 0
 	/** Budget-rewrite evictions, fed by retention's onEvict. */
 	evicted = 0
 
@@ -96,9 +98,9 @@ export class Health {
 			drop_contention: counters.disabledStandby + counters.disabledShutdown,
 			drop_capacity: counters.droppedCapacity + counters.droppedQuota,
 			drop_policy: counters.disabledPolicy + this.writeDropPolicy,
-			drop_oversize: 0,
-			drop_evicted: this.evicted,
-			drop_failure: 0,
+			drop_oversize: this.writeDropOversize,
+			drop_evicted: this.evicted + this.deps.queue.evictedSample + this.deps.queue.evictedCritical,
+			drop_failure: counters.droppedFailure,
 		}
 	}
 

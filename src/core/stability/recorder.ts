@@ -11,7 +11,7 @@
 import { validate, purposes as projection } from "./dictionary"
 import { estimateBytes, type Draft, type Fact, type Purpose } from "./fact"
 import type { PolicyStore } from "./policy"
-import type { StabilityQueue } from "./queue"
+import { type StabilityQueue, tierOf } from "./queue"
 import type { Clock } from "./clock"
 import { uuid } from "./ids"
 
@@ -34,6 +34,7 @@ export interface RecorderCounters {
 	accepted: number
 	droppedInvalid: number
 	droppedCapacity: number
+	droppedFailure: number
 	droppedQuota: number
 	disabledPolicy: number
 	disabledShutdown: number
@@ -60,6 +61,7 @@ export class Recorder {
 		accepted: 0,
 		droppedInvalid: 0,
 		droppedCapacity: 0,
+		droppedFailure: 0,
 		droppedQuota: 0,
 		disabledPolicy: 0,
 		disabledShutdown: 0,
@@ -158,7 +160,10 @@ export class Recorder {
 		}
 		const bytes = estimateBytes(draft)
 		if (!this.deps.queue.offer({ fact, bytes, channel: draft.channel, at: this.deps.clock.wall() })) {
-			this.counters.droppedCapacity++
+			// A failure-tier rejection is its own loss class: quality degrades
+			// (precise success rates must not be trusted for the run).
+			if (tierOf(fact) === "failure") this.counters.droppedFailure++
+			else this.counters.droppedCapacity++
 			return "dropped"
 		}
 		this.counters.accepted++
