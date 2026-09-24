@@ -1,7 +1,7 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"title": "CoStrict VS Code stability fact v1",
-	"description": "Wire record for ~/.costrict/telemetry/outbox/<scope-id>.jsonl (NDJSON, one object per line, LF-terminated, ≤32KiB; scope ids match ^sc-[0-9a-f]{12}$). Frozen field set; unknown keys rejected. See docs/vscode-stability-design.md §3.",
+	"description": "Wire record for ~/.costrict/telemetry/outbox/<scope-id>.jsonl (NDJSON, one object per line, LF-terminated, ≤32KiB; scope ids match ^sc-[0-9a-f]{12}$). v1/v2 lines mix per line; decode by schema_version major.",
 	"type": "object",
 	"additionalProperties": false,
 	"required": [
@@ -33,7 +33,7 @@
 	],
 	"properties": {
 		"schema_version": {
-			"const": "1.0"
+			"enum": ["1.0", "2.0"]
 		},
 		"event_id": {
 			"type": "string",
@@ -112,12 +112,13 @@
 			"enum": ["operation", "transition", "lifecycle", "interval", "diagnostic", "health", "sample"]
 		},
 		"name": {
-			"$ref": "#/definitions/token"
+			"$ref": "#/definitions/token",
+			"description": "closed registry per schema major; v2 adds diagnostic.reported/payload/redaction_failed (dictionary.ts)"
 		},
 		"context": {
 			"type": "object",
 			"additionalProperties": false,
-			"maxProperties": 5,
+			"maxProperties": 6,
 			"properties": {
 				"operation_id": {
 					"$ref": "#/definitions/token"
@@ -133,8 +134,12 @@
 				},
 				"workspace_id": {
 					"$ref": "#/definitions/token"
+				},
+				"incident_id": {
+					"$ref": "#/definitions/token"
 				}
-			}
+			},
+			"description": "可选；仅允许六个闭集键"
 		},
 		"data": {
 			"type": "object",

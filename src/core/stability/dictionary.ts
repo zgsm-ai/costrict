@@ -6,13 +6,15 @@
  */
 import type { Draft, FactKind, Purpose } from "./fact"
 
-type FieldType = "string" | "token" | "int" | "number" | "bool"
+type FieldType = "string" | "token" | "int" | "number" | "bool" | "list"
 
 interface FieldRule {
 	type: FieldType
 	vocab?: readonly string[]
 	optional?: boolean
 	max?: number
+	/** list: per-item byte bound */
+	itemMax?: number
 }
 
 interface NameRule {
@@ -22,6 +24,8 @@ interface NameRule {
 	purposes: readonly Purpose[] | "error-family"
 	/** operation kinds require phase semantics (start needs deadline, end needs result). */
 	phased: boolean
+	/** v2-only events (diagnostic.*): drafts must carry schemaVersion "2.0". */
+	version?: "2.0"
 }
 
 const RESULT: FieldRule = {
@@ -57,6 +61,42 @@ const op = (fields: Record<string, FieldRule>, purposes: readonly Purpose[] = DU
 
 const DUAL: readonly Purpose[] = ["metrics", "logs"]
 const METRICS: readonly Purpose[] = ["metrics"]
+const LOGS: readonly Purpose[] = ["logs"]
+
+/**
+ * v2 diagnostic main record (diagnostic.reported / diagnostic.redaction_failed,
+ * JB 2026-09-24 dictionary). Same field set as the JetBrains DIAGNOSTIC_FIELDS:
+ * eight mandatory keys, bounded detail text, frame list, HTTP/JSON context and
+ * payload references into the same incident's diagnostic.payload shards.
+ */
+const diagnostic = (): NameRule => ({
+	kind: "diagnostic",
+	version: "2.0",
+	fields: {
+		severity: { type: "token", vocab: ["warn", "error"] },
+		component: { type: "string" },
+		code: { type: "string" },
+		message: { type: "string", max: 16 * 1024 },
+		exception_type: { type: "string", optional: true },
+		cause_chain: { type: "string", optional: true, max: 16 * 1024 },
+		suppressed_count: { type: "int", optional: true, max: 2 ** 31 },
+		thread_name: { type: "string" },
+		thread_id: { type: "int", max: 2 ** 53 },
+		frames: { type: "list", optional: true, itemMax: 256, max: 16 },
+		method: { type: "string", optional: true },
+		route: { type: "string", optional: true, max: 1024 },
+		http_status: { type: "int", optional: true, max: 2 ** 31 },
+		content_type: { type: "string", optional: true, max: 256 },
+		payload_bytes: { type: "int", optional: true, max: 2 ** 53 },
+		json_path: { type: "string", optional: true, max: 1024 },
+		expected_type: { type: "string", optional: true, max: 256 },
+		actual_type: { type: "string", optional: true, max: 256 },
+		payload_refs: { type: "list", itemMax: 128, max: 16 },
+		truncated: { type: "bool" },
+	},
+	purposes: LOGS,
+	phased: false,
+})
 
 export const CONNECTION_STAGES = [
 	"setting",
@@ -208,6 +248,26 @@ export const DICTIONARY: Record<string, NameRule> = {
 		purposes: "error-family",
 		phased: false,
 	},
+	// ---- v2 high-fidelity diagnostics (schema 2.0, logs-only; JB 2026-09-24) ----
+	"diagnostic.reported": diagnostic(),
+	"diagnostic.redaction_failed": diagnostic(),
+	"diagnostic.payload": {
+		kind: "diagnostic",
+		version: "2.0",
+		fields: {
+			incident_id: { type: "token", max: 128 },
+			payload_kind: { type: "token" },
+			chunk_index: { type: "int", optional: true, max: 2 ** 31 },
+			chunk_count: { type: "int", max: 2 ** 31 },
+			encoding: { type: "token", vocab: ["utf8", "base64"] },
+			content: { type: "string", optional: true, max: 32 * 1024 },
+			original_bytes: { type: "int", optional: true, max: 2 ** 53 },
+			sha256: { type: "token", optional: true },
+			truncated: { type: "bool", optional: true },
+		},
+		purposes: LOGS,
+		phased: false,
+	},
 	"protocol.error": {
 		kind: "diagnostic",
 		fields: {
@@ -357,6 +417,19 @@ const checkValue = (key: string, value: unknown, rule: FieldRule, at: string[]):
 				: [`${at}: ${key} must be number`]
 		case "bool":
 			return typeof value === "boolean" ? [] : [`${at}: ${key} must be bool`]
+		case "list": {
+			if (!Array.isArray(value)) return [`${at}: ${key} must be list`]
+			if (value.length > (rule.max ?? 16)) return [`${at}: ${key} exceeds items`]
+			return value.every(
+				(item) =>
+					typeof item === "string" &&
+					// eslint-disable-next-line no-control-regex -- rejecting control characters is the point
+					!/[\u0000-\u001f\u007f]/.test(item) &&
+					Buffer.byteLength(item, "utf8") <= (rule.itemMax ?? 256),
+			)
+				? []
+				: [`${at}: ${key} item violates bounds`]
+		}
 	}
 }
 
@@ -367,6 +440,26 @@ export const validate = (draft: Draft): string[] => {
 	if (!rule) return [`${at}: not registered`]
 	if (draft.kind !== rule.kind) return [`${at}: kind mismatch`]
 	const violations: string[] = []
+	const version = draft.schemaVersion ?? "1.0"
+	if (version !== (rule.version ?? "1.0")) {
+		violations.push(`${at}: schema version ${version} does not match ${rule.version ?? "1.0"}`)
+	}
+	if (rule.version === "2.0") {
+		// v2 diagnostics: incident correlation is mandatory and the family is
+		// logs-only (metrics never project high-fidelity details).
+		if (!draft.context?.incident_id) violations.push(`${at}: v2 diagnostic requires incident_id context`)
+		const purposes = draft.purposes ?? []
+		if (purposes.length !== 1 || purposes[0] !== "logs")
+			violations.push(`${at}: v2 diagnostics require logs-only purposes`)
+	}
+	if (draft.name === "diagnostic.payload") {
+		const { chunk_index: index, chunk_count: count, incident_id: incident } = draft.data
+		if (typeof index === "number" && typeof count === "number" && index >= count) {
+			violations.push(`${at}: chunk_index must be below chunk_count`)
+		}
+		if (typeof incident !== "string" || incident.length === 0)
+			violations.push(`${at}: payload incident_id must be text`)
+	}
 	for (const [key, value] of Object.entries(draft.data ?? {})) {
 		const field = rule.fields[key]
 		if (!field) {
@@ -405,4 +498,22 @@ export const validate = (draft: Draft): string[] => {
 		}
 	}
 	return violations
+}
+
+/**
+ * Cross-record validation for atomically published groups: chunk indexes must
+ * stay unique per (incident_id, payload_kind) across the batch. Callers record
+ * the drafts in order after this passes; single-draft admission still applies.
+ */
+export const validateGroup = (drafts: Draft[]): string[] => {
+	const problems = drafts.flatMap((draft) => validate(draft))
+	if (problems.length > 0) return problems
+	const seen = new Set<string>()
+	for (const draft of drafts) {
+		if (draft.name !== "diagnostic.payload") continue
+		const key = `${draft.data.incident_id}\u0000${draft.data.payload_kind}\u0000${draft.data.chunk_index}`
+		if (seen.has(key)) problems.push("payload chunk indexes must be unique per incident and kind")
+		else seen.add(key)
+	}
+	return problems
 }

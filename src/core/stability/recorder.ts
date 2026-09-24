@@ -107,7 +107,15 @@ export class Recorder {
 			return "dropped"
 		}
 		const requested = draft.purposes ?? dictionaryPurposes
-		const permitted = this.deps.policy.current().permit(
+		const snapshot = this.deps.policy.current()
+		const major = Number((draft.schemaVersion ?? "1.0").split(".")[0])
+		if (!snapshot.acceptedMajors.includes(major)) {
+			// v2 facts need a consumer (or the fail-open default) that accepts
+			// their schema major; otherwise the family stays dormant.
+			this.counters.disabledPolicy++
+			return "disabled"
+		}
+		const permitted = snapshot.permit(
 			draft.channel,
 			requested.filter((p) => dictionaryPurposes.includes(p)),
 		)
@@ -120,9 +128,8 @@ export class Recorder {
 			return "dropped"
 		}
 		const seq = ++this.seq[draft.channel]
-		const snapshot = this.deps.policy.current()
 		const fact: Fact = {
-			schema_version: "1.0",
+			schema_version: draft.schemaVersion ?? "1.0",
 			event_id: uuid(),
 			timestamp: draft.t_wall ?? this.deps.clock.wall(),
 			producer_id: this.deps.identity.producer_id,

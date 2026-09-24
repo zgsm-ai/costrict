@@ -17,10 +17,11 @@ export type FactContext = Partial<{
 	fault_id: string
 	trace_id: string
 	workspace_id: string
+	incident_id: string
 }>
 
 export interface Fact {
-	schema_version: "1.0"
+	schema_version: "1.0" | "2.0"
 	event_id: string
 	timestamp: number
 	producer_id: string
@@ -63,6 +64,8 @@ export interface Draft {
 	epoch?: string
 	purposes?: Purpose[]
 	side?: Side
+	/** Fact schema major carrier: v2 high-fidelity diagnostics opt in with "2.0". */
+	schemaVersion?: "1.0" | "2.0"
 	t_wall?: number
 	t_mono?: number
 }
@@ -75,7 +78,14 @@ const utf8Bytes = (value: string): number => Buffer.byteLength(value, "utf8")
 export const estimateBytes = (draft: Draft): number =>
 	2048 + 2 * (utf8Bytes(draft.name) + utf8Bytes(JSON.stringify(draft.data ?? {})))
 
-const CONTEXT_KEYS: readonly string[] = ["operation_id", "attempt_id", "fault_id", "trace_id", "workspace_id"]
+const CONTEXT_KEYS: readonly string[] = [
+	"operation_id",
+	"attempt_id",
+	"fault_id",
+	"trace_id",
+	"workspace_id",
+	"incident_id",
+]
 
 export const validContext = (context: FactContext | undefined): boolean => {
 	if (!context) return true
