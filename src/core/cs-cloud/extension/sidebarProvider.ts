@@ -5,6 +5,7 @@ import { promisify } from "util"
 import { CsCloudService } from "./csCloudService"
 import { openDiffView } from "./diffView"
 import { getAssistantUIConfig, type AssistantUIConfig } from "./config"
+import { resolveCsCloudApiKey } from "./csCloudApiKey"
 import {
 	getAssistantUIStaticHtml,
 	getAssistantUIIframeHtml,
@@ -603,6 +604,11 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					}
 				}
 			}
+			// Two distinct credentials reach the webview. __CS_CLOUD_ACCESS_TOKEN__
+			// is the Costrict platform login JWT (quota, console deep-links, user
+			// info); __CS_CLOUD_API_KEY__ is the local cs-cloud control-plane key
+			// (CS_BRIDGE_API_KEY → CS_CLOUD_API_KEY → ~/.costrict/cs-cloud/config.json),
+			// mirroring the JetBrains plugin's CsCloudEndpointResolver.
 			let accessToken: string | null = null
 			try {
 				accessToken = await CostrictAuthService.getInstance().getCurrentAccessToken()
@@ -624,6 +630,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					)
 				}
 			}
+			const apiKey = resolveCsCloudApiKey() ?? undefined
 			const costrictWebUrl = CostrictAuthConfig.getInstance().getDefaultApiBaseUrl()
 			const pluginVersion = Package.version
 			const pluginSha = Package.sha
@@ -645,6 +652,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					Package.commandIDPrefix,
 					pluginSha,
 					pluginBuildTime,
+					apiKey,
 				)
 				webviewView.webview.html = html
 				this.cachedHtml = html
@@ -663,6 +671,7 @@ export class AssistantUISidebarProvider implements vscode.WebviewViewProvider {
 					Package.commandIDPrefix,
 					pluginSha,
 					pluginBuildTime,
+					apiKey,
 				)
 				webviewView.webview.html = html
 				this.cachedHtml = html
