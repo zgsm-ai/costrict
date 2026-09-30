@@ -256,6 +256,68 @@ describe("AssistantUIPanel", () => {
 		expect(html).toContain('event.data?.type === "restartCsCloudServerFailed"')
 	})
 
+	it("hands the iframe both credentials: platform token and local api key", () => {
+		const webview = {
+			cspSource: "vscode-webview://test-csp-source",
+		}
+
+		const html = getAssistantUIIframeHtml(
+			webview as never,
+			{ extensionUri: { fsPath: "/tmp/test-extension" } } as never,
+			"http://127.0.0.1:45489/api/v1",
+			"http://127.0.0.1:3000",
+			"/workspace",
+			"platform-jwt",
+			false,
+			"https://zgsm.sangfor.com",
+			"1.0.0",
+			"costrict",
+			"sha",
+			"build-time",
+			"local-api-key",
+		)
+
+		expect(html).toContain('window.__CS_CLOUD_ACCESS_TOKEN__ = "platform-jwt"')
+		expect(html).toContain('window.__CS_CLOUD_API_KEY__ = "local-api-key"')
+		expect(html).toContain('{ type: "API_KEY", apiKey: window.__CS_CLOUD_API_KEY__ }')
+	})
+
+	it("injects the local api key into the static webview html", () => {
+		const extensionRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cs-cloud-ui-api-key-"))
+		try {
+			const outDir = path.join(extensionRoot, "assets", "cs-cloud-ui", "out")
+			fs.mkdirSync(outDir, { recursive: true })
+			fs.writeFileSync(path.join(outDir, "index.html"), "<!DOCTYPE html><html><head></head><body></body></html>")
+
+			const webview = {
+				cspSource: "vscode-webview://test-csp-source",
+				asWebviewUri: (uri: { fsPath: string }) => ({
+					toString: () => `vscode-resource:${uri.fsPath}`,
+				}),
+			}
+
+			const html = getAssistantUIStaticHtml(
+				webview as never,
+				{ extensionUri: { fsPath: extensionRoot } } as never,
+				"http://127.0.0.1:45489/api/v1",
+				"/workspace",
+				"platform-jwt",
+				"https://zgsm.sangfor.com",
+				"1.0.0",
+				"costrict",
+				"sha",
+				"build-time",
+				"local-api-key",
+			)
+
+			expect(html).toContain('window.__CS_CLOUD_ACCESS_TOKEN__ = "platform-jwt"')
+			expect(html).toContain('window.__CS_CLOUD_API_KEY__ = "local-api-key"')
+			expect(html).toContain("hasApiKey: !!window.__CS_CLOUD_API_KEY__")
+		} finally {
+			fs.rmSync(extensionRoot, { recursive: true, force: true })
+		}
+	})
+
 	it("preserves Request method, headers, and body in the static Webview fetch proxy", () => {
 		const extensionRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cs-cloud-ui-fetch-proxy-"))
 		try {

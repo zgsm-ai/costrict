@@ -692,6 +692,7 @@ export function getAssistantUIStaticHtml(
 	commandIDPrefix?: string,
 	pluginSha?: string,
 	pluginBuildTime?: string,
+	apiKey?: string,
 ): string {
 	const outDir = getAssistantUIStaticOutDir(context)
 	const indexPath = path.join(outDir, "index.html")
@@ -711,6 +712,7 @@ export function getAssistantUIStaticHtml(
 			pluginVersion,
 			pluginSha,
 			pluginBuildTime,
+			apiKey,
 		)
 	}
 
@@ -745,6 +747,7 @@ export function getAssistantUIStaticHtml(
         window.__CS_CLOUD_COMMAND_ID_PREFIX__ = ${JSON.stringify(commandIDPrefix || "costrict")}; 
         window.__ASSISTANT_UI_THEME__ = ${JSON.stringify(getAssistantUITheme())}; 
         window.__CS_CLOUD_ACCESS_TOKEN__ = ${JSON.stringify(accessToken || "")};
+        window.__CS_CLOUD_API_KEY__ = ${JSON.stringify(apiKey || "")};
         window.__CS_CLOUD_WEB_URL__ = ${JSON.stringify(costrictWebUrl)};
         window.__CS_CLOUD_VERSION__ = ${JSON.stringify(pluginVersion || "")};
         window.__CS_CLOUD_SHA__ = ${JSON.stringify(pluginSha || "")};
@@ -773,6 +776,7 @@ export function getAssistantUIStaticHtml(
             baseUrl: window.__CS_CLOUD_BASE_URL__,
             workspaceDirectory: window.__CS_CLOUD_WORKSPACE_DIRECTORY__,
             hasAccessToken: !!window.__CS_CLOUD_ACCESS_TOKEN__,
+            hasApiKey: !!window.__CS_CLOUD_API_KEY__,
             userAgent: navigator.userAgent
           });
           var dumpCloudUiDomState = function(label) {
@@ -1063,6 +1067,7 @@ export function getAssistantUIIframeHtml(
 	commandIDPrefix?: string,
 	pluginSha?: string,
 	pluginBuildTime?: string,
+	apiKey?: string,
 ): string {
 	const nonce = getNonce()
 	const frameUrl = buildAssistantUIFrameUrl(
@@ -1117,6 +1122,7 @@ export function getAssistantUIIframeHtml(
     window.__CS_CLOUD_WORKSPACE_DIRECTORY__ = ${JSON.stringify(workspaceDirectory)};
     window.__CS_CLOUD_COMMAND_ID_PREFIX__ = ${JSON.stringify(commandIDPrefix || "costrict")};
     window.__CS_CLOUD_ACCESS_TOKEN__ = ${JSON.stringify(accessToken || "")};
+    window.__CS_CLOUD_API_KEY__ = ${JSON.stringify(apiKey || "")};
     window.__ASSISTANT_UI_FRAME_URL__ = ${JSON.stringify(frameUrl)};
     window.__ASSISTANT_UI_THEME__ = ${JSON.stringify(getAssistantUITheme())};
     window.__CS_CLOUD_VERSION__ = ${JSON.stringify(pluginVersion || "")};
@@ -1135,6 +1141,9 @@ export function getAssistantUIIframeHtml(
           window.__ASSISTANT_UI_HIDE_LOADING__();
           if (frame.contentWindow && window.__CS_CLOUD_ACCESS_TOKEN__) {
             frame.contentWindow.postMessage({ type: "ACCESS_TOKEN", token: window.__CS_CLOUD_ACCESS_TOKEN__ }, frameOrigin);
+          }
+          if (frame.contentWindow && window.__CS_CLOUD_API_KEY__) {
+            frame.contentWindow.postMessage({ type: "API_KEY", apiKey: window.__CS_CLOUD_API_KEY__ }, frameOrigin);
           }
         });
       }
@@ -1170,6 +1179,17 @@ export function getAssistantUIIframeHtml(
           if (frame.contentWindow && window.__CS_CLOUD_ACCESS_TOKEN__) {
             frame.contentWindow.postMessage({ type: "ACCESS_TOKEN", token: window.__CS_CLOUD_ACCESS_TOKEN__ }, frameOrigin);
           }
+          if (frame.contentWindow && window.__CS_CLOUD_API_KEY__) {
+            frame.contentWindow.postMessage({ type: "API_KEY", apiKey: window.__CS_CLOUD_API_KEY__ }, frameOrigin);
+          }
+          return;
+        }
+        if (event.data?.type === "stabilityFacts") {
+          vscodeApi.postMessage({ type: "stabilityFacts", facts: event.data.facts, dropped: event.data.dropped });
+          return;
+        }
+        if (event.data?.type === "stabilityDiagnostics" && event.data.diagnostic) {
+          vscodeApi.postMessage({ type: "stabilityDiagnostics", diagnostic: event.data.diagnostic });
           return;
         }
         if (event.data?.type === "FETCH_QUOTA") {

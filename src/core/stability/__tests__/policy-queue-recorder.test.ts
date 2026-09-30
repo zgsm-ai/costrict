@@ -1,0 +1,331 @@
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { promises as fs } from "fs"
+import os from "os"
+import path from "path"
+import { fixedClock } from "../clock"
+import { parseControl, PolicyStore, UNBOUND_EPOCH } from "../policy"
+import { RESERVED_ITEMS, QUEUE_MAX_BYTES, QUEUE_MAX_ITEMS, StabilityQueue } from "../queue"
+import { Recorder, type Identity } from "../recorder"
+import type { Draft, Fact } from "../fact"
+import { randomId } from "../ids"
+
+let dir: string
+
+beforeEach(async () => {
+	dir = await fs.mkdtemp(path.join(os.tmpdir(), "stability-policy-"))
+})
+
+afterEach(async () => {
+	await fs.rm(dir, { recursive: true, force: true })
+})
+
+const controlPath = () => path.join(dir, "control", "vscode.json")
+const writeControl = async (content: unknown) => {
+	await fs.mkdir(path.dirname(controlPath()), { recursive: true })
+	await fs.writeFile(controlPath(), JSON.stringify(content), "utf8")
+}
+
+const baseControl = {
+	schema_major: 1,
+	revision: 7,
+	enabled: true,
+	metrics_enabled: true,
+	logs_enabled: true,
+	account_epoch: "acct-1",
+	account_state: "ready",
+	expires_at: Number.MAX_SAFE_INTEGER,
+}
+
+describe("control file parsing", () => {
+	it("rejects malformed and unknown fields", () => {
+		expect(parseControl("{")).toBeUndefined()
+		expect(parseControl("null")).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, extra: 1 }))).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, schema_major: 2 }))).toBeUndefined()
+	})
+
+	it("accepts a valid file", () => {
+		expect(parseControl(JSON.stringify(baseControl))?.revision).toBe(7)
+	})
+
+	it("parses accepted_fact_schema_majors strictly", () => {
+		expect(
+			parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [1, 2] }))
+				?.accepted_fact_schema_majors,
+		).toEqual([1, 2])
+		// absent, empty, non-integer, non-positive or duplicated values invalidate the whole file
+		expect(parseControl(JSON.stringify(baseControl))?.accepted_fact_schema_majors).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [] }))).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [1, "2"] }))).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [0] }))).toBeUndefined()
+		expect(parseControl(JSON.stringify({ ...baseControl, accepted_fact_schema_majors: [2, 2] }))).toBeUndefined()
+	})
+
+	it("exposes acceptedMajors: fail-open defaults to {1,2}, explicit file controls it", async () => {
+		const clock = fixedClock(1000)
+		const store = new PolicyStore({ controlPath: controlPath(), clock })
+		await store.refresh()
+		expect(store.current().acceptedMajors).toEqual([1, 2]) // no control file: v2 by default
+		await writeControl({ ...baseControl, accepted_fact_schema_majors: [1, 2] })
+		await store.refresh()
+		expect(store.current().acceptedMajors).toEqual([1, 2])
+		// Explicit [1] or a missing field both suppress v2 (consumer v1 only).
+		await writeControl({ ...baseControl, accepted_fact_schema_majors: [1] })
+		await store.refresh()
+		expect(store.current().acceptedMajors).toEqual([1])
+		await writeControl({ ...baseControl })
+		await store.refresh()
+		expect(store.current().acceptedMajors).toEqual([1])
+	})
+})
+
+describe("policy store fail-open semantics", () => {
+	it("is fail-open when the control file is missing", async () => {
+		const clock = fixedClock(1000)
+		const store = new PolicyStore({ controlPath: controlPath(), clock })
+		await store.refresh()
+		const snapshot = store.current()
+		expect(snapshot.explicit).toBeUndefined()
+		expect(snapshot.revision).toBe(0)
+		expect(snapshot.epoch).toBe(UNBOUND_EPOCH)
+		expect(snapshot.permit("critical", ["metrics", "logs"])).toEqual(["metrics", "logs"])
+	})
+
+	it("permits per purpose, channel and expiry", async () => {
+		const clock = fixedClock(1000)
+		await writeControl({ ...baseControl, logs_enabled: false, metrics_allowed_categories: ["critical"] })
+		const store = new PolicyStore({ controlPath: controlPath(), clock })
+		await store.refresh()
+		const snapshot = store.current()
+		expect(snapshot.permit("critical", ["metrics", "logs"])).toEqual(["metrics"])
+		expect(snapshot.permit("diagnostic", ["metrics"])).toEqual([])
+		expect(snapshot.permit("critical", ["logs"])).toEqual([])
+	})
+
+	it("stops both purposes on disabled or expired common policy", async () => {
+		const clock = fixedClock(1000)
+		await writeControl({ ...baseControl, enabled: false })
+		const disabled = new PolicyStore({ controlPath: controlPath(), clock })
+		await disabled.refresh()
+		expect(disabled.current().permit("critical", ["metrics", "logs"])).toEqual([])
+
+		await writeControl({ ...baseControl, expires_at: 500 })
+		const expired = new PolicyStore({ controlPath: controlPath(), clock })
+		await expired.refresh()
+		expect(expired.current().permit("critical", ["metrics"])).toEqual([])
+	})
+
+	it("permanently retires an epoch after a change", async () => {
+		const clock = fixedClock(1000)
+		await writeControl({ ...baseControl, account_epoch: "acct-1" })
+		const store = new PolicyStore({ controlPath: controlPath(), clock })
+		await store.refresh()
+		expect(store.isRetired("acct-1")).toBe(false)
+
+		await writeControl({ ...baseControl, account_epoch: "acct-2", revision: 8 })
+		await store.refresh()
+		expect(store.isRetired("acct-1")).toBe(true)
+		expect(store.current().epoch).toBe("acct-2")
+		expect(store.retiredEpochs()).toEqual(["acct-1"])
+	})
+
+	it("does not revive an expired permit after clock rollback", async () => {
+		const clock = fixedClock(5000)
+		await writeControl({ ...baseControl, expires_at: 6000 })
+		const store = new PolicyStore({ controlPath: controlPath(), clock })
+		await store.refresh()
+		expect(store.current().permit("critical", ["metrics"])).toEqual(["metrics"])
+
+		clock.tick(2000) // now 7000, expired
+		expect(store.current().permit("critical", ["metrics"])).toEqual([])
+
+		clock.tick(-5000) // rollback to 2000
+		expect(store.current().permit("critical", ["metrics"])).toEqual([]) // floor keeps it expired
+	})
+})
+
+const queued = (channel: "critical" | "diagnostic" = "critical", bytes = 1024, name = "connection") => ({
+	fact: { channel, name, data: {} } as Fact,
+	bytes,
+	channel,
+	at: 0,
+})
+
+describe("queue bounds (three tiers)", () => {
+	it("reserves the protected share: samples rejected beyond it, critical still fits", () => {
+		const queue = new StabilityQueue()
+		const sampleMax = QUEUE_MAX_ITEMS - RESERVED_ITEMS
+		for (let i = 0; i < sampleMax; i++) expect(queue.offer(queued("diagnostic", 1))).toBe(true)
+		expect(queue.offer(queued("diagnostic", 1))).toBe(false) // sample never evicts
+		// critical fits inside the reservation
+		expect(queue.offer(queued("critical", 1))).toBe(true)
+	})
+
+	it("critical evicts samples under pressure; failure evicts samples then critical, never the reverse", () => {
+		const q2 = new StabilityQueue()
+		q2.offer(queued("diagnostic", 1024))
+		q2.offer(queued("diagnostic", 1024))
+		expect(q2.offer(queued("critical", QUEUE_MAX_BYTES - 512))).toBe(true)
+		expect(q2.evictedSample).toBe(2)
+		expect(q2.claim(10, QUEUE_MAX_BYTES).every((item) => item.channel === "critical")).toBe(true)
+
+		const q3 = new StabilityQueue()
+		q3.offer(queued("diagnostic", 1024))
+		q3.offer(queued("critical", 1024))
+		expect(q3.offer(queued("critical", QUEUE_MAX_BYTES - 512, "error.reported"))).toBe(true)
+		expect(q3.evictedSample).toBe(1)
+		expect(q3.evictedCritical).toBe(1)
+		const claimed = q3.claim(10, QUEUE_MAX_BYTES)
+		expect(claimed.length).toBe(1) // only the failure survivor remains
+	})
+
+	it("keeps claimed batches budgeted until release; requeue stays group-atomic", () => {
+		const queue = new StabilityQueue()
+		for (let i = 0; i < 10; i++) expect(queue.offer(queued("critical", 1024))).toBe(true)
+		const batch = queue.claim(5, QUEUE_MAX_BYTES)
+		expect(batch.length).toBe(5)
+		expect(queue.depth().items).toBe(5) // claimed excluded from backlog depth
+		queue.requeue(batch)
+		expect(queue.depth().items).toBe(10)
+		// the requeued five arrive as ONE group: a claim smaller than the group
+		// cannot split it (head-of-line blocking is group-granular, like JB)
+		expect(queue.claim(2, QUEUE_MAX_BYTES)).toEqual([])
+		const again = queue.claim(6, QUEUE_MAX_BYTES)
+		expect(again.length).toBe(6) // the 5-group plus one single
+		queue.release(again)
+		expect(queue.depth().items).toBe(4)
+	})
+
+	it("tiers gate eviction only: draining stays arrival-ordered so seq stays monotonic in file order", () => {
+		const queue = new StabilityQueue()
+		queue.offer(queued("critical", 1, "telemetry.health"))
+		queue.offer(queued("critical", 1, "connection"))
+		queue.offer({
+			...queued("critical", 1, "rpc"),
+			fact: { channel: "critical", name: "rpc", data: { phase: "start" } } as unknown as Fact,
+		})
+		queue.offer({
+			...queued("critical", 1, "rpc"),
+			fact: { channel: "critical", name: "rpc", data: { phase: "end" } } as unknown as Fact,
+		})
+		// failure-tier end does NOT overtake its critical-tier start
+		const order = queue.claim(10, QUEUE_MAX_BYTES).map((item) => item.fact.data.phase ?? "-")
+		expect(order).toEqual(["-", "-", "start", "end"])
+	})
+
+	it("offerGroup admits or drops a publication unit whole, at its most severe tier", () => {
+		const queue = new StabilityQueue()
+		const parent = { ...queued("diagnostic", 100, "diagnostic.reported") }
+		const shard = { ...queued("diagnostic", 100, "diagnostic.payload") }
+		expect(queue.offerGroup([parent, shard])).toBe(true)
+		// a group larger than the whole queue drops whole
+		expect(queue.offerGroup([{ ...queued("diagnostic", QUEUE_MAX_BYTES + 1, "diagnostic.payload") }])).toBe(false)
+		const claimed = queue.claim(10, QUEUE_MAX_BYTES)
+		expect(claimed.map((item) => item.fact.name)).toEqual(["diagnostic.reported", "diagnostic.payload"])
+	})
+})
+
+const identity: Identity = {
+	producer_id: randomId("pr"),
+	run_id: randomId("run"),
+	device_id: "device-6d81",
+	plugin_version: "3.0.21",
+	ide_build: "1.102",
+	ide_build_major: "1.102",
+	os_family: "linux",
+	arch: "x64",
+	env: "test",
+}
+
+const setup = async (control?: unknown) => {
+	if (control) await writeControl(control)
+	const clock = fixedClock(1789862400000)
+	const policy = new PolicyStore({ controlPath: controlPath(), clock })
+	await policy.refresh()
+	const queue = new StabilityQueue()
+	const recorder = new Recorder({ identity, policy, queue, clock })
+	return { clock, policy, queue, recorder }
+}
+
+const op = (name: string, data: Record<string, unknown>, over: Partial<Draft> = {}): Draft => ({
+	name,
+	kind: "operation",
+	channel: "critical",
+	data: { phase: "end", result: "success", duration_ms: 10, ...data },
+	...over,
+})
+
+describe("recorder admission gate", () => {
+	it("fail-open: queues with unbound epoch and revision 0 without a control file", async () => {
+		const { recorder, queue } = await setup()
+		expect(recorder.record(op("webview.setup", { stage: "ready" }))).toBe("queued")
+		const fact = queue.claim(10, 1 << 20)[0].fact
+		expect(fact.account_epoch).toBe(UNBOUND_EPOCH)
+		expect(fact.policy_revision).toBe(0)
+		expect(fact.seq).toBe(1)
+		expect(fact.purposes).toEqual(["metrics", "logs"])
+		expect(fact.side).toBe("extension_host")
+	})
+
+	it("seq is per channel, strictly monotonic, holes preserved", async () => {
+		const { recorder, queue } = await setup()
+		recorder.record(op("webview.setup", { stage: "ready" }))
+		recorder.record({
+			name: "error.reported",
+			kind: "diagnostic",
+			channel: "diagnostic",
+			data: { fault_id: "f-1", error_class: "type_error", handled: true },
+		})
+		recorder.record(op("panel.load", { trigger: "initial" }))
+		const facts = queue.claim(10, 1 << 20).map((item) => item.fact)
+		expect(facts.map((f) => [f.channel, f.seq])).toEqual([
+			["critical", 1],
+			["diagnostic", 1],
+			["critical", 2],
+		])
+	})
+
+	it("policy intersection disables (not drops) facts the policy forbids", async () => {
+		const { recorder } = await setup({ ...baseControl, logs_enabled: false })
+		const status = recorder.record(op("webview.setup", { stage: "ready" }, { purposes: ["logs"] }))
+		expect(status).toBe("disabled")
+		expect(recorder.counters.disabledPolicy).toBe(1)
+		expect(recorder.counters.accepted).toBe(0)
+	})
+
+	it("drops invalid drafts and stamps the policy epoch/revision", async () => {
+		const { recorder, queue } = await setup(baseControl)
+		expect(recorder.record(op("webview.setup", { stage: "ready", bogus: 1 }))).toBe("dropped")
+		expect(recorder.counters.droppedInvalid).toBe(1)
+		recorder.record(op("webview.setup", { stage: "ready" }))
+		const fact = queue.claim(10, 1 << 20)[0].fact
+		expect(fact.account_epoch).toBe("acct-1")
+		expect(fact.policy_revision).toBe(7)
+	})
+
+	it("t_wall overrides the clock as the fact timestamp (webview capture time)", async () => {
+		const { recorder, queue } = await setup()
+		recorder.record(op("action", { action: "stop" }, { t_wall: 111, side: "webview" }))
+		const fact = queue.claim(10, 1 << 20)[0].fact
+		expect(fact.timestamp).toBe(111)
+		expect(fact.side).toBe("webview")
+	})
+
+	it("standby forwards to the active recorder", async () => {
+		const { recorder } = await setup()
+		const standby = new Recorder({
+			identity,
+			policy: recorder["deps"].policy,
+			queue: recorder["deps"].queue,
+			clock: recorder["deps"].clock,
+		})
+		standby.setStandbyTarget(recorder)
+		expect(standby.record(op("webview.setup", { stage: "ready" }))).toBe("queued")
+		expect(recorder.counters.accepted).toBe(1)
+
+		standby.setStandbyTarget(undefined)
+		standby.close()
+		expect(standby.record(op("webview.setup", { stage: "ready" }))).toBe("disabled")
+		expect(standby.counters.disabledShutdown).toBe(1)
+	})
+})

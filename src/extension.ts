@@ -64,6 +64,7 @@ import { loadIdeaShellEnvOnce } from "./utils/ideaShellEnvLoader"
 import { isJetbrainsPlatform } from "./utils/platform"
 import { AssistantUISidebarProvider } from "./core/cs-cloud/extension/sidebarProvider"
 import { CsCloudService } from "./core/cs-cloud/extension/csCloudService"
+import { stabilityController, startStability } from "./core/stability/setup"
 import { getConfiguredUiMode } from "./shared/uiMode"
 // import { flushModels, getModels, initializeModelCacheRefresh } from "./api/providers/fetchers/modelCache"
 
@@ -253,7 +254,45 @@ export async function activate(context: vscode.ExtensionContext) {
 		const csCloudService = new CsCloudService(outputChannel)
 		context.subscriptions.push(csCloudService)
 
-		const assistantProvider = new AssistantUISidebarProvider(context, outputChannel, csCloudService)
+		// 稳定性采集（cloud ui mode only）：fail-open，outbox 落盘 ~/.costrict/telemetry
+		const stability = startStability(context, (line) => outputChannel.appendLine(line), Package.version)
+		// v2 日志镜像（cloud only）：扩展输出通道的错误形态行进入诊断管线
+		{
+			const channel = outputChannel as { appendLine: (value: string) => void }
+			const original = channel.appendLine.bind(outputChannel)
+			channel.appendLine = (value: string) => {
+				stability.mirrorLogLine(value)
+				original(value)
+			}
+		}
+		context.subscriptions.push({
+			dispose: () => {
+				void stability.stop("app_close")
+			},
+		})
+
+		// 字典扫描自检（仅开发/测试模式注册，不进生产分母）
+		if (
+			context.extensionMode === vscode.ExtensionMode.Development ||
+			context.extensionMode === vscode.ExtensionMode.Test
+		) {
+			context.subscriptions.push(
+				vscode.commands.registerCommand(`${Package.commandIDPrefix}.stability.selfTest`, async () => {
+					const { emitDictionarySweep, emitDiagnosticSelftest } = await import("./core/stability/selftest")
+					const result = emitDictionarySweep(stability.service)
+					const diag = emitDiagnosticSelftest(stability.service)
+					void stability.drain()
+					outputChannel.appendLine(
+						`[stability] selfTest: ${result.queued}/${result.attempted} queued, dropped=${result.dropped}, disabled=${result.disabled} (ws-selftest)`,
+					)
+					outputChannel.appendLine(
+						`[stability] selfTest v2: incident=${diag.incident}, ${diag.mirrored} mirror record queued for drain`,
+					)
+				}),
+			)
+		}
+
+		const assistantProvider = new AssistantUISidebarProvider(context, outputChannel, csCloudService, stability)
 
 		context.subscriptions.push(
 			vscode.window.registerWebviewViewProvider(AssistantUISidebarProvider.viewType, assistantProvider, {
@@ -461,6 +500,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated.
 export async function deactivate() {
+	// Stability run ends from this real platform callback BEFORE anything else
+	// tears down, so plugin.shutdown can still pass the admission gate.
+	await stabilityController()?.stop("app_close")
 	await CostrictCore.deactivate()
 	outputChannel.appendLine(`${Package.commandIDPrefix} extension deactivated`)
 

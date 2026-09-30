@@ -1,0 +1,159 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "CoStrict VS Code stability fact v1",
+	"description": "Wire record for ~/.costrict/telemetry/outbox/<scope-id>.jsonl (NDJSON, one object per line, LF-terminated, ≤32KiB; scope ids match ^sc-[0-9a-f]{12}$). v1/v2 lines mix per line; decode by schema_version major.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schema_version",
+		"event_id",
+		"timestamp",
+		"producer_id",
+		"run_id",
+		"channel",
+		"seq",
+		"account_epoch",
+		"policy_revision",
+		"purposes",
+		"source",
+		"device_id",
+		"plugin_version",
+		"ide_product",
+		"ide_build",
+		"ide_build_major",
+		"os_family",
+		"arch",
+		"env",
+		"mode",
+		"side",
+		"connection_provider",
+		"kind",
+		"name",
+		"data"
+	],
+	"properties": {
+		"schema_version": {
+			"enum": ["1.0", "2.0"]
+		},
+		"event_id": {
+			"type": "string",
+			"pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+		},
+		"timestamp": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"producer_id": {
+			"$ref": "#/definitions/token"
+		},
+		"run_id": {
+			"$ref": "#/definitions/token"
+		},
+		"channel": {
+			"enum": ["critical", "diagnostic"]
+		},
+		"seq": {
+			"type": "integer",
+			"minimum": 1
+		},
+		"account_epoch": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 64
+		},
+		"policy_revision": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"purposes": {
+			"type": "array",
+			"items": {
+				"enum": ["metrics", "logs"]
+			},
+			"minItems": 1,
+			"uniqueItems": true
+		},
+		"source": {
+			"const": "vscode-plugin"
+		},
+		"device_id": {
+			"$ref": "#/definitions/token"
+		},
+		"plugin_version": {
+			"type": "string",
+			"maxLength": 64
+		},
+		"ide_product": {
+			"const": "vscode"
+		},
+		"ide_build": {
+			"type": "string",
+			"maxLength": 64
+		},
+		"os_family": {
+			"enum": ["windows", "macos", "linux", "unknown"]
+		},
+		"arch": {
+			"enum": ["x64", "arm64", "ia32", "unknown"]
+		},
+		"env": {
+			"enum": ["prod", "dev", "test"]
+		},
+		"mode": {
+			"const": "monolith"
+		},
+		"side": {
+			"enum": ["extension_host", "webview"]
+		},
+		"connection_provider": {
+			"const": "cs-cloud"
+		},
+		"kind": {
+			"enum": ["operation", "transition", "lifecycle", "interval", "diagnostic", "health", "sample"]
+		},
+		"name": {
+			"$ref": "#/definitions/token",
+			"description": "closed registry per schema major; v2 adds diagnostic.reported/payload/redaction_failed (dictionary.ts)"
+		},
+		"context": {
+			"type": "object",
+			"additionalProperties": false,
+			"maxProperties": 6,
+			"properties": {
+				"operation_id": {
+					"$ref": "#/definitions/token"
+				},
+				"attempt_id": {
+					"$ref": "#/definitions/token"
+				},
+				"fault_id": {
+					"$ref": "#/definitions/token"
+				},
+				"trace_id": {
+					"$ref": "#/definitions/token"
+				},
+				"workspace_id": {
+					"$ref": "#/definitions/token"
+				},
+				"incident_id": {
+					"$ref": "#/definitions/token"
+				}
+			},
+			"description": "可选；仅允许六个闭集键"
+		},
+		"data": {
+			"type": "object",
+			"description": "Event-specific whitelist; see dictionary.ts and the design doc §4 table."
+		},
+		"ide_build_major": {
+			"type": "string",
+			"maxLength": 32
+		}
+	},
+	"definitions": {
+		"token": {
+			"type": "string",
+			"pattern": "^[a-z0-9][a-z0-9_.-]{0,63}$"
+		}
+	}
+}
