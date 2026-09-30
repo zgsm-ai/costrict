@@ -2,6 +2,11 @@
 
 > For the complete history, please visit [CHANGELOG_ARCHIVE.md](./CHANGELOG_ARCHIVE.md)
 
+## [3.0.23]
+
+- Optimize CoStrict Cloud stability and diagnostics
+- Fix known issues
+
 ## [3.0.22]
 
 - Remove code completion feature and runtime installer
