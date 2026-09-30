@@ -251,6 +251,16 @@ describe("rpc and ide operations", () => {
 		expect(apiGroupOf("/api/v1/unknown/thing")).toBe("other")
 	})
 
+	it("derives api groups from absolute relay URLs (proxyFetch passes full URLs)", () => {
+		// Regression: full URLs used to miss every pattern and collapse to
+		// "other", hiding per-surface rpc splits in dashboards.
+		expect(apiGroupOf("http://127.0.0.1:45489/api/v1/session")).toBe("session")
+		expect(apiGroupOf("http://127.0.0.1:45489/api/v1/conversations/abc/prompt/async")).toBe("session")
+		expect(apiGroupOf("https://host/api/v1/permissions")).toBe("permission")
+		expect(apiGroupOf("http://127.0.0.1:45489/api/v1/agents/models/config")).toBe("agent")
+		expect(apiGroupOf("http://127.0.0.1:45489/api/v1/other/thing")).toBe("other")
+	})
+
 	it("observes success and failure with results", async () => {
 		await observeRpc(service, "/api/v1/session", async () => "ok")
 		await expect(
@@ -265,5 +275,25 @@ describe("rpc and ide operations", () => {
 		const ide = recorded.find((f) => f.name === "ide.operation" && f.data.phase === "end")
 		expect(ide?.data.operation).toBe("open_diff")
 		expect(ide?.data.result).toBe("success")
+	})
+
+	it("settles non-2xx HTTP responses as failures instead of success", async () => {
+		// Regression: an upstream 4xx/5xx settles without throwing in the
+		// relay; it used to be recorded as success and the only symptom was
+		// silence (zero-token sessions, [object Object] SDK errors over a
+		// silent 401/404).
+		const notFound = new Response("404 page not found", { status: 404 })
+		const badGateway = new Response("upstream unavailable", { status: 503, statusText: "Service Unavailable" })
+		await observeRpc(service, "http://127.0.0.1:45489/api/v1/session", async () => notFound)
+		await observeRpc(service, "http://127.0.0.1:45489/api/v1/session", async () => badGateway)
+		await new Promise((resolve) => setImmediate(resolve)) // bridge drain
+		const recorded = drain()
+		const ends = recorded.filter((f) => f.name === "rpc" && f.data.phase === "end")
+		expect(ends.every((f) => f.data.result === "failure")).toBe(true)
+		expect(ends.map((f) => f.data.error_code)).toEqual(["http_404", "http_503"])
+		const parents = recorded.filter((f) => f.name === "diagnostic.reported")
+		expect(parents.map((f) => f.data.severity).sort()).toEqual(["error", "warn"])
+		expect(parents.every((f) => String(f.data.message).startsWith("rpc session failed: HTTP"))).toBe(true)
+		expect(parents.every((f) => f.data.route === "/api/v1/session")).toBe(true)
 	})
 })
