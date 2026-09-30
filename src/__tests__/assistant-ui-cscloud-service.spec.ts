@@ -352,11 +352,15 @@ describe("CsCloudService (refactored)", () => {
 
 		let existsCallCount = 0
 		mockFs.existsSync.mockImplementation((p: string) => {
-			existsCallCount++
-			if (p.toString().endsWith("server_url")) {
-				return existsCallCount > 1
+			const s = p.toString()
+			if (s.endsWith("server_url")) {
+				existsCallCount++
+				// two candidate roots are probed per read (cs-bridge, then
+				// legacy cs-cloud); the legacy file appears from the second
+				// read onward, after the bundled binary has been spawned
+				return s.includes("cs-cloud") && existsCallCount > 2
 			}
-			return p.toString().includes("cs-cloud")
+			return s.includes("cs-cloud")
 		})
 		mockFs.readFileSync.mockReturnValue("http://127.0.0.1:59249")
 		mockHealthOk()
@@ -404,5 +408,49 @@ describe("CsCloudService (refactored)", () => {
 		expect(svc.state).toBe("running")
 
 		svc.dispose()
+	})
+
+	it("prefers the cs-bridge server_url over the legacy cs-cloud one", async () => {
+		mockFs.existsSync.mockImplementation((p: string) => p.toString().includes("cs-bridge"))
+		mockFs.readFileSync.mockImplementation((p: string) => {
+			// both roots have a server_url; the daemon v1.2.72+ root wins
+			return p.toString().includes("cs-bridge") ? "http://127.0.0.1:59249" : "http://127.0.0.1:9999"
+		})
+		mockHealthOk()
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await expect(svc.ensureStarted()).resolves.toBe("http://127.0.0.1:59249/api/v1")
+
+		// the watcher covers the cs-bridge root (and only the roots that exist)
+		const watchedDirs = mockFs.watch.mock.calls.map((call) => String(call[0]))
+		expect(watchedDirs).toContain("/home/testuser/.costrict/cs-bridge")
+		expect(watchedDirs).not.toContain("/home/testuser/.costrict/cs-cloud")
+	})
+
+	it("falls back to the legacy cs-cloud server_url when cs-bridge has none", async () => {
+		mockFs.existsSync.mockImplementation((p: string) => p.toString().includes("cs-cloud"))
+		mockFs.readFileSync.mockReturnValue("http://127.0.0.1:59249")
+		mockHealthOk()
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		await expect(svc.ensureStarted()).resolves.toBe("http://127.0.0.1:59249/api/v1")
+		expect(svc.connectionSource).toBe("serverUrlFile")
+
+		const watchedDirs = mockFs.watch.mock.calls.map((call) => String(call[0]))
+		expect(watchedDirs).toEqual(["/home/testuser/.costrict/cs-cloud"])
+	})
+
+	it("empty cs-bridge server_url does not fall through to the legacy root", async () => {
+		mockFs.existsSync.mockImplementation((p: string) => p.toString().endsWith("server_url"))
+		mockFs.readFileSync.mockImplementation((p: string) => {
+			return p.toString().includes("cs-bridge") ? "   " : "http://127.0.0.1:59249"
+		})
+		mockHealthOk()
+
+		const svc = new CsCloudService(createOutputChannel() as never)
+		// Step2 must not hand out the stale legacy URL; discovery continues
+		// to the bundled binary / CLI branches and ends in an error here
+		await expect(svc.ensureStarted()).rejects.toThrow()
+		expect(svc.connectionSource).not.toBe("serverUrlFile")
 	})
 })

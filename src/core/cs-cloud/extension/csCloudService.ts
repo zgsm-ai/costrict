@@ -8,6 +8,7 @@ import which from "which"
 import crossSpawn from "cross-spawn"
 import * as vscode from "vscode"
 import { getAssistantUIConfig } from "./config"
+import { serverUrlPaths } from "./csCloudPaths"
 
 export type CsCloudServiceState = "idle" | "loading" | "running" | "error"
 export type CsCloudProcessOwner = "extension" | "external"
@@ -53,7 +54,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	startupFailureIsNotRunning = false
 
 	private baseUrl: string | undefined
-	private watcher: fs.FSWatcher | undefined
+	private watchers: fs.FSWatcher[] = []
 	private operationPromise?: Promise<string>
 	private childProcess?: ReturnType<typeof crossSpawn>
 	private healthCheckTimer?: ReturnType<typeof setInterval>
@@ -93,7 +94,7 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	}
 
 	private get serverUrlPath(): string {
-		return path.join(os.homedir(), ".costrict", "cs-cloud", "server_url")
+		return serverUrlPaths().join(" → ")
 	}
 
 	private get bundledBinPath(): string {
@@ -339,15 +340,25 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	}
 
 	private readServerUrlFile(): string | undefined {
-		try {
-			if (!fs.existsSync(this.serverUrlPath)) return undefined
-			const content = fs.readFileSync(this.serverUrlPath, "utf-8").trim()
-			if (!content) return undefined
-			return trimTrailingSlash(content)
-		} catch (err) {
-			this.log(0, "readServerUrl", `Read failed: ${err instanceof Error ? err.message : String(err)}`)
-			return undefined
+		// First root holding a server_url file wins (cs-bridge before legacy
+		// cs-cloud, mirroring the daemon's own root choice). A file that exists
+		// but is empty belongs to the winning root, so we do not fall through
+		// to the other root and read a stale daemon's URL.
+		for (const candidate of serverUrlPaths()) {
+			try {
+				if (!fs.existsSync(candidate)) continue
+				const content = fs.readFileSync(candidate, "utf-8").trim()
+				if (!content) return undefined
+				return trimTrailingSlash(content)
+			} catch (err) {
+				this.log(
+					0,
+					"readServerUrl",
+					`Read failed at ${candidate}: ${err instanceof Error ? err.message : String(err)}`,
+				)
+			}
 		}
+		return undefined
 	}
 
 	private async waitForServerUrlFile(timeoutMs: number): Promise<string | undefined> {
@@ -408,19 +419,29 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 	private startWatching(): void {
 		this.stopWatching()
 
-		const dir = path.dirname(this.serverUrlPath)
-		if (!fs.existsSync(dir)) {
-			this.log(0, "fileWatcher", `Directory does not exist, skipping watcher: ${dir}`)
+		// Watch every candidate root that exists so a daemon restart that
+		// migrates roots (legacy cs-cloud → cs-bridge) still surfaces as a URL
+		// change instead of a spurious stop; "stopped" requires server_url to
+		// be gone from all candidates.
+		const dirs = [...new Set(serverUrlPaths().map((candidate) => path.dirname(candidate)))].filter((dir) =>
+			fs.existsSync(dir),
+		)
+		if (dirs.length === 0) {
+			this.log(
+				0,
+				"fileWatcher",
+				`No candidate directory exists, skipping watcher: ${serverUrlPaths().join(" → ")}`,
+			)
 			return
 		}
 
-		this.log(0, "fileWatcher", `Starting watcher: ${dir}`)
-		this.watcher = fs.watch(dir, (eventType, filename) => {
+		this.log(0, "fileWatcher", `Starting watcher: ${dirs.join(", ")}`)
+		const onEvent = (eventType: string, filename: unknown) => {
 			if (filename !== "server_url") return
 
 			this.log(0, "fileWatcher", `Event: ${eventType}`)
 
-			if (eventType === "rename" && !fs.existsSync(this.serverUrlPath)) {
+			if (eventType === "rename" && serverUrlPaths().every((candidate) => !fs.existsSync(candidate))) {
 				this.log(0, "fileWatcher", "server_url deleted → cs-cloud has stopped")
 				this.handleCrashDetected("cs-cloud process has stopped")
 				return
@@ -437,15 +458,16 @@ export class CsCloudService extends EventEmitter implements vscode.Disposable {
 					}
 				}
 			}
-		})
+		}
+		this.watchers = dirs.map((dir) => fs.watch(dir, onEvent))
 	}
 
 	private stopWatching(): void {
-		if (this.watcher) {
+		if (this.watchers.length > 0) {
 			this.log(0, "fileWatcher", "Stopping watcher")
-			this.watcher.close()
-			this.watcher = undefined
+			this.watchers.forEach((watcher) => watcher.close())
 		}
+		this.watchers = []
 	}
 
 	private startHealthCheck(): void {
