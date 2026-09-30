@@ -390,6 +390,15 @@ function getSelectedModel({
 			const info = routerModels["vercel-ai-gateway"]?.[id]
 			return { id, info }
 		}
+		case "orcarouter": {
+			const id = getValidatedModelId(
+				apiConfiguration.orcaRouterModelId,
+				routerModels["orcarouter"],
+				defaultModelId,
+			)
+			const info = routerModels["orcarouter"]?.[id]
+			return { id, info }
+		}
 		// case "anthropic":
 		// case "human-relay":
 		// case "fake-ai":

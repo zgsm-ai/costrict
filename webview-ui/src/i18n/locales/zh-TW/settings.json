@@ -319,7 +319,9 @@
 		"openRouterApiKey": "OpenRouter API 金鑰",
 		"getOpenRouterApiKey": "取得 OpenRouter API 金鑰",
 		"vercelAiGatewayApiKey": "Vercel AI Gateway API 金鑰",
+		"orcaRouterApiKey": "OrcaRouter API 金鑰",
 		"getVercelAiGatewayApiKey": "取得 Vercel AI Gateway API 金鑰",
+		"getOrcaRouterApiKey": "取得 OrcaRouter API 金鑰",
 		"apiKeyStorageNotice": "API 金鑰會安全地儲存在 VS Code 的 Secret Storage 中",
 		"openAiCodexRateLimits": {
 			"title": "Codex 用量限制{{planLabel}}",

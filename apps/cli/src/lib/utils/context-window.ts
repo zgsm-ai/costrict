@@ -54,6 +54,8 @@ function getModelIdForProvider(config: ProviderSettings): string | undefined {
 			return config.litellmModelId
 		case "vercel-ai-gateway":
 			return config.vercelAiGatewayModelId
+		case "orcarouter":
+			return config.orcaRouterModelId
 		default:
 			// For anthropic, bedrock, vertex, gemini, xai, etc.
 			return config.apiModelId

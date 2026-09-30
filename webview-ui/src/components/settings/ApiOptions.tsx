@@ -33,6 +33,7 @@ import {
 	fireworksDefaultModelId,
 	rooDefaultModelId,
 	vercelAiGatewayDefaultModelId,
+	orcaRouterDefaultModelId,
 	minimaxDefaultModelId,
 	mimoDefaultModelId,
 	// type ToolProtocol,
@@ -101,6 +102,7 @@ import {
 	ZAi,
 	Fireworks,
 	VercelAiGateway,
+	OrcaRouter,
 	MiniMax,
 	Mimo,
 } from "./providers"
@@ -413,6 +415,7 @@ const ApiOptions = ({
 				poe: { field: "apiModelId", default: poeDefaultModelId },
 				roo: { field: "apiModelId", default: rooDefaultModelId },
 				"vercel-ai-gateway": { field: "vercelAiGatewayModelId", default: vercelAiGatewayDefaultModelId },
+				orcarouter: { field: "orcaRouterModelId", default: orcaRouterDefaultModelId },
 				openai: { field: "openAiModelId" },
 				costrict: { field: "costrictModelId", default: costrictDefaultModelId },
 				ollama: { field: "ollamaModelId" },
@@ -799,6 +802,17 @@ const ApiOptions = ({
 
 					{selectedProvider === "vercel-ai-gateway" && (
 						<VercelAiGateway
+							apiConfiguration={apiConfiguration}
+							setApiConfigurationField={setApiConfigurationField}
+							routerModels={routerModels}
+							organizationAllowList={organizationAllowList}
+							modelValidationError={modelValidationError}
+							simplifySettings={fromWelcomeView}
+						/>
+					)}
+
+					{selectedProvider === "orcarouter" && (
+						<OrcaRouter
 							apiConfiguration={apiConfiguration}
 							setApiConfigurationField={setApiConfigurationField}
 							routerModels={routerModels}

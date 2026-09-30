@@ -1197,6 +1197,7 @@ export const webviewMessageHandler = async (
 						costrict: {},
 						openrouter: {},
 						"vercel-ai-gateway": {},
+						orcarouter: {},
 						litellm: {},
 						requesty: {},
 						unbound: {},
@@ -1253,6 +1254,7 @@ export const webviewMessageHandler = async (
 					},
 				},
 				{ key: "vercel-ai-gateway", options: { provider: "vercel-ai-gateway" } },
+				{ key: "orcarouter", options: { provider: "orcarouter" } },
 				// {
 				// 	key: "roo",
 				// 	options: {

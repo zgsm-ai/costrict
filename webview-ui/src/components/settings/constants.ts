@@ -69,6 +69,7 @@ export const PROVIDERS = [
 	{ value: "fireworks", label: "Fireworks AI", proxy: false },
 	// { value: "roo", label: "Roo Code Router", proxy: false },
 	{ value: "vercel-ai-gateway", label: "Vercel AI Gateway", proxy: false },
+	{ value: "orcarouter", label: "OrcaRouter", proxy: false },
 	{ value: "minimax", label: "MiniMax", proxy: false },
 	{ value: "mimo", label: "Xiaomi MiMo", proxy: false },
 	{ value: "baseten", label: "Baseten", proxy: false },

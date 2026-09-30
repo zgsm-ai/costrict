@@ -31,6 +31,7 @@ export * from "./xai.js"
 export * from "./costrict.js"
 // export * from "./doubao.js"
 export * from "./vercel-ai-gateway.js"
+export * from "./orcarouter.js"
 export * from "./zai.js"
 export * from "./minimax.js"
 export * from "./mimo.js"
@@ -59,6 +60,7 @@ import { vertexDefaultModelId } from "./vertex.js"
 import { vscodeLlmDefaultModelId } from "./vscode-llm.js"
 import { xaiDefaultModelId } from "./xai.js"
 import { vercelAiGatewayDefaultModelId } from "./vercel-ai-gateway.js"
+import { orcaRouterDefaultModelId } from "./orcarouter.js"
 import { internationalZAiDefaultModelId, mainlandZAiDefaultModelId } from "./zai.js"
 import { minimaxDefaultModelId } from "./minimax.js"
 import { mimoDefaultModelId } from "./mimo.js"
@@ -138,6 +140,8 @@ export function getProviderDefaultModelId(
 			return unboundDefaultModelId
 		case "vercel-ai-gateway":
 			return vercelAiGatewayDefaultModelId
+		case "orcarouter":
+			return orcaRouterDefaultModelId
 		case "anthropic":
 		case "human-relay":
 		case "fake-ai":

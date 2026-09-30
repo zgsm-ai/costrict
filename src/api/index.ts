@@ -37,6 +37,7 @@ import {
 	FireworksHandler,
 	// RooHandler,
 	VercelAiGatewayHandler,
+	OrcaRouterHandler,
 	MiniMaxHandler,
 	BasetenHandler,
 	MimoHandler,
@@ -199,6 +200,8 @@ export function buildApiHandler(configuration: ProviderSettings): ApiHandler {
 		// 	return new RooHandler(options)
 		case "vercel-ai-gateway":
 			return new VercelAiGatewayHandler(options)
+		case "orcarouter":
+			return new OrcaRouterHandler(options)
 		case "minimax":
 			return new MiniMaxHandler(options)
 		case "mimo":

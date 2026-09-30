@@ -218,6 +218,7 @@ The CLI will look for API keys in environment variables if not provided via `--a
 | openrouter        | `OPENROUTER_API_KEY`        |
 | gemini            | `GOOGLE_API_KEY`            |
 | vercel-ai-gateway | `VERCEL_AI_GATEWAY_API_KEY` |
+| orcarouter        | `ORCAROUTER_API_KEY`        |
 
 **Authentication Environment Variables:**
 

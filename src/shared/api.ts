@@ -177,6 +177,7 @@ const dynamicProviderExtras = {
 	},
 	openrouter: {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
 	"vercel-ai-gateway": {} as {}, // eslint-disable-line @typescript-eslint/no-empty-object-type
+	orcarouter: {} as { apiKey?: string; baseUrl?: string },
 	litellm: {} as { apiKey: string; baseUrl: string },
 	requesty: {} as { apiKey?: string; baseUrl?: string },
 	unbound: {} as { apiKey?: string },

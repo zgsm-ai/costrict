@@ -427,6 +427,8 @@
 		"getOpenRouterApiKey": "Get OpenRouter API Key",
 		"vercelAiGatewayApiKey": "Vercel AI Gateway API Key",
 		"getVercelAiGatewayApiKey": "Get Vercel AI Gateway API Key",
+		"orcaRouterApiKey": "OrcaRouter API Key",
+		"getOrcaRouterApiKey": "Get OrcaRouter API Key",
 		"apiKeyStorageNotice": "API keys are stored securely in VSCode's Secret Storage",
 		"openAiCodexRateLimits": {
 			"title": "Usage Limits for Codex{{planLabel}}",
