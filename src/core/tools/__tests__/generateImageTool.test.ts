@@ -7,7 +7,10 @@ import * as pathUtils from "../../../utils/pathUtils"
 import * as fileUtils from "../../../utils/fs"
 import { formatResponse } from "../../prompts/responses"
 import { EXPERIMENT_IDS } from "../../../shared/experiments"
+import { generateMiniMaxImage } from "../../../api/providers/utils/minimax-image-generation"
 import { OpenRouterHandler } from "../../../api/providers/openrouter"
+
+vi.mock("../../../api/providers/utils/minimax-image-generation")
 
 // Mock dependencies
 vi.mock("fs/promises")
@@ -66,6 +69,63 @@ describe("generateImageTool", () => {
 		vi.mocked(fs.mkdir).mockResolvedValue(undefined)
 		vi.mocked(fs.writeFile).mockResolvedValue(undefined)
 		vi.mocked(pathUtils.isPathOutsideWorkspace).mockReturnValue(false)
+	})
+
+	it.each(["minimax", "minimax-cn"])("dispatches %s with its own credential", async (imageGenerationProvider) => {
+		mockCline.providerRef.deref().getState.mockResolvedValue({
+			experiments: { [EXPERIMENT_IDS.IMAGE_GENERATION]: true },
+			imageGenerationProvider,
+			openRouterImageApiKey: "unrelated-key",
+			openRouterImageGenerationSelectedModel: "image-01-live",
+			apiConfiguration: { minimaxApiKey: "minimax-test-key" },
+		})
+		vi.mocked(generateMiniMaxImage).mockResolvedValue({
+			success: true,
+			imageData: "data:image/png;base64,aGVsbG8=",
+			imageFormat: "png",
+		})
+		await generateImageTool.execute({ prompt: "A tree", path: "tree.png" }, mockCline, {
+			askApproval: mockAskApproval,
+			handleError: mockHandleError,
+			pushToolResult: mockPushToolResult,
+		})
+		expect(generateMiniMaxImage).toHaveBeenCalledWith({
+			provider: imageGenerationProvider,
+			authToken: "minimax-test-key",
+			model: "image-01-live",
+			prompt: "A tree",
+		})
+		expect(OpenRouterHandler).not.toHaveBeenCalled()
+		expect(fs.writeFile).toHaveBeenCalled()
+	})
+	it("rejects image input for MiniMax without reading it", async () => {
+		mockCline.providerRef.deref().getState.mockResolvedValue({
+			experiments: { [EXPERIMENT_IDS.IMAGE_GENERATION]: true },
+			imageGenerationProvider: "minimax",
+			apiConfiguration: { minimaxApiKey: "test-key" },
+		})
+		await generateImageTool.execute({ prompt: "A tree", path: "tree.png", image: "input.png" }, mockCline, {
+			askApproval: mockAskApproval,
+			handleError: mockHandleError,
+			pushToolResult: mockPushToolResult,
+		})
+		expect(generateMiniMaxImage).not.toHaveBeenCalled()
+		expect(fs.readFile).not.toHaveBeenCalled()
+		expect(mockPushToolResult).toHaveBeenCalledWith(expect.stringContaining("text prompts only"))
+	})
+	it("requires a MiniMax credential instead of the unrelated image key", async () => {
+		mockCline.providerRef.deref().getState.mockResolvedValue({
+			experiments: { [EXPERIMENT_IDS.IMAGE_GENERATION]: true },
+			imageGenerationProvider: "minimax",
+			openRouterImageApiKey: "unrelated-key",
+		})
+		await generateImageTool.execute({ prompt: "A tree", path: "tree.png" }, mockCline, {
+			askApproval: mockAskApproval,
+			handleError: mockHandleError,
+			pushToolResult: mockPushToolResult,
+		})
+		expect(generateMiniMaxImage).not.toHaveBeenCalled()
+		expect(mockPushToolResult).toHaveBeenCalledWith(expect.stringContaining("MiniMax API key"))
 	})
 
 	describe("partial block handling", () => {

@@ -106,7 +106,7 @@ export const globalSettingsSchema = z.object({
 	clickedOnceNotices: z.array(z.number()).optional(),
 
 	// Image generation settings (experimental) - flattened for simplicity
-	imageGenerationProvider: z.enum(["openrouter", "roo"]).optional(),
+	imageGenerationProvider: z.enum(["openrouter", "roo", "minimax", "minimax-cn"]).optional(),
 	openRouterImageApiKey: z.string().optional(),
 	openRouterImageGenerationSelectedModel: z.string().optional(),
 

@@ -86,6 +86,8 @@ export const ExperimentalSettings = ({
 										}
 										imageGenerationProvider={imageGenerationProvider}
 										openRouterImageApiKey={openRouterImageApiKey}
+										minimaxApiKey={apiConfiguration?.minimaxApiKey}
+										setMinimaxApiKey={(value) => setApiConfigurationField?.("minimaxApiKey", value)}
 										openRouterImageGenerationSelectedModel={openRouterImageGenerationSelectedModel}
 										setImageGenerationProvider={setImageGenerationProvider}
 										setOpenRouterImageApiKey={setOpenRouterImageApiKey}

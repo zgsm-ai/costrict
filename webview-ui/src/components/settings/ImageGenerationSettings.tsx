@@ -7,6 +7,8 @@ interface ImageGenerationSettingsProps {
 	enabled: boolean
 	onChange: (enabled: boolean) => void
 	imageGenerationProvider?: ImageGenerationProvider
+	minimaxApiKey?: string
+	setMinimaxApiKey?: (apiKey: string) => void
 	openRouterImageApiKey?: string
 	openRouterImageGenerationSelectedModel?: string
 	setImageGenerationProvider: (provider: ImageGenerationProvider) => void
@@ -19,6 +21,8 @@ export const ImageGenerationSettings = ({
 	onChange,
 	imageGenerationProvider,
 	openRouterImageApiKey,
+	minimaxApiKey,
+	setMinimaxApiKey,
 	openRouterImageGenerationSelectedModel,
 	setImageGenerationProvider,
 	setOpenRouterImageApiKey,
@@ -87,8 +91,8 @@ export const ImageGenerationSettings = ({
 		setImageGenerationSelectedModel(value)
 	}
 
-	const requiresApiKey = currentProvider === "openrouter"
-	const isConfigured = !requiresApiKey || (requiresApiKey && openRouterImageApiKey)
+	const isMiniMax = currentProvider === "minimax" || currentProvider === "minimax-cn"
+	const isConfigured = isMiniMax ? !!minimaxApiKey : !!openRouterImageApiKey
 
 	return (
 		<div className="space-y-4">
@@ -120,6 +124,8 @@ export const ImageGenerationSettings = ({
 							<VSCodeOption value="openrouter" className="py-2 px-3">
 								OpenRouter
 							</VSCodeOption>
+							<VSCodeOption value="minimax">MiniMax (Global)</VSCodeOption>
+							<VSCodeOption value="minimax-cn">MiniMax (China)</VSCodeOption>
 						</VSCodeDropdown>
 						<p className="text-vscode-descriptionForeground text-xs mt-1">
 							{t("settings:experimental.IMAGE_GENERATION.providerDescription")}
@@ -152,6 +158,23 @@ export const ImageGenerationSettings = ({
 						</div>
 					)}
 
+					{isMiniMax && (
+						<div>
+							<label className="block font-medium mb-1">MiniMax API key</label>
+							<VSCodeTextField
+								aria-label="MiniMax API key"
+								placeholder="MiniMax API key"
+								value={minimaxApiKey || ""}
+								type="password"
+								className="w-full"
+								onInput={(e: any) => setMinimaxApiKey?.(e.target.value)}
+							/>
+							<p className="text-vscode-descriptionForeground text-xs mt-1">
+								Uses the MiniMax API key from the current API profile. Choose the region matching your
+								key. Text-to-image only.
+							</p>
+						</div>
+					)}
 					{/* Model Selection */}
 					<div>
 						<label className="block font-medium mb-1">

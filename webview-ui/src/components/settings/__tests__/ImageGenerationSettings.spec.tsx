@@ -30,6 +30,28 @@ describe("ImageGenerationSettings", () => {
 		vi.clearAllMocks()
 	})
 
+	it.each(["minimax", "minimax-cn"] as const)(
+		"edits the MiniMax key for %s without changing another key",
+		(provider) => {
+			const setMinimaxApiKey = vi.fn()
+			const { getByPlaceholderText, queryByPlaceholderText } = render(
+				<ImageGenerationSettings
+					{...defaultProps}
+					enabled
+					imageGenerationProvider={provider}
+					minimaxApiKey="old-key"
+					setMinimaxApiKey={setMinimaxApiKey}
+				/>,
+			)
+			fireEvent.input(getByPlaceholderText("MiniMax API key"), { target: { value: "new-key" } })
+			expect(setMinimaxApiKey).toHaveBeenCalledWith("new-key")
+			expect(mockSetOpenRouterImageApiKey).not.toHaveBeenCalled()
+			expect(
+				queryByPlaceholderText("settings:experimental.IMAGE_GENERATION.openRouterApiKeyPlaceholder"),
+			).not.toBeInTheDocument()
+		},
+	)
+
 	describe("Initial Mount Behavior", () => {
 		it("should not call setter functions on initial mount with empty configuration", () => {
 			render(<ImageGenerationSettings {...defaultProps} />)
