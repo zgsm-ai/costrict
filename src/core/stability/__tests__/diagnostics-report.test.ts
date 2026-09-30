@@ -102,9 +102,42 @@ describe("diagnostics report", () => {
 		expect(shards.length).toBeGreaterThan(0)
 		const body = shards.find((s) => s.data.payload_kind === "response_body")
 		expect(body?.data.content).toBe("Internal Server Error")
-		// message + stack land as payload kinds too
-		expect(shards.some((s) => s.data.payload_kind === "message")).toBe(true)
+		// the parent carries the redacted original message directly; the
+		// message kind is reserved for oversize overflow, stack still shards
+		expect(parent?.data.message).toBe("session call failed")
+		expect(shards.some((s) => s.data.payload_kind === "message")).toBe(false)
 		expect(shards.some((s) => s.data.payload_kind === "stack")).toBe(true)
+		expect(parent?.data.truncated).toBe(false)
+	})
+
+	it("oversize message clips in the parent and overflows into message shards", () => {
+		const diagnostics = new Diagnostics({ recorder, clock })
+		const big = "x".repeat(17 * 1024)
+		diagnostics.report({ severity: "error", component: "test", message: big })
+		const facts = drain()
+		const parent = facts.find((f) => f.name === "diagnostic.reported")
+		expect(Buffer.byteLength(String(parent?.data.message), "utf8")).toBe(16 * 1024)
+		expect(parent?.data.truncated).toBe(true)
+		expect(parent?.data.payload_refs).toContain("message")
+	})
+
+	it("empty message falls back to a non-empty marker", () => {
+		const diagnostics = new Diagnostics({ recorder, clock })
+		diagnostics.report({ severity: "warn", component: "test", message: "" })
+		const facts = drain()
+		const parent = facts.find((f) => f.name === "diagnostic.reported")
+		expect(parent?.data.message).toBe("(no message text)")
+	})
+
+	it("multi-byte message clips on a codepoint boundary", () => {
+		const diagnostics = new Diagnostics({ recorder, clock })
+		// 2-byte chars: 8193 chars = 16KiB + 2 bytes over the cap
+		diagnostics.report({ severity: "warn", component: "test", message: "é".repeat(8193) })
+		const facts = drain()
+		const parent = facts.find((f) => f.name === "diagnostic.reported")
+		const clipped = String(parent?.data.message)
+		expect(Buffer.byteLength(clipped, "utf8")).toBe(16 * 1024)
+		expect(clipped.endsWith("é")).toBe(true)
 	})
 
 	it("same Error object keeps its incident id; a fresh error gets a new one", () => {

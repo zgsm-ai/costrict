@@ -157,7 +157,9 @@ describe("rpc mirror wiring", () => {
 		expect(parent?.context?.operation_id).toMatch(/^op-/)
 		expect(parent?.data.code).toBe("typeerror")
 		const shards = facts.filter((f) => f.name === "diagnostic.payload")
-		expect(shards.some((s) => s.data.payload_kind === "message")).toBe(true)
+		// parent carries the real message text; message kind is oversize-only
+		expect(parent?.data.message).toBe("rpc session failed: cannot read properties of undefined (reading 'id')")
+		expect(shards.some((s) => s.data.payload_kind === "message")).toBe(false)
 		expect(shards.some((s) => s.data.payload_kind === "stack")).toBe(true)
 		// high fidelity by design: the raw exception text IS the payload —
 		// the outbox alone now explains what threw (last night's storm case)

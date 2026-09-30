@@ -3,8 +3,9 @@
  * Diagnostics, JS adaptation). report() is the single collection boundary:
  * it always emits the v1 count form (error.reported/uncaught, metrics) and,
  * within the per-fingerprint detail budget, publishes an atomic v2 incident
- * (diagnostic.reported parent + diagnostic.payload shards carrying message,
- * stack, exception message, attributes and caller-supplied payloads) through
+ * (diagnostic.reported parent + diagnostic.payload shards carrying stack,
+ * exception message, attributes, caller-supplied payloads and — only when the
+ * original overflows the parent cap — the message text) through
  * recorder.recordGroup. Redaction is fail-closed: any failure inside the
  * filter/format pipeline downgrades to a diagnostic.redaction_failed parent
  * without original text. Caller-supplied secrets are masked before the
@@ -29,6 +30,10 @@ const SCALAR_BYTES = 64
 const SCALAR = /^[A-Za-z0-9_.#$<> -]+$/
 const IDENTIFIER = /^[A-Za-z0-9_.-]{1,128}$/
 const PAYLOAD_KIND = /^[a-z][a-z0-9_]{0,63}$/
+// Parent-record message cap, aligned with the dictionary TEXT byte limit
+// registered for the diagnostic family's message field.
+const MAX_MESSAGE_BYTES = 16 * 1024
+const EMPTY_MESSAGE = "(no message text)"
 
 export interface DiagnosticInput {
 	severity: "warn" | "error"
@@ -66,6 +71,19 @@ const hash = (text: string): string => createHash("sha256").update(text, "utf8")
 
 const scalar = (text: string): string =>
 	Buffer.byteLength(text, "utf8") <= SCALAR_BYTES && SCALAR.test(text) ? text : "unknown"
+
+/** Codepoint-safe prefix of at most [maxBytes] UTF-8 bytes; never splits a surrogate pair. */
+const head = (text: string, maxBytes: number): string => {
+	let size = 0
+	let out = ""
+	for (const char of text) {
+		const next = Buffer.byteLength(char, "utf8")
+		if (size + next > maxBytes) break
+		out += char
+		size += next
+	}
+	return out
+}
 
 /** Bounded, identifier-safe frame names from a JS stack (plugin-code frames first). */
 const frames = (error: unknown): string[] => {
@@ -258,7 +276,14 @@ export class Diagnostics {
 			]),
 		)
 		const content = new Map<string, string>()
-		content.set("message", clean(input.message).text)
+		// The parent record carries the redacted original message directly
+		// (aligned with the outbox contract and the downstream log API that
+		// maps message straight to VictoriaLogs _msg); a message shard exists
+		// only when the text overflows the parent cap, keeping the clipped
+		// full original reassemblable from shards.
+		const text = clean(input.message).text
+		const clipped = Buffer.byteLength(text, "utf8") > MAX_MESSAGE_BYTES
+		if (clipped) content.set("message", text)
 		if (input.error instanceof Error) {
 			content.set("stack", clean(input.error.stack ?? "").text)
 			if (input.error.message && input.error.message !== input.message) {
@@ -266,7 +291,7 @@ export class Diagnostics {
 			}
 		}
 		for (const [kind, supplier] of Object.entries(input.payloads ?? {})) {
-			if (!PAYLOAD_KIND.test(kind) || content.has(kind) || kind === "attributes") {
+			if (!PAYLOAD_KIND.test(kind) || kind === "message" || content.has(kind) || kind === "attributes") {
 				throw new Error(`invalid diagnostic payload kind: ${kind}`)
 			}
 			content.set(kind, clean(supplier()).text)
@@ -310,7 +335,7 @@ export class Diagnostics {
 				severity: input.severity,
 				component: scalar(clean(input.component).text),
 				code: scalar(attributes.code ?? codeOf(input.error)),
-				message: "Diagnostic detail in payloads",
+				message: clipped ? head(text, MAX_MESSAGE_BYTES) : text || EMPTY_MESSAGE,
 				thread_name: scalar(clean(input.threadName ?? "extension_host").text),
 				thread_id: process.pid,
 				...(input.error instanceof Error ? { exception_type: scalar(clean(input.error.name).text) } : {}),
@@ -318,7 +343,7 @@ export class Diagnostics {
 				...this.metadata(attributes),
 				payload_bytes: total,
 				payload_refs: [...bytes.keys()],
-				truncated: parts.some((group) => group.some((draft) => draft.data.truncated === true)),
+				truncated: clipped || parts.some((group) => group.some((draft) => draft.data.truncated === true)),
 			},
 		}
 		// Fault linkage lives in the closed context key set, never in data.
