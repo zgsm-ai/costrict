@@ -56,7 +56,9 @@ function getMiniMaxThinkingConfig(
 	modelId: MinimaxModelId,
 	enableReasoningEffort: boolean | undefined,
 ): MiniMaxThinkingConfig | undefined {
-	return modelId === "MiniMax-M3" ? { type: enableReasoningEffort ? "adaptive" : "disabled" } : undefined
+	return modelId === "MiniMax-M3" || modelId === "MiniMax-M3.1-Flash"
+		? { type: enableReasoningEffort || modelId === "MiniMax-M3.1-Flash" ? "adaptive" : "disabled" }
+		: undefined
 }
 
 export class MiniMaxHandler extends BaseProvider implements SingleCompletionHandler {
