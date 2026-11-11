@@ -358,6 +358,32 @@ describe("MiniMaxHandler", () => {
 			)
 		})
 
+		it("should send the default effort for MiniMax-M3.1-Flash", async () => {
+			const handlerWithFlash = new MiniMaxHandler({
+				apiModelId: "MiniMax-M3.1-Flash",
+				minimaxApiKey: "test-minimax-api-key",
+			})
+
+			mockCreate.mockResolvedValueOnce({
+				[Symbol.asyncIterator]: () => ({
+					async next() {
+						return { done: true }
+					},
+				}),
+			})
+
+			const messageGenerator = handlerWithFlash.createMessage("test", [])
+			await messageGenerator.next()
+
+			expect(mockCreate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					model: "MiniMax-M3.1-Flash",
+					thinking: { type: "adaptive" },
+					output_config: { effort: "max" },
+				}),
+			)
+		})
+
 		it("should not send MiniMax-M3 thinking controls to M2 models", async () => {
 			const handlerWithM2 = new MiniMaxHandler({
 				apiModelId: "MiniMax-M2.7",
@@ -397,6 +423,29 @@ describe("MiniMaxHandler", () => {
 				expect.objectContaining({
 					model: "MiniMax-M3",
 					thinking: { type: "adaptive" },
+				}),
+				expect.any(Object),
+			)
+		})
+
+		it("should pass a selected MiniMax-M3.1-Flash effort to completePrompt", async () => {
+			const handlerWithFlash = new MiniMaxHandler({
+				apiModelId: "MiniMax-M3.1-Flash",
+				minimaxApiKey: "test-minimax-api-key",
+				reasoningEffort: "low",
+			})
+
+			mockCreate.mockResolvedValueOnce({
+				content: [{ type: "text", text: "response" }],
+			})
+
+			await handlerWithFlash.completePrompt("test")
+
+			expect(mockCreate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					model: "MiniMax-M3.1-Flash",
+					thinking: { type: "adaptive" },
+					output_config: { effort: "low" },
 				}),
 				expect.any(Object),
 			)
@@ -540,6 +589,12 @@ describe("MiniMaxHandler", () => {
 			expect(model.outputPrice).toBe(2.4)
 			expect(model.cacheReadsPrice).toBe(0.12)
 			expect(model.cacheWritesPrice).toBeUndefined()
+		})
+
+		it("should correctly configure MiniMax-M3.1-Flash reasoning effort", () => {
+			const model = minimaxModels["MiniMax-M3.1-Flash"]
+			expect(model.supportsReasoningEffort).toEqual(["low", "medium", "high", "xhigh", "max"])
+			expect(model.reasoningEffort).toBe("max")
 		})
 
 		it("should correctly configure MiniMax-M2.7-highspeed model properties", () => {
