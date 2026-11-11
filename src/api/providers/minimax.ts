@@ -3,7 +3,12 @@ import { Stream as AnthropicStream } from "@anthropic-ai/sdk/streaming"
 import { CacheControlEphemeral } from "@anthropic-ai/sdk/resources"
 import OpenAI from "openai"
 
-import { type MinimaxModelId, minimaxDefaultModelId, minimaxModels } from "@roo-code/types"
+import {
+	type MinimaxModelId,
+	minimaxDefaultModelId,
+	minimaxModels,
+	type ReasoningEffortExtended,
+} from "@roo-code/types"
 
 import type { ApiHandlerOptions } from "../../shared/api"
 
@@ -51,12 +56,15 @@ function convertOpenAIToolChoice(
 }
 
 type MiniMaxThinkingConfig = { type: "adaptive" | "disabled" }
+type MiniMaxOutputConfig = { effort: ReasoningEffortExtended }
 
 function getMiniMaxThinkingConfig(
 	modelId: MinimaxModelId,
 	enableReasoningEffort: boolean | undefined,
 ): MiniMaxThinkingConfig | undefined {
-	return modelId === "MiniMax-M3" ? { type: enableReasoningEffort ? "adaptive" : "disabled" } : undefined
+	return modelId === "MiniMax-M3" || modelId === "MiniMax-M3.1-Flash"
+		? { type: enableReasoningEffort || modelId === "MiniMax-M3.1-Flash" ? "adaptive" : "disabled" }
+		: undefined
 }
 
 export class MiniMaxHandler extends BaseProvider implements SingleCompletionHandler {
@@ -92,7 +100,7 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 	): ApiStream {
 		let stream: AnthropicStream<Anthropic.Messages.RawMessageStreamEvent>
 		const cacheControl: CacheControlEphemeral = { type: "ephemeral" }
-		const { id: modelId, info, maxTokens, temperature } = this.getModel()
+		const { id: modelId, info, maxTokens, temperature, reasoningEffort } = this.getModel()
 
 		// MiniMax M2 models support prompt caching
 		const supportsPromptCache = info.supportsPromptCache ?? false
@@ -126,6 +134,11 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 		if (thinking) {
 			// The installed Anthropic SDK predates the adaptive thinking type supported by MiniMax-M3.
 			;(requestParams as unknown as { thinking: MiniMaxThinkingConfig }).thinking = thinking
+		}
+		if (modelId === "MiniMax-M3.1-Flash" && reasoningEffort) {
+			;(requestParams as unknown as { output_config: MiniMaxOutputConfig }).output_config = {
+				effort: reasoningEffort,
+			}
 		}
 
 		stream = await this.client.messages.create(requestParams)
@@ -305,7 +318,7 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 	}
 
 	async completePrompt(prompt: string, systemPrompt?: string, metadata?: any) {
-		const { id: model, temperature } = this.getModel()
+		const { id: model, temperature, reasoningEffort } = this.getModel()
 		const requestParams: Anthropic.Messages.MessageCreateParamsNonStreaming = {
 			model,
 			max_tokens: 16_384,
@@ -317,6 +330,11 @@ export class MiniMaxHandler extends BaseProvider implements SingleCompletionHand
 		const thinking = getMiniMaxThinkingConfig(model, this.options.enableReasoningEffort)
 		if (thinking) {
 			;(requestParams as unknown as { thinking: MiniMaxThinkingConfig }).thinking = thinking
+		}
+		if (model === "MiniMax-M3.1-Flash" && reasoningEffort) {
+			;(requestParams as unknown as { output_config: MiniMaxOutputConfig }).output_config = {
+				effort: reasoningEffort,
+			}
 		}
 
 		const message = await this.client.messages.create(requestParams, {
