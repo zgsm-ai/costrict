@@ -1,0 +1,9 @@
+{
+  "name": "tetris-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tetris game engine and web UI",
+  "scripts": {
+    "test": "node --test"
+  }
+}

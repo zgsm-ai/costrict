@@ -1,0 +1,38 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #101018;
+  color: #e8e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(10, 24px);
+  gap: 1px;
+  padding: 4px;
+  background: #20202c;
+}
+
+.cell {
+  width: 24px;
+  height: 24px;
+  background: #16161f;
+}
+
+.cell-1 { background: #4fd2e8; }
+.cell-2 { background: #f2d24f; }
+.cell-3 { background: #b45fe0; }
+.cell-4 { background: #5fe07a; }
+.cell-5 { background: #e05f5f; }
+.cell-6 { background: #5f86e0; }
+.cell-7 { background: #e08a3c; }
+
+.message {
+  min-height: 1.5em;
+  margin-top: 12px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #ff6b6b;
+}

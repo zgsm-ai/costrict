@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tetris</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <h1>Tetris</h1>
+  <p class="help">← → move, ↑ rotate, ↓ soft drop, Space hard drop</p>
+  <!--
+    minimal CommonJS shim. The game modules are Node-style files; classic scripts share one
+    global lexical scope, and engine.js's `const { SHAPES, rotate, createBoard, ... }` would
+    collide with pieces.js/board.js top-level names, while ES modules are CORS-blocked on
+    file://. So pieces.js/board.js are inlined below (wrapped in IIFEs) and engine/input/
+    game-ui are loaded as plain <script src> tags.
+    shortcut: the two inlined copies must be re-copied if src/game/pieces.js or
+    src/game/board.js changes.
+  -->
+  <script>
+    window.__registry = {};
+    window.require = name => window.__registry[name.replace(/^\.\//, '').replace(/\.js$/, '')];
+  </script>
+  <script>
+    window.__registry['pieces'] = (function () {
+      const SHAPES = {
+        1: [[1, 1, 1, 1]],
+        2: [[1, 1], [1, 1]],
+        3: [[0, 1, 0], [1, 1, 1]],
+        4: [[0, 1, 1], [1, 1, 0]],
+        5: [[1, 1, 0], [0, 1, 1]],
+        6: [[1, 0], [1, 1], [1, 0]],
+        7: [[0, 1], [1, 1], [0, 1]],
+      };
+      function rotate(cells) {
+        return cells[0].map((_, x) => cells.map(row => row[x]).reverse());
+      }
+      return { SHAPES, rotate };
+    })();
+    window.__registry['board'] = (function () {
+      function createBoard(columns, rows) {
+        return Array.from({ length: rows }, () => new Array(columns).fill(0));
+      }
+      function collides(board, piece) {
+        const rows = board.length;
+        const columns = board[0].length;
+        for (let y = 0; y < piece.cells.length; y++) {
+          for (let x = 0; x < piece.cells[y].length; x++) {
+            if (!piece.cells[y][x]) continue;
+            const by = piece.y + y;
+            const bx = piece.x + x;
+            if (bx < 0 || bx >= columns || by >= rows) return true;
+            if (by >= 0 && board[by][bx]) return true;
+          }
+        }
+        return false;
+      }
+      function merge(board, piece) {
+        const out = board.map(row => row.slice());
+        piece.cells.forEach((row, y) => row.forEach((cell, x) => {
+          if (cell) out[piece.y + y][piece.x + x] = piece.type;
+        }));
+        return out;
+      }
+      function clearLines(board) {
+        const kept = board.filter(row => row.some(cell => !cell));
+        const cleared = board.length - kept.length;
+        while (kept.length < board.length) kept.unshift(new Array(board[0].length).fill(0));
+        return { board: kept, cleared };
+      }
+      return { createBoard, collides, merge, clearLines };
+    })();
+  </script>
+  <script>var module = { exports: {} };</script>
+  <script src="src/game/engine.js"></script>
+  <script>window.__registry['engine'] = module.exports;</script>
+  <script>var module = { exports: {} };</script>
+  <script src="src/ui/input.js"></script>
+  <script>window.__registry['input'] = module.exports;</script>
+  <script>var module = { exports: {} };</script>
+  <script src="src/ui/game-ui.js"></script>
+  <script>window.__registry['game-ui'] = module.exports;</script>
+  <script>
+    var game = window.require('engine').createGame();
+    window.require('game-ui').createGameUi({ game, document: window.document });
+  </script>
+</body>
+</html>
